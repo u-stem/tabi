@@ -37,5 +37,8 @@ coverage/
 apps/web/public/sw.js
 apps/web/public/swe-worker-*.js
 
+# Worktrees
+.worktrees/
+
 # Misc
 *.tsbuildinfo

@@ -24,6 +24,11 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL("/auth/login", request.url));
     }
 
+    const body = await res.json();
+    if (!body?.session) {
+      return NextResponse.redirect(new URL("/auth/login", request.url));
+    }
+
     return NextResponse.next();
   } catch {
     return NextResponse.redirect(new URL("/auth/login", request.url));

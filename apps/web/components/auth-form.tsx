@@ -33,21 +33,25 @@ export function AuthForm({ mode }: AuthFormProps) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    try {
-      if (mode === "signup") {
-        const name = formData.get("name") as string;
-        await signUp.email({ email, password, name });
-        toast.success("アカウントを作成しました");
-      } else {
-        await signIn.email({ email, password });
-        toast.success("ログインしました");
+    if (mode === "signup") {
+      const name = formData.get("name") as string;
+      const result = await signUp.email({ email, password, name });
+      if (result.error) {
+        setError(result.error.message ?? "登録に失敗しました");
+        setLoading(false);
+        return;
       }
-      router.push("/dashboard");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "エラーが発生しました");
-    } finally {
-      setLoading(false);
+      toast.success("アカウントを作成しました");
+    } else {
+      const result = await signIn.email({ email, password });
+      if (result.error) {
+        setError(result.error.message ?? "ログインに失敗しました");
+        setLoading(false);
+        return;
+      }
+      toast.success("ログインしました");
     }
+    router.push("/dashboard");
   }
 
   return (

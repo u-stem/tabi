@@ -53,7 +53,6 @@ export function TripActions({ tripId, status }: TripActionsProps) {
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(shareUrl);
       } else {
-        // Fallback for non-HTTPS environments
         const textarea = document.createElement("textarea");
         textarea.value = shareUrl;
         textarea.style.position = "fixed";
@@ -72,21 +71,18 @@ export function TripActions({ tripId, status }: TripActionsProps) {
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <Badge variant="secondary">
-        {STATUS_LABELS[status as keyof typeof STATUS_LABELS] ?? status}
-      </Badge>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={handleShare}
-        disabled={sharing}
-      >
-        {sharing ? "生成中..." : "共有リンク"}
-      </Button>
+    <div className="flex w-full items-center justify-between">
+      <div className="flex items-center gap-2">
+        <Badge variant="secondary">
+          {STATUS_LABELS[status as keyof typeof STATUS_LABELS] ?? status}
+        </Badge>
+        <Button variant="outline" size="sm" onClick={handleShare} disabled={sharing}>
+          {sharing ? "生成中..." : "共有リンク"}
+        </Button>
+      </div>
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="destructive" size="sm" disabled={deleting} aria-label="旅行を削除">
+          <Button variant="ghost" size="sm" disabled={deleting} className="text-muted-foreground hover:text-destructive">
             {deleting ? "削除中..." : "削除"}
           </Button>
         </AlertDialogTrigger>
@@ -99,9 +95,7 @@ export function TripActions({ tripId, status }: TripActionsProps) {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>
-              削除する
-            </AlertDialogAction>
+            <AlertDialogAction onClick={handleDelete}>削除する</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -16,6 +16,8 @@ import {
 type SpotItemProps = {
   name: string;
   category: string;
+  address?: string | null;
+  url?: string | null;
   startTime?: string | null;
   endTime?: string | null;
   memo?: string | null;
@@ -25,6 +27,8 @@ type SpotItemProps = {
 export function SpotItem({
   name,
   category,
+  address,
+  url,
   startTime,
   endTime,
   memo,
@@ -38,18 +42,23 @@ export function SpotItem({
         : "";
 
   return (
-    <div className="flex items-start gap-3 rounded-md border p-3">
-      <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">
+    <div className="flex items-start gap-2 rounded-md border p-3">
+      <span className="mt-0.5 shrink-0 rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">
         {CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] ?? category}
       </span>
-      <div className="flex-1">
-        <div className="flex items-center justify-between">
-          <span className="font-medium">{name}</span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <span className="font-medium">{name}</span>
+            {timeStr && (
+              <span className="ml-2 text-xs text-muted-foreground">{timeStr}</span>
+            )}
+          </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <button
                 type="button"
-                className="text-xs text-muted-foreground hover:text-destructive"
+                className="shrink-0 text-xs text-muted-foreground hover:text-destructive"
                 aria-label={`${name}を削除`}
               >
                 削除
@@ -64,18 +73,28 @@ export function SpotItem({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                <AlertDialogAction onClick={onDelete}>
-                  削除する
-                </AlertDialogAction>
+                <AlertDialogAction onClick={onDelete}>削除する</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </div>
-        {timeStr && (
-          <p className="text-xs text-muted-foreground">{timeStr}</p>
-        )}
-        {memo && (
-          <p className="mt-1 text-sm text-muted-foreground">{memo}</p>
+        {(address || url || memo) && (
+          <div className="mt-1 space-y-0.5">
+            {address && (
+              <p className="text-xs text-muted-foreground">{address}</p>
+            )}
+            {url && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block truncate text-xs text-blue-600 hover:underline"
+              >
+                {url}
+              </a>
+            )}
+            {memo && <p className="text-sm text-muted-foreground">{memo}</p>}
+          </div>
         )}
       </div>
     </div>

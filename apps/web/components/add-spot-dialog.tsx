@@ -49,6 +49,8 @@ export function AddSpotDialog({ tripId, dayId, onAdded }: AddSpotDialogProps) {
     const data = {
       name: formData.get("name") as string,
       category,
+      address: (formData.get("address") as string) || undefined,
+      url: (formData.get("url") as string) || undefined,
       startTime: (formData.get("startTime") as string) || undefined,
       endTime: (formData.get("endTime") as string) || undefined,
       memo: (formData.get("memo") as string) || undefined,
@@ -70,13 +72,16 @@ export function AddSpotDialog({ tripId, dayId, onAdded }: AddSpotDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(isOpen) => {
-      setOpen(isOpen);
-      if (!isOpen) {
-        setError(null);
-        setCategory("sightseeing");
-      }
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) {
+          setError(null);
+          setCategory("sightseeing");
+        }
+      }}
+    >
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           + スポット追加
@@ -105,6 +110,14 @@ export function AddSpotDialog({ tripId, dayId, onAdded }: AddSpotDialogProps) {
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="address">住所</Label>
+            <Input id="address" name="address" placeholder="京都市北区金閣寺町1" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="url">URL</Label>
+            <Input id="url" name="url" type="url" placeholder="https://..." />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">

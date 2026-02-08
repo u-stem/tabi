@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { DayTimeline } from "@/components/day-timeline";
 import { TripMap } from "@/components/trip-map-wrapper";
+import { TripActions } from "@/components/trip-actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError } from "@/lib/api";
-import { TripActions } from "@/components/trip-actions";
-import { formatDateRange } from "@/lib/format";
+import { formatDateRange, getDayCount } from "@/lib/format";
 import type { TripResponse } from "@tabi/shared";
 
 export default function TripDetailPage() {
@@ -47,14 +47,11 @@ export default function TripDetailPage() {
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-4 w-64" />
           </div>
-          <div className="space-y-6">
+          <div className="space-y-4">
             {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
-              <div key={key} className="space-y-3">
+              <div key={key} className="rounded-lg border p-4 space-y-3">
                 <Skeleton className="h-5 w-32" />
-                <div className="space-y-2">
-                  <Skeleton className="h-16 w-full rounded-md" />
-                  <Skeleton className="h-16 w-full rounded-md" />
-                </div>
+                <Skeleton className="h-16 w-full rounded-md" />
               </div>
             ))}
           </div>
@@ -67,6 +64,10 @@ export default function TripDetailPage() {
   if (error || !trip) {
     return <p className="text-destructive">{error ?? "旅行が見つかりません"}</p>;
   }
+
+  const allSpots = trip.days.flatMap((day) => day.spots);
+  const hasGeoSpots = allSpots.some((s) => s.latitude && s.longitude);
+  const dayCount = getDayCount(trip.startDate, trip.endDate);
 
   return (
     <div className="grid gap-8 lg:grid-cols-2">
@@ -81,13 +82,15 @@ export default function TripDetailPage() {
           </Link>
           <h1 className="text-2xl font-bold">{trip.title}</h1>
           <p className="text-muted-foreground">
-            {trip.destination} / {formatDateRange(trip.startDate, trip.endDate)}
+            {trip.destination !== trip.title ? `${trip.destination} / ` : ""}
+            {formatDateRange(trip.startDate, trip.endDate)}
+            <span className="ml-2 text-sm">({dayCount}日間)</span>
           </p>
-          <div className="mt-3">
+          <div className="mt-3 flex items-center justify-between">
             <TripActions tripId={tripId} status={trip.status} />
           </div>
         </div>
-        <div className="space-y-6">
+        <div className="space-y-4">
           {trip.days.map((day) => (
             <DayTimeline
               key={day.id}
@@ -104,7 +107,18 @@ export default function TripDetailPage() {
 
       {/* Right: Map */}
       <div className="h-[50vh] lg:sticky lg:top-4 lg:h-[calc(100vh-8rem)]">
-        <TripMap spots={trip.days.flatMap((day) => day.spots)} />
+        {hasGeoSpots ? (
+          <TripMap spots={allSpots} />
+        ) : (
+          <div className="flex h-full items-center justify-center rounded-lg border border-dashed bg-muted/30">
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                スポットに位置情報を追加すると
+              </p>
+              <p className="text-sm text-muted-foreground">地図が表示されます</p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

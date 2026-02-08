@@ -50,9 +50,13 @@ tripRoutes.post("/", async (c) => {
     let dayNumber = 1;
     const maxDays = 365;
     for (let d = new Date(start); d <= end && dayNumber <= maxDays; d.setDate(d.getDate() + 1)) {
+      // Use local date methods to avoid UTC conversion shifting dates
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, "0");
+      const dayOfMonth = String(d.getDate()).padStart(2, "0");
       days.push({
         tripId: created.id,
-        date: d.toISOString().split("T")[0],
+        date: `${year}-${month}-${dayOfMonth}`,
         dayNumber: dayNumber++,
       });
     }

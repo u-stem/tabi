@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "bun run --hot src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run --passWithNoTests --exclude 'src/__tests__/integration/**'",
+    "test:integration": "TEST_DATABASE_URL=postgresql://tabi:tabi@localhost:5432/tabi_test vitest run --fileParallelism=false src/__tests__/integration/",
     "lint": "biome lint src/",
     "format": "biome format --write src/",
     "check": "biome check --write src/",

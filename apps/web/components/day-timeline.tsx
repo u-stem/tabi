@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  DndContext,
+  closestCenter,
+  type DragEndEvent,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { toast } from "sonner";
 import { SpotItem } from "./spot-item";
 import { AddSpotDialog } from "./add-spot-dialog";
@@ -24,6 +34,11 @@ export function DayTimeline({
   spots,
   onRefresh,
 }: DayTimelineProps) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+  );
+
   async function handleDelete(spotId: string) {
     try {
       await api(`/api/trips/${tripId}/days/${dayId}/spots/${spotId}`, {
@@ -34,6 +49,28 @@ export function DayTimeline({
     } catch (err) {
       console.error("Failed to delete spot:", err);
       toast.error("スポットの削除に失敗しました");
+    }
+  }
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = spots.findIndex((s) => s.id === active.id);
+    const newIndex = spots.findIndex((s) => s.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(spots, oldIndex, newIndex);
+    const spotIds = reordered.map((s) => s.id);
+
+    try {
+      await api(`/api/trips/${tripId}/days/${dayId}/spots/reorder`, {
+        method: "PATCH",
+        body: JSON.stringify({ spotIds }),
+      });
+      onRefresh();
+    } catch {
+      toast.error("並び替えに失敗しました");
     }
   }
 
@@ -58,11 +95,19 @@ export function DayTimeline({
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {spots.map((spot) => (
-            <SpotItem key={spot.id} {...spot} onDelete={() => handleDelete(spot.id)} />
-          ))}
-        </div>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={spots.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {spots.map((spot) => (
+                <SpotItem key={spot.id} {...spot} onDelete={() => handleDelete(spot.id)} />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
       )}
     </div>
   );

@@ -1,5 +1,7 @@
 "use client";
 
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { CATEGORY_LABELS } from "@tabi/shared";
 import {
   AlertDialog,
@@ -14,6 +16,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 type SpotItemProps = {
+  id: string;
   name: string;
   category: string;
   address?: string | null;
@@ -25,6 +28,7 @@ type SpotItemProps = {
 };
 
 export function SpotItem({
+  id,
   name,
   category,
   address,
@@ -34,6 +38,15 @@ export function SpotItem({
   memo,
   onDelete,
 }: SpotItemProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
   const timeStr =
     startTime && endTime
       ? `${startTime} - ${endTime}`
@@ -42,7 +55,27 @@ export function SpotItem({
         : "";
 
   return (
-    <div className="flex items-start gap-2 rounded-md border p-3">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`flex items-start gap-2 rounded-md border p-3 ${isDragging ? "opacity-50" : ""}`}
+    >
+      <button
+        type="button"
+        className="mt-1 shrink-0 cursor-grab touch-none text-muted-foreground hover:text-foreground"
+        aria-label="Drag to reorder"
+        {...attributes}
+        {...listeners}
+      >
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" role="img" aria-label="Drag handle">
+          <circle cx="5" cy="3" r="1.5" />
+          <circle cx="11" cy="3" r="1.5" />
+          <circle cx="5" cy="8" r="1.5" />
+          <circle cx="11" cy="8" r="1.5" />
+          <circle cx="5" cy="13" r="1.5" />
+          <circle cx="11" cy="13" r="1.5" />
+        </svg>
+      </button>
       <span className="mt-0.5 shrink-0 rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">
         {CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] ?? category}
       </span>

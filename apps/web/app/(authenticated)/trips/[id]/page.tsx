@@ -87,7 +87,7 @@ export default function TripDetailPage() {
             <span className="ml-2 text-sm">({dayCount}日間)</span>
           </p>
           <div className="mt-3 flex items-center justify-between">
-            <TripActions tripId={tripId} status={trip.status} />
+            <TripActions tripId={tripId} status={trip.status} onStatusChange={fetchTrip} />
           </div>
         </div>
         <div className="space-y-4">

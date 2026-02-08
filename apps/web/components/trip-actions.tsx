@@ -4,7 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,12 +28,29 @@ import { STATUS_LABELS } from "@tabi/shared";
 type TripActionsProps = {
   tripId: string;
   status: string;
+  onStatusChange?: () => void;
 };
 
-export function TripActions({ tripId, status }: TripActionsProps) {
+const statuses = Object.entries(STATUS_LABELS) as [string, string][];
+
+export function TripActions({ tripId, status, onStatusChange }: TripActionsProps) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState(false);
+
+  async function handleStatusChange(newStatus: string) {
+    if (newStatus === status) return;
+    try {
+      await api(`/api/trips/${tripId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: newStatus }),
+      });
+      toast.success("ステータスを変更しました");
+      onStatusChange?.();
+    } catch {
+      toast.error("ステータスの変更に失敗しました");
+    }
+  }
 
   async function handleDelete() {
     setDeleting(true);
@@ -73,9 +96,18 @@ export function TripActions({ tripId, status }: TripActionsProps) {
   return (
     <div className="flex w-full items-center justify-between">
       <div className="flex items-center gap-2">
-        <Badge variant="secondary">
-          {STATUS_LABELS[status as keyof typeof STATUS_LABELS] ?? status}
-        </Badge>
+        <Select value={status} onValueChange={handleStatusChange}>
+          <SelectTrigger className="h-8 w-[130px] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {statuses.map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         <Button variant="outline" size="sm" onClick={handleShare} disabled={sharing}>
           {sharing ? "生成中..." : "共有リンク"}
         </Button>

@@ -3,19 +3,21 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { spots, tripDays } from "../db/schema";
+import { canEdit, checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
 const spotRoutes = new Hono<AppEnv>();
 spotRoutes.use("*", requireAuth);
 
-// Verify that the day belongs to the trip and the trip belongs to the user
+// Verify that the day belongs to the trip and the user can edit the trip
 async function verifyDayOwnership(tripId: string, dayId: string, userId: string): Promise<boolean> {
   const day = await db.query.tripDays.findFirst({
     where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
-    with: { trip: true },
   });
-  return !!day && day.trip.ownerId === userId;
+  if (!day) return false;
+  const role = await checkTripAccess(tripId, userId);
+  return canEdit(role);
 }
 
 // List spots for a day

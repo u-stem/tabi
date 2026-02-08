@@ -1,31 +1,45 @@
 import { createTripSchema, updateTripSchema } from "@tabi/shared";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { tripDays, tripMembers, trips } from "../db/schema";
+import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
 const tripRoutes = new Hono<AppEnv>();
 tripRoutes.use("*", requireAuth);
 
-// List trips for current user
+// List trips for current user (all trips where user is a member)
 tripRoutes.get("/", async (c) => {
   const user = c.get("user");
-  const userTrips = await db.query.trips.findMany({
-    where: eq(trips.ownerId, user.id),
-    orderBy: (trips, { desc }) => [desc(trips.updatedAt)],
+  const memberships = await db.query.tripMembers.findMany({
+    where: eq(tripMembers.userId, user.id),
     with: {
-      days: {
-        with: { spots: { columns: { id: true } } },
+      trip: {
+        with: {
+          days: {
+            with: { spots: { columns: { id: true } } },
+          },
+        },
       },
     },
   });
 
-  const result = userTrips.map(({ days, ...rest }) => ({
-    ...rest,
-    totalSpots: days.reduce((sum, day) => sum + day.spots.length, 0),
-  }));
+  const result = memberships.map(({ trip }) => {
+    const { days, ...rest } = trip;
+    return {
+      ...rest,
+      totalSpots: days.reduce((sum, day) => sum + day.spots.length, 0),
+    };
+  });
+
+  // Sort by updatedAt descending
+  result.sort((a, b) => {
+    const dateA = a.updatedAt instanceof Date ? a.updatedAt.getTime() : 0;
+    const dateB = b.updatedAt instanceof Date ? b.updatedAt.getTime() : 0;
+    return dateB - dateA;
+  });
 
   return c.json(result);
 });
@@ -88,13 +102,18 @@ tripRoutes.post("/", async (c) => {
   return c.json(trip, 201);
 });
 
-// Get trip detail with days and spots
+// Get trip detail with days and spots (any member can view)
 tripRoutes.get("/:id", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("id");
 
+  const role = await checkTripAccess(tripId, user.id);
+  if (!role) {
+    return c.json({ error: "Trip not found" }, 404);
+  }
+
   const trip = await db.query.trips.findFirst({
-    where: and(eq(trips.id, tripId), eq(trips.ownerId, user.id)),
+    where: eq(trips.id, tripId),
     with: {
       days: {
         orderBy: (days, { asc }) => [asc(days.dayNumber)],
@@ -114,7 +133,7 @@ tripRoutes.get("/:id", async (c) => {
   return c.json(trip);
 });
 
-// Update trip
+// Update trip (owner or editor)
 tripRoutes.patch("/:id", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("id");
@@ -130,10 +149,15 @@ tripRoutes.patch("/:id", async (c) => {
     return c.json({ error: "Date changes are not supported. Please create a new trip." }, 400);
   }
 
+  const role = await checkTripAccess(tripId, user.id);
+  if (!canEdit(role)) {
+    return c.json({ error: "Trip not found" }, 404);
+  }
+
   const [updated] = await db
     .update(trips)
     .set({ ...parsed.data, updatedAt: new Date() })
-    .where(and(eq(trips.id, tripId), eq(trips.ownerId, user.id)))
+    .where(eq(trips.id, tripId))
     .returning();
 
   if (!updated) {
@@ -143,16 +167,13 @@ tripRoutes.patch("/:id", async (c) => {
   return c.json(updated);
 });
 
-// Delete trip
+// Delete trip (owner only)
 tripRoutes.delete("/:id", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("id");
 
-  const existing = await db.query.trips.findFirst({
-    where: and(eq(trips.id, tripId), eq(trips.ownerId, user.id)),
-  });
-
-  if (!existing) {
+  const role = await checkTripAccess(tripId, user.id);
+  if (!isOwner(role)) {
     return c.json({ error: "Trip not found" }, 404);
   }
 

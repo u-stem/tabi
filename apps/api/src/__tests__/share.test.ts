@@ -7,6 +7,9 @@ const { mockGetSession, mockDbQuery, mockDbUpdate } = vi.hoisted(() => ({
     trips: {
       findFirst: vi.fn(),
     },
+    tripMembers: {
+      findFirst: vi.fn(),
+    },
   },
   mockDbUpdate: vi.fn(),
 }));
@@ -43,6 +46,12 @@ describe("Share routes", () => {
       user: fakeUser,
       session: { id: "session-1" },
     });
+    // Default: user is the owner
+    mockDbQuery.tripMembers.findFirst.mockResolvedValue({
+      tripId: "trip-1",
+      userId: fakeUser.id,
+      role: "owner",
+    });
   });
 
   describe("POST /api/trips/:id/share", () => {
@@ -57,8 +66,23 @@ describe("Share routes", () => {
       expect(res.status).toBe(401);
     });
 
-    it("returns 404 when trip not found", async () => {
-      mockDbQuery.trips.findFirst.mockResolvedValue(undefined);
+    it("returns 404 when user is not owner", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
+
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1/share", {
+        method: "POST",
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 404 when user is editor (not owner)", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue({
+        tripId: "trip-1",
+        userId: fakeUser.id,
+        role: "editor",
+      });
 
       const app = createApp();
       const res = await app.request("/api/trips/trip-1/share", {
@@ -71,8 +95,6 @@ describe("Share routes", () => {
     it("returns existing shareToken if already set", async () => {
       const existingToken = "abc123existingtoken";
       mockDbQuery.trips.findFirst.mockResolvedValue({
-        id: "trip-1",
-        ownerId: fakeUser.id,
         shareToken: existingToken,
       });
 
@@ -89,8 +111,6 @@ describe("Share routes", () => {
     it("generates a new shareToken when not set", async () => {
       const generatedToken = "abc123generated";
       mockDbQuery.trips.findFirst.mockResolvedValue({
-        id: "trip-1",
-        ownerId: fakeUser.id,
         shareToken: null,
       });
 

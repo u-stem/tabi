@@ -9,6 +9,10 @@ const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, m
         findMany: vi.fn(),
         findFirst: vi.fn(),
       },
+      tripMembers: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+      },
     },
     mockDbInsert: vi.fn(),
     mockDbUpdate: vi.fn(),
@@ -50,6 +54,12 @@ describe("Trip routes", () => {
     mockGetSession.mockResolvedValue({
       user: fakeUser,
       session: { id: "session-1" },
+    });
+    // Default: user is the owner of the trip
+    mockDbQuery.tripMembers.findFirst.mockResolvedValue({
+      tripId: "trip-1",
+      userId: fakeUser.id,
+      role: "owner",
     });
   });
 
@@ -145,11 +155,17 @@ describe("Trip routes", () => {
 
   describe("GET /api/trips", () => {
     it("returns an array of trips with totalSpots", async () => {
-      mockDbQuery.trips.findMany.mockResolvedValue([
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([
         {
-          id: "trip-1",
-          title: "Tokyo Trip",
-          days: [{ spots: [{ id: "spot-1" }, { id: "spot-2" }] }, { spots: [] }],
+          tripId: "trip-1",
+          userId: fakeUser.id,
+          role: "owner",
+          trip: {
+            id: "trip-1",
+            title: "Tokyo Trip",
+            updatedAt: new Date("2025-07-01"),
+            days: [{ spots: [{ id: "spot-1" }, { id: "spot-2" }] }, { spots: [] }],
+          },
         },
       ]);
 
@@ -191,8 +207,8 @@ describe("Trip routes", () => {
       expect(body.id).toBe("trip-1");
     });
 
-    it("returns 404 when trip not found", async () => {
-      mockDbQuery.trips.findFirst.mockResolvedValue(undefined);
+    it("returns 404 when user is not a member", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
 
       const app = createApp();
       const res = await app.request("/api/trips/nonexistent");
@@ -224,17 +240,28 @@ describe("Trip routes", () => {
       expect(body.title).toBe("New Title");
     });
 
-    it("returns 404 when trip not found", async () => {
-      mockDbUpdate.mockReturnValue({
-        set: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValue([]),
-          }),
-        }),
-      });
+    it("returns 404 when user is not a member", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
 
       const app = createApp();
       const res = await app.request("/api/trips/nonexistent", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "New Title" }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 404 when user is viewer (cannot edit)", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue({
+        tripId: "trip-1",
+        userId: fakeUser.id,
+        role: "viewer",
+      });
+
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: "New Title" }),
@@ -254,6 +281,44 @@ describe("Trip routes", () => {
       expect(res.status).toBe(400);
     });
 
+    it("returns updated trip when changing status", async () => {
+      const updated = {
+        id: "trip-1",
+        title: "Tokyo Trip",
+        ownerId: fakeUser.id,
+        status: "planned",
+      };
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "planned" }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.status).toBe("planned");
+    });
+
+    it("returns 400 with invalid status", async () => {
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "invalid" }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
     it("returns 400 when trying to change dates", async () => {
       const app = createApp();
       const res = await app.request("/api/trips/trip-1", {
@@ -268,8 +333,6 @@ describe("Trip routes", () => {
 
   describe("DELETE /api/trips/:id", () => {
     it("returns ok on success", async () => {
-      const existing = { id: "trip-1", ownerId: fakeUser.id };
-      mockDbQuery.trips.findFirst.mockResolvedValue(existing);
       mockDbDelete.mockReturnValue({
         where: vi.fn().mockResolvedValue(undefined),
       });
@@ -284,11 +347,26 @@ describe("Trip routes", () => {
       expect(body).toEqual({ ok: true });
     });
 
-    it("returns 404 when trip not found", async () => {
-      mockDbQuery.trips.findFirst.mockResolvedValue(undefined);
+    it("returns 404 when user is not a member", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
 
       const app = createApp();
       const res = await app.request("/api/trips/nonexistent", {
+        method: "DELETE",
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 404 when user is editor (not owner)", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue({
+        tripId: "trip-1",
+        userId: fakeUser.id,
+        role: "editor",
+      });
+
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1", {
         method: "DELETE",
       });
 

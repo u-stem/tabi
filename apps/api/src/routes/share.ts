@@ -1,26 +1,29 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { trips } from "../db/schema";
+import { checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
 const shareRoutes = new Hono<AppEnv>();
 
-// Generate or get share link (requires auth)
+// Generate or get share link (owner only)
 shareRoutes.post("/api/trips/:id/share", requireAuth, async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("id");
 
-  const trip = await db.query.trips.findFirst({
-    where: and(eq(trips.id, tripId), eq(trips.ownerId, user.id)),
-  });
-
-  if (!trip) {
+  const role = await checkTripAccess(tripId, user.id);
+  if (!isOwner(role)) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
-  if (trip.shareToken) {
+  const trip = await db.query.trips.findFirst({
+    where: eq(trips.id, tripId),
+    columns: { shareToken: true },
+  });
+
+  if (trip?.shareToken) {
     return c.json({ shareToken: trip.shareToken });
   }
 
@@ -29,7 +32,7 @@ shareRoutes.post("/api/trips/:id/share", requireAuth, async (c) => {
   const [updated] = await db
     .update(trips)
     .set({ shareToken: newToken })
-    .where(and(eq(trips.id, tripId), isNull(trips.shareToken)))
+    .where(isNull(trips.shareToken))
     .returning({ shareToken: trips.shareToken });
 
   // If another request already set the token, fetch the existing one

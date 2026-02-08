@@ -22,6 +22,9 @@ const {
     tripDays: {
       findFirst: vi.fn(),
     },
+    tripMembers: {
+      findFirst: vi.fn(),
+    },
   },
   mockDbInsert: vi.fn(),
   mockDbUpdate: vi.fn(),
@@ -69,11 +72,15 @@ describe("Spot routes", () => {
       user: fakeUser,
       session: { id: "session-1" },
     });
-    // Default: day belongs to trip, trip belongs to user
+    // Default: day belongs to trip, user is an editor/owner
     mockDbQuery.tripDays.findFirst.mockResolvedValue({
       id: dayId,
       tripId,
-      trip: { id: tripId, ownerId: fakeUser.id },
+    });
+    mockDbQuery.tripMembers.findFirst.mockResolvedValue({
+      tripId,
+      userId: fakeUser.id,
+      role: "owner",
     });
   });
 

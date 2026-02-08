@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,8 +37,10 @@ export function AuthForm({ mode }: AuthFormProps) {
       if (mode === "signup") {
         const name = formData.get("name") as string;
         await signUp.email({ email, password, name });
+        toast.success("アカウントを作成しました");
       } else {
         await signIn.email({ email, password });
+        toast.success("ログインしました");
       }
       router.push("/dashboard");
     } catch (err) {
@@ -49,12 +52,14 @@ export function AuthForm({ mode }: AuthFormProps) {
 
   return (
     <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>{mode === "login" ? "ログイン" : "新規登録"}</CardTitle>
+      <CardHeader className="text-center">
+        <CardTitle className="text-2xl">
+          {mode === "login" ? "ログイン" : "新規登録"}
+        </CardTitle>
         <CardDescription>
           {mode === "login"
-            ? "アカウントにログイン"
-            : "新しいアカウントを作成"}
+            ? "メールアドレスでログイン"
+            : "無料でアカウントを作成"}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -62,12 +67,25 @@ export function AuthForm({ mode }: AuthFormProps) {
           {mode === "signup" && (
             <div className="space-y-2">
               <Label htmlFor="name">名前</Label>
-              <Input id="name" name="name" required />
+              <Input
+                id="name"
+                name="name"
+                placeholder="山田太郎"
+                autoComplete="name"
+                required
+              />
             </div>
           )}
           <div className="space-y-2">
             <Label htmlFor="email">メールアドレス</Label>
-            <Input id="email" name="email" type="email" required />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="you@example.com"
+              autoComplete="email"
+              required
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">パスワード</Label>
@@ -75,11 +93,22 @@ export function AuthForm({ mode }: AuthFormProps) {
               id="password"
               name="password"
               type="password"
+              placeholder="8文字以上"
               minLength={8}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
               required
             />
+            {mode === "signup" && (
+              <p className="text-xs text-muted-foreground">
+                8文字以上で入力してください
+              </p>
+            )}
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+              {error}
+            </div>
+          )}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading
               ? mode === "login"
@@ -87,7 +116,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 : "登録中..."
               : mode === "login"
                 ? "ログイン"
-                : "登録する"}
+                : "アカウントを作成"}
           </Button>
         </form>
       </CardContent>

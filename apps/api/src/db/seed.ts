@@ -14,14 +14,78 @@ const SAMPLE_TRIP = {
 };
 
 const SAMPLE_SPOTS = [
-  { dayIndex: 0, name: "金閣寺", category: "sightseeing", startTime: "09:00", endTime: "10:30", latitude: 35.0394, longitude: 135.7292 },
-  { dayIndex: 0, name: "嵐山 竹林の小径", category: "sightseeing", startTime: "11:00", endTime: "12:00", latitude: 35.0173, longitude: 135.6711 },
-  { dayIndex: 0, name: "湯豆腐 嵯峨野", category: "restaurant", startTime: "12:30", endTime: "13:30", latitude: 35.0148, longitude: 135.6745 },
-  { dayIndex: 1, name: "伏見稲荷大社", category: "sightseeing", startTime: "08:00", endTime: "10:00", latitude: 34.9671, longitude: 135.7727 },
-  { dayIndex: 1, name: "錦市場", category: "restaurant", startTime: "11:00", endTime: "12:30", latitude: 35.0050, longitude: 135.7649 },
-  { dayIndex: 1, name: "清水寺", category: "sightseeing", startTime: "14:00", endTime: "16:00", latitude: 34.9949, longitude: 135.7850 },
-  { dayIndex: 2, name: "銀閣寺", category: "sightseeing", startTime: "09:00", endTime: "10:30", latitude: 35.0270, longitude: 135.7983 },
-  { dayIndex: 2, name: "哲学の道", category: "activity", startTime: "10:30", endTime: "11:30", latitude: 35.0232, longitude: 135.7942 },
+  {
+    dayIndex: 0,
+    name: "金閣寺",
+    category: "sightseeing",
+    startTime: "09:00",
+    endTime: "10:30",
+    latitude: 35.0394,
+    longitude: 135.7292,
+  },
+  {
+    dayIndex: 0,
+    name: "嵐山 竹林の小径",
+    category: "sightseeing",
+    startTime: "11:00",
+    endTime: "12:00",
+    latitude: 35.0173,
+    longitude: 135.6711,
+  },
+  {
+    dayIndex: 0,
+    name: "湯豆腐 嵯峨野",
+    category: "restaurant",
+    startTime: "12:30",
+    endTime: "13:30",
+    latitude: 35.0148,
+    longitude: 135.6745,
+  },
+  {
+    dayIndex: 1,
+    name: "伏見稲荷大社",
+    category: "sightseeing",
+    startTime: "08:00",
+    endTime: "10:00",
+    latitude: 34.9671,
+    longitude: 135.7727,
+  },
+  {
+    dayIndex: 1,
+    name: "錦市場",
+    category: "restaurant",
+    startTime: "11:00",
+    endTime: "12:30",
+    latitude: 35.005,
+    longitude: 135.7649,
+  },
+  {
+    dayIndex: 1,
+    name: "清水寺",
+    category: "sightseeing",
+    startTime: "14:00",
+    endTime: "16:00",
+    latitude: 34.9949,
+    longitude: 135.785,
+  },
+  {
+    dayIndex: 2,
+    name: "銀閣寺",
+    category: "sightseeing",
+    startTime: "09:00",
+    endTime: "10:30",
+    latitude: 35.027,
+    longitude: 135.7983,
+  },
+  {
+    dayIndex: 2,
+    name: "哲学の道",
+    category: "activity",
+    startTime: "10:30",
+    endTime: "11:30",
+    latitude: 35.0232,
+    longitude: 135.7942,
+  },
 ];
 
 type ApiResponse = Record<string, unknown>;
@@ -102,10 +166,11 @@ async function main() {
     const day = days[spot.dayIndex];
     if (!day) continue;
     const { dayIndex: _, ...spotData } = spot;
-    await apiFetch(
-      `/api/trips/${trip.id}/days/${day.id}/spots`,
-      { method: "POST", body: JSON.stringify(spotData), headers: { cookie: cookies } },
-    );
+    await apiFetch(`/api/trips/${trip.id}/days/${day.id}/spots`, {
+      method: "POST",
+      body: JSON.stringify(spotData),
+      headers: { cookie: cookies },
+    });
     console.log(`  ${days[spot.dayIndex].dayNumber}日目: ${spot.name}`);
   }
 

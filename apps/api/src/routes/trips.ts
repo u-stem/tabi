@@ -1,9 +1,9 @@
-import { Hono } from "hono";
-import { eq, and } from "drizzle-orm";
-import { db } from "../db/index";
-import { trips, tripDays, tripMembers } from "../db/schema";
-import { requireAuth } from "../middleware/auth";
 import { createTripSchema, updateTripSchema } from "@tabi/shared";
+import { and, eq } from "drizzle-orm";
+import { Hono } from "hono";
+import { db } from "../db/index";
+import { tripDays, tripMembers, trips } from "../db/schema";
+import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
 const tripRoutes = new Hono<AppEnv>();
@@ -44,8 +44,8 @@ tripRoutes.post("/", async (c) => {
       .returning();
 
     // Auto-create trip days based on date range
-    const start = new Date(startDate + "T00:00:00");
-    const end = new Date(endDate + "T00:00:00");
+    const start = new Date(`${startDate}T00:00:00`);
+    const end = new Date(`${endDate}T00:00:00`);
     const days = [];
     let dayNumber = 1;
     const maxDays = 365;

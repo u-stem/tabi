@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeAll, afterAll } from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { setupTestDb, teardownTestDb } from "./setup";
 
 describe("Trips Integration", () => {

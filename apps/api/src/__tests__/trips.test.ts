@@ -1,19 +1,20 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbTransaction } = vi.hoisted(() => ({
-  mockGetSession: vi.fn(),
-  mockDbQuery: {
-    trips: {
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
+const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbTransaction } =
+  vi.hoisted(() => ({
+    mockGetSession: vi.fn(),
+    mockDbQuery: {
+      trips: {
+        findMany: vi.fn(),
+        findFirst: vi.fn(),
+      },
     },
-  },
-  mockDbInsert: vi.fn(),
-  mockDbUpdate: vi.fn(),
-  mockDbDelete: vi.fn(),
-  mockDbTransaction: vi.fn(),
-}));
+    mockDbInsert: vi.fn(),
+    mockDbUpdate: vi.fn(),
+    mockDbDelete: vi.fn(),
+    mockDbTransaction: vi.fn(),
+  }));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -65,7 +66,7 @@ describe("Trip routes", () => {
       };
 
       // db.transaction wraps insert calls
-      mockDbTransaction.mockImplementation(async (fn: Function) => {
+      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
         const tx = {
           insert: vi.fn().mockReturnValue({
             values: vi.fn().mockReturnValue({
@@ -144,9 +145,7 @@ describe("Trip routes", () => {
 
   describe("GET /api/trips", () => {
     it("returns an array of trips", async () => {
-      mockDbQuery.trips.findMany.mockResolvedValue([
-        { id: "trip-1", title: "Tokyo Trip" },
-      ]);
+      mockDbQuery.trips.findMany.mockResolvedValue([{ id: "trip-1", title: "Tokyo Trip" }]);
 
       const app = createApp();
       const res = await app.request("/api/trips");

@@ -3,8 +3,7 @@ import postgres from "postgres";
 import * as schema from "../../db/schema";
 
 const TEST_DB_URL =
-  process.env.TEST_DATABASE_URL ||
-  "postgresql://tabi:tabi@localhost:5432/tabi_test";
+  process.env.TEST_DATABASE_URL || "postgresql://tabi:tabi@localhost:5432/tabi_test";
 
 export async function setupTestDb() {
   const client = postgres(TEST_DB_URL);

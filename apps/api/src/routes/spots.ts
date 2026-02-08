@@ -1,9 +1,9 @@
+import { createSpotSchema, reorderSpotsSchema, updateSpotSchema } from "@tabi/shared";
+import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
-import { eq, and, sql, inArray } from "drizzle-orm";
 import { db } from "../db/index";
-import { spots, tripDays, trips } from "../db/schema";
+import { spots, tripDays } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
-import { createSpotSchema, updateSpotSchema, reorderSpotsSchema } from "@tabi/shared";
 import type { AppEnv } from "../types";
 
 const spotRoutes = new Hono<AppEnv>();
@@ -24,7 +24,7 @@ spotRoutes.get("/:tripId/days/:dayId/spots", async (c) => {
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
 
-  if (!await verifyDayOwnership(tripId, dayId, user.id)) {
+  if (!(await verifyDayOwnership(tripId, dayId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -41,7 +41,7 @@ spotRoutes.post("/:tripId/days/:dayId/spots", async (c) => {
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
 
-  if (!await verifyDayOwnership(tripId, dayId, user.id)) {
+  if (!(await verifyDayOwnership(tripId, dayId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -59,13 +59,16 @@ spotRoutes.post("/:tripId/days/:dayId/spots", async (c) => {
     .where(eq(spots.tripDayId, dayId));
 
   const { latitude, longitude, ...restData } = parsed.data;
-  const [spot] = await db.insert(spots).values({
-    tripDayId: dayId,
-    ...restData,
-    ...(latitude !== undefined ? { latitude: String(latitude) } : {}),
-    ...(longitude !== undefined ? { longitude: String(longitude) } : {}),
-    sortOrder: (maxOrder[0]?.max ?? -1) + 1,
-  }).returning();
+  const [spot] = await db
+    .insert(spots)
+    .values({
+      tripDayId: dayId,
+      ...restData,
+      ...(latitude !== undefined ? { latitude: String(latitude) } : {}),
+      ...(longitude !== undefined ? { longitude: String(longitude) } : {}),
+      sortOrder: (maxOrder[0]?.max ?? -1) + 1,
+    })
+    .returning();
 
   return c.json(spot, 201);
 });
@@ -76,7 +79,7 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/reorder", async (c) => {
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
 
-  if (!await verifyDayOwnership(tripId, dayId, user.id)) {
+  if (!(await verifyDayOwnership(tripId, dayId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -91,10 +94,7 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/reorder", async (c) => {
     // Verify all spots belong to this day
     if (parsed.data.spotIds.length > 0) {
       const targetSpots = await tx.query.spots.findMany({
-        where: and(
-          inArray(spots.id, parsed.data.spotIds),
-          eq(spots.tripDayId, dayId),
-        ),
+        where: and(inArray(spots.id, parsed.data.spotIds), eq(spots.tripDayId, dayId)),
       });
       if (targetSpots.length !== parsed.data.spotIds.length) {
         throw new Error("Some spots do not belong to this day");
@@ -102,9 +102,7 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/reorder", async (c) => {
     }
 
     for (let i = 0; i < parsed.data.spotIds.length; i++) {
-      await tx.update(spots)
-        .set({ sortOrder: i })
-        .where(eq(spots.id, parsed.data.spotIds[i]));
+      await tx.update(spots).set({ sortOrder: i }).where(eq(spots.id, parsed.data.spotIds[i]));
     }
   });
 
@@ -118,7 +116,7 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/:spotId", async (c) => {
   const dayId = c.req.param("dayId");
   const spotId = c.req.param("spotId");
 
-  if (!await verifyDayOwnership(tripId, dayId, user.id)) {
+  if (!(await verifyDayOwnership(tripId, dayId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -138,7 +136,8 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/:spotId", async (c) => {
   }
 
   const { latitude, longitude, ...restUpdate } = parsed.data;
-  const [updated] = await db.update(spots)
+  const [updated] = await db
+    .update(spots)
     .set({
       ...restUpdate,
       ...(latitude !== undefined ? { latitude: String(latitude) } : {}),
@@ -158,7 +157,7 @@ spotRoutes.delete("/:tripId/days/:dayId/spots/:spotId", async (c) => {
   const dayId = c.req.param("dayId");
   const spotId = c.req.param("spotId");
 
-  if (!await verifyDayOwnership(tripId, dayId, user.id)) {
+  if (!(await verifyDayOwnership(tripId, dayId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 

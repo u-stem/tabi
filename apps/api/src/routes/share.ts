@@ -1,5 +1,5 @@
+import { and, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
-import { eq, and, isNull } from "drizzle-orm";
 import { db } from "../db/index";
 import { trips } from "../db/schema";
 import { requireAuth } from "../middleware/auth";

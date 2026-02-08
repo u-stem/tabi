@@ -1,9 +1,9 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { authRoutes } from "./routes/auth";
-import { tripRoutes } from "./routes/trips";
-import { spotRoutes } from "./routes/spots";
 import { shareRoutes } from "./routes/share";
+import { spotRoutes } from "./routes/spots";
+import { tripRoutes } from "./routes/trips";
 
 const app = new Hono();
 

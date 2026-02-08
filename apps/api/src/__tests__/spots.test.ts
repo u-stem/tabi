@@ -1,7 +1,15 @@
-import { describe, expect, it, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbSelect, mockDbTransaction } = vi.hoisted(() => ({
+const {
+  mockGetSession,
+  mockDbQuery,
+  mockDbInsert,
+  mockDbUpdate,
+  mockDbDelete,
+  mockDbSelect,
+  mockDbTransaction,
+} = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
   mockDbQuery: {
     spots: {
@@ -258,7 +266,7 @@ describe("Spot routes", () => {
   describe(`PATCH ${basePath}/reorder`, () => {
     it("returns ok with valid UUIDs", async () => {
       const spotId = "550e8400-e29b-41d4-a716-446655440000";
-      mockDbTransaction.mockImplementation(async (fn: Function) => {
+      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
         const tx = {
           query: {
             spots: {

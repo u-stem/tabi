@@ -1,13 +1,28 @@
-import {
-  pgTable, uuid, varchar, text, date, integer, timestamp, boolean,
-  pgEnum, decimal, time, primaryKey,
-} from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
+import {
+  boolean,
+  date,
+  decimal,
+  integer,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  text,
+  time,
+  timestamp,
+  uuid,
+  varchar,
+} from "drizzle-orm/pg-core";
 
 export const tripStatusEnum = pgEnum("trip_status", ["draft", "planned", "active", "completed"]);
 export const tripMemberRoleEnum = pgEnum("trip_member_role", ["owner", "editor", "viewer"]);
 export const spotCategoryEnum = pgEnum("spot_category", [
-  "sightseeing", "restaurant", "hotel", "transport", "activity", "other",
+  "sightseeing",
+  "restaurant",
+  "hotel",
+  "transport",
+  "activity",
+  "other",
 ]);
 
 // --- Tables ---
@@ -24,7 +39,9 @@ export const users = pgTable("users", {
 
 export const sessions = pgTable("sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   token: varchar("token", { length: 255 }).notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
   ipAddress: varchar("ip_address", { length: 45 }),
@@ -35,7 +52,9 @@ export const sessions = pgTable("sessions", {
 
 export const accounts = pgTable("accounts", {
   id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   accountId: varchar("account_id", { length: 255 }).notNull(),
   providerId: varchar("provider_id", { length: 255 }).notNull(),
   accessToken: text("access_token"),
@@ -61,7 +80,9 @@ export const verifications = pgTable("verifications", {
 
 export const trips = pgTable("trips", {
   id: uuid("id").primaryKey().defaultRandom(),
-  ownerId: uuid("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  ownerId: uuid("owner_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
   title: varchar("title", { length: 100 }).notNull(),
   destination: varchar("destination", { length: 100 }).notNull(),
   startDate: date("start_date").notNull(),
@@ -76,8 +97,12 @@ export const trips = pgTable("trips", {
 export const tripMembers = pgTable(
   "trip_members",
   {
-    tripId: uuid("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
-    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    tripId: uuid("trip_id")
+      .notNull()
+      .references(() => trips.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
     role: tripMemberRoleEnum("role").notNull(),
   },
   (table) => [primaryKey({ columns: [table.tripId, table.userId] })],
@@ -85,7 +110,9 @@ export const tripMembers = pgTable(
 
 export const tripDays = pgTable("trip_days", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tripId: uuid("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
   date: date("date").notNull(),
   dayNumber: integer("day_number").notNull(),
   memo: text("memo"),
@@ -93,7 +120,9 @@ export const tripDays = pgTable("trip_days", {
 
 export const spots = pgTable("spots", {
   id: uuid("id").primaryKey().defaultRandom(),
-  tripDayId: uuid("trip_day_id").notNull().references(() => tripDays.id, { onDelete: "cascade" }),
+  tripDayId: uuid("trip_day_id")
+    .notNull()
+    .references(() => tripDays.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 200 }).notNull(),
   category: spotCategoryEnum("category").notNull(),
   address: varchar("address", { length: 500 }),

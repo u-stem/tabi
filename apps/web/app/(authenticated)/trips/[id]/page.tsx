@@ -48,8 +48,8 @@ export default function TripDetailPage() {
             <Skeleton className="h-4 w-64" />
           </div>
           <div className="space-y-6">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="space-y-3">
+            {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
+              <div key={key} className="space-y-3">
                 <Skeleton className="h-5 w-32" />
                 <div className="space-y-2">
                   <Skeleton className="h-16 w-full rounded-md" />

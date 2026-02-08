@@ -144,8 +144,14 @@ describe("Trip routes", () => {
   });
 
   describe("GET /api/trips", () => {
-    it("returns an array of trips", async () => {
-      mockDbQuery.trips.findMany.mockResolvedValue([{ id: "trip-1", title: "Tokyo Trip" }]);
+    it("returns an array of trips with totalSpots", async () => {
+      mockDbQuery.trips.findMany.mockResolvedValue([
+        {
+          id: "trip-1",
+          title: "Tokyo Trip",
+          days: [{ spots: [{ id: "spot-1" }, { id: "spot-2" }] }, { spots: [] }],
+        },
+      ]);
 
       const app = createApp();
       const res = await app.request("/api/trips");
@@ -153,6 +159,8 @@ describe("Trip routes", () => {
 
       expect(res.status).toBe(200);
       expect(Array.isArray(body)).toBe(true);
+      expect(body[0].totalSpots).toBe(2);
+      expect(body[0].days).toBeUndefined();
     });
 
     it("returns 401 when unauthenticated", async () => {

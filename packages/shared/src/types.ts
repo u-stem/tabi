@@ -37,4 +37,5 @@ export type TripListItem = {
   startDate: string;
   endDate: string;
   status: string;
+  totalSpots: number;
 };

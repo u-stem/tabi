@@ -15,8 +15,19 @@ tripRoutes.get("/", async (c) => {
   const userTrips = await db.query.trips.findMany({
     where: eq(trips.ownerId, user.id),
     orderBy: (trips, { desc }) => [desc(trips.updatedAt)],
+    with: {
+      days: {
+        with: { spots: { columns: { id: true } } },
+      },
+    },
   });
-  return c.json(userTrips);
+
+  const result = userTrips.map(({ days, ...rest }) => ({
+    ...rest,
+    totalSpots: days.reduce((sum, day) => sum + day.spots.length, 0),
+  }));
+
+  return c.json(result);
 });
 
 // Create a trip

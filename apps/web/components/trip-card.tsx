@@ -17,6 +17,7 @@ type TripCardProps = {
   startDate: string;
   endDate: string;
   status: string;
+  totalSpots: number;
 };
 
 export function TripCard({
@@ -26,6 +27,7 @@ export function TripCard({
   startDate,
   endDate,
   status,
+  totalSpots,
 }: TripCardProps) {
   const dayCount = getDayCount(startDate, endDate);
 
@@ -42,12 +44,14 @@ export function TripCard({
               {STATUS_LABELS[status as keyof typeof STATUS_LABELS] ?? status}
             </Badge>
           </div>
-          <CardDescription>{destination}</CardDescription>
+          {destination !== title && <CardDescription>{destination}</CardDescription>}
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            {formatDateRange(startDate, endDate)}
-            <span className="ml-2">({dayCount}日間)</span>
+            {formatDateRange(startDate, endDate)} ({dayCount}日間)
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {totalSpots > 0 ? `${totalSpots}件のスポット` : "スポット未登録"}
           </p>
         </CardContent>
       </Card>

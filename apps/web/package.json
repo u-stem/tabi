@@ -11,7 +11,10 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
+    "@radix-ui/react-label": "^2.1.8",
+    "@radix-ui/react-slot": "^1.2.4",
     "@tabi/shared": "workspace:*",
+    "better-auth": "^1.4.18",
     "class-variance-authority": "^0.7",
     "clsx": "^2",
     "lucide-react": "^0.468",

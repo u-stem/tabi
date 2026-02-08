@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { authRoutes } from "./routes/auth";
+import { tripRoutes } from "./routes/trips";
 
 const app = new Hono();
 
@@ -17,5 +18,6 @@ app.get("/health", (c) => {
 });
 
 app.route("/", authRoutes);
+app.route("/api/trips", tripRoutes);
 
 export { app };

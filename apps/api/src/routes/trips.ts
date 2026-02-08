@@ -1,0 +1,150 @@
+import { Hono } from "hono";
+import { eq, and } from "drizzle-orm";
+import { db } from "../db/index";
+import { trips, tripDays, tripMembers } from "../db/schema";
+import { requireAuth } from "../middleware/auth";
+import { createTripSchema, updateTripSchema } from "@tabi/shared";
+
+type AuthUser = { id: string; name: string; email: string };
+
+type Env = {
+  Variables: {
+    user: AuthUser;
+    session: unknown;
+  };
+};
+
+const tripRoutes = new Hono<Env>();
+tripRoutes.use("*", requireAuth);
+
+// List trips for current user
+tripRoutes.get("/", async (c) => {
+  const user = c.get("user");
+  const userTrips = await db.query.trips.findMany({
+    where: eq(trips.ownerId, user.id),
+    orderBy: (trips, { desc }) => [desc(trips.updatedAt)],
+  });
+  return c.json(userTrips);
+});
+
+// Create a trip
+tripRoutes.post("/", async (c) => {
+  const user = c.get("user");
+  const body = await c.req.json();
+  const parsed = createTripSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const { title, destination, startDate, endDate } = parsed.data;
+
+  const [trip] = await db
+    .insert(trips)
+    .values({
+      ownerId: user.id,
+      title,
+      destination,
+      startDate,
+      endDate,
+    })
+    .returning();
+
+  // Auto-create trip days based on date range
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const days = [];
+  let dayNumber = 1;
+  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    days.push({
+      tripId: trip.id,
+      date: d.toISOString().split("T")[0],
+      dayNumber: dayNumber++,
+    });
+  }
+  if (days.length > 0) {
+    await db.insert(tripDays).values(days);
+  }
+
+  // Add owner as trip member
+  await db.insert(tripMembers).values({
+    tripId: trip.id,
+    userId: user.id,
+    role: "owner" as const,
+  });
+
+  return c.json(trip, 201);
+});
+
+// Get trip detail with days and spots
+tripRoutes.get("/:id", async (c) => {
+  const user = c.get("user");
+  const tripId = c.req.param("id");
+
+  const trip = await db.query.trips.findFirst({
+    where: and(eq(trips.id, tripId), eq(trips.ownerId, user.id)),
+    with: {
+      days: {
+        orderBy: (days, { asc }) => [asc(days.dayNumber)],
+        with: {
+          spots: {
+            orderBy: (spots, { asc }) => [asc(spots.sortOrder)],
+          },
+        },
+      },
+    },
+  });
+
+  if (!trip) {
+    return c.json({ error: "Trip not found" }, 404);
+  }
+
+  return c.json(trip);
+});
+
+// Update trip
+tripRoutes.patch("/:id", async (c) => {
+  const user = c.get("user");
+  const tripId = c.req.param("id");
+  const body = await c.req.json();
+  const parsed = updateTripSchema.safeParse(body);
+
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const existing = await db.query.trips.findFirst({
+    where: and(eq(trips.id, tripId), eq(trips.ownerId, user.id)),
+  });
+
+  if (!existing) {
+    return c.json({ error: "Trip not found" }, 404);
+  }
+
+  const [updated] = await db
+    .update(trips)
+    .set({ ...parsed.data, updatedAt: new Date() })
+    .where(eq(trips.id, tripId))
+    .returning();
+
+  return c.json(updated);
+});
+
+// Delete trip
+tripRoutes.delete("/:id", async (c) => {
+  const user = c.get("user");
+  const tripId = c.req.param("id");
+
+  const existing = await db.query.trips.findFirst({
+    where: and(eq(trips.id, tripId), eq(trips.ownerId, user.id)),
+  });
+
+  if (!existing) {
+    return c.json({ error: "Trip not found" }, 404);
+  }
+
+  await db.delete(trips).where(eq(trips.id, tripId));
+  return c.json({ ok: true });
+});
+
+export { tripRoutes };

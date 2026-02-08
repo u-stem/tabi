@@ -25,9 +25,7 @@ describe("api", () => {
       "http://localhost:3001/api/trips",
       expect.objectContaining({
         credentials: "include",
-        headers: expect.objectContaining({
-          "Content-Type": "application/json",
-        }),
+        headers: {},
       }),
     );
     expect(result).toEqual({ data: "test" });
@@ -100,6 +98,9 @@ describe("api", () => {
       expect.objectContaining({
         method: "POST",
         body,
+        headers: expect.objectContaining({
+          "Content-Type": "application/json",
+        }),
       }),
     );
   });

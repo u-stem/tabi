@@ -70,14 +70,14 @@ export default function SharedTripPage() {
                   </span>
                 </h3>
                 {day.spots.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">スポットなし</p>
+                  <p className="text-sm text-muted-foreground">まだスポットがありません</p>
                 ) : (
                   <div className="space-y-2">
                     {day.spots.map((spot) => (
                       <div key={spot.id} className="rounded-md border p-3">
                         <div className="flex items-center gap-2">
                           <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">
-                            {CATEGORY_LABELS[spot.category as keyof typeof CATEGORY_LABELS] ?? spot.category}
+                            {CATEGORY_LABELS[spot.category]}
                           </span>
                           <span className="font-medium">{spot.name}</span>
                           {spot.startTime && (

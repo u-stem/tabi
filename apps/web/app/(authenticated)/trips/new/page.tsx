@@ -59,7 +59,7 @@ export default function NewTripPage() {
         href="/dashboard"
         className="mb-4 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
       >
-        &larr; マイ旅行に戻る
+        <span aria-hidden="true">&larr;</span> マイ旅行に戻る
       </Link>
       <Card>
         <CardHeader>
@@ -105,7 +105,7 @@ export default function NewTripPage() {
                 />
               </div>
             </div>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "作成中..." : "旅行を作成"}
             </Button>

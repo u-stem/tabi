@@ -28,8 +28,7 @@ export default function DashboardPage() {
         setError("旅行の取得に失敗しました");
       })
       .finally(() => setLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- router is stable, run once on mount
-  }, []);
+  }, [router]);
 
   return (
     <div>
@@ -68,10 +67,10 @@ export default function DashboardPage() {
           </p>
           {online ? (
             <Button asChild>
-              <Link href="/trips/new">旅行を作成する</Link>
+              <Link href="/trips/new">旅行を作成</Link>
             </Button>
           ) : (
-            <Button disabled>旅行を作成する</Button>
+            <Button disabled>旅行を作成</Button>
           )}
         </div>
       ) : (

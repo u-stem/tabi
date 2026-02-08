@@ -48,8 +48,7 @@ export function DayTimeline({
       });
       toast.success("スポットを削除しました");
       onRefresh();
-    } catch (err) {
-      console.error("Failed to delete spot:", err);
+    } catch {
       toast.error("スポットの削除に失敗しました");
     }
   }
@@ -85,7 +84,7 @@ export function DayTimeline({
             {formatDate(date)}
           </span>
         </h3>
-        <AddSpotDialog tripId={tripId} dayId={dayId} onAdded={onRefresh} disabled={disabled} />
+        <AddSpotDialog tripId={tripId} dayId={dayId} onAdd={onRefresh} disabled={disabled} />
       </div>
       {spots.length === 0 ? (
         <div className="rounded-md border border-dashed p-6 text-center">

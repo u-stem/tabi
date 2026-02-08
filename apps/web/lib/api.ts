@@ -26,13 +26,15 @@ export async function api<T>(
     url += `?${searchParams.toString()}`;
   }
 
+  const headers: HeadersInit = { ...fetchOptions.headers };
+  if (fetchOptions.body) {
+    (headers as Record<string, string>)["Content-Type"] = "application/json";
+  }
+
   const res = await fetch(url, {
     ...fetchOptions,
     credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...fetchOptions.headers,
-    },
+    headers,
   });
 
   if (!res.ok) {

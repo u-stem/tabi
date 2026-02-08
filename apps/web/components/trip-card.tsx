@@ -8,17 +8,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { STATUS_LABELS } from "@tabi/shared";
+import type { TripListItem } from "@tabi/shared";
 import { formatDateRange, getDayCount } from "@/lib/format";
 
-type TripCardProps = {
-  id: string;
-  title: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  totalSpots: number;
-};
+type TripCardProps = TripListItem;
 
 export function TripCard({
   id,
@@ -41,7 +34,7 @@ export function TripCard({
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">{title}</CardTitle>
             <Badge variant="secondary">
-              {STATUS_LABELS[status as keyof typeof STATUS_LABELS] ?? status}
+              {STATUS_LABELS[status]}
             </Badge>
           </div>
           {destination !== title && <CardDescription>{destination}</CardDescription>}

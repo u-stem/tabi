@@ -42,7 +42,7 @@ memberRoutes.post("/:tripId/members", async (c) => {
 
   const role = await checkTripAccess(tripId, user.id);
   if (!isOwner(role)) {
-    return c.json({ error: "Forbidden" }, 403);
+    return c.json({ error: "Trip not found" }, 404);
   }
 
   const body = await c.req.json();
@@ -71,7 +71,15 @@ memberRoutes.post("/:tripId/members", async (c) => {
     role: parsed.data.role,
   });
 
-  return c.json({ ok: true }, 201);
+  return c.json(
+    {
+      userId: targetUser.id,
+      role: parsed.data.role,
+      name: targetUser.name,
+      email: targetUser.email,
+    },
+    201,
+  );
 });
 
 // Update member role (owner only)
@@ -82,7 +90,7 @@ memberRoutes.patch("/:tripId/members/:userId", async (c) => {
 
   const role = await checkTripAccess(tripId, user.id);
   if (!isOwner(role)) {
-    return c.json({ error: "Forbidden" }, 403);
+    return c.json({ error: "Trip not found" }, 404);
   }
 
   if (targetUserId === user.id) {
@@ -118,11 +126,18 @@ memberRoutes.delete("/:tripId/members/:userId", async (c) => {
 
   const role = await checkTripAccess(tripId, user.id);
   if (!isOwner(role)) {
-    return c.json({ error: "Forbidden" }, 403);
+    return c.json({ error: "Trip not found" }, 404);
   }
 
   if (targetUserId === user.id) {
     return c.json({ error: "Cannot remove yourself" }, 400);
+  }
+
+  const existing = await db.query.tripMembers.findFirst({
+    where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, targetUserId)),
+  });
+  if (!existing) {
+    return c.json({ error: "Member not found" }, 404);
   }
 
   await db

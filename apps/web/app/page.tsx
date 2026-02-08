@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-export default function Home() {
+export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="container flex h-14 items-center">

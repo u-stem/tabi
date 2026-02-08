@@ -124,10 +124,12 @@ describe("Member routes", () => {
       const body = await res.json();
 
       expect(res.status).toBe(201);
-      expect(body.ok).toBe(true);
+      expect(body.userId).toBe("user-2");
+      expect(body.role).toBe("editor");
+      expect(body.name).toBe("New Member");
     });
 
-    it("returns 403 when user is editor (not owner)", async () => {
+    it("returns 404 when user is editor (not owner)", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue({
         tripId,
         userId: fakeUser.id,
@@ -141,7 +143,7 @@ describe("Member routes", () => {
         body: JSON.stringify({ email: "new@test.com", role: "editor" }),
       });
 
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(404);
     });
 
     it("returns 404 when target user not found", async () => {
@@ -224,7 +226,7 @@ describe("Member routes", () => {
       expect(res.status).toBe(400);
     });
 
-    it("returns 403 when user is not owner", async () => {
+    it("returns 404 when user is not owner", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue({
         tripId,
         userId: fakeUser.id,
@@ -238,12 +240,16 @@ describe("Member routes", () => {
         body: JSON.stringify({ role: "viewer" }),
       });
 
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(404);
     });
   });
 
   describe(`DELETE ${basePath}/:userId`, () => {
     it("returns ok when removing a member", async () => {
+      // First call: owner check; second call: target member exists
+      mockDbQuery.tripMembers.findFirst
+        .mockResolvedValueOnce({ tripId, userId: fakeUser.id, role: "owner" })
+        .mockResolvedValueOnce({ tripId, userId: "user-2", role: "editor" });
       mockDbDelete.mockReturnValue({
         where: vi.fn().mockResolvedValue(undefined),
       });
@@ -267,7 +273,7 @@ describe("Member routes", () => {
       expect(res.status).toBe(400);
     });
 
-    it("returns 403 when user is not owner", async () => {
+    it("returns 404 when user is not owner", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue({
         tripId,
         userId: fakeUser.id,
@@ -279,7 +285,7 @@ describe("Member routes", () => {
         method: "DELETE",
       });
 
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(404);
     });
   });
 });

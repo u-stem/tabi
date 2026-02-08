@@ -1,8 +1,7 @@
 import { and, eq } from "drizzle-orm";
+import type { MemberRole } from "@tabi/shared";
 import { db } from "../db/index";
 import { tripMembers } from "../db/schema";
-
-export type MemberRole = "owner" | "editor" | "viewer";
 
 export async function checkTripAccess(
   tripId: string,

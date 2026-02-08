@@ -26,7 +26,7 @@ import { CATEGORY_LABELS } from "@tabi/shared";
 type AddSpotDialogProps = {
   tripId: string;
   dayId: string;
-  onAdded: () => void;
+  onAdd: () => void;
   disabled?: boolean;
 };
 
@@ -35,7 +35,7 @@ const categories = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({
   label,
 }));
 
-export function AddSpotDialog({ tripId, dayId, onAdded, disabled }: AddSpotDialogProps) {
+export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -64,7 +64,7 @@ export function AddSpotDialog({ tripId, dayId, onAdded, disabled }: AddSpotDialo
       });
       setOpen(false);
       toast.success("スポットを追加しました");
-      onAdded();
+      onAdd();
     } catch (err) {
       setError(err instanceof Error ? err.message : "スポットの追加に失敗しました");
     } finally {
@@ -134,7 +134,7 @@ export function AddSpotDialog({ tripId, dayId, onAdded, disabled }: AddSpotDialo
             <Label htmlFor="memo">メモ</Label>
             <Textarea id="memo" name="memo" rows={3} />
           </div>
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "追加中..." : "スポットを追加"}
           </Button>

@@ -44,19 +44,15 @@ describe("updateTripSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("rejects end date before start date when both provided", () => {
+  it("strips unknown fields", () => {
     const result = updateTripSchema.safeParse({
-      startDate: "2025-03-17",
-      endDate: "2025-03-15",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("accepts when only startDate is provided", () => {
-    const result = updateTripSchema.safeParse({
+      title: "New Title",
       startDate: "2025-03-17",
     });
     expect(result.success).toBe(true);
+    if (result.success) {
+      expect(result.data).toEqual({ title: "New Title" });
+    }
   });
 
   it("rejects empty title", () => {

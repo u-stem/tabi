@@ -135,6 +135,7 @@ export function MemberDialog({ tripId }: MemberDialogProps) {
                       <button
                         type="button"
                         className="text-xs text-muted-foreground hover:text-destructive"
+                        aria-label={`${member.name}を削除`}
                         onClick={() => handleRemove(member.userId)}
                       >
                         削除

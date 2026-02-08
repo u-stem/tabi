@@ -10,8 +10,18 @@ import type { AppEnv } from "../types";
 const spotRoutes = new Hono<AppEnv>();
 spotRoutes.use("*", requireAuth);
 
-// Verify that the day belongs to the trip and the user can edit the trip
-async function verifyDayOwnership(tripId: string, dayId: string, userId: string): Promise<boolean> {
+// Verify that the day belongs to the trip and the user is a member
+async function verifyDayAccess(tripId: string, dayId: string, userId: string): Promise<boolean> {
+  const day = await db.query.tripDays.findFirst({
+    where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
+  });
+  if (!day) return false;
+  const role = await checkTripAccess(tripId, userId);
+  return role !== null;
+}
+
+// Verify that the day belongs to the trip and the user can edit
+async function verifyDayEditAccess(tripId: string, dayId: string, userId: string): Promise<boolean> {
   const day = await db.query.tripDays.findFirst({
     where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
   });
@@ -26,7 +36,7 @@ spotRoutes.get("/:tripId/days/:dayId/spots", async (c) => {
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
 
-  if (!(await verifyDayOwnership(tripId, dayId, user.id))) {
+  if (!(await verifyDayAccess(tripId, dayId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -43,7 +53,7 @@ spotRoutes.post("/:tripId/days/:dayId/spots", async (c) => {
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
 
-  if (!(await verifyDayOwnership(tripId, dayId, user.id))) {
+  if (!(await verifyDayEditAccess(tripId, dayId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -81,7 +91,7 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/reorder", async (c) => {
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
 
-  if (!(await verifyDayOwnership(tripId, dayId, user.id))) {
+  if (!(await verifyDayEditAccess(tripId, dayId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -118,7 +128,7 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/:spotId", async (c) => {
   const dayId = c.req.param("dayId");
   const spotId = c.req.param("spotId");
 
-  if (!(await verifyDayOwnership(tripId, dayId, user.id))) {
+  if (!(await verifyDayEditAccess(tripId, dayId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -159,7 +169,7 @@ spotRoutes.delete("/:tripId/days/:dayId/spots/:spotId", async (c) => {
   const dayId = c.req.param("dayId");
   const spotId = c.req.param("spotId");
 
-  if (!(await verifyDayOwnership(tripId, dayId, user.id))) {
+  if (!(await verifyDayEditAccess(tripId, dayId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 

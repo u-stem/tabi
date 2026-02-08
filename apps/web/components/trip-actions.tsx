@@ -25,15 +25,16 @@ import {
 import { MemberDialog } from "@/components/member-dialog";
 import { api } from "@/lib/api";
 import { STATUS_LABELS } from "@tabi/shared";
+import type { TripStatus } from "@tabi/shared";
 
 type TripActionsProps = {
   tripId: string;
-  status: string;
+  status: TripStatus;
   onStatusChange?: () => void;
   disabled?: boolean;
 };
 
-const statuses = Object.entries(STATUS_LABELS) as [string, string][];
+const statuses = Object.entries(STATUS_LABELS) as [TripStatus, string][];
 
 export function TripActions({ tripId, status, onStatusChange, disabled }: TripActionsProps) {
   const router = useRouter();

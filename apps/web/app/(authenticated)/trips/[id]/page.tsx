@@ -34,8 +34,7 @@ export default function TripDetailPage() {
     } finally {
       setLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- router is stable
-  }, [tripId]);
+  }, [tripId, router]);
 
   useEffect(() => {
     fetchTrip();
@@ -80,7 +79,7 @@ export default function TripDetailPage() {
             href="/dashboard"
             className="mb-4 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
           >
-            &larr; マイ旅行に戻る
+            <span aria-hidden="true">&larr;</span> マイ旅行に戻る
           </Link>
           <h1 className="text-2xl font-bold">{trip.title}</h1>
           <p className="text-muted-foreground">

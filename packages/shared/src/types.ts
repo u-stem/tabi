@@ -1,7 +1,11 @@
+import type { MemberRole } from "./schemas/member";
+import type { SpotCategory } from "./schemas/spot";
+import type { TripStatus } from "./schemas/trip";
+
 export type SpotResponse = {
   id: string;
   name: string;
-  category: string;
+  category: SpotCategory;
   address?: string | null;
   latitude?: string | null;
   longitude?: string | null;
@@ -26,7 +30,7 @@ export type TripResponse = {
   destination: string;
   startDate: string;
   endDate: string;
-  status: string;
+  status: TripStatus;
   days: DayResponse[];
 };
 
@@ -36,13 +40,13 @@ export type TripListItem = {
   destination: string;
   startDate: string;
   endDate: string;
-  status: string;
+  status: TripStatus;
   totalSpots: number;
 };
 
 export type MemberResponse = {
   userId: string;
-  role: string;
+  role: MemberRole;
   name: string;
   email: string;
 };

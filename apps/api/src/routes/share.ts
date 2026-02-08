@@ -1,4 +1,4 @@
-import { eq, isNull } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { trips } from "../db/schema";
@@ -32,7 +32,7 @@ shareRoutes.post("/api/trips/:id/share", requireAuth, async (c) => {
   const [updated] = await db
     .update(trips)
     .set({ shareToken: newToken })
-    .where(isNull(trips.shareToken))
+    .where(and(eq(trips.id, tripId), isNull(trips.shareToken)))
     .returning({ shareToken: trips.shareToken });
 
   // If another request already set the token, fetch the existing one
@@ -41,7 +41,10 @@ shareRoutes.post("/api/trips/:id/share", requireAuth, async (c) => {
       where: eq(trips.id, tripId),
       columns: { shareToken: true },
     });
-    return c.json({ shareToken: refreshed!.shareToken });
+    if (!refreshed?.shareToken) {
+      return c.json({ error: "Trip not found" }, 404);
+    }
+    return c.json({ shareToken: refreshed.shareToken });
   }
 
   return c.json({ shareToken: updated.shareToken });

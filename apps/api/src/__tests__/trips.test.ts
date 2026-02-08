@@ -319,16 +319,6 @@ describe("Trip routes", () => {
       expect(res.status).toBe(400);
     });
 
-    it("returns 400 when trying to change dates", async () => {
-      const app = createApp();
-      const res = await app.request("/api/trips/trip-1", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ startDate: "2025-08-01" }),
-      });
-
-      expect(res.status).toBe(400);
-    });
   });
 
   describe("DELETE /api/trips/:id", () => {

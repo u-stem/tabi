@@ -16,24 +16,9 @@ export const createTripSchema = z
   });
 export type CreateTripInput = z.infer<typeof createTripSchema>;
 
-export const updateTripSchema = z
-  .object({
-    title: z.string().min(1).max(100).optional(),
-    destination: z.string().min(1).max(100).optional(),
-    startDate: z.string().date().optional(),
-    endDate: z.string().date().optional(),
-    status: tripStatusSchema.optional(),
-  })
-  .refine(
-    (data) => {
-      if (data.startDate && data.endDate) {
-        return data.endDate >= data.startDate;
-      }
-      return true;
-    },
-    {
-      message: "End date must be on or after start date",
-      path: ["endDate"],
-    },
-  );
+export const updateTripSchema = z.object({
+  title: z.string().min(1).max(100).optional(),
+  destination: z.string().min(1).max(100).optional(),
+  status: tripStatusSchema.optional(),
+});
 export type UpdateTripInput = z.infer<typeof updateTripSchema>;

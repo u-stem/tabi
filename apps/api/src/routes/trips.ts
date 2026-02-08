@@ -144,11 +144,6 @@ tripRoutes.patch("/:id", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  // Reject date changes because tripDays would go out of sync
-  if (parsed.data.startDate || parsed.data.endDate) {
-    return c.json({ error: "Date changes are not supported. Please create a new trip." }, 400);
-  }
-
   const role = await checkTripAccess(tripId, user.id);
   if (!canEdit(role)) {
     return c.json({ error: "Trip not found" }, 404);

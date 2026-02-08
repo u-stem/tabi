@@ -1,5 +1,5 @@
 import {
-  pgTable, uuid, varchar, text, date, integer, timestamp,
+  pgTable, uuid, varchar, text, date, integer, timestamp, boolean,
   pgEnum, decimal, time, primaryKey,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
@@ -16,8 +16,8 @@ export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: varchar("name", { length: 100 }).notNull(),
   email: varchar("email", { length: 255 }).notNull().unique(),
-  emailVerified: timestamp("email_verified"),
-  avatarUrl: varchar("avatar_url", { length: 500 }),
+  emailVerified: boolean("email_verified").notNull().default(false),
+  image: varchar("image", { length: 500 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -27,6 +27,8 @@ export const sessions = pgTable("sessions", {
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   token: varchar("token", { length: 255 }).notNull().unique(),
   expiresAt: timestamp("expires_at").notNull(),
+  ipAddress: varchar("ip_address", { length: 45 }),
+  userAgent: text("user_agent"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -38,7 +40,11 @@ export const accounts = pgTable("accounts", {
   providerId: varchar("provider_id", { length: 255 }).notNull(),
   accessToken: text("access_token"),
   refreshToken: text("refresh_token"),
+  idToken: text("id_token"),
   expiresAt: timestamp("expires_at"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at"),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+  scope: varchar("scope", { length: 500 }),
   password: text("password"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

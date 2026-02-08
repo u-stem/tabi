@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "tabi - Travel Planner",
-  description: "Plan your perfect trip",
+  title: "tabi - 旅行プランナー",
+  description: "あなたの旅を、もっと自由に",
 };
 
 export default function RootLayout({

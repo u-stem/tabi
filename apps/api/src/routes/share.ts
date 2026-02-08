@@ -3,17 +3,9 @@ import { eq, and } from "drizzle-orm";
 import { db } from "../db/index";
 import { trips } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
+import type { AppEnv } from "../types";
 
-type AuthUser = { id: string; name: string; email: string };
-
-type Env = {
-  Variables: {
-    user: AuthUser;
-    session: unknown;
-  };
-};
-
-const shareRoutes = new Hono<Env>();
+const shareRoutes = new Hono<AppEnv>();
 
 // Generate or get share link (requires auth)
 shareRoutes.post("/api/trips/:id/share", requireAuth, async (c) => {

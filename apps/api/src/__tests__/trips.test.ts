@@ -1,7 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 
-const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete } = vi.hoisted(() => ({
+const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbTransaction } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
   mockDbQuery: {
     trips: {
@@ -12,6 +12,7 @@ const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete } 
   mockDbInsert: vi.fn(),
   mockDbUpdate: vi.fn(),
   mockDbDelete: vi.fn(),
+  mockDbTransaction: vi.fn(),
 }));
 
 vi.mock("../lib/auth", () => ({
@@ -28,6 +29,7 @@ vi.mock("../db/index", () => ({
     insert: (...args: unknown[]) => mockDbInsert(...args),
     update: (...args: unknown[]) => mockDbUpdate(...args),
     delete: (...args: unknown[]) => mockDbDelete(...args),
+    transaction: (...args: unknown[]) => mockDbTransaction(...args),
   },
 }));
 
@@ -62,11 +64,16 @@ describe("Trip routes", () => {
         status: "draft",
       };
 
-      // db.insert(trips).values(...).returning() chain
-      mockDbInsert.mockReturnValue({
-        values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([createdTrip]),
-        }),
+      // db.transaction wraps insert calls
+      mockDbTransaction.mockImplementation(async (fn: Function) => {
+        const tx = {
+          insert: vi.fn().mockReturnValue({
+            values: vi.fn().mockReturnValue({
+              returning: vi.fn().mockResolvedValue([createdTrip]),
+            }),
+          }),
+        };
+        return fn(tx);
       });
 
       const app = createApp();

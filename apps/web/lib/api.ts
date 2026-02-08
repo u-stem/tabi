@@ -30,5 +30,9 @@ export async function api<T>(
     throw new Error(error.error || `API error: ${res.status}`);
   }
 
+  if (res.status === 204) {
+    return undefined as T;
+  }
+
   return res.json();
 }

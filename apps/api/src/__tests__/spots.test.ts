@@ -1,11 +1,14 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { Hono } from "hono";
 
-const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbSelect } = vi.hoisted(() => ({
+const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbSelect, mockDbTransaction } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
   mockDbQuery: {
     spots: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    trips: {
       findFirst: vi.fn(),
     },
   },
@@ -13,6 +16,7 @@ const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, m
   mockDbUpdate: vi.fn(),
   mockDbDelete: vi.fn(),
   mockDbSelect: vi.fn(),
+  mockDbTransaction: vi.fn(),
 }));
 
 vi.mock("../lib/auth", () => ({
@@ -30,6 +34,7 @@ vi.mock("../db/index", () => ({
     update: (...args: unknown[]) => mockDbUpdate(...args),
     delete: (...args: unknown[]) => mockDbDelete(...args),
     select: (...args: unknown[]) => mockDbSelect(...args),
+    transaction: (...args: unknown[]) => mockDbTransaction(...args),
   },
 }));
 
@@ -53,6 +58,36 @@ describe("Spot routes", () => {
       user: fakeUser,
       session: { id: "session-1" },
     });
+    // Default: trip belongs to user
+    mockDbQuery.trips.findFirst.mockResolvedValue({
+      id: tripId,
+      ownerId: fakeUser.id,
+    });
+  });
+
+  describe(`GET ${basePath}`, () => {
+    it("returns spots for a day", async () => {
+      const daySpots = [
+        { id: "spot-1", name: "Tokyo Tower", category: "sightseeing", sortOrder: 0 },
+      ];
+      mockDbQuery.spots.findMany.mockResolvedValue(daySpots);
+
+      const app = createApp();
+      const res = await app.request(basePath);
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body).toEqual(daySpots);
+    });
+
+    it("returns 404 when trip does not belong to user", async () => {
+      mockDbQuery.trips.findFirst.mockResolvedValue(undefined);
+
+      const app = createApp();
+      const res = await app.request(basePath);
+
+      expect(res.status).toBe(404);
+    });
   });
 
   describe(`POST ${basePath}`, () => {
@@ -65,14 +100,12 @@ describe("Spot routes", () => {
         sortOrder: 0,
       };
 
-      // db.select({ max: ... }).from(spots).where(...)
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([{ max: -1 }]),
         }),
       });
 
-      // db.insert(spots).values(...).returning()
       mockDbInsert.mockReturnValue({
         values: vi.fn().mockReturnValue({
           returning: vi.fn().mockResolvedValue([createdSpot]),
@@ -121,9 +154,49 @@ describe("Spot routes", () => {
 
       expect(res.status).toBe(400);
     });
+
+    it("returns 404 when trip does not belong to user", async () => {
+      mockDbQuery.trips.findFirst.mockResolvedValue(undefined);
+
+      const app = createApp();
+      const res = await app.request(basePath, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Tokyo Tower",
+          category: "sightseeing",
+        }),
+      });
+
+      expect(res.status).toBe(404);
+    });
   });
 
   describe(`PATCH ${basePath}/:spotId`, () => {
+    it("returns updated spot on success", async () => {
+      const existing = { id: "spot-1", name: "Old Name", category: "sightseeing" };
+      const updated = { ...existing, name: "New Name" };
+      mockDbQuery.spots.findFirst.mockResolvedValue(existing);
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/spot-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "New Name" }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.name).toBe("New Name");
+    });
+
     it("returns 400 with invalid data", async () => {
       const app = createApp();
       const res = await app.request(`${basePath}/spot-1`, {
@@ -134,9 +207,38 @@ describe("Spot routes", () => {
 
       expect(res.status).toBe(400);
     });
+
+    it("returns 404 when spot not found", async () => {
+      mockDbQuery.spots.findFirst.mockResolvedValue(undefined);
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/spot-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "New Name" }),
+      });
+
+      expect(res.status).toBe(404);
+    });
   });
 
   describe(`DELETE ${basePath}/:spotId`, () => {
+    it("returns ok on success", async () => {
+      mockDbQuery.spots.findFirst.mockResolvedValue({ id: "spot-1" });
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/spot-1`, {
+        method: "DELETE",
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body).toEqual({ ok: true });
+    });
+
     it("returns 404 when spot not found", async () => {
       mockDbQuery.spots.findFirst.mockResolvedValue(undefined);
 
@@ -150,6 +252,32 @@ describe("Spot routes", () => {
   });
 
   describe(`PATCH ${basePath}/reorder`, () => {
+    it("returns ok with valid UUIDs", async () => {
+      mockDbTransaction.mockImplementation(async (fn: Function) => {
+        const tx = {
+          update: vi.fn().mockReturnValue({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue(undefined),
+            }),
+          }),
+        };
+        await fn(tx);
+      });
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          spotIds: ["550e8400-e29b-41d4-a716-446655440000"],
+        }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body).toEqual({ ok: true });
+    });
+
     it("returns 400 with invalid data", async () => {
       const app = createApp();
       const res = await app.request(`${basePath}/reorder`, {

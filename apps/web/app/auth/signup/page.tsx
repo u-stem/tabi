@@ -7,9 +7,9 @@ export default function SignupPage() {
       <div className="space-y-4">
         <AuthForm mode="signup" />
         <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{" "}
+          アカウントをお持ちの方は{" "}
           <Link href="/auth/login" className="underline">
-            Login
+            ログイン
           </Link>
         </p>
       </div>

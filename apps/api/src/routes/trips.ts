@@ -4,17 +4,9 @@ import { db } from "../db/index";
 import { trips, tripDays, tripMembers } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
 import { createTripSchema, updateTripSchema } from "@tabi/shared";
+import type { AppEnv } from "../types";
 
-type AuthUser = { id: string; name: string; email: string };
-
-type Env = {
-  Variables: {
-    user: AuthUser;
-    session: unknown;
-  };
-};
-
-const tripRoutes = new Hono<Env>();
+const tripRoutes = new Hono<AppEnv>();
 tripRoutes.use("*", requireAuth);
 
 // List trips for current user
@@ -39,38 +31,42 @@ tripRoutes.post("/", async (c) => {
 
   const { title, destination, startDate, endDate } = parsed.data;
 
-  const [trip] = await db
-    .insert(trips)
-    .values({
-      ownerId: user.id,
-      title,
-      destination,
-      startDate,
-      endDate,
-    })
-    .returning();
+  const trip = await db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(trips)
+      .values({
+        ownerId: user.id,
+        title,
+        destination,
+        startDate,
+        endDate,
+      })
+      .returning();
 
-  // Auto-create trip days based on date range
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const days = [];
-  let dayNumber = 1;
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    days.push({
-      tripId: trip.id,
-      date: d.toISOString().split("T")[0],
-      dayNumber: dayNumber++,
+    // Auto-create trip days based on date range
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const days = [];
+    let dayNumber = 1;
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      days.push({
+        tripId: created.id,
+        date: d.toISOString().split("T")[0],
+        dayNumber: dayNumber++,
+      });
+    }
+    if (days.length > 0) {
+      await tx.insert(tripDays).values(days);
+    }
+
+    // Add owner as trip member
+    await tx.insert(tripMembers).values({
+      tripId: created.id,
+      userId: user.id,
+      role: "owner" as const,
     });
-  }
-  if (days.length > 0) {
-    await db.insert(tripDays).values(days);
-  }
 
-  // Add owner as trip member
-  await db.insert(tripMembers).values({
-    tripId: trip.id,
-    userId: user.id,
-    role: "owner" as const,
+    return created;
   });
 
   return c.json(trip, 201);

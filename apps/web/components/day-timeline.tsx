@@ -3,22 +3,14 @@
 import { SpotItem } from "./spot-item";
 import { AddSpotDialog } from "./add-spot-dialog";
 import { api } from "@/lib/api";
-
-type Spot = {
-  id: string;
-  name: string;
-  category: string;
-  startTime?: string | null;
-  endTime?: string | null;
-  memo?: string | null;
-};
+import type { SpotResponse } from "@tabi/shared";
 
 type DayTimelineProps = {
   tripId: string;
   dayId: string;
   dayNumber: number;
   date: string;
-  spots: Spot[];
+  spots: SpotResponse[];
   onRefresh: () => void;
 };
 
@@ -31,17 +23,21 @@ export function DayTimeline({
   onRefresh,
 }: DayTimelineProps) {
   async function handleDelete(spotId: string) {
-    await api(`/api/trips/${tripId}/days/${dayId}/spots/${spotId}`, {
-      method: "DELETE",
-    });
-    onRefresh();
+    try {
+      await api(`/api/trips/${tripId}/days/${dayId}/spots/${spotId}`, {
+        method: "DELETE",
+      });
+      onRefresh();
+    } catch (err) {
+      console.error(err);
+    }
   }
 
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h3 className="font-semibold">
-          Day {dayNumber}{" "}
+          {dayNumber}日目{" "}
           <span className="text-sm font-normal text-muted-foreground">
             {date}
           </span>
@@ -49,7 +45,7 @@ export function DayTimeline({
         <AddSpotDialog tripId={tripId} dayId={dayId} onAdded={onRefresh} />
       </div>
       {spots.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No spots yet</p>
+        <p className="text-sm text-muted-foreground">スポットなし</p>
       ) : (
         <div className="space-y-2">
           {spots.map((spot) => (

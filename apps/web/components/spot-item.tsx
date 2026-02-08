@@ -1,3 +1,5 @@
+import { CATEGORY_LABELS } from "@tabi/shared";
+
 type SpotItemProps = {
   name: string;
   category: string;
@@ -5,15 +7,6 @@ type SpotItemProps = {
   endTime?: string | null;
   memo?: string | null;
   onDelete: () => void;
-};
-
-const categoryLabels: Record<string, string> = {
-  sightseeing: "Sight",
-  restaurant: "Food",
-  hotel: "Hotel",
-  transport: "Move",
-  activity: "Play",
-  other: "Other",
 };
 
 export function SpotItem({
@@ -34,7 +27,7 @@ export function SpotItem({
   return (
     <div className="flex items-start gap-3 rounded-md border p-3">
       <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">
-        {categoryLabels[category] ?? category}
+        {CATEGORY_LABELS[category as keyof typeof CATEGORY_LABELS] ?? category}
       </span>
       <div className="flex-1">
         <div className="flex items-center justify-between">
@@ -43,7 +36,7 @@ export function SpotItem({
             onClick={onDelete}
             className="text-xs text-muted-foreground hover:text-destructive"
           >
-            Delete
+            削除
           </button>
         </div>
         {timeStr && (

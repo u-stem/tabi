@@ -41,7 +41,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       }
       router.push("/dashboard");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred");
+      setError(err instanceof Error ? err.message : "エラーが発生しました");
     } finally {
       setLoading(false);
     }
@@ -50,27 +50,27 @@ export function AuthForm({ mode }: AuthFormProps) {
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
-        <CardTitle>{mode === "login" ? "Login" : "Sign Up"}</CardTitle>
+        <CardTitle>{mode === "login" ? "ログイン" : "新規登録"}</CardTitle>
         <CardDescription>
           {mode === "login"
-            ? "Sign in to your account"
-            : "Create a new account"}
+            ? "アカウントにログイン"
+            : "新しいアカウントを作成"}
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === "signup" && (
             <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
+              <Label htmlFor="name">名前</Label>
               <Input id="name" name="name" required />
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">メールアドレス</Label>
             <Input id="email" name="email" type="email" required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">パスワード</Label>
             <Input
               id="password"
               name="password"
@@ -84,8 +84,8 @@ export function AuthForm({ mode }: AuthFormProps) {
             {loading
               ? "..."
               : mode === "login"
-                ? "Login"
-                : "Sign Up"}
+                ? "ログイン"
+                : "登録する"}
           </Button>
         </form>
       </CardContent>

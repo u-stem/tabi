@@ -7,6 +7,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { STATUS_LABELS } from "@tabi/shared";
 
 type TripCardProps = {
   id: string;
@@ -15,13 +16,6 @@ type TripCardProps = {
   startDate: string;
   endDate: string;
   status: string;
-};
-
-const statusLabels: Record<string, string> = {
-  draft: "Draft",
-  planned: "Planned",
-  active: "Active",
-  completed: "Completed",
 };
 
 export function TripCard({
@@ -38,7 +32,9 @@ export function TripCard({
         <CardHeader>
           <div className="flex items-center justify-between">
             <CardTitle className="text-lg">{title}</CardTitle>
-            <Badge variant="secondary">{statusLabels[status] ?? status}</Badge>
+            <Badge variant="secondary">
+              {STATUS_LABELS[status as keyof typeof STATUS_LABELS] ?? status}
+            </Badge>
           </div>
           <CardDescription>{destination}</CardDescription>
         </CardHeader>

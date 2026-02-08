@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { CATEGORY_LABELS } from "@tabi/shared";
 
 type AddSpotDialogProps = {
   tripId: string;
@@ -27,23 +28,21 @@ type AddSpotDialogProps = {
   onAdded: () => void;
 };
 
-const categories = [
-  { value: "sightseeing", label: "Sightseeing" },
-  { value: "restaurant", label: "Restaurant" },
-  { value: "hotel", label: "Hotel" },
-  { value: "transport", label: "Transport" },
-  { value: "activity", label: "Activity" },
-  { value: "other", label: "Other" },
-];
+const categories = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));
 
 export function AddSpotDialog({ tripId, dayId, onAdded }: AddSpotDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState("sightseeing");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
+    setError(null);
 
     const formData = new FormData(e.currentTarget);
     const data = {
@@ -62,7 +61,7 @@ export function AddSpotDialog({ tripId, dayId, onAdded }: AddSpotDialogProps) {
       setOpen(false);
       onAdded();
     } catch (err) {
-      console.error(err);
+      setError(err instanceof Error ? err.message : "スポットの追加に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -72,20 +71,20 @@ export function AddSpotDialog({ tripId, dayId, onAdded }: AddSpotDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          + Add Spot
+          + スポット追加
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add Spot</DialogTitle>
+          <DialogTitle>スポットを追加</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" placeholder="Kinkaku-ji" required />
+            <Label htmlFor="name">名前</Label>
+            <Input id="name" name="name" placeholder="金閣寺" required />
           </div>
           <div className="space-y-2">
-            <Label>Category</Label>
+            <Label>カテゴリ</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger>
                 <SelectValue />
@@ -101,20 +100,21 @@ export function AddSpotDialog({ tripId, dayId, onAdded }: AddSpotDialogProps) {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startTime">Start Time</Label>
+              <Label htmlFor="startTime">開始時間</Label>
               <Input id="startTime" name="startTime" type="time" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endTime">End Time</Label>
+              <Label htmlFor="endTime">終了時間</Label>
               <Input id="endTime" name="endTime" type="time" />
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="memo">Memo</Label>
+            <Label htmlFor="memo">メモ</Label>
             <Textarea id="memo" name="memo" rows={3} />
           </div>
+          {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Adding..." : "Add Spot"}
+            {loading ? "追加中..." : "スポットを追加"}
           </Button>
         </form>
       </DialogContent>

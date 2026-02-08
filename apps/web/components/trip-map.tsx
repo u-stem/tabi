@@ -3,17 +3,10 @@
 import { useEffect } from "react";
 import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
 import L from "leaflet";
-
-type Spot = {
-  id: string;
-  name: string;
-  category: string;
-  latitude?: string | null;
-  longitude?: string | null;
-};
+import type { SpotResponse } from "@tabi/shared";
 
 type TripMapProps = {
-  spots: Spot[];
+  spots: SpotResponse[];
 };
 
 // Fix default marker icon issue with webpack/turbopack

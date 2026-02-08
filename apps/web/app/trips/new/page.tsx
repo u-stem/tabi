@@ -38,7 +38,7 @@ export default function NewTripPage() {
       });
       router.push(`/trips/${trip.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to create trip");
+      setError(err instanceof Error ? err.message : "旅行の作成に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -48,31 +48,31 @@ export default function NewTripPage() {
     <div className="mx-auto max-w-lg">
       <Card>
         <CardHeader>
-          <CardTitle>Create New Trip</CardTitle>
+          <CardTitle>新しい旅行を作成</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Trip Title</Label>
+              <Label htmlFor="title">旅行タイトル</Label>
               <Input
                 id="title"
                 name="title"
-                placeholder="Kyoto 3-day trip"
+                placeholder="京都3日間の旅"
                 required
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="destination">Destination</Label>
+              <Label htmlFor="destination">目的地</Label>
               <Input
                 id="destination"
                 name="destination"
-                placeholder="Kyoto"
+                placeholder="京都"
                 required
               />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="startDate">Start Date</Label>
+                <Label htmlFor="startDate">出発日</Label>
                 <Input
                   id="startDate"
                   name="startDate"
@@ -81,7 +81,7 @@ export default function NewTripPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="endDate">End Date</Label>
+                <Label htmlFor="endDate">帰着日</Label>
                 <Input
                   id="endDate"
                   name="endDate"
@@ -92,7 +92,7 @@ export default function NewTripPage() {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating..." : "Create Trip"}
+              {loading ? "作成中..." : "旅行を作成"}
             </Button>
           </form>
         </CardContent>

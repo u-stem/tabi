@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createTripSchema, tripStatusSchema } from "../schemas/trip";
+import { createTripSchema, updateTripSchema, tripStatusSchema } from "../schemas/trip";
 
 describe("createTripSchema", () => {
   it("validates a valid trip", () => {
@@ -33,11 +33,41 @@ describe("createTripSchema", () => {
   });
 });
 
+describe("updateTripSchema", () => {
+  it("accepts partial update with title only", () => {
+    const result = updateTripSchema.safeParse({ title: "New Title" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts partial update with status only", () => {
+    const result = updateTripSchema.safeParse({ status: "active" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects end date before start date when both provided", () => {
+    const result = updateTripSchema.safeParse({
+      startDate: "2025-03-17",
+      endDate: "2025-03-15",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts when only startDate is provided", () => {
+    const result = updateTripSchema.safeParse({
+      startDate: "2025-03-17",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects empty title", () => {
+    const result = updateTripSchema.safeParse({ title: "" });
+    expect(result.success).toBe(false);
+  });
+});
+
 describe("tripStatusSchema", () => {
-  it("accepts valid statuses", () => {
-    for (const status of ["draft", "planned", "active", "completed"]) {
-      expect(tripStatusSchema.safeParse(status).success).toBe(true);
-    }
+  it.each(["draft", "planned", "active", "completed"])("accepts '%s'", (status) => {
+    expect(tripStatusSchema.safeParse(status).success).toBe(true);
   });
 
   it("rejects invalid status", () => {

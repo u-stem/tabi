@@ -17,9 +17,7 @@ describe("Trips Integration", () => {
     }
   });
 
-  it("placeholder - requires running PostgreSQL", () => {
-    // Full integration tests require `docker compose up` first.
-    // Run with: TEST_DATABASE_URL=... bun run --filter @tabi/api test
-    expect(true).toBe(true);
+  it("connects to the test database", () => {
+    expect(db).toBeDefined();
   });
 });

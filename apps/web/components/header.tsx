@@ -27,7 +27,7 @@ export function Header() {
                 {session.user.name}
               </span>
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                Logout
+                ログアウト
               </Button>
             </>
           )}

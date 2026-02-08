@@ -33,7 +33,7 @@ export default function DashboardPage() {
   return (
     <div>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">マイ旅行</h1>
+        <h1 className="text-2xl font-bold">ホーム</h1>
         {online ? (
           <Button asChild>
             <Link href="/trips/new">新しい旅行</Link>

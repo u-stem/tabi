@@ -59,7 +59,7 @@ export default function NewTripPage() {
         href="/dashboard"
         className="mb-4 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
       >
-        <span aria-hidden="true">&larr;</span> マイ旅行に戻る
+        <span aria-hidden="true">&larr;</span> ホームに戻る
       </Link>
       <Card>
         <CardHeader>

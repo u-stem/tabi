@@ -48,6 +48,7 @@ export function SpotItem({
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <button
+                type="button"
                 className="text-xs text-muted-foreground hover:text-destructive"
                 aria-label={`${name}を削除`}
               >

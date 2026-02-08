@@ -12,8 +12,12 @@
     "test": {
       "dependsOn": ["^build"]
     },
-    "lint": {
-      "dependsOn": ["^build"]
+    "lint": {},
+    "format": {
+      "cache": false
+    },
+    "check": {
+      "cache": false
     },
     "check-types": {
       "dependsOn": ["^build"]

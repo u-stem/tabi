@@ -7,6 +7,9 @@
     "dev": "bun run --hot src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
     "test": "vitest run --passWithNoTests",
+    "lint": "biome lint src/",
+    "format": "biome format --write src/",
+    "check": "biome check --write src/",
     "check-types": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
@@ -22,7 +25,6 @@
     "postgres": "^3.4.8"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.3.14",
     "@types/bun": "latest",
     "drizzle-kit": "^0.31.8",
     "typescript": "^5",

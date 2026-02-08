@@ -20,7 +20,7 @@ export function Header() {
   }
 
   return (
-    <header className="border-b" role="banner">
+    <header className="border-b">
       <nav aria-label="メインナビゲーション" className="container flex h-14 items-center justify-between">
         <Link href="/dashboard" className="text-xl font-bold">
           tabi

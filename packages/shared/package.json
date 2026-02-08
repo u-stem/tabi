@@ -8,6 +8,9 @@
   },
   "scripts": {
     "test": "vitest run --passWithNoTests",
+    "lint": "biome lint src/",
+    "format": "biome format --write src/",
+    "check": "biome check --write src/",
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {

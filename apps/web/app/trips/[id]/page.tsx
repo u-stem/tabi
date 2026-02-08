@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import { DayTimeline } from "@/components/day-timeline";
+import { TripMap } from "@/components/trip-map-wrapper";
 import { api } from "@/lib/api";
 
 type Spot = {
@@ -87,10 +88,9 @@ export default function TripDetailPage() {
         </div>
       </div>
 
-      {/* Right: Map placeholder (Task 15) */}
-      <div className="rounded-lg border bg-muted/50 p-8 text-center text-muted-foreground lg:sticky lg:top-4 lg:h-[calc(100vh-8rem)]">
-        <p>Map View</p>
-        <p className="text-sm">(Loading...)</p>
+      {/* Right: Map */}
+      <div className="lg:sticky lg:top-4 lg:h-[calc(100vh-8rem)]">
+        <TripMap spots={trip.days.flatMap((day) => day.spots)} />
       </div>
     </div>
   );

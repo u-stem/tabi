@@ -19,14 +19,17 @@
     "better-auth": "^1.4.18",
     "class-variance-authority": "^0.7",
     "clsx": "^2",
+    "leaflet": "^1.9.4",
     "lucide-react": "^0.468",
     "next": "^15",
     "react": "^19",
     "react-dom": "^19",
+    "react-leaflet": "^5.0.0",
     "tailwind-merge": "^2"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/leaflet": "^1.9.21",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "autoprefixer": "^10",

@@ -27,6 +27,7 @@ type AddSpotDialogProps = {
   tripId: string;
   dayId: string;
   onAdded: () => void;
+  disabled?: boolean;
 };
 
 const categories = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({
@@ -34,7 +35,7 @@ const categories = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({
   label,
 }));
 
-export function AddSpotDialog({ tripId, dayId, onAdded }: AddSpotDialogProps) {
+export function AddSpotDialog({ tripId, dayId, onAdded, disabled }: AddSpotDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -83,7 +84,7 @@ export function AddSpotDialog({ tripId, dayId, onAdded }: AddSpotDialogProps) {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" disabled={disabled}>
           + スポット追加
         </Button>
       </DialogTrigger>

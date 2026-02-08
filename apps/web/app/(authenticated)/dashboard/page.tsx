@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TripCard } from "@/components/trip-card";
 import { api, ApiError } from "@/lib/api";
+import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import type { TripListItem } from "@tabi/shared";
 
 export default function DashboardPage() {
   const router = useRouter();
+  const online = useOnlineStatus();
   const [trips, setTrips] = useState<TripListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,9 +35,13 @@ export default function DashboardPage() {
     <div>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold">マイ旅行</h1>
-        <Button asChild>
-          <Link href="/trips/new">新しい旅行</Link>
-        </Button>
+        {online ? (
+          <Button asChild>
+            <Link href="/trips/new">新しい旅行</Link>
+          </Button>
+        ) : (
+          <Button disabled>新しい旅行</Button>
+        )}
       </div>
       {loading ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -60,9 +66,13 @@ export default function DashboardPage() {
           <p className="text-sm text-muted-foreground">
             最初の旅行プランを作成してみましょう
           </p>
-          <Button asChild>
-            <Link href="/trips/new">旅行を作成する</Link>
-          </Button>
+          {online ? (
+            <Button asChild>
+              <Link href="/trips/new">旅行を作成する</Link>
+            </Button>
+          ) : (
+            <Button disabled>旅行を作成する</Button>
+          )}
         </div>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

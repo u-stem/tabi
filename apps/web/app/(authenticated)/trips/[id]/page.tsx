@@ -9,12 +9,14 @@ import { TripActions } from "@/components/trip-actions";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, ApiError } from "@/lib/api";
 import { formatDateRange, getDayCount } from "@/lib/format";
+import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import type { TripResponse } from "@tabi/shared";
 
 export default function TripDetailPage() {
   const params = useParams();
   const router = useRouter();
   const tripId = params.id as string;
+  const online = useOnlineStatus();
   const [trip, setTrip] = useState<TripResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +89,7 @@ export default function TripDetailPage() {
             <span className="ml-2 text-sm">({dayCount}日間)</span>
           </p>
           <div className="mt-3 flex items-center justify-between">
-            <TripActions tripId={tripId} status={trip.status} onStatusChange={fetchTrip} />
+            <TripActions tripId={tripId} status={trip.status} onStatusChange={fetchTrip} disabled={!online} />
           </div>
         </div>
         <div className="space-y-4">
@@ -100,6 +102,7 @@ export default function TripDetailPage() {
               date={day.date}
               spots={day.spots}
               onRefresh={fetchTrip}
+              disabled={!online}
             />
           ))}
         </div>

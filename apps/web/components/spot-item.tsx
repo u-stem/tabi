@@ -25,6 +25,7 @@ type SpotItemProps = {
   endTime?: string | null;
   memo?: string | null;
   onDelete: () => void;
+  disabled?: boolean;
 };
 
 export function SpotItem({
@@ -37,9 +38,11 @@ export function SpotItem({
   endTime,
   memo,
   onDelete,
+  disabled,
 }: SpotItemProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
+    disabled,
   });
 
   const style = {
@@ -91,8 +94,9 @@ export function SpotItem({
             <AlertDialogTrigger asChild>
               <button
                 type="button"
-                className="shrink-0 text-xs text-muted-foreground hover:text-destructive"
+                className="shrink-0 text-xs text-muted-foreground hover:text-destructive disabled:pointer-events-none disabled:opacity-50"
                 aria-label={`${name}を削除`}
+                disabled={disabled}
               >
                 削除
               </button>

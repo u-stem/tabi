@@ -24,6 +24,7 @@ type DayTimelineProps = {
   date: string;
   spots: SpotResponse[];
   onRefresh: () => void;
+  disabled?: boolean;
 };
 
 export function DayTimeline({
@@ -33,6 +34,7 @@ export function DayTimeline({
   date,
   spots,
   onRefresh,
+  disabled,
 }: DayTimelineProps) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -83,7 +85,7 @@ export function DayTimeline({
             {formatDate(date)}
           </span>
         </h3>
-        <AddSpotDialog tripId={tripId} dayId={dayId} onAdded={onRefresh} />
+        <AddSpotDialog tripId={tripId} dayId={dayId} onAdded={onRefresh} disabled={disabled} />
       </div>
       {spots.length === 0 ? (
         <div className="rounded-md border border-dashed p-6 text-center">
@@ -103,7 +105,7 @@ export function DayTimeline({
           <SortableContext items={spots.map((s) => s.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {spots.map((spot) => (
-                <SpotItem key={spot.id} {...spot} onDelete={() => handleDelete(spot.id)} />
+                <SpotItem key={spot.id} {...spot} onDelete={() => handleDelete(spot.id)} disabled={disabled} />
               ))}
             </div>
           </SortableContext>

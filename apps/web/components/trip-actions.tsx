@@ -30,11 +30,12 @@ type TripActionsProps = {
   tripId: string;
   status: string;
   onStatusChange?: () => void;
+  disabled?: boolean;
 };
 
 const statuses = Object.entries(STATUS_LABELS) as [string, string][];
 
-export function TripActions({ tripId, status, onStatusChange }: TripActionsProps) {
+export function TripActions({ tripId, status, onStatusChange, disabled }: TripActionsProps) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -97,7 +98,7 @@ export function TripActions({ tripId, status, onStatusChange }: TripActionsProps
   return (
     <div className="flex w-full items-center justify-between">
       <div className="flex items-center gap-2">
-        <Select value={status} onValueChange={handleStatusChange}>
+        <Select value={status} onValueChange={handleStatusChange} disabled={disabled}>
           <SelectTrigger className="h-8 w-[130px] text-xs">
             <SelectValue />
           </SelectTrigger>
@@ -110,13 +111,13 @@ export function TripActions({ tripId, status, onStatusChange }: TripActionsProps
           </SelectContent>
         </Select>
         <MemberDialog tripId={tripId} />
-        <Button variant="outline" size="sm" onClick={handleShare} disabled={sharing}>
+        <Button variant="outline" size="sm" onClick={handleShare} disabled={disabled || sharing}>
           {sharing ? "生成中..." : "共有リンク"}
         </Button>
       </div>
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="ghost" size="sm" disabled={deleting} className="text-muted-foreground hover:text-destructive">
+          <Button variant="ghost" size="sm" disabled={disabled || deleting} className="text-muted-foreground hover:text-destructive">
             {deleting ? "削除中..." : "削除"}
           </Button>
         </AlertDialogTrigger>

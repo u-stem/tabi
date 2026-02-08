@@ -1,4 +1,17 @@
+"use client";
+
 import { CATEGORY_LABELS } from "@tabi/shared";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 type SpotItemProps = {
   name: string;
@@ -32,12 +45,30 @@ export function SpotItem({
       <div className="flex-1">
         <div className="flex items-center justify-between">
           <span className="font-medium">{name}</span>
-          <button
-            onClick={onDelete}
-            className="text-xs text-muted-foreground hover:text-destructive"
-          >
-            削除
-          </button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                className="text-xs text-muted-foreground hover:text-destructive"
+                aria-label={`${name}を削除`}
+              >
+                削除
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>スポットを削除しますか？</AlertDialogTitle>
+                <AlertDialogDescription>
+                  「{name}」を削除します。この操作は取り消せません。
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                <AlertDialogAction onClick={onDelete}>
+                  削除する
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
         {timeStr && (
           <p className="text-xs text-muted-foreground">{timeStr}</p>

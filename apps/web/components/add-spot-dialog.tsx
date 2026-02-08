@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,6 +60,7 @@ export function AddSpotDialog({ tripId, dayId, onAdded }: AddSpotDialogProps) {
         body: JSON.stringify(data),
       });
       setOpen(false);
+      toast.success("スポットを追加しました");
       onAdded();
     } catch (err) {
       setError(err instanceof Error ? err.message : "スポットの追加に失敗しました");
@@ -68,7 +70,13 @@ export function AddSpotDialog({ tripId, dayId, onAdded }: AddSpotDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(isOpen) => {
+      setOpen(isOpen);
+      if (!isOpen) {
+        setError(null);
+        setCategory("sightseeing");
+      }
+    }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           + スポット追加

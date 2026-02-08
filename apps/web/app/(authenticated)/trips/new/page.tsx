@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +38,7 @@ export default function NewTripPage() {
         method: "POST",
         body: JSON.stringify(data),
       });
+      toast.success("旅行を作成しました");
       router.push(`/trips/${trip.id}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "旅行の作成に失敗しました");
@@ -46,6 +49,12 @@ export default function NewTripPage() {
 
   return (
     <div className="mx-auto max-w-lg">
+      <Link
+        href="/dashboard"
+        className="mb-4 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
+      >
+        &larr; マイ旅行に戻る
+      </Link>
       <Card>
         <CardHeader>
           <CardTitle>新しい旅行を作成</CardTitle>

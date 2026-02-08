@@ -82,7 +82,9 @@ export function AuthForm({ mode }: AuthFormProps) {
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading
-              ? "..."
+              ? mode === "login"
+                ? "ログイン中..."
+                : "登録中..."
               : mode === "login"
                 ? "ログイン"
                 : "登録する"}

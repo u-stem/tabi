@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { STATUS_LABELS } from "@tabi/shared";
+import { formatDateRange } from "@/lib/format";
 
 type TripCardProps = {
   id: string;
@@ -27,7 +28,7 @@ export function TripCard({
   status,
 }: TripCardProps) {
   return (
-    <Link href={`/trips/${id}`}>
+    <Link href={`/trips/${id}`} className="block rounded-lg focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:outline-none">
       <Card className="transition-colors hover:bg-accent/50">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -40,7 +41,7 @@ export function TripCard({
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            {startDate} - {endDate}
+            {formatDateRange(startDate, endDate)}
           </p>
         </CardContent>
       </Card>

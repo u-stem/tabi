@@ -15,8 +15,8 @@ export function Header() {
   }
 
   return (
-    <header className="border-b">
-      <div className="container flex h-14 items-center justify-between">
+    <header className="border-b" role="banner">
+      <nav aria-label="メインナビゲーション" className="container flex h-14 items-center justify-between">
         <Link href="/dashboard" className="text-xl font-bold">
           tabi
         </Link>
@@ -32,7 +32,7 @@ export function Header() {
             </>
           )}
         </div>
-      </div>
+      </nav>
     </header>
   );
 }

@@ -1,8 +1,10 @@
 "use client";
 
+import { toast } from "sonner";
 import { SpotItem } from "./spot-item";
 import { AddSpotDialog } from "./add-spot-dialog";
 import { api } from "@/lib/api";
+import { formatDate } from "@/lib/format";
 import type { SpotResponse } from "@tabi/shared";
 
 type DayTimelineProps = {
@@ -27,9 +29,10 @@ export function DayTimeline({
       await api(`/api/trips/${tripId}/days/${dayId}/spots/${spotId}`, {
         method: "DELETE",
       });
+      toast.success("スポットを削除しました");
       onRefresh();
-    } catch (err) {
-      console.error(err);
+    } catch {
+      toast.error("スポットの削除に失敗しました");
     }
   }
 
@@ -39,7 +42,7 @@ export function DayTimeline({
         <h3 className="font-semibold">
           {dayNumber}日目{" "}
           <span className="text-sm font-normal text-muted-foreground">
-            {date}
+            {formatDate(date)}
           </span>
         </h3>
         <AddSpotDialog tripId={tripId} dayId={dayId} onAdded={onRefresh} />

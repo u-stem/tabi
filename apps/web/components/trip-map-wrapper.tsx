@@ -17,5 +17,9 @@ const TripMapInner = dynamic(
 );
 
 export function TripMap({ spots }: { spots: SpotResponse[] }) {
-  return <TripMapInner spots={spots} />;
+  return (
+    <div role="img" aria-label="旅行スポットの地図">
+      <TripMapInner spots={spots} />
+    </div>
+  );
 }

@@ -1,8 +1,6 @@
 @import "tailwindcss";
 @import "leaflet/dist/leaflet.css";
 
-@custom-variant dark (&:is(.dark *));
-
 @theme {
   --color-background: hsl(0 0% 100%);
   --color-foreground: hsl(240 10% 3.9%);
@@ -35,6 +33,12 @@
   --radius: 0.5rem;
   --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
     "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+@utility container {
+  margin-inline: auto;
+  padding-inline: 1rem;
+  max-width: 80rem;
 }
 
 @layer base {

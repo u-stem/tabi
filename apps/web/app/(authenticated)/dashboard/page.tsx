@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TripCard } from "@/components/trip-card";
 import { api } from "@/lib/api";
 import type { TripListItem } from "@tabi/shared";
@@ -36,13 +37,32 @@ export default function DashboardPage() {
         </Button>
       </div>
       {loading ? (
-        <p className="mt-8 text-muted-foreground">読み込み中...</p>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="rounded-lg border p-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-4 w-40" />
+            </div>
+          ))}
+        </div>
       ) : error ? (
         <p className="mt-8 text-destructive">{error}</p>
       ) : trips.length === 0 ? (
-        <p className="mt-8 text-muted-foreground">
-          まだ旅行がありません。最初の旅行を作成しましょう!
-        </p>
+        <div className="mt-12 flex flex-col items-center gap-4 text-center">
+          <p className="text-lg text-muted-foreground">
+            まだ旅行がありません
+          </p>
+          <p className="text-sm text-muted-foreground">
+            最初の旅行プランを作成してみましょう
+          </p>
+          <Button asChild>
+            <Link href="/trips/new">旅行を作成する</Link>
+          </Button>
+        </div>
       ) : (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {trips.map((trip) => (

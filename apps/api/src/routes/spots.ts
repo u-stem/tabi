@@ -3,6 +3,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { spots, tripDays } from "../db/schema";
+import { geocode } from "../lib/geocoding";
 import { canEdit, checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -64,20 +65,29 @@ spotRoutes.post("/:tripId/days/:dayId/spots", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
+  let { latitude, longitude } = parsed.data;
+  if (parsed.data.address && latitude == null && longitude == null) {
+    const coords = await geocode(parsed.data.address);
+    if (coords) {
+      latitude = coords.latitude;
+      longitude = coords.longitude;
+    }
+  }
+
   // Get next sort order
   const maxOrder = await db
     .select({ max: sql<number>`COALESCE(MAX(${spots.sortOrder}), -1)` })
     .from(spots)
     .where(eq(spots.tripDayId, dayId));
 
-  const { latitude, longitude, ...restData } = parsed.data;
+  const { latitude: _lat, longitude: _lon, ...restData } = parsed.data;
   const [spot] = await db
     .insert(spots)
     .values({
       tripDayId: dayId,
       ...restData,
-      ...(latitude !== undefined ? { latitude: String(latitude) } : {}),
-      ...(longitude !== undefined ? { longitude: String(longitude) } : {}),
+      ...(latitude != null ? { latitude: String(latitude) } : {}),
+      ...(longitude != null ? { longitude: String(longitude) } : {}),
       sortOrder: (maxOrder[0]?.max ?? -1) + 1,
     })
     .returning();

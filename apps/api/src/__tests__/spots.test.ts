@@ -9,6 +9,7 @@ const {
   mockDbDelete,
   mockDbSelect,
   mockDbTransaction,
+  mockGeocode,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
   mockDbQuery: {
@@ -31,6 +32,7 @@ const {
   mockDbDelete: vi.fn(),
   mockDbSelect: vi.fn(),
   mockDbTransaction: vi.fn(),
+  mockGeocode: vi.fn(),
 }));
 
 vi.mock("../lib/auth", () => ({
@@ -39,6 +41,10 @@ vi.mock("../lib/auth", () => ({
       getSession: (...args: unknown[]) => mockGetSession(...args),
     },
   },
+}));
+
+vi.mock("../lib/geocoding", () => ({
+  geocode: (...args: unknown[]) => mockGeocode(...args),
 }));
 
 vi.mock("../db/index", () => ({
@@ -188,6 +194,123 @@ describe("Spot routes", () => {
       });
 
       expect(res.status).toBe(404);
+    });
+
+    it("geocodes address when coordinates are not provided", async () => {
+      mockGeocode.mockResolvedValue({ latitude: 35.0394, longitude: 135.7291 });
+
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ max: -1 }]),
+        }),
+      });
+
+      const createdSpot = {
+        id: "spot-1",
+        tripDayId: dayId,
+        name: "Kinkaku-ji",
+        category: "sightseeing",
+        address: "京都市北区金閣寺町1",
+        latitude: "35.0394",
+        longitude: "135.7291",
+        sortOrder: 0,
+      };
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([createdSpot]),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(basePath, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Kinkaku-ji",
+          category: "sightseeing",
+          address: "京都市北区金閣寺町1",
+        }),
+      });
+
+      expect(res.status).toBe(201);
+      expect(mockGeocode).toHaveBeenCalledWith("京都市北区金閣寺町1");
+    });
+
+    it("saves spot without coordinates when geocoding fails", async () => {
+      mockGeocode.mockResolvedValue(null);
+
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ max: -1 }]),
+        }),
+      });
+
+      const createdSpot = {
+        id: "spot-1",
+        tripDayId: dayId,
+        name: "Unknown Place",
+        category: "sightseeing",
+        address: "unknown address",
+        sortOrder: 0,
+      };
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([createdSpot]),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(basePath, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Unknown Place",
+          category: "sightseeing",
+          address: "unknown address",
+        }),
+      });
+
+      expect(res.status).toBe(201);
+      expect(mockGeocode).toHaveBeenCalledWith("unknown address");
+    });
+
+    it("skips geocoding when explicit coordinates are provided", async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ max: -1 }]),
+        }),
+      });
+
+      const createdSpot = {
+        id: "spot-1",
+        tripDayId: dayId,
+        name: "Custom Place",
+        category: "sightseeing",
+        latitude: "35.0",
+        longitude: "135.0",
+        sortOrder: 0,
+      };
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([createdSpot]),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(basePath, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Custom Place",
+          category: "sightseeing",
+          address: "some address",
+          latitude: 35.0,
+          longitude: 135.0,
+        }),
+      });
+
+      expect(res.status).toBe(201);
+      expect(mockGeocode).not.toHaveBeenCalled();
     });
   });
 

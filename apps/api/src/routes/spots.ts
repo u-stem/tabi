@@ -22,7 +22,11 @@ async function verifyDayAccess(tripId: string, dayId: string, userId: string): P
 }
 
 // Verify that the day belongs to the trip and the user can edit
-async function verifyDayEditAccess(tripId: string, dayId: string, userId: string): Promise<boolean> {
+async function verifyDayEditAccess(
+  tripId: string,
+  dayId: string,
+  userId: string,
+): Promise<boolean> {
   const day = await db.query.tripDays.findFirst({
     where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
   });

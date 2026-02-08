@@ -364,11 +364,21 @@ describe("Spot routes", () => {
     });
 
     it("geocodes when address is updated", async () => {
-      const existing = { id: "spot-1", name: "Place", category: "sightseeing", address: "old address" };
+      const existing = {
+        id: "spot-1",
+        name: "Place",
+        category: "sightseeing",
+        address: "old address",
+      };
       mockDbQuery.spots.findFirst.mockResolvedValue(existing);
       mockGeocode.mockResolvedValue({ latitude: 34.6937, longitude: 135.5023 });
 
-      const updated = { ...existing, address: "大阪市北区", latitude: "34.6937", longitude: "135.5023" };
+      const updated = {
+        ...existing,
+        address: "大阪市北区",
+        latitude: "34.6937",
+        longitude: "135.5023",
+      };
       mockDbUpdate.mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { OfflineBanner } from "@/components/offline-banner";
 import { signOut, useSession } from "@/lib/auth-client";
 
 export function Header() {
@@ -21,6 +22,7 @@ export function Header() {
 
   return (
     <header className="border-b">
+      <OfflineBanner />
       <nav aria-label="メインナビゲーション" className="container flex h-14 items-center justify-between">
         <Link href="/dashboard" className="text-xl font-bold">
           tabi

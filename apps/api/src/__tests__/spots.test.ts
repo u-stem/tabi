@@ -362,6 +362,54 @@ describe("Spot routes", () => {
 
       expect(res.status).toBe(404);
     });
+
+    it("geocodes when address is updated", async () => {
+      const existing = { id: "spot-1", name: "Place", category: "sightseeing", address: "old address" };
+      mockDbQuery.spots.findFirst.mockResolvedValue(existing);
+      mockGeocode.mockResolvedValue({ latitude: 34.6937, longitude: 135.5023 });
+
+      const updated = { ...existing, address: "大阪市北区", latitude: "34.6937", longitude: "135.5023" };
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/spot-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address: "大阪市北区" }),
+      });
+
+      expect(res.status).toBe(200);
+      expect(mockGeocode).toHaveBeenCalledWith("大阪市北区");
+    });
+
+    it("does not geocode when address is not updated", async () => {
+      const existing = { id: "spot-1", name: "Place", category: "sightseeing" };
+      const updated = { ...existing, name: "New Name" };
+      mockDbQuery.spots.findFirst.mockResolvedValue(existing);
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/spot-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "New Name" }),
+      });
+
+      expect(res.status).toBe(200);
+      expect(mockGeocode).not.toHaveBeenCalled();
+    });
   });
 
   describe(`DELETE ${basePath}/:spotId`, () => {

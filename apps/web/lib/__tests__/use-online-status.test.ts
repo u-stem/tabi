@@ -27,7 +27,7 @@ describe("useOnlineStatus", () => {
     expect(result.current).toBe(true);
   });
 
-  it("returns false when offline", () => {
+  it("syncs to offline after mount", () => {
     vi.stubGlobal("navigator", { onLine: false });
     const { result } = renderHook(() => useOnlineStatus());
     expect(result.current).toBe(false);

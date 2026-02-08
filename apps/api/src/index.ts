@@ -1,2 +1,10 @@
-// Entry point for @tabi/api - will be implemented in Task 2
-export {};
+import { app } from "./app";
+
+const port = Number(process.env.PORT) || 3001;
+
+console.log(`API server running on http://localhost:${port}`);
+
+export default {
+  fetch: app.fetch,
+  port,
+};

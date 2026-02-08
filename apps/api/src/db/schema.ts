@@ -1,0 +1,130 @@
+import {
+  pgTable, uuid, varchar, text, date, integer, timestamp,
+  pgEnum, decimal, time, primaryKey,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+
+export const tripStatusEnum = pgEnum("trip_status", ["draft", "planned", "active", "completed"]);
+export const tripMemberRoleEnum = pgEnum("trip_member_role", ["owner", "editor", "viewer"]);
+export const spotCategoryEnum = pgEnum("spot_category", [
+  "sightseeing", "restaurant", "hotel", "transport", "activity", "other",
+]);
+
+// --- Tables ---
+
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: varchar("name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  emailVerified: timestamp("email_verified"),
+  avatarUrl: varchar("avatar_url", { length: 500 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const sessions = pgTable("sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  token: varchar("token", { length: 255 }).notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const accounts = pgTable("accounts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  accountId: varchar("account_id", { length: 255 }).notNull(),
+  providerId: varchar("provider_id", { length: 255 }).notNull(),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  expiresAt: timestamp("expires_at"),
+  password: text("password"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const verifications = pgTable("verifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  identifier: varchar("identifier", { length: 255 }).notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const trips = pgTable("trips", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ownerId: uuid("owner_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: varchar("title", { length: 100 }).notNull(),
+  destination: varchar("destination", { length: 100 }).notNull(),
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date").notNull(),
+  status: tripStatusEnum("status").notNull().default("draft"),
+  coverImageUrl: varchar("cover_image_url", { length: 500 }),
+  shareToken: varchar("share_token", { length: 64 }).unique(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const tripMembers = pgTable(
+  "trip_members",
+  {
+    tripId: uuid("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    role: tripMemberRoleEnum("role").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.tripId, table.userId] })],
+);
+
+export const tripDays = pgTable("trip_days", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id").notNull().references(() => trips.id, { onDelete: "cascade" }),
+  date: date("date").notNull(),
+  dayNumber: integer("day_number").notNull(),
+  memo: text("memo"),
+});
+
+export const spots = pgTable("spots", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripDayId: uuid("trip_day_id").notNull().references(() => tripDays.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 200 }).notNull(),
+  category: spotCategoryEnum("category").notNull(),
+  address: varchar("address", { length: 500 }),
+  latitude: decimal("latitude", { precision: 10, scale: 7 }),
+  longitude: decimal("longitude", { precision: 10, scale: 7 }),
+  startTime: time("start_time"),
+  endTime: time("end_time"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  memo: text("memo"),
+  url: varchar("url", { length: 2000 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+// --- Relations ---
+
+export const usersRelations = relations(users, ({ many }) => ({
+  trips: many(trips),
+  tripMembers: many(tripMembers),
+}));
+
+export const tripsRelations = relations(trips, ({ one, many }) => ({
+  owner: one(users, { fields: [trips.ownerId], references: [users.id] }),
+  members: many(tripMembers),
+  days: many(tripDays),
+}));
+
+export const tripMembersRelations = relations(tripMembers, ({ one }) => ({
+  trip: one(trips, { fields: [tripMembers.tripId], references: [trips.id] }),
+  user: one(users, { fields: [tripMembers.userId], references: [users.id] }),
+}));
+
+export const tripDaysRelations = relations(tripDays, ({ one, many }) => ({
+  trip: one(trips, { fields: [tripDays.tripId], references: [trips.id] }),
+  spots: many(spots),
+}));
+
+export const spotsRelations = relations(spots, ({ one }) => ({
+  tripDay: one(tripDays, { fields: [spots.tripDayId], references: [tripDays.id] }),
+}));

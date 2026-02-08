@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { MemberDialog } from "@/components/member-dialog";
 import { api } from "@/lib/api";
 import { STATUS_LABELS } from "@tabi/shared";
 
@@ -108,6 +109,7 @@ export function TripActions({ tripId, status, onStatusChange }: TripActionsProps
             ))}
           </SelectContent>
         </Select>
+        <MemberDialog tripId={tripId} />
         <Button variant="outline" size="sm" onClick={handleShare} disabled={sharing}>
           {sharing ? "生成中..." : "共有リンク"}
         </Button>

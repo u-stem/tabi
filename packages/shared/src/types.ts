@@ -39,3 +39,10 @@ export type TripListItem = {
   status: string;
   totalSpots: number;
 };
+
+export type MemberResponse = {
+  userId: string;
+  role: string;
+  name: string;
+  email: string;
+};

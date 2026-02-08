@@ -22,6 +22,7 @@
     "@radix-ui/react-label": "^2.1.8",
     "@radix-ui/react-select": "^2.2.6",
     "@radix-ui/react-slot": "^1.2.4",
+    "@serwist/next": "^9.5.5",
     "@tabi/shared": "workspace:*",
     "better-auth": "^1.4.18",
     "class-variance-authority": "^0.7",
@@ -44,6 +45,7 @@
     "autoprefixer": "^10",
     "jsdom": "^28.0.0",
     "postcss": "^8",
+    "serwist": "^9.5.5",
     "tailwindcss": "^4",
     "typescript": "^5",
     "vitest": "^4.0.18"

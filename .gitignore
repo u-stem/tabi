@@ -33,5 +33,9 @@ npm-debug.log*
 # Testing
 coverage/
 
+# Serwist (auto-generated Service Worker)
+apps/web/public/sw.js
+apps/web/public/swe-worker-*.js
+
 # Misc
 *.tsbuildinfo

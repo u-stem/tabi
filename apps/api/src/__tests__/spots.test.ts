@@ -11,6 +11,9 @@ const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, m
     trips: {
       findFirst: vi.fn(),
     },
+    tripDays: {
+      findFirst: vi.fn(),
+    },
   },
   mockDbInsert: vi.fn(),
   mockDbUpdate: vi.fn(),
@@ -58,10 +61,11 @@ describe("Spot routes", () => {
       user: fakeUser,
       session: { id: "session-1" },
     });
-    // Default: trip belongs to user
-    mockDbQuery.trips.findFirst.mockResolvedValue({
-      id: tripId,
-      ownerId: fakeUser.id,
+    // Default: day belongs to trip, trip belongs to user
+    mockDbQuery.tripDays.findFirst.mockResolvedValue({
+      id: dayId,
+      tripId,
+      trip: { id: tripId, ownerId: fakeUser.id },
     });
   });
 
@@ -80,8 +84,8 @@ describe("Spot routes", () => {
       expect(body).toEqual(daySpots);
     });
 
-    it("returns 404 when trip does not belong to user", async () => {
-      mockDbQuery.trips.findFirst.mockResolvedValue(undefined);
+    it("returns 404 when day does not belong to user", async () => {
+      mockDbQuery.tripDays.findFirst.mockResolvedValue(undefined);
 
       const app = createApp();
       const res = await app.request(basePath);
@@ -155,8 +159,8 @@ describe("Spot routes", () => {
       expect(res.status).toBe(400);
     });
 
-    it("returns 404 when trip does not belong to user", async () => {
-      mockDbQuery.trips.findFirst.mockResolvedValue(undefined);
+    it("returns 404 when day does not belong to user", async () => {
+      mockDbQuery.tripDays.findFirst.mockResolvedValue(undefined);
 
       const app = createApp();
       const res = await app.request(basePath, {
@@ -253,8 +257,14 @@ describe("Spot routes", () => {
 
   describe(`PATCH ${basePath}/reorder`, () => {
     it("returns ok with valid UUIDs", async () => {
+      const spotId = "550e8400-e29b-41d4-a716-446655440000";
       mockDbTransaction.mockImplementation(async (fn: Function) => {
         const tx = {
+          query: {
+            spots: {
+              findMany: vi.fn().mockResolvedValue([{ id: spotId, tripDayId: dayId }]),
+            },
+          },
           update: vi.fn().mockReturnValue({
             set: vi.fn().mockReturnValue({
               where: vi.fn().mockResolvedValue(undefined),
@@ -269,7 +279,7 @@ describe("Spot routes", () => {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          spotIds: ["550e8400-e29b-41d4-a716-446655440000"],
+          spotIds: [spotId],
         }),
       });
       const body = await res.json();

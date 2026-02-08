@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TripCard } from "@/components/trip-card";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import type { TripListItem } from "@tabi/shared";
 
 export default function DashboardPage() {
@@ -19,14 +19,15 @@ export default function DashboardPage() {
     api<TripListItem[]>("/api/trips")
       .then(setTrips)
       .catch((err) => {
-        if (err instanceof Error && err.message.includes("401")) {
+        if (err instanceof ApiError && err.status === 401) {
           router.push("/auth/login");
           return;
         }
         setError("旅行の取得に失敗しました");
       })
       .finally(() => setLoading(false));
-  }, [router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- router is stable, run once on mount
+  }, []);
 
   return (
     <div>

@@ -33,6 +33,12 @@ export default function NewTripPage() {
       endDate: formData.get("endDate") as string,
     };
 
+    if (data.startDate > data.endDate) {
+      setError("出発日は帰着日より前に設定してください");
+      setLoading(false);
+      return;
+    }
+
     try {
       const trip = await api<{ id: string }>("/api/trips", {
         method: "POST",

@@ -87,6 +87,7 @@ describe("Share routes", () => {
     });
 
     it("generates a new shareToken when not set", async () => {
+      const generatedToken = "abc123generated";
       mockDbQuery.trips.findFirst.mockResolvedValue({
         id: "trip-1",
         ownerId: fakeUser.id,
@@ -95,7 +96,9 @@ describe("Share routes", () => {
 
       mockDbUpdate.mockReturnValue({
         set: vi.fn().mockReturnValue({
-          where: vi.fn().mockResolvedValue(undefined),
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ shareToken: generatedToken }]),
+          }),
         }),
       });
 

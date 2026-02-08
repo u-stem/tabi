@@ -19,7 +19,7 @@ export default function SharedTripPage() {
   useEffect(() => {
     api<TripResponse>(`/api/shared/${token}`)
       .then(setTrip)
-      .catch((err) => setError(err.message))
+      .catch(() => setError("旅行の取得に失敗しました"))
       .finally(() => setLoading(false));
   }, [token]);
 

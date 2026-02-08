@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, and } from "drizzle-orm";
+import { eq, and, isNull } from "drizzle-orm";
 import { db } from "../db/index";
 import { trips } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
@@ -20,13 +20,28 @@ shareRoutes.post("/api/trips/:id/share", requireAuth, async (c) => {
     return c.json({ error: "Trip not found" }, 404);
   }
 
-  let shareToken = trip.shareToken;
-  if (!shareToken) {
-    shareToken = crypto.randomUUID().replace(/-/g, "");
-    await db.update(trips).set({ shareToken }).where(eq(trips.id, tripId));
+  if (trip.shareToken) {
+    return c.json({ shareToken: trip.shareToken });
   }
 
-  return c.json({ shareToken });
+  // Atomic: only set token if still null (prevents race condition)
+  const newToken = crypto.randomUUID().replace(/-/g, "");
+  const [updated] = await db
+    .update(trips)
+    .set({ shareToken: newToken })
+    .where(and(eq(trips.id, tripId), isNull(trips.shareToken)))
+    .returning({ shareToken: trips.shareToken });
+
+  // If another request already set the token, fetch the existing one
+  if (!updated) {
+    const refreshed = await db.query.trips.findFirst({
+      where: eq(trips.id, tripId),
+      columns: { shareToken: true },
+    });
+    return c.json({ shareToken: refreshed!.shareToken });
+  }
+
+  return c.json({ shareToken: updated.shareToken });
 });
 
 // View shared trip (no auth required)

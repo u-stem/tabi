@@ -30,7 +30,8 @@ export async function middleware(request: NextRequest) {
     }
 
     return NextResponse.next();
-  } catch {
+  } catch (err) {
+    console.error("[Middleware] Session check failed:", err);
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 }

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { signOut, useSession } from "@/lib/auth-client";
 
@@ -10,8 +11,12 @@ export function Header() {
   const { data: session } = useSession();
 
   async function handleSignOut() {
-    await signOut();
-    router.push("/");
+    try {
+      await signOut();
+      router.push("/");
+    } catch {
+      toast.error("ログアウトに失敗しました");
+    }
   }
 
   return (

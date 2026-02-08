@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { DayTimeline } from "@/components/day-timeline";
 import { TripMap } from "@/components/trip-map-wrapper";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api";
+import { api, ApiError } from "@/lib/api";
 import { TripActions } from "@/components/trip-actions";
 import { formatDateRange } from "@/lib/format";
 import type { TripResponse } from "@tabi/shared";
@@ -24,7 +24,7 @@ export default function TripDetailPage() {
       const data = await api<TripResponse>(`/api/trips/${tripId}`);
       setTrip(data);
     } catch (err) {
-      if (err instanceof Error && err.message.includes("401")) {
+      if (err instanceof ApiError && err.status === 401) {
         router.push("/auth/login");
         return;
       }
@@ -32,7 +32,8 @@ export default function TripDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [tripId, router]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- router is stable
+  }, [tripId]);
 
   useEffect(() => {
     fetchTrip();

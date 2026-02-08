@@ -50,7 +50,19 @@ export function TripActions({ tripId, status }: TripActionsProps) {
         { method: "POST" },
       );
       const shareUrl = `${window.location.origin}/shared/${result.shareToken}`;
-      await navigator.clipboard.writeText(shareUrl);
+      if (navigator.clipboard) {
+        await navigator.clipboard.writeText(shareUrl);
+      } else {
+        // Fallback for non-HTTPS environments
+        const textarea = document.createElement("textarea");
+        textarea.value = shareUrl;
+        textarea.style.position = "fixed";
+        textarea.style.opacity = "0";
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
       toast.success("共有リンクをコピーしました");
     } catch {
       toast.error("共有リンクの生成に失敗しました");

@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, inArray } from "drizzle-orm";
 import { db } from "../db/index";
 import { spots, tripDays, trips } from "../db/schema";
 import { requireAuth } from "../middleware/auth";
@@ -9,12 +9,13 @@ import type { AppEnv } from "../types";
 const spotRoutes = new Hono<AppEnv>();
 spotRoutes.use("*", requireAuth);
 
-// Verify that the trip belongs to the authenticated user
-async function verifyTripOwnership(tripId: string, userId: string): Promise<boolean> {
-  const trip = await db.query.trips.findFirst({
-    where: and(eq(trips.id, tripId), eq(trips.ownerId, userId)),
+// Verify that the day belongs to the trip and the trip belongs to the user
+async function verifyDayOwnership(tripId: string, dayId: string, userId: string): Promise<boolean> {
+  const day = await db.query.tripDays.findFirst({
+    where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
+    with: { trip: true },
   });
-  return !!trip;
+  return !!day && day.trip.ownerId === userId;
 }
 
 // List spots for a day
@@ -23,7 +24,7 @@ spotRoutes.get("/:tripId/days/:dayId/spots", async (c) => {
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
 
-  if (!await verifyTripOwnership(tripId, user.id)) {
+  if (!await verifyDayOwnership(tripId, dayId, user.id)) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -40,7 +41,7 @@ spotRoutes.post("/:tripId/days/:dayId/spots", async (c) => {
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
 
-  if (!await verifyTripOwnership(tripId, user.id)) {
+  if (!await verifyDayOwnership(tripId, dayId, user.id)) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -73,8 +74,9 @@ spotRoutes.post("/:tripId/days/:dayId/spots", async (c) => {
 spotRoutes.patch("/:tripId/days/:dayId/spots/reorder", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
+  const dayId = c.req.param("dayId");
 
-  if (!await verifyTripOwnership(tripId, user.id)) {
+  if (!await verifyDayOwnership(tripId, dayId, user.id)) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -86,6 +88,19 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/reorder", async (c) => {
   }
 
   await db.transaction(async (tx) => {
+    // Verify all spots belong to this day
+    if (parsed.data.spotIds.length > 0) {
+      const targetSpots = await tx.query.spots.findMany({
+        where: and(
+          inArray(spots.id, parsed.data.spotIds),
+          eq(spots.tripDayId, dayId),
+        ),
+      });
+      if (targetSpots.length !== parsed.data.spotIds.length) {
+        throw new Error("Some spots do not belong to this day");
+      }
+    }
+
     for (let i = 0; i < parsed.data.spotIds.length; i++) {
       await tx.update(spots)
         .set({ sortOrder: i })
@@ -100,9 +115,10 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/reorder", async (c) => {
 spotRoutes.patch("/:tripId/days/:dayId/spots/:spotId", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
+  const dayId = c.req.param("dayId");
   const spotId = c.req.param("spotId");
 
-  if (!await verifyTripOwnership(tripId, user.id)) {
+  if (!await verifyDayOwnership(tripId, dayId, user.id)) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -114,7 +130,7 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/:spotId", async (c) => {
   }
 
   const existing = await db.query.spots.findFirst({
-    where: eq(spots.id, spotId),
+    where: and(eq(spots.id, spotId), eq(spots.tripDayId, dayId)),
   });
 
   if (!existing) {
@@ -139,14 +155,15 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/:spotId", async (c) => {
 spotRoutes.delete("/:tripId/days/:dayId/spots/:spotId", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
+  const dayId = c.req.param("dayId");
   const spotId = c.req.param("spotId");
 
-  if (!await verifyTripOwnership(tripId, user.id)) {
+  if (!await verifyDayOwnership(tripId, dayId, user.id)) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
   const existing = await db.query.spots.findFirst({
-    where: eq(spots.id, spotId),
+    where: and(eq(spots.id, spotId), eq(spots.tripDayId, dayId)),
   });
 
   if (!existing) {

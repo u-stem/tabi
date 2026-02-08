@@ -31,7 +31,8 @@ export function DayTimeline({
       });
       toast.success("スポットを削除しました");
       onRefresh();
-    } catch {
+    } catch (err) {
+      console.error("Failed to delete spot:", err);
       toast.error("スポットの削除に失敗しました");
     }
   }

@@ -51,6 +51,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       }
       toast.success("ログインしました");
     }
+    setLoading(false);
     router.push("/dashboard");
   }
 

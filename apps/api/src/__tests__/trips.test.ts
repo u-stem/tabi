@@ -196,9 +196,7 @@ describe("Trip routes", () => {
 
   describe("PATCH /api/trips/:id", () => {
     it("returns updated trip on success", async () => {
-      const existing = { id: "trip-1", title: "Old", ownerId: fakeUser.id };
-      const updated = { ...existing, title: "New Title" };
-      mockDbQuery.trips.findFirst.mockResolvedValue(existing);
+      const updated = { id: "trip-1", title: "New Title", ownerId: fakeUser.id };
       mockDbUpdate.mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -220,7 +218,13 @@ describe("Trip routes", () => {
     });
 
     it("returns 404 when trip not found", async () => {
-      mockDbQuery.trips.findFirst.mockResolvedValue(undefined);
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
 
       const app = createApp();
       const res = await app.request("/api/trips/nonexistent", {
@@ -238,6 +242,17 @@ describe("Trip routes", () => {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: "" }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 400 when trying to change dates", async () => {
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate: "2025-08-01" }),
       });
 
       expect(res.status).toBe(400);

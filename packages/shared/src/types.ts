@@ -2,17 +2,21 @@ export type SpotResponse = {
   id: string;
   name: string;
   category: string;
-  startTime?: string | null;
-  endTime?: string | null;
-  memo?: string | null;
+  address?: string | null;
   latitude?: string | null;
   longitude?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  sortOrder: number;
+  memo?: string | null;
+  url?: string | null;
 };
 
 export type DayResponse = {
   id: string;
   dayNumber: number;
   date: string;
+  memo?: string | null;
   spots: SpotResponse[];
 };
 

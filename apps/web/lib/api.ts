@@ -1,5 +1,15 @@
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
 
+export class ApiError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
 type FetchOptions = RequestInit & {
   params?: Record<string, string>;
 };
@@ -26,8 +36,8 @@ export async function api<T>(
   });
 
   if (!res.ok) {
-    const error = await res.json().catch(() => ({ error: "Unknown error" }));
-    throw new Error(error.error || `API error: ${res.status}`);
+    const body = await res.json().catch(() => ({ error: "Unknown error" }));
+    throw new ApiError(body.error || `API error: ${res.status}`, res.status);
   }
 
   if (res.status === 204) {

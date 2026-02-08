@@ -44,11 +44,12 @@ tripRoutes.post("/", async (c) => {
       .returning();
 
     // Auto-create trip days based on date range
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = new Date(startDate + "T00:00:00");
+    const end = new Date(endDate + "T00:00:00");
     const days = [];
     let dayNumber = 1;
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+    const maxDays = 365;
+    for (let d = new Date(start); d <= end && dayNumber <= maxDays; d.setDate(d.getDate() + 1)) {
       days.push({
         tripId: created.id,
         date: d.toISOString().split("T")[0],
@@ -109,19 +110,20 @@ tripRoutes.patch("/:id", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const existing = await db.query.trips.findFirst({
-    where: and(eq(trips.id, tripId), eq(trips.ownerId, user.id)),
-  });
-
-  if (!existing) {
-    return c.json({ error: "Trip not found" }, 404);
+  // Reject date changes because tripDays would go out of sync
+  if (parsed.data.startDate || parsed.data.endDate) {
+    return c.json({ error: "Date changes are not supported. Please create a new trip." }, 400);
   }
 
   const [updated] = await db
     .update(trips)
     .set({ ...parsed.data, updatedAt: new Date() })
-    .where(eq(trips.id, tripId))
+    .where(and(eq(trips.id, tripId), eq(trips.ownerId, user.id)))
     .returning();
+
+  if (!updated) {
+    return c.json({ error: "Trip not found" }, 404);
+  }
 
   return c.json(updated);
 });

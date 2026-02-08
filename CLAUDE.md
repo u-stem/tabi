@@ -62,7 +62,8 @@ bun run --filter @tabi/shared check-types
 - DB schema at `apps/api/src/db/schema.ts` includes Better Auth tables
 - Spots belong to trip_days, trip_days belong to trips
 - Trip creation auto-generates trip_days from date range and adds owner as trip_member
-- Spot/trip ownership verified through full chain (dayId -> tripId -> userId)
+- Spot/trip ownership verified through trip_members table (checkTripAccess -> canEdit/isOwner)
+- Member roles: owner (full control), editor (CRUD spots/trips), viewer (read only)
 
 ## Development
 
@@ -71,6 +72,7 @@ bun run --filter @tabi/shared check-types
 - Web: http://localhost:3000
 - DB push: `bun run db:push`
 - Seed: `bun run db:seed`
+- Integration tests: `bun run --filter @tabi/api test:integration` (requires PostgreSQL with `tabi_test` DB)
 
 ## Conventions
 

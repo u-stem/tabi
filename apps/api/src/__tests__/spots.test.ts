@@ -174,6 +174,65 @@ describe("Spot routes", () => {
       expect(res.status).toBe(400);
     });
 
+    it("returns 201 with transport-specific fields", async () => {
+      const createdSpot = {
+        id: "spot-2",
+        tripDayId: dayId,
+        name: "Tokyo to Osaka",
+        category: "transport",
+        departurePlace: "Tokyo Station",
+        arrivalPlace: "Shin-Osaka Station",
+        transportMethod: "train",
+        sortOrder: 0,
+      };
+
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ max: -1 }]),
+        }),
+      });
+
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([createdSpot]),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(basePath, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Tokyo to Osaka",
+          category: "transport",
+          departurePlace: "Tokyo Station",
+          arrivalPlace: "Shin-Osaka Station",
+          transportMethod: "train",
+        }),
+      });
+
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.departurePlace).toBe("Tokyo Station");
+      expect(body.arrivalPlace).toBe("Shin-Osaka Station");
+      expect(body.transportMethod).toBe("train");
+    });
+
+    it("returns 400 with invalid transportMethod", async () => {
+      const app = createApp();
+      const res = await app.request(basePath, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Tokyo to Osaka",
+          category: "transport",
+          transportMethod: "helicopter",
+        }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
     it("returns 404 when day does not belong to user", async () => {
       mockDbQuery.tripDays.findFirst.mockResolvedValue(undefined);
 
@@ -226,6 +285,44 @@ describe("Spot routes", () => {
       });
 
       expect(res.status).toBe(400);
+    });
+
+    it("updates transport-specific fields", async () => {
+      const existing = {
+        id: "spot-1",
+        name: "Move",
+        category: "transport",
+        departurePlace: "Tokyo",
+        transportMethod: "bus",
+      };
+      const updated = {
+        ...existing,
+        departurePlace: "Shinjuku",
+        transportMethod: "train",
+      };
+      mockDbQuery.spots.findFirst.mockResolvedValue(existing);
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/spot-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          departurePlace: "Shinjuku",
+          transportMethod: "train",
+        }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.departurePlace).toBe("Shinjuku");
+      expect(body.transportMethod).toBe("train");
     });
 
     it("returns 404 when spot not found", async () => {

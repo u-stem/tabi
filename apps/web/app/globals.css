@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@import "leaflet/dist/leaflet.css";
+
 
 @theme {
   --color-background: hsl(0 0% 100%);

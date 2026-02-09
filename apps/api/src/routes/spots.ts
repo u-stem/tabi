@@ -3,7 +3,7 @@ import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { spots, tripDays } from "../db/schema";
-import { geocode } from "../lib/geocoding";
+
 import { canEdit, checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -69,22 +69,13 @@ spotRoutes.post("/:tripId/days/:dayId/spots", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  let { latitude, longitude } = parsed.data;
-  if (parsed.data.address && latitude == null && longitude == null) {
-    const coords = await geocode(parsed.data.address);
-    if (coords) {
-      latitude = coords.latitude;
-      longitude = coords.longitude;
-    }
-  }
-
   // Get next sort order
   const maxOrder = await db
     .select({ max: sql<number>`COALESCE(MAX(${spots.sortOrder}), -1)` })
     .from(spots)
     .where(eq(spots.tripDayId, dayId));
 
-  const { latitude: _lat, longitude: _lon, ...restData } = parsed.data;
+  const { latitude, longitude, ...restData } = parsed.data;
   const [spot] = await db
     .insert(spots)
     .values({
@@ -161,22 +152,13 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/:spotId", async (c) => {
     return c.json({ error: "Spot not found" }, 404);
   }
 
-  let { latitude, longitude } = parsed.data;
-  if (parsed.data.address && latitude == null && longitude == null) {
-    const coords = await geocode(parsed.data.address);
-    if (coords) {
-      latitude = coords.latitude;
-      longitude = coords.longitude;
-    }
-  }
-
-  const { latitude: _lat, longitude: _lon, ...restUpdate } = parsed.data;
+  const { latitude: lat, longitude: lon, ...restUpdate } = parsed.data;
   const [updated] = await db
     .update(spots)
     .set({
       ...restUpdate,
-      ...(latitude != null ? { latitude: String(latitude) } : {}),
-      ...(longitude != null ? { longitude: String(longitude) } : {}),
+      ...(lat != null ? { latitude: String(lat) } : {}),
+      ...(lon != null ? { longitude: String(lon) } : {}),
       updatedAt: new Date(),
     })
     .where(eq(spots.id, spotId))

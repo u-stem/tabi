@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import type { TripResponse } from "@tabi/shared";
+import { CATEGORY_LABELS } from "@tabi/shared";
 import { useParams } from "next/navigation";
-import { TripMap } from "@/components/trip-map-wrapper";
+import { useEffect, useState } from "react";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { formatDate, formatDateRange } from "@/lib/format";
-import { CATEGORY_LABELS } from "@tabi/shared";
-import type { TripResponse } from "@tabi/shared";
 
 export default function SharedTripPage() {
   const params = useParams();
@@ -59,49 +59,42 @@ export default function SharedTripPage() {
             {trip.destination} / {formatDateRange(trip.startDate, trip.endDate)}
           </p>
         </div>
-        <div className="grid gap-8 lg:grid-cols-2">
-          <div className="space-y-6">
-            {trip.days.map((day) => (
-              <div key={day.id} className="space-y-3">
-                <h3 className="font-semibold">
-                  {day.dayNumber}日目{" "}
-                  <span className="text-sm font-normal text-muted-foreground">
-                    {formatDate(day.date)}
-                  </span>
-                </h3>
-                {day.spots.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">まだスポットがありません</p>
-                ) : (
-                  <div className="space-y-2">
-                    {day.spots.map((spot) => (
-                      <div key={spot.id} className="rounded-md border p-3">
-                        <div className="flex items-center gap-2">
-                          <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">
-                            {CATEGORY_LABELS[spot.category]}
+        <div className="space-y-6">
+          {trip.days.map((day) => (
+            <div key={day.id} className="space-y-3">
+              <h3 className="font-semibold">
+                {day.dayNumber}日目{" "}
+                <span className="text-sm font-normal text-muted-foreground">
+                  {formatDate(day.date)}
+                </span>
+              </h3>
+              {day.spots.length === 0 ? (
+                <p className="text-sm text-muted-foreground">まだスポットがありません</p>
+              ) : (
+                <div className="space-y-2">
+                  {day.spots.map((spot) => (
+                    <div key={spot.id} className="rounded-md border p-3">
+                      <div className="flex items-center gap-2">
+                        <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">
+                          {CATEGORY_LABELS[spot.category]}
+                        </span>
+                        <span className="font-medium">{spot.name}</span>
+                        {spot.startTime && (
+                          <span className="text-xs text-muted-foreground">
+                            {spot.startTime}
+                            {spot.endTime && ` - ${spot.endTime}`}
                           </span>
-                          <span className="font-medium">{spot.name}</span>
-                          {spot.startTime && (
-                            <span className="text-xs text-muted-foreground">
-                              {spot.startTime}
-                              {spot.endTime && ` - ${spot.endTime}`}
-                            </span>
-                          )}
-                        </div>
-                        {spot.memo && (
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {spot.memo}
-                          </p>
                         )}
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-          <div className="h-[50vh] lg:sticky lg:top-4 lg:h-[calc(100vh-8rem)]">
-            <TripMap spots={trip.days.flatMap((day) => day.spots)} />
-          </div>
+                      {spot.memo && (
+                        <p className="mt-1 text-sm text-muted-foreground">{spot.memo}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -90,7 +90,7 @@ export default function TripDetailPage() {
           </button>
         </div>
         <p className="text-muted-foreground">
-          {trip.destination !== trip.title ? `${trip.destination} / ` : ""}
+          {`${trip.destination} / `}
           {formatDateRange(trip.startDate, trip.endDate)}
           <span className="ml-2 text-sm">({dayCount}日間)</span>
         </p>
@@ -107,6 +107,8 @@ export default function TripDetailPage() {
         tripId={tripId}
         title={trip.title}
         destination={trip.destination}
+        startDate={trip.startDate}
+        endDate={trip.endDate}
         open={editOpen}
         onOpenChange={setEditOpen}
         onUpdate={fetchTrip}

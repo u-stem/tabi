@@ -319,6 +319,124 @@ describe("Trip routes", () => {
       expect(res.status).toBe(400);
     });
 
+    it("uses transaction to adjust trip_days when changing dates", async () => {
+      const existingTrip = {
+        id: "trip-1",
+        startDate: "2025-07-01",
+        endDate: "2025-07-03",
+      };
+      mockDbQuery.trips.findFirst.mockResolvedValue(existingTrip);
+
+      const updated = {
+        id: "trip-1",
+        title: "Tokyo Trip",
+        startDate: "2025-07-02",
+        endDate: "2025-07-05",
+      };
+      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        const tx = {
+          delete: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue(undefined),
+          }),
+          insert: vi.fn().mockReturnValue({
+            values: vi.fn().mockResolvedValue(undefined),
+          }),
+          update: vi.fn().mockReturnValue({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                returning: vi.fn().mockResolvedValue([updated]),
+              }),
+            }),
+          }),
+          select: vi.fn().mockReturnValue({
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                orderBy: vi.fn().mockResolvedValue([
+                  { id: "day-2", date: "2025-07-02", dayNumber: 1 },
+                  { id: "day-3", date: "2025-07-03", dayNumber: 2 },
+                ]),
+              }),
+            }),
+          }),
+        };
+        return fn(tx);
+      });
+
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate: "2025-07-02", endDate: "2025-07-05" }),
+      });
+
+      expect(res.status).toBe(200);
+      expect(mockDbTransaction).toHaveBeenCalledOnce();
+    });
+
+    it("returns 400 when startDate is after endDate", async () => {
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate: "2025-07-10", endDate: "2025-07-01" }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 200 when only startDate is sent", async () => {
+      const existingTrip = {
+        id: "trip-1",
+        startDate: "2025-07-01",
+        endDate: "2025-07-03",
+      };
+      mockDbQuery.trips.findFirst.mockResolvedValue(existingTrip);
+
+      const updated = {
+        id: "trip-1",
+        startDate: "2025-07-02",
+        endDate: "2025-07-03",
+      };
+      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        const tx = {
+          delete: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue(undefined),
+          }),
+          insert: vi.fn().mockReturnValue({
+            values: vi.fn().mockResolvedValue(undefined),
+          }),
+          update: vi.fn().mockReturnValue({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                returning: vi.fn().mockResolvedValue([updated]),
+              }),
+            }),
+          }),
+          select: vi.fn().mockReturnValue({
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                orderBy: vi.fn().mockResolvedValue([
+                  { id: "day-2", date: "2025-07-02", dayNumber: 1 },
+                  { id: "day-3", date: "2025-07-03", dayNumber: 2 },
+                ]),
+              }),
+            }),
+          }),
+        };
+        return fn(tx);
+      });
+
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate: "2025-07-02" }),
+      });
+
+      expect(res.status).toBe(200);
+      expect(mockDbTransaction).toHaveBeenCalledOnce();
+    });
+
   });
 
   describe("DELETE /api/trips/:id", () => {

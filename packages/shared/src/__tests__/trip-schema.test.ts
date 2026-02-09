@@ -44,15 +44,28 @@ describe("updateTripSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("strips unknown fields", () => {
+  it("accepts partial update with dates", () => {
     const result = updateTripSchema.safeParse({
       title: "New Title",
       startDate: "2025-03-17",
     });
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data).toEqual({ title: "New Title" });
+      expect(result.data).toEqual({ title: "New Title", startDate: "2025-03-17" });
     }
+  });
+
+  it("rejects end date before start date", () => {
+    const result = updateTripSchema.safeParse({
+      startDate: "2025-03-20",
+      endDate: "2025-03-15",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("passes when only one date is provided", () => {
+    const result = updateTripSchema.safeParse({ endDate: "2025-03-20" });
+    expect(result.success).toBe(true);
   });
 
   it("rejects empty title", () => {

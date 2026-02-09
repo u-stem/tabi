@@ -18,6 +18,8 @@ type EditTripDialogProps = {
   tripId: string;
   title: string;
   destination: string;
+  startDate: string;
+  endDate: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
@@ -27,6 +29,8 @@ export function EditTripDialog({
   tripId,
   title,
   destination,
+  startDate,
+  endDate,
   open,
   onOpenChange,
   onUpdate,
@@ -47,9 +51,20 @@ export function EditTripDialog({
     setError(null);
 
     const formData = new FormData(e.currentTarget);
+    const newStartDate = formData.get("startDate") as string;
+    const newEndDate = formData.get("endDate") as string;
+
+    if (newStartDate > newEndDate) {
+      setError("出発日は帰着日より前に設定してください");
+      setLoading(false);
+      return;
+    }
+
     const data = {
       title: formData.get("title") as string,
       destination: formData.get("destination") as string,
+      startDate: newStartDate,
+      endDate: newEndDate,
     };
 
     try {
@@ -82,6 +97,16 @@ export function EditTripDialog({
           <div className="space-y-2">
             <Label htmlFor="edit-destination">目的地</Label>
             <Input id="edit-destination" name="destination" defaultValue={destination} required />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-startDate">出発日</Label>
+              <Input id="edit-startDate" name="startDate" type="date" defaultValue={startDate} required />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-endDate">帰着日</Label>
+              <Input id="edit-endDate" name="endDate" type="date" defaultValue={endDate} required />
+            </div>
           </div>
           {error && (
             <p role="alert" className="text-sm text-destructive">

@@ -1,11 +1,25 @@
 import { createTripSchema, updateTripSchema } from "@tabi/shared";
-import { eq } from "drizzle-orm";
+import { asc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { tripDays, tripMembers, trips } from "../db/schema";
 import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
+
+function generateDateRange(startDate: string, endDate: string): string[] {
+  const start = new Date(`${startDate}T00:00:00`);
+  const end = new Date(`${endDate}T00:00:00`);
+  const dates: string[] = [];
+  const maxDays = 365;
+  for (let d = new Date(start); d <= end && dates.length < maxDays; d.setDate(d.getDate() + 1)) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const dayOfMonth = String(d.getDate()).padStart(2, "0");
+    dates.push(`${year}-${month}-${dayOfMonth}`);
+  }
+  return dates;
+}
 
 const tripRoutes = new Hono<AppEnv>();
 tripRoutes.use("*", requireAuth);
@@ -69,24 +83,15 @@ tripRoutes.post("/", async (c) => {
       .returning();
 
     // Auto-create trip days based on date range
-    const start = new Date(`${startDate}T00:00:00`);
-    const end = new Date(`${endDate}T00:00:00`);
-    const days = [];
-    let dayNumber = 1;
-    const maxDays = 365;
-    for (let d = new Date(start); d <= end && dayNumber <= maxDays; d.setDate(d.getDate() + 1)) {
-      // Use local date methods to avoid UTC conversion shifting dates
-      const year = d.getFullYear();
-      const month = String(d.getMonth() + 1).padStart(2, "0");
-      const dayOfMonth = String(d.getDate()).padStart(2, "0");
-      days.push({
-        tripId: created.id,
-        date: `${year}-${month}-${dayOfMonth}`,
-        dayNumber: dayNumber++,
-      });
-    }
-    if (days.length > 0) {
-      await tx.insert(tripDays).values(days);
+    const dates = generateDateRange(startDate, endDate);
+    if (dates.length > 0) {
+      await tx.insert(tripDays).values(
+        dates.map((date, i) => ({
+          tripId: created.id,
+          date,
+          dayNumber: i + 1,
+        })),
+      );
     }
 
     // Add owner as trip member
@@ -149,11 +154,103 @@ tripRoutes.patch("/:id", async (c) => {
     return c.json({ error: "Trip not found" }, 404);
   }
 
-  const [updated] = await db
-    .update(trips)
-    .set({ ...parsed.data, updatedAt: new Date() })
-    .where(eq(trips.id, tripId))
-    .returning();
+  const { startDate: newStart, endDate: newEnd, ...otherFields } = parsed.data;
+  const hasDates = newStart !== undefined || newEnd !== undefined;
+
+  if (!hasDates) {
+    const [updated] = await db
+      .update(trips)
+      .set({ ...otherFields, updatedAt: new Date() })
+      .where(eq(trips.id, tripId))
+      .returning();
+
+    if (!updated) {
+      return c.json({ error: "Trip not found" }, 404);
+    }
+    return c.json(updated);
+  }
+
+  // Fetch current trip to determine full date range
+  const currentTrip = await db.query.trips.findFirst({
+    where: eq(trips.id, tripId),
+  });
+  if (!currentTrip) {
+    return c.json({ error: "Trip not found" }, 404);
+  }
+
+  const effectiveStart = newStart ?? currentTrip.startDate;
+  const effectiveEnd = newEnd ?? currentTrip.endDate;
+
+  // Validate cross-field constraint when only one date is sent
+  if (effectiveEnd < effectiveStart) {
+    return c.json(
+      { error: { fieldErrors: { endDate: ["End date must be on or after start date"] }, formErrors: [] } },
+      400,
+    );
+  }
+
+  const updated = await db.transaction(async (tx) => {
+    // Generate new date set
+    const newDates = generateDateRange(effectiveStart, effectiveEnd);
+
+    // Get existing trip_days
+    const existingDays = await tx
+      .select()
+      .from(tripDays)
+      .where(eq(tripDays.tripId, tripId))
+      .orderBy(asc(tripDays.date));
+
+    const existingDateSet = new Set(existingDays.map((d) => d.date));
+    const newDateSet = new Set(newDates);
+
+    // Delete days outside new range
+    const idsToDelete = existingDays.filter((d) => !newDateSet.has(d.date)).map((d) => d.id);
+    if (idsToDelete.length > 0) {
+      await tx.delete(tripDays).where(inArray(tripDays.id, idsToDelete));
+    }
+
+    // Insert new days
+    const datesToInsert = newDates.filter((d) => !existingDateSet.has(d));
+    if (datesToInsert.length > 0) {
+      await tx.insert(tripDays).values(
+        datesToInsert.map((date) => ({
+          tripId,
+          date,
+          dayNumber: 0, // Will be corrected below
+        })),
+      );
+    }
+
+    // Re-fetch all days and update dayNumber
+    const allDays = await tx
+      .select()
+      .from(tripDays)
+      .where(eq(tripDays.tripId, tripId))
+      .orderBy(asc(tripDays.date));
+
+    for (let i = 0; i < allDays.length; i++) {
+      if (allDays[i].dayNumber !== i + 1) {
+        await tx
+          .update(tripDays)
+          .set({ dayNumber: i + 1 })
+          .where(eq(tripDays.id, allDays[i].id));
+      }
+    }
+
+    // Update trip
+    const [result] = await tx
+      .update(trips)
+      .set({
+        ...otherFields,
+        startDate: effectiveStart,
+        endDate: effectiveEnd,
+        updatedAt: new Date(),
+      })
+      .where(eq(trips.id, tripId))
+      .returning();
+
+    return result;
+  });
 
   if (!updated) {
     return c.json({ error: "Trip not found" }, 404);

@@ -99,7 +99,10 @@ export function DayTimeline({
                 <SpotItem
                   key={spot.id}
                   {...spot}
+                  tripId={tripId}
+                  dayId={dayId}
                   onDelete={() => handleDelete(spot.id)}
+                  onUpdate={onRefresh}
                   disabled={disabled}
                 />
               ))}

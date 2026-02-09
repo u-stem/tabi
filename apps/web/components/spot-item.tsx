@@ -4,6 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { SpotCategory, TransportMethod } from "@tabi/shared";
 import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@tabi/shared";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { EditSpotDialog } from "./edit-spot-dialog";
 
 type SpotItemProps = {
   id: string;
@@ -29,7 +31,10 @@ type SpotItemProps = {
   departurePlace?: string | null;
   arrivalPlace?: string | null;
   transportMethod?: string | null;
+  tripId: string;
+  dayId: string;
   onDelete: () => void;
+  onUpdate: () => void;
   disabled?: boolean;
 };
 
@@ -45,9 +50,13 @@ export function SpotItem({
   departurePlace,
   arrivalPlace,
   transportMethod,
+  tripId,
+  dayId,
   onDelete,
+  onUpdate,
   disabled,
 }: SpotItemProps) {
+  const [editOpen, setEditOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
     disabled,
@@ -91,7 +100,17 @@ export function SpotItem({
             <span className="font-medium">{name}</span>
             {timeStr && <span className="ml-2 text-xs text-muted-foreground">{timeStr}</span>}
           </div>
-          <AlertDialog>
+          <div className="flex shrink-0 gap-2">
+            <button
+              type="button"
+              className="text-xs text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+              aria-label={`${name}を編集`}
+              disabled={disabled}
+              onClick={() => setEditOpen(true)}
+            >
+              編集
+            </button>
+            <AlertDialog>
             <AlertDialogTrigger asChild>
               <button
                 type="button"
@@ -115,6 +134,15 @@ export function SpotItem({
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+          </div>
+          <EditSpotDialog
+            tripId={tripId}
+            dayId={dayId}
+            spot={{ id, name, category, address, url, startTime, endTime, memo, departurePlace, arrivalPlace, transportMethod, sortOrder: 0 }}
+            open={editOpen}
+            onOpenChange={setEditOpen}
+            onUpdate={onUpdate}
+          />
         </div>
         {(address || url || memo || departurePlace || arrivalPlace || transportMethod) && (
           <div className="mt-1 space-y-0.5">

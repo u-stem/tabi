@@ -90,7 +90,13 @@ patternRoutes.post("/:tripId/days/:dayId/patterns", async (c) => {
   broadcastToTrip(tripId, user.id, {
     type: "pattern:created",
     dayId,
-    pattern: { ...pattern, spots: [] },
+    pattern: {
+      id: pattern.id,
+      label: pattern.label,
+      isDefault: pattern.isDefault,
+      sortOrder: pattern.sortOrder,
+      spots: [],
+    },
   });
   return c.json(pattern, 201);
 });
@@ -128,7 +134,13 @@ patternRoutes.patch("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
   broadcastToTrip(tripId, user.id, {
     type: "pattern:updated",
     dayId,
-    pattern: { ...updated, spots: [] },
+    pattern: {
+      id: updated.id,
+      label: updated.label,
+      isDefault: updated.isDefault,
+      sortOrder: updated.sortOrder,
+      spots: [],
+    },
   });
   return c.json(updated);
 });
@@ -223,7 +235,13 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
   broadcastToTrip(tripId, user.id, {
     type: "pattern:duplicated",
     dayId,
-    pattern: { ...result, spots: [] },
+    pattern: {
+      id: result.id,
+      label: result.label,
+      isDefault: result.isDefault,
+      sortOrder: result.sortOrder,
+      spots: [],
+    },
   });
   return c.json(result, 201);
 });

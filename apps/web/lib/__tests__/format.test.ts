@@ -17,9 +17,7 @@ describe("formatDate", () => {
 
 describe("formatDateRange", () => {
   it("formats a date range", () => {
-    expect(formatDateRange("2025-04-01", "2025-04-03")).toBe(
-      "2025年4月1日 - 2025年4月3日",
-    );
+    expect(formatDateRange("2025-04-01", "2025-04-03")).toBe("2025年4月1日 - 2025年4月3日");
   });
 });
 

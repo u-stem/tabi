@@ -14,10 +14,7 @@ type FetchOptions = RequestInit & {
   params?: Record<string, string>;
 };
 
-export async function api<T>(
-  path: string,
-  options: FetchOptions = {},
-): Promise<T> {
+export async function api<T>(path: string, options: FetchOptions = {}): Promise<T> {
   const { params, ...fetchOptions } = options;
 
   let url = `${API_BASE}${path}`;

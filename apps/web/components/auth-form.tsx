@@ -1,18 +1,12 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { signIn, signUp } from "@/lib/auth-client";
 
 type AuthFormProps = {
@@ -58,13 +52,9 @@ export function AuthForm({ mode }: AuthFormProps) {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">
-          {mode === "login" ? "ログイン" : "新規登録"}
-        </CardTitle>
+        <CardTitle className="text-2xl">{mode === "login" ? "ログイン" : "新規登録"}</CardTitle>
         <CardDescription>
-          {mode === "login"
-            ? "メールアドレスでログイン"
-            : "無料でアカウントを作成"}
+          {mode === "login" ? "メールアドレスでログイン" : "無料でアカウントを作成"}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -72,13 +62,7 @@ export function AuthForm({ mode }: AuthFormProps) {
           {mode === "signup" && (
             <div className="space-y-2">
               <Label htmlFor="name">名前</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder="山田太郎"
-                autoComplete="name"
-                required
-              />
+              <Input id="name" name="name" placeholder="山田太郎" autoComplete="name" required />
             </div>
           )}
           <div className="space-y-2">
@@ -104,13 +88,14 @@ export function AuthForm({ mode }: AuthFormProps) {
               required
             />
             {mode === "signup" && (
-              <p className="text-xs text-muted-foreground">
-                8文字以上で入力してください
-              </p>
+              <p className="text-xs text-muted-foreground">8文字以上で入力してください</p>
             )}
           </div>
           {error && (
-            <div role="alert" className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            <div
+              role="alert"
+              className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+            >
               {error}
             </div>
           )}

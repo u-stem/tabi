@@ -1,18 +1,19 @@
 "use client";
 
+import { CATEGORY_LABELS } from "@tabi/shared";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,8 +21,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { CATEGORY_LABELS } from "@tabi/shared";
 
 type AddSpotDialogProps = {
   tripId: string;
@@ -91,6 +92,7 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
       <DialogContent>
         <DialogHeader>
           <DialogTitle>スポットを追加</DialogTitle>
+          <DialogDescription>旅行の日程にスポットを追加します</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -134,7 +136,11 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
             <Label htmlFor="memo">メモ</Label>
             <Textarea id="memo" name="memo" rows={3} />
           </div>
-          {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+          {error && (
+            <p role="alert" className="text-sm text-destructive">
+              {error}
+            </p>
+          )}
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "追加中..." : "スポットを追加"}
           </Button>

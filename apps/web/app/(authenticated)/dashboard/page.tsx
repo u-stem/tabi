@@ -1,14 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import type { TripListItem } from "@tabi/shared";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { TripCard } from "@/components/trip-card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TripCard } from "@/components/trip-card";
-import { api, ApiError } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
-import type { TripListItem } from "@tabi/shared";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -59,12 +59,8 @@ export default function DashboardPage() {
         <p className="mt-8 text-destructive">{error}</p>
       ) : trips.length === 0 ? (
         <div className="mt-12 flex flex-col items-center gap-4 text-center">
-          <p className="text-lg text-muted-foreground">
-            まだ旅行がありません
-          </p>
-          <p className="text-sm text-muted-foreground">
-            最初の旅行プランを作成してみましょう
-          </p>
+          <p className="text-lg text-muted-foreground">まだ旅行がありません</p>
+          <p className="text-sm text-muted-foreground">最初の旅行プランを作成してみましょう</p>
           {online ? (
             <Button asChild>
               <Link href="/trips/new">旅行を作成</Link>

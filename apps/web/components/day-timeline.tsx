@@ -1,21 +1,21 @@
 "use client";
 
 import {
-  DndContext,
   closestCenter,
+  DndContext,
   type DragEndEvent,
   PointerSensor,
   TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { SortableContext, arrayMove, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import type { SpotResponse } from "@tabi/shared";
 import { toast } from "sonner";
-import { SpotItem } from "./spot-item";
-import { AddSpotDialog } from "./add-spot-dialog";
 import { api } from "@/lib/api";
 import { formatDate } from "@/lib/format";
-import type { SpotResponse } from "@tabi/shared";
+import { AddSpotDialog } from "./add-spot-dialog";
+import { SpotItem } from "./spot-item";
 
 type DayTimelineProps = {
   tripId: string;
@@ -80,31 +80,28 @@ export function DayTimeline({
       <div className="mb-3 flex items-center justify-between">
         <h3 className="font-semibold">
           {dayNumber}日目
-          <span className="ml-2 text-sm font-normal text-muted-foreground">
-            {formatDate(date)}
-          </span>
+          <span className="ml-2 text-sm font-normal text-muted-foreground">{formatDate(date)}</span>
         </h3>
         <AddSpotDialog tripId={tripId} dayId={dayId} onAdd={onRefresh} disabled={disabled} />
       </div>
       {spots.length === 0 ? (
         <div className="rounded-md border border-dashed p-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            まだスポットがありません
-          </p>
+          <p className="text-sm text-muted-foreground">まだスポットがありません</p>
           <p className="mt-1 text-xs text-muted-foreground">
             「+ スポット追加」から行きたい場所を追加しましょう
           </p>
         </div>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          onDragEnd={handleDragEnd}
-        >
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
           <SortableContext items={spots.map((s) => s.id)} strategy={verticalListSortingStrategy}>
             <div className="space-y-2">
               {spots.map((spot) => (
-                <SpotItem key={spot.id} {...spot} onDelete={() => handleDelete(spot.id)} disabled={disabled} />
+                <SpotItem
+                  key={spot.id}
+                  {...spot}
+                  onDelete={() => handleDelete(spot.id)}
+                  disabled={disabled}
+                />
               ))}
             </div>
           </SortableContext>

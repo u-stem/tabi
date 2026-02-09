@@ -5,8 +5,8 @@ vi.mock("../hooks/use-online-status", () => ({
   useOnlineStatus: vi.fn(),
 }));
 
-import { useOnlineStatus } from "../hooks/use-online-status";
 import { OfflineBanner } from "../../components/offline-banner";
+import { useOnlineStatus } from "../hooks/use-online-status";
 
 const mockUseOnlineStatus = vi.mocked(useOnlineStatus);
 

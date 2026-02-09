@@ -1,18 +1,13 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { api } from "@/lib/api";
 
 export default function NewTripPage() {
@@ -69,43 +64,27 @@ export default function NewTripPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="title">旅行タイトル</Label>
-              <Input
-                id="title"
-                name="title"
-                placeholder="京都3日間の旅"
-                required
-              />
+              <Input id="title" name="title" placeholder="京都3日間の旅" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="destination">目的地</Label>
-              <Input
-                id="destination"
-                name="destination"
-                placeholder="京都"
-                required
-              />
+              <Input id="destination" name="destination" placeholder="京都" required />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="startDate">出発日</Label>
-                <Input
-                  id="startDate"
-                  name="startDate"
-                  type="date"
-                  required
-                />
+                <Input id="startDate" name="startDate" type="date" required />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="endDate">帰着日</Label>
-                <Input
-                  id="endDate"
-                  name="endDate"
-                  type="date"
-                  required
-                />
+                <Input id="endDate" name="endDate" type="date" required />
               </div>
             </div>
-            {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "作成中..." : "旅行を作成"}
             </Button>

@@ -1,16 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import type { TripStatus } from "@tabi/shared";
+import { STATUS_LABELS } from "@tabi/shared";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { MemberDialog } from "@/components/member-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,10 +17,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { MemberDialog } from "@/components/member-dialog";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { STATUS_LABELS } from "@tabi/shared";
-import type { TripStatus } from "@tabi/shared";
 
 type TripActionsProps = {
   tripId: string;
@@ -71,10 +71,9 @@ export function TripActions({ tripId, status, onStatusChange, disabled }: TripAc
   async function handleShare() {
     setSharing(true);
     try {
-      const result = await api<{ shareToken: string }>(
-        `/api/trips/${tripId}/share`,
-        { method: "POST" },
-      );
+      const result = await api<{ shareToken: string }>(`/api/trips/${tripId}/share`, {
+        method: "POST",
+      });
       const shareUrl = `${window.location.origin}/shared/${result.shareToken}`;
       if (navigator.clipboard) {
         await navigator.clipboard.writeText(shareUrl);
@@ -118,7 +117,12 @@ export function TripActions({ tripId, status, onStatusChange, disabled }: TripAc
       </div>
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="ghost" size="sm" disabled={disabled || deleting} className="text-muted-foreground hover:text-destructive">
+          <Button
+            variant="ghost"
+            size="sm"
+            disabled={disabled || deleting}
+            className="text-muted-foreground hover:text-destructive"
+          >
             {deleting ? "削除中..." : "削除"}
           </Button>
         </AlertDialogTrigger>

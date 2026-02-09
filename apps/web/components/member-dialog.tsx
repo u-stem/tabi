@@ -1,17 +1,19 @@
 "use client";
 
+import type { MemberResponse } from "@tabi/shared";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -20,7 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import type { MemberResponse } from "@tabi/shared";
 
 type MemberDialogProps = {
   tripId: string;
@@ -106,6 +107,7 @@ export function MemberDialog({ tripId }: MemberDialogProps) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>メンバー管理</DialogTitle>
+          <DialogDescription>旅行メンバーの招待と権限を管理します</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -114,7 +116,10 @@ export function MemberDialog({ tripId }: MemberDialogProps) {
           ) : (
             <div className="space-y-2">
               {members.map((member) => (
-                <div key={member.userId} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                <div
+                  key={member.userId}
+                  className="flex items-center justify-between gap-2 rounded-md border p-2"
+                >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{member.name}</p>
                     <p className="truncate text-xs text-muted-foreground">{member.email}</p>
@@ -123,7 +128,10 @@ export function MemberDialog({ tripId }: MemberDialogProps) {
                     <span className="shrink-0 text-xs text-muted-foreground">オーナー</span>
                   ) : (
                     <div className="flex shrink-0 items-center gap-1">
-                      <Select value={member.role} onValueChange={(v) => handleRoleChange(member.userId, v)}>
+                      <Select
+                        value={member.role}
+                        onValueChange={(v) => handleRoleChange(member.userId, v)}
+                      >
                         <SelectTrigger className="h-7 w-[100px] text-xs">
                           <SelectValue />
                         </SelectTrigger>

@@ -2,9 +2,8 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { CATEGORY_LABELS } from "@tabi/shared";
 import type { SpotCategory } from "@tabi/shared";
-import { cn } from "@/lib/utils";
+import { CATEGORY_LABELS } from "@tabi/shared";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,6 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 type SpotItemProps = {
   id: string;
@@ -52,12 +52,7 @@ export function SpotItem({
     transition,
   };
 
-  const timeStr =
-    startTime && endTime
-      ? `${startTime} - ${endTime}`
-      : startTime
-        ? startTime
-        : "";
+  const timeStr = startTime && endTime ? `${startTime} - ${endTime}` : startTime ? startTime : "";
 
   return (
     <div
@@ -88,9 +83,7 @@ export function SpotItem({
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
             <span className="font-medium">{name}</span>
-            {timeStr && (
-              <span className="ml-2 text-xs text-muted-foreground">{timeStr}</span>
-            )}
+            {timeStr && <span className="ml-2 text-xs text-muted-foreground">{timeStr}</span>}
           </div>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -119,9 +112,7 @@ export function SpotItem({
         </div>
         {(address || url || memo) && (
           <div className="mt-1 space-y-0.5">
-            {address && (
-              <p className="text-xs text-muted-foreground">{address}</p>
-            )}
+            {address && <p className="text-xs text-muted-foreground">{address}</p>}
             {url && (
               <a
                 href={url}

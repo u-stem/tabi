@@ -54,6 +54,17 @@ describe("Room management", () => {
     it("returns empty array for non-existent room", () => {
       expect(getPresence("no-room")).toEqual([]);
     });
+
+    it("deduplicates same user with multiple connections", () => {
+      const ws1 = createMockWs();
+      const ws2 = createMockWs();
+      const user: PresenceUser = { userId: "u1", name: "Alice", dayId: null, patternId: null };
+
+      joinRoom("trip-1", ws1, user);
+      joinRoom("trip-1", ws2, user);
+
+      expect(getPresence("trip-1")).toHaveLength(1);
+    });
   });
 
   describe("broadcastToTrip", () => {

@@ -29,10 +29,15 @@ export function leaveAll(): void {
   rooms.clear();
 }
 
+// Deduplicate by userId (last connection's state wins)
 export function getPresence(tripId: string): PresenceUser[] {
   const room = rooms.get(tripId);
   if (!room) return [];
-  return [...room.values()];
+  const byUser = new Map<string, PresenceUser>();
+  for (const user of room.values()) {
+    byUser.set(user.userId, user);
+  }
+  return [...byUser.values()];
 }
 
 export function updatePresence(

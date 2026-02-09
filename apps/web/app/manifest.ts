@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: "tabi - 旅行プランナー",
     short_name: "tabi",
     description: "あなたの旅を、もっと自由に",
-    start_url: "/dashboard",
+    start_url: "/home",
     display: "standalone",
     background_color: "#ffffff",
     theme_color: "#09090b",

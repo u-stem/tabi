@@ -1,4 +1,4 @@
-import type { SpotCategory, TransportMethod } from "./schemas/spot";
+import type { SpotCategory, SpotColor, TransportMethod } from "./schemas/spot";
 import type { TripStatus } from "./schemas/trip";
 
 export const CATEGORY_LABELS: Record<SpotCategory, string> = {
@@ -24,4 +24,15 @@ export const STATUS_LABELS: Record<TripStatus, string> = {
   planned: "計画済み",
   active: "進行中",
   completed: "完了",
+};
+
+export const SPOT_COLOR_LABELS: Record<SpotColor, string> = {
+  blue: "青",
+  red: "赤",
+  green: "緑",
+  yellow: "黄",
+  purple: "紫",
+  pink: "ピンク",
+  orange: "オレンジ",
+  gray: "グレー",
 };

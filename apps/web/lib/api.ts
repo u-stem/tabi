@@ -36,7 +36,9 @@ export async function api<T>(path: string, options: FetchOptions = {}): Promise<
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({ error: "Unknown error" }));
-    throw new ApiError(body.error || `API error: ${res.status}`, res.status);
+    const error = body.error;
+    const message = typeof error === "string" ? error : `API error: ${res.status}`;
+    throw new ApiError(message, res.status);
   }
 
   if (res.status === 204) {

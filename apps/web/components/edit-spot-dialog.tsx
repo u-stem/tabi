@@ -1,9 +1,16 @@
 "use client";
 
-import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@tabi/shared";
-import type { SpotResponse, TransportMethod } from "@tabi/shared";
+import type { SpotColor, SpotResponse, TransportMethod } from "@tabi/shared";
+import {
+  CATEGORY_LABELS,
+  SPOT_COLOR_LABELS,
+  SPOT_COLORS,
+  TRANSPORT_METHOD_LABELS,
+} from "@tabi/shared";
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { TimeInput } from "@/components/time-input";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,6 +30,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import { SPOT_COLOR_CLASSES } from "@/lib/colors";
+import { validateTimeRange } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 type EditSpotDialogProps = {
   tripId: string;
@@ -63,18 +73,34 @@ export function EditSpotDialog({
   const [transportMethod, setTransportMethod] = useState<TransportMethod | "">(
     (spot.transportMethod as TransportMethod) || "",
   );
+  const [color, setColor] = useState<SpotColor>(spot.color);
+  const [startTime, setStartTime] = useState<string | undefined>(spot.startTime ?? undefined);
+  const [endTime, setEndTime] = useState<string | undefined>(spot.endTime ?? undefined);
+  const [timeError, setTimeError] = useState<string | null>(null);
 
   function handleOpenChange(isOpen: boolean) {
     onOpenChange(isOpen);
     if (!isOpen) {
       setError(null);
+      setTimeError(null);
       setCategory(spot.category);
       setTransportMethod((spot.transportMethod as TransportMethod) || "");
+      setColor(spot.color);
+      setStartTime(spot.startTime ?? undefined);
+      setEndTime(spot.endTime ?? undefined);
     }
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setTimeError(null);
+
+    const timeValidation = validateTimeRange(startTime, endTime);
+    if (timeValidation) {
+      setTimeError(timeValidation);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -82,10 +108,12 @@ export function EditSpotDialog({
     const data = {
       name: formData.get("name") as string,
       category,
-      address: category !== "transport" ? (formData.get("address") as string) || undefined : undefined,
+      color,
+      address:
+        category !== "transport" ? (formData.get("address") as string) || undefined : undefined,
       url: (formData.get("url") as string) || undefined,
-      startTime: (formData.get("startTime") as string) || undefined,
-      endTime: (formData.get("endTime") as string) || undefined,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
       memo: (formData.get("memo") as string) || undefined,
       ...(category === "transport"
         ? {
@@ -102,10 +130,10 @@ export function EditSpotDialog({
         body: JSON.stringify(data),
       });
       onOpenChange(false);
-      toast.success("スポットを更新しました");
+      toast.success("予定を更新しました");
       onUpdate();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "スポットの更新に失敗しました");
+      setError(err instanceof Error ? err.message : "予定の更新に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -115,8 +143,8 @@ export function EditSpotDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>スポットを編集</DialogTitle>
-          <DialogDescription>スポットの情報を変更します</DialogDescription>
+          <DialogTitle>予定を編集</DialogTitle>
+          <DialogDescription>予定の情報を変更します</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -143,6 +171,24 @@ export function EditSpotDialog({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>色</Label>
+            <div className="flex gap-2">
+              {SPOT_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColor(c)}
+                  className={cn(
+                    "h-6 w-6 rounded-full",
+                    SPOT_COLOR_CLASSES[c].bg,
+                    color === c && `ring-2 ring-offset-1 ${SPOT_COLOR_CLASSES[c].ring}`,
+                  )}
+                  aria-label={SPOT_COLOR_LABELS[c]}
+                />
+              ))}
+            </div>
           </div>
           {category !== "transport" && (
             <div className="space-y-2">
@@ -207,24 +253,15 @@ export function EditSpotDialog({
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="edit-startTime">{getTimeLabels(category).start}</Label>
-              <Input
-                id="edit-startTime"
-                name="startTime"
-                type="time"
-                defaultValue={spot.startTime ?? ""}
-              />
+              <Label>{getTimeLabels(category).start}</Label>
+              <TimeInput value={startTime} onChange={setStartTime} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-endTime">{getTimeLabels(category).end}</Label>
-              <Input
-                id="edit-endTime"
-                name="endTime"
-                type="time"
-                defaultValue={spot.endTime ?? ""}
-              />
+              <Label>{getTimeLabels(category).end}</Label>
+              <TimeInput value={endTime} onChange={setEndTime} />
             </div>
           </div>
+          {timeError && <p className="text-sm text-destructive">{timeError}</p>}
           <div className="space-y-2">
             <Label htmlFor="edit-memo">メモ</Label>
             <Textarea id="edit-memo" name="memo" rows={3} defaultValue={spot.memo ?? ""} />
@@ -235,7 +272,8 @@ export function EditSpotDialog({
             </p>
           )}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "更新中..." : "スポットを更新"}
+            <Check className="h-4 w-4" />
+            {loading ? "更新中..." : "予定を更新"}
           </Button>
         </form>
       </DialogContent>

@@ -20,7 +20,7 @@
   --color-destructive-foreground: hsl(0 0% 98%);
   --color-border: hsl(240 5.9% 90%);
   --color-input: hsl(240 5.9% 90%);
-  --color-ring: hsl(240 5.9% 10%);
+  --color-ring: hsl(221 83.2% 53.3%);
   --color-chart-1: hsl(12 76% 61%);
   --color-chart-2: hsl(173 58% 39%);
   --color-chart-3: hsl(197 37% 24%);
@@ -47,5 +47,9 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  button,
+  [role="button"] {
+    cursor: pointer;
   }
 }

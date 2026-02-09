@@ -1,5 +1,6 @@
 "use client";
 
+import { LogIn, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -46,7 +47,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       toast.success("ログインしました");
     }
     setLoading(false);
-    router.push("/dashboard");
+    router.push("/home");
   }
 
   return (
@@ -100,6 +101,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             </div>
           )}
           <Button type="submit" className="w-full" disabled={loading}>
+            {mode === "login" ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
             {loading
               ? mode === "login"
                 ? "ログイン中..."

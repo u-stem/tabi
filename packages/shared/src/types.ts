@@ -1,5 +1,5 @@
 import type { MemberRole } from "./schemas/member";
-import type { SpotCategory } from "./schemas/spot";
+import type { SpotCategory, SpotColor } from "./schemas/spot";
 import type { TripStatus } from "./schemas/trip";
 
 export type SpotResponse = {
@@ -17,6 +17,7 @@ export type SpotResponse = {
   departurePlace?: string | null;
   arrivalPlace?: string | null;
   transportMethod?: string | null;
+  color: SpotColor;
 };
 
 export type DayResponse = {

@@ -1,5 +1,6 @@
 "use client";
 
+import { CircleUser, LogOut } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -27,14 +28,18 @@ export function Header() {
         aria-label="メインナビゲーション"
         className="container flex h-14 items-center justify-between"
       >
-        <Link href="/dashboard" className="text-xl font-bold">
+        <Link href="/home" className="text-xl font-bold">
           tabi
         </Link>
         <div className="flex items-center gap-4">
           {session?.user && (
             <>
-              <span className="text-sm text-muted-foreground">{session.user.name}</span>
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
+              <span className="flex items-center gap-1 text-sm text-muted-foreground">
+                <CircleUser className="h-4 w-4" />
+                {session.user.name}
+              </span>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4" />
                 ログアウト
               </Button>
             </>

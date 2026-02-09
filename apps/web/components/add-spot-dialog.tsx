@@ -1,9 +1,16 @@
 "use client";
 
-import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@tabi/shared";
-import type { TransportMethod } from "@tabi/shared";
+import type { SpotColor, TransportMethod } from "@tabi/shared";
+import {
+  CATEGORY_LABELS,
+  SPOT_COLOR_LABELS,
+  SPOT_COLORS,
+  TRANSPORT_METHOD_LABELS,
+} from "@tabi/shared";
+import { Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { TimeInput } from "@/components/time-input";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -24,6 +31,9 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
+import { SPOT_COLOR_CLASSES } from "@/lib/colors";
+import { validateTimeRange } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 type AddSpotDialogProps = {
   tripId: string;
@@ -54,9 +64,21 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState("sightseeing");
   const [transportMethod, setTransportMethod] = useState<TransportMethod | "">("");
+  const [color, setColor] = useState<SpotColor>("blue");
+  const [startTime, setStartTime] = useState<string | undefined>();
+  const [endTime, setEndTime] = useState<string | undefined>();
+  const [timeError, setTimeError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    setTimeError(null);
+
+    const timeValidation = validateTimeRange(startTime, endTime);
+    if (timeValidation) {
+      setTimeError(timeValidation);
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -64,10 +86,12 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
     const data = {
       name: formData.get("name") as string,
       category,
-      address: category !== "transport" ? (formData.get("address") as string) || undefined : undefined,
+      color,
+      address:
+        category !== "transport" ? (formData.get("address") as string) || undefined : undefined,
       url: (formData.get("url") as string) || undefined,
-      startTime: (formData.get("startTime") as string) || undefined,
-      endTime: (formData.get("endTime") as string) || undefined,
+      startTime: startTime || undefined,
+      endTime: endTime || undefined,
       memo: (formData.get("memo") as string) || undefined,
       ...(category === "transport"
         ? {
@@ -84,10 +108,10 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
         body: JSON.stringify(data),
       });
       setOpen(false);
-      toast.success("スポットを追加しました");
+      toast.success("予定を追加しました");
       onAdd();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "スポットの追加に失敗しました");
+      setError(err instanceof Error ? err.message : "予定の追加に失敗しました");
     } finally {
       setLoading(false);
     }
@@ -102,18 +126,23 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
           setError(null);
           setCategory("sightseeing");
           setTransportMethod("");
+          setColor("blue");
+          setStartTime(undefined);
+          setEndTime(undefined);
+          setTimeError(null);
         }
       }}
     >
       <DialogTrigger asChild>
         <Button variant="outline" size="sm" disabled={disabled}>
-          + スポット追加
+          <Plus className="h-4 w-4" />
+          予定を追加
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>スポットを追加</DialogTitle>
-          <DialogDescription>旅行の日程にスポットを追加します</DialogDescription>
+          <DialogTitle>予定を追加</DialogTitle>
+          <DialogDescription>旅行の日程に予定を追加します</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
@@ -140,6 +169,24 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>色</Label>
+            <div className="flex gap-2">
+              {SPOT_COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColor(c)}
+                  className={cn(
+                    "h-6 w-6 rounded-full",
+                    SPOT_COLOR_CLASSES[c].bg,
+                    color === c && `ring-2 ring-offset-1 ${SPOT_COLOR_CLASSES[c].ring}`,
+                  )}
+                  aria-label={SPOT_COLOR_LABELS[c]}
+                />
+              ))}
+            </div>
           </div>
           {category !== "transport" && (
             <div className="space-y-2">
@@ -183,14 +230,15 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startTime">{getTimeLabels(category).start}</Label>
-              <Input id="startTime" name="startTime" type="time" />
+              <Label>{getTimeLabels(category).start}</Label>
+              <TimeInput value={startTime} onChange={setStartTime} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endTime">{getTimeLabels(category).end}</Label>
-              <Input id="endTime" name="endTime" type="time" />
+              <Label>{getTimeLabels(category).end}</Label>
+              <TimeInput value={endTime} onChange={setEndTime} />
             </div>
           </div>
+          {timeError && <p className="text-sm text-destructive">{timeError}</p>}
           <div className="space-y-2">
             <Label htmlFor="memo">メモ</Label>
             <Textarea id="memo" name="memo" rows={3} />
@@ -201,7 +249,8 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
             </p>
           )}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "追加中..." : "スポットを追加"}
+            <Plus className="h-4 w-4" />
+            {loading ? "追加中..." : "予定を追加"}
           </Button>
         </form>
       </DialogContent>

@@ -10,6 +10,10 @@ export const spotCategorySchema = z.enum([
 ]);
 export type SpotCategory = z.infer<typeof spotCategorySchema>;
 
+export const SPOT_COLORS = ["blue", "red", "green", "yellow", "purple", "pink", "orange", "gray"] as const;
+export const spotColorSchema = z.enum(SPOT_COLORS);
+export type SpotColor = z.infer<typeof spotColorSchema>;
+
 export const transportMethodSchema = z.enum([
   "train",
   "bus",
@@ -20,7 +24,7 @@ export const transportMethodSchema = z.enum([
 ]);
 export type TransportMethod = z.infer<typeof transportMethodSchema>;
 
-const timeRegex = /^\d{2}:\d{2}$/;
+const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
 
 export const createSpotSchema = z.object({
   name: z.string().min(1).max(200),
@@ -35,6 +39,7 @@ export const createSpotSchema = z.object({
   departurePlace: z.string().max(200).optional(),
   arrivalPlace: z.string().max(200).optional(),
   transportMethod: transportMethodSchema.optional(),
+  color: spotColorSchema.default("blue"),
 });
 export type CreateSpotInput = z.infer<typeof createSpotSchema>;
 

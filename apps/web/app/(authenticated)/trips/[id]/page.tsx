@@ -1,7 +1,6 @@
 "use client";
 
 import type { TripResponse } from "@tabi/shared";
-import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { DayTimeline } from "@/components/day-timeline";
@@ -12,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
 import { formatDateRange, getDayCount } from "@/lib/format";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
+import { cn } from "@/lib/utils";
 
 export default function TripDetailPage() {
   const params = useParams();
@@ -22,6 +22,7 @@ export default function TripDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(0);
 
   const fetchTrip = useCallback(async () => {
     try {
@@ -72,23 +73,7 @@ export default function TripDetailPage() {
   return (
     <div>
       <div className="mb-6">
-        <Link
-          href="/dashboard"
-          className="mb-4 inline-flex items-center text-sm text-muted-foreground hover:text-foreground"
-        >
-          <span aria-hidden="true">&larr;</span> ホームに戻る
-        </Link>
-        <div className="flex items-center gap-2">
-          <h1 className="text-2xl font-bold">{trip.title}</h1>
-          <button
-            type="button"
-            onClick={() => setEditOpen(true)}
-            disabled={!online}
-            className="text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
-          >
-            編集
-          </button>
-        </div>
+        <h1 className="text-2xl font-bold">{trip.title}</h1>
         <p className="text-muted-foreground">
           {`${trip.destination} / `}
           {formatDateRange(trip.startDate, trip.endDate)}
@@ -99,6 +84,7 @@ export default function TripDetailPage() {
             tripId={tripId}
             status={trip.status}
             onStatusChange={fetchTrip}
+            onEdit={() => setEditOpen(true)}
             disabled={!online}
           />
         </div>
@@ -113,20 +99,39 @@ export default function TripDetailPage() {
         onOpenChange={setEditOpen}
         onUpdate={fetchTrip}
       />
-      <div className="space-y-4">
-        {trip.days.map((day) => (
-          <DayTimeline
+      <div className="flex gap-1 overflow-x-auto border-b" role="tablist" aria-label="日程タブ">
+        {trip.days.map((day, index) => (
+          <button
             key={day.id}
+            type="button"
+            role="tab"
+            aria-selected={selectedDay === index}
+            aria-controls={`day-panel-${day.id}`}
+            onClick={() => setSelectedDay(index)}
+            className={cn(
+              "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
+              selectedDay === index
+                ? "text-blue-600 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {day.dayNumber}日目
+          </button>
+        ))}
+      </div>
+      {trip.days[selectedDay] && (
+        <div id={`day-panel-${trip.days[selectedDay].id}`} role="tabpanel" className="mt-4">
+          <DayTimeline
+            key={trip.days[selectedDay].id}
             tripId={tripId}
-            dayId={day.id}
-            dayNumber={day.dayNumber}
-            date={day.date}
-            spots={day.spots}
+            dayId={trip.days[selectedDay].id}
+            date={trip.days[selectedDay].date}
+            spots={trip.days[selectedDay].spots}
             onRefresh={fetchTrip}
             disabled={!online}
           />
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

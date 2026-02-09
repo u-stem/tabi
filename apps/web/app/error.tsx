@@ -1,5 +1,6 @@
 "use client";
 
+import { Home, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -16,9 +17,15 @@ export default function ErrorPage({
         予期しないエラーが発生しました。もう一度お試しください。
       </p>
       <div className="flex gap-4">
-        <Button onClick={reset}>再試行</Button>
+        <Button onClick={reset}>
+          <RotateCcw className="h-4 w-4" />
+          再試行
+        </Button>
         <Button variant="outline" asChild>
-          <Link href="/">トップに戻る</Link>
+          <Link href="/home">
+            <Home className="h-4 w-4" />
+            ホームに戻る
+          </Link>
         </Button>
       </div>
     </div>

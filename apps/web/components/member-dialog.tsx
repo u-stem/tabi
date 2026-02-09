@@ -1,6 +1,7 @@
 "use client";
 
 import type { MemberResponse } from "@tabi/shared";
+import { UserPlus, Users } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -101,6 +102,7 @@ export function MemberDialog({ tripId }: MemberDialogProps) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
+          <Users className="h-4 w-4" />
           メンバー
         </Button>
       </DialogTrigger>
@@ -177,6 +179,7 @@ export function MemberDialog({ tripId }: MemberDialogProps) {
               </Select>
             </div>
             <Button type="submit" size="sm" className="w-full" disabled={adding}>
+              <UserPlus className="h-4 w-4" />
               {adding ? "追加中..." : "追加"}
             </Button>
           </form>

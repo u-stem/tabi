@@ -1,6 +1,7 @@
 "use client";
 
 import type { TripListItem } from "@tabi/shared";
+import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -13,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 
-export default function DashboardPage() {
+export default function HomePage() {
   const router = useRouter();
   const online = useOnlineStatus();
   const [trips, setTrips] = useState<TripListItem[]>([]);
@@ -56,7 +57,9 @@ export default function DashboardPage() {
     }
 
     if (sortKey === "startDate") {
-      result = [...result].sort((a, b) => (a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0));
+      result = [...result].sort((a, b) =>
+        a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0,
+      );
     }
     // "updatedAt" preserves API order (already sorted by updatedAt desc)
 
@@ -117,9 +120,7 @@ export default function DashboardPage() {
         setTrips(fresh);
       } catch {
         // Fallback: remove only successfully deleted trips
-        const succeededIds = new Set(
-          ids.filter((_, i) => results[i].status === "fulfilled"),
-        );
+        const succeededIds = new Set(ids.filter((_, i) => results[i].status === "fulfilled"));
         setTrips((prev) => prev.filter((t) => !succeededIds.has(t.id)));
       }
     }
@@ -137,7 +138,6 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold">ホーム</h1>
       {loading ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
@@ -159,10 +159,16 @@ export default function DashboardPage() {
           <p className="text-sm text-muted-foreground">最初の旅行プランを作成してみましょう</p>
           {online ? (
             <Button asChild>
-              <Link href="/trips/new">旅行を作成</Link>
+              <Link href="/trips/new">
+                <Plus className="h-4 w-4" />
+                旅行を作成
+              </Link>
             </Button>
           ) : (
-            <Button disabled>旅行を作成</Button>
+            <Button disabled>
+              <Plus className="h-4 w-4" />
+              旅行を作成
+            </Button>
           )}
         </div>
       ) : (
@@ -187,18 +193,22 @@ export default function DashboardPage() {
               newTripSlot={
                 online ? (
                   <Button asChild size="sm">
-                    <Link href="/trips/new">新しい旅行</Link>
+                    <Link href="/trips/new">
+                      <Plus className="h-4 w-4" />
+                      新規作成
+                    </Link>
                   </Button>
                 ) : (
-                  <Button size="sm" disabled>新しい旅行</Button>
+                  <Button size="sm" disabled>
+                    <Plus className="h-4 w-4" />
+                    新規作成
+                  </Button>
                 )
               }
             />
           </div>
           {filteredTrips.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">
-              条件に一致する旅行がありません
-            </p>
+            <p className="mt-8 text-center text-muted-foreground">条件に一致する旅行がありません</p>
           ) : (
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredTrips.map((trip) => (

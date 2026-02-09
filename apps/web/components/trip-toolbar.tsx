@@ -2,6 +2,7 @@
 
 import type { TripStatus } from "@tabi/shared";
 import { STATUS_LABELS } from "@tabi/shared";
+import { CheckCheck, SquareMousePointer, Trash2, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -81,15 +82,18 @@ export function TripToolbar({
       <div role="toolbar" aria-label="選択操作" className="flex items-center gap-2">
         <span className="text-sm font-medium">{selectedCount}件選択中</span>
         <Button variant="outline" size="sm" onClick={onSelectAll} disabled={deleting}>
+          <CheckCheck className="h-4 w-4" />
           全選択
         </Button>
         <Button variant="outline" size="sm" onClick={onDeselectAll} disabled={deleting}>
+          <X className="h-4 w-4" />
           選択解除
         </Button>
         <div className="ml-auto flex items-center gap-2">
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="destructive" size="sm" disabled={selectedCount === 0 || deleting}>
+                <Trash2 className="h-4 w-4" />
                 {deleting ? "削除中..." : "削除"}
               </Button>
             </AlertDialogTrigger>
@@ -97,17 +101,23 @@ export function TripToolbar({
               <AlertDialogHeader>
                 <AlertDialogTitle>{selectedCount}件の旅行を削除しますか？</AlertDialogTitle>
                 <AlertDialogDescription>
-                  選択した旅行とすべてのスポットが削除されます。この操作は取り消せません。
+                  選択した旅行とすべての予定が削除されます。この操作は取り消せません。
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                <AlertDialogAction onClick={onDeleteSelected}>削除する</AlertDialogAction>
+                <AlertDialogAction
+                  onClick={onDeleteSelected}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  削除する
+                </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={() => onSelectionModeChange(false)}
             disabled={deleting}
@@ -129,10 +139,7 @@ export function TripToolbar({
         onChange={(e) => onSearchChange(e.target.value)}
         className="h-8 w-40"
       />
-      <Select
-        value={statusFilter}
-        onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}
-      >
+      <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>
         <SelectTrigger className="h-8 w-[120px] text-xs">
           <SelectValue />
         </SelectTrigger>
@@ -163,6 +170,7 @@ export function TripToolbar({
           onClick={() => onSelectionModeChange(true)}
           disabled={disabled || totalCount === 0}
         >
+          <SquareMousePointer className="h-4 w-4" />
           選択
         </Button>
         {newTripSlot}

@@ -1,12 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { Check } from "lucide-react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { DateRangePicker } from "@/components/date-range-picker";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -37,6 +40,15 @@ export function EditTripDialog({
 }: EditTripDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [editStartDate, setEditStartDate] = useState(startDate);
+  const [editEndDate, setEditEndDate] = useState(endDate);
+
+  useEffect(() => {
+    if (open) {
+      setEditStartDate(startDate);
+      setEditEndDate(endDate);
+    }
+  }, [open, startDate, endDate]);
 
   function handleOpenChange(isOpen: boolean) {
     onOpenChange(isOpen);
@@ -54,8 +66,8 @@ export function EditTripDialog({
     const newStartDate = formData.get("startDate") as string;
     const newEndDate = formData.get("endDate") as string;
 
-    if (newStartDate > newEndDate) {
-      setError("出発日は帰着日より前に設定してください");
+    if (!newStartDate || !newEndDate) {
+      setError("日付を選択してください");
       setLoading(false);
       return;
     }
@@ -84,38 +96,48 @@ export function EditTripDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>旅行を編集</DialogTitle>
           <DialogDescription>旅行の情報を変更します</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-title">タイトル</Label>
+            <Label htmlFor="edit-title">
+              タイトル <span className="text-destructive">*</span>
+            </Label>
             <Input id="edit-title" name="title" defaultValue={title} required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="edit-destination">目的地</Label>
+            <Label htmlFor="edit-destination">
+              目的地 <span className="text-destructive">*</span>
+            </Label>
             <Input id="edit-destination" name="destination" defaultValue={destination} required />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="edit-startDate">出発日</Label>
-              <Input id="edit-startDate" name="startDate" type="date" defaultValue={startDate} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="edit-endDate">帰着日</Label>
-              <Input id="edit-endDate" name="endDate" type="date" defaultValue={endDate} required />
-            </div>
+          <div className="space-y-2">
+            <Label>
+              旅行期間 <span className="text-destructive">*</span>
+            </Label>
+            <DateRangePicker
+              startDate={editStartDate}
+              endDate={editEndDate}
+              onChangeStart={setEditStartDate}
+              onChangeEnd={setEditEndDate}
+            />
+            <input type="hidden" name="startDate" value={editStartDate} />
+            <input type="hidden" name="endDate" value={editEndDate} />
           </div>
           {error && (
             <p role="alert" className="text-sm text-destructive">
               {error}
             </p>
           )}
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "更新中..." : "旅行を更新"}
-          </Button>
+          <DialogFooter>
+            <Button type="submit" disabled={loading}>
+              <Check className="h-4 w-4" />
+              {loading ? "更新中..." : "更新"}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

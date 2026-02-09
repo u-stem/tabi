@@ -34,6 +34,17 @@ export const spotCategoryEnum = pgEnum("spot_category", [
   "other",
 ]);
 
+export const spotColorEnum = pgEnum("spot_color", [
+  "blue",
+  "red",
+  "green",
+  "yellow",
+  "purple",
+  "pink",
+  "orange",
+  "gray",
+]);
+
 // --- Tables ---
 
 export const users = pgTable("users", {
@@ -145,6 +156,7 @@ export const spots = pgTable("spots", {
   departurePlace: varchar("departure_place", { length: 200 }),
   arrivalPlace: varchar("arrival_place", { length: 200 }),
   transportMethod: transportMethodEnum("transport_method"),
+  color: spotColorEnum("color").notNull().default("blue"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

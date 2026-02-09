@@ -1,6 +1,6 @@
 "use client";
 
-import type { TripResponse, TransportMethod } from "@tabi/shared";
+import type { TransportMethod, TripResponse } from "@tabi/shared";
 import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@tabi/shared";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -69,7 +69,7 @@ export default function SharedTripPage() {
                 </span>
               </h3>
               {day.spots.length === 0 ? (
-                <p className="text-sm text-muted-foreground">まだスポットがありません</p>
+                <p className="text-sm text-muted-foreground">まだ予定がありません</p>
               ) : (
                 <div className="space-y-2">
                   {day.spots.map((spot) => (

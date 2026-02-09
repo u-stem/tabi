@@ -2,6 +2,7 @@
 
 import type { TripStatus } from "@tabi/shared";
 import { STATUS_LABELS } from "@tabi/shared";
+import { Link, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -31,12 +32,19 @@ type TripActionsProps = {
   tripId: string;
   status: TripStatus;
   onStatusChange?: () => void;
+  onEdit?: () => void;
   disabled?: boolean;
 };
 
 const statuses = Object.entries(STATUS_LABELS) as [TripStatus, string][];
 
-export function TripActions({ tripId, status, onStatusChange, disabled }: TripActionsProps) {
+export function TripActions({
+  tripId,
+  status,
+  onStatusChange,
+  onEdit,
+  disabled,
+}: TripActionsProps) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [sharing, setSharing] = useState(false);
@@ -60,7 +68,7 @@ export function TripActions({ tripId, status, onStatusChange, disabled }: TripAc
     try {
       await api(`/api/trips/${tripId}`, { method: "DELETE" });
       toast.success("旅行を削除しました");
-      router.push("/dashboard");
+      router.push("/home");
     } catch {
       toast.error("旅行の削除に失敗しました");
     } finally {
@@ -112,33 +120,49 @@ export function TripActions({ tripId, status, onStatusChange, disabled }: TripAc
         </Select>
         <MemberDialog tripId={tripId} />
         <Button variant="outline" size="sm" onClick={handleShare} disabled={disabled || sharing}>
+          <Link className="h-4 w-4" />
           {sharing ? "生成中..." : "共有リンク"}
         </Button>
       </div>
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            disabled={disabled || deleting}
-            className="text-muted-foreground hover:text-destructive"
-          >
-            {deleting ? "削除中..." : "削除"}
+      <div className="flex items-center gap-1">
+        {onEdit && (
+          <Button variant="outline" size="sm" disabled={disabled} onClick={onEdit}>
+            <Pencil className="h-4 w-4" />
+            編集
           </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>旅行を削除しますか？</AlertDialogTitle>
-            <AlertDialogDescription>
-              この旅行とすべてのスポットが削除されます。この操作は取り消せません。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>削除する</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        )}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={disabled || deleting}
+              className="border-destructive/50 text-destructive hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="h-4 w-4" />
+              {deleting ? "削除中..." : "削除"}
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>旅行を削除しますか？</AlertDialogTitle>
+              <AlertDialogDescription>
+                この旅行とすべての予定が削除されます。この操作は取り消せません。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>キャンセル</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleDelete}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                <Trash2 className="h-4 w-4" />
+                削除する
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 }

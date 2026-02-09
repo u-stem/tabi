@@ -15,7 +15,7 @@ export default function SignupPage() {
           アカウントをお持ちの方は{" "}
           <Link
             href="/auth/login"
-            className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+            className="font-medium text-blue-600 underline underline-offset-4 hover:text-blue-800"
           >
             ログイン
           </Link>

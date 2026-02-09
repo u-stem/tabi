@@ -1,3 +1,4 @@
+import { ArrowRight, LogIn } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -14,14 +15,20 @@ export default function HomePage() {
         </h1>
         <p className="mt-4 max-w-lg text-lg text-muted-foreground">
           旅行の計画から共有まで、すべてをひとつの場所で。
-          スポットを地図上で管理し、旅の全体像を把握しましょう。
+          日ごとの予定を整理し、旅の全体像を把握しましょう。
         </p>
         <div className="mt-8 flex gap-4">
           <Button asChild size="lg">
-            <Link href="/auth/signup">無料で始める</Link>
+            <Link href="/auth/signup">
+              <ArrowRight className="h-4 w-4" />
+              無料で始める
+            </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
-            <Link href="/auth/login">ログイン</Link>
+            <Link href="/auth/login">
+              <LogIn className="h-4 w-4" />
+              ログイン
+            </Link>
           </Button>
         </div>
       </main>

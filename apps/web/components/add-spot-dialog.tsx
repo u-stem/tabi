@@ -1,6 +1,7 @@
 "use client";
 
-import { CATEGORY_LABELS } from "@tabi/shared";
+import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@tabi/shared";
+import type { TransportMethod } from "@tabi/shared";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -36,11 +37,23 @@ const categories = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({
   label,
 }));
 
+const transportMethods = Object.entries(TRANSPORT_METHOD_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}));
+
+function getTimeLabels(cat: string) {
+  if (cat === "transport") return { start: "出発時間", end: "到着時間" };
+  if (cat === "hotel") return { start: "チェックイン", end: "チェックアウト" };
+  return { start: "開始時間", end: "終了時間" };
+}
+
 export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState("sightseeing");
+  const [transportMethod, setTransportMethod] = useState<TransportMethod | "">("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -51,11 +64,18 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
     const data = {
       name: formData.get("name") as string,
       category,
-      address: (formData.get("address") as string) || undefined,
+      address: category !== "transport" ? (formData.get("address") as string) || undefined : undefined,
       url: (formData.get("url") as string) || undefined,
       startTime: (formData.get("startTime") as string) || undefined,
       endTime: (formData.get("endTime") as string) || undefined,
       memo: (formData.get("memo") as string) || undefined,
+      ...(category === "transport"
+        ? {
+            departurePlace: (formData.get("departurePlace") as string) || undefined,
+            arrivalPlace: (formData.get("arrivalPlace") as string) || undefined,
+            transportMethod: transportMethod || undefined,
+          }
+        : {}),
     };
 
     try {
@@ -81,6 +101,7 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
         if (!isOpen) {
           setError(null);
           setCategory("sightseeing");
+          setTransportMethod("");
         }
       }}
     >
@@ -101,7 +122,13 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
           </div>
           <div className="space-y-2">
             <Label>カテゴリ</Label>
-            <Select value={category} onValueChange={setCategory}>
+            <Select
+              value={category}
+              onValueChange={(v) => {
+                setCategory(v);
+                setTransportMethod("");
+              }}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -114,21 +141,53 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="address">住所</Label>
-            <Input id="address" name="address" placeholder="京都市北区金閣寺町1" />
-          </div>
+          {category !== "transport" && (
+            <div className="space-y-2">
+              <Label htmlFor="address">住所</Label>
+              <Input id="address" name="address" placeholder="京都市北区金閣寺町1" />
+            </div>
+          )}
+          {category === "transport" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="departurePlace">出発地</Label>
+                <Input id="departurePlace" name="departurePlace" placeholder="東京駅" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="arrivalPlace">到着地</Label>
+                <Input id="arrivalPlace" name="arrivalPlace" placeholder="新大阪駅" />
+              </div>
+              <div className="space-y-2">
+                <Label>交通手段</Label>
+                <Select
+                  value={transportMethod}
+                  onValueChange={(v) => setTransportMethod(v as TransportMethod)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="選択してください" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {transportMethods.map((m) => (
+                      <SelectItem key={m.value} value={m.value}>
+                        {m.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
           <div className="space-y-2">
             <Label htmlFor="url">URL</Label>
             <Input id="url" name="url" type="url" placeholder="https://..." />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="startTime">開始時間</Label>
+              <Label htmlFor="startTime">{getTimeLabels(category).start}</Label>
               <Input id="startTime" name="startTime" type="time" />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="endTime">終了時間</Label>
+              <Label htmlFor="endTime">{getTimeLabels(category).end}</Label>
               <Input id="endTime" name="endTime" type="time" />
             </div>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
-import type { TripResponse } from "@tabi/shared";
-import { CATEGORY_LABELS } from "@tabi/shared";
+import type { TripResponse, TransportMethod } from "@tabi/shared";
+import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@tabi/shared";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -86,6 +86,16 @@ export default function SharedTripPage() {
                           </span>
                         )}
                       </div>
+                      {spot.category === "transport" &&
+                        (spot.departurePlace || spot.arrivalPlace || spot.transportMethod) && (
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {spot.departurePlace && spot.arrivalPlace
+                              ? `${spot.departurePlace} → ${spot.arrivalPlace}`
+                              : spot.departurePlace || spot.arrivalPlace}
+                            {spot.transportMethod &&
+                              ` (${TRANSPORT_METHOD_LABELS[spot.transportMethod as TransportMethod]})`}
+                          </p>
+                        )}
                       {spot.memo && (
                         <p className="mt-1 text-sm text-muted-foreground">{spot.memo}</p>
                       )}

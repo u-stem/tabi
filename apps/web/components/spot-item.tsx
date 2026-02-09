@@ -2,8 +2,8 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { SpotCategory } from "@tabi/shared";
-import { CATEGORY_LABELS } from "@tabi/shared";
+import type { SpotCategory, TransportMethod } from "@tabi/shared";
+import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@tabi/shared";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -26,6 +26,9 @@ type SpotItemProps = {
   startTime?: string | null;
   endTime?: string | null;
   memo?: string | null;
+  departurePlace?: string | null;
+  arrivalPlace?: string | null;
+  transportMethod?: string | null;
   onDelete: () => void;
   disabled?: boolean;
 };
@@ -39,6 +42,9 @@ export function SpotItem({
   startTime,
   endTime,
   memo,
+  departurePlace,
+  arrivalPlace,
+  transportMethod,
   onDelete,
   disabled,
 }: SpotItemProps) {
@@ -110,9 +116,20 @@ export function SpotItem({
             </AlertDialogContent>
           </AlertDialog>
         </div>
-        {(address || url || memo) && (
+        {(address || url || memo || departurePlace || arrivalPlace || transportMethod) && (
           <div className="mt-1 space-y-0.5">
-            {address && <p className="text-xs text-muted-foreground">{address}</p>}
+            {category === "transport" && (departurePlace || arrivalPlace || transportMethod) && (
+              <p className="text-xs text-muted-foreground">
+                {departurePlace && arrivalPlace
+                  ? `${departurePlace} → ${arrivalPlace}`
+                  : departurePlace || arrivalPlace}
+                {transportMethod &&
+                  ` (${TRANSPORT_METHOD_LABELS[transportMethod as TransportMethod]})`}
+              </p>
+            )}
+            {category !== "transport" && address && (
+              <p className="text-xs text-muted-foreground">{address}</p>
+            )}
             {url && (
               <a
                 href={url}

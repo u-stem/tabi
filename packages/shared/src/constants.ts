@@ -1,4 +1,4 @@
-import type { SpotCategory } from "./schemas/spot";
+import type { SpotCategory, TransportMethod } from "./schemas/spot";
 import type { TripStatus } from "./schemas/trip";
 
 export const CATEGORY_LABELS: Record<SpotCategory, string> = {
@@ -8,6 +8,15 @@ export const CATEGORY_LABELS: Record<SpotCategory, string> = {
   transport: "移動",
   activity: "アクティビティ",
   other: "その他",
+};
+
+export const TRANSPORT_METHOD_LABELS: Record<TransportMethod, string> = {
+  train: "電車",
+  bus: "バス",
+  taxi: "タクシー",
+  walk: "徒歩",
+  car: "車",
+  airplane: "飛行機",
 };
 
 export const STATUS_LABELS: Record<TripStatus, string> = {

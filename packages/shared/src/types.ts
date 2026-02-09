@@ -14,6 +14,9 @@ export type SpotResponse = {
   sortOrder: number;
   memo?: string | null;
   url?: string | null;
+  departurePlace?: string | null;
+  arrivalPlace?: string | null;
+  transportMethod?: string | null;
 };
 
 export type DayResponse = {

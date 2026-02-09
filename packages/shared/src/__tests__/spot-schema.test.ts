@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { createSpotSchema, updateSpotSchema, reorderSpotsSchema, spotCategorySchema } from "../schemas/spot";
+import {
+  createSpotSchema,
+  updateSpotSchema,
+  reorderSpotsSchema,
+  spotCategorySchema,
+  transportMethodSchema,
+} from "../schemas/spot";
 
 describe("spotCategorySchema", () => {
   it.each(["sightseeing", "restaurant", "hotel", "transport", "activity", "other"])(
@@ -78,6 +84,49 @@ describe("updateSpotSchema", () => {
 
   it("rejects invalid category", () => {
     const result = updateSpotSchema.safeParse({ category: "invalid" });
+    expect(result.success).toBe(false);
+  });
+});
+
+describe("transportMethodSchema", () => {
+  it.each(["train", "bus", "taxi", "walk", "car", "airplane"])(
+    "accepts '%s'",
+    (method) => {
+      expect(transportMethodSchema.safeParse(method).success).toBe(true);
+    },
+  );
+
+  it("rejects invalid method", () => {
+    expect(transportMethodSchema.safeParse("helicopter").success).toBe(false);
+  });
+});
+
+describe("createSpotSchema transport fields", () => {
+  it("accepts transport-specific fields", () => {
+    const result = createSpotSchema.safeParse({
+      name: "Tokyo to Osaka",
+      category: "transport",
+      departurePlace: "Tokyo Station",
+      arrivalPlace: "Shin-Osaka Station",
+      transportMethod: "train",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts without transport-specific fields", () => {
+    const result = createSpotSchema.safeParse({
+      name: "Tokyo to Osaka",
+      category: "transport",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid transportMethod", () => {
+    const result = createSpotSchema.safeParse({
+      name: "Tokyo to Osaka",
+      category: "transport",
+      transportMethod: "helicopter",
+    });
     expect(result.success).toBe(false);
   });
 });

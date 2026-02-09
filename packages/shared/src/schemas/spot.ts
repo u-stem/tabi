@@ -10,6 +10,16 @@ export const spotCategorySchema = z.enum([
 ]);
 export type SpotCategory = z.infer<typeof spotCategorySchema>;
 
+export const transportMethodSchema = z.enum([
+  "train",
+  "bus",
+  "taxi",
+  "walk",
+  "car",
+  "airplane",
+]);
+export type TransportMethod = z.infer<typeof transportMethodSchema>;
+
 const timeRegex = /^\d{2}:\d{2}$/;
 
 export const createSpotSchema = z.object({
@@ -22,6 +32,9 @@ export const createSpotSchema = z.object({
   endTime: z.string().regex(timeRegex).optional(),
   memo: z.string().max(2000).optional(),
   url: z.string().url().max(2000).optional(),
+  departurePlace: z.string().max(200).optional(),
+  arrivalPlace: z.string().max(200).optional(),
+  transportMethod: transportMethodSchema.optional(),
 });
 export type CreateSpotInput = z.infer<typeof createSpotSchema>;
 

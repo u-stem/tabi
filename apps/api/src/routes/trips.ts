@@ -2,7 +2,7 @@ import { createTripSchema, updateTripSchema } from "@tabi/shared";
 import { asc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { dayPatterns, tripDays, tripMembers, trips } from "../db/schema";
+import { dayPatterns, spots, tripDays, tripMembers, trips } from "../db/schema";
 import { DEFAULT_PATTERN_LABEL, ERROR_MSG, MAX_TRIP_DAYS } from "../lib/constants";
 import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
@@ -307,6 +307,106 @@ tripRoutes.patch("/:id", async (c) => {
 
   broadcastToTrip(tripId, user.id, { type: "trip:updated" });
   return c.json(updated);
+});
+
+// Duplicate trip (any member can duplicate, new trip is owned by current user)
+tripRoutes.post("/:id/duplicate", async (c) => {
+  const user = c.get("user");
+  const tripId = c.req.param("id");
+
+  const role = await checkTripAccess(tripId, user.id);
+  if (!role) {
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
+  }
+
+  const source = await db.query.trips.findFirst({
+    where: eq(trips.id, tripId),
+    with: {
+      days: {
+        orderBy: (days, { asc }) => [asc(days.dayNumber)],
+        with: {
+          patterns: {
+            orderBy: (patterns, { asc }) => [asc(patterns.sortOrder)],
+            with: {
+              spots: {
+                orderBy: (spots, { asc }) => [asc(spots.sortOrder)],
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+  if (!source) {
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
+  }
+
+  const newTrip = await db.transaction(async (tx) => {
+    const [created] = await tx
+      .insert(trips)
+      .values({
+        ownerId: user.id,
+        title: `${source.title} (copy)`,
+        destination: source.destination,
+        startDate: source.startDate,
+        endDate: source.endDate,
+        status: "draft",
+      })
+      .returning();
+
+    for (const day of source.days) {
+      const [newDay] = await tx
+        .insert(tripDays)
+        .values({
+          tripId: created.id,
+          date: day.date,
+          dayNumber: day.dayNumber,
+        })
+        .returning({ id: tripDays.id });
+
+      for (const pattern of day.patterns) {
+        const [newPattern] = await tx
+          .insert(dayPatterns)
+          .values({
+            tripDayId: newDay.id,
+            label: pattern.label,
+            isDefault: pattern.isDefault,
+            sortOrder: pattern.sortOrder,
+          })
+          .returning({ id: dayPatterns.id });
+
+        if (pattern.spots.length > 0) {
+          await tx.insert(spots).values(
+            pattern.spots.map((spot) => ({
+              dayPatternId: newPattern.id,
+              name: spot.name,
+              category: spot.category,
+              address: spot.address,
+              startTime: spot.startTime,
+              endTime: spot.endTime,
+              sortOrder: spot.sortOrder,
+              memo: spot.memo,
+              url: spot.url,
+              departurePlace: spot.departurePlace,
+              arrivalPlace: spot.arrivalPlace,
+              transportMethod: spot.transportMethod,
+              color: spot.color,
+            })),
+          );
+        }
+      }
+    }
+
+    await tx.insert(tripMembers).values({
+      tripId: created.id,
+      userId: user.id,
+      role: "owner" as const,
+    });
+
+    return created;
+  });
+
+  return c.json(newTrip, 201);
 });
 
 // Delete trip (owner only)

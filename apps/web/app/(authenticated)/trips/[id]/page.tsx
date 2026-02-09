@@ -22,7 +22,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
-import { formatDateRange, getDayCount } from "@/lib/format";
+import { formatDateRange, getDayCount, getTimeStatus } from "@/lib/format";
+import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
 import { cn } from "@/lib/utils";
@@ -32,6 +33,7 @@ export default function TripDetailPage() {
   const router = useRouter();
   const tripId = params.id as string;
   const online = useOnlineStatus();
+  const now = useCurrentTime();
   const [trip, setTrip] = useState<TripResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +86,73 @@ export default function TripDetailPage() {
       updatePresence(currentDay.id, currentPattern?.id ?? null);
     }
   }, [currentDay?.id, currentPattern?.id, updatePresence]);
+
+  // Auto-transition: planned → active (first spot starts), active → completed (all spots done)
+  const autoTransitionTriggered = useRef(false);
+  useEffect(() => {
+    autoTransitionTriggered.current = false;
+  }, [trip?.status]);
+
+  useEffect(() => {
+    if (!trip || autoTransitionTriggered.current) return;
+
+    const today = new Date();
+    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+    let nextStatus: string | null = null;
+    let message = "";
+
+    if (trip.status === "planned") {
+      let shouldActivate = false;
+      if (todayStr > trip.startDate) {
+        shouldActivate = true;
+      } else if (todayStr === trip.startDate) {
+        const todaySpots = trip.days
+          .filter((d) => d.date === todayStr)
+          .flatMap((d) => d.patterns.flatMap((p) => p.spots));
+        shouldActivate = todaySpots.some(
+          (spot) => getTimeStatus(now, spot.startTime, spot.endTime) !== "future",
+        );
+      }
+      if (shouldActivate) {
+        nextStatus = "active";
+        message = "旅行が開始されました。ステータスを「進行中」に変更しました";
+      }
+    } else if (trip.status === "active") {
+      let allDone = false;
+      if (todayStr > trip.endDate) {
+        allDone = true;
+      } else if (todayStr === trip.endDate) {
+        const todaySpots = trip.days
+          .filter((d) => d.date === todayStr)
+          .flatMap((d) => d.patterns.flatMap((p) => p.spots));
+        if (todaySpots.length > 0) {
+          allDone = todaySpots.every(
+            (spot) => getTimeStatus(now, spot.startTime, spot.endTime) === "past",
+          );
+        }
+      }
+      if (allDone) {
+        nextStatus = "completed";
+        message = "全ての予定が終了しました。ステータスを「完了」に変更しました";
+      }
+    }
+
+    if (nextStatus) {
+      autoTransitionTriggered.current = true;
+      api(`/api/trips/${tripId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: nextStatus }),
+      })
+        .then(() => {
+          toast.success(message);
+          fetchTrip();
+        })
+        .catch(() => {
+          autoTransitionTriggered.current = false;
+        });
+    }
+  }, [trip, now, tripId, fetchTrip]);
 
   async function handleAddPattern(e: React.FormEvent) {
     e.preventDefault();

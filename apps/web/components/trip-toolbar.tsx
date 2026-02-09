@@ -2,7 +2,7 @@
 
 import type { TripStatus } from "@tabi/shared";
 import { STATUS_LABELS } from "@tabi/shared";
-import { CheckCheck, SquareMousePointer, Trash2, X } from "lucide-react";
+import { CheckCheck, Copy, SquareMousePointer, Trash2, X } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,7 +41,9 @@ type TripToolbarProps = {
   onSelectAll: () => void;
   onDeselectAll: () => void;
   onDeleteSelected: () => void;
+  onDuplicateSelected: () => void;
   deleting: boolean;
+  duplicating: boolean;
   disabled: boolean;
   newTripSlot?: React.ReactNode;
 };
@@ -73,7 +75,9 @@ export function TripToolbar({
   onSelectAll,
   onDeselectAll,
   onDeleteSelected,
+  onDuplicateSelected,
   deleting,
+  duplicating,
   disabled,
   newTripSlot,
 }: TripToolbarProps) {
@@ -81,18 +85,41 @@ export function TripToolbar({
     return (
       <div role="toolbar" aria-label="選択操作" className="flex items-center gap-2">
         <span className="text-sm font-medium">{selectedCount}件選択中</span>
-        <Button variant="outline" size="sm" onClick={onSelectAll} disabled={deleting}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onSelectAll}
+          disabled={deleting || duplicating}
+        >
           <CheckCheck className="h-4 w-4" />
           全選択
         </Button>
-        <Button variant="outline" size="sm" onClick={onDeselectAll} disabled={deleting}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onDeselectAll}
+          disabled={deleting || duplicating}
+        >
           <X className="h-4 w-4" />
           選択解除
         </Button>
         <div className="ml-auto flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onDuplicateSelected}
+            disabled={selectedCount === 0 || deleting || duplicating}
+          >
+            <Copy className="h-4 w-4" />
+            {duplicating ? "複製中..." : "複製"}
+          </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm" disabled={selectedCount === 0 || deleting}>
+              <Button
+                variant="destructive"
+                size="sm"
+                disabled={selectedCount === 0 || deleting || duplicating}
+              >
                 <Trash2 className="h-4 w-4" />
                 {deleting ? "削除中..." : "削除"}
               </Button>
@@ -120,7 +147,7 @@ export function TripToolbar({
             variant="outline"
             size="sm"
             onClick={() => onSelectionModeChange(false)}
-            disabled={deleting}
+            disabled={deleting || duplicating}
           >
             キャンセル
           </Button>

@@ -231,15 +231,25 @@ function PlaceCard({
                 ),
           )}
         />
-        <div
-          className={cn(
-            "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white",
-            colorClasses.bg,
-            isPast && "opacity-50",
-            isCurrent && "ring-2 ring-offset-2 ring-offset-background",
+        <div className="relative flex shrink-0 items-center justify-center">
+          {isCurrent && (
+            <span
+              className={cn(
+                "absolute h-7 w-7 animate-ping rounded-full opacity-30",
+                colorClasses.bg,
+              )}
+            />
           )}
-        >
-          <CategoryIcon className="h-3.5 w-3.5" />
+          <div
+            className={cn(
+              "relative flex h-7 w-7 items-center justify-center rounded-full text-white",
+              colorClasses.bg,
+              isPast && "opacity-50",
+              isCurrent && `ring-2 ring-offset-2 ring-offset-background ${colorClasses.ring}`,
+            )}
+          >
+            <CategoryIcon className="h-3.5 w-3.5" />
+          </div>
         </div>
         <div
           className={cn(
@@ -380,15 +390,25 @@ function TransportConnector({
                 ),
           )}
         />
-        <div
-          className={cn(
-            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 bg-white",
-            colorClasses.border,
-            isPast && "opacity-50",
-            isCurrent && "ring-2 ring-offset-1 ring-offset-background",
+        <div className="relative flex shrink-0 items-center justify-center">
+          {isCurrent && (
+            <span
+              className={cn(
+                "absolute h-5 w-5 animate-ping rounded-full opacity-30",
+                colorClasses.bg,
+              )}
+            />
           )}
-        >
-          <TransportIcon className={cn("h-2.5 w-2.5", colorClasses.text)} />
+          <div
+            className={cn(
+              "relative flex h-5 w-5 items-center justify-center rounded-full border-2 bg-white",
+              colorClasses.border,
+              isPast && "opacity-50",
+              isCurrent && `ring-2 ring-offset-1 ring-offset-background ${colorClasses.ring}`,
+            )}
+          >
+            <TransportIcon className={cn("h-2.5 w-2.5", colorClasses.text)} />
+          </div>
         </div>
         <div
           className={cn(

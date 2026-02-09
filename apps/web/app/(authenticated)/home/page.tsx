@@ -28,6 +28,7 @@ export default function HomePage() {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
+  const [duplicating, setDuplicating] = useState(false);
 
   useEffect(() => {
     api<TripListItem[]>("/api/trips")
@@ -136,6 +137,36 @@ export default function HomePage() {
     setDeleting(false);
   }
 
+  async function handleDuplicateSelected() {
+    const ids = [...selectedIds];
+    setDuplicating(true);
+
+    const results = await Promise.allSettled(
+      ids.map((id) => api(`/api/trips/${id}/duplicate`, { method: "POST" })),
+    );
+    const failed = results.filter((r) => r.status === "rejected").length;
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+
+    if (succeeded > 0) {
+      try {
+        const fresh = await api<TripListItem[]>("/api/trips");
+        setTrips(fresh);
+      } catch {
+        // Ignore: list will be stale but not broken
+      }
+    }
+
+    if (failed > 0) {
+      toast.error(`${failed}件の複製に失敗しました`);
+    } else {
+      toast.success(`${succeeded}件の旅行を複製しました`);
+    }
+
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+    setDuplicating(false);
+  }
+
   return (
     <div>
       {loading ? (
@@ -188,7 +219,9 @@ export default function HomePage() {
               onSelectAll={handleSelectAll}
               onDeselectAll={handleDeselectAll}
               onDeleteSelected={handleDeleteSelected}
+              onDuplicateSelected={handleDuplicateSelected}
               deleting={deleting}
+              duplicating={duplicating}
               disabled={!online}
               newTripSlot={
                 online ? (

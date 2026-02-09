@@ -1,12 +1,7 @@
 "use client";
 
 import type { SpotColor, SpotResponse, TransportMethod } from "@tabi/shared";
-import {
-  CATEGORY_LABELS,
-  SPOT_COLOR_LABELS,
-  SPOT_COLORS,
-  TRANSPORT_METHOD_LABELS,
-} from "@tabi/shared";
+import { SPOT_COLOR_LABELS, SPOT_COLORS } from "@tabi/shared";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -32,6 +27,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { SPOT_COLOR_CLASSES } from "@/lib/colors";
 import { validateTimeRange } from "@/lib/format";
+import { CATEGORY_OPTIONS, getTimeLabels, TRANSPORT_METHOD_OPTIONS } from "@/lib/spot-utils";
 import { cn } from "@/lib/utils";
 
 type EditSpotDialogProps = {
@@ -43,22 +39,6 @@ type EditSpotDialogProps = {
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
 };
-
-const categories = Object.entries(CATEGORY_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
-
-const transportMethods = Object.entries(TRANSPORT_METHOD_LABELS).map(([value, label]) => ({
-  value,
-  label,
-}));
-
-function getTimeLabels(cat: string) {
-  if (cat === "transport") return { start: "出発時間", end: "到着時間" };
-  if (cat === "hotel") return { start: "チェックイン", end: "チェックアウト" };
-  return { start: "開始時間", end: "終了時間" };
-}
 
 export function EditSpotDialog({
   tripId,
@@ -166,7 +146,7 @@ export function EditSpotDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {categories.map((cat) => (
+                {CATEGORY_OPTIONS.map((cat) => (
                   <SelectItem key={cat.value} value={cat.value}>
                     {cat.label}
                   </SelectItem>
@@ -233,7 +213,7 @@ export function EditSpotDialog({
                     <SelectValue placeholder="選択してください" />
                   </SelectTrigger>
                   <SelectContent>
-                    {transportMethods.map((m) => (
+                    {TRANSPORT_METHOD_OPTIONS.map((m) => (
                       <SelectItem key={m.value} value={m.value}>
                         {m.label}
                       </SelectItem>

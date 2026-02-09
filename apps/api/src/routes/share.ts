@@ -2,6 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { trips } from "../db/schema";
+import { ERROR_MSG } from "../lib/constants";
 import { checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -15,7 +16,7 @@ shareRoutes.post("/api/trips/:id/share", requireAuth, async (c) => {
 
   const role = await checkTripAccess(tripId, user.id);
   if (!isOwner(role)) {
-    return c.json({ error: "Trip not found" }, 404);
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   const trip = await db.query.trips.findFirst({
@@ -42,7 +43,7 @@ shareRoutes.post("/api/trips/:id/share", requireAuth, async (c) => {
       columns: { shareToken: true },
     });
     if (!refreshed?.shareToken) {
-      return c.json({ error: "Trip not found" }, 404);
+      return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
     }
     return c.json({ shareToken: refreshed.shareToken });
   }
@@ -74,7 +75,7 @@ shareRoutes.get("/api/shared/:token", async (c) => {
   });
 
   if (!trip) {
-    return c.json({ error: "Shared trip not found" }, 404);
+    return c.json({ error: ERROR_MSG.SHARED_NOT_FOUND }, 404);
   }
 
   // Remove sensitive fields

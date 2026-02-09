@@ -1,26 +1,34 @@
 import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbTransaction } =
-  vi.hoisted(() => ({
-    mockGetSession: vi.fn(),
-    mockDbQuery: {
-      tripDays: {
-        findFirst: vi.fn(),
-      },
-      dayPatterns: {
-        findFirst: vi.fn(),
-        findMany: vi.fn(),
-      },
-      tripMembers: {
-        findFirst: vi.fn(),
-      },
+const {
+  mockGetSession,
+  mockDbQuery,
+  mockDbInsert,
+  mockDbUpdate,
+  mockDbDelete,
+  mockDbTransaction,
+  mockDbSelect,
+} = vi.hoisted(() => ({
+  mockGetSession: vi.fn(),
+  mockDbQuery: {
+    tripDays: {
+      findFirst: vi.fn(),
     },
-    mockDbInsert: vi.fn(),
-    mockDbUpdate: vi.fn(),
-    mockDbDelete: vi.fn(),
-    mockDbTransaction: vi.fn(),
-  }));
+    dayPatterns: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+    },
+    tripMembers: {
+      findFirst: vi.fn(),
+    },
+  },
+  mockDbInsert: vi.fn(),
+  mockDbUpdate: vi.fn(),
+  mockDbDelete: vi.fn(),
+  mockDbTransaction: vi.fn(),
+  mockDbSelect: vi.fn(),
+}));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -37,6 +45,7 @@ vi.mock("../db/index", () => ({
     update: (...args: unknown[]) => mockDbUpdate(...args),
     delete: (...args: unknown[]) => mockDbDelete(...args),
     transaction: (...args: unknown[]) => mockDbTransaction(...args),
+    select: (...args: unknown[]) => mockDbSelect(...args),
   },
 }));
 
@@ -69,6 +78,11 @@ describe("Pattern routes", () => {
       tripId,
       userId: fakeUser.id,
       role: "owner",
+    });
+    mockDbSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([{ max: 0 }]),
+      }),
     });
   });
 
@@ -115,7 +129,6 @@ describe("Pattern routes", () => {
         isDefault: false,
         sortOrder: 1,
       };
-      mockDbQuery.dayPatterns.findMany.mockResolvedValue([{ sortOrder: 0 }]);
       mockDbInsert.mockReturnValue({
         values: vi.fn().mockReturnValue({
           returning: vi.fn().mockResolvedValue([created]),
@@ -271,8 +284,6 @@ describe("Pattern routes", () => {
           name: "Tokyo Tower",
           category: "sightseeing",
           address: null,
-          latitude: null,
-          longitude: null,
           startTime: "09:00",
           endTime: "10:00",
           sortOrder: 0,
@@ -290,7 +301,6 @@ describe("Pattern routes", () => {
         label: "Sunny",
         spots: sourceSpots,
       });
-      mockDbQuery.dayPatterns.findMany.mockResolvedValue([{ sortOrder: 0 }]);
 
       const duplicated = {
         id: "p-new",

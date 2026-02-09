@@ -3,6 +3,7 @@ import { asc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, tripDays, tripMembers, trips } from "../db/schema";
+import { DEFAULT_PATTERN_LABEL, ERROR_MSG, MAX_TRIP_DAYS } from "../lib/constants";
 import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -12,8 +13,11 @@ function generateDateRange(startDate: string, endDate: string): string[] {
   const start = new Date(`${startDate}T00:00:00`);
   const end = new Date(`${endDate}T00:00:00`);
   const dates: string[] = [];
-  const maxDays = 365;
-  for (let d = new Date(start); d <= end && dates.length < maxDays; d.setDate(d.getDate() + 1)) {
+  for (
+    let d = new Date(start);
+    d <= end && dates.length < MAX_TRIP_DAYS;
+    d.setDate(d.getDate() + 1)
+  ) {
     const year = d.getFullYear();
     const month = String(d.getMonth() + 1).padStart(2, "0");
     const dayOfMonth = String(d.getDate()).padStart(2, "0");
@@ -108,7 +112,7 @@ tripRoutes.post("/", async (c) => {
       await tx.insert(dayPatterns).values(
         insertedDays.map((day) => ({
           tripDayId: day.id,
-          label: "デフォルト",
+          label: DEFAULT_PATTERN_LABEL,
           isDefault: true,
           sortOrder: 0,
         })),
@@ -135,7 +139,7 @@ tripRoutes.get("/:id", async (c) => {
 
   const role = await checkTripAccess(tripId, user.id);
   if (!role) {
-    return c.json({ error: "Trip not found" }, 404);
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   const trip = await db.query.trips.findFirst({
@@ -158,7 +162,7 @@ tripRoutes.get("/:id", async (c) => {
   });
 
   if (!trip) {
-    return c.json({ error: "Trip not found" }, 404);
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   return c.json(trip);
@@ -177,7 +181,7 @@ tripRoutes.patch("/:id", async (c) => {
 
   const role = await checkTripAccess(tripId, user.id);
   if (!canEdit(role)) {
-    return c.json({ error: "Trip not found" }, 404);
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   const { startDate: newStart, endDate: newEnd, ...otherFields } = parsed.data;
@@ -191,7 +195,7 @@ tripRoutes.patch("/:id", async (c) => {
       .returning();
 
     if (!updated) {
-      return c.json({ error: "Trip not found" }, 404);
+      return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
     }
     broadcastToTrip(tripId, user.id, { type: "trip:updated" });
     return c.json(updated);
@@ -202,7 +206,7 @@ tripRoutes.patch("/:id", async (c) => {
     where: eq(trips.id, tripId),
   });
   if (!currentTrip) {
-    return c.json({ error: "Trip not found" }, 404);
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   const effectiveStart = newStart ?? currentTrip.startDate;
@@ -213,7 +217,7 @@ tripRoutes.patch("/:id", async (c) => {
     return c.json(
       {
         error: {
-          fieldErrors: { endDate: ["End date must be on or after start date"] },
+          fieldErrors: { endDate: [ERROR_MSG.DATE_ORDER] },
           formErrors: [],
         },
       },
@@ -259,7 +263,7 @@ tripRoutes.patch("/:id", async (c) => {
       await tx.insert(dayPatterns).values(
         newDays.map((day) => ({
           tripDayId: day.id,
-          label: "デフォルト",
+          label: DEFAULT_PATTERN_LABEL,
           isDefault: true,
           sortOrder: 0,
         })),
@@ -298,7 +302,7 @@ tripRoutes.patch("/:id", async (c) => {
   });
 
   if (!updated) {
-    return c.json({ error: "Trip not found" }, 404);
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   broadcastToTrip(tripId, user.id, { type: "trip:updated" });
@@ -312,7 +316,7 @@ tripRoutes.delete("/:id", async (c) => {
 
   const role = await checkTripAccess(tripId, user.id);
   if (!isOwner(role)) {
-    return c.json({ error: "Trip not found" }, 404);
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   await db.delete(trips).where(eq(trips.id, tripId));

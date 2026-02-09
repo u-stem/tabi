@@ -2,7 +2,6 @@ import { relations } from "drizzle-orm";
 import {
   boolean,
   date,
-  decimal,
   integer,
   pgEnum,
   pgTable,
@@ -157,8 +156,6 @@ export const spots = pgTable("spots", {
   name: varchar("name", { length: 200 }).notNull(),
   category: spotCategoryEnum("category").notNull(),
   address: varchar("address", { length: 500 }),
-  latitude: decimal("latitude", { precision: 10, scale: 7 }),
-  longitude: decimal("longitude", { precision: 10, scale: 7 }),
   startTime: time("start_time"),
   endTime: time("end_time"),
   sortOrder: integer("sort_order").notNull().default(0),

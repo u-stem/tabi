@@ -1,6 +1,7 @@
 import type { Hono } from "hono";
 import { createBunWebSocket } from "hono/bun";
 import { auth } from "../lib/auth";
+import { WS_CLOSE_CODE } from "../lib/constants";
 import { checkTripAccess } from "../lib/permissions";
 import { broadcastPresence, joinRoom, leaveRoom, updatePresence } from "./rooms";
 
@@ -19,13 +20,13 @@ export function registerWebSocket(app: Hono): void {
         async onOpen(_evt, ws) {
           const session = await auth.api.getSession({ headers });
           if (!session) {
-            ws.close(4401, "Unauthorized");
+            ws.close(WS_CLOSE_CODE.UNAUTHORIZED, "Unauthorized");
             return;
           }
 
           const role = await checkTripAccess(tripId, session.user.id);
           if (!role) {
-            ws.close(4403, "Not a member");
+            ws.close(WS_CLOSE_CODE.NOT_A_MEMBER, "Not a member");
             return;
           }
 

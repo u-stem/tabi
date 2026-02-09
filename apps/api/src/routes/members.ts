@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { tripMembers, users } from "../db/schema";
+import { ERROR_MSG } from "../lib/constants";
 import { checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -17,7 +18,7 @@ memberRoutes.get("/:tripId/members", async (c) => {
 
   const role = await checkTripAccess(tripId, user.id);
   if (!role) {
-    return c.json({ error: "Trip not found" }, 404);
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   const members = await db.query.tripMembers.findMany({
@@ -42,7 +43,7 @@ memberRoutes.post("/:tripId/members", async (c) => {
 
   const role = await checkTripAccess(tripId, user.id);
   if (!isOwner(role)) {
-    return c.json({ error: "Trip not found" }, 404);
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   const body = await c.req.json();
@@ -90,7 +91,7 @@ memberRoutes.patch("/:tripId/members/:userId", async (c) => {
 
   const role = await checkTripAccess(tripId, user.id);
   if (!isOwner(role)) {
-    return c.json({ error: "Trip not found" }, 404);
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   if (targetUserId === user.id) {
@@ -126,7 +127,7 @@ memberRoutes.delete("/:tripId/members/:userId", async (c) => {
 
   const role = await checkTripAccess(tripId, user.id);
   if (!isOwner(role)) {
-    return c.json({ error: "Trip not found" }, 404);
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   if (targetUserId === user.id) {

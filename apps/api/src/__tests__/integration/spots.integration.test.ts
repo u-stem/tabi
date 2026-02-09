@@ -249,7 +249,7 @@ describe("Spots Integration", () => {
     expect(res.status).toBe(404);
   });
 
-  it("creates a spot with coordinates", async () => {
+  it("creates a spot with address", async () => {
     const res = await app.request(
       `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`,
       {
@@ -258,8 +258,6 @@ describe("Spots Integration", () => {
         body: JSON.stringify({
           name: "Tokyo Tower",
           category: "sightseeing",
-          latitude: 35.6585805,
-          longitude: 139.7454329,
           address: "4-2-8 Shibakoen, Minato City, Tokyo",
         }),
       },
@@ -268,7 +266,5 @@ describe("Spots Integration", () => {
     expect(res.status).toBe(201);
     const spot = await res.json();
     expect(spot.address).toBe("4-2-8 Shibakoen, Minato City, Tokyo");
-    expect(Number(spot.latitude)).toBeCloseTo(35.6585805, 5);
-    expect(Number(spot.longitude)).toBeCloseTo(139.7454329, 5);
   });
 });

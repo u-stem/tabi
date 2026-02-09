@@ -7,8 +7,6 @@ export type SpotResponse = {
   name: string;
   category: SpotCategory;
   address?: string | null;
-  latitude?: string | null;
-  longitude?: string | null;
   startTime?: string | null;
   endTime?: string | null;
   sortOrder: number;

@@ -2,53 +2,15 @@ import { createSpotSchema, reorderSpotsSchema, updateSpotSchema } from "@tabi/sh
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { dayPatterns, spots, tripDays } from "../db/schema";
-
-import { canEdit, checkTripAccess } from "../lib/permissions";
+import { spots } from "../db/schema";
+import { ERROR_MSG } from "../lib/constants";
+import { canEdit, verifyPatternAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 import { broadcastToTrip } from "../ws/rooms";
 
 const spotRoutes = new Hono<AppEnv>();
 spotRoutes.use("*", requireAuth);
-
-// Verify pattern belongs to day, day belongs to trip, user has access
-async function verifyPatternAccess(
-  tripId: string,
-  dayId: string,
-  patternId: string,
-  userId: string,
-): Promise<boolean> {
-  const day = await db.query.tripDays.findFirst({
-    where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
-  });
-  if (!day) return false;
-  const pattern = await db.query.dayPatterns.findFirst({
-    where: and(eq(dayPatterns.id, patternId), eq(dayPatterns.tripDayId, dayId)),
-  });
-  if (!pattern) return false;
-  const role = await checkTripAccess(tripId, userId);
-  return role !== null;
-}
-
-// Verify pattern access with edit permission
-async function verifyPatternEditAccess(
-  tripId: string,
-  dayId: string,
-  patternId: string,
-  userId: string,
-): Promise<boolean> {
-  const day = await db.query.tripDays.findFirst({
-    where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
-  });
-  if (!day) return false;
-  const pattern = await db.query.dayPatterns.findFirst({
-    where: and(eq(dayPatterns.id, patternId), eq(dayPatterns.tripDayId, dayId)),
-  });
-  if (!pattern) return false;
-  const role = await checkTripAccess(tripId, userId);
-  return canEdit(role);
-}
 
 // List spots for a pattern
 spotRoutes.get("/:tripId/days/:dayId/patterns/:patternId/spots", async (c) => {
@@ -57,8 +19,9 @@ spotRoutes.get("/:tripId/days/:dayId/patterns/:patternId/spots", async (c) => {
   const dayId = c.req.param("dayId");
   const patternId = c.req.param("patternId");
 
-  if (!(await verifyPatternAccess(tripId, dayId, patternId, user.id))) {
-    return c.json({ error: "Trip not found" }, 404);
+  const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
+  if (!role) {
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   const patternSpots = await db.query.spots.findMany({
@@ -75,8 +38,9 @@ spotRoutes.post("/:tripId/days/:dayId/patterns/:patternId/spots", async (c) => {
   const dayId = c.req.param("dayId");
   const patternId = c.req.param("patternId");
 
-  if (!(await verifyPatternEditAccess(tripId, dayId, patternId, user.id))) {
-    return c.json({ error: "Trip not found" }, 404);
+  const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
+  if (!canEdit(role)) {
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   const body = await c.req.json();
@@ -92,14 +56,11 @@ spotRoutes.post("/:tripId/days/:dayId/patterns/:patternId/spots", async (c) => {
     .from(spots)
     .where(eq(spots.dayPatternId, patternId));
 
-  const { latitude, longitude, ...restData } = parsed.data;
   const [spot] = await db
     .insert(spots)
     .values({
       dayPatternId: patternId,
-      ...restData,
-      ...(latitude != null ? { latitude: String(latitude) } : {}),
-      ...(longitude != null ? { longitude: String(longitude) } : {}),
+      ...parsed.data,
       sortOrder: (maxOrder[0]?.max ?? -1) + 1,
     })
     .returning();
@@ -115,8 +76,9 @@ spotRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/spots/reorder", async
   const dayId = c.req.param("dayId");
   const patternId = c.req.param("patternId");
 
-  if (!(await verifyPatternEditAccess(tripId, dayId, patternId, user.id))) {
-    return c.json({ error: "Trip not found" }, 404);
+  const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
+  if (!canEdit(role)) {
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   const body = await c.req.json();
@@ -159,8 +121,9 @@ spotRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/spots/:spotId", async
   const patternId = c.req.param("patternId");
   const spotId = c.req.param("spotId");
 
-  if (!(await verifyPatternEditAccess(tripId, dayId, patternId, user.id))) {
-    return c.json({ error: "Trip not found" }, 404);
+  const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
+  if (!canEdit(role)) {
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   const body = await c.req.json();
@@ -175,16 +138,13 @@ spotRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/spots/:spotId", async
   });
 
   if (!existing) {
-    return c.json({ error: "Spot not found" }, 404);
+    return c.json({ error: ERROR_MSG.SPOT_NOT_FOUND }, 404);
   }
 
-  const { latitude: lat, longitude: lon, ...restUpdate } = parsed.data;
   const [updated] = await db
     .update(spots)
     .set({
-      ...restUpdate,
-      ...(lat != null ? { latitude: String(lat) } : {}),
-      ...(lon != null ? { longitude: String(lon) } : {}),
+      ...parsed.data,
       updatedAt: new Date(),
     })
     .where(eq(spots.id, spotId))
@@ -202,8 +162,9 @@ spotRoutes.delete("/:tripId/days/:dayId/patterns/:patternId/spots/:spotId", asyn
   const patternId = c.req.param("patternId");
   const spotId = c.req.param("spotId");
 
-  if (!(await verifyPatternEditAccess(tripId, dayId, patternId, user.id))) {
-    return c.json({ error: "Trip not found" }, 404);
+  const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
+  if (!canEdit(role)) {
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   const existing = await db.query.spots.findFirst({
@@ -211,7 +172,7 @@ spotRoutes.delete("/:tripId/days/:dayId/patterns/:patternId/spots/:spotId", asyn
   });
 
   if (!existing) {
-    return c.json({ error: "Spot not found" }, 404);
+    return c.json({ error: ERROR_MSG.SPOT_NOT_FOUND }, 404);
   }
 
   await db.delete(spots).where(eq(spots.id, spotId));

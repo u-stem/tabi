@@ -38,8 +38,6 @@ describe("createSpotSchema", () => {
       name: "Kinkaku-ji",
       category: "sightseeing",
       address: "1 Kinkakujicho, Kita Ward, Kyoto",
-      latitude: 35.0394,
-      longitude: 135.7292,
       startTime: "09:00",
       endTime: "10:30",
       memo: "Golden Pavilion",
@@ -61,15 +59,6 @@ describe("createSpotSchema", () => {
       name: "Spot",
       category: "sightseeing",
       startTime: "9:00",
-    });
-    expect(result.success).toBe(false);
-  });
-
-  it("rejects latitude out of range", () => {
-    const result = createSpotSchema.safeParse({
-      name: "Spot",
-      category: "sightseeing",
-      latitude: 91,
     });
     expect(result.success).toBe(false);
   });

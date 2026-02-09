@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { ERROR_MSG } from "./lib/constants";
 import { authRoutes } from "./routes/auth";
 import { memberRoutes } from "./routes/members";
 import { patternRoutes } from "./routes/patterns";
@@ -19,10 +20,10 @@ app.use(
 
 app.onError((err, c) => {
   if (err instanceof SyntaxError) {
-    return c.json({ error: "Invalid JSON" }, 400);
+    return c.json({ error: ERROR_MSG.INVALID_JSON }, 400);
   }
   console.error(err);
-  return c.json({ error: "Internal server error" }, 500);
+  return c.json({ error: ERROR_MSG.INTERNAL_ERROR }, 500);
 });
 
 app.get("/health", (c) => {

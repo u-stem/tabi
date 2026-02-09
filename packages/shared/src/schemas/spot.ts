@@ -32,8 +32,6 @@ export const createSpotSchema = z.object({
   name: z.string().min(1).max(200),
   category: spotCategorySchema,
   address: z.string().max(500).optional(),
-  latitude: z.number().min(-90).max(90).optional(),
-  longitude: z.number().min(-180).max(180).optional(),
   startTime: z.string().regex(timeRegex).optional(),
   endTime: z.string().regex(timeRegex).optional(),
   memo: z.string().max(2000).optional(),

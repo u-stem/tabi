@@ -20,8 +20,6 @@ const SAMPLE_SPOTS = [
     category: "sightseeing",
     startTime: "09:00",
     endTime: "10:30",
-    latitude: 35.0394,
-    longitude: 135.7292,
   },
   {
     dayIndex: 0,
@@ -29,8 +27,6 @@ const SAMPLE_SPOTS = [
     category: "sightseeing",
     startTime: "11:00",
     endTime: "12:00",
-    latitude: 35.0173,
-    longitude: 135.6711,
   },
   {
     dayIndex: 0,
@@ -38,8 +34,6 @@ const SAMPLE_SPOTS = [
     category: "restaurant",
     startTime: "12:30",
     endTime: "13:30",
-    latitude: 35.0148,
-    longitude: 135.6745,
   },
   {
     dayIndex: 0,
@@ -74,8 +68,6 @@ const SAMPLE_SPOTS = [
     category: "sightseeing",
     startTime: "08:00",
     endTime: "10:00",
-    latitude: 34.9671,
-    longitude: 135.7727,
   },
   {
     dayIndex: 1,
@@ -83,8 +75,6 @@ const SAMPLE_SPOTS = [
     category: "restaurant",
     startTime: "11:00",
     endTime: "12:30",
-    latitude: 35.005,
-    longitude: 135.7649,
   },
   {
     dayIndex: 1,
@@ -102,8 +92,6 @@ const SAMPLE_SPOTS = [
     category: "sightseeing",
     startTime: "14:00",
     endTime: "16:00",
-    latitude: 34.9949,
-    longitude: 135.785,
   },
   {
     dayIndex: 2,
@@ -111,8 +99,6 @@ const SAMPLE_SPOTS = [
     category: "sightseeing",
     startTime: "09:00",
     endTime: "10:30",
-    latitude: 35.027,
-    longitude: 135.7983,
   },
   {
     dayIndex: 2,
@@ -120,8 +106,6 @@ const SAMPLE_SPOTS = [
     category: "activity",
     startTime: "10:30",
     endTime: "11:30",
-    latitude: 35.0232,
-    longitude: 135.7942,
   },
 ];
 

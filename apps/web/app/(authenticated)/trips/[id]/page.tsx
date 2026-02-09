@@ -1,6 +1,7 @@
 "use client";
 
 import type { DayPatternResponse, TripResponse } from "@tabi/shared";
+import { PATTERN_LABEL_MAX_LENGTH } from "@tabi/shared";
 import { ChevronDown, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -351,7 +352,7 @@ export default function TripDetailPage() {
                 value={addPatternLabel}
                 onChange={(e) => setAddPatternLabel(e.target.value)}
                 placeholder="例: 雨の日プラン"
-                maxLength={50}
+                maxLength={PATTERN_LABEL_MAX_LENGTH}
               />
             </div>
             <Button
@@ -386,7 +387,7 @@ export default function TripDetailPage() {
                 id="rename-label"
                 value={renameLabel}
                 onChange={(e) => setRenameLabel(e.target.value)}
-                maxLength={50}
+                maxLength={PATTERN_LABEL_MAX_LENGTH}
               />
             </div>
             <Button

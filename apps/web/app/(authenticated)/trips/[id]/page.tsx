@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { DayTimeline } from "@/components/day-timeline";
+import { EditTripDialog } from "@/components/edit-trip-dialog";
 import { TripActions } from "@/components/trip-actions";
 
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,6 +21,7 @@ export default function TripDetailPage() {
   const [trip, setTrip] = useState<TripResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
   const fetchTrip = useCallback(async () => {
     try {
@@ -76,7 +78,17 @@ export default function TripDetailPage() {
         >
           <span aria-hidden="true">&larr;</span> ホームに戻る
         </Link>
-        <h1 className="text-2xl font-bold">{trip.title}</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold">{trip.title}</h1>
+          <button
+            type="button"
+            onClick={() => setEditOpen(true)}
+            disabled={!online}
+            className="text-sm text-muted-foreground hover:text-foreground disabled:opacity-50"
+          >
+            編集
+          </button>
+        </div>
         <p className="text-muted-foreground">
           {trip.destination !== trip.title ? `${trip.destination} / ` : ""}
           {formatDateRange(trip.startDate, trip.endDate)}
@@ -91,6 +103,14 @@ export default function TripDetailPage() {
           />
         </div>
       </div>
+      <EditTripDialog
+        tripId={tripId}
+        title={trip.title}
+        destination={trip.destination}
+        open={editOpen}
+        onOpenChange={setEditOpen}
+        onUpdate={fetchTrip}
+      />
       <div className="space-y-4">
         {trip.days.map((day) => (
           <DayTimeline

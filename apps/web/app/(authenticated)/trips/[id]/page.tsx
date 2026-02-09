@@ -3,10 +3,11 @@
 import type { DayPatternResponse, TripResponse } from "@tabi/shared";
 import { ChevronDown, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { DayTimeline } from "@/components/day-timeline";
 import { EditTripDialog } from "@/components/edit-trip-dialog";
+import { hashColor, PresenceAvatars } from "@/components/presence-avatars";
 import { TripActions } from "@/components/trip-actions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -22,6 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
 import { formatDateRange, getDayCount } from "@/lib/format";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
+import { useTripSync } from "@/lib/hooks/use-trip-sync";
 import { cn } from "@/lib/utils";
 
 export default function TripDetailPage() {
@@ -42,6 +44,13 @@ export default function TripDetailPage() {
   const [renameLabel, setRenameLabel] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
 
+  // Defined before fetchTrip so it can be passed to useTripSync below
+  const fetchTripRef = useRef<() => void>(() => {});
+
+  const { presence, isConnected, updatePresence } = useTripSync(tripId, () =>
+    fetchTripRef.current(),
+  );
+
   const fetchTrip = useCallback(async () => {
     try {
       const data = await api<TripResponse>(`/api/trips/${tripId}`);
@@ -58,12 +67,22 @@ export default function TripDetailPage() {
   }, [tripId, router]);
 
   useEffect(() => {
+    fetchTripRef.current = fetchTrip;
+  }, [fetchTrip]);
+
+  useEffect(() => {
     fetchTrip();
   }, [fetchTrip]);
 
   const currentDay = trip?.days[selectedDay] ?? null;
   const currentPatternIndex = currentDay ? (selectedPattern[currentDay.id] ?? 0) : 0;
   const currentPattern = currentDay?.patterns[currentPatternIndex] ?? null;
+
+  useEffect(() => {
+    if (currentDay) {
+      updatePresence(currentDay.id, currentPattern?.id ?? null);
+    }
+  }, [currentDay?.id, currentPattern?.id, updatePresence]);
 
   async function handleAddPattern(e: React.FormEvent) {
     e.preventDefault();
@@ -163,7 +182,10 @@ export default function TripDetailPage() {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">{trip.title}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">{trip.title}</h1>
+          <PresenceAvatars users={presence} isConnected={isConnected} />
+        </div>
         <p className="text-muted-foreground">
           {`${trip.destination} / `}
           {formatDateRange(trip.startDate, trip.endDate)}
@@ -206,6 +228,16 @@ export default function TripDetailPage() {
             )}
           >
             {day.dayNumber}日目
+            {presence
+              .filter((u) => u.dayId === day.id)
+              .slice(0, 3)
+              .map((u, i) => (
+                <span
+                  key={u.userId}
+                  className={cn("absolute top-1 h-1.5 w-1.5 rounded-full", hashColor(u.userId))}
+                  style={{ right: `${4 + i * 6}px` }}
+                />
+              ))}
           </button>
         ))}
       </div>

@@ -55,7 +55,7 @@ type ServerMessage =
   | { type: "pattern:updated"; dayId: string; pattern: DayPatternResponse }
   | { type: "pattern:deleted"; dayId: string; patternId: string }
   | { type: "pattern:duplicated"; dayId: string; pattern: DayPatternResponse }
-  | { type: "trip:updated"; trip: TripResponse }
+  | { type: "trip:updated" }
   | { type: "presence"; users: PresenceUser[] }
 ```
 

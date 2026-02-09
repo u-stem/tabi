@@ -101,7 +101,7 @@ describe("Room management", () => {
   });
 
   describe("broadcastPresence", () => {
-    it("sends presence list to all members", () => {
+    it("sends other users only (excludes self)", () => {
       const ws1 = createMockWs();
       const ws2 = createMockWs();
       const user1: PresenceUser = { userId: "u1", name: "Alice", dayId: "d1", patternId: null };
@@ -114,9 +114,26 @@ describe("Room management", () => {
 
       expect(ws1.send).toHaveBeenCalledOnce();
       expect(ws2.send).toHaveBeenCalledOnce();
-      const sent = JSON.parse(ws1.send.mock.calls[0][0]);
-      expect(sent.type).toBe("presence");
-      expect(sent.users).toHaveLength(2);
+
+      const sentToWs1 = JSON.parse(ws1.send.mock.calls[0][0]);
+      expect(sentToWs1.type).toBe("presence");
+      expect(sentToWs1.users).toHaveLength(1);
+      expect(sentToWs1.users[0].userId).toBe("u2");
+
+      const sentToWs2 = JSON.parse(ws2.send.mock.calls[0][0]);
+      expect(sentToWs2.users).toHaveLength(1);
+      expect(sentToWs2.users[0].userId).toBe("u1");
+    });
+
+    it("sends empty list when user is alone", () => {
+      const ws = createMockWs();
+      const user: PresenceUser = { userId: "u1", name: "Alice", dayId: null, patternId: null };
+
+      joinRoom("trip-1", ws, user);
+      broadcastPresence("trip-1");
+
+      const sent = JSON.parse(ws.send.mock.calls[0][0]);
+      expect(sent.users).toHaveLength(0);
     });
   });
 

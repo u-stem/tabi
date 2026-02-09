@@ -47,9 +47,11 @@ export function useTripSync(
   onSyncRef.current = onSync;
   const onlineRef = useRef(online);
   onlineRef.current = online;
+  // Prevents onclose from scheduling reconnects after effect cleanup
+  const disposedRef = useRef(false);
 
   const connect = useCallback(() => {
-    if (wsRef.current) return;
+    if (wsRef.current || disposedRef.current) return;
 
     const ws = new WebSocket(`${WS_BASE}/ws/trips/${tripId}`);
 
@@ -76,7 +78,8 @@ export function useTripSync(
       setIsConnected(false);
       setPresence([]);
 
-      // Use ref to avoid stale closure over `online`
+      if (disposedRef.current) return;
+
       if (onlineRef.current) {
         reconnectTimer.current = setTimeout(() => {
           reconnectDelay.current = Math.min(reconnectDelay.current * 2, MAX_RECONNECT_DELAY);
@@ -93,6 +96,8 @@ export function useTripSync(
   }, [tripId]);
 
   useEffect(() => {
+    disposedRef.current = false;
+
     if (!online) {
       if (reconnectTimer.current) {
         clearTimeout(reconnectTimer.current);
@@ -105,6 +110,7 @@ export function useTripSync(
     connect();
 
     return () => {
+      disposedRef.current = true;
       if (reconnectTimer.current) {
         clearTimeout(reconnectTimer.current);
         reconnectTimer.current = null;

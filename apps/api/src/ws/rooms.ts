@@ -66,12 +66,13 @@ export function broadcastToTrip(tripId: string, senderId: string, message: Serve
   }
 }
 
+// Send each connection a deduped presence list excluding themselves
 export function broadcastPresence(tripId: string): void {
   const room = rooms.get(tripId);
   if (!room) return;
-  const users = [...room.values()];
-  const data = JSON.stringify({ type: "presence" as const, users });
-  for (const [ws] of room) {
-    ws.send(data);
+  const allUsers = getPresence(tripId);
+  for (const [ws, self] of room) {
+    const others = allUsers.filter((u) => u.userId !== self.userId);
+    ws.send(JSON.stringify({ type: "presence" as const, users: others }));
   }
 }

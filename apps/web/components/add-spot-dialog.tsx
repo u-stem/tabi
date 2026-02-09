@@ -38,6 +38,7 @@ import { cn } from "@/lib/utils";
 type AddSpotDialogProps = {
   tripId: string;
   dayId: string;
+  patternId: string;
   onAdd: () => void;
   disabled?: boolean;
 };
@@ -58,7 +59,7 @@ function getTimeLabels(cat: string) {
   return { start: "開始時間", end: "終了時間" };
 }
 
-export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogProps) {
+export function AddSpotDialog({ tripId, dayId, patternId, onAdd, disabled }: AddSpotDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -103,7 +104,7 @@ export function AddSpotDialog({ tripId, dayId, onAdd, disabled }: AddSpotDialogP
     };
 
     try {
-      await api(`/api/trips/${tripId}/days/${dayId}/spots`, {
+      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`, {
         method: "POST",
         body: JSON.stringify(data),
       });

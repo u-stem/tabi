@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 type EditSpotDialogProps = {
   tripId: string;
   dayId: string;
+  patternId: string;
   spot: SpotResponse;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -62,6 +63,7 @@ function getTimeLabels(cat: string) {
 export function EditSpotDialog({
   tripId,
   dayId,
+  patternId,
   spot,
   open,
   onOpenChange,
@@ -125,7 +127,7 @@ export function EditSpotDialog({
     };
 
     try {
-      await api(`/api/trips/${tripId}/days/${dayId}/spots/${spot.id}`, {
+      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots/${spot.id}`, {
         method: "PATCH",
         body: JSON.stringify(data),
       });

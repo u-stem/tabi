@@ -1,6 +1,6 @@
 "use client";
 
-import type { TransportMethod, TripResponse } from "@tabi/shared";
+import type { DayPatternResponse, TransportMethod, TripResponse } from "@tabi/shared";
 import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@tabi/shared";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -68,45 +68,66 @@ export default function SharedTripPage() {
                   {formatDate(day.date)}
                 </span>
               </h3>
-              {day.spots.length === 0 ? (
-                <p className="text-sm text-muted-foreground">まだ予定がありません</p>
-              ) : (
-                <div className="space-y-2">
-                  {day.spots.map((spot) => (
-                    <div key={spot.id} className="rounded-md border p-3">
-                      <div className="flex items-center gap-2">
-                        <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">
-                          {CATEGORY_LABELS[spot.category]}
-                        </span>
-                        <span className="font-medium">{spot.name}</span>
-                        {spot.startTime && (
-                          <span className="text-xs text-muted-foreground">
-                            {spot.startTime}
-                            {spot.endTime && ` - ${spot.endTime}`}
-                          </span>
-                        )}
-                      </div>
-                      {spot.category === "transport" &&
-                        (spot.departurePlace || spot.arrivalPlace || spot.transportMethod) && (
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {spot.departurePlace && spot.arrivalPlace
-                              ? `${spot.departurePlace} → ${spot.arrivalPlace}`
-                              : spot.departurePlace || spot.arrivalPlace}
-                            {spot.transportMethod &&
-                              ` (${TRANSPORT_METHOD_LABELS[spot.transportMethod as TransportMethod]})`}
-                          </p>
-                        )}
-                      {spot.memo && (
-                        <p className="mt-1 text-sm text-muted-foreground">{spot.memo}</p>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+              {day.patterns.map((pattern) => (
+                <PatternSection
+                  key={pattern.id}
+                  pattern={pattern}
+                  showLabel={day.patterns.length > 1}
+                />
+              ))}
             </div>
           ))}
         </div>
       </div>
+    </div>
+  );
+}
+
+function PatternSection({
+  pattern,
+  showLabel,
+}: {
+  pattern: DayPatternResponse;
+  showLabel: boolean;
+}) {
+  return (
+    <div>
+      {showLabel && (
+        <p className="mb-1 text-sm font-medium text-muted-foreground">{pattern.label}</p>
+      )}
+      {pattern.spots.length === 0 ? (
+        <p className="text-sm text-muted-foreground">まだ予定がありません</p>
+      ) : (
+        <div className="space-y-2">
+          {pattern.spots.map((spot) => (
+            <div key={spot.id} className="rounded-md border p-3">
+              <div className="flex items-center gap-2">
+                <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">
+                  {CATEGORY_LABELS[spot.category]}
+                </span>
+                <span className="font-medium">{spot.name}</span>
+                {spot.startTime && (
+                  <span className="text-xs text-muted-foreground">
+                    {spot.startTime}
+                    {spot.endTime && ` - ${spot.endTime}`}
+                  </span>
+                )}
+              </div>
+              {spot.category === "transport" &&
+                (spot.departurePlace || spot.arrivalPlace || spot.transportMethod) && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {spot.departurePlace && spot.arrivalPlace
+                      ? `${spot.departurePlace} → ${spot.arrivalPlace}`
+                      : spot.departurePlace || spot.arrivalPlace}
+                    {spot.transportMethod &&
+                      ` (${TRANSPORT_METHOD_LABELS[spot.transportMethod as TransportMethod]})`}
+                  </p>
+                )}
+              {spot.memo && <p className="mt-1 text-sm text-muted-foreground">{spot.memo}</p>}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

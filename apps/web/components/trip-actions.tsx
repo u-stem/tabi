@@ -2,7 +2,7 @@
 
 import type { TripStatus } from "@tabi/shared";
 import { STATUS_LABELS } from "@tabi/shared";
-import { Link, Pencil, Trash2 } from "lucide-react";
+import { Link, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -16,9 +16,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -47,6 +52,7 @@ export function TripActions({
 }: TripActionsProps) {
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
 
   async function handleStatusChange(newStatus: string) {
@@ -124,45 +130,50 @@ export function TripActions({
           {sharing ? "生成中..." : "共有リンク"}
         </Button>
       </div>
-      <div className="flex items-center gap-1">
-        {onEdit && (
-          <Button variant="outline" size="sm" disabled={disabled} onClick={onEdit}>
-            <Pencil className="h-4 w-4" />
-            編集
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon" className="h-8 w-8" disabled={disabled}>
+            <MoreHorizontal className="h-4 w-4" />
+            <span className="sr-only">旅行メニュー</span>
           </Button>
-        )}
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={disabled || deleting}
-              className="border-destructive/50 text-destructive hover:text-destructive hover:bg-destructive/10"
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {onEdit && (
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              編集
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuItem
+            className="text-destructive"
+            disabled={deleting}
+            onClick={() => setDeleteOpen(true)}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            {deleting ? "削除中..." : "削除"}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>旅行を削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              この旅行とすべての予定が削除されます。この操作は取り消せません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               <Trash2 className="h-4 w-4" />
-              {deleting ? "削除中..." : "削除"}
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>旅行を削除しますか？</AlertDialogTitle>
-              <AlertDialogDescription>
-                この旅行とすべての予定が削除されます。この操作は取り消せません。
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>キャンセル</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                <Trash2 className="h-4 w-4" />
-                削除する
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

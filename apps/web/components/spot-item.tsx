@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { SpotCategory, SpotColor, TransportMethod } from "@tabi/shared";
 import { TRANSPORT_METHOD_LABELS } from "@tabi/shared";
-import { Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useState } from "react";
 import {
@@ -16,9 +16,15 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SPOT_COLOR_CLASSES } from "@/lib/colors";
+import type { TimeStatus } from "@/lib/format";
 import { formatTime, formatTimeRange } from "@/lib/format";
 import { CATEGORY_ICONS, TRANSPORT_ICONS } from "@/lib/icons";
 import { cn } from "@/lib/utils";
@@ -39,11 +45,13 @@ type SpotItemProps = {
   color?: SpotColor;
   tripId: string;
   dayId: string;
+  patternId: string;
   onDelete: () => void;
   onUpdate: () => void;
   disabled?: boolean;
   isFirst?: boolean;
   isLast?: boolean;
+  timeStatus?: TimeStatus | null;
 };
 
 type UseSortableReturn = ReturnType<typeof useSortable>;
@@ -64,7 +72,7 @@ export function SpotItem(props: SpotItemProps) {
   });
 
   const style: CSSProperties = {
-    transform: CSS.Transform.toString(transform),
+    transform: CSS.Translate.toString(transform),
     transition,
   };
 
@@ -109,47 +117,64 @@ function DragHandle({
   );
 }
 
-function DeleteConfirmDialog({
+function SpotMenu({
   name,
   disabled,
+  onEdit,
   onDelete,
 }: {
   name: string;
   disabled?: boolean;
+  onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
   return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <button
-          type="button"
-          className="inline-flex shrink-0 items-center gap-0.5 text-xs text-destructive hover:text-destructive/80 disabled:pointer-events-none disabled:opacity-50"
-          aria-label={`${name}を削除`}
-          disabled={disabled}
-        >
-          <Trash2 className="h-3 w-3" />
-          削除
-        </button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>予定を削除しますか？</AlertDialogTitle>
-          <AlertDialogDescription>
-            「{name}」を削除します。この操作は取り消せません。
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>キャンセル</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={onDelete}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
+            aria-label={`${name}のメニュー`}
+            disabled={disabled}
           >
-            <Trash2 className="h-4 w-4" />
-            削除する
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={onEdit}>
+            <Pencil className="mr-2 h-3 w-3" />
+            編集
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
+            <Trash2 className="mr-2 h-3 w-3" />
+            削除
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>予定を削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              「{name}」を削除します。この操作は取り消せません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={onDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              <Trash2 className="h-4 w-4" />
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
 
@@ -168,16 +193,20 @@ function PlaceCard({
   color = "blue",
   tripId,
   dayId,
+  patternId,
   onDelete,
   onUpdate,
   disabled,
   isFirst,
   isLast,
+  timeStatus,
   sortable,
 }: SpotItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const CategoryIcon = CATEGORY_ICONS[category];
   const colorClasses = SPOT_COLOR_CLASSES[color];
+  const isPast = timeStatus === "past";
+  const isCurrent = timeStatus === "current";
 
   const timeStr = formatTimeRange(startTime, endTime);
 
@@ -192,13 +221,22 @@ function PlaceCard({
         <div
           className={cn(
             "w-px flex-1",
-            isFirst ? "border-transparent" : "border-l border-dashed border-muted-foreground/30",
+            isFirst
+              ? "border-transparent"
+              : cn(
+                  "border-l",
+                  isPast
+                    ? `border-solid ${colorClasses.border}`
+                    : "border-dashed border-muted-foreground/30",
+                ),
           )}
         />
         <div
           className={cn(
             "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white",
             colorClasses.bg,
+            isPast && "opacity-50",
+            isCurrent && "ring-2 ring-offset-2 ring-offset-background",
           )}
         >
           <CategoryIcon className="h-3.5 w-3.5" />
@@ -206,32 +244,32 @@ function PlaceCard({
         <div
           className={cn(
             "w-px flex-1",
-            isLast ? "border-transparent" : "border-l border-dashed border-muted-foreground/30",
+            isLast
+              ? "border-transparent"
+              : cn(
+                  "border-l",
+                  isPast
+                    ? `border-solid ${colorClasses.border}`
+                    : "border-dashed border-muted-foreground/30",
+                ),
           )}
         />
       </div>
 
       {/* Card body */}
-      <div className="min-w-0 flex-1 rounded-md border p-3">
+      <div className={cn("min-w-0 flex-1 rounded-md border p-3", isPast && "opacity-50")}>
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
             <span className="font-medium">{name}</span>
             {timeStr && <span className="text-xs text-muted-foreground">{timeStr}</span>}
           </div>
-          <div className="flex shrink-0 gap-2">
-            <button
-              type="button"
-              className="inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
-              aria-label={`${name}を編集`}
-              disabled={disabled}
-              onClick={() => setEditOpen(true)}
-            >
-              <Pencil className="h-3 w-3" />
-              編集
-            </button>
-            <DeleteConfirmDialog name={name} disabled={disabled} onDelete={onDelete} />
-          </div>
+          <SpotMenu
+            name={name}
+            disabled={disabled}
+            onEdit={() => setEditOpen(true)}
+            onDelete={onDelete}
+          />
         </div>
         {(address || url || memo) && (
           <div className="mt-1 space-y-0.5">
@@ -254,6 +292,7 @@ function PlaceCard({
       <EditSpotDialog
         tripId={tripId}
         dayId={dayId}
+        patternId={patternId}
         spot={{
           id,
           name,
@@ -292,15 +331,19 @@ function TransportConnector({
   color = "blue",
   tripId,
   dayId,
+  patternId,
   onDelete,
   onUpdate,
   disabled,
   isFirst,
   isLast,
+  timeStatus,
   sortable,
 }: SpotItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const colorClasses = SPOT_COLOR_CLASSES[color];
+  const isPast = timeStatus === "past";
+  const isCurrent = timeStatus === "current";
   const TransportIcon = transportMethod
     ? TRANSPORT_ICONS[transportMethod as TransportMethod]
     : CATEGORY_ICONS.transport;
@@ -327,13 +370,22 @@ function TransportConnector({
         <div
           className={cn(
             "w-px flex-1",
-            isFirst ? "border-transparent" : "border-l border-dashed border-muted-foreground/30",
+            isFirst
+              ? "border-transparent"
+              : cn(
+                  "border-l",
+                  isPast
+                    ? `border-solid ${colorClasses.border}`
+                    : "border-dashed border-muted-foreground/30",
+                ),
           )}
         />
         <div
           className={cn(
             "flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 bg-white",
             colorClasses.border,
+            isPast && "opacity-50",
+            isCurrent && "ring-2 ring-offset-1 ring-offset-background",
           )}
         >
           <TransportIcon className={cn("h-2.5 w-2.5", colorClasses.text)} />
@@ -341,13 +393,25 @@ function TransportConnector({
         <div
           className={cn(
             "w-px flex-1",
-            isLast ? "border-transparent" : "border-l border-dashed border-muted-foreground/30",
+            isLast
+              ? "border-transparent"
+              : cn(
+                  "border-l",
+                  isPast
+                    ? `border-solid ${colorClasses.border}`
+                    : "border-dashed border-muted-foreground/30",
+                ),
           )}
         />
       </div>
 
       {/* Compact connector row */}
-      <div className="flex min-w-0 flex-1 items-center gap-2 rounded border border-dashed px-3 py-1.5">
+      <div
+        className={cn(
+          "flex min-w-0 flex-1 items-center gap-2 rounded border border-dashed px-3 py-1.5",
+          isPast && "opacity-50",
+        )}
+      >
         <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
         <TransportIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
         {routeStr && <span className="truncate text-sm text-muted-foreground">{routeStr}</span>}
@@ -355,24 +419,20 @@ function TransportConnector({
           <span className="shrink-0 text-xs text-muted-foreground">({methodLabel})</span>
         )}
         {timeStr && <span className="shrink-0 text-xs text-muted-foreground">{timeStr}</span>}
-        <div className="ml-auto flex shrink-0 gap-2">
-          <button
-            type="button"
-            className="inline-flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
-            aria-label={`${name}を編集`}
+        <div className="ml-auto">
+          <SpotMenu
+            name={name}
             disabled={disabled}
-            onClick={() => setEditOpen(true)}
-          >
-            <Pencil className="h-3 w-3" />
-            編集
-          </button>
-          <DeleteConfirmDialog name={name} disabled={disabled} onDelete={onDelete} />
+            onEdit={() => setEditOpen(true)}
+            onDelete={onDelete}
+          />
         </div>
       </div>
 
       <EditSpotDialog
         tripId={tripId}
         dayId={dayId}
+        patternId={patternId}
         spot={{
           id,
           name,

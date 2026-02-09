@@ -32,6 +32,44 @@ export function formatTimeRange(startTime?: string | null, endTime?: string | nu
   return "";
 }
 
+export type TimeStatus = "past" | "current" | "future";
+
+export function getTimeStatus(
+  now: string,
+  startTime?: string | null,
+  endTime?: string | null,
+): TimeStatus {
+  const nowHm = now.slice(0, 5);
+
+  if (!startTime) return "future";
+
+  const startHm = startTime.slice(0, 5);
+
+  if (endTime) {
+    const endHm = endTime.slice(0, 5);
+    if (endHm <= nowHm) return "past";
+    if (startHm <= nowHm) return "current";
+    return "future";
+  }
+
+  // startTime only: treat as past once the time has passed
+  return startHm <= nowHm ? "past" : "future";
+}
+
+export function compareByStartTime(
+  a: { startTime?: string | null },
+  b: { startTime?: string | null },
+): number {
+  const aTime = a.startTime?.slice(0, 5) ?? null;
+  const bTime = b.startTime?.slice(0, 5) ?? null;
+  if (aTime === null && bTime === null) return 0;
+  if (aTime === null) return 1;
+  if (bTime === null) return -1;
+  if (aTime < bTime) return -1;
+  if (aTime > bTime) return 1;
+  return 0;
+}
+
 export function validateTimeRange(startTime?: string, endTime?: string): string | null {
   if (!startTime && endTime) return "開始時間を入力してください";
   if (startTime && endTime && startTime >= endTime) return "終了時間は開始時間より後にしてください";

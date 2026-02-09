@@ -1,12 +1,23 @@
 "use client";
 
-import type { TripResponse } from "@tabi/shared";
+import type { DayPatternResponse, TripResponse } from "@tabi/shared";
+import { ChevronDown, Copy, Pencil, Plus, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { DayTimeline } from "@/components/day-timeline";
 import { EditTripDialog } from "@/components/edit-trip-dialog";
 import { TripActions } from "@/components/trip-actions";
-
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
 import { formatDateRange, getDayCount } from "@/lib/format";
@@ -23,6 +34,13 @@ export default function TripDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(0);
+  const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
+  const [addPatternOpen, setAddPatternOpen] = useState(false);
+  const [addPatternLabel, setAddPatternLabel] = useState("");
+  const [addPatternLoading, setAddPatternLoading] = useState(false);
+  const [renamePattern, setRenamePattern] = useState<DayPatternResponse | null>(null);
+  const [renameLabel, setRenameLabel] = useState("");
+  const [renameLoading, setRenameLoading] = useState(false);
 
   const fetchTrip = useCallback(async () => {
     try {
@@ -42,6 +60,78 @@ export default function TripDetailPage() {
   useEffect(() => {
     fetchTrip();
   }, [fetchTrip]);
+
+  const currentDay = trip?.days[selectedDay] ?? null;
+  const currentPatternIndex = currentDay ? (selectedPattern[currentDay.id] ?? 0) : 0;
+  const currentPattern = currentDay?.patterns[currentPatternIndex] ?? null;
+
+  async function handleAddPattern(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentDay || !addPatternLabel.trim()) return;
+    setAddPatternLoading(true);
+    try {
+      await api(`/api/trips/${tripId}/days/${currentDay.id}/patterns`, {
+        method: "POST",
+        body: JSON.stringify({ label: addPatternLabel.trim() }),
+      });
+      toast.success("パターンを追加しました");
+      setAddPatternOpen(false);
+      setAddPatternLabel("");
+      fetchTrip();
+    } catch {
+      toast.error("パターンの追加に失敗しました");
+    } finally {
+      setAddPatternLoading(false);
+    }
+  }
+
+  async function handleDuplicatePattern(patternId: string) {
+    if (!currentDay) return;
+    try {
+      await api(`/api/trips/${tripId}/days/${currentDay.id}/patterns/${patternId}/duplicate`, {
+        method: "POST",
+      });
+      toast.success("パターンを複製しました");
+      fetchTrip();
+    } catch {
+      toast.error("パターンの複製に失敗しました");
+    }
+  }
+
+  async function handleDeletePattern(patternId: string) {
+    if (!currentDay) return;
+    try {
+      await api(`/api/trips/${tripId}/days/${currentDay.id}/patterns/${patternId}`, {
+        method: "DELETE",
+      });
+      toast.success("パターンを削除しました");
+      // Reset to first pattern
+      setSelectedPattern((prev) => ({ ...prev, [currentDay.id]: 0 }));
+      fetchTrip();
+    } catch {
+      toast.error("パターンの削除に失敗しました");
+    }
+  }
+
+  async function handleRenamePattern(e: React.FormEvent) {
+    e.preventDefault();
+    if (!currentDay || !renamePattern || !renameLabel.trim()) return;
+    setRenameLoading(true);
+    try {
+      await api(`/api/trips/${tripId}/days/${currentDay.id}/patterns/${renamePattern.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ label: renameLabel.trim() }),
+      });
+      toast.success("名前を変更しました");
+      setRenamePattern(null);
+      setRenameLabel("");
+      fetchTrip();
+    } catch {
+      toast.error("名前の変更に失敗しました");
+    } finally {
+      setRenameLoading(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -119,19 +209,164 @@ export default function TripDetailPage() {
           </button>
         ))}
       </div>
-      {trip.days[selectedDay] && (
-        <div id={`day-panel-${trip.days[selectedDay].id}`} role="tabpanel" className="mt-4">
+
+      {currentDay && currentPattern && (
+        <div id={`day-panel-${currentDay.id}`} role="tabpanel" className="mt-4">
           <DayTimeline
-            key={trip.days[selectedDay].id}
+            key={currentPattern.id}
             tripId={tripId}
-            dayId={trip.days[selectedDay].id}
-            date={trip.days[selectedDay].date}
-            spots={trip.days[selectedDay].spots}
+            dayId={currentDay.id}
+            patternId={currentPattern.id}
+            date={currentDay.date}
+            spots={currentPattern.spots}
             onRefresh={fetchTrip}
             disabled={!online}
+            headerContent={
+              <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                {currentDay.patterns.map((pattern, index) => {
+                  const isActive = currentPatternIndex === index;
+                  return (
+                    <div
+                      key={pattern.id}
+                      className={cn(
+                        "flex shrink-0 items-center rounded-full border transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-1",
+                        isActive
+                          ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                          : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                      )}
+                    >
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setSelectedPattern((prev) => ({
+                            ...prev,
+                            [currentDay.id]: index,
+                          }))
+                        }
+                        className="py-1.5 pl-3 pr-1 text-xs font-medium focus:outline-none"
+                      >
+                        {pattern.label}
+                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            className="py-1.5 pr-2 pl-0.5 text-xs focus:outline-none"
+                          >
+                            <ChevronDown className="h-3 w-3" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              setRenamePattern(pattern);
+                              setRenameLabel(pattern.label);
+                            }}
+                          >
+                            <Pencil className="mr-2 h-3 w-3" />
+                            名前変更
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDuplicatePattern(pattern.id)}>
+                            <Copy className="mr-2 h-3 w-3" />
+                            複製
+                          </DropdownMenuItem>
+                          {!pattern.isDefault && (
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleDeletePattern(pattern.id)}
+                            >
+                              <Trash2 className="mr-2 h-3 w-3" />
+                              削除
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  );
+                })}
+                {online && (
+                  <button
+                    type="button"
+                    onClick={() => setAddPatternOpen(true)}
+                    className="shrink-0 rounded-full border border-dashed border-muted-foreground/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
+                  >
+                    <Plus className="inline h-3 w-3" /> パターン追加
+                  </button>
+                )}
+              </div>
+            }
           />
         </div>
       )}
+
+      {/* Add pattern dialog */}
+      <Dialog
+        open={addPatternOpen}
+        onOpenChange={(open) => {
+          setAddPatternOpen(open);
+          if (!open) setAddPatternLabel("");
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>パターン追加</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleAddPattern} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="pattern-label">ラベル</Label>
+              <Input
+                id="pattern-label"
+                value={addPatternLabel}
+                onChange={(e) => setAddPatternLabel(e.target.value)}
+                placeholder="例: 雨の日プラン"
+                maxLength={50}
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={addPatternLoading || !addPatternLabel.trim()}
+              className="w-full"
+            >
+              {addPatternLoading ? "追加中..." : "追加"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename pattern dialog */}
+      <Dialog
+        open={renamePattern !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRenamePattern(null);
+            setRenameLabel("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>パターン名変更</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleRenamePattern} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="rename-label">ラベル</Label>
+              <Input
+                id="rename-label"
+                value={renameLabel}
+                onChange={(e) => setRenameLabel(e.target.value)}
+                maxLength={50}
+              />
+            </div>
+            <Button
+              type="submit"
+              disabled={renameLoading || !renameLabel.trim()}
+              className="w-full"
+            >
+              {renameLoading ? "変更中..." : "変更"}
+            </Button>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

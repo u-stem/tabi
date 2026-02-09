@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
+  compareByStartTime,
   formatDate,
   formatDateRange,
   formatDateShort,
   formatTime,
   formatTimeRange,
   getDayCount,
+  getTimeStatus,
   validateTimeRange,
 } from "../format";
 
@@ -98,6 +100,84 @@ describe("validateTimeRange", () => {
 
   it("returns error when start time is after end time", () => {
     expect(validateTimeRange("18:00", "09:00")).toBe("終了時間は開始時間より後にしてください");
+  });
+});
+
+describe("getTimeStatus", () => {
+  it("returns future when no times are set", () => {
+    expect(getTimeStatus("12:00", null, null)).toBe("future");
+  });
+
+  it("returns future when only endTime is set", () => {
+    expect(getTimeStatus("12:00", null, "13:00")).toBe("future");
+  });
+
+  it("returns past when endTime <= now", () => {
+    expect(getTimeStatus("15:00", "10:00", "14:00")).toBe("past");
+  });
+
+  it("returns past when endTime equals now", () => {
+    expect(getTimeStatus("14:00", "10:00", "14:00")).toBe("past");
+  });
+
+  it("returns current when startTime <= now < endTime", () => {
+    expect(getTimeStatus("12:00", "10:00", "14:00")).toBe("current");
+  });
+
+  it("returns current when startTime equals now", () => {
+    expect(getTimeStatus("10:00", "10:00", "14:00")).toBe("current");
+  });
+
+  it("returns future when startTime > now", () => {
+    expect(getTimeStatus("09:00", "10:00", "14:00")).toBe("future");
+  });
+
+  it("returns past when only startTime is set and startTime <= now", () => {
+    expect(getTimeStatus("12:00", "10:00", null)).toBe("past");
+  });
+
+  it("returns future when only startTime is set and startTime > now", () => {
+    expect(getTimeStatus("09:00", "10:00", null)).toBe("future");
+  });
+
+  it("handles HH:MM:SS format by comparing first 5 characters", () => {
+    expect(getTimeStatus("12:00", "10:00:00", "14:00:00")).toBe("current");
+  });
+});
+
+describe("compareByStartTime", () => {
+  it("sorts spots with earlier startTime first", () => {
+    expect(compareByStartTime({ startTime: "09:00" }, { startTime: "10:00" })).toBeLessThan(0);
+  });
+
+  it("sorts spots with later startTime after", () => {
+    expect(compareByStartTime({ startTime: "14:00" }, { startTime: "09:00" })).toBeGreaterThan(0);
+  });
+
+  it("returns 0 for equal startTimes", () => {
+    expect(compareByStartTime({ startTime: "09:00" }, { startTime: "09:00" })).toBe(0);
+  });
+
+  it("returns 0 when both have no startTime", () => {
+    expect(compareByStartTime({ startTime: null }, { startTime: null })).toBe(0);
+  });
+
+  it("returns 0 when both startTime are undefined", () => {
+    expect(compareByStartTime({}, {})).toBe(0);
+  });
+
+  it("places spot without startTime after spot with startTime", () => {
+    expect(compareByStartTime({ startTime: "09:00" }, { startTime: null })).toBeLessThan(0);
+  });
+
+  it("places spot without startTime after spot with startTime (reversed)", () => {
+    expect(compareByStartTime({ startTime: null }, { startTime: "09:00" })).toBeGreaterThan(0);
+  });
+
+  it("handles HH:MM:SS format", () => {
+    expect(compareByStartTime({ startTime: "09:00:00" }, { startTime: "10:00:00" })).toBeLessThan(
+      0,
+    );
   });
 });
 

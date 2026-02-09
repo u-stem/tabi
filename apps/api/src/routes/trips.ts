@@ -6,6 +6,7 @@ import { dayPatterns, tripDays, tripMembers, trips } from "../db/schema";
 import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
+import { broadcastToTrip } from "../ws/rooms";
 
 function generateDateRange(startDate: string, endDate: string): string[] {
   const start = new Date(`${startDate}T00:00:00`);
@@ -192,6 +193,7 @@ tripRoutes.patch("/:id", async (c) => {
     if (!updated) {
       return c.json({ error: "Trip not found" }, 404);
     }
+    broadcastToTrip(tripId, user.id, { type: "trip:updated" });
     return c.json(updated);
   }
 
@@ -299,6 +301,7 @@ tripRoutes.patch("/:id", async (c) => {
     return c.json({ error: "Trip not found" }, 404);
   }
 
+  broadcastToTrip(tripId, user.id, { type: "trip:updated" });
   return c.json(updated);
 });
 

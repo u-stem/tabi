@@ -6,6 +6,7 @@ import { dayPatterns, spots, tripDays } from "../db/schema";
 import { canEdit, checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
+import { broadcastToTrip } from "../ws/rooms";
 
 const patternRoutes = new Hono<AppEnv>();
 patternRoutes.use("*", requireAuth);
@@ -86,6 +87,11 @@ patternRoutes.post("/:tripId/days/:dayId/patterns", async (c) => {
     })
     .returning();
 
+  broadcastToTrip(tripId, user.id, {
+    type: "pattern:created",
+    dayId,
+    pattern: { ...pattern, spots: [] },
+  });
   return c.json(pattern, 201);
 });
 
@@ -119,6 +125,11 @@ patternRoutes.patch("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
     .where(eq(dayPatterns.id, patternId))
     .returning();
 
+  broadcastToTrip(tripId, user.id, {
+    type: "pattern:updated",
+    dayId,
+    pattern: { ...updated, spots: [] },
+  });
   return c.json(updated);
 });
 
@@ -144,6 +155,7 @@ patternRoutes.delete("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
   }
 
   await db.delete(dayPatterns).where(eq(dayPatterns.id, patternId));
+  broadcastToTrip(tripId, user.id, { type: "pattern:deleted", dayId, patternId });
   return c.json({ ok: true });
 });
 
@@ -208,6 +220,11 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
     return newPattern;
   });
 
+  broadcastToTrip(tripId, user.id, {
+    type: "pattern:duplicated",
+    dayId,
+    pattern: { ...result, spots: [] },
+  });
   return c.json(result, 201);
 });
 

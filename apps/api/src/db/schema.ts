@@ -16,6 +16,15 @@ import {
 
 export const tripStatusEnum = pgEnum("trip_status", ["draft", "planned", "active", "completed"]);
 export const tripMemberRoleEnum = pgEnum("trip_member_role", ["owner", "editor", "viewer"]);
+export const transportMethodEnum = pgEnum("transport_method", [
+  "train",
+  "bus",
+  "taxi",
+  "walk",
+  "car",
+  "airplane",
+]);
+
 export const spotCategoryEnum = pgEnum("spot_category", [
   "sightseeing",
   "restaurant",
@@ -133,6 +142,9 @@ export const spots = pgTable("spots", {
   sortOrder: integer("sort_order").notNull().default(0),
   memo: text("memo"),
   url: varchar("url", { length: 2000 }),
+  departurePlace: varchar("departure_place", { length: 200 }),
+  arrivalPlace: varchar("arrival_place", { length: 200 }),
+  transportMethod: transportMethodEnum("transport_method"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

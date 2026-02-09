@@ -8,6 +8,13 @@
       "when": 1770557136498,
       "tag": "0000_silky_sumo",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1770597698992,
+      "tag": "0001_hot_centennial",
+      "breakpoints": true
     }
   ]
 }

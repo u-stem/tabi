@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { authRoutes } from "./routes/auth";
 import { memberRoutes } from "./routes/members";
+import { patternRoutes } from "./routes/patterns";
 import { shareRoutes } from "./routes/share";
 import { spotRoutes } from "./routes/spots";
 import { tripRoutes } from "./routes/trips";
@@ -30,6 +31,7 @@ app.get("/health", (c) => {
 
 app.route("/", authRoutes);
 app.route("/api/trips", tripRoutes);
+app.route("/api/trips", patternRoutes);
 app.route("/api/trips", spotRoutes);
 app.route("/api/trips", memberRoutes);
 app.route("/", shareRoutes);

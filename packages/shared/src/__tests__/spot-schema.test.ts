@@ -1,19 +1,23 @@
 import { describe, expect, it } from "vitest";
 import {
   createSpotSchema,
-  updateSpotSchema,
   reorderSpotsSchema,
   spotCategorySchema,
   transportMethodSchema,
+  updateSpotSchema,
 } from "../schemas/spot";
 
 describe("spotCategorySchema", () => {
-  it.each(["sightseeing", "restaurant", "hotel", "transport", "activity", "other"])(
-    "accepts '%s'",
-    (cat) => {
-      expect(spotCategorySchema.safeParse(cat).success).toBe(true);
-    },
-  );
+  it.each([
+    "sightseeing",
+    "restaurant",
+    "hotel",
+    "transport",
+    "activity",
+    "other",
+  ])("accepts '%s'", (cat) => {
+    expect(spotCategorySchema.safeParse(cat).success).toBe(true);
+  });
 
   it("rejects invalid category", () => {
     expect(spotCategorySchema.safeParse("invalid").success).toBe(false);
@@ -89,12 +93,9 @@ describe("updateSpotSchema", () => {
 });
 
 describe("transportMethodSchema", () => {
-  it.each(["train", "bus", "taxi", "walk", "car", "airplane"])(
-    "accepts '%s'",
-    (method) => {
-      expect(transportMethodSchema.safeParse(method).success).toBe(true);
-    },
-  );
+  it.each(["train", "bus", "taxi", "walk", "car", "airplane"])("accepts '%s'", (method) => {
+    expect(transportMethodSchema.safeParse(method).success).toBe(true);
+  });
 
   it("rejects invalid method", () => {
     expect(transportMethodSchema.safeParse("helicopter").success).toBe(false);

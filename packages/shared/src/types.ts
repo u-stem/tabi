@@ -20,12 +20,20 @@ export type SpotResponse = {
   color: SpotColor;
 };
 
+export type DayPatternResponse = {
+  id: string;
+  label: string;
+  isDefault: boolean;
+  sortOrder: number;
+  spots: SpotResponse[];
+};
+
 export type DayResponse = {
   id: string;
   dayNumber: number;
   date: string;
   memo?: string | null;
-  spots: SpotResponse[];
+  patterns: DayPatternResponse[];
 };
 
 export type TripResponse = {

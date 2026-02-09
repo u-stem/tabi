@@ -60,8 +60,13 @@ shareRoutes.get("/api/shared/:token", async (c) => {
       days: {
         orderBy: (days, { asc }) => [asc(days.dayNumber)],
         with: {
-          spots: {
-            orderBy: (spots, { asc }) => [asc(spots.sortOrder)],
+          patterns: {
+            orderBy: (patterns, { asc }) => [asc(patterns.sortOrder)],
+            with: {
+              spots: {
+                orderBy: (spots, { asc }) => [asc(spots.sortOrder)],
+              },
+            },
           },
         },
       },

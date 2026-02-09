@@ -82,9 +82,7 @@ describe("Members Integration", () => {
     const members = await listRes.json();
     expect(members).toHaveLength(2);
 
-    const editorMember = members.find(
-      (m: { userId: string }) => m.userId === editor.id,
-    );
+    const editorMember = members.find((m: { userId: string }) => m.userId === editor.id);
     expect(editorMember.role).toBe("editor");
   });
 
@@ -123,9 +121,7 @@ describe("Members Integration", () => {
 
     const listRes = await app.request(`/api/trips/${tripId}/members`);
     const members = await listRes.json();
-    const updated = members.find(
-      (m: { userId: string }) => m.userId === editor.id,
-    );
+    const updated = members.find((m: { userId: string }) => m.userId === editor.id);
     expect(updated.role).toBe("viewer");
   });
 
@@ -176,7 +172,7 @@ describe("Members Integration", () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email: "new@test.com", role: "viewer" }),
     });
-    expect(res.status).toBe(403);
+    expect(res.status).toBe(404);
   });
 
   it("added member can view the trip in their list", async () => {

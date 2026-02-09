@@ -77,11 +77,32 @@ describe("Trip routes", () => {
 
       // db.transaction wraps insert calls
       mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        let insertCallCount = 0;
         const tx = {
-          insert: vi.fn().mockReturnValue({
-            values: vi.fn().mockReturnValue({
-              returning: vi.fn().mockResolvedValue([createdTrip]),
-            }),
+          insert: vi.fn().mockImplementation(() => {
+            insertCallCount++;
+            // First insert: trips (returning trip), second: tripDays (returning ids), third: dayPatterns, fourth: tripMembers
+            if (insertCallCount === 1) {
+              return {
+                values: vi.fn().mockReturnValue({
+                  returning: vi.fn().mockResolvedValue([createdTrip]),
+                }),
+              };
+            }
+            if (insertCallCount === 2) {
+              return {
+                values: vi.fn().mockReturnValue({
+                  returning: vi
+                    .fn()
+                    .mockResolvedValue([{ id: "day-1" }, { id: "day-2" }, { id: "day-3" }]),
+                }),
+              };
+            }
+            return {
+              values: vi.fn().mockReturnValue({
+                returning: vi.fn().mockResolvedValue([]),
+              }),
+            };
           }),
         };
         return fn(tx);
@@ -164,7 +185,10 @@ describe("Trip routes", () => {
             id: "trip-1",
             title: "Tokyo Trip",
             updatedAt: new Date("2025-07-01"),
-            days: [{ spots: [{ id: "spot-1" }, { id: "spot-2" }] }, { spots: [] }],
+            days: [
+              { patterns: [{ spots: [{ id: "spot-1" }, { id: "spot-2" }] }] },
+              { patterns: [{ spots: [] }] },
+            ],
           },
         },
       ]);
@@ -339,7 +363,9 @@ describe("Trip routes", () => {
             where: vi.fn().mockResolvedValue(undefined),
           }),
           insert: vi.fn().mockReturnValue({
-            values: vi.fn().mockResolvedValue(undefined),
+            values: vi.fn().mockReturnValue({
+              returning: vi.fn().mockResolvedValue([{ id: "new-day-1" }]),
+            }),
           }),
           update: vi.fn().mockReturnValue({
             set: vi.fn().mockReturnValue({
@@ -403,7 +429,9 @@ describe("Trip routes", () => {
             where: vi.fn().mockResolvedValue(undefined),
           }),
           insert: vi.fn().mockReturnValue({
-            values: vi.fn().mockResolvedValue(undefined),
+            values: vi.fn().mockReturnValue({
+              returning: vi.fn().mockResolvedValue([{ id: "new-day-1" }]),
+            }),
           }),
           update: vi.fn().mockReturnValue({
             set: vi.fn().mockReturnValue({
@@ -436,7 +464,6 @@ describe("Trip routes", () => {
       expect(res.status).toBe(200);
       expect(mockDbTransaction).toHaveBeenCalledOnce();
     });
-
   });
 
   describe("DELETE /api/trips/:id", () => {

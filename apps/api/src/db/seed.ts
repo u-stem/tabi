@@ -190,25 +190,26 @@ async function main() {
   );
   console.log(`  Trip ID: ${trip.id}`);
 
-  // 3. Fetch trip details to get day IDs
-  const tripDetail = await apiFetch<{ days: { id: string; dayNumber: number }[] }>(
-    `/api/trips/${trip.id}`,
-    { headers: { cookie: cookies } },
-  );
+  // 3. Fetch trip details to get day IDs and default pattern IDs
+  const tripDetail = await apiFetch<{
+    days: { id: string; dayNumber: number; patterns: { id: string; isDefault: boolean }[] }[];
+  }>(`/api/trips/${trip.id}`, { headers: { cookie: cookies } });
   const days = tripDetail.days.sort((a, b) => a.dayNumber - b.dayNumber);
 
-  // 4. Create spots
+  // 4. Create spots via pattern-scoped URLs
   console.log(`\nCreating ${SAMPLE_SPOTS.length} spots...`);
   for (const spot of SAMPLE_SPOTS) {
     const day = days[spot.dayIndex];
     if (!day) continue;
+    const defaultPattern = day.patterns.find((v) => v.isDefault) ?? day.patterns[0];
+    if (!defaultPattern) continue;
     const { dayIndex: _, ...spotData } = spot;
-    await apiFetch(`/api/trips/${trip.id}/days/${day.id}/spots`, {
+    await apiFetch(`/api/trips/${trip.id}/days/${day.id}/patterns/${defaultPattern.id}/spots`, {
       method: "POST",
       body: JSON.stringify(spotData),
       headers: { cookie: cookies },
     });
-    console.log(`  ${days[spot.dayIndex].dayNumber}日目: ${spot.name}`);
+    console.log(`  ${day.dayNumber}日目: ${spot.name}`);
   }
 
   console.log("\n--- Seed complete ---");

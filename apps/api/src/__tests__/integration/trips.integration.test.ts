@@ -16,12 +16,11 @@ vi.mock("../../lib/auth", () => ({
   },
 }));
 
-import { tripRoutes } from "../../routes/trips";
-import { memberRoutes } from "../../routes/members";
-import { getTestDb } from "./setup";
-import { cleanupTables, createTestUser, teardownTestDb } from "./setup";
-import { tripDays, tripMembers } from "../../db/schema";
 import { eq } from "drizzle-orm";
+import { tripDays, tripMembers } from "../../db/schema";
+import { memberRoutes } from "../../routes/members";
+import { tripRoutes } from "../../routes/trips";
+import { cleanupTables, createTestUser, getTestDb, teardownTestDb } from "./setup";
 
 function createApp() {
   const app = new Hono();
@@ -146,6 +145,9 @@ describe("Trips Integration", () => {
     expect(trip.days).toHaveLength(2);
     expect(trip.days[0].dayNumber).toBe(1);
     expect(trip.days[1].dayNumber).toBe(2);
+    expect(trip.days[0].patterns).toHaveLength(1);
+    expect(trip.days[0].patterns[0].label).toBe("デフォルト");
+    expect(trip.days[0].patterns[0].isDefault).toBe(true);
   });
 
   it("updates trip status", async () => {

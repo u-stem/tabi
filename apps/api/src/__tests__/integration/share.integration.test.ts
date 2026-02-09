@@ -16,15 +16,17 @@ vi.mock("../../lib/auth", () => ({
   },
 }));
 
+import { tripMembers } from "../../db/schema";
+import { patternRoutes } from "../../routes/patterns";
 import { shareRoutes } from "../../routes/share";
 import { spotRoutes } from "../../routes/spots";
 import { tripRoutes } from "../../routes/trips";
 import { cleanupTables, createTestUser, getTestDb, teardownTestDb } from "./setup";
-import { tripMembers } from "../../db/schema";
 
 function createApp() {
   const app = new Hono();
   app.route("/api/trips", tripRoutes);
+  app.route("/api/trips", patternRoutes);
   app.route("/api/trips", spotRoutes);
   app.route("/", shareRoutes);
   return app;
@@ -35,6 +37,7 @@ describe("Share Integration", () => {
   let owner: { id: string; name: string; email: string };
   let tripId: string;
   let dayId: string;
+  let patternId: string;
 
   beforeEach(async () => {
     await cleanupTables();
@@ -61,8 +64,9 @@ describe("Share Integration", () => {
     const detailRes = await app.request(`/api/trips/${tripId}`);
     const detail = await detailRes.json();
     dayId = detail.days[0].id;
+    patternId = detail.days[0].patterns[0].id;
 
-    await app.request(`/api/trips/${tripId}/days/${dayId}/spots`, {
+    await app.request(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "Tokyo Tower", category: "sightseeing" }),
@@ -112,8 +116,9 @@ describe("Share Integration", () => {
     const trip = await res.json();
     expect(trip.title).toBe("Share Test Trip");
     expect(trip.days).toHaveLength(1);
-    expect(trip.days[0].spots).toHaveLength(1);
-    expect(trip.days[0].spots[0].name).toBe("Tokyo Tower");
+    expect(trip.days[0].patterns).toHaveLength(1);
+    expect(trip.days[0].patterns[0].spots).toHaveLength(1);
+    expect(trip.days[0].patterns[0].spots[0].name).toBe("Tokyo Tower");
     // Sensitive fields should be excluded
     expect(trip.ownerId).toBeUndefined();
     expect(trip.shareToken).toBeUndefined();

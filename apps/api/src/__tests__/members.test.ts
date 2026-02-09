@@ -66,8 +66,16 @@ describe("Member routes", () => {
   describe(`GET ${basePath}`, () => {
     it("returns list of members", async () => {
       const members = [
-        { userId: fakeUser.id, role: "owner", user: { id: fakeUser.id, name: "Owner", email: "owner@test.com" } },
-        { userId: "user-2", role: "editor", user: { id: "user-2", name: "Editor", email: "editor@test.com" } },
+        {
+          userId: fakeUser.id,
+          role: "owner",
+          user: { id: fakeUser.id, name: "Owner", email: "owner@test.com" },
+        },
+        {
+          userId: "user-2",
+          role: "editor",
+          user: { id: "user-2", name: "Editor", email: "editor@test.com" },
+        },
       ];
       mockDbQuery.tripMembers.findMany.mockResolvedValue(members);
 

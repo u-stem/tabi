@@ -10,18 +10,20 @@ export const spotCategorySchema = z.enum([
 ]);
 export type SpotCategory = z.infer<typeof spotCategorySchema>;
 
-export const SPOT_COLORS = ["blue", "red", "green", "yellow", "purple", "pink", "orange", "gray"] as const;
+export const SPOT_COLORS = [
+  "blue",
+  "red",
+  "green",
+  "yellow",
+  "purple",
+  "pink",
+  "orange",
+  "gray",
+] as const;
 export const spotColorSchema = z.enum(SPOT_COLORS);
 export type SpotColor = z.infer<typeof spotColorSchema>;
 
-export const transportMethodSchema = z.enum([
-  "train",
-  "bus",
-  "taxi",
-  "walk",
-  "car",
-  "airplane",
-]);
+export const transportMethodSchema = z.enum(["train", "bus", "taxi", "walk", "car", "airplane"]);
 export type TransportMethod = z.infer<typeof transportMethodSchema>;
 
 const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;

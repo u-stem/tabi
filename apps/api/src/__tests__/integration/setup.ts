@@ -21,13 +21,11 @@ export function getTestDb() {
 export async function cleanupTables() {
   const db = getTestDb();
   await db.execute(
-    sql`TRUNCATE spots, trip_days, trip_members, trips, verifications, accounts, sessions, users CASCADE`,
+    sql`TRUNCATE spots, day_patterns, trip_days, trip_members, trips, verifications, accounts, sessions, users CASCADE`,
   );
 }
 
-export async function createTestUser(
-  overrides: Partial<{ name: string; email: string }> = {},
-) {
+export async function createTestUser(overrides: Partial<{ name: string; email: string }> = {}) {
   const db = getTestDb();
   const [user] = await db
     .insert(schema.users)

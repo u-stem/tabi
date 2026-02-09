@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createTripSchema, updateTripSchema, tripStatusSchema } from "../schemas/trip";
+import { createTripSchema, tripStatusSchema, updateTripSchema } from "../schemas/trip";
 
 describe("createTripSchema", () => {
   it("validates a valid trip", () => {

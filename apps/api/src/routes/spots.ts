@@ -2,7 +2,7 @@ import { createSpotSchema, reorderSpotsSchema, updateSpotSchema } from "@tabi/sh
 import { and, eq, inArray, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { spots, tripDays } from "../db/schema";
+import { dayPatterns, spots, tripDays } from "../db/schema";
 
 import { canEdit, checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
@@ -11,54 +11,70 @@ import type { AppEnv } from "../types";
 const spotRoutes = new Hono<AppEnv>();
 spotRoutes.use("*", requireAuth);
 
-// Verify that the day belongs to the trip and the user is a member
-async function verifyDayAccess(tripId: string, dayId: string, userId: string): Promise<boolean> {
-  const day = await db.query.tripDays.findFirst({
-    where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
-  });
-  if (!day) return false;
-  const role = await checkTripAccess(tripId, userId);
-  return role !== null;
-}
-
-// Verify that the day belongs to the trip and the user can edit
-async function verifyDayEditAccess(
+// Verify pattern belongs to day, day belongs to trip, user has access
+async function verifyPatternAccess(
   tripId: string,
   dayId: string,
+  patternId: string,
   userId: string,
 ): Promise<boolean> {
   const day = await db.query.tripDays.findFirst({
     where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
   });
   if (!day) return false;
+  const pattern = await db.query.dayPatterns.findFirst({
+    where: and(eq(dayPatterns.id, patternId), eq(dayPatterns.tripDayId, dayId)),
+  });
+  if (!pattern) return false;
+  const role = await checkTripAccess(tripId, userId);
+  return role !== null;
+}
+
+// Verify pattern access with edit permission
+async function verifyPatternEditAccess(
+  tripId: string,
+  dayId: string,
+  patternId: string,
+  userId: string,
+): Promise<boolean> {
+  const day = await db.query.tripDays.findFirst({
+    where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
+  });
+  if (!day) return false;
+  const pattern = await db.query.dayPatterns.findFirst({
+    where: and(eq(dayPatterns.id, patternId), eq(dayPatterns.tripDayId, dayId)),
+  });
+  if (!pattern) return false;
   const role = await checkTripAccess(tripId, userId);
   return canEdit(role);
 }
 
-// List spots for a day
-spotRoutes.get("/:tripId/days/:dayId/spots", async (c) => {
+// List spots for a pattern
+spotRoutes.get("/:tripId/days/:dayId/patterns/:patternId/spots", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
+  const patternId = c.req.param("patternId");
 
-  if (!(await verifyDayAccess(tripId, dayId, user.id))) {
+  if (!(await verifyPatternAccess(tripId, dayId, patternId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
-  const daySpots = await db.query.spots.findMany({
-    where: eq(spots.tripDayId, dayId),
+  const patternSpots = await db.query.spots.findMany({
+    where: eq(spots.dayPatternId, patternId),
     orderBy: (spots, { asc }) => [asc(spots.sortOrder)],
   });
-  return c.json(daySpots);
+  return c.json(patternSpots);
 });
 
 // Add spot
-spotRoutes.post("/:tripId/days/:dayId/spots", async (c) => {
+spotRoutes.post("/:tripId/days/:dayId/patterns/:patternId/spots", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
+  const patternId = c.req.param("patternId");
 
-  if (!(await verifyDayEditAccess(tripId, dayId, user.id))) {
+  if (!(await verifyPatternEditAccess(tripId, dayId, patternId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -73,13 +89,13 @@ spotRoutes.post("/:tripId/days/:dayId/spots", async (c) => {
   const maxOrder = await db
     .select({ max: sql<number>`COALESCE(MAX(${spots.sortOrder}), -1)` })
     .from(spots)
-    .where(eq(spots.tripDayId, dayId));
+    .where(eq(spots.dayPatternId, patternId));
 
   const { latitude, longitude, ...restData } = parsed.data;
   const [spot] = await db
     .insert(spots)
     .values({
-      tripDayId: dayId,
+      dayPatternId: patternId,
       ...restData,
       ...(latitude != null ? { latitude: String(latitude) } : {}),
       ...(longitude != null ? { longitude: String(longitude) } : {}),
@@ -91,12 +107,13 @@ spotRoutes.post("/:tripId/days/:dayId/spots", async (c) => {
 });
 
 // Reorder spots -- registered before /:spotId to avoid "reorder" matching as spotId
-spotRoutes.patch("/:tripId/days/:dayId/spots/reorder", async (c) => {
+spotRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/spots/reorder", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
+  const patternId = c.req.param("patternId");
 
-  if (!(await verifyDayEditAccess(tripId, dayId, user.id))) {
+  if (!(await verifyPatternEditAccess(tripId, dayId, patternId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -108,13 +125,13 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/reorder", async (c) => {
   }
 
   await db.transaction(async (tx) => {
-    // Verify all spots belong to this day
+    // Verify all spots belong to this pattern
     if (parsed.data.spotIds.length > 0) {
       const targetSpots = await tx.query.spots.findMany({
-        where: and(inArray(spots.id, parsed.data.spotIds), eq(spots.tripDayId, dayId)),
+        where: and(inArray(spots.id, parsed.data.spotIds), eq(spots.dayPatternId, patternId)),
       });
       if (targetSpots.length !== parsed.data.spotIds.length) {
-        throw new Error("Some spots do not belong to this day");
+        throw new Error("Some spots do not belong to this pattern");
       }
     }
 
@@ -127,13 +144,14 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/reorder", async (c) => {
 });
 
 // Update spot
-spotRoutes.patch("/:tripId/days/:dayId/spots/:spotId", async (c) => {
+spotRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/spots/:spotId", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
+  const patternId = c.req.param("patternId");
   const spotId = c.req.param("spotId");
 
-  if (!(await verifyDayEditAccess(tripId, dayId, user.id))) {
+  if (!(await verifyPatternEditAccess(tripId, dayId, patternId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
@@ -145,7 +163,7 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/:spotId", async (c) => {
   }
 
   const existing = await db.query.spots.findFirst({
-    where: and(eq(spots.id, spotId), eq(spots.tripDayId, dayId)),
+    where: and(eq(spots.id, spotId), eq(spots.dayPatternId, patternId)),
   });
 
   if (!existing) {
@@ -168,18 +186,19 @@ spotRoutes.patch("/:tripId/days/:dayId/spots/:spotId", async (c) => {
 });
 
 // Delete spot
-spotRoutes.delete("/:tripId/days/:dayId/spots/:spotId", async (c) => {
+spotRoutes.delete("/:tripId/days/:dayId/patterns/:patternId/spots/:spotId", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
   const dayId = c.req.param("dayId");
+  const patternId = c.req.param("patternId");
   const spotId = c.req.param("spotId");
 
-  if (!(await verifyDayEditAccess(tripId, dayId, user.id))) {
+  if (!(await verifyPatternEditAccess(tripId, dayId, patternId, user.id))) {
     return c.json({ error: "Trip not found" }, 404);
   }
 
   const existing = await db.query.spots.findFirst({
-    where: and(eq(spots.id, spotId), eq(spots.tripDayId, dayId)),
+    where: and(eq(spots.id, spotId), eq(spots.dayPatternId, patternId)),
   });
 
   if (!existing) {

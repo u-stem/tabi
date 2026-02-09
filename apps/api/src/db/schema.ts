@@ -138,11 +138,22 @@ export const tripDays = pgTable("trip_days", {
   memo: text("memo"),
 });
 
-export const spots = pgTable("spots", {
+export const dayPatterns = pgTable("day_patterns", {
   id: uuid("id").primaryKey().defaultRandom(),
   tripDayId: uuid("trip_day_id")
     .notNull()
     .references(() => tripDays.id, { onDelete: "cascade" }),
+  label: varchar("label", { length: 50 }).notNull(),
+  isDefault: boolean("is_default").notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const spots = pgTable("spots", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  dayPatternId: uuid("day_pattern_id")
+    .notNull()
+    .references(() => dayPatterns.id, { onDelete: "cascade" }),
   name: varchar("name", { length: 200 }).notNull(),
   category: spotCategoryEnum("category").notNull(),
   address: varchar("address", { length: 500 }),
@@ -181,9 +192,14 @@ export const tripMembersRelations = relations(tripMembers, ({ one }) => ({
 
 export const tripDaysRelations = relations(tripDays, ({ one, many }) => ({
   trip: one(trips, { fields: [tripDays.tripId], references: [trips.id] }),
+  patterns: many(dayPatterns),
+}));
+
+export const dayPatternsRelations = relations(dayPatterns, ({ one, many }) => ({
+  tripDay: one(tripDays, { fields: [dayPatterns.tripDayId], references: [tripDays.id] }),
   spots: many(spots),
 }));
 
 export const spotsRelations = relations(spots, ({ one }) => ({
-  tripDay: one(tripDays, { fields: [spots.tripDayId], references: [tripDays.id] }),
+  dayPattern: one(dayPatterns, { fields: [spots.dayPatternId], references: [dayPatterns.id] }),
 }));

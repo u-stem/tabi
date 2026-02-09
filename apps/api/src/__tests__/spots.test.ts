@@ -22,6 +22,9 @@ const {
     tripDays: {
       findFirst: vi.fn(),
     },
+    dayPatterns: {
+      findFirst: vi.fn(),
+    },
     tripMembers: {
       findFirst: vi.fn(),
     },
@@ -57,7 +60,8 @@ import { spotRoutes } from "../routes/spots";
 const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
 const tripId = "trip-1";
 const dayId = "day-1";
-const basePath = `/api/trips/${tripId}/days/${dayId}/spots`;
+const patternId = "pattern-1";
+const basePath = `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`;
 
 function createApp() {
   const app = new Hono();
@@ -72,10 +76,14 @@ describe("Spot routes", () => {
       user: fakeUser,
       session: { id: "session-1" },
     });
-    // Default: day belongs to trip, user is an editor/owner
+    // Default: day belongs to trip, pattern belongs to day, user is an editor/owner
     mockDbQuery.tripDays.findFirst.mockResolvedValue({
       id: dayId,
       tripId,
+    });
+    mockDbQuery.dayPatterns.findFirst.mockResolvedValue({
+      id: patternId,
+      tripDayId: dayId,
     });
     mockDbQuery.tripMembers.findFirst.mockResolvedValue({
       tripId,
@@ -85,22 +93,31 @@ describe("Spot routes", () => {
   });
 
   describe(`GET ${basePath}`, () => {
-    it("returns spots for a day", async () => {
-      const daySpots = [
+    it("returns spots for a pattern", async () => {
+      const patternSpots = [
         { id: "spot-1", name: "Tokyo Tower", category: "sightseeing", sortOrder: 0 },
       ];
-      mockDbQuery.spots.findMany.mockResolvedValue(daySpots);
+      mockDbQuery.spots.findMany.mockResolvedValue(patternSpots);
 
       const app = createApp();
       const res = await app.request(basePath);
       const body = await res.json();
 
       expect(res.status).toBe(200);
-      expect(body).toEqual(daySpots);
+      expect(body).toEqual(patternSpots);
     });
 
-    it("returns 404 when day does not belong to user", async () => {
+    it("returns 404 when day does not belong to trip", async () => {
       mockDbQuery.tripDays.findFirst.mockResolvedValue(undefined);
+
+      const app = createApp();
+      const res = await app.request(basePath);
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 404 when pattern does not belong to day", async () => {
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValue(undefined);
 
       const app = createApp();
       const res = await app.request(basePath);
@@ -113,7 +130,7 @@ describe("Spot routes", () => {
     it("returns 201 with valid data", async () => {
       const createdSpot = {
         id: "spot-1",
-        tripDayId: dayId,
+        dayPatternId: patternId,
         name: "Tokyo Tower",
         category: "sightseeing",
         sortOrder: 0,
@@ -177,7 +194,7 @@ describe("Spot routes", () => {
     it("returns 201 with transport-specific fields", async () => {
       const createdSpot = {
         id: "spot-2",
-        tripDayId: dayId,
+        dayPatternId: patternId,
         name: "Tokyo to Osaka",
         category: "transport",
         departurePlace: "Tokyo Station",
@@ -248,8 +265,7 @@ describe("Spot routes", () => {
 
       expect(res.status).toBe(404);
     });
-
-});
+  });
 
   describe(`PATCH ${basePath}/:spotId`, () => {
     it("returns updated spot on success", async () => {
@@ -337,8 +353,7 @@ describe("Spot routes", () => {
 
       expect(res.status).toBe(404);
     });
-
-});
+  });
 
   describe(`DELETE ${basePath}/:spotId`, () => {
     it("returns ok on success", async () => {
@@ -376,7 +391,7 @@ describe("Spot routes", () => {
         const tx = {
           query: {
             spots: {
-              findMany: vi.fn().mockResolvedValue([{ id: spotId, tripDayId: dayId }]),
+              findMany: vi.fn().mockResolvedValue([{ id: spotId, dayPatternId: patternId }]),
             },
           },
           update: vi.fn().mockReturnValue({

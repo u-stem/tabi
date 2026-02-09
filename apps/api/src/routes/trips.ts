@@ -2,7 +2,7 @@ import { createTripSchema, updateTripSchema } from "@tabi/shared";
 import { asc, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { tripDays, tripMembers, trips } from "../db/schema";
+import { dayPatterns, tripDays, tripMembers, trips } from "../db/schema";
 import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -33,7 +33,11 @@ tripRoutes.get("/", async (c) => {
       trip: {
         with: {
           days: {
-            with: { spots: { columns: { id: true } } },
+            with: {
+              patterns: {
+                with: { spots: { columns: { id: true } } },
+              },
+            },
           },
         },
       },
@@ -44,7 +48,10 @@ tripRoutes.get("/", async (c) => {
     const { days, ...rest } = trip;
     return {
       ...rest,
-      totalSpots: days.reduce((sum, day) => sum + day.spots.length, 0),
+      totalSpots: days.reduce(
+        (sum, day) => sum + day.patterns.reduce((vSum, v) => vSum + v.spots.length, 0),
+        0,
+      ),
     };
   });
 
@@ -85,11 +92,24 @@ tripRoutes.post("/", async (c) => {
     // Auto-create trip days based on date range
     const dates = generateDateRange(startDate, endDate);
     if (dates.length > 0) {
-      await tx.insert(tripDays).values(
-        dates.map((date, i) => ({
-          tripId: created.id,
-          date,
-          dayNumber: i + 1,
+      const insertedDays = await tx
+        .insert(tripDays)
+        .values(
+          dates.map((date, i) => ({
+            tripId: created.id,
+            date,
+            dayNumber: i + 1,
+          })),
+        )
+        .returning({ id: tripDays.id });
+
+      // Create default pattern for each day
+      await tx.insert(dayPatterns).values(
+        insertedDays.map((day) => ({
+          tripDayId: day.id,
+          label: "デフォルト",
+          isDefault: true,
+          sortOrder: 0,
         })),
       );
     }
@@ -123,8 +143,13 @@ tripRoutes.get("/:id", async (c) => {
       days: {
         orderBy: (days, { asc }) => [asc(days.dayNumber)],
         with: {
-          spots: {
-            orderBy: (spots, { asc }) => [asc(spots.sortOrder)],
+          patterns: {
+            orderBy: (patterns, { asc }) => [asc(patterns.sortOrder)],
+            with: {
+              spots: {
+                orderBy: (spots, { asc }) => [asc(spots.sortOrder)],
+              },
+            },
           },
         },
       },
@@ -184,7 +209,12 @@ tripRoutes.patch("/:id", async (c) => {
   // Validate cross-field constraint when only one date is sent
   if (effectiveEnd < effectiveStart) {
     return c.json(
-      { error: { fieldErrors: { endDate: ["End date must be on or after start date"] }, formErrors: [] } },
+      {
+        error: {
+          fieldErrors: { endDate: ["End date must be on or after start date"] },
+          formErrors: [],
+        },
+      },
       400,
     );
   }
@@ -212,11 +242,24 @@ tripRoutes.patch("/:id", async (c) => {
     // Insert new days
     const datesToInsert = newDates.filter((d) => !existingDateSet.has(d));
     if (datesToInsert.length > 0) {
-      await tx.insert(tripDays).values(
-        datesToInsert.map((date) => ({
-          tripId,
-          date,
-          dayNumber: 0, // Will be corrected below
+      const newDays = await tx
+        .insert(tripDays)
+        .values(
+          datesToInsert.map((date) => ({
+            tripId,
+            date,
+            dayNumber: 0, // Will be corrected below
+          })),
+        )
+        .returning({ id: tripDays.id });
+
+      // Create default pattern for each new day
+      await tx.insert(dayPatterns).values(
+        newDays.map((day) => ({
+          tripDayId: day.id,
+          label: "デフォルト",
+          isDefault: true,
+          sortOrder: 0,
         })),
       );
     }

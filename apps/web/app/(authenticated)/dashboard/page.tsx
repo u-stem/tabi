@@ -137,17 +137,7 @@ export default function DashboardPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">ホーム</h1>
-        {!selectionMode &&
-          (online ? (
-            <Button asChild>
-              <Link href="/trips/new">新しい旅行</Link>
-            </Button>
-          ) : (
-            <Button disabled>新しい旅行</Button>
-          ))}
-      </div>
+      <h1 className="text-2xl font-bold">ホーム</h1>
       {loading ? (
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
@@ -194,6 +184,15 @@ export default function DashboardPage() {
               onDeleteSelected={handleDeleteSelected}
               deleting={deleting}
               disabled={!online}
+              newTripSlot={
+                online ? (
+                  <Button asChild size="sm">
+                    <Link href="/trips/new">新しい旅行</Link>
+                  </Button>
+                ) : (
+                  <Button size="sm" disabled>新しい旅行</Button>
+                )
+              }
             />
           </div>
           {filteredTrips.length === 0 ? (

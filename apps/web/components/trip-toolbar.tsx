@@ -42,6 +42,7 @@ type TripToolbarProps = {
   onDeleteSelected: () => void;
   deleting: boolean;
   disabled: boolean;
+  newTripSlot?: React.ReactNode;
 };
 
 const statusFilters: { value: StatusFilter; label: string }[] = [
@@ -73,6 +74,7 @@ export function TripToolbar({
   onDeleteSelected,
   deleting,
   disabled,
+  newTripSlot,
 }: TripToolbarProps) {
   if (selectionMode) {
     return (
@@ -154,7 +156,7 @@ export function TripToolbar({
           ))}
         </SelectContent>
       </Select>
-      <div className="ml-auto">
+      <div className="ml-auto flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -163,6 +165,7 @@ export function TripToolbar({
         >
           選択
         </Button>
+        {newTripSlot}
       </div>
     </div>
   );

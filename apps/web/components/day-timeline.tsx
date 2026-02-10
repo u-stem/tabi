@@ -1,21 +1,26 @@
 "use client";
 
-import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  PointerSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifiers";
-import { arrayMove, SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { useDroppable } from "@dnd-kit/core";
+import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { SpotResponse } from "@tabi/shared";
-import { ArrowUpDown } from "lucide-react";
-import { useEffect, useState } from "react";
+import {
+  ArrowUpDown,
+  CheckCheck,
+  CheckSquare,
+  Copy,
+  MoreHorizontal,
+  Trash2,
+  Undo2,
+  X,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { api } from "@/lib/api";
 import { compareByStartTime, formatDate, getTimeStatus, type TimeStatus } from "@/lib/format";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
@@ -31,6 +36,17 @@ type DayTimelineProps = {
   onRefresh: () => void;
   disabled?: boolean;
   headerContent?: React.ReactNode;
+  selectionMode?: boolean;
+  selectedIds?: Set<string>;
+  onToggleSelect?: (id: string) => void;
+  onEnterSelectionMode?: () => void;
+  onExitSelectionMode?: () => void;
+  onSelectAll?: () => void;
+  onDeselectAll?: () => void;
+  onBatchUnassign?: () => void;
+  onBatchDuplicate?: () => void;
+  onBatchDelete?: () => void;
+  batchLoading?: boolean;
 };
 
 export function DayTimeline({
@@ -42,11 +58,22 @@ export function DayTimeline({
   onRefresh,
   disabled,
   headerContent,
+  selectionMode,
+  selectedIds,
+  onToggleSelect,
+  onEnterSelectionMode,
+  onExitSelectionMode,
+  onSelectAll,
+  onDeselectAll,
+  onBatchUnassign,
+  onBatchDuplicate,
+  onBatchDelete,
+  batchLoading,
 }: DayTimelineProps) {
-  const [localSpots, setLocalSpots] = useState(spots);
-  useEffect(() => {
-    setLocalSpots(spots);
-  }, [spots]);
+  const { setNodeRef: setDroppableRef } = useDroppable({
+    id: "timeline",
+    data: { type: "timeline" },
+  });
 
   const now = useCurrentTime();
   const today = new Date();
@@ -57,11 +84,6 @@ export function DayTimeline({
     if (!isToday) return null;
     return getTimeStatus(now, spot.startTime, spot.endTime);
   }
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
-  );
 
   async function handleDelete(spotId: string) {
     try {
@@ -75,14 +97,24 @@ export function DayTimeline({
     }
   }
 
+  async function handleUnassign(spotId: string) {
+    try {
+      await api(`/api/trips/${tripId}/spots/${spotId}/unassign`, {
+        method: "POST",
+      });
+      toast.success("候補に戻しました");
+      onRefresh();
+    } catch {
+      toast.error("候補への移動に失敗しました");
+    }
+  }
+
   const isSorted =
-    localSpots.length <= 1 ||
-    localSpots.every((spot, i) => i === 0 || compareByStartTime(localSpots[i - 1], spot) <= 0);
+    spots.length <= 1 ||
+    spots.every((spot, i) => i === 0 || compareByStartTime(spots[i - 1], spot) <= 0);
 
   async function handleSortByTime() {
-    const sorted = [...localSpots].sort(compareByStartTime);
-    setLocalSpots(sorted);
-
+    const sorted = [...spots].sort(compareByStartTime);
     const spotIds = sorted.map((s) => s.id);
     try {
       await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots/reorder`, {
@@ -91,97 +123,151 @@ export function DayTimeline({
       });
       onRefresh();
     } catch {
-      setLocalSpots(spots);
       toast.error("並び替えに失敗しました");
     }
   }
 
-  async function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
-
-    const oldIndex = localSpots.findIndex((s) => s.id === active.id);
-    const newIndex = localSpots.findIndex((s) => s.id === over.id);
-    if (oldIndex === -1 || newIndex === -1) return;
-
-    const reordered = arrayMove(localSpots, oldIndex, newIndex);
-    setLocalSpots(reordered);
-
-    const spotIds = reordered.map((s) => s.id);
-    try {
-      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots/reorder`, {
-        method: "PATCH",
-        body: JSON.stringify({ spotIds }),
-      });
-      onRefresh();
-    } catch {
-      setLocalSpots(spots);
-      toast.error("並び替えに失敗しました");
-    }
-  }
+  const selectedCount = selectedIds?.size ?? 0;
 
   return (
-    <div className="rounded-lg border bg-card p-4">
-      <div className="mb-3 flex items-center justify-between">
-        <span className="text-sm text-muted-foreground">{formatDate(date)}</span>
-        <div className="flex items-center gap-1">
+    <div>
+      {selectionMode ? (
+        <div className="mb-3 flex items-center gap-1.5">
+          <Button variant="outline" size="sm" onClick={onSelectAll}>
+            <CheckCheck className="h-4 w-4" />
+            全選択
+          </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={handleSortByTime}
-            disabled={disabled || isSorted}
+            onClick={onDeselectAll}
+            disabled={selectedCount === 0}
           >
-            <ArrowUpDown className="h-4 w-4" />
-            時刻順
+            <X className="h-4 w-4" />
+            選択解除
           </Button>
-          <AddSpotDialog
-            tripId={tripId}
-            dayId={dayId}
-            patternId={patternId}
-            onAdd={onRefresh}
-            disabled={disabled}
-          />
-        </div>
-      </div>
-      {headerContent}
-
-      {localSpots.length === 0 ? (
-        <div className="rounded-md border border-dashed p-6 text-center">
-          <p className="text-sm text-muted-foreground">まだ予定がありません</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            「+ 予定を追加」から行きたい場所を追加しましょう
-          </p>
+          <div className="ml-auto flex items-center gap-1.5">
+            <Button
+              size="sm"
+              onClick={onBatchUnassign}
+              disabled={selectedCount === 0 || batchLoading}
+            >
+              <Undo2 className="h-4 w-4" />
+              候補に戻す
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" disabled={selectedCount === 0 || batchLoading}>
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onBatchDuplicate}>
+                  <Copy className="mr-2 h-3 w-3" />
+                  複製
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive" onClick={onBatchDelete}>
+                  <Trash2 className="mr-2 h-3 w-3" />
+                  削除
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button variant="outline" size="sm" onClick={onExitSelectionMode}>
+              キャンセル
+            </Button>
+          </div>
         </div>
       ) : (
-        <DndContext
-          sensors={sensors}
-          collisionDetection={closestCenter}
-          modifiers={[restrictToVerticalAxis, restrictToParentElement]}
-          onDragEnd={handleDragEnd}
-        >
-          <SortableContext
-            items={localSpots.map((s) => s.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <div>
-              {localSpots.map((spot, index) => (
-                <SpotItem
-                  key={spot.id}
-                  {...spot}
-                  tripId={tripId}
-                  dayId={dayId}
-                  patternId={patternId}
-                  isFirst={index === 0}
-                  isLast={index === localSpots.length - 1}
-                  onDelete={() => handleDelete(spot.id)}
-                  onUpdate={onRefresh}
-                  disabled={disabled}
-                  timeStatus={getSpotTimeStatus(spot)}
-                />
-              ))}
-            </div>
+        <div className="mb-3 flex items-center justify-between">
+          <span className="text-sm text-muted-foreground">{formatDate(date)}</span>
+          <div className="flex items-center gap-1.5">
+            {!disabled && (
+              <AddSpotDialog
+                tripId={tripId}
+                dayId={dayId}
+                patternId={patternId}
+                onAdd={onRefresh}
+                disabled={disabled}
+              />
+            )}
+            {!disabled && spots.length > 0 && onEnterSelectionMode && (
+              <Button variant="outline" size="sm" onClick={onEnterSelectionMode}>
+                <CheckSquare className="h-4 w-4" />
+                選択
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleSortByTime}
+              disabled={disabled || isSorted}
+            >
+              <ArrowUpDown className="h-4 w-4" />
+              時刻順
+            </Button>
+          </div>
+        </div>
+      )}
+      {!selectionMode && headerContent}
+
+      {selectionMode ? (
+        /* Selection mode: plain list without DnD */
+        spots.length === 0 ? (
+          <div className="rounded-md border border-dashed p-6 text-center">
+            <p className="text-sm text-muted-foreground">まだ予定がありません</p>
+          </div>
+        ) : (
+          <div>
+            {spots.map((spot, index) => (
+              <SpotItem
+                key={spot.id}
+                {...spot}
+                tripId={tripId}
+                dayId={dayId}
+                patternId={patternId}
+                isFirst={index === 0}
+                isLast={index === spots.length - 1}
+                onDelete={() => handleDelete(spot.id)}
+                onUpdate={onRefresh}
+                disabled={disabled}
+                timeStatus={getSpotTimeStatus(spot)}
+                selectable
+                selected={selectedIds?.has(spot.id)}
+                onSelect={onToggleSelect}
+              />
+            ))}
+          </div>
+        )
+      ) : (
+        <div ref={setDroppableRef}>
+          <SortableContext items={spots.map((s) => s.id)} strategy={verticalListSortingStrategy}>
+            {spots.length === 0 ? (
+              <div className="rounded-md border border-dashed p-6 text-center">
+                <p className="text-sm text-muted-foreground">まだ予定がありません</p>
+                <p className="mt-1 text-xs text-muted-foreground">候補から追加しましょう</p>
+              </div>
+            ) : (
+              <div>
+                {spots.map((spot, index) => (
+                  <SpotItem
+                    key={spot.id}
+                    {...spot}
+                    tripId={tripId}
+                    dayId={dayId}
+                    patternId={patternId}
+                    isFirst={index === 0}
+                    isLast={index === spots.length - 1}
+                    onDelete={() => handleDelete(spot.id)}
+                    onUpdate={onRefresh}
+                    onUnassign={disabled ? undefined : () => handleUnassign(spot.id)}
+                    disabled={disabled}
+                    timeStatus={getSpotTimeStatus(spot)}
+                  />
+                ))}
+              </div>
+            )}
           </SortableContext>
-        </DndContext>
+        </div>
       )}
     </div>
   );

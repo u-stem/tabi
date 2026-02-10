@@ -15,4 +15,5 @@ export const ERROR_MSG = {
   INTERNAL_ERROR: "Internal server error",
   DATE_ORDER: "End date must be on or after start date",
   SHARED_NOT_FOUND: "Shared trip not found",
+  CANDIDATE_NOT_FOUND: "Candidate not found",
 } as const;

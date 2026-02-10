@@ -1,0 +1,584 @@
+import { Hono } from "hono";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const {
+  mockGetSession,
+  mockDbQuery,
+  mockDbInsert,
+  mockDbUpdate,
+  mockDbDelete,
+  mockDbSelect,
+  mockDbTransaction,
+} = vi.hoisted(() => ({
+  mockGetSession: vi.fn(),
+  mockDbQuery: {
+    spots: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+    },
+    tripMembers: {
+      findFirst: vi.fn(),
+    },
+    dayPatterns: {
+      findFirst: vi.fn(),
+    },
+  },
+  mockDbInsert: vi.fn(),
+  mockDbUpdate: vi.fn(),
+  mockDbDelete: vi.fn(),
+  mockDbSelect: vi.fn(),
+  mockDbTransaction: vi.fn(),
+}));
+
+vi.mock("../lib/auth", () => ({
+  auth: {
+    api: {
+      getSession: (...args: unknown[]) => mockGetSession(...args),
+    },
+  },
+}));
+
+vi.mock("../db/index", () => ({
+  db: {
+    query: mockDbQuery,
+    insert: (...args: unknown[]) => mockDbInsert(...args),
+    update: (...args: unknown[]) => mockDbUpdate(...args),
+    delete: (...args: unknown[]) => mockDbDelete(...args),
+    select: (...args: unknown[]) => mockDbSelect(...args),
+    transaction: (...args: unknown[]) => mockDbTransaction(...args),
+  },
+}));
+
+vi.mock("../ws/rooms", () => ({
+  broadcastToTrip: vi.fn(),
+}));
+
+import { candidateRoutes } from "../routes/candidates";
+
+const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
+const tripId = "trip-1";
+
+function createApp() {
+  const app = new Hono();
+  app.route("/api/trips", candidateRoutes);
+  return app;
+}
+
+describe("Candidate routes", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockGetSession.mockResolvedValue({
+      user: fakeUser,
+      session: { id: "session-1" },
+    });
+    mockDbQuery.tripMembers.findFirst.mockResolvedValue({
+      tripId,
+      userId: fakeUser.id,
+      role: "owner",
+    });
+  });
+
+  describe("GET /api/trips/:tripId/candidates", () => {
+    it("returns candidates sorted by sortOrder", async () => {
+      const candidates = [
+        { id: "s1", name: "Spot A", category: "restaurant", sortOrder: 0 },
+        { id: "s2", name: "Spot B", category: "sightseeing", sortOrder: 1 },
+      ];
+      mockDbQuery.spots.findMany.mockResolvedValue(candidates);
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates`);
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body).toHaveLength(2);
+      expect(body[0].name).toBe("Spot A");
+    });
+
+    it("returns 404 when user is not a trip member", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates`);
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("POST /api/trips/:tripId/candidates", () => {
+    it("creates candidate and returns 201", async () => {
+      const created = {
+        id: "s1",
+        tripId,
+        name: "New Spot",
+        category: "restaurant",
+        memo: null,
+        sortOrder: 0,
+      };
+
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ max: -1 }]),
+        }),
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([created]),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "New Spot", category: "restaurant" }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(body.name).toBe("New Spot");
+    });
+
+    it("returns 400 for empty name", async () => {
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "", category: "restaurant" }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 400 for invalid category", async () => {
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Spot", category: "invalid" }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 404 for viewer role", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue({
+        tripId,
+        userId: fakeUser.id,
+        role: "viewer",
+      });
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Spot", category: "restaurant" }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("PATCH /api/trips/:tripId/candidates/:spotId", () => {
+    it("updates candidate fields", async () => {
+      const existing = { id: "s1", tripId, name: "Old", dayPatternId: null };
+      const updated = { ...existing, name: "Updated" };
+
+      mockDbQuery.spots.findFirst.mockResolvedValue(existing);
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/s1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Updated" }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.name).toBe("Updated");
+    });
+
+    it("returns 404 for non-existent candidate", async () => {
+      mockDbQuery.spots.findFirst.mockResolvedValue(undefined);
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/s1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Updated" }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("DELETE /api/trips/:tripId/candidates/:spotId", () => {
+    it("deletes candidate", async () => {
+      mockDbQuery.spots.findFirst.mockResolvedValue({ id: "s1", tripId, dayPatternId: null });
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/s1`, {
+        method: "DELETE",
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.ok).toBe(true);
+    });
+
+    it("returns 404 for non-existent candidate", async () => {
+      mockDbQuery.spots.findFirst.mockResolvedValue(undefined);
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/s1`, {
+        method: "DELETE",
+      });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("PATCH /api/trips/:tripId/candidates/reorder", () => {
+    it("reorders candidates", async () => {
+      const id1 = "00000000-0000-0000-0000-000000000001";
+      const id2 = "00000000-0000-0000-0000-000000000002";
+      mockDbQuery.spots.findMany.mockResolvedValue([
+        { id: id1, tripId, dayPatternId: null },
+        { id: id2, tripId, dayPatternId: null },
+      ]);
+      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        await fn({
+          update: vi.fn().mockReturnValue({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue(undefined),
+            }),
+          }),
+        });
+      });
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id2, id1] }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.ok).toBe(true);
+    });
+
+    it("returns 400 for invalid UUIDs", async () => {
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/reorder`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: ["not-a-uuid"] }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe("POST /api/trips/:tripId/candidates/batch-assign", () => {
+    const patternId = "00000000-0000-0000-0000-000000000010";
+    const dayId = "day-1";
+    const id1 = "00000000-0000-0000-0000-000000000001";
+    const id2 = "00000000-0000-0000-0000-000000000002";
+
+    it("assigns multiple candidates to a pattern", async () => {
+      mockDbQuery.spots.findMany.mockResolvedValue([
+        { id: id1, tripId, dayPatternId: null },
+        { id: id2, tripId, dayPatternId: null },
+      ]);
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValue({
+        id: patternId,
+        tripDay: { id: dayId, tripId },
+      });
+      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        await fn({
+          select: vi.fn().mockReturnValue({
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([{ max: 0 }]),
+            }),
+          }),
+          update: vi.fn().mockReturnValue({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue(undefined),
+            }),
+          }),
+        });
+      });
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/batch-assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1, id2], dayPatternId: patternId }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.ok).toBe(true);
+    });
+
+    it("returns 400 for empty spotIds", async () => {
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/batch-assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [], dayPatternId: patternId }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 404 when some spots are not candidates", async () => {
+      mockDbQuery.spots.findMany.mockResolvedValue([{ id: id1, tripId, dayPatternId: null }]);
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValue({
+        id: patternId,
+        tripDay: { id: dayId, tripId },
+      });
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/batch-assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1, id2], dayPatternId: patternId }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 404 when pattern does not belong to trip", async () => {
+      mockDbQuery.spots.findMany.mockResolvedValue([{ id: id1, tripId, dayPatternId: null }]);
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValue(undefined);
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/batch-assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1], dayPatternId: patternId }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("POST /api/trips/:tripId/candidates/batch-delete", () => {
+    const id1 = "00000000-0000-0000-0000-000000000001";
+    const id2 = "00000000-0000-0000-0000-000000000002";
+
+    it("deletes multiple candidates", async () => {
+      mockDbQuery.spots.findMany.mockResolvedValue([
+        { id: id1, tripId, dayPatternId: null },
+        { id: id2, tripId, dayPatternId: null },
+      ]);
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/batch-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1, id2] }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.ok).toBe(true);
+    });
+
+    it("returns 400 for empty spotIds", async () => {
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/batch-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [] }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 404 when some spots are not candidates", async () => {
+      mockDbQuery.spots.findMany.mockResolvedValue([{ id: id1, tripId, dayPatternId: null }]);
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/batch-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1, id2] }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("POST /api/trips/:tripId/candidates/batch-duplicate", () => {
+    const id1 = "00000000-0000-0000-0000-000000000001";
+    const id2 = "00000000-0000-0000-0000-000000000002";
+
+    it("duplicates multiple candidates and returns 201", async () => {
+      const existingSpots = [
+        {
+          id: id1,
+          tripId,
+          dayPatternId: null,
+          name: "Spot A",
+          category: "restaurant",
+          memo: "good food",
+          address: null,
+          startTime: null,
+          endTime: null,
+          url: null,
+          departurePlace: null,
+          arrivalPlace: null,
+          transportMethod: null,
+          color: "blue",
+          sortOrder: 0,
+        },
+        {
+          id: id2,
+          tripId,
+          dayPatternId: null,
+          name: "Spot B",
+          category: "sightseeing",
+          memo: null,
+          address: "Tokyo",
+          startTime: null,
+          endTime: null,
+          url: "https://example.com",
+          departurePlace: null,
+          arrivalPlace: null,
+          transportMethod: null,
+          color: "red",
+          sortOrder: 1,
+        },
+      ];
+      mockDbQuery.spots.findMany.mockResolvedValue(existingSpots);
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ max: 1 }]),
+        }),
+      });
+      const duplicated = [
+        { ...existingSpots[0], id: "new-1", sortOrder: 2 },
+        { ...existingSpots[1], id: "new-2", sortOrder: 3 },
+      ];
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue(duplicated),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/batch-duplicate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1, id2] }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(body).toHaveLength(2);
+    });
+
+    it("returns 400 for empty spotIds", async () => {
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/batch-duplicate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [] }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 404 when some spots are not candidates", async () => {
+      mockDbQuery.spots.findMany.mockResolvedValue([{ id: id1, tripId, dayPatternId: null }]);
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/batch-duplicate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1, id2] }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("POST /api/trips/:tripId/candidates/:spotId/assign", () => {
+    it("assigns candidate to a pattern", async () => {
+      const patternId = "00000000-0000-0000-0000-000000000010";
+      const dayId = "day-1";
+      const spotId = "s1";
+      const existing = { id: spotId, tripId, dayPatternId: null };
+      const updated = { ...existing, dayPatternId: patternId, sortOrder: 0 };
+
+      mockDbQuery.spots.findFirst.mockResolvedValue(existing);
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValue({
+        id: patternId,
+        tripDay: { id: dayId, tripId },
+      });
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ max: -1 }]),
+        }),
+      });
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/${spotId}/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dayPatternId: patternId }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.dayPatternId).toBe(patternId);
+    });
+
+    it("returns 400 for missing dayPatternId", async () => {
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/s1/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 404 when spot is not a candidate", async () => {
+      mockDbQuery.spots.findFirst.mockResolvedValue(undefined);
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/candidates/s1/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dayPatternId: "00000000-0000-0000-0000-000000000001" }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+  });
+});

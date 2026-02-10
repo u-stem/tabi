@@ -150,9 +150,12 @@ export const dayPatterns = pgTable("day_patterns", {
 
 export const spots = pgTable("spots", {
   id: uuid("id").primaryKey().defaultRandom(),
-  dayPatternId: uuid("day_pattern_id")
+  tripId: uuid("trip_id")
     .notNull()
-    .references(() => dayPatterns.id, { onDelete: "cascade" }),
+    .references(() => trips.id, { onDelete: "cascade" }),
+  dayPatternId: uuid("day_pattern_id").references(() => dayPatterns.id, {
+    onDelete: "cascade",
+  }),
   name: varchar("name", { length: 200 }).notNull(),
   category: spotCategoryEnum("category").notNull(),
   address: varchar("address", { length: 500 }),
@@ -180,6 +183,7 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
   owner: one(users, { fields: [trips.ownerId], references: [users.id] }),
   members: many(tripMembers),
   days: many(tripDays),
+  spots: many(spots),
 }));
 
 export const tripMembersRelations = relations(tripMembers, ({ one }) => ({
@@ -198,5 +202,6 @@ export const dayPatternsRelations = relations(dayPatterns, ({ one, many }) => ({
 }));
 
 export const spotsRelations = relations(spots, ({ one }) => ({
+  trip: one(trips, { fields: [spots.tripId], references: [trips.id] }),
   dayPattern: one(dayPatterns, { fields: [spots.dayPatternId], references: [dayPatterns.id] }),
 }));

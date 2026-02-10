@@ -30,6 +30,18 @@ type SyncType =
   | "spot:updated"
   | "spot:deleted"
   | "spot:reordered"
+  | "spot:assigned"
+  | "spot:unassigned"
+  | "spot:batch-unassigned"
+  | "spot:batch-deleted"
+  | "candidate:created"
+  | "candidate:updated"
+  | "candidate:deleted"
+  | "candidate:reordered"
+  | "candidate:batch-assigned"
+  | "candidate:batch-deleted"
+  | "candidate:batch-duplicated"
+  | "spot:batch-duplicated"
   | "pattern:created"
   | "pattern:updated"
   | "pattern:deleted"
@@ -41,6 +53,18 @@ const SYNC_TYPES: Set<string> = new Set<SyncType>([
   "spot:updated",
   "spot:deleted",
   "spot:reordered",
+  "spot:assigned",
+  "spot:unassigned",
+  "spot:batch-unassigned",
+  "spot:batch-deleted",
+  "candidate:created",
+  "candidate:updated",
+  "candidate:deleted",
+  "candidate:reordered",
+  "candidate:batch-assigned",
+  "candidate:batch-deleted",
+  "candidate:batch-duplicated",
+  "spot:batch-duplicated",
   "pattern:created",
   "pattern:updated",
   "pattern:deleted",

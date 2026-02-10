@@ -184,6 +184,7 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
     if (source.spots.length > 0) {
       await tx.insert(spots).values(
         source.spots.map((spot) => ({
+          tripId,
           dayPatternId: newPattern.id,
           name: spot.name,
           category: spot.category,

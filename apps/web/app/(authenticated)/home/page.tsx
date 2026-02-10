@@ -32,7 +32,7 @@ export default function HomePage() {
   const [duplicating, setDuplicating] = useState(false);
 
   useEffect(() => {
-    api<TripListItem[]>("/api/trips")
+    api<TripListItem[]>("/api/trips?scope=owned")
       .then((data) => {
         setTrips(data);
       })
@@ -120,7 +120,7 @@ export default function HomePage() {
 
     if (succeeded > 0) {
       try {
-        const fresh = await api<TripListItem[]>("/api/trips");
+        const fresh = await api<TripListItem[]>("/api/trips?scope=owned");
         setTrips(fresh);
       } catch {
         // Fallback: remove only successfully deleted trips
@@ -152,7 +152,7 @@ export default function HomePage() {
 
     if (succeeded > 0) {
       try {
-        const fresh = await api<TripListItem[]>("/api/trips");
+        const fresh = await api<TripListItem[]>("/api/trips?scope=owned");
         setTrips(fresh);
       } catch {
         // Ignore: list will be stale but not broken

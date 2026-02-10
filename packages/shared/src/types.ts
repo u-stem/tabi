@@ -43,6 +43,7 @@ export type TripResponse = {
   status: TripStatus;
   role: MemberRole;
   days: DayResponse[];
+  candidates: SpotResponse[];
 };
 
 export type TripListItem = {

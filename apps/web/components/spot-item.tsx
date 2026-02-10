@@ -4,7 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { SpotCategory, SpotColor, TransportMethod } from "@tabi/shared";
 import { TRANSPORT_METHOD_LABELS } from "@tabi/shared";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { MoreHorizontal, Pencil, Trash2, Undo2 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useState } from "react";
 import {
@@ -23,6 +23,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { SPOT_COLOR_CLASSES } from "@/lib/colors";
 import type { TimeStatus } from "@/lib/format";
 import { formatTime, formatTimeRange } from "@/lib/format";
@@ -48,10 +49,14 @@ type SpotItemProps = {
   patternId: string;
   onDelete: () => void;
   onUpdate: () => void;
+  onUnassign?: () => void;
   disabled?: boolean;
   isFirst?: boolean;
   isLast?: boolean;
   timeStatus?: TimeStatus | null;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelect?: (id: string) => void;
 };
 
 type UseSortableReturn = ReturnType<typeof useSortable>;
@@ -65,10 +70,11 @@ type SortableProps = {
 };
 
 export function SpotItem(props: SpotItemProps) {
-  const { id, category, disabled } = props;
+  const { id, category, disabled, selectable } = props;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
-    disabled,
+    disabled: disabled || selectable,
+    data: { type: "spot" },
   });
 
   const style: CSSProperties = {
@@ -122,11 +128,13 @@ function SpotMenu({
   disabled,
   onEdit,
   onDelete,
+  onUnassign,
 }: {
   name: string;
   disabled?: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  onUnassign?: () => void;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -148,6 +156,12 @@ function SpotMenu({
             <Pencil className="mr-2 h-3 w-3" />
             編集
           </DropdownMenuItem>
+          {onUnassign && (
+            <DropdownMenuItem onClick={onUnassign}>
+              <Undo2 className="mr-2 h-3 w-3" />
+              候補に戻す
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
             <Trash2 className="mr-2 h-3 w-3" />
             削除
@@ -196,10 +210,14 @@ function PlaceCard({
   patternId,
   onDelete,
   onUpdate,
+  onUnassign,
   disabled,
   isFirst,
   isLast,
   timeStatus,
+  selectable,
+  selected,
+  onSelect,
   sortable,
 }: SpotItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -214,7 +232,7 @@ function PlaceCard({
     <div
       ref={sortable.nodeRef}
       style={sortable.style}
-      className={cn("flex gap-3 py-1", sortable.isDragging && "opacity-50")}
+      className={cn("flex gap-3 py-1.5", sortable.isDragging && "opacity-50")}
     >
       {/* Timeline node with line segments */}
       <div className="flex flex-col items-center" aria-hidden="true">
@@ -267,19 +285,47 @@ function PlaceCard({
       </div>
 
       {/* Card body */}
-      <div className={cn("min-w-0 flex-1 rounded-md border p-3", isPast && "opacity-50")}>
+      <div
+        className={cn(
+          "min-w-0 flex-1 rounded-md border p-3",
+          isPast && "opacity-50",
+          selectable && "cursor-pointer transition-colors hover:bg-accent/50",
+          selectable && selected && "border-ring ring-2 ring-ring",
+        )}
+        {...(selectable
+          ? {
+              onClick: () => onSelect?.(id),
+              onKeyDown: (e: React.KeyboardEvent) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect?.(id);
+                }
+              },
+              role: "button" as const,
+              tabIndex: 0,
+              "aria-pressed": selected,
+            }
+          : {})}
+      >
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
-            <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
+            {selectable ? (
+              <SelectionIndicator checked={!!selected} />
+            ) : (
+              <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
+            )}
             <span className="font-medium">{name}</span>
             {timeStr && <span className="text-xs text-muted-foreground">{timeStr}</span>}
           </div>
-          <SpotMenu
-            name={name}
-            disabled={disabled}
-            onEdit={() => setEditOpen(true)}
-            onDelete={onDelete}
-          />
+          {!selectable && (
+            <SpotMenu
+              name={name}
+              disabled={disabled}
+              onEdit={() => setEditOpen(true)}
+              onDelete={onDelete}
+              onUnassign={onUnassign}
+            />
+          )}
         </div>
         {(address || url || memo) && (
           <div className="mt-1 space-y-0.5">
@@ -344,10 +390,14 @@ function TransportConnector({
   patternId,
   onDelete,
   onUpdate,
+  onUnassign,
   disabled,
   isFirst,
   isLast,
   timeStatus,
+  selectable,
+  selected,
+  onSelect,
   sortable,
 }: SpotItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
@@ -430,23 +480,45 @@ function TransportConnector({
         className={cn(
           "flex min-w-0 flex-1 items-center gap-2 rounded border border-dashed px-3 py-1.5",
           isPast && "opacity-50",
+          selectable && "cursor-pointer transition-colors hover:bg-accent/50",
+          selectable && selected && "border-ring ring-2 ring-ring",
         )}
+        {...(selectable
+          ? {
+              onClick: () => onSelect?.(id),
+              onKeyDown: (e: React.KeyboardEvent) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  onSelect?.(id);
+                }
+              },
+              role: "button" as const,
+              tabIndex: 0,
+              "aria-pressed": selected,
+            }
+          : {})}
       >
-        <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
-        <TransportIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+        {selectable ? (
+          <SelectionIndicator checked={!!selected} />
+        ) : (
+          <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
+        )}
         {routeStr && <span className="truncate text-sm text-muted-foreground">{routeStr}</span>}
         {methodLabel && (
           <span className="shrink-0 text-xs text-muted-foreground">({methodLabel})</span>
         )}
         {timeStr && <span className="shrink-0 text-xs text-muted-foreground">{timeStr}</span>}
-        <div className="ml-auto">
-          <SpotMenu
-            name={name}
-            disabled={disabled}
-            onEdit={() => setEditOpen(true)}
-            onDelete={onDelete}
-          />
-        </div>
+        {!selectable && (
+          <div className="ml-auto">
+            <SpotMenu
+              name={name}
+              disabled={disabled}
+              onEdit={() => setEditOpen(true)}
+              onDelete={onDelete}
+              onUnassign={onUnassign}
+            />
+          </div>
+        )}
       </div>
 
       <EditSpotDialog

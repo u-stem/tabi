@@ -50,3 +50,31 @@ export const reorderSpotsSchema = z.object({
   spotIds: z.array(z.string().uuid()),
 });
 export type ReorderSpotsInput = z.infer<typeof reorderSpotsSchema>;
+
+export const createCandidateSpotSchema = z.object({
+  name: z.string().min(1).max(200),
+  category: spotCategorySchema,
+  memo: z.string().max(2000).optional(),
+});
+export type CreateCandidateSpotInput = z.infer<typeof createCandidateSpotSchema>;
+
+export const assignCandidateSchema = z.object({
+  dayPatternId: z.string().uuid(),
+});
+export type AssignCandidateInput = z.infer<typeof assignCandidateSchema>;
+
+export const batchAssignCandidatesSchema = z.object({
+  spotIds: z.array(z.string().uuid()).min(1),
+  dayPatternId: z.string().uuid(),
+});
+export type BatchAssignCandidatesInput = z.infer<typeof batchAssignCandidatesSchema>;
+
+export const batchUnassignSpotsSchema = z.object({
+  spotIds: z.array(z.string().uuid()).min(1),
+});
+export type BatchUnassignSpotsInput = z.infer<typeof batchUnassignSpotsSchema>;
+
+export const batchDeleteSpotsSchema = z.object({
+  spotIds: z.array(z.string().uuid()).min(1),
+});
+export type BatchDeleteSpotsInput = z.infer<typeof batchDeleteSpotsSchema>;

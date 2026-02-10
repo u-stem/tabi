@@ -1,5 +1,5 @@
 import { createTripSchema, updateTripSchema } from "@tabi/shared";
-import { and, asc, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, spots, tripDays, tripMembers, trips } from "../db/schema";
@@ -32,10 +32,14 @@ tripRoutes.use("*", requireAuth);
 // List trips for current user, filtered by scope
 tripRoutes.get("/", async (c) => {
   const user = c.get("user");
-  const scope = c.req.query("scope") === "shared" ? "shared" : "owned";
+  const scope = c.req.query("scope") as string | undefined;
 
   const roleFilter =
-    scope === "owned" ? eq(tripMembers.role, "owner") : ne(tripMembers.role, "owner");
+    scope === "owned"
+      ? eq(tripMembers.role, "owner")
+      : scope === "shared"
+        ? ne(tripMembers.role, "owner")
+        : undefined;
 
   const memberships = await db.query.tripMembers.findMany({
     where: and(eq(tripMembers.userId, user.id), roleFilter),
@@ -171,7 +175,12 @@ tripRoutes.get("/:id", async (c) => {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
-  return c.json({ ...trip, role });
+  const candidates = await db.query.spots.findMany({
+    where: and(eq(spots.tripId, tripId), isNull(spots.dayPatternId)),
+    orderBy: (s, { asc }) => [asc(s.sortOrder)],
+  });
+
+  return c.json({ ...trip, role, candidates });
 });
 
 // Update trip (owner or editor)
@@ -384,6 +393,7 @@ tripRoutes.post("/:id/duplicate", async (c) => {
         if (pattern.spots.length > 0) {
           await tx.insert(spots).values(
             pattern.spots.map((spot) => ({
+              tripId: created.id,
               dayPatternId: newPattern.id,
               name: spot.name,
               category: spot.category,

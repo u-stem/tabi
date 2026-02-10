@@ -55,6 +55,10 @@ vi.mock("../db/index", () => ({
   },
 }));
 
+vi.mock("../ws/rooms", () => ({
+  broadcastToTrip: vi.fn(),
+}));
+
 import { spotRoutes } from "../routes/spots";
 
 const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
@@ -378,6 +382,211 @@ describe("Spot routes", () => {
       const app = createApp();
       const res = await app.request(`${basePath}/nonexistent`, {
         method: "DELETE",
+      });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("POST /api/trips/:tripId/spots/batch-unassign", () => {
+    const id1 = "00000000-0000-0000-0000-000000000001";
+    const id2 = "00000000-0000-0000-0000-000000000002";
+
+    it("unassigns multiple spots to candidates", async () => {
+      mockDbQuery.spots.findMany.mockResolvedValue([
+        { id: id1, tripId, dayPatternId: patternId, dayPattern: { tripDay: { id: dayId } } },
+        { id: id2, tripId, dayPatternId: patternId, dayPattern: { tripDay: { id: dayId } } },
+      ]);
+      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
+        await fn({
+          select: vi.fn().mockReturnValue({
+            from: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue([{ max: 0 }]),
+            }),
+          }),
+          update: vi.fn().mockReturnValue({
+            set: vi.fn().mockReturnValue({
+              where: vi.fn().mockResolvedValue(undefined),
+            }),
+          }),
+        });
+      });
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/spots/batch-unassign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1, id2] }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.ok).toBe(true);
+    });
+
+    it("returns 400 for empty spotIds", async () => {
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/spots/batch-unassign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [] }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 404 when some spots are not assigned", async () => {
+      mockDbQuery.spots.findMany.mockResolvedValue([{ id: id1, tripId, dayPatternId: patternId }]);
+
+      const app = createApp();
+      const res = await app.request(`/api/trips/${tripId}/spots/batch-unassign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1, id2] }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe(`POST ${basePath}/batch-delete`, () => {
+    const id1 = "00000000-0000-0000-0000-000000000001";
+    const id2 = "00000000-0000-0000-0000-000000000002";
+
+    it("deletes multiple spots from a pattern", async () => {
+      mockDbQuery.spots.findMany.mockResolvedValue([
+        { id: id1, dayPatternId: patternId },
+        { id: id2, dayPatternId: patternId },
+      ]);
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/batch-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1, id2] }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.ok).toBe(true);
+    });
+
+    it("returns 400 for empty spotIds", async () => {
+      const app = createApp();
+      const res = await app.request(`${basePath}/batch-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [] }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 404 when some spots do not belong to pattern", async () => {
+      mockDbQuery.spots.findMany.mockResolvedValue([{ id: id1, dayPatternId: patternId }]);
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/batch-delete`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1, id2] }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe(`POST ${basePath}/batch-duplicate`, () => {
+    const id1 = "00000000-0000-0000-0000-000000000001";
+    const id2 = "00000000-0000-0000-0000-000000000002";
+
+    it("duplicates multiple spots and returns 201", async () => {
+      const existingSpots = [
+        {
+          id: id1,
+          tripId,
+          dayPatternId: patternId,
+          name: "Spot A",
+          category: "restaurant",
+          memo: "good food",
+          address: null,
+          startTime: "10:00",
+          endTime: "11:00",
+          url: null,
+          departurePlace: null,
+          arrivalPlace: null,
+          transportMethod: null,
+          color: "blue",
+          sortOrder: 0,
+        },
+        {
+          id: id2,
+          tripId,
+          dayPatternId: patternId,
+          name: "Spot B",
+          category: "sightseeing",
+          memo: null,
+          address: "Tokyo",
+          startTime: null,
+          endTime: null,
+          url: "https://example.com",
+          departurePlace: null,
+          arrivalPlace: null,
+          transportMethod: null,
+          color: "red",
+          sortOrder: 1,
+        },
+      ];
+      mockDbQuery.spots.findMany.mockResolvedValue(existingSpots);
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ max: 1 }]),
+        }),
+      });
+      const duplicated = [
+        { ...existingSpots[0], id: "new-1", sortOrder: 2 },
+        { ...existingSpots[1], id: "new-2", sortOrder: 3 },
+      ];
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue(duplicated),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/batch-duplicate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1, id2] }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(body).toHaveLength(2);
+    });
+
+    it("returns 400 for empty spotIds", async () => {
+      const app = createApp();
+      const res = await app.request(`${basePath}/batch-duplicate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [] }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 404 when some spots do not belong to pattern", async () => {
+      mockDbQuery.spots.findMany.mockResolvedValue([{ id: id1, dayPatternId: patternId }]);
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/batch-duplicate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ spotIds: [id1, id2] }),
       });
 
       expect(res.status).toBe(404);

@@ -84,7 +84,6 @@ export function TripToolbar({
   if (selectionMode) {
     return (
       <div role="toolbar" aria-label="選択操作" className="flex items-center gap-2">
-        <span className="text-sm font-medium">{selectedCount}件選択中</span>
         <Button
           variant="outline"
           size="sm"

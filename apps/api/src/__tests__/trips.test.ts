@@ -13,6 +13,9 @@ const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, m
         findFirst: vi.fn(),
         findMany: vi.fn(),
       },
+      spots: {
+        findMany: vi.fn(),
+      },
     },
     mockDbInsert: vi.fn(),
     mockDbUpdate: vi.fn(),
@@ -61,6 +64,7 @@ describe("Trip routes", () => {
       userId: fakeUser.id,
       role: "owner",
     });
+    mockDbQuery.spots.findMany.mockResolvedValue([]);
   });
 
   describe("POST /api/trips", () => {
@@ -203,8 +207,41 @@ describe("Trip routes", () => {
       expect(body[0].days).toBeUndefined();
     });
 
-    it("returns only owned trips by default (scope=owned)", async () => {
-      // DB query filters by role="owner", so mock returns only owned trips
+    it("returns all trips by default (no scope filter)", async () => {
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([
+        {
+          tripId: "trip-1",
+          userId: fakeUser.id,
+          role: "owner",
+          trip: {
+            id: "trip-1",
+            title: "My Trip",
+            updatedAt: new Date("2025-07-01"),
+            days: [],
+          },
+        },
+        {
+          tripId: "trip-2",
+          userId: fakeUser.id,
+          role: "editor",
+          trip: {
+            id: "trip-2",
+            title: "Shared Trip",
+            updatedAt: new Date("2025-07-02"),
+            days: [],
+          },
+        },
+      ]);
+
+      const app = createApp();
+      const res = await app.request("/api/trips");
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body).toHaveLength(2);
+    });
+
+    it("returns only owned trips when scope=owned", async () => {
       mockDbQuery.tripMembers.findMany.mockResolvedValue([
         {
           tripId: "trip-1",
@@ -220,7 +257,7 @@ describe("Trip routes", () => {
       ]);
 
       const app = createApp();
-      const res = await app.request("/api/trips");
+      const res = await app.request("/api/trips?scope=owned");
       const body = await res.json();
 
       expect(res.status).toBe(200);
@@ -229,7 +266,6 @@ describe("Trip routes", () => {
     });
 
     it("returns only shared trips when scope=shared", async () => {
-      // DB query filters by role!="owner", so mock returns only shared trips
       mockDbQuery.tripMembers.findMany.mockResolvedValue([
         {
           tripId: "trip-2",

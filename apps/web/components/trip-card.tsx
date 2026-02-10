@@ -2,10 +2,10 @@
 
 import type { MemberRole, TripListItem, TripStatus } from "@tabi/shared";
 import { ROLE_LABELS, STATUS_LABELS } from "@tabi/shared";
-import { Check } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { formatDateRange, getDayCount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -27,20 +27,6 @@ type TripCardProps = TripListItem & {
   selected?: boolean;
   onSelect?: (id: string) => void;
 };
-
-function SelectionIndicator({ checked }: { checked: boolean }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        "flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border border-blue-500",
-        checked && "bg-blue-500 text-white",
-      )}
-    >
-      {checked && <Check className="h-3.5 w-3.5" />}
-    </span>
-  );
-}
 
 export function TripCard({
   id,

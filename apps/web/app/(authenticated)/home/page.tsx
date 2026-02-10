@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+
 import { toast } from "sonner";
 import { TripCard } from "@/components/trip-card";
 import type { SortKey, StatusFilter } from "@/components/trip-toolbar";
@@ -32,7 +33,9 @@ export default function HomePage() {
 
   useEffect(() => {
     api<TripListItem[]>("/api/trips")
-      .then(setTrips)
+      .then((data) => {
+        setTrips(data);
+      })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 401) {
           router.push("/auth/login");
@@ -184,24 +187,6 @@ export default function HomePage() {
         </div>
       ) : error ? (
         <p className="mt-8 text-destructive">{error}</p>
-      ) : trips.length === 0 ? (
-        <div className="mt-12 flex flex-col items-center gap-4 text-center">
-          <p className="text-lg text-muted-foreground">まだ旅行がありません</p>
-          <p className="text-sm text-muted-foreground">最初の旅行プランを作成してみましょう</p>
-          {online ? (
-            <Button asChild>
-              <Link href="/trips/new">
-                <Plus className="h-4 w-4" />
-                旅行を作成
-              </Link>
-            </Button>
-          ) : (
-            <Button disabled>
-              <Plus className="h-4 w-4" />
-              旅行を作成
-            </Button>
-          )}
-        </div>
       ) : (
         <>
           <div className="mt-4">
@@ -240,7 +225,11 @@ export default function HomePage() {
               }
             />
           </div>
-          {filteredTrips.length === 0 ? (
+          {trips.length === 0 ? (
+            <p className="mt-8 text-center text-muted-foreground">
+              まだ旅行がありません。新規作成から旅行プランを作成してみましょう
+            </p>
+          ) : filteredTrips.length === 0 ? (
             <p className="mt-8 text-center text-muted-foreground">条件に一致する旅行がありません</p>
           ) : (
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -1,4 +1,3 @@
-import type { DayPatternResponse } from "@tabi/shared";
 import { createDayPatternSchema, updateDayPatternSchema } from "@tabi/shared";
 import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
@@ -13,8 +12,8 @@ import { broadcastToTrip } from "../ws/rooms";
 const patternRoutes = new Hono<AppEnv>();
 patternRoutes.use("*", requireAuth);
 
-function toPatternPayload(p: typeof dayPatterns.$inferSelect): DayPatternResponse {
-  return { id: p.id, label: p.label, isDefault: p.isDefault, sortOrder: p.sortOrder, spots: [] };
+function toPatternNotification(p: typeof dayPatterns.$inferSelect) {
+  return { id: p.id, label: p.label, isDefault: p.isDefault, sortOrder: p.sortOrder };
 }
 
 // List patterns for a day
@@ -75,7 +74,7 @@ patternRoutes.post("/:tripId/days/:dayId/patterns", async (c) => {
   broadcastToTrip(tripId, user.id, {
     type: "pattern:created",
     dayId,
-    pattern: toPatternPayload(pattern),
+    pattern: toPatternNotification(pattern),
   });
   return c.json(pattern, 201);
 });
@@ -114,7 +113,7 @@ patternRoutes.patch("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
   broadcastToTrip(tripId, user.id, {
     type: "pattern:updated",
     dayId,
-    pattern: toPatternPayload(updated),
+    pattern: toPatternNotification(updated),
   });
   return c.json(updated);
 });
@@ -208,7 +207,7 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
   broadcastToTrip(tripId, user.id, {
     type: "pattern:duplicated",
     dayId,
-    pattern: toPatternPayload(result),
+    pattern: toPatternNotification(result),
   });
   return c.json(result, 201);
 });

@@ -1,13 +1,12 @@
 import Link from "next/link";
 import { AuthForm } from "@/components/auth-form";
+import { Logo } from "@/components/logo";
 
 export default function SignupPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="container flex h-14 items-center">
-        <Link href="/" className="text-xl font-bold">
-          tabi
-        </Link>
+        <Logo href="/" />
       </header>
       <main className="flex flex-1 flex-col items-center justify-center px-4">
         <AuthForm mode="signup" />

@@ -1,6 +1,6 @@
 "use client";
 
-import type { TripStatus } from "@tabi/shared";
+import type { MemberRole, TripStatus } from "@tabi/shared";
 import { STATUS_LABELS } from "@tabi/shared";
 import { Link, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -36,6 +36,7 @@ import { api } from "@/lib/api";
 type TripActionsProps = {
   tripId: string;
   status: TripStatus;
+  role: MemberRole;
   onStatusChange?: () => void;
   onEdit?: () => void;
   disabled?: boolean;
@@ -46,10 +47,13 @@ const statuses = Object.entries(STATUS_LABELS) as [TripStatus, string][];
 export function TripActions({
   tripId,
   status,
+  role,
   onStatusChange,
   onEdit,
   disabled,
 }: TripActionsProps) {
+  const isOwnerRole = role === "owner";
+  const canEditRole = role === "owner" || role === "editor";
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -112,48 +116,58 @@ export function TripActions({
   return (
     <div className="flex w-full items-center justify-between">
       <div className="flex items-center gap-2">
-        <Select value={status} onValueChange={handleStatusChange} disabled={disabled}>
-          <SelectTrigger className="h-8 w-[130px] text-xs">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {statuses.map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <MemberDialog tripId={tripId} />
-        <Button variant="outline" size="sm" onClick={handleShare} disabled={disabled || sharing}>
-          <Link className="h-4 w-4" />
-          {sharing ? "生成中..." : "共有リンク"}
-        </Button>
-      </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="h-8 w-8" disabled={disabled}>
-            <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">旅行メニュー</span>
+        {canEditRole ? (
+          <Select value={status} onValueChange={handleStatusChange} disabled={disabled}>
+            <SelectTrigger className="h-8 w-[130px] text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {statuses.map(([value, label]) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <span className="text-xs text-muted-foreground">{STATUS_LABELS[status]}</span>
+        )}
+        <MemberDialog tripId={tripId} isOwner={isOwnerRole} />
+        {isOwnerRole && (
+          <Button variant="outline" size="sm" onClick={handleShare} disabled={disabled || sharing}>
+            <Link className="h-4 w-4" />
+            {sharing ? "生成中..." : "共有リンク"}
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {onEdit && (
-            <DropdownMenuItem onClick={onEdit}>
-              <Pencil className="mr-2 h-4 w-4" />
-              編集
-            </DropdownMenuItem>
-          )}
-          <DropdownMenuItem
-            className="text-destructive"
-            disabled={deleting}
-            onClick={() => setDeleteOpen(true)}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            {deleting ? "削除中..." : "削除"}
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        )}
+      </div>
+      {canEditRole && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={disabled}>
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">旅行メニュー</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {onEdit && (
+              <DropdownMenuItem onClick={onEdit}>
+                <Pencil className="mr-2 h-4 w-4" />
+                編集
+              </DropdownMenuItem>
+            )}
+            {isOwnerRole && (
+              <DropdownMenuItem
+                className="text-destructive"
+                disabled={deleting}
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                {deleting ? "削除中..." : "削除"}
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

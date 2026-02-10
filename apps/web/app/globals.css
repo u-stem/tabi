@@ -31,8 +31,9 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius: 0.5rem;
-  --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji",
-    "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-sans: var(--font-inter), var(--font-noto-sans-jp), ui-sans-serif,
+    system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 @utility container {

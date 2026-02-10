@@ -1,5 +1,5 @@
 import { createTripSchema, updateTripSchema } from "@tabi/shared";
-import { asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, spots, tripDays, tripMembers, trips } from "../db/schema";
@@ -29,11 +29,16 @@ function generateDateRange(startDate: string, endDate: string): string[] {
 const tripRoutes = new Hono<AppEnv>();
 tripRoutes.use("*", requireAuth);
 
-// List trips for current user (all trips where user is a member)
+// List trips for current user, filtered by scope
 tripRoutes.get("/", async (c) => {
   const user = c.get("user");
+  const scope = c.req.query("scope") === "shared" ? "shared" : "owned";
+
+  const roleFilter =
+    scope === "owned" ? eq(tripMembers.role, "owner") : ne(tripMembers.role, "owner");
+
   const memberships = await db.query.tripMembers.findMany({
-    where: eq(tripMembers.userId, user.id),
+    where: and(eq(tripMembers.userId, user.id), roleFilter),
     with: {
       trip: {
         with: {
@@ -49,10 +54,11 @@ tripRoutes.get("/", async (c) => {
     },
   });
 
-  const result = memberships.map(({ trip }) => {
+  const result = memberships.map(({ role, trip }) => {
     const { days, ...rest } = trip;
     return {
       ...rest,
+      role,
       totalSpots: days.reduce(
         (sum, day) => sum + day.patterns.reduce((vSum, v) => vSum + v.spots.length, 0),
         0,
@@ -165,7 +171,7 @@ tripRoutes.get("/:id", async (c) => {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
-  return c.json(trip);
+  return c.json({ ...trip, role });
 });
 
 // Update trip (owner or editor)

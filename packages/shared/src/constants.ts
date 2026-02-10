@@ -1,3 +1,4 @@
+import type { MemberRole } from "./schemas/member";
 import type { SpotCategory, SpotColor, TransportMethod } from "./schemas/spot";
 import type { TripStatus } from "./schemas/trip";
 
@@ -24,6 +25,12 @@ export const STATUS_LABELS: Record<TripStatus, string> = {
   planned: "計画済み",
   active: "進行中",
   completed: "完了",
+};
+
+export const ROLE_LABELS: Record<MemberRole, string> = {
+  owner: "オーナー",
+  editor: "編集者",
+  viewer: "閲覧者",
 };
 
 export const SPOT_COLOR_LABELS: Record<SpotColor, string> = {

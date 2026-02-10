@@ -1,21 +1,19 @@
 import { ArrowRight, LogIn } from "lucide-react";
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="container flex h-14 items-center">
-        <span className="text-xl font-bold">tabi</span>
+        <Logo />
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-          あなたの旅を、もっと自由に
-        </h1>
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">仲間と描く、旅のかたち</h1>
         <p className="mt-4 max-w-lg text-lg text-muted-foreground">
-          旅行の計画から共有まで、すべてをひとつの場所で。
-          日ごとの予定を整理し、旅の全体像を把握しましょう。
+          仲間と旅の計画を作ろう。日程も予定も、ここでまとめる。
         </p>
         <div className="mt-8 flex gap-4">
           <Button asChild size="lg">
@@ -34,7 +32,7 @@ export default function HomePage() {
       </main>
 
       <footer className="container flex h-14 items-center justify-center text-sm text-muted-foreground">
-        tabi - 旅行プランナー
+        sugara
       </footer>
     </div>
   );

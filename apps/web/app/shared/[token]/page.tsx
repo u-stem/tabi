@@ -5,6 +5,7 @@ import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@tabi/shared";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { Logo } from "@/components/logo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { formatDate, formatDateRange } from "@/lib/format";
@@ -28,7 +29,7 @@ export default function SharedTripPage() {
       <div className="min-h-screen">
         <header className="border-b">
           <div className="container flex h-14 items-center">
-            <span className="text-xl font-bold">tabi</span>
+            <Logo />
           </div>
         </header>
         <div className="container py-8">
@@ -48,7 +49,7 @@ export default function SharedTripPage() {
     <div className="min-h-screen">
       <header className="border-b">
         <div className="container flex h-14 items-center">
-          <span className="text-xl font-bold">tabi</span>
+          <Logo />
           <span className="ml-2 text-sm text-muted-foreground">共有プラン</span>
         </div>
       </header>

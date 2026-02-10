@@ -41,6 +41,7 @@ export type TripResponse = {
   startDate: string;
   endDate: string;
   status: TripStatus;
+  role: MemberRole;
   days: DayResponse[];
 };
 
@@ -51,6 +52,7 @@ export type TripListItem = {
   startDate: string;
   endDate: string;
   status: TripStatus;
+  role: MemberRole;
   totalSpots: number;
 };
 

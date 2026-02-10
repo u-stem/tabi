@@ -1,7 +1,7 @@
 "use client";
 
-import type { TripListItem, TripStatus } from "@tabi/shared";
-import { STATUS_LABELS } from "@tabi/shared";
+import type { MemberRole, TripListItem, TripStatus } from "@tabi/shared";
+import { ROLE_LABELS, STATUS_LABELS } from "@tabi/shared";
 import { Check } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
@@ -10,10 +10,16 @@ import { formatDateRange, getDayCount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 const STATUS_COLORS: Record<TripStatus, string> = {
-  draft: "bg-gray-100 text-gray-700 border-gray-200",
-  planned: "bg-blue-50 text-blue-700 border-blue-200",
-  active: "bg-green-50 text-green-700 border-green-200",
-  completed: "bg-purple-50 text-purple-700 border-purple-200",
+  draft: "bg-gray-200 text-gray-800 border-gray-300",
+  planned: "bg-blue-100 text-blue-800 border-blue-300",
+  active: "bg-green-100 text-green-800 border-green-300",
+  completed: "bg-purple-100 text-purple-800 border-purple-300",
+};
+
+const ROLE_COLORS: Record<MemberRole, string> = {
+  owner: "bg-amber-100 text-amber-800 border-amber-300",
+  editor: "bg-sky-100 text-sky-800 border-sky-300",
+  viewer: "bg-slate-100 text-slate-700 border-slate-300",
 };
 
 type TripCardProps = TripListItem & {
@@ -43,12 +49,14 @@ export function TripCard({
   startDate,
   endDate,
   status,
+  role,
   totalSpots,
   selectable = false,
   selected = false,
   onSelect,
 }: TripCardProps) {
   const dayCount = getDayCount(startDate, endDate);
+  const showRole = role !== "owner";
 
   const inner = (
     <>
@@ -58,9 +66,16 @@ export function TripCard({
             {selectable && <SelectionIndicator checked={selected} />}
             <CardTitle className="text-lg">{title}</CardTitle>
           </div>
-          <Badge variant="outline" className={STATUS_COLORS[status]}>
-            {STATUS_LABELS[status]}
-          </Badge>
+          <div className="flex items-center gap-1.5">
+            {showRole && (
+              <Badge variant="outline" className={cn("text-xs", ROLE_COLORS[role])}>
+                {ROLE_LABELS[role]}
+              </Badge>
+            )}
+            <Badge variant="outline" className={STATUS_COLORS[status]}>
+              {STATUS_LABELS[status]}
+            </Badge>
+          </div>
         </div>
         <CardDescription>{destination}</CardDescription>
       </CardHeader>

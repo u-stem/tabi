@@ -175,7 +175,7 @@ describe("Trip routes", () => {
   });
 
   describe("GET /api/trips", () => {
-    it("returns an array of trips with totalSpots", async () => {
+    it("returns trips with totalSpots and excludes days from response", async () => {
       mockDbQuery.tripMembers.findMany.mockResolvedValue([
         {
           tripId: "trip-1",
@@ -198,9 +198,59 @@ describe("Trip routes", () => {
       const body = await res.json();
 
       expect(res.status).toBe(200);
-      expect(Array.isArray(body)).toBe(true);
+      expect(body).toHaveLength(1);
       expect(body[0].totalSpots).toBe(2);
       expect(body[0].days).toBeUndefined();
+    });
+
+    it("returns only owned trips by default (scope=owned)", async () => {
+      // DB query filters by role="owner", so mock returns only owned trips
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([
+        {
+          tripId: "trip-1",
+          userId: fakeUser.id,
+          role: "owner",
+          trip: {
+            id: "trip-1",
+            title: "My Trip",
+            updatedAt: new Date("2025-07-01"),
+            days: [],
+          },
+        },
+      ]);
+
+      const app = createApp();
+      const res = await app.request("/api/trips");
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body).toHaveLength(1);
+      expect(body[0].id).toBe("trip-1");
+    });
+
+    it("returns only shared trips when scope=shared", async () => {
+      // DB query filters by role!="owner", so mock returns only shared trips
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([
+        {
+          tripId: "trip-2",
+          userId: fakeUser.id,
+          role: "editor",
+          trip: {
+            id: "trip-2",
+            title: "Shared Trip",
+            updatedAt: new Date("2025-07-02"),
+            days: [],
+          },
+        },
+      ]);
+
+      const app = createApp();
+      const res = await app.request("/api/trips?scope=shared");
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body).toHaveLength(1);
+      expect(body[0].id).toBe("trip-2");
     });
 
     it("returns 401 when unauthenticated", async () => {
@@ -214,7 +264,7 @@ describe("Trip routes", () => {
   });
 
   describe("GET /api/trips/:id", () => {
-    it("returns trip detail when found", async () => {
+    it("returns trip detail with role when found", async () => {
       const tripDetail = {
         id: "trip-1",
         title: "Tokyo Trip",
@@ -229,6 +279,27 @@ describe("Trip routes", () => {
 
       expect(res.status).toBe(200);
       expect(body.id).toBe("trip-1");
+      expect(body.role).toBe("owner");
+    });
+
+    it("returns editor role for editor member", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue({
+        tripId: "trip-1",
+        userId: fakeUser.id,
+        role: "editor",
+      });
+      mockDbQuery.trips.findFirst.mockResolvedValue({
+        id: "trip-1",
+        title: "Tokyo Trip",
+        days: [],
+      });
+
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1");
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.role).toBe("editor");
     });
 
     it("returns 404 when user is not a member", async () => {

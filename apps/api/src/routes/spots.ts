@@ -88,17 +88,17 @@ spotRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/spots/reorder", async
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  await db.transaction(async (tx) => {
-    // Verify all spots belong to this pattern
-    if (parsed.data.spotIds.length > 0) {
-      const targetSpots = await tx.query.spots.findMany({
-        where: and(inArray(spots.id, parsed.data.spotIds), eq(spots.dayPatternId, patternId)),
-      });
-      if (targetSpots.length !== parsed.data.spotIds.length) {
-        throw new Error("Some spots do not belong to this pattern");
-      }
+  // Verify all spots belong to this pattern before updating
+  if (parsed.data.spotIds.length > 0) {
+    const targetSpots = await db.query.spots.findMany({
+      where: and(inArray(spots.id, parsed.data.spotIds), eq(spots.dayPatternId, patternId)),
+    });
+    if (targetSpots.length !== parsed.data.spotIds.length) {
+      return c.json({ error: "Some spots do not belong to this pattern" }, 400);
     }
+  }
 
+  await db.transaction(async (tx) => {
     for (let i = 0; i < parsed.data.spotIds.length; i++) {
       await tx.update(spots).set({ sortOrder: i }).where(eq(spots.id, parsed.data.spotIds[i]));
     }

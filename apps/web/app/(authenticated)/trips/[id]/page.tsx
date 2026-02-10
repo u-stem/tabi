@@ -95,6 +95,8 @@ export default function TripDetailPage() {
 
   useEffect(() => {
     if (!trip || autoTransitionTriggered.current) return;
+    // Only owner/editor can change status; skip for viewer to avoid infinite retry
+    if (trip.role === "viewer") return;
 
     const today = new Date();
     const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
@@ -247,6 +249,7 @@ export default function TripDetailPage() {
     return <p className="text-destructive">{error ?? "旅行が見つかりません"}</p>;
   }
 
+  const canEdit = trip.role === "owner" || trip.role === "editor";
   const dayCount = getDayCount(trip.startDate, trip.endDate);
 
   return (
@@ -265,8 +268,9 @@ export default function TripDetailPage() {
           <TripActions
             tripId={tripId}
             status={trip.status}
+            role={trip.role}
             onStatusChange={fetchTrip}
-            onEdit={() => setEditOpen(true)}
+            onEdit={canEdit ? () => setEditOpen(true) : undefined}
             disabled={!online}
           />
         </div>
@@ -322,7 +326,7 @@ export default function TripDetailPage() {
             date={currentDay.date}
             spots={currentPattern.spots}
             onRefresh={fetchTrip}
-            disabled={!online}
+            disabled={!online || !canEdit}
             headerContent={
               <div className="mb-3 flex flex-wrap items-center gap-1.5">
                 {currentDay.patterns.map((pattern, index) => {
@@ -345,48 +349,53 @@ export default function TripDetailPage() {
                             [currentDay.id]: index,
                           }))
                         }
-                        className="py-1.5 pl-3 pr-1 text-xs font-medium focus:outline-none"
+                        className={cn(
+                          "py-1.5 text-xs font-medium focus:outline-none",
+                          canEdit ? "pl-3 pr-1" : "px-3",
+                        )}
                       >
                         {pattern.label}
                       </button>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button
-                            type="button"
-                            className="py-1.5 pr-2 pl-0.5 text-xs focus:outline-none"
-                          >
-                            <ChevronDown className="h-3 w-3" />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setRenamePattern(pattern);
-                              setRenameLabel(pattern.label);
-                            }}
-                          >
-                            <Pencil className="mr-2 h-3 w-3" />
-                            名前変更
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDuplicatePattern(pattern.id)}>
-                            <Copy className="mr-2 h-3 w-3" />
-                            複製
-                          </DropdownMenuItem>
-                          {!pattern.isDefault && (
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => handleDeletePattern(pattern.id)}
+                      {canEdit && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              type="button"
+                              className="py-1.5 pr-2 pl-0.5 text-xs focus:outline-none"
                             >
-                              <Trash2 className="mr-2 h-3 w-3" />
-                              削除
+                              <ChevronDown className="h-3 w-3" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setRenamePattern(pattern);
+                                setRenameLabel(pattern.label);
+                              }}
+                            >
+                              <Pencil className="mr-2 h-3 w-3" />
+                              名前変更
                             </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                            <DropdownMenuItem onClick={() => handleDuplicatePattern(pattern.id)}>
+                              <Copy className="mr-2 h-3 w-3" />
+                              複製
+                            </DropdownMenuItem>
+                            {!pattern.isDefault && (
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() => handleDeletePattern(pattern.id)}
+                              >
+                                <Trash2 className="mr-2 h-3 w-3" />
+                                削除
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   );
                 })}
-                {online && (
+                {canEdit && online && (
                   <button
                     type="button"
                     onClick={() => setAddPatternOpen(true)}

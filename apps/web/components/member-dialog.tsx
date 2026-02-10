@@ -26,9 +26,10 @@ import { api } from "@/lib/api";
 
 type MemberDialogProps = {
   tripId: string;
+  isOwner: boolean;
 };
 
-export function MemberDialog({ tripId }: MemberDialogProps) {
+export function MemberDialog({ tripId, isOwner }: MemberDialogProps) {
   const [open, setOpen] = useState(false);
   const [members, setMembers] = useState<MemberResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -128,7 +129,7 @@ export function MemberDialog({ tripId }: MemberDialogProps) {
                   </div>
                   {member.role === "owner" ? (
                     <span className="shrink-0 text-xs text-muted-foreground">オーナー</span>
-                  ) : (
+                  ) : isOwner ? (
                     <div className="flex shrink-0 items-center gap-1">
                       <Select
                         value={member.role}
@@ -151,38 +152,44 @@ export function MemberDialog({ tripId }: MemberDialogProps) {
                         削除
                       </button>
                     </div>
+                  ) : (
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {member.role === "editor" ? "編集者" : "閲覧者"}
+                    </span>
                   )}
                 </div>
               ))}
             </div>
           )}
 
-          <form onSubmit={handleAdd} className="space-y-3 border-t pt-3">
-            <Label className="text-sm font-medium">メンバーを追加</Label>
-            <div className="flex gap-2">
-              <Input
-                type="email"
-                placeholder="メールアドレス"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="flex-1"
-              />
-              <Select value={role} onValueChange={setRole}>
-                <SelectTrigger className="w-[100px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="editor">編集者</SelectItem>
-                  <SelectItem value="viewer">閲覧者</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <Button type="submit" size="sm" className="w-full" disabled={adding}>
-              <UserPlus className="h-4 w-4" />
-              {adding ? "追加中..." : "追加"}
-            </Button>
-          </form>
+          {isOwner && (
+            <form onSubmit={handleAdd} className="space-y-3 border-t pt-3">
+              <Label className="text-sm font-medium">メンバーを追加</Label>
+              <div className="flex gap-2">
+                <Input
+                  type="email"
+                  placeholder="メールアドレス"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="flex-1"
+                />
+                <Select value={role} onValueChange={setRole}>
+                  <SelectTrigger className="w-[100px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="editor">編集者</SelectItem>
+                    <SelectItem value="viewer">閲覧者</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button type="submit" size="sm" className="w-full" disabled={adding}>
+                <UserPlus className="h-4 w-4" />
+                {adding ? "追加中..." : "追加"}
+              </Button>
+            </form>
+          )}
         </div>
       </DialogContent>
     </Dialog>

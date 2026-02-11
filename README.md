@@ -1,74 +1,72 @@
 # tabi
 
-Travel planning web application.
+旅行計画Webアプリケーション。
 
-## Tech Stack
+## 技術スタック
 
-- **Monorepo**: Turborepo + bun workspaces
-- **Frontend**: Next.js 15 (App Router) + Tailwind CSS v4 + shadcn/ui
+- **モノレポ**: Turborepo + bun workspaces
+- **フロントエンド**: Next.js 15 (App Router) + Tailwind CSS v4 + shadcn/ui
 - **API**: Hono (bun runtime)
-- **Database**: PostgreSQL + Drizzle ORM
-- **Auth**: Better Auth (email/password)
-- **Validation**: Zod (shared schemas)
-- **Linter/Formatter**: Biome
-- **Map**: Leaflet + react-leaflet
+- **データベース**: PostgreSQL + Drizzle ORM
+- **認証**: Better Auth (メール/パスワード)
+- **バリデーション**: Zod (共有スキーマ)
+- **リンター/フォーマッター**: Biome
+- **地図**: Leaflet + react-leaflet
 
-## Setup
+## セットアップ
 
-### Prerequisites
+### 前提条件
 
 - [bun](https://bun.sh/) >= 1.0
-- [Docker](https://www.docker.com/) (for PostgreSQL)
+- [Docker](https://www.docker.com/)
 
-### Install
+### 初回セットアップ
 
 ```bash
 bun install
+docker compose --profile init up -d
+docker compose logs -f init   # seed 完了を待つ
 ```
 
-### Start Database
+PostgreSQL + API サーバーを起動し、スキーマ反映とシードデータ投入を行う。
+
+### 開発
 
 ```bash
-docker compose up -d
-```
-
-### Run Migrations & Seed
-
-```bash
-cp apps/api/.env.example apps/api/.env
-bun run db:push
-bun run db:seed
-```
-
-### Development
-
-```bash
-bun run dev
+docker compose up -d                   # DB + API を起動
+bun run --filter @tabi/web dev         # フロントエンドを起動
 ```
 
 - Web: http://localhost:3000
-- API: http://localhost:3001
+- API: http://localhost:3001 (ホットリロード有効)
 
-## Scripts
-
-All commands run from project root:
+### データベースリセット
 
 ```bash
-bun run dev          # Start all dev servers
-bun run build        # Build all packages
-bun run test         # Run all tests (Vitest)
-bun run lint         # Lint all packages (Biome)
-bun run format       # Format all packages (Biome)
-bun run check        # Lint + format + import sort (Biome)
-bun run check-types  # TypeScript type checking
-bun run db:push      # Push DB schema
-bun run db:generate  # Generate migrations
-bun run db:migrate   # Run migrations
-bun run db:studio    # Open Drizzle Studio
-bun run db:seed      # Seed dev data
+docker compose down -v
+docker compose --profile init up -d
 ```
 
-Package-specific:
+## スクリプト
+
+プロジェクトルートから実行:
+
+```bash
+bun run dev          # 全開発サーバー起動
+bun run build        # 全パッケージビルド
+bun run test         # 全テスト実行 (Vitest)
+bun run lint         # 全パッケージ lint (Biome)
+bun run format       # 全パッケージ format (Biome)
+bun run check        # lint + format + import sort (Biome)
+bun run check-types  # TypeScript 型チェック
+bun run db:push      # DB スキーマ反映
+bun run db:generate  # マイグレーション生成
+bun run db:migrate   # マイグレーション実行
+bun run db:studio    # Drizzle Studio 起動
+bun run db:seed      # 開発用シードデータ投入
+```
+
+パッケージ単位の実行:
 
 ```bash
 bun run --filter @tabi/api test
@@ -76,16 +74,16 @@ bun run --filter @tabi/web lint
 bun run --filter @tabi/shared check-types
 ```
 
-## Project Structure
+## プロジェクト構成
 
 ```
 tabi/
 ├── apps/
-│   ├── web/          # Next.js frontend
-│   └── api/          # Hono API server
+│   ├── web/          # Next.js フロントエンド
+│   └── api/          # Hono API サーバー
 ├── packages/
-│   └── shared/       # Shared Zod schemas & types
-├── biome.json        # Biome config (lint/format)
-├── turbo.json        # Turborepo config
+│   └── shared/       # 共有 Zod スキーマ・型定義
+├── biome.json        # Biome 設定 (lint/format)
+├── turbo.json        # Turborepo 設定
 └── docker-compose.yml
 ```

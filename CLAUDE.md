@@ -1,37 +1,37 @@
-# tabi - Travel Planning App
+# tabi - 旅行計画アプリ
 
-## Project Overview
+## プロジェクト概要
 
-Travel planning web app. Monorepo with Turborepo + bun workspaces.
+旅行計画Webアプリ。Turborepo + bun workspaces によるモノレポ構成。
 
-## Structure
+## 構成
 
 ```
 apps/web/         Next.js 15 (App Router) + Tailwind CSS v4 + shadcn/ui
-apps/api/         Hono API server (bun runtime)
-packages/shared/  Shared Zod schemas and types
+apps/api/         Hono API サーバー (bun runtime)
+packages/shared/  共有 Zod スキーマ・型定義
 ```
 
-## Commands
+## コマンド
 
-All commands run from project root with `bun run`:
+プロジェクトルートから `bun run` で実行:
 
 ```bash
-bun run dev          # Start all dev servers (turbo)
-bun run build        # Build all packages
-bun run test         # Run all tests (vitest)
-bun run lint         # Lint all packages (Biome via turbo)
-bun run format       # Format all packages (Biome via turbo)
-bun run check        # Lint + format + import sort (Biome via turbo)
-bun run check-types  # TypeScript type checking
-bun run db:push      # Push DB schema
-bun run db:generate  # Generate migrations
-bun run db:migrate   # Run migrations
-bun run db:studio    # Open Drizzle Studio
-bun run db:seed      # Seed dev data
+bun run dev          # 全開発サーバー起動 (turbo)
+bun run build        # 全パッケージビルド
+bun run test         # 全テスト実行 (vitest)
+bun run lint         # 全パッケージ lint (Biome via turbo)
+bun run format       # 全パッケージ format (Biome via turbo)
+bun run check        # lint + format + import sort (Biome via turbo)
+bun run check-types  # TypeScript 型チェック
+bun run db:push      # DB スキーマ反映
+bun run db:generate  # マイグレーション生成
+bun run db:migrate   # マイグレーション実行
+bun run db:studio    # Drizzle Studio 起動
+bun run db:seed      # 開発用シードデータ投入
 ```
 
-Package-specific commands use `--filter`:
+パッケージ単位の実行は `--filter` を使用:
 
 ```bash
 bun run --filter @tabi/api test
@@ -39,45 +39,46 @@ bun run --filter @tabi/web lint
 bun run --filter @tabi/shared check-types
 ```
 
-**NEVER use `cd <dir> && ...` pattern. Always use `bun run` or `bun run --filter`.**
-**NEVER use `bunx`. All tools have package.json scripts.**
+**`cd <dir> && ...` パターンは絶対に使わない。常に `bun run` または `bun run --filter` を使う。**
+**`bunx` は使わない。全ツールは package.json スクリプトで定義済み。**
 
-## Tech Stack
+## 技術スタック
 
-- Runtime: bun
-- Frontend: Next.js 15, React 19, Tailwind CSS v4, shadcn/ui (New York, Zinc)
-- Backend: Hono on bun
+- ランタイム: bun
+- フロントエンド: Next.js 15, React 19, Tailwind CSS v4, shadcn/ui (New York, Zinc)
+- バックエンド: Hono on bun
 - DB: PostgreSQL + Drizzle ORM
-- Auth: Better Auth (email/password, `advanced.database.generateId: "uuid"`)
-- Validation: Zod (shared schemas in packages/shared)
-- Linter/Formatter: Biome (root biome.json, each package has lint/format/check scripts)
-- Test: Vitest
-- Map: Leaflet + react-leaflet
+- 認証: Better Auth (メール/パスワード, `advanced.database.generateId: "uuid"`)
+- バリデーション: Zod (packages/shared で共有)
+- リンター/フォーマッター: Biome (ルートに biome.json、各パッケージから turbo 経由で実行)
+- テスト: Vitest
+- 地図: Leaflet + react-leaflet
 
-## Key Patterns
+## 主要パターン
 
-- All API routes require `requireAuth` middleware (except health check and shared trip view)
-- Zod schemas in `packages/shared/src/schemas/` are used for both API and frontend validation
-- API client at `apps/web/lib/api.ts` handles auth cookies automatically (`ApiError` class with status code)
-- DB schema at `apps/api/src/db/schema.ts` includes Better Auth tables
-- Spots belong to trip_days, trip_days belong to trips
-- Trip creation auto-generates trip_days from date range and adds owner as trip_member
-- Spot/trip ownership verified through trip_members table (checkTripAccess -> canEdit/isOwner)
-- Member roles: owner (full control), editor (CRUD spots/trips), viewer (read only)
+- 全 API ルートで `requireAuth` ミドルウェアが必要 (ヘルスチェックと共有旅行ビューを除く)
+- Zod スキーマは `packages/shared/src/schemas/` に配置し、API とフロントエンドの両方で使用
+- API クライアント `apps/web/lib/api.ts` が認証 Cookie を自動処理 (`ApiError` クラスでステータスコード管理)
+- DB スキーマ `apps/api/src/db/schema.ts` に Better Auth テーブルを含む
+- スポットは trip_days に、trip_days は trips に所属
+- 旅行作成時に日付範囲から trip_days を自動生成し、作成者を trip_member として追加
+- 旅行/スポットの権限は trip_members テーブルで検証 (checkTripAccess -> canEdit/isOwner)
+- メンバーロール: owner (全権限), editor (スポット/旅行の CRUD), viewer (閲覧のみ)
 
-## Development
+## 開発環境
 
-- PostgreSQL required: `docker compose up -d`
-- API: http://localhost:3001
-- Web: http://localhost:3000
-- DB push: `bun run db:push`
-- Seed: `bun run db:seed`
-- Integration tests: `bun run --filter @tabi/api test:integration` (requires PostgreSQL with `tabi_test` DB)
+- PostgreSQL + API: `docker compose up -d`
+- 初回セットアップ (スキーマ + シード): `docker compose --profile init up`
+- Web: `bun run --filter @tabi/web dev` (localhost:3000)
+- API ホットリロード: 有効 (ソース変更が自動反映)
+- 全起動: `docker compose up -d && bun run --filter @tabi/web dev`
+- DB リセット: `docker compose down -v && docker compose --profile init up -d`
+- 結合テスト: `bun run --filter @tabi/api test:integration` (PostgreSQL の `tabi_test` DB が必要)
 
-## Conventions
+## 規約
 
-- Conventional Commits: `<type>: <Japanese description>`
+- Conventional Commits: `<type>: <日本語の説明>`
 - TDD: Red -> Green -> Refactor
-- Language in code: English (comments explain Why, not What)
-- No dead code, no TODO without issue
-- No `biome-ignore` for lint suppression; fix the root cause
+- コード内の言語: 英語 (コメントは What でなく Why を書く)
+- デッドコード禁止、TODO は Issue 化する
+- `biome-ignore` による lint 抑制禁止。根本的に修正する

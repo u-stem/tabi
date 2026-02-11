@@ -17,7 +17,8 @@ const notoSansJP = Noto_Sans_JP({
 
 export const metadata: Metadata = {
   title: "sugara",
-  description: "計画もまた、旅のうち。",
+  description: "計画もまた、旅の楽しみだ。",
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

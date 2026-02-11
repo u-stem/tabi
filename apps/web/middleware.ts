@@ -13,7 +13,7 @@ export async function middleware(request: NextRequest) {
   }
 
   const cookieHeader = request.headers.get("cookie") ?? "";
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+  const apiUrl = request.nextUrl.origin;
 
   try {
     const res = await fetch(`${apiUrl}/api/auth/get-session`, {

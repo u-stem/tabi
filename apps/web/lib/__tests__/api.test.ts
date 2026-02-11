@@ -22,7 +22,7 @@ describe("api", () => {
     const result = await api("/api/trips");
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "http://localhost:3001/api/trips",
+      "/api/trips",
       expect.objectContaining({
         credentials: "include",
         headers: {},
@@ -40,10 +40,7 @@ describe("api", () => {
 
     await api("/api/trips", { params: { status: "active" } });
 
-    expect(mockFetch).toHaveBeenCalledWith(
-      "http://localhost:3001/api/trips?status=active",
-      expect.any(Object),
-    );
+    expect(mockFetch).toHaveBeenCalledWith("/api/trips?status=active", expect.any(Object));
   });
 
   it("throws ApiError on non-ok response", async () => {
@@ -94,7 +91,7 @@ describe("api", () => {
     await api("/api/trips", { method: "POST", body });
 
     expect(mockFetch).toHaveBeenCalledWith(
-      "http://localhost:3001/api/trips",
+      "/api/trips",
       expect.objectContaining({
         method: "POST",
         body,

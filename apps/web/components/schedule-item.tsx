@@ -44,6 +44,7 @@ type ScheduleItemProps = {
   arrivalPlace?: string | null;
   transportMethod?: string | null;
   color?: ScheduleColor;
+  updatedAt: string;
   tripId: string;
   dayId: string;
   patternId: string;
@@ -205,6 +206,7 @@ function PlaceCard({
   arrivalPlace,
   transportMethod,
   color = "blue",
+  updatedAt,
   tripId,
   dayId,
   patternId,
@@ -362,6 +364,7 @@ function PlaceCard({
           arrivalPlace,
           transportMethod,
           color,
+          updatedAt,
           sortOrder: 0,
         }}
         open={editOpen}
@@ -385,6 +388,7 @@ function TransportConnector({
   arrivalPlace,
   transportMethod,
   color = "blue",
+  updatedAt,
   tripId,
   dayId,
   patternId,
@@ -538,6 +542,7 @@ function TransportConnector({
           arrivalPlace,
           transportMethod,
           color,
+          updatedAt,
           sortOrder: 0,
         }}
         open={editOpen}

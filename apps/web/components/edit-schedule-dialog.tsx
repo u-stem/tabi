@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { validateTimeRange } from "@/lib/format";
 import { CATEGORY_OPTIONS, getTimeLabels, TRANSPORT_METHOD_OPTIONS } from "@/lib/schedule-utils";
@@ -104,6 +104,7 @@ export function EditScheduleDialog({
             transportMethod: transportMethod || undefined,
           }
         : {}),
+      expectedUpdatedAt: schedule.updatedAt,
     };
 
     try {
@@ -118,7 +119,12 @@ export function EditScheduleDialog({
       toast.success("予定を更新しました");
       onUpdate();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "予定の更新に失敗しました");
+      if (err instanceof ApiError && err.status === 409) {
+        setError("他のユーザーが先に更新しました。画面を更新してください。");
+        onUpdate();
+      } else {
+        setError(err instanceof Error ? err.message : "予定の更新に失敗しました");
+      }
     } finally {
       setLoading(false);
     }

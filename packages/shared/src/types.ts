@@ -16,6 +16,7 @@ export type ScheduleResponse = {
   arrivalPlace?: string | null;
   transportMethod?: string | null;
   color: ScheduleColor;
+  updatedAt: string;
 };
 
 export type DayPatternResponse = {

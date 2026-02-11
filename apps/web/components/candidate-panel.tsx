@@ -58,7 +58,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
 import { CATEGORY_OPTIONS } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
@@ -331,13 +331,24 @@ export function CandidatePanel({
     try {
       await api(`/api/trips/${tripId}/candidates/${editSchedule.id}`, {
         method: "PATCH",
-        body: JSON.stringify({ name, category: editCategory, memo }),
+        body: JSON.stringify({
+          name,
+          category: editCategory,
+          memo,
+          expectedUpdatedAt: editSchedule.updatedAt,
+        }),
       });
       setEditSchedule(null);
       toast.success("候補を更新しました");
       onRefresh();
-    } catch {
-      toast.error("候補の更新に失敗しました");
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        toast.error("他のユーザーが先に更新しました。画面を更新してください。");
+        setEditSchedule(null);
+        onRefresh();
+      } else {
+        toast.error("候補の更新に失敗しました");
+      }
     } finally {
       setEditLoading(false);
     }

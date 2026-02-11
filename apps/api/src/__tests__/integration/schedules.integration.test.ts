@@ -226,6 +226,68 @@ describe("Schedules Integration", () => {
     expect(scheduleList).toHaveLength(0);
   });
 
+  it("returns 409 when expectedUpdatedAt does not match (conflict)", async () => {
+    const createRes = await app.request(
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Conflict Test", category: "sightseeing" }),
+      },
+    );
+    const schedule = await createRes.json();
+
+    // First update succeeds
+    const firstUpdate = await app.request(
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${schedule.id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Updated Name",
+          expectedUpdatedAt: schedule.updatedAt,
+        }),
+      },
+    );
+    expect(firstUpdate.status).toBe(200);
+
+    // Second update with stale updatedAt fails
+    const secondUpdate = await app.request(
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${schedule.id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Stale Update",
+          expectedUpdatedAt: schedule.updatedAt,
+        }),
+      },
+    );
+    expect(secondUpdate.status).toBe(409);
+  });
+
+  it("skips conflict check when expectedUpdatedAt is omitted", async () => {
+    const createRes = await app.request(
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "No Conflict", category: "sightseeing" }),
+      },
+    );
+    const schedule = await createRes.json();
+
+    const res = await app.request(
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${schedule.id}`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Updated Without Lock" }),
+      },
+    );
+    expect(res.status).toBe(200);
+  });
+
   it("viewer cannot create schedules", async () => {
     const viewer = await createTestUser({ name: "Viewer", email: "viewer@test.com" });
     const db = getTestDb();

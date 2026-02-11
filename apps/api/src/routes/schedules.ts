@@ -270,14 +270,28 @@ scheduleRoutes.patch(
       return c.json({ error: ERROR_MSG.SCHEDULE_NOT_FOUND }, 404);
     }
 
+    const { expectedUpdatedAt, ...updateData } = parsed.data;
+
+    // Atomic optimistic lock: include updatedAt in WHERE clause
+    const whereConditions = expectedUpdatedAt
+      ? and(
+          eq(schedules.id, scheduleId),
+          sql`date_trunc('milliseconds', ${schedules.updatedAt}) = ${expectedUpdatedAt}::timestamptz`,
+        )
+      : eq(schedules.id, scheduleId);
+
     const [updated] = await db
       .update(schedules)
       .set({
-        ...parsed.data,
+        ...updateData,
         updatedAt: new Date(),
       })
-      .where(eq(schedules.id, scheduleId))
+      .where(whereConditions)
       .returning();
+
+    if (!updated) {
+      return c.json({ error: ERROR_MSG.CONFLICT }, 409);
+    }
 
     broadcastToTrip(tripId, user.id, {
       type: "schedule:updated",
@@ -346,9 +360,11 @@ scheduleRoutes.post("/:tripId/schedules/batch-unassign", async (c) => {
     return c.json({ error: ERROR_MSG.SCHEDULE_NOT_FOUND }, 404);
   }
 
-  // Group by source pattern for broadcast
-  const fromDayId = assigned[0].dayPattern!.tripDay.id;
-  const fromPatternId = assigned[0].dayPatternId!;
+  const sources = assigned.map((s) => ({
+    scheduleId: s.id,
+    fromDayId: s.dayPattern!.tripDay.id,
+    fromPatternId: s.dayPatternId!,
+  }));
 
   await db.transaction(async (tx) => {
     const maxOrder = await tx
@@ -372,8 +388,7 @@ scheduleRoutes.post("/:tripId/schedules/batch-unassign", async (c) => {
   broadcastToTrip(tripId, user.id, {
     type: "schedule:batch-unassigned",
     scheduleIds: parsed.data.scheduleIds,
-    fromDayId,
-    fromPatternId,
+    sources,
   });
   return c.json({ ok: true });
 });

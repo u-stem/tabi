@@ -43,7 +43,9 @@ export const createScheduleSchema = z.object({
 });
 export type CreateScheduleInput = z.infer<typeof createScheduleSchema>;
 
-export const updateScheduleSchema = createScheduleSchema.partial();
+export const updateScheduleSchema = createScheduleSchema.partial().extend({
+  expectedUpdatedAt: z.string().datetime().optional(),
+});
 export type UpdateScheduleInput = z.infer<typeof updateScheduleSchema>;
 
 export const reorderSchedulesSchema = z.object({

@@ -16,4 +16,5 @@ export const ERROR_MSG = {
   DATE_ORDER: "End date must be on or after start date",
   SHARED_NOT_FOUND: "Shared trip not found",
   CANDIDATE_NOT_FOUND: "Candidate not found",
+  CONFLICT: "Resource was modified by another user",
 } as const;

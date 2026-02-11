@@ -308,11 +308,25 @@ candidateRoutes.patch("/:tripId/candidates/:scheduleId", async (c) => {
     return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
   }
 
+  const { expectedUpdatedAt, ...updateData } = parsed.data;
+
+  // Atomic optimistic lock: include updatedAt in WHERE clause
+  const whereConditions = expectedUpdatedAt
+    ? and(
+        eq(schedules.id, scheduleId),
+        sql`date_trunc('milliseconds', ${schedules.updatedAt}) = ${expectedUpdatedAt}::timestamptz`,
+      )
+    : eq(schedules.id, scheduleId);
+
   const [updated] = await db
     .update(schedules)
-    .set({ ...parsed.data, updatedAt: new Date() })
-    .where(eq(schedules.id, scheduleId))
+    .set({ ...updateData, updatedAt: new Date() })
+    .where(whereConditions)
     .returning();
+
+  if (!updated) {
+    return c.json({ error: ERROR_MSG.CONFLICT }, 409);
+  }
 
   broadcastToTrip(tripId, user.id, { type: "candidate:updated", schedule: updated });
   return c.json(updated);

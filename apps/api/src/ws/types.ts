@@ -1,4 +1,5 @@
-import type { DayPatternResponse, ScheduleResponse } from "@tabi/shared";
+import type { DayPatternResponse } from "@tabi/shared";
+import type { schedules } from "../db/schema";
 
 export type PresenceUser = {
   userId: string;
@@ -10,22 +11,24 @@ export type PresenceUser = {
 // Pattern notifications exclude schedules — the client re-fetches full data on sync
 type PatternNotification = Omit<DayPatternResponse, "schedules">;
 
+// DB row type returned by Drizzle insert/update .returning()
+type ScheduleRow = typeof schedules.$inferSelect;
+
 export type ServerMessage =
-  | { type: "schedule:created"; dayId: string; patternId: string; schedule: ScheduleResponse }
-  | { type: "schedule:updated"; dayId: string; patternId: string; schedule: ScheduleResponse }
+  | { type: "schedule:created"; dayId: string; patternId: string; schedule: ScheduleRow }
+  | { type: "schedule:updated"; dayId: string; patternId: string; schedule: ScheduleRow }
   | { type: "schedule:deleted"; dayId: string; patternId: string; scheduleId: string }
   | { type: "schedule:reordered"; dayId: string; patternId: string; scheduleIds: string[] }
-  | { type: "schedule:assigned"; schedule: ScheduleResponse; dayId: string; patternId: string }
+  | { type: "schedule:assigned"; schedule: ScheduleRow; dayId: string; patternId: string }
   | { type: "schedule:unassigned"; scheduleId: string; fromDayId: string; fromPatternId: string }
   | {
       type: "schedule:batch-unassigned";
       scheduleIds: string[];
-      fromDayId: string;
-      fromPatternId: string;
+      sources: Array<{ scheduleId: string; fromDayId: string; fromPatternId: string }>;
     }
   | { type: "schedule:batch-deleted"; scheduleIds: string[]; dayId: string; patternId: string }
-  | { type: "candidate:created"; schedule: ScheduleResponse }
-  | { type: "candidate:updated"; schedule: ScheduleResponse }
+  | { type: "candidate:created"; schedule: ScheduleRow }
+  | { type: "candidate:updated"; schedule: ScheduleRow }
   | { type: "candidate:deleted"; scheduleId: string }
   | { type: "candidate:reordered"; scheduleIds: string[] }
   | { type: "candidate:batch-assigned"; scheduleIds: string[]; dayId: string; patternId: string }

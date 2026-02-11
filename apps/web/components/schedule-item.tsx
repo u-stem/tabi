@@ -39,6 +39,7 @@ type ScheduleItemProps = {
   url?: string | null;
   startTime?: string | null;
   endTime?: string | null;
+  endDayOffset?: number | null;
   memo?: string | null;
   departurePlace?: string | null;
   arrivalPlace?: string | null;
@@ -58,6 +59,11 @@ type ScheduleItemProps = {
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (id: string) => void;
+  maxEndDayOffset?: number;
+  /** When true, display endTime only and hide endDayOffset label (cross-day target view) */
+  crossDayDisplay?: boolean;
+  /** Source day number for cross-day display (e.g. "1日目から継続") */
+  crossDaySourceDayNumber?: number;
 };
 
 type UseSortableReturn = ReturnType<typeof useSortable>;
@@ -71,10 +77,14 @@ type SortableProps = {
 };
 
 export function ScheduleItem(props: ScheduleItemProps) {
-  const { id, category, disabled, selectable } = props;
+  const { id, category, disabled, selectable, crossDayDisplay } = props;
+  // Cross-day entries use a prefixed ID so they don't collide with same-day
+  // schedule IDs in SortableContext. They register as drop targets but can't
+  // be dragged (disabled: true).
+  const sortableId = crossDayDisplay ? `cross-${id}` : id;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
-    id,
-    disabled: disabled || selectable,
+    id: sortableId,
+    disabled: disabled || selectable || crossDayDisplay,
     data: { type: "schedule" },
   });
 
@@ -201,6 +211,7 @@ function PlaceCard({
   url,
   startTime,
   endTime,
+  endDayOffset,
   memo,
   departurePlace,
   arrivalPlace,
@@ -221,6 +232,9 @@ function PlaceCard({
   selected,
   onSelect,
   sortable,
+  maxEndDayOffset,
+  crossDayDisplay,
+  crossDaySourceDayNumber,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const CategoryIcon = CATEGORY_ICONS[category];
@@ -228,7 +242,10 @@ function PlaceCard({
   const isPast = timeStatus === "past";
   const isCurrent = timeStatus === "current";
 
-  const timeStr = formatTimeRange(startTime, endTime);
+  // Cross-day target: show only endTime. Normal: hide endTime if endDayOffset set.
+  const visibleStartTime = crossDayDisplay ? endTime : startTime;
+  const visibleEndTime = crossDayDisplay || endDayOffset ? null : endTime;
+  const timeStr = formatTimeRange(visibleStartTime, visibleEndTime);
 
   return (
     <div
@@ -291,6 +308,7 @@ function PlaceCard({
         className={cn(
           "min-w-0 flex-1 rounded-md border p-3",
           isPast && "opacity-50",
+          crossDayDisplay && "border-dashed bg-muted/30",
           selectable && "cursor-pointer transition-colors hover:bg-accent/50",
           selectable && selected && SELECTED_RING,
         )}
@@ -307,17 +325,35 @@ function PlaceCard({
               tabIndex: 0,
               "aria-pressed": selected,
             }
-          : {})}
+          : crossDayDisplay && crossDaySourceDayNumber
+            ? {
+                role: "group" as const,
+                "aria-label": `${crossDaySourceDayNumber}日目から継続: ${name}`,
+              }
+            : {})}
       >
+        {crossDayDisplay && crossDaySourceDayNumber && (
+          <span className="mb-1.5 inline-block rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            {crossDaySourceDayNumber}日目から継続
+          </span>
+        )}
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             {selectable ? (
               <SelectionIndicator checked={!!selected} />
-            ) : (
+            ) : !crossDayDisplay ? (
               <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
+            ) : null}
+            <span className="text-sm font-medium">{name}</span>
+            {crossDayDisplay && timeStr && (
+              <span className="text-xs text-muted-foreground">~{timeStr}</span>
             )}
-            <span className="font-medium">{name}</span>
-            {timeStr && <span className="text-xs text-muted-foreground">{timeStr}</span>}
+            {!crossDayDisplay && timeStr && (
+              <span className="text-xs text-muted-foreground">{timeStr}</span>
+            )}
+            {!crossDayDisplay && endDayOffset != null && endDayOffset > 0 && (
+              <span className="text-xs text-muted-foreground">→ {endDayOffset}日後</span>
+            )}
           </div>
           {!selectable && (
             <ScheduleMenu
@@ -359,6 +395,7 @@ function PlaceCard({
           url,
           startTime,
           endTime,
+          endDayOffset,
           memo,
           departurePlace,
           arrivalPlace,
@@ -370,6 +407,7 @@ function PlaceCard({
         open={editOpen}
         onOpenChange={setEditOpen}
         onUpdate={onUpdate}
+        maxEndDayOffset={maxEndDayOffset}
       />
     </div>
   );
@@ -383,6 +421,7 @@ function TransportConnector({
   url,
   startTime,
   endTime,
+  endDayOffset,
   memo,
   departurePlace,
   arrivalPlace,
@@ -403,6 +442,9 @@ function TransportConnector({
   selected,
   onSelect,
   sortable,
+  maxEndDayOffset,
+  crossDayDisplay,
+  crossDaySourceDayNumber,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
@@ -412,8 +454,10 @@ function TransportConnector({
     ? TRANSPORT_ICONS[transportMethod as TransportMethod]
     : CATEGORY_ICONS.transport;
 
-  const routeStr =
-    departurePlace && arrivalPlace
+  // Cross-day target: show arrival only since departure is on the source day
+  const routeStr = crossDayDisplay
+    ? arrivalPlace || ""
+    : departurePlace && arrivalPlace
       ? `${departurePlace} → ${arrivalPlace}`
       : departurePlace || arrivalPlace || "";
 
@@ -421,7 +465,8 @@ function TransportConnector({
     ? TRANSPORT_METHOD_LABELS[transportMethod as TransportMethod]
     : "";
 
-  const timeStr = startTime ? formatTime(startTime) : "";
+  const visibleTime = crossDayDisplay ? endTime : startTime;
+  const timeStr = visibleTime ? formatTime(visibleTime) : "";
 
   return (
     <div
@@ -482,8 +527,9 @@ function TransportConnector({
       {/* Compact connector row */}
       <div
         className={cn(
-          "flex min-w-0 flex-1 items-center gap-2 rounded border border-dashed px-3 py-1.5",
+          "flex min-w-0 flex-1 flex-wrap items-center gap-2 rounded border border-dashed px-3 py-1.5",
           isPast && "opacity-50",
+          crossDayDisplay && "bg-muted/30",
           selectable && "cursor-pointer transition-colors hover:bg-accent/50",
           selectable && selected && SELECTED_RING,
         )}
@@ -500,18 +546,40 @@ function TransportConnector({
               tabIndex: 0,
               "aria-pressed": selected,
             }
-          : {})}
+          : crossDayDisplay && crossDaySourceDayNumber
+            ? {
+                role: "group" as const,
+                "aria-label": `${crossDaySourceDayNumber}日目から継続: ${name}`,
+              }
+            : {})}
       >
+        {crossDayDisplay && crossDaySourceDayNumber && (
+          <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+            {crossDaySourceDayNumber}日目から
+          </span>
+        )}
         {selectable ? (
           <SelectionIndicator checked={!!selected} />
-        ) : (
+        ) : !crossDayDisplay ? (
           <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
+        ) : null}
+        {routeStr && (
+          <span className="truncate text-sm text-muted-foreground">
+            {crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}
+          </span>
         )}
-        {routeStr && <span className="truncate text-sm text-muted-foreground">{routeStr}</span>}
         {methodLabel && (
           <span className="shrink-0 text-xs text-muted-foreground">({methodLabel})</span>
         )}
-        {timeStr && <span className="shrink-0 text-xs text-muted-foreground">{timeStr}</span>}
+        {crossDayDisplay && timeStr && (
+          <span className="shrink-0 text-xs text-muted-foreground">~{timeStr}</span>
+        )}
+        {!crossDayDisplay && timeStr && (
+          <span className="shrink-0 text-xs text-muted-foreground">{timeStr}</span>
+        )}
+        {!crossDayDisplay && endDayOffset != null && endDayOffset > 0 && (
+          <span className="shrink-0 text-xs text-muted-foreground">→ {endDayOffset}日後</span>
+        )}
         {!selectable && (
           <div className="ml-auto">
             <ScheduleMenu
@@ -537,6 +605,7 @@ function TransportConnector({
           url,
           startTime,
           endTime,
+          endDayOffset,
           memo,
           departurePlace,
           arrivalPlace,
@@ -548,6 +617,7 @@ function TransportConnector({
         open={editOpen}
         onOpenChange={setEditOpen}
         onUpdate={onUpdate}
+        maxEndDayOffset={maxEndDayOffset}
       />
     </div>
   );

@@ -2,7 +2,7 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import type { ScheduleResponse } from "@sugara/shared";
+import type { CrossDayEntry, ScheduleResponse } from "@sugara/shared";
 import {
   ArrowUpDown,
   CheckCheck,
@@ -25,11 +25,15 @@ import { api } from "@/lib/api";
 import {
   compareByStartTime,
   formatDate,
+  getCrossDayTimeStatus,
   getTimeStatus,
   type TimeStatus,
   toDateString,
 } from "@/lib/format";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
+import type { TimelineItem } from "@/lib/merge-timeline";
+import { buildMergedTimeline, timelineSortableIds } from "@/lib/merge-timeline";
+import { MSG } from "@/lib/messages";
 import { AddScheduleDialog } from "./add-schedule-dialog";
 import { ScheduleItem } from "./schedule-item";
 
@@ -53,6 +57,9 @@ type DayTimelineProps = {
   onBatchDuplicate?: () => void;
   onBatchDelete?: () => void;
   batchLoading?: boolean;
+  maxEndDayOffset?: number;
+  totalDays?: number;
+  crossDayEntries?: CrossDayEntry[];
 };
 
 export function DayTimeline({
@@ -75,6 +82,9 @@ export function DayTimeline({
   onBatchDuplicate,
   onBatchDelete,
   batchLoading,
+  maxEndDayOffset,
+  totalDays,
+  crossDayEntries,
 }: DayTimelineProps) {
   const { setNodeRef: setDroppableRef } = useDroppable({
     id: "timeline",
@@ -89,18 +99,21 @@ export function DayTimeline({
     return getTimeStatus(now, schedule.startTime, schedule.endTime);
   }
 
-  async function handleDelete(scheduleId: string) {
+  async function handleDelete(
+    scheduleId: string,
+    overrideDayId?: string,
+    overridePatternId?: string,
+  ) {
+    const dId = overrideDayId ?? dayId;
+    const pId = overridePatternId ?? patternId;
     try {
-      await api(
-        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${scheduleId}`,
-        {
-          method: "DELETE",
-        },
-      );
-      toast.success("予定を削除しました");
+      await api(`/api/trips/${tripId}/days/${dId}/patterns/${pId}/schedules/${scheduleId}`, {
+        method: "DELETE",
+      });
+      toast.success(MSG.SCHEDULE_DELETED);
       onRefresh();
     } catch {
-      toast.error("予定の削除に失敗しました");
+      toast.error(MSG.SCHEDULE_DELETE_FAILED);
     }
   }
 
@@ -109,10 +122,10 @@ export function DayTimeline({
       await api(`/api/trips/${tripId}/schedules/${scheduleId}/unassign`, {
         method: "POST",
       });
-      toast.success("候補に戻しました");
+      toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
       onRefresh();
     } catch {
-      toast.error("候補への移動に失敗しました");
+      toast.error(MSG.SCHEDULE_MOVE_FAILED);
     }
   }
 
@@ -132,7 +145,7 @@ export function DayTimeline({
       });
       onRefresh();
     } catch {
-      toast.error("並び替えに失敗しました");
+      toast.error(MSG.SCHEDULE_REORDER_FAILED);
     }
   }
 
@@ -197,6 +210,7 @@ export function DayTimeline({
                 patternId={patternId}
                 onAdd={onRefresh}
                 disabled={disabled}
+                maxEndDayOffset={maxEndDayOffset}
               />
             )}
             {!disabled && schedules.length > 0 && onEnterSelectionMode && (
@@ -219,68 +233,89 @@ export function DayTimeline({
       )}
       {!selectionMode && headerContent}
 
-      {selectionMode ? (
-        /* Selection mode: plain list without DnD */
-        schedules.length === 0 ? (
-          <div className="rounded-md border border-dashed p-6 text-center">
-            <p className="text-sm text-muted-foreground">まだ予定がありません</p>
-          </div>
-        ) : (
-          <div>
-            {schedules.map((schedule, index) => (
+      {(() => {
+        const merged = buildMergedTimeline(schedules, crossDayEntries);
+        const total = merged.length;
+
+        if (total === 0) {
+          return (
+            <div className="rounded-md border border-dashed p-6 text-center">
+              <p className="text-sm text-muted-foreground">まだ予定がありません</p>
+            </div>
+          );
+        }
+
+        function renderItem(item: TimelineItem, i: number, opts?: { selectable?: boolean }) {
+          const isFirst = i === 0;
+          const isLast = i === total - 1;
+
+          if (item.type === "crossDay") {
+            // Cross-day entries are not selectable in batch mode because they
+            // belong to a different day's pattern and batch operations target
+            // the current day's schedules only.
+            const { schedule: s, sourceDayId, sourcePatternId, sourceDayNumber } = item.entry;
+            // Calculate maxEndDayOffset from the source day, not the display day
+            const sourceMaxEndDayOffset =
+              totalDays != null ? totalDays - sourceDayNumber : maxEndDayOffset;
+            return (
               <ScheduleItem
-                key={schedule.id}
-                {...schedule}
+                key={`cross-${s.id}`}
+                {...s}
                 tripId={tripId}
-                dayId={dayId}
-                patternId={patternId}
-                isFirst={index === 0}
-                isLast={index === schedules.length - 1}
-                onDelete={() => handleDelete(schedule.id)}
+                dayId={sourceDayId}
+                patternId={sourcePatternId}
+                isFirst={isFirst}
+                isLast={isLast}
+                onDelete={() => handleDelete(s.id, sourceDayId, sourcePatternId)}
                 onUpdate={onRefresh}
+                onUnassign={!disabled && !opts?.selectable ? () => handleUnassign(s.id) : undefined}
                 disabled={disabled}
-                timeStatus={getScheduleTimeStatus(schedule)}
-                selectable
-                selected={selectedIds?.has(schedule.id)}
-                onSelect={onToggleSelect}
+                timeStatus={isToday ? getCrossDayTimeStatus(now, s.endTime) : null}
+                maxEndDayOffset={sourceMaxEndDayOffset}
+                crossDayDisplay
+                crossDaySourceDayNumber={sourceDayNumber}
               />
-            ))}
+            );
+          }
+
+          const { schedule } = item;
+          return (
+            <ScheduleItem
+              key={schedule.id}
+              {...schedule}
+              tripId={tripId}
+              dayId={dayId}
+              patternId={patternId}
+              isFirst={isFirst}
+              isLast={isLast}
+              onDelete={() => handleDelete(schedule.id)}
+              onUpdate={onRefresh}
+              onUnassign={
+                !disabled && !opts?.selectable ? () => handleUnassign(schedule.id) : undefined
+              }
+              disabled={disabled}
+              timeStatus={getScheduleTimeStatus(schedule)}
+              maxEndDayOffset={maxEndDayOffset}
+              selectable={opts?.selectable}
+              selected={opts?.selectable ? selectedIds?.has(schedule.id) : undefined}
+              onSelect={opts?.selectable ? onToggleSelect : undefined}
+            />
+          );
+        }
+
+        return selectionMode ? (
+          <div>{merged.map((item, i) => renderItem(item, i, { selectable: true }))}</div>
+        ) : (
+          <div ref={setDroppableRef}>
+            <SortableContext
+              items={timelineSortableIds(merged)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div>{merged.map((item, i) => renderItem(item, i))}</div>
+            </SortableContext>
           </div>
-        )
-      ) : (
-        <div ref={setDroppableRef}>
-          <SortableContext
-            items={schedules.map((s) => s.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            {schedules.length === 0 ? (
-              <div className="rounded-md border border-dashed p-6 text-center">
-                <p className="text-sm text-muted-foreground">まだ予定がありません</p>
-                <p className="mt-1 text-xs text-muted-foreground">候補から追加しましょう</p>
-              </div>
-            ) : (
-              <div>
-                {schedules.map((schedule, index) => (
-                  <ScheduleItem
-                    key={schedule.id}
-                    {...schedule}
-                    tripId={tripId}
-                    dayId={dayId}
-                    patternId={patternId}
-                    isFirst={index === 0}
-                    isLast={index === schedules.length - 1}
-                    onDelete={() => handleDelete(schedule.id)}
-                    onUpdate={onRefresh}
-                    onUnassign={disabled ? undefined : () => handleUnassign(schedule.id)}
-                    disabled={disabled}
-                    timeStatus={getScheduleTimeStatus(schedule)}
-                  />
-                ))}
-              </div>
-            )}
-          </SortableContext>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

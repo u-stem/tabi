@@ -32,6 +32,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { MSG } from "@/lib/messages";
 
 type TripActionsProps = {
   tripId: string;
@@ -68,10 +69,10 @@ export function TripActions({
         method: "PATCH",
         body: JSON.stringify({ status: newStatus }),
       });
-      toast.success("ステータスを変更しました");
+      toast.success(MSG.TRIP_STATUS_CHANGED);
       onStatusChange?.();
     } catch {
-      toast.error("ステータスの変更に失敗しました");
+      toast.error(MSG.TRIP_STATUS_CHANGE_FAILED);
     }
   }
 
@@ -79,10 +80,10 @@ export function TripActions({
     setDeleting(true);
     try {
       await api(`/api/trips/${tripId}`, { method: "DELETE" });
-      toast.success("旅行を削除しました");
+      toast.success(MSG.TRIP_DELETED);
       router.push("/home");
     } catch {
-      toast.error("旅行の削除に失敗しました");
+      toast.error(MSG.TRIP_DELETE_FAILED);
     } finally {
       setDeleting(false);
     }
@@ -114,9 +115,9 @@ export function TripActions({
       const shareUrl = `${window.location.origin}/shared/${result.shareToken}`;
       await copyToClipboard(shareUrl);
       setShareExpiresAt(result.shareTokenExpiresAt);
-      toast.success("共有リンクをコピーしました");
+      toast.success(MSG.SHARE_LINK_COPIED);
     } catch {
-      toast.error("共有リンクの生成に失敗しました");
+      toast.error(MSG.SHARE_LINK_FAILED);
     } finally {
       setSharing(false);
     }
@@ -131,9 +132,9 @@ export function TripActions({
       const shareUrl = `${window.location.origin}/shared/${result.shareToken}`;
       await copyToClipboard(shareUrl);
       setShareExpiresAt(result.shareTokenExpiresAt);
-      toast.success("共有リンクを再生成してコピーしました");
+      toast.success(MSG.SHARE_LINK_REGENERATED);
     } catch {
-      toast.error("共有リンクの再生成に失敗しました");
+      toast.error(MSG.SHARE_LINK_REGENERATE_FAILED);
     } finally {
       setRegenerating(false);
     }

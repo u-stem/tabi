@@ -401,6 +401,7 @@ tripRoutes.post("/:id/duplicate", async (c) => {
               arrivalPlace: schedule.arrivalPlace,
               transportMethod: schedule.transportMethod,
               color: schedule.color,
+              endDayOffset: schedule.endDayOffset,
             })),
           );
         }

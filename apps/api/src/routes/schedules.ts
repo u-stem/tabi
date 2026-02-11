@@ -167,6 +167,7 @@ scheduleRoutes.post(
           arrivalPlace: schedule.arrivalPlace,
           transportMethod: schedule.transportMethod,
           color: schedule.color,
+          endDayOffset: schedule.endDayOffset,
           sortOrder: nextOrder++,
         })),
       )
@@ -204,7 +205,7 @@ scheduleRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/schedules/reorder
       ),
     });
     if (targetSchedules.length !== parsed.data.scheduleIds.length) {
-      return c.json({ error: "Some schedules do not belong to this pattern" }, 400);
+      return c.json({ error: ERROR_MSG.INVALID_REORDER }, 400);
     }
   }
 

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth-client";
+import { MSG } from "@/lib/messages";
 
 export function AuthForm() {
   const router = useRouter();
@@ -26,11 +27,11 @@ export function AuthForm() {
 
     const result = await signIn.email({ email, password });
     if (result.error) {
-      setError(result.error.message ?? "ログインに失敗しました");
+      setError(result.error.message ?? MSG.AUTH_LOGIN_FAILED);
       setLoading(false);
       return;
     }
-    toast.success("ログインしました");
+    toast.success(MSG.AUTH_LOGIN_SUCCESS);
     setLoading(false);
     router.push("/home");
   }

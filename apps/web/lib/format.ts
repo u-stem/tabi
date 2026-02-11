@@ -1,3 +1,6 @@
+import type { ScheduleCategory } from "@sugara/shared";
+import { MSG } from "@/lib/messages";
+
 export function toDateString(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
@@ -64,6 +67,17 @@ export function getTimeStatus(
   return startHm <= nowHm ? "past" : "future";
 }
 
+/**
+ * TimeStatus for cross-day entries displayed on the target day.
+ * Only endTime is relevant (the checkout / arrival time on this day).
+ */
+export function getCrossDayTimeStatus(now: string, endTime?: string | null): TimeStatus | null {
+  if (!endTime) return null;
+  const nowHm = now.slice(0, 5);
+  const endHm = endTime.slice(0, 5);
+  return endHm <= nowHm ? "past" : "current";
+}
+
 export function compareByStartTime(
   a: { startTime?: string | null },
   b: { startTime?: string | null },
@@ -78,8 +92,20 @@ export function compareByStartTime(
   return 0;
 }
 
-export function validateTimeRange(startTime?: string, endTime?: string): string | null {
-  if (!startTime && endTime) return "開始時間を入力してください";
-  if (startTime && endTime && startTime >= endTime) return "終了時間は開始時間より後にしてください";
+export function validateTimeRange(
+  startTime?: string,
+  endTime?: string,
+  options?: { allowOvernight?: boolean; category?: ScheduleCategory },
+): string | null {
+  if (!startTime && endTime) {
+    if (options?.category === "hotel") return MSG.TIME_HOTEL_CHECKIN_REQUIRED;
+    if (options?.category === "transport") return MSG.TIME_TRANSPORT_DEPARTURE_REQUIRED;
+    return MSG.TIME_START_REQUIRED;
+  }
+  if (startTime && endTime && !options?.allowOvernight && startTime >= endTime) {
+    if (options?.category === "hotel") return MSG.TIME_HOTEL_CHECKOUT_AFTER;
+    if (options?.category === "transport") return MSG.TIME_TRANSPORT_ARRIVAL_AFTER;
+    return MSG.TIME_END_BEFORE_START;
+  }
   return null;
 }

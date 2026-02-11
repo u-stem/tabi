@@ -60,6 +60,7 @@ import {
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { ApiError, api } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
+import { MSG } from "@/lib/messages";
 import { CATEGORY_OPTIONS } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 
@@ -272,10 +273,10 @@ export function CandidatePanel({
         method: "POST",
         body: JSON.stringify({ dayPatternId: currentPatternId }),
       });
-      toast.success("予定に追加しました");
+      toast.success(MSG.CANDIDATE_ASSIGNED);
       onRefresh();
     } catch {
-      toast.error("予定への追加に失敗しました");
+      toast.error(MSG.CANDIDATE_ASSIGN_FAILED);
     }
   }
 
@@ -284,10 +285,10 @@ export function CandidatePanel({
       await api(`/api/trips/${tripId}/candidates/${spotId}`, {
         method: "DELETE",
       });
-      toast.success("候補を削除しました");
+      toast.success(MSG.CANDIDATE_DELETED);
       onRefresh();
     } catch {
-      toast.error("候補の削除に失敗しました");
+      toast.error(MSG.CANDIDATE_DELETE_FAILED);
     }
   }
 
@@ -305,10 +306,10 @@ export function CandidatePanel({
         body: JSON.stringify({ name, category, memo }),
       });
       setAddOpen(false);
-      toast.success("候補を追加しました");
+      toast.success(MSG.CANDIDATE_ADDED);
       onRefresh();
     } catch {
-      toast.error("候補の追加に失敗しました");
+      toast.error(MSG.CANDIDATE_ADD_FAILED);
     } finally {
       setAddLoading(false);
     }
@@ -339,15 +340,15 @@ export function CandidatePanel({
         }),
       });
       setEditSchedule(null);
-      toast.success("候補を更新しました");
+      toast.success(MSG.CANDIDATE_UPDATED);
       onRefresh();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        toast.error("他のユーザーが先に更新しました。画面を更新してください。");
+        toast.error(MSG.CONFLICT);
         setEditSchedule(null);
         onRefresh();
       } else {
-        toast.error("候補の更新に失敗しました");
+        toast.error(MSG.CANDIDATE_UPDATE_FAILED);
       }
     } finally {
       setEditLoading(false);

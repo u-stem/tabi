@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { MSG } from "@/lib/messages";
 
 type MemberDialogProps = {
   tripId: string;
@@ -43,7 +44,7 @@ export function MemberDialog({ tripId, isOwner }: MemberDialogProps) {
       const data = await api<MemberResponse[]>(`/api/trips/${tripId}/members`);
       setMembers(data);
     } catch {
-      toast.error("メンバー一覧の取得に失敗しました");
+      toast.error(MSG.MEMBER_LIST_FAILED);
     } finally {
       setLoading(false);
     }
@@ -63,11 +64,11 @@ export function MemberDialog({ tripId, isOwner }: MemberDialogProps) {
         method: "POST",
         body: JSON.stringify({ email, role }),
       });
-      toast.success("メンバーを追加しました");
+      toast.success(MSG.MEMBER_ADDED);
       setEmail("");
       fetchMembers();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "メンバーの追加に失敗しました";
+      const message = err instanceof Error ? err.message : MSG.MEMBER_ADD_FAILED;
       toast.error(message);
     } finally {
       setAdding(false);
@@ -80,10 +81,10 @@ export function MemberDialog({ tripId, isOwner }: MemberDialogProps) {
         method: "PATCH",
         body: JSON.stringify({ role: newRole }),
       });
-      toast.success("ロールを変更しました");
+      toast.success(MSG.MEMBER_ROLE_CHANGED);
       fetchMembers();
     } catch {
-      toast.error("ロールの変更に失敗しました");
+      toast.error(MSG.MEMBER_ROLE_CHANGE_FAILED);
     }
   }
 
@@ -92,10 +93,10 @@ export function MemberDialog({ tripId, isOwner }: MemberDialogProps) {
       await api(`/api/trips/${tripId}/members/${userId}`, {
         method: "DELETE",
       });
-      toast.success("メンバーを削除しました");
+      toast.success(MSG.MEMBER_REMOVED);
       fetchMembers();
     } catch {
-      toast.error("メンバーの削除に失敗しました");
+      toast.error(MSG.MEMBER_REMOVE_FAILED);
     }
   }
 

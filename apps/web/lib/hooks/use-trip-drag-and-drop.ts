@@ -8,14 +8,26 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import type { ScheduleResponse } from "@sugara/shared";
+import type {
+  CrossDayEntry,
+  ScheduleCategory,
+  ScheduleColor,
+  ScheduleResponse,
+} from "@sugara/shared";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import {
+  buildMergedTimeline,
+  timelineScheduleOrder,
+  timelineSortableIds,
+} from "@/lib/merge-timeline";
 
 type ActiveDragItem = {
   id: string;
   name: string;
+  category: ScheduleCategory;
+  color: ScheduleColor;
   source: "schedule" | "candidate";
 };
 
@@ -25,6 +37,7 @@ type UseTripDragAndDropArgs = {
   currentPatternId: string | null;
   schedules: ScheduleResponse[];
   candidates: ScheduleResponse[];
+  crossDayEntries?: CrossDayEntry[];
   onDone: () => void;
 };
 
@@ -34,6 +47,7 @@ export function useTripDragAndDrop({
   currentPatternId,
   schedules,
   candidates,
+  crossDayEntries,
   onDone,
 }: UseTripDragAndDropArgs) {
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
@@ -71,13 +85,17 @@ export function useTripDragAndDrop({
     if (!type) return;
 
     const source = type === "candidate" ? "candidate" : "schedule";
-    let name = "";
-    if (source === "schedule") {
-      name = localSchedules.find((s) => s.id === active.id)?.name ?? "";
-    } else {
-      name = localCandidates.find((c) => c.id === active.id)?.name ?? "";
-    }
-    setActiveDragItem({ id: String(active.id), name, source });
+    const item =
+      source === "schedule"
+        ? localSchedules.find((s) => s.id === active.id)
+        : localCandidates.find((c) => c.id === active.id);
+    setActiveDragItem({
+      id: String(active.id),
+      name: item?.name ?? "",
+      category: item?.category ?? "sightseeing",
+      color: item?.color ?? "blue",
+      source,
+    });
   }
 
   async function handleDragEnd(event: DragEndEvent) {
@@ -93,11 +111,17 @@ export function useTripDragAndDrop({
 
     if (sourceType === "schedule" && isOverTimeline) {
       if (active.id === over.id) return;
-      const oldIndex = localSchedules.findIndex((s) => s.id === active.id);
-      const overIndex = localSchedules.findIndex((s) => s.id === over.id);
+      // Use merged timeline so schedules can be dragged past cross-day entries
+      const merged = buildMergedTimeline(localSchedules, crossDayEntries);
+      const mergedIds = timelineSortableIds(merged);
+      const activeId = String(active.id);
+      const overId = String(over.id);
+      const oldIndex = mergedIds.indexOf(activeId);
+      const overIndex = mergedIds.indexOf(overId);
       if (oldIndex === -1 || overIndex === -1) return;
 
-      const reordered = arrayMove(localSchedules, oldIndex, overIndex);
+      const reorderedMerged = arrayMove(merged, oldIndex, overIndex);
+      const reordered = timelineScheduleOrder(reorderedMerged);
       setLocalSchedules(reordered);
 
       const scheduleIds = reordered.map((s) => s.id);
@@ -132,10 +156,28 @@ export function useTripDragAndDrop({
         });
 
         if (overType === "schedule") {
-          const overIndex = localSchedules.findIndex((s) => s.id === over.id);
-          if (overIndex !== -1) {
+          // Find the insertion position in schedule-only order.
+          // When dropped on a cross-day entry, insert before the next
+          // regular schedule in the merged timeline.
+          const merged = buildMergedTimeline(localSchedules, crossDayEntries);
+          const mergedIds = timelineSortableIds(merged);
+          const overIdx = mergedIds.indexOf(String(over.id));
+          if (overIdx !== -1) {
+            let insertBeforeId: string | null = null;
+            for (let k = overIdx; k < merged.length; k++) {
+              const item = merged[k];
+              if (item.type === "schedule") {
+                insertBeforeId = item.schedule.id;
+                break;
+              }
+            }
             const scheduleIds = localSchedules.map((s) => s.id);
-            scheduleIds.splice(overIndex, 0, String(active.id));
+            const insertIdx = insertBeforeId ? scheduleIds.indexOf(insertBeforeId) : -1;
+            if (insertIdx !== -1) {
+              scheduleIds.splice(insertIdx, 0, String(active.id));
+            } else {
+              scheduleIds.push(String(active.id));
+            }
             await api(
               `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/reorder`,
               {

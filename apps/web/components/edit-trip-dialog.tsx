@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
+import { MSG } from "@/lib/messages";
 
 type EditTripDialogProps = {
   tripId: string;
@@ -67,7 +68,7 @@ export function EditTripDialog({
     const newEndDate = formData.get("endDate") as string;
 
     if (!newStartDate || !newEndDate) {
-      setError("日付を選択してください");
+      setError(MSG.TRIP_DATE_REQUIRED);
       setLoading(false);
       return;
     }
@@ -85,10 +86,10 @@ export function EditTripDialog({
         body: JSON.stringify(data),
       });
       onOpenChange(false);
-      toast.success("旅行を更新しました");
+      toast.success(MSG.TRIP_UPDATED);
       onUpdate();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "旅行の更新に失敗しました");
+      setError(err instanceof Error ? err.message : MSG.TRIP_UPDATE_FAILED);
     } finally {
       setLoading(false);
     }

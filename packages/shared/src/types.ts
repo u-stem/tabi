@@ -16,6 +16,7 @@ export type ScheduleResponse = {
   arrivalPlace?: string | null;
   transportMethod?: string | null;
   color: ScheduleColor;
+  endDayOffset?: number | null;
   updatedAt: string;
 };
 
@@ -56,6 +57,13 @@ export type TripListItem = {
   status: TripStatus;
   role: MemberRole;
   totalSchedules: number;
+};
+
+export type CrossDayEntry = {
+  schedule: ScheduleResponse;
+  sourceDayId: string;
+  sourcePatternId: string;
+  sourceDayNumber: number;
 };
 
 export type MemberResponse = {

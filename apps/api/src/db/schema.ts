@@ -170,6 +170,7 @@ export const schedules = pgTable("schedules", {
   arrivalPlace: varchar("arrival_place", { length: 200 }),
   transportMethod: transportMethodEnum("transport_method"),
   color: scheduleColorEnum("color").notNull().default("blue"),
+  endDayOffset: integer("end_day_offset"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

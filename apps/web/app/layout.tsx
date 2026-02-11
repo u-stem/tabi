@@ -16,8 +16,8 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "sugara - 仲間と作る旅の計画",
-  description: "仲間と旅行プランを作る共同編集アプリ。日程も予定も、ここでまとめる。",
+  title: "sugara",
+  description: "計画もまた、旅のうち。",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

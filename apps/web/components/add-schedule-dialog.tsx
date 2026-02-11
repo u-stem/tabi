@@ -1,6 +1,6 @@
 "use client";
 
-import type { ScheduleColor, TransportMethod } from "@sugara/shared";
+import type { ScheduleCategory, ScheduleColor, TransportMethod } from "@sugara/shared";
 import { DEFAULT_SCHEDULE_CATEGORY, SCHEDULE_COLOR_LABELS, SCHEDULE_COLORS } from "@sugara/shared";
 import { Plus } from "lucide-react";
 import { useState } from "react";
@@ -28,7 +28,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { validateTimeRange } from "@/lib/format";
-import { CATEGORY_OPTIONS, getTimeLabels, TRANSPORT_METHOD_OPTIONS } from "@/lib/schedule-utils";
+import { MSG } from "@/lib/messages";
+import {
+  CATEGORY_OPTIONS,
+  getEndDayOptions,
+  getTimeLabels,
+  TRANSPORT_METHOD_OPTIONS,
+} from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 
 type AddScheduleDialogProps = {
@@ -37,6 +43,7 @@ type AddScheduleDialogProps = {
   patternId: string;
   onAdd: () => void;
   disabled?: boolean;
+  maxEndDayOffset?: number;
 };
 
 export function AddScheduleDialog({
@@ -45,22 +52,27 @@ export function AddScheduleDialog({
   patternId,
   onAdd,
   disabled,
+  maxEndDayOffset = 0,
 }: AddScheduleDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [category, setCategory] = useState<string>(DEFAULT_SCHEDULE_CATEGORY);
+  const [category, setCategory] = useState<ScheduleCategory>(DEFAULT_SCHEDULE_CATEGORY);
   const [transportMethod, setTransportMethod] = useState<TransportMethod | "">("");
   const [color, setColor] = useState<ScheduleColor>("blue");
   const [startTime, setStartTime] = useState<string | undefined>();
   const [endTime, setEndTime] = useState<string | undefined>();
+  const [endDayOffset, setEndDayOffset] = useState(0);
   const [timeError, setTimeError] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setTimeError(null);
 
-    const timeValidation = validateTimeRange(startTime, endTime);
+    const timeValidation = validateTimeRange(startTime, endTime, {
+      allowOvernight: endDayOffset > 0,
+      category,
+    });
     if (timeValidation) {
       setTimeError(timeValidation);
       return;
@@ -87,6 +99,7 @@ export function AddScheduleDialog({
             transportMethod: transportMethod || undefined,
           }
         : {}),
+      ...(endDayOffset > 0 ? { endDayOffset } : {}),
     };
 
     try {
@@ -95,10 +108,10 @@ export function AddScheduleDialog({
         body: JSON.stringify(data),
       });
       setOpen(false);
-      toast.success("予定を追加しました");
+      toast.success(MSG.SCHEDULE_ADDED);
       onAdd();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "予定の追加に失敗しました");
+      setError(err instanceof Error ? err.message : MSG.SCHEDULE_ADD_FAILED);
     } finally {
       setLoading(false);
     }
@@ -116,6 +129,7 @@ export function AddScheduleDialog({
           setColor("blue");
           setStartTime(undefined);
           setEndTime(undefined);
+          setEndDayOffset(0);
           setTimeError(null);
         }
       }}
@@ -141,7 +155,7 @@ export function AddScheduleDialog({
             <Select
               value={category}
               onValueChange={(v) => {
-                setCategory(v);
+                setCategory(v as ScheduleCategory);
                 setTransportMethod("");
               }}
             >
@@ -225,6 +239,26 @@ export function AddScheduleDialog({
               <TimeInput value={endTime} onChange={setEndTime} />
             </div>
           </div>
+          {maxEndDayOffset > 0 && (
+            <div className="space-y-2">
+              <Label>{getTimeLabels(category).end}日</Label>
+              <Select
+                value={String(endDayOffset)}
+                onValueChange={(v) => setEndDayOffset(Number(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {getEndDayOptions(maxEndDayOffset).map((opt) => (
+                    <SelectItem key={opt.value} value={String(opt.value)}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {timeError && <p className="text-sm text-destructive">{timeError}</p>}
           <div className="space-y-2">
             <Label htmlFor="memo">メモ</Label>

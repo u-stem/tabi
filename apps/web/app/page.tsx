@@ -11,15 +11,15 @@ export default function HomePage() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">仲間と描く、旅のかたち</h1>
+        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">計画もまた、旅のうち。</h1>
         <p className="mt-4 max-w-lg text-lg text-muted-foreground">
-          仲間と旅の計画を作ろう。日程も予定も、ここでまとめる。
+          旅行プランを作成・共有できる共同編集アプリ
         </p>
         <div className="mt-8 flex gap-4">
           <Button asChild size="lg">
             <Link href="/auth/signup">
               <ArrowRight className="h-4 w-4" />
-              無料で始める
+              サインアップ
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">

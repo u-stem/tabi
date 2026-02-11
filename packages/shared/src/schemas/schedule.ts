@@ -48,6 +48,7 @@ export const createScheduleSchema = z.object({
   arrivalPlace: z.string().max(200).optional(),
   transportMethod: transportMethodSchema.optional(),
   color: scheduleColorSchema.default("blue"),
+  endDayOffset: z.number().int().min(1).max(30).nullable().optional(),
 });
 export type CreateScheduleInput = z.infer<typeof createScheduleSchema>;
 

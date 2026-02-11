@@ -55,7 +55,7 @@ export const users = pgTable("users", {
   image: varchar("image", { length: 500 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}).enableRLS();
 
 export const sessions = pgTable("sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -68,7 +68,7 @@ export const sessions = pgTable("sessions", {
   userAgent: text("user_agent"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}).enableRLS();
 
 export const accounts = pgTable("accounts", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -87,7 +87,7 @@ export const accounts = pgTable("accounts", {
   password: text("password"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}).enableRLS();
 
 export const verifications = pgTable("verifications", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -96,7 +96,7 @@ export const verifications = pgTable("verifications", {
   expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}).enableRLS();
 
 export const trips = pgTable("trips", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -113,7 +113,7 @@ export const trips = pgTable("trips", {
   shareTokenExpiresAt: timestamp("share_token_expires_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}).enableRLS();
 
 export const tripMembers = pgTable(
   "trip_members",
@@ -127,7 +127,7 @@ export const tripMembers = pgTable(
     role: tripMemberRoleEnum("role").notNull(),
   },
   (table) => [primaryKey({ columns: [table.tripId, table.userId] })],
-);
+).enableRLS();
 
 export const tripDays = pgTable("trip_days", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -137,7 +137,7 @@ export const tripDays = pgTable("trip_days", {
   date: date("date").notNull(),
   dayNumber: integer("day_number").notNull(),
   memo: text("memo"),
-});
+}).enableRLS();
 
 export const dayPatterns = pgTable("day_patterns", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -148,7 +148,7 @@ export const dayPatterns = pgTable("day_patterns", {
   isDefault: boolean("is_default").notNull().default(false),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}).enableRLS();
 
 export const schedules = pgTable("schedules", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -170,9 +170,10 @@ export const schedules = pgTable("schedules", {
   arrivalPlace: varchar("arrival_place", { length: 200 }),
   transportMethod: transportMethodEnum("transport_method"),
   color: scheduleColorEnum("color").notNull().default("blue"),
+  endDayOffset: integer("end_day_offset"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
-});
+}).enableRLS();
 
 // --- Relations ---
 

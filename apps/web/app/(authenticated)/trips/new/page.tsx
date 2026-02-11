@@ -86,7 +86,15 @@ export default function NewTripPage() {
                 {error}
               </p>
             )}
-            <div className="flex justify-end">
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                disabled={loading}
+              >
+                キャンセル
+              </Button>
               <Button type="submit" disabled={loading}>
                 <Plus className="h-4 w-4" />
                 {loading ? "作成中..." : "作成"}

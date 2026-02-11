@@ -1,6 +1,6 @@
 "use client";
 
-import { DndContext, DragOverlay } from "@dnd-kit/core";
+import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
 import type { DayPatternResponse, TripResponse } from "@sugara/shared";
 import { PATTERN_LABEL_MAX_LENGTH } from "@sugara/shared";
 import { ChevronDown, Copy, List, Pencil, Plus, Trash2 } from "lucide-react";
@@ -35,13 +35,33 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
+import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
+import { getCrossDayEntries } from "@/lib/cross-day";
 import { formatDateRange, getDayCount, getTimeStatus, toDateString } from "@/lib/format";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
 import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
+import { CATEGORY_ICONS } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+
+const dndAnnouncements: Announcements = {
+  onDragStart({ active }) {
+    return `${active.id} を持ち上げました`;
+  },
+  onDragOver({ active, over }) {
+    if (over) return `${active.id} を ${over.id} の上に移動中`;
+    return `${active.id} をドラッグ中`;
+  },
+  onDragEnd({ active, over }) {
+    if (over) return `${active.id} を ${over.id} の位置にドロップしました`;
+    return `${active.id} をドロップしました`;
+  },
+  onDragCancel({ active }) {
+    return `${active.id} のドラッグをキャンセルしました`;
+  },
+};
 
 export default function TripDetailPage() {
   const params = useParams();
@@ -193,6 +213,10 @@ export default function TripDetailPage() {
   // Stable references to avoid infinite re-render when values are null
   const dndSchedules = useMemo(() => currentPattern?.schedules ?? [], [currentPattern?.schedules]);
   const dndCandidates = useMemo(() => trip?.candidates ?? [], [trip?.candidates]);
+  const dndCrossDayEntries = useMemo(
+    () => (currentDay && trip ? getCrossDayEntries(trip.days, currentDay.dayNumber) : undefined),
+    [currentDay, trip],
+  );
 
   const dnd = useTripDragAndDrop({
     tripId,
@@ -200,6 +224,7 @@ export default function TripDetailPage() {
     currentPatternId: currentPattern?.id ?? null,
     schedules: dndSchedules,
     candidates: dndCandidates,
+    crossDayEntries: dndCrossDayEntries,
     onDone: onMutate,
   });
 
@@ -292,19 +317,62 @@ export default function TripDetailPage() {
 
   if (loading) {
     return (
-      <div className="grid gap-8 lg:grid-cols-2">
-        <div>
-          <div className="mb-6 space-y-2">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-64" />
+      <div>
+        <div className="mb-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="mt-2 h-4 w-64" />
+          <div className="mt-3 flex items-center gap-2">
+            <Skeleton className="h-8 w-20 rounded-md" />
+            <Skeleton className="h-8 w-20 rounded-md" />
           </div>
-          <div className="space-y-4">
-            {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
-              <div key={key} className="rounded-lg border p-4 space-y-3">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-16 w-full rounded-md" />
+        </div>
+        <div className="flex gap-4">
+          <div className="flex max-h-[calc(100vh-12rem)] min-w-0 flex-[3] flex-col rounded-lg border bg-card">
+            <div className="flex gap-1 border-b px-4">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="my-2 h-5 w-14" />
+              ))}
+            </div>
+            <div className="p-4">
+              <div className="mb-3 flex items-center gap-1.5">
+                <Skeleton className="h-7 w-20 rounded-full" />
+                <Skeleton className="h-7 w-24 rounded-full" />
               </div>
-            ))}
+              <div className="space-y-3">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-3">
+                    <div className="flex flex-col items-center">
+                      <Skeleton className="h-7 w-7 rounded-full" />
+                      {i < 3 && <Skeleton className="mt-1 h-10 w-0.5" />}
+                    </div>
+                    <div className="flex-1 rounded-md border p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-5 w-12 rounded-full" />
+                        <Skeleton className="h-4 w-28" />
+                      </div>
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="hidden flex-[2] self-start sticky top-4 rounded-lg border border-dashed bg-card p-4 lg:block">
+            <div className="mb-3 flex items-center justify-between">
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-8 w-20 rounded-md" />
+            </div>
+            <div className="space-y-1.5">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-2 rounded-md border p-2">
+                  <Skeleton className="h-2.5 w-2.5 rounded-full" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -371,6 +439,7 @@ export default function TripDetailPage() {
           collisionDetection={dnd.collisionDetection}
           onDragStart={dnd.handleDragStart}
           onDragEnd={dnd.handleDragEnd}
+          accessibility={{ announcements: dndAnnouncements }}
         >
           <div className="flex gap-4">
             {/* Timeline */}
@@ -426,6 +495,9 @@ export default function TripDetailPage() {
                   schedules={dnd.localSchedules}
                   onRefresh={onMutate}
                   disabled={!online || !canEdit}
+                  maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
+                  totalDays={trip.days.length}
+                  crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
                   selectionMode={selection.selectionTarget === "timeline"}
                   selectedIds={
                     selection.selectionTarget === "timeline" ? selection.selectedIds : undefined
@@ -553,12 +625,25 @@ export default function TripDetailPage() {
               />
             </div>
           </div>
-          <DragOverlay dropAnimation={null}>
-            {dnd.activeDragItem && (
-              <div className="rounded-md border bg-card p-2 shadow-lg opacity-90">
-                <span className="text-sm font-medium">{dnd.activeDragItem.name}</span>
-              </div>
-            )}
+          <DragOverlay>
+            {dnd.activeDragItem &&
+              (() => {
+                const Icon = CATEGORY_ICONS[dnd.activeDragItem.category];
+                const colorClasses = SCHEDULE_COLOR_CLASSES[dnd.activeDragItem.color];
+                return (
+                  <div className="flex items-center gap-2 rounded-md border bg-card p-2 shadow-lg opacity-90">
+                    <div
+                      className={cn(
+                        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white",
+                        colorClasses.bg,
+                      )}
+                    >
+                      <Icon className="h-3 w-3" />
+                    </div>
+                    <span className="text-sm font-medium">{dnd.activeDragItem.name}</span>
+                  </div>
+                );
+              })()}
           </DragOverlay>
         </DndContext>
       )}
@@ -602,6 +687,7 @@ export default function TripDetailPage() {
         <DialogContent className="max-h-[80vh] overflow-y-auto sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>候補リスト</DialogTitle>
+            <p className="text-xs text-muted-foreground">選択して一括操作で予定に追加できます</p>
           </DialogHeader>
           {currentDay && currentPattern && (
             <CandidatePanel

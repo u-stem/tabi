@@ -27,7 +27,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { ApiError, api } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { validateTimeRange } from "@/lib/format";
-import { CATEGORY_OPTIONS, getTimeLabels, TRANSPORT_METHOD_OPTIONS } from "@/lib/schedule-utils";
+import { MSG } from "@/lib/messages";
+import {
+  CATEGORY_OPTIONS,
+  getEndDayOptions,
+  getTimeLabels,
+  TRANSPORT_METHOD_OPTIONS,
+} from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 
 type EditScheduleDialogProps = {
@@ -38,6 +44,7 @@ type EditScheduleDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
+  maxEndDayOffset?: number;
 };
 
 export function EditScheduleDialog({
@@ -48,6 +55,7 @@ export function EditScheduleDialog({
   open,
   onOpenChange,
   onUpdate,
+  maxEndDayOffset = 0,
 }: EditScheduleDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -58,6 +66,7 @@ export function EditScheduleDialog({
   const [color, setColor] = useState<ScheduleColor>(schedule.color);
   const [startTime, setStartTime] = useState<string | undefined>(schedule.startTime ?? undefined);
   const [endTime, setEndTime] = useState<string | undefined>(schedule.endTime ?? undefined);
+  const [endDayOffset, setEndDayOffset] = useState(schedule.endDayOffset ?? 0);
   const [timeError, setTimeError] = useState<string | null>(null);
 
   function handleOpenChange(isOpen: boolean) {
@@ -70,6 +79,7 @@ export function EditScheduleDialog({
       setColor(schedule.color);
       setStartTime(schedule.startTime ?? undefined);
       setEndTime(schedule.endTime ?? undefined);
+      setEndDayOffset(schedule.endDayOffset ?? 0);
     }
   }
 
@@ -77,7 +87,10 @@ export function EditScheduleDialog({
     e.preventDefault();
     setTimeError(null);
 
-    const timeValidation = validateTimeRange(startTime, endTime);
+    const timeValidation = validateTimeRange(startTime, endTime, {
+      allowOvernight: endDayOffset > 0,
+      category,
+    });
     if (timeValidation) {
       setTimeError(timeValidation);
       return;
@@ -104,6 +117,7 @@ export function EditScheduleDialog({
             transportMethod: transportMethod || undefined,
           }
         : {}),
+      endDayOffset: endDayOffset > 0 ? endDayOffset : null,
       expectedUpdatedAt: schedule.updatedAt,
     };
 
@@ -116,14 +130,14 @@ export function EditScheduleDialog({
         },
       );
       onOpenChange(false);
-      toast.success("予定を更新しました");
+      toast.success(MSG.SCHEDULE_UPDATED);
       onUpdate();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        setError("他のユーザーが先に更新しました。画面を更新してください。");
+        setError(MSG.CONFLICT);
         onUpdate();
       } else {
-        setError(err instanceof Error ? err.message : "予定の更新に失敗しました");
+        setError(err instanceof Error ? err.message : MSG.SCHEDULE_UPDATE_FAILED);
       }
     } finally {
       setLoading(false);
@@ -252,6 +266,26 @@ export function EditScheduleDialog({
               <TimeInput value={endTime} onChange={setEndTime} />
             </div>
           </div>
+          {maxEndDayOffset > 0 && (
+            <div className="space-y-2">
+              <Label>{getTimeLabels(category).end}日</Label>
+              <Select
+                value={String(endDayOffset)}
+                onValueChange={(v) => setEndDayOffset(Number(v))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {getEndDayOptions(maxEndDayOffset).map((opt) => (
+                    <SelectItem key={opt.value} value={String(opt.value)}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           {timeError && <p className="text-sm text-destructive">{timeError}</p>}
           <div className="space-y-2">
             <Label htmlFor="edit-memo">メモ</Label>

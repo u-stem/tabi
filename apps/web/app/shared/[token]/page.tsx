@@ -1,13 +1,14 @@
 "use client";
 
 import type {
+  CrossDayEntry,
   DayPatternResponse,
   DayResponse,
   ScheduleResponse,
   TransportMethod,
   TripStatus,
 } from "@sugara/shared";
-import { CATEGORY_LABELS, STATUS_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
+import { STATUS_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import { Calendar, Clock, MapPin, RefreshCw } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -17,8 +18,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
+import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
+import { getCrossDayEntries } from "@/lib/cross-day";
 import { formatDate, formatDateRange, getDayCount } from "@/lib/format";
+import { CATEGORY_ICONS } from "@/lib/icons";
+import { buildMergedTimeline } from "@/lib/merge-timeline";
+import { MSG } from "@/lib/messages";
 import { supabase } from "@/lib/supabase";
+import { cn } from "@/lib/utils";
 
 type SharedTripResponse = {
   id: string;
@@ -67,9 +74,9 @@ export default function SharedTripPage() {
       })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 404) {
-          setError("このリンクは無効か、有効期限が切れています");
+          setError(MSG.SHARED_LINK_INVALID);
         } else {
-          setError("旅行の取得に失敗しました");
+          setError(MSG.SHARED_TRIP_FETCH_FAILED);
         }
       })
       .finally(() => setLoading(false));
@@ -99,19 +106,36 @@ export default function SharedTripPage() {
       <div className="min-h-screen">
         <SharedHeader />
         <div className="container max-w-3xl py-8">
-          <div className="mb-8 space-y-3">
+          <div className="mb-8">
             <div className="flex items-center gap-2">
               <Skeleton className="h-8 w-48" />
               <Skeleton className="h-5 w-16 rounded-full" />
             </div>
-            <Skeleton className="h-4 w-72" />
+            <div className="mt-1 flex items-center gap-3">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-36" />
+            </div>
           </div>
           <div className="space-y-6">
-            {[1, 2].map((i) => (
-              <div key={i} className="space-y-3 rounded-lg border p-4">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-12 w-full rounded-md" />
-                <Skeleton className="h-12 w-full rounded-md" />
+            {[1, 2].map((day) => (
+              <div key={day} className="rounded-lg border bg-card p-4 sm:p-5">
+                <div className="mb-3 flex items-center gap-2">
+                  <Skeleton className="h-7 w-7 rounded-full" />
+                  <Skeleton className="h-5 w-16" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="space-y-2">
+                  {[1, 2].map((s) => (
+                    <div key={s} className="rounded-md border p-3 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Skeleton className="h-5 w-12 rounded-full" />
+                        <Skeleton className="h-4 w-28" />
+                        <Skeleton className="h-3 w-20" />
+                      </div>
+                      <Skeleton className="h-3 w-36" />
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
@@ -140,7 +164,7 @@ export default function SharedTripPage() {
       <div className="min-h-screen">
         <SharedHeader />
         <div className="container flex max-w-3xl flex-col items-center py-16 text-center">
-          <p className="text-lg font-medium text-destructive">旅行が見つかりません</p>
+          <p className="text-lg font-medium text-destructive">{MSG.SHARED_TRIP_NOT_FOUND}</p>
         </div>
       </div>
     );
@@ -190,26 +214,30 @@ export default function SharedTripPage() {
           )}
         </div>
         <div className="space-y-6">
-          {(trip.days ?? []).map((day) => (
-            <section key={day.id} className="rounded-lg border bg-card p-4 sm:p-5">
-              <h3 className="mb-3 flex items-center gap-2 text-base font-semibold">
-                <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                  {day.dayNumber}
-                </span>
-                {day.dayNumber}日目
-                <span className="text-sm font-normal text-muted-foreground">
-                  {formatDate(day.date)}
-                </span>
-              </h3>
-              {(day.patterns ?? []).map((pattern) => (
-                <PatternSection
-                  key={pattern.id}
-                  pattern={pattern}
-                  showLabel={(day.patterns ?? []).length > 1}
-                />
-              ))}
-            </section>
-          ))}
+          {(trip.days ?? []).map((day) => {
+            const crossDayEntries = getCrossDayEntries(trip.days ?? [], day.dayNumber);
+            return (
+              <section key={day.id} className="rounded-lg border bg-card p-4 sm:p-5">
+                <h3 className="mb-3 flex items-center gap-2 text-base font-semibold">
+                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                    {day.dayNumber}
+                  </span>
+                  {day.dayNumber}日目
+                  <span className="text-sm font-normal text-muted-foreground">
+                    {formatDate(day.date)}
+                  </span>
+                </h3>
+                {(day.patterns ?? []).map((pattern, i) => (
+                  <PatternSection
+                    key={pattern.id}
+                    pattern={pattern}
+                    showLabel={(day.patterns ?? []).length > 1}
+                    crossDayEntries={i === 0 ? crossDayEntries : undefined}
+                  />
+                ))}
+              </section>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -219,58 +247,110 @@ export default function SharedTripPage() {
 function PatternSection({
   pattern,
   showLabel,
+  crossDayEntries,
 }: {
   pattern: DayPatternResponse;
   showLabel: boolean;
+  crossDayEntries?: CrossDayEntry[];
 }) {
   const schedules = pattern.schedules ?? [];
+  const merged = buildMergedTimeline(schedules, crossDayEntries);
 
   return (
     <div className={showLabel ? "mt-3" : ""}>
       {showLabel && (
         <p className="mb-2 text-sm font-medium text-muted-foreground">{pattern.label}</p>
       )}
-      {schedules.length === 0 ? (
+      {merged.length === 0 ? (
         <p className="py-2 text-center text-sm text-muted-foreground">まだ予定がありません</p>
       ) : (
         <div className="space-y-2">
-          {schedules.map((schedule) => (
-            <ScheduleCard key={schedule.id} schedule={schedule} />
-          ))}
+          {merged.map((item) =>
+            item.type === "crossDay" ? (
+              <ScheduleCard
+                key={`cross-${item.entry.schedule.id}`}
+                schedule={item.entry.schedule}
+                crossDayDisplay
+                crossDaySourceDayNumber={item.entry.sourceDayNumber}
+              />
+            ) : (
+              <ScheduleCard key={item.schedule.id} schedule={item.schedule} />
+            ),
+          )}
         </div>
       )}
     </div>
   );
 }
 
-function ScheduleCard({ schedule }: { schedule: ScheduleResponse }) {
-  const categoryLabel = CATEGORY_LABELS[schedule.category] ?? schedule.category;
+/** Read-only schedule card for the public shared view (no edit/delete actions). */
+function ScheduleCard({
+  schedule,
+  crossDayDisplay,
+  crossDaySourceDayNumber,
+}: {
+  schedule: ScheduleResponse;
+  crossDayDisplay?: boolean;
+  crossDaySourceDayNumber?: number;
+}) {
+  const CategoryIcon = CATEGORY_ICONS[schedule.category];
+  const colorClasses = SCHEDULE_COLOR_CLASSES[schedule.color ?? "blue"];
   const transportLabel =
     schedule.transportMethod && schedule.transportMethod in TRANSPORT_METHOD_LABELS
       ? TRANSPORT_METHOD_LABELS[schedule.transportMethod as TransportMethod]
       : schedule.transportMethod;
 
+  const displayTime = crossDayDisplay ? schedule.endTime : schedule.startTime;
+  const showEndTime = !crossDayDisplay && !schedule.endDayOffset && schedule.endTime;
+
   return (
-    <div className="cursor-default rounded-md border p-3">
+    <div
+      className={cn(
+        "cursor-default rounded-md border p-3",
+        crossDayDisplay && "border-dashed bg-muted/30",
+      )}
+      {...(crossDayDisplay && crossDaySourceDayNumber
+        ? {
+            role: "group" as const,
+            "aria-label": `${crossDaySourceDayNumber}日目から継続: ${schedule.name}`,
+          }
+        : {})}
+    >
+      {crossDayDisplay && crossDaySourceDayNumber && (
+        <span className="mb-1.5 inline-block rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+          {crossDaySourceDayNumber}日目から継続
+        </span>
+      )}
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="secondary" className="text-xs">
-          {categoryLabel}
-        </Badge>
+        <div
+          className={cn(
+            "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white",
+            colorClasses.bg,
+          )}
+        >
+          <CategoryIcon className="h-3 w-3" />
+        </div>
         <span className="font-medium">{schedule.name}</span>
-        {schedule.startTime && (
+        {displayTime && (
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
-            {schedule.startTime.slice(0, 5)}
-            {schedule.endTime && ` - ${schedule.endTime.slice(0, 5)}`}
+            {crossDayDisplay ? "~" : ""}
+            {displayTime.slice(0, 5)}
+            {showEndTime && ` - ${schedule.endTime!.slice(0, 5)}`}
           </span>
+        )}
+        {!crossDayDisplay && schedule.endDayOffset != null && schedule.endDayOffset > 0 && (
+          <span className="text-xs text-muted-foreground">→ {schedule.endDayOffset}日後</span>
         )}
       </div>
       {schedule.category === "transport" &&
         (schedule.departurePlace || schedule.arrivalPlace || transportLabel) && (
           <p className="mt-1 text-xs text-muted-foreground">
-            {schedule.departurePlace && schedule.arrivalPlace
-              ? `${schedule.departurePlace} → ${schedule.arrivalPlace}`
-              : schedule.departurePlace || schedule.arrivalPlace}
+            {crossDayDisplay
+              ? schedule.arrivalPlace && `→ ${schedule.arrivalPlace}`
+              : schedule.departurePlace && schedule.arrivalPlace
+                ? `${schedule.departurePlace} → ${schedule.arrivalPlace}`
+                : schedule.departurePlace || schedule.arrivalPlace}
             {transportLabel && ` (${transportLabel})`}
           </p>
         )}

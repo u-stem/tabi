@@ -56,14 +56,14 @@ memberRoutes.post("/:tripId/members", async (c) => {
     where: eq(users.email, parsed.data.email),
   });
   if (!targetUser) {
-    return c.json({ error: "User not found" }, 404);
+    return c.json({ error: ERROR_MSG.USER_NOT_FOUND }, 404);
   }
 
   const existing = await db.query.tripMembers.findFirst({
     where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, targetUser.id)),
   });
   if (existing) {
-    return c.json({ error: "Already a member" }, 409);
+    return c.json({ error: ERROR_MSG.ALREADY_MEMBER }, 409);
   }
 
   await db.insert(tripMembers).values({
@@ -95,7 +95,7 @@ memberRoutes.patch("/:tripId/members/:userId", async (c) => {
   }
 
   if (targetUserId === user.id) {
-    return c.json({ error: "Cannot change own role" }, 400);
+    return c.json({ error: ERROR_MSG.CANNOT_CHANGE_OWN_ROLE }, 400);
   }
 
   const body = await c.req.json();
@@ -108,7 +108,7 @@ memberRoutes.patch("/:tripId/members/:userId", async (c) => {
     where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, targetUserId)),
   });
   if (!existing) {
-    return c.json({ error: "Member not found" }, 404);
+    return c.json({ error: ERROR_MSG.MEMBER_NOT_FOUND }, 404);
   }
 
   await db
@@ -131,14 +131,14 @@ memberRoutes.delete("/:tripId/members/:userId", async (c) => {
   }
 
   if (targetUserId === user.id) {
-    return c.json({ error: "Cannot remove yourself" }, 400);
+    return c.json({ error: ERROR_MSG.CANNOT_REMOVE_SELF }, 400);
   }
 
   const existing = await db.query.tripMembers.findFirst({
     where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, targetUserId)),
   });
   if (!existing) {
-    return c.json({ error: "Member not found" }, 404);
+    return c.json({ error: ERROR_MSG.MEMBER_NOT_FOUND }, 404);
   }
 
   await db

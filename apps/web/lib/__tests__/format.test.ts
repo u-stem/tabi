@@ -6,10 +6,12 @@ import {
   formatDateShort,
   formatTime,
   formatTimeRange,
+  getCrossDayTimeStatus,
   getDayCount,
   getTimeStatus,
   validateTimeRange,
 } from "../format";
+import { MSG } from "../messages";
 
 describe("formatDate", () => {
   it("formats a date string to Japanese format", () => {
@@ -91,15 +93,49 @@ describe("validateTimeRange", () => {
   });
 
   it("returns error when end time is set without start time", () => {
-    expect(validateTimeRange(undefined, "17:00")).toBe("開始時間を入力してください");
+    expect(validateTimeRange(undefined, "17:00")).toBe(MSG.TIME_START_REQUIRED);
   });
 
   it("returns error when start time equals end time", () => {
-    expect(validateTimeRange("09:00", "09:00")).toBe("終了時間は開始時間より後にしてください");
+    expect(validateTimeRange("09:00", "09:00")).toBe(MSG.TIME_END_BEFORE_START);
   });
 
   it("returns error when start time is after end time", () => {
-    expect(validateTimeRange("18:00", "09:00")).toBe("終了時間は開始時間より後にしてください");
+    expect(validateTimeRange("18:00", "09:00")).toBe(MSG.TIME_END_BEFORE_START);
+  });
+
+  it("allows overnight time range for hotel category", () => {
+    expect(validateTimeRange("15:00", "10:00", { allowOvernight: true })).toBeNull();
+  });
+
+  it("still requires start time for hotel when only end time is set", () => {
+    expect(validateTimeRange(undefined, "10:00", { allowOvernight: true })).toBe(
+      MSG.TIME_START_REQUIRED,
+    );
+  });
+
+  it("returns hotel-specific error when end time is set without start time", () => {
+    expect(validateTimeRange(undefined, "10:00", { category: "hotel" })).toBe(
+      MSG.TIME_HOTEL_CHECKIN_REQUIRED,
+    );
+  });
+
+  it("returns transport-specific error when end time is set without start time", () => {
+    expect(validateTimeRange(undefined, "10:00", { category: "transport" })).toBe(
+      MSG.TIME_TRANSPORT_DEPARTURE_REQUIRED,
+    );
+  });
+
+  it("returns hotel-specific error when end time is before start time", () => {
+    expect(validateTimeRange("18:00", "09:00", { category: "hotel" })).toBe(
+      MSG.TIME_HOTEL_CHECKOUT_AFTER,
+    );
+  });
+
+  it("returns transport-specific error when end time is before start time", () => {
+    expect(validateTimeRange("18:00", "09:00", { category: "transport" })).toBe(
+      MSG.TIME_TRANSPORT_ARRIVAL_AFTER,
+    );
   });
 });
 
@@ -196,5 +232,23 @@ describe("getDayCount", () => {
 
   it("handles year boundaries", () => {
     expect(getDayCount("2025-12-30", "2026-01-02")).toBe(4);
+  });
+});
+
+describe("getCrossDayTimeStatus", () => {
+  it("returns past when endTime has passed", () => {
+    expect(getCrossDayTimeStatus("11:00", "10:00")).toBe("past");
+  });
+
+  it("returns current when endTime has not passed", () => {
+    expect(getCrossDayTimeStatus("09:00", "10:00")).toBe("current");
+  });
+
+  it("returns past when endTime equals now", () => {
+    expect(getCrossDayTimeStatus("10:00", "10:00")).toBe("past");
+  });
+
+  it("returns null when endTime is null", () => {
+    expect(getCrossDayTimeStatus("10:00", null)).toBeNull();
   });
 });

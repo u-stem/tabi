@@ -129,6 +129,70 @@ describe("createScheduleSchema transport fields", () => {
   });
 });
 
+describe("createScheduleSchema endDayOffset", () => {
+  it("accepts endDayOffset of 1", () => {
+    const result = createScheduleSchema.safeParse({
+      name: "Hotel",
+      category: "hotel",
+      endDayOffset: 1,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts endDayOffset of 30", () => {
+    const result = createScheduleSchema.safeParse({
+      name: "Hotel",
+      category: "hotel",
+      endDayOffset: 30,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects endDayOffset of 0", () => {
+    const result = createScheduleSchema.safeParse({
+      name: "Hotel",
+      category: "hotel",
+      endDayOffset: 0,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects endDayOffset greater than 30", () => {
+    const result = createScheduleSchema.safeParse({
+      name: "Hotel",
+      category: "hotel",
+      endDayOffset: 31,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects non-integer endDayOffset", () => {
+    const result = createScheduleSchema.safeParse({
+      name: "Hotel",
+      category: "hotel",
+      endDayOffset: 1.5,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts schedule without endDayOffset", () => {
+    const result = createScheduleSchema.safeParse({
+      name: "Hotel",
+      category: "hotel",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts null endDayOffset", () => {
+    const result = createScheduleSchema.safeParse({
+      name: "Hotel",
+      category: "hotel",
+      endDayOffset: null,
+    });
+    expect(result.success).toBe(true);
+  });
+});
+
 describe("reorderSchedulesSchema", () => {
   it("accepts valid UUIDs", () => {
     const result = reorderSchedulesSchema.safeParse({

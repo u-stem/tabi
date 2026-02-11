@@ -35,6 +35,70 @@ test.describe("Shared Trip", () => {
     await context.close();
   });
 
+  test("regenerates share link", async ({ authenticatedPage: page }) => {
+    await createTripViaUI(page, {
+      title: "Regenerate Link Test",
+      destination: "Shizuoka",
+    });
+
+    await page.context().grantPermissions(["clipboard-write", "clipboard-read"]);
+
+    // Generate initial share link
+    const firstResponse = page.waitForResponse(
+      (res) => res.url().includes("/api/trips/") && res.url().endsWith("/share") && res.ok(),
+    );
+    await page.getByRole("button", { name: "共有リンク" }).click();
+    await firstResponse;
+    await expect(page.getByText("共有リンクをコピーしました")).toBeVisible();
+
+    // Regenerate share link
+    const secondResponse = page.waitForResponse(
+      (res) => res.url().includes("/api/trips/") && res.url().endsWith("/share") && res.ok(),
+    );
+    await page.getByRole("button", { name: "共有リンクを再生成" }).click();
+    await secondResponse;
+    await expect(page.getByText("共有リンクを再生成してコピーしました")).toBeVisible();
+  });
+
+  test("shows shared trip on shared-trips page", async ({
+    authenticatedPage: page,
+    browser,
+  }) => {
+    // Owner creates a trip and adds another user as member
+    const memberEmail = `e2e-shared-list-${Date.now()}@test.com`;
+
+    // Create the member user
+    const memberContext = await browser.newContext();
+    const memberPage = await memberContext.newPage();
+    await memberPage.goto("http://localhost:3000/auth/signup");
+    await memberPage.getByLabel("名前").fill("Shared List User");
+    await memberPage.getByLabel("メールアドレス").fill(memberEmail);
+    await memberPage.getByLabel("パスワード").fill("TestPassword123!");
+    await memberPage.getByRole("button", { name: "アカウントを作成" }).click();
+    await expect(memberPage).toHaveURL(/\/home/, { timeout: 10000 });
+
+    // Owner creates a trip
+    await createTripViaUI(page, {
+      title: "Shared List Trip",
+      destination: "Kanazawa",
+    });
+
+    // Add member
+    await page.getByRole("button", { name: "メンバー" }).click();
+    await page.getByPlaceholder("メールアドレス").fill(memberEmail);
+    await page.getByRole("button", { name: "追加" }).click();
+    await expect(page.getByText("メンバーを追加しました")).toBeVisible();
+
+    // Member navigates to shared-trips page
+    await memberPage.getByRole("link", { name: "共有" }).click();
+    await expect(memberPage).toHaveURL(/\/shared-trips/, { timeout: 10000 });
+    await expect(memberPage.getByText("Shared List Trip")).toBeVisible({
+      timeout: 10000,
+    });
+
+    await memberContext.close();
+  });
+
   test("shows error for invalid share token", async ({ browser }) => {
     const context = await browser.newContext();
     const page = await context.newPage();

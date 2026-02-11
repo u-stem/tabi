@@ -50,6 +50,51 @@ test.describe("Dashboard", () => {
     ).toBeVisible();
   });
 
+  test("sorts trips by start date", async ({ authenticatedPage: page }) => {
+    await createTripViaUI(page, {
+      title: "Sort Trip",
+      destination: "Matsumoto",
+    });
+    await page.getByRole("link", { name: "ホーム" }).click();
+    await expect(page).toHaveURL(/\/home/);
+
+    // Default sort is by updated date; switch to start date
+    const sortSelect = page
+      .getByRole("toolbar", { name: "旅行フィルター" })
+      .getByRole("combobox")
+      .last();
+    await sortSelect.click();
+    await page.getByRole("option", { name: "出発日" }).click();
+
+    // Trip should still be visible after sort change
+    await expect(page.getByText("Sort Trip")).toBeVisible();
+  });
+
+  test("duplicates a trip", async ({ authenticatedPage: page }) => {
+    await createTripViaUI(page, {
+      title: "Original Trip",
+      destination: "Takayama",
+    });
+    await page.getByRole("link", { name: "ホーム" }).click();
+    await expect(page).toHaveURL(/\/home/);
+
+    // Enter selection mode and select the trip
+    await page
+      .getByRole("toolbar", { name: "旅行フィルター" })
+      .getByRole("button", { name: "選択" })
+      .click();
+    await page
+      .getByRole("toolbar", { name: "選択操作" })
+      .getByRole("button", { name: "全選択" })
+      .click();
+    await page
+      .getByRole("toolbar", { name: "選択操作" })
+      .getByRole("button", { name: "複製" })
+      .click();
+
+    await expect(page.getByText("1件の旅行を複製しました")).toBeVisible();
+  });
+
   test("selects and deletes a trip", async ({ authenticatedPage: page }) => {
     await createTripViaUI(page, {
       title: "Delete Me",

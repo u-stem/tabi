@@ -3,9 +3,11 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
+  "exports": {
+    ".": "./src/app.ts"
+  },
   "scripts": {
-    "dev": "bun run --hot src/index.ts",
-    "build": "bun build src/index.ts --outdir dist --target bun",
+    "build": "tsc --noEmit",
     "test": "vitest run --passWithNoTests --exclude 'src/__tests__/integration/**'",
     "test:integration": "TEST_DATABASE_URL=postgresql://sugara:sugara@localhost:5432/sugara_test vitest run --fileParallelism=false src/__tests__/integration/",
     "lint": "biome lint src/",
@@ -16,7 +18,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "bun run src/db/seed.ts"
+    "db:seed": "bun run src/db/seed.ts",
+    "db:seed-user": "bun run src/db/seed-user.ts"
   },
   "dependencies": {
     "@sugara/shared": "workspace:*",

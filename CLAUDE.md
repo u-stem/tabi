@@ -7,8 +7,8 @@
 ## 構成
 
 ```
-apps/web/         Next.js 15 (App Router) + Tailwind CSS v4 + shadcn/ui
-apps/api/         Hono API サーバー (bun runtime)
+apps/web/         Next.js 15 (App Router) + Tailwind CSS v4 + shadcn/ui + Hono API (Route Handler)
+apps/api/         Hono API ルート・DB スキーマ・認証 (Next.js Route Handler として統合)
 packages/shared/  共有 Zod スキーマ・型定義
 ```
 
@@ -28,7 +28,7 @@ bun run db:generate  # マイグレーション生成
 bun run db:migrate   # マイグレーション実行
 bun run db:studio    # Drizzle Studio 起動
 bun run db:seed      # 開発用シードデータ投入
-bun run setup        # 初回セットアップ (Docker)
+bun run db:seed-user # 本番用ユーザー作成 (環境変数で指定)
 ```
 
 パッケージ単位の実行は `--filter` を使用:
@@ -46,20 +46,23 @@ bun run --filter @sugara/shared check-types
 
 - ランタイム: bun
 - フロントエンド: Next.js 15, React 19, Tailwind CSS v4, shadcn/ui (New York, Zinc)
-- バックエンド: Hono on bun
-- DB: PostgreSQL + Drizzle ORM
-- 認証: Better Auth (メール/パスワード, `advanced.database.generateId: "uuid"`)
+- API: Hono (Next.js Route Handler `apps/web/app/api/[[...route]]/route.ts` として統合)
+- DB: Supabase PostgreSQL + Drizzle ORM
+- リアルタイム同期: Supabase Realtime (Broadcast + Presence)
+- 認証: Better Auth (メール/パスワード, 招待制, `advanced.database.generateId: "uuid"`)
 - バリデーション: Zod (packages/shared で共有)
 - リンター/フォーマッター: Biome (ルートに biome.json、各パッケージから turbo 経由で実行)
 - テスト: Vitest
 - Git フック: lefthook (pre-commit: check + check-types, commit-msg: Conventional Commits, pre-push: test)
 - 地図: Leaflet + react-leaflet
+- デプロイ: Vercel
 
 ## 主要パターン
 
 - 全 API ルートで `requireAuth` ミドルウェアが必要 (ヘルスチェックと共有旅行ビューを除く)
 - Zod スキーマは `packages/shared/src/schemas/` に配置し、API とフロントエンドの両方で使用
 - API クライアント `apps/web/lib/api.ts` が認証 Cookie を自動処理 (`ApiError` クラスでステータスコード管理)
+- API は同一オリジン (相対パス `/api/...`) でアクセス
 - DB スキーマ `apps/api/src/db/schema.ts` に Better Auth テーブルを含む
 - スポットは trip_days に、trip_days は trips に所属
 - 旅行作成時に日付範囲から trip_days を自動生成し、作成者を trip_member として追加
@@ -68,12 +71,12 @@ bun run --filter @sugara/shared check-types
 
 ## 開発環境
 
-- 初回セットアップ: `bun run setup` (Docker で DB + API 起動、スキーマ反映、シード投入)
-- DB + API 起動: `docker compose up -d`
-- Web: `bun run --filter @sugara/web dev` (localhost:3000)
-- API ホットリロード: 有効 (Docker 内でソース変更が自動反映)
-- 全起動: `docker compose up -d && bun run --filter @sugara/web dev`
-- DB リセット: `docker compose down -v && bun run setup`
+- 初回セットアップ: `bun install && supabase start && bun run db:push && bun run db:seed`
+- ローカル Supabase 起動: `supabase start`
+- Web + API: `bun run --filter @sugara/web dev` (localhost:3000)
+- API エンドポイント: http://localhost:3000/api
+- Supabase Studio: http://127.0.0.1:54323
+- DB リセット: `supabase db reset && bun run db:push && bun run db:seed`
 - 結合テスト: `bun run --filter @sugara/api test:integration` (PostgreSQL の `sugara_test` DB が必要)
 
 ## 規約

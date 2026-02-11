@@ -13,7 +13,6 @@ import { ERROR_MSG } from "../lib/constants";
 import { canEdit, checkTripAccess, verifyPatternAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
-import { broadcastToTrip } from "../ws/rooms";
 
 const scheduleRoutes = new Hono<AppEnv>();
 scheduleRoutes.use("*", requireAuth);
@@ -72,7 +71,6 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules", async 
     })
     .returning();
 
-  broadcastToTrip(tripId, user.id, { type: "schedule:created", dayId, patternId, schedule });
   return c.json(schedule, 201);
 });
 
@@ -108,12 +106,6 @@ scheduleRoutes.post(
 
     await db.delete(schedules).where(inArray(schedules.id, parsed.data.scheduleIds));
 
-    broadcastToTrip(tripId, user.id, {
-      type: "schedule:batch-deleted",
-      scheduleIds: parsed.data.scheduleIds,
-      dayId,
-      patternId,
-    });
     return c.json({ ok: true });
   },
 );
@@ -180,12 +172,6 @@ scheduleRoutes.post(
       )
       .returning();
 
-    broadcastToTrip(tripId, user.id, {
-      type: "schedule:batch-duplicated",
-      scheduleIds: parsed.data.scheduleIds,
-      dayId,
-      patternId,
-    });
     return c.json(duplicated, 201);
   },
 );
@@ -231,12 +217,6 @@ scheduleRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/schedules/reorder
     }
   });
 
-  broadcastToTrip(tripId, user.id, {
-    type: "schedule:reordered",
-    dayId,
-    patternId,
-    scheduleIds: parsed.data.scheduleIds,
-  });
   return c.json({ ok: true });
 });
 
@@ -293,12 +273,6 @@ scheduleRoutes.patch(
       return c.json({ error: ERROR_MSG.CONFLICT }, 409);
     }
 
-    broadcastToTrip(tripId, user.id, {
-      type: "schedule:updated",
-      dayId,
-      patternId,
-      schedule: updated,
-    });
     return c.json(updated);
   },
 );
@@ -327,7 +301,6 @@ scheduleRoutes.delete(
     }
 
     await db.delete(schedules).where(eq(schedules.id, scheduleId));
-    broadcastToTrip(tripId, user.id, { type: "schedule:deleted", dayId, patternId, scheduleId });
     return c.json({ ok: true });
   },
 );
@@ -360,12 +333,6 @@ scheduleRoutes.post("/:tripId/schedules/batch-unassign", async (c) => {
     return c.json({ error: ERROR_MSG.SCHEDULE_NOT_FOUND }, 404);
   }
 
-  const sources = assigned.map((s) => ({
-    scheduleId: s.id,
-    fromDayId: s.dayPattern!.tripDay.id,
-    fromPatternId: s.dayPatternId!,
-  }));
-
   await db.transaction(async (tx) => {
     const maxOrder = await tx
       .select({ max: sql<number>`COALESCE(MAX(${schedules.sortOrder}), -1)` })
@@ -385,11 +352,6 @@ scheduleRoutes.post("/:tripId/schedules/batch-unassign", async (c) => {
     }
   });
 
-  broadcastToTrip(tripId, user.id, {
-    type: "schedule:batch-unassigned",
-    scheduleIds: parsed.data.scheduleIds,
-    sources,
-  });
   return c.json({ ok: true });
 });
 
@@ -427,12 +389,6 @@ scheduleRoutes.post("/:tripId/schedules/:scheduleId/unassign", async (c) => {
     .where(eq(schedules.id, scheduleId))
     .returning();
 
-  broadcastToTrip(tripId, user.id, {
-    type: "schedule:unassigned",
-    scheduleId,
-    fromDayId: existing.dayPattern!.tripDay.id,
-    fromPatternId: existing.dayPatternId!,
-  });
   return c.json(updated);
 });
 

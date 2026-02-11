@@ -7,7 +7,6 @@ import { DEFAULT_PATTERN_LABEL, ERROR_MSG, MAX_TRIP_DAYS } from "../lib/constant
 import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
-import { broadcastToTrip } from "../ws/rooms";
 
 function generateDateRange(startDate: string, endDate: string): string[] {
   const start = new Date(`${startDate}T00:00:00`);
@@ -209,7 +208,6 @@ tripRoutes.patch("/:id", async (c) => {
     if (!updated) {
       return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
     }
-    broadcastToTrip(tripId, user.id, { type: "trip:updated" });
     return c.json(updated);
   }
 
@@ -317,7 +315,6 @@ tripRoutes.patch("/:id", async (c) => {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
-  broadcastToTrip(tripId, user.id, { type: "trip:updated" });
   return c.json(updated);
 });
 

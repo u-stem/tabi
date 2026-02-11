@@ -1,11 +1,6 @@
 export const DEFAULT_PATTERN_LABEL = "デフォルト";
 export const MAX_TRIP_DAYS = 365;
 
-export const WS_CLOSE_CODE = {
-  UNAUTHORIZED: 4401,
-  NOT_A_MEMBER: 4403,
-} as const;
-
 export const ERROR_MSG = {
   TRIP_NOT_FOUND: "Trip not found",
   SCHEDULE_NOT_FOUND: "Schedule not found",

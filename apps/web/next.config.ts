@@ -10,7 +10,7 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@sugara/shared"],
+  transpilePackages: ["@sugara/api", "@sugara/shared"],
 };
 
 export default withSerwist(nextConfig);

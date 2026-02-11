@@ -1,6 +1,6 @@
 "use client";
 
-import { LogIn, UserPlus } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -8,13 +8,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { signIn, signUp } from "@/lib/auth-client";
+import { signIn } from "@/lib/auth-client";
 
-type AuthFormProps = {
-  mode: "login" | "signup";
-};
-
-export function AuthForm({ mode }: AuthFormProps) {
+export function AuthForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -28,24 +24,13 @@ export function AuthForm({ mode }: AuthFormProps) {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    if (mode === "signup") {
-      const name = formData.get("name") as string;
-      const result = await signUp.email({ email, password, name });
-      if (result.error) {
-        setError(result.error.message ?? "登録に失敗しました");
-        setLoading(false);
-        return;
-      }
-      toast.success("アカウントを作成しました");
-    } else {
-      const result = await signIn.email({ email, password });
-      if (result.error) {
-        setError(result.error.message ?? "ログインに失敗しました");
-        setLoading(false);
-        return;
-      }
-      toast.success("ログインしました");
+    const result = await signIn.email({ email, password });
+    if (result.error) {
+      setError(result.error.message ?? "ログインに失敗しました");
+      setLoading(false);
+      return;
     }
+    toast.success("ログインしました");
     setLoading(false);
     router.push("/home");
   }
@@ -53,19 +38,11 @@ export function AuthForm({ mode }: AuthFormProps) {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">{mode === "login" ? "ログイン" : "新規登録"}</CardTitle>
-        <CardDescription>
-          {mode === "login" ? "メールアドレスでログイン" : "無料でアカウントを作成"}
-        </CardDescription>
+        <CardTitle className="text-2xl">ログイン</CardTitle>
+        <CardDescription>メールアドレスでログイン</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === "signup" && (
-            <div className="space-y-2">
-              <Label htmlFor="name">名前</Label>
-              <Input id="name" name="name" placeholder="山田太郎" autoComplete="name" required />
-            </div>
-          )}
           <div className="space-y-2">
             <Label htmlFor="email">メールアドレス</Label>
             <Input
@@ -85,12 +62,9 @@ export function AuthForm({ mode }: AuthFormProps) {
               type="password"
               placeholder="8文字以上"
               minLength={8}
-              autoComplete={mode === "login" ? "current-password" : "new-password"}
+              autoComplete="current-password"
               required
             />
-            {mode === "signup" && (
-              <p className="text-xs text-muted-foreground">8文字以上で入力してください</p>
-            )}
           </div>
           {error && (
             <div
@@ -101,14 +75,8 @@ export function AuthForm({ mode }: AuthFormProps) {
             </div>
           )}
           <Button type="submit" className="w-full" disabled={loading}>
-            {mode === "login" ? <LogIn className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
-            {loading
-              ? mode === "login"
-                ? "ログイン中..."
-                : "登録中..."
-              : mode === "login"
-                ? "ログイン"
-                : "アカウントを作成"}
+            <LogIn className="h-4 w-4" />
+            {loading ? "ログイン中..." : "ログイン"}
           </Button>
         </form>
       </CardContent>

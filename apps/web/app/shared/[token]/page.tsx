@@ -8,15 +8,17 @@ import type {
   TripStatus,
 } from "@sugara/shared";
 import { CATEGORY_LABELS, STATUS_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
-import { Calendar, Clock, MapPin } from "lucide-react";
+import { Calendar, Clock, MapPin, RefreshCw } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
 import { formatDate, formatDateRange, getDayCount } from "@/lib/format";
+import { supabase } from "@/lib/supabase";
 
 type SharedTripResponse = {
   id: string;
@@ -53,10 +55,16 @@ export default function SharedTripPage() {
   const [trip, setTrip] = useState<SharedTripResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [hasUpdate, setHasUpdate] = useState(false);
+  const tripIdRef = useRef<string | null>(null);
 
-  useEffect(() => {
+  const fetchTrip = useCallback(() => {
     api<SharedTripResponse>(`/api/shared/${token}`)
-      .then(setTrip)
+      .then((data) => {
+        setTrip(data);
+        tripIdRef.current = data.id;
+        setHasUpdate(false);
+      })
       .catch((err) => {
         if (err instanceof ApiError && err.status === 404) {
           setError("このリンクは無効か、有効期限が切れています");
@@ -66,6 +74,25 @@ export default function SharedTripPage() {
       })
       .finally(() => setLoading(false));
   }, [token]);
+
+  useEffect(() => {
+    fetchTrip();
+  }, [fetchTrip]);
+
+  // Subscribe to broadcast updates
+  useEffect(() => {
+    if (!tripIdRef.current) return;
+    const tripId = tripIdRef.current;
+    const channel = supabase
+      .channel(`trip:${tripId}`)
+      .on("broadcast", { event: "trip:updated" }, () => {
+        setHasUpdate(true);
+      })
+      .subscribe();
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [trip?.id]);
 
   if (loading) {
     return (
@@ -124,6 +151,19 @@ export default function SharedTripPage() {
   return (
     <div className="min-h-screen">
       <SharedHeader />
+      {hasUpdate && (
+        <div className="sticky top-0 z-10 border-b bg-blue-50 px-4 py-2 text-center">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-blue-700 hover:text-blue-800"
+            onClick={fetchTrip}
+          >
+            <RefreshCw className="h-3.5 w-3.5" />
+            内容が更新されました。タップして最新を表示
+          </Button>
+        </div>
+      )}
       <div className="container max-w-3xl py-8">
         <div className="mb-8">
           <div className="flex flex-wrap items-center gap-2">

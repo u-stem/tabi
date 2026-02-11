@@ -34,6 +34,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
+import { useSession } from "@/lib/auth-client";
 import { formatDateRange, getDayCount, getTimeStatus, toDateString } from "@/lib/format";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
@@ -48,6 +49,7 @@ export default function TripDetailPage() {
   const tripId = params.id as string;
   const online = useOnlineStatus();
   const now = useCurrentTime();
+  const { data: session } = useSession();
   const [trip, setTrip] = useState<TripResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -65,8 +67,14 @@ export default function TripDetailPage() {
   // Defined before fetchTrip so it can be passed to useTripSync below
   const fetchTripRef = useRef<() => void>(() => {});
 
-  const { presence, isConnected, updatePresence } = useTripSync(tripId, () =>
-    fetchTripRef.current(),
+  const syncUser = useMemo(
+    () => (session?.user ? { id: session.user.id, name: session.user.name } : null),
+    [session?.user],
+  );
+  const { presence, isConnected, updatePresence, broadcastChange } = useTripSync(
+    tripId,
+    syncUser,
+    () => fetchTripRef.current(),
   );
 
   const fetchTrip = useCallback(async () => {
@@ -84,6 +92,12 @@ export default function TripDetailPage() {
     }
   }, [tripId, router]);
 
+  // Mutation callback: refetch + broadcast to other clients
+  const onMutate = useCallback(async () => {
+    await fetchTrip();
+    broadcastChange();
+  }, [fetchTrip, broadcastChange]);
+
   useEffect(() => {
     fetchTripRef.current = fetchTrip;
   }, [fetchTrip]);
@@ -95,6 +109,12 @@ export default function TripDetailPage() {
   const currentDay = trip?.days[selectedDay] ?? null;
   const currentPatternIndex = currentDay ? (selectedPattern[currentDay.id] ?? 0) : 0;
   const currentPattern = currentDay?.patterns[currentPatternIndex] ?? null;
+
+  // Exclude self from presence display
+  const otherPresence = useMemo(
+    () => (session?.user ? presence.filter((u) => u.userId !== session.user.id) : presence),
+    [presence, session?.user],
+  );
 
   useEffect(() => {
     if (currentDay) {
@@ -162,13 +182,13 @@ export default function TripDetailPage() {
       })
         .then(() => {
           toast.success(message);
-          fetchTrip();
+          onMutate();
         })
         .catch(() => {
           autoTransitionTriggered.current = false;
         });
     }
-  }, [trip, now, tripId, fetchTrip]);
+  }, [trip, now, tripId, fetchTrip, onMutate]);
 
   // Stable references to avoid infinite re-render when values are null
   const dndSchedules = useMemo(() => currentPattern?.schedules ?? [], [currentPattern?.schedules]);
@@ -180,7 +200,7 @@ export default function TripDetailPage() {
     currentPatternId: currentPattern?.id ?? null,
     schedules: dndSchedules,
     candidates: dndCandidates,
-    onDone: fetchTrip,
+    onDone: onMutate,
   });
 
   async function handleAddPattern(e: React.FormEvent) {
@@ -195,7 +215,7 @@ export default function TripDetailPage() {
       toast.success("パターンを追加しました");
       setAddPatternOpen(false);
       setAddPatternLabel("");
-      fetchTrip();
+      onMutate();
     } catch {
       toast.error("パターンの追加に失敗しました");
     } finally {
@@ -210,7 +230,7 @@ export default function TripDetailPage() {
         method: "POST",
       });
       toast.success("パターンを複製しました");
-      fetchTrip();
+      onMutate();
     } catch {
       toast.error("パターンの複製に失敗しました");
     }
@@ -225,7 +245,7 @@ export default function TripDetailPage() {
       toast.success("パターンを削除しました");
       // Reset to first pattern
       setSelectedPattern((prev) => ({ ...prev, [currentDay.id]: 0 }));
-      fetchTrip();
+      onMutate();
     } catch {
       toast.error("パターンの削除に失敗しました");
     }
@@ -243,7 +263,7 @@ export default function TripDetailPage() {
       toast.success("名前を変更しました");
       setRenamePattern(null);
       setRenameLabel("");
-      fetchTrip();
+      onMutate();
     } catch {
       toast.error("名前の変更に失敗しました");
     } finally {
@@ -267,7 +287,7 @@ export default function TripDetailPage() {
     currentPatternId: currentPattern?.id ?? null,
     timelineScheduleIds,
     candidateIds,
-    onDone: fetchTrip,
+    onDone: onMutate,
   });
 
   if (loading) {
@@ -303,7 +323,7 @@ export default function TripDetailPage() {
       <div className="mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">{trip.title}</h1>
-          <PresenceAvatars users={presence} isConnected={isConnected} />
+          <PresenceAvatars users={otherPresence} isConnected={isConnected} />
         </div>
         <p className="text-muted-foreground">
           {`${trip.destination} / `}
@@ -315,7 +335,7 @@ export default function TripDetailPage() {
             tripId={tripId}
             status={trip.status}
             role={trip.role}
-            onStatusChange={fetchTrip}
+            onStatusChange={onMutate}
             onEdit={canEdit ? () => setEditOpen(true) : undefined}
             disabled={!online}
           />
@@ -343,7 +363,7 @@ export default function TripDetailPage() {
         endDate={trip.endDate}
         open={editOpen}
         onOpenChange={setEditOpen}
-        onUpdate={fetchTrip}
+        onUpdate={onMutate}
       />
       {currentDay && currentPattern && (
         <DndContext
@@ -376,7 +396,7 @@ export default function TripDetailPage() {
                     )}
                   >
                     {day.dayNumber}日目
-                    {presence
+                    {otherPresence
                       .filter((u) => u.dayId === day.id)
                       .slice(0, 3)
                       .map((u, i) => (
@@ -404,7 +424,7 @@ export default function TripDetailPage() {
                   patternId={currentPattern.id}
                   date={currentDay.date}
                   schedules={dnd.localSchedules}
-                  onRefresh={fetchTrip}
+                  onRefresh={onMutate}
                   disabled={!online || !canEdit}
                   selectionMode={selection.selectionTarget === "timeline"}
                   selectedIds={
@@ -512,7 +532,7 @@ export default function TripDetailPage() {
                 tripId={tripId}
                 candidates={dnd.localCandidates}
                 currentPatternId={currentPattern.id}
-                onRefresh={fetchTrip}
+                onRefresh={onMutate}
                 disabled={!online || !canEdit}
                 draggable={canEdit && online}
                 selectionMode={selection.selectionTarget === "candidates"}
@@ -588,7 +608,7 @@ export default function TripDetailPage() {
               tripId={tripId}
               candidates={dnd.localCandidates}
               currentPatternId={currentPattern.id}
-              onRefresh={fetchTrip}
+              onRefresh={onMutate}
               disabled={!online || !canEdit}
               draggable={false}
               selectionMode={selection.selectionTarget === "candidates"}

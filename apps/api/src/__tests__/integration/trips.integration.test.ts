@@ -19,6 +19,8 @@ vi.mock("../../lib/auth", () => ({
 import { eq } from "drizzle-orm";
 import { tripDays, tripMembers } from "../../db/schema";
 import { memberRoutes } from "../../routes/members";
+import { patternRoutes } from "../../routes/patterns";
+import { scheduleRoutes } from "../../routes/schedules";
 import { tripRoutes } from "../../routes/trips";
 import { cleanupTables, createTestUser, getTestDb, teardownTestDb } from "./setup";
 
@@ -26,6 +28,8 @@ function createApp() {
   const app = new Hono();
   app.route("/api/trips", tripRoutes);
   app.route("/api/trips", memberRoutes);
+  app.route("/api/trips", patternRoutes);
+  app.route("/api/trips", scheduleRoutes);
   return app;
 }
 
@@ -123,6 +127,41 @@ describe("Trips Integration", () => {
     const trips = await res.json();
     expect(trips).toHaveLength(1);
     expect(trips[0].title).toBe("Owner Trip");
+  });
+
+  it("returns totalSchedules in trip list", async () => {
+    const createRes = await app.request("/api/trips", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: "Count Trip",
+        destination: "Tokyo",
+        startDate: "2025-04-01",
+        endDate: "2025-04-01",
+      }),
+    });
+    const trip = await createRes.json();
+
+    // Get dayId and patternId
+    const detailRes = await app.request(`/api/trips/${trip.id}`);
+    const detail = await detailRes.json();
+    const dayId = detail.days[0].id;
+    const patternId = detail.days[0].patterns[0].id;
+
+    // Add 2 schedules
+    for (const name of ["Spot A", "Spot B"]) {
+      await app.request(`/api/trips/${trip.id}/days/${dayId}/patterns/${patternId}/schedules`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, category: "sightseeing" }),
+      });
+    }
+
+    const listRes = await app.request("/api/trips");
+    expect(listRes.status).toBe(200);
+    const list = await listRes.json();
+    const target = list.find((t: { id: string }) => t.id === trip.id);
+    expect(target.totalSchedules).toBe(2);
   });
 
   it("gets trip detail with days and spots", async () => {

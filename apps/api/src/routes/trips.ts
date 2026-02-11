@@ -1,5 +1,5 @@
 import { createTripSchema, updateTripSchema } from "@tabi/shared";
-import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
+import { and, asc, count, eq, inArray, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, schedules, tripDays, tripMembers, trips } from "../db/schema";
@@ -43,32 +43,29 @@ tripRoutes.get("/", async (c) => {
 
   const memberships = await db.query.tripMembers.findMany({
     where: and(eq(tripMembers.userId, user.id), roleFilter),
-    with: {
-      trip: {
-        with: {
-          days: {
-            with: {
-              patterns: {
-                with: { schedules: { columns: { id: true } } },
-              },
-            },
-          },
-        },
-      },
-    },
+    with: { trip: true },
   });
 
-  const result = memberships.map(({ role, trip }) => {
-    const { days, ...rest } = trip;
-    return {
-      ...rest,
-      role,
-      totalSchedules: days.reduce(
-        (sum, day) => sum + day.patterns.reduce((vSum, v) => vSum + v.schedules.length, 0),
-        0,
-      ),
-    };
-  });
+  if (memberships.length === 0) return c.json([]);
+
+  const tripIds = memberships.map((m) => m.trip.id);
+
+  const scheduleCounts = await db
+    .select({
+      tripId: schedules.tripId,
+      count: count(),
+    })
+    .from(schedules)
+    .where(inArray(schedules.tripId, tripIds))
+    .groupBy(schedules.tripId);
+
+  const countMap = new Map(scheduleCounts.map((r) => [r.tripId, r.count]));
+
+  const result = memberships.map(({ role, trip }) => ({
+    ...trip,
+    role,
+    totalSchedules: countMap.get(trip.id) ?? 0,
+  }));
 
   // Sort by updatedAt descending
   result.sort((a, b) => {

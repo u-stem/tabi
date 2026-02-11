@@ -1,27 +1,35 @@
 import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbTransaction } =
-  vi.hoisted(() => ({
-    mockGetSession: vi.fn(),
-    mockDbQuery: {
-      trips: {
-        findMany: vi.fn(),
-        findFirst: vi.fn(),
-      },
-      tripMembers: {
-        findFirst: vi.fn(),
-        findMany: vi.fn(),
-      },
-      schedules: {
-        findMany: vi.fn(),
-      },
+const {
+  mockGetSession,
+  mockDbQuery,
+  mockDbInsert,
+  mockDbUpdate,
+  mockDbDelete,
+  mockDbTransaction,
+  mockDbSelect,
+} = vi.hoisted(() => ({
+  mockGetSession: vi.fn(),
+  mockDbQuery: {
+    trips: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
     },
-    mockDbInsert: vi.fn(),
-    mockDbUpdate: vi.fn(),
-    mockDbDelete: vi.fn(),
-    mockDbTransaction: vi.fn(),
-  }));
+    tripMembers: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+    },
+    schedules: {
+      findMany: vi.fn(),
+    },
+  },
+  mockDbInsert: vi.fn(),
+  mockDbUpdate: vi.fn(),
+  mockDbDelete: vi.fn(),
+  mockDbTransaction: vi.fn(),
+  mockDbSelect: vi.fn(),
+}));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -38,6 +46,7 @@ vi.mock("../db/index", () => ({
     update: (...args: unknown[]) => mockDbUpdate(...args),
     delete: (...args: unknown[]) => mockDbDelete(...args),
     transaction: (...args: unknown[]) => mockDbTransaction(...args),
+    select: (...args: unknown[]) => mockDbSelect(...args),
   },
 }));
 
@@ -65,6 +74,14 @@ describe("Trip routes", () => {
       role: "owner",
     });
     mockDbQuery.schedules.findMany.mockResolvedValue([]);
+    // Default: schedule count query returns empty (no schedules)
+    mockDbSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          groupBy: vi.fn().mockResolvedValue([]),
+        }),
+      }),
+    });
   });
 
   describe("POST /api/trips", () => {
@@ -179,7 +196,7 @@ describe("Trip routes", () => {
   });
 
   describe("GET /api/trips", () => {
-    it("returns trips with totalSchedules and excludes days from response", async () => {
+    it("returns trips with totalSchedules", async () => {
       mockDbQuery.tripMembers.findMany.mockResolvedValue([
         {
           tripId: "trip-1",
@@ -189,13 +206,16 @@ describe("Trip routes", () => {
             id: "trip-1",
             title: "Tokyo Trip",
             updatedAt: new Date("2025-07-01"),
-            days: [
-              { patterns: [{ schedules: [{ id: "schedule-1" }, { id: "schedule-2" }] }] },
-              { patterns: [{ schedules: [] }] },
-            ],
           },
         },
       ]);
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            groupBy: vi.fn().mockResolvedValue([{ tripId: "trip-1", count: 2 }]),
+          }),
+        }),
+      });
 
       const app = createApp();
       const res = await app.request("/api/trips");
@@ -204,7 +224,6 @@ describe("Trip routes", () => {
       expect(res.status).toBe(200);
       expect(body).toHaveLength(1);
       expect(body[0].totalSchedules).toBe(2);
-      expect(body[0].days).toBeUndefined();
     });
 
     it("returns all trips by default (no scope filter)", async () => {
@@ -217,7 +236,6 @@ describe("Trip routes", () => {
             id: "trip-1",
             title: "My Trip",
             updatedAt: new Date("2025-07-01"),
-            days: [],
           },
         },
         {
@@ -228,7 +246,6 @@ describe("Trip routes", () => {
             id: "trip-2",
             title: "Shared Trip",
             updatedAt: new Date("2025-07-02"),
-            days: [],
           },
         },
       ]);
@@ -251,7 +268,6 @@ describe("Trip routes", () => {
             id: "trip-1",
             title: "My Trip",
             updatedAt: new Date("2025-07-01"),
-            days: [],
           },
         },
       ]);
@@ -275,7 +291,6 @@ describe("Trip routes", () => {
             id: "trip-2",
             title: "Shared Trip",
             updatedAt: new Date("2025-07-02"),
-            days: [],
           },
         },
       ]);

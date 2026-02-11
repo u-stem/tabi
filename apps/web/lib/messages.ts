@@ -27,7 +27,17 @@ export const MSG = {
   TRIP_DELETE_FAILED: "旅行の削除に失敗しました",
   TRIP_STATUS_CHANGED: "ステータスを変更しました",
   TRIP_STATUS_CHANGE_FAILED: "ステータスの変更に失敗しました",
+  TRIP_CREATED: "旅行を作成しました",
+  TRIP_CREATE_FAILED: "旅行の作成に失敗しました",
+  TRIP_FETCH_FAILED: "旅行の取得に失敗しました",
+  TRIP_NOT_FOUND: "旅行が見つかりません",
   TRIP_DATE_REQUIRED: "日付を選択してください",
+  TRIP_AUTO_IN_PROGRESS: "旅行が開始されました。ステータスを「進行中」に変更しました",
+  TRIP_AUTO_COMPLETED: "全ての予定が終了しました。ステータスを「完了」に変更しました",
+  TRIP_BULK_DELETED: (n: number) => `${n}件の旅行を削除しました`,
+  TRIP_BULK_DELETE_FAILED: (n: number) => `${n}件の削除に失敗しました`,
+  TRIP_BULK_DUPLICATED: (n: number) => `${n}件の旅行を複製しました`,
+  TRIP_BULK_DUPLICATE_FAILED: (n: number) => `${n}件の複製に失敗しました`,
 
   // Share
   SHARE_LINK_COPIED: "共有リンクをコピーしました",
@@ -44,9 +54,30 @@ export const MSG = {
   MEMBER_REMOVED: "メンバーを削除しました",
   MEMBER_REMOVE_FAILED: "メンバーの削除に失敗しました",
 
+  // Pattern
+  PATTERN_ADDED: "パターンを追加しました",
+  PATTERN_ADD_FAILED: "パターンの追加に失敗しました",
+  PATTERN_DUPLICATED: "パターンを複製しました",
+  PATTERN_DUPLICATE_FAILED: "パターンの複製に失敗しました",
+  PATTERN_DELETED: "パターンを削除しました",
+  PATTERN_DELETE_FAILED: "パターンの削除に失敗しました",
+  PATTERN_RENAMED: "名前を変更しました",
+  PATTERN_RENAME_FAILED: "名前の変更に失敗しました",
+
   // Auth
   AUTH_LOGIN_FAILED: "ログインに失敗しました",
   AUTH_LOGIN_SUCCESS: "ログインしました",
+  AUTH_LOGOUT_FAILED: "ログアウトに失敗しました",
+
+  // Batch operations
+  BATCH_ASSIGNED: (n: number) => `${n}件を予定に追加しました`,
+  BATCH_ASSIGN_FAILED: "予定への追加に失敗しました",
+  BATCH_UNASSIGNED: (n: number) => `${n}件を候補に戻しました`,
+  BATCH_UNASSIGN_FAILED: "候補への移動に失敗しました",
+  BATCH_DELETED: (n: number) => `${n}件を削除しました`,
+  BATCH_DELETE_FAILED: "削除に失敗しました",
+  BATCH_DUPLICATED: (n: number) => `${n}件を複製しました`,
+  BATCH_DUPLICATE_FAILED: "複製に失敗しました",
 
   // Conflict
   CONFLICT: "他のユーザーが先に更新しました。画面を更新してください。",

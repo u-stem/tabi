@@ -2,7 +2,8 @@
 
 import type { MemberRole, TripStatus } from "@sugara/shared";
 import { STATUS_LABELS } from "@sugara/shared";
-import { Link, MoreHorizontal, Pencil, RefreshCw, Trash2 } from "lucide-react";
+import { FileDown, Link, MoreHorizontal, Pencil, RefreshCw, Trash2 } from "lucide-react";
+import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -201,6 +202,12 @@ export function TripActions({
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
+            <DropdownMenuItem asChild>
+              <NextLink href={`/trips/${tripId}/print`} target="_blank">
+                <FileDown className="mr-2 h-4 w-4" />
+                PDF エクスポート
+              </NextLink>
+            </DropdownMenuItem>
             {onEdit && (
               <DropdownMenuItem onClick={onEdit}>
                 <Pencil className="mr-2 h-4 w-4" />

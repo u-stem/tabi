@@ -2,9 +2,9 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "sugara - 旅行プランナー",
+    name: "sugara",
     short_name: "sugara",
-    description: "あなたの旅を、もっと自由に",
+    description: "旅行計画をみんなで作成・共有できるアプリ",
     start_url: "/home",
     display: "standalone",
     background_color: "#ffffff",

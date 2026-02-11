@@ -44,6 +44,7 @@ import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
 import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
 import { CATEGORY_ICONS } from "@/lib/icons";
+import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 const dndAnnouncements: Announcements = {
@@ -106,7 +107,7 @@ export default function TripDetailPage() {
         router.push("/auth/login");
         return;
       }
-      setError("旅行の取得に失敗しました");
+      setError(MSG.TRIP_FETCH_FAILED);
     } finally {
       setLoading(false);
     }
@@ -172,7 +173,7 @@ export default function TripDetailPage() {
       }
       if (shouldActivate) {
         nextStatus = "active";
-        message = "旅行が開始されました。ステータスを「進行中」に変更しました";
+        message = MSG.TRIP_AUTO_IN_PROGRESS;
       }
     } else if (trip.status === "active") {
       let allDone = false;
@@ -190,7 +191,7 @@ export default function TripDetailPage() {
       }
       if (allDone) {
         nextStatus = "completed";
-        message = "全ての予定が終了しました。ステータスを「完了」に変更しました";
+        message = MSG.TRIP_AUTO_COMPLETED;
       }
     }
 
@@ -237,12 +238,12 @@ export default function TripDetailPage() {
         method: "POST",
         body: JSON.stringify({ label: addPatternLabel.trim() }),
       });
-      toast.success("パターンを追加しました");
+      toast.success(MSG.PATTERN_ADDED);
       setAddPatternOpen(false);
       setAddPatternLabel("");
       onMutate();
     } catch {
-      toast.error("パターンの追加に失敗しました");
+      toast.error(MSG.PATTERN_ADD_FAILED);
     } finally {
       setAddPatternLoading(false);
     }
@@ -254,10 +255,10 @@ export default function TripDetailPage() {
       await api(`/api/trips/${tripId}/days/${currentDay.id}/patterns/${patternId}/duplicate`, {
         method: "POST",
       });
-      toast.success("パターンを複製しました");
+      toast.success(MSG.PATTERN_DUPLICATED);
       onMutate();
     } catch {
-      toast.error("パターンの複製に失敗しました");
+      toast.error(MSG.PATTERN_DUPLICATE_FAILED);
     }
   }
 
@@ -267,12 +268,12 @@ export default function TripDetailPage() {
       await api(`/api/trips/${tripId}/days/${currentDay.id}/patterns/${patternId}`, {
         method: "DELETE",
       });
-      toast.success("パターンを削除しました");
+      toast.success(MSG.PATTERN_DELETED);
       // Reset to first pattern
       setSelectedPattern((prev) => ({ ...prev, [currentDay.id]: 0 }));
       onMutate();
     } catch {
-      toast.error("パターンの削除に失敗しました");
+      toast.error(MSG.PATTERN_DELETE_FAILED);
     }
   }
 
@@ -285,12 +286,12 @@ export default function TripDetailPage() {
         method: "PATCH",
         body: JSON.stringify({ label: renameLabel.trim() }),
       });
-      toast.success("名前を変更しました");
+      toast.success(MSG.PATTERN_RENAMED);
       setRenamePattern(null);
       setRenameLabel("");
       onMutate();
     } catch {
-      toast.error("名前の変更に失敗しました");
+      toast.error(MSG.PATTERN_RENAME_FAILED);
     } finally {
       setRenameLoading(false);
     }
@@ -380,7 +381,7 @@ export default function TripDetailPage() {
   }
 
   if (error || !trip) {
-    return <p className="text-destructive">{error ?? "旅行が見つかりません"}</p>;
+    return <p className="text-destructive">{error ?? MSG.TRIP_NOT_FOUND}</p>;
   }
 
   const canEdit = trip.role === "owner" || trip.role === "editor";

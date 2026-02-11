@@ -7,6 +7,7 @@ import { TripCard } from "@/components/trip-card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
+import { MSG } from "@/lib/messages";
 
 export default function SharedTripsPage() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function SharedTripsPage() {
           router.push("/auth/login");
           return;
         }
-        setError("旅行の取得に失敗しました");
+        setError(MSG.TRIP_FETCH_FAILED);
       })
       .finally(() => setLoading(false));
   }, [router]);

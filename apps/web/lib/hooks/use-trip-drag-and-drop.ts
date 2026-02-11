@@ -22,6 +22,7 @@ import {
   timelineScheduleOrder,
   timelineSortableIds,
 } from "@/lib/merge-timeline";
+import { MSG } from "@/lib/messages";
 
 type ActiveDragItem = {
   id: string;
@@ -136,17 +137,17 @@ export function useTripDragAndDrop({
         onDone();
       } catch {
         setLocalSchedules(schedules);
-        toast.error("並び替えに失敗しました");
+        toast.error(MSG.SCHEDULE_REORDER_FAILED);
       }
     } else if (sourceType === "schedule" && isOverCandidates) {
       try {
         await api(`/api/trips/${tripId}/schedules/${active.id}/unassign`, {
           method: "POST",
         });
-        toast.success("候補に戻しました");
+        toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
         onDone();
       } catch {
-        toast.error("候補への移動に失敗しました");
+        toast.error(MSG.SCHEDULE_MOVE_FAILED);
       }
     } else if (sourceType === "candidate" && isOverTimeline) {
       try {
@@ -188,10 +189,10 @@ export function useTripDragAndDrop({
           }
         }
 
-        toast.success("予定に追加しました");
+        toast.success(MSG.CANDIDATE_ASSIGNED);
         onDone();
       } catch {
-        toast.error("予定への追加に失敗しました");
+        toast.error(MSG.CANDIDATE_ASSIGN_FAILED);
       }
     } else if (sourceType === "candidate" && isOverCandidates) {
       if (active.id === over.id) return;
@@ -211,7 +212,7 @@ export function useTripDragAndDrop({
         onDone();
       } catch {
         setLocalCandidates(candidates);
-        toast.error("並び替えに失敗しました");
+        toast.error(MSG.SCHEDULE_REORDER_FAILED);
       }
     }
   }

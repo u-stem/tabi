@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut } from "lucide-react";
+import { Download, LogOut } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -18,6 +18,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { signOut, useSession } from "@/lib/auth-client";
+import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
+import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -29,13 +31,14 @@ export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
+  const { canInstall, promptInstall } = useInstallPrompt();
 
   async function handleSignOut() {
     try {
       await signOut();
       router.push("/");
     } catch {
-      toast.error("ログアウトに失敗しました");
+      toast.error(MSG.AUTH_LOGOUT_FAILED);
     }
   }
 
@@ -81,6 +84,12 @@ export function Header() {
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel>{session.user.name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                {canInstall && (
+                  <DropdownMenuItem onClick={promptInstall}>
+                    <Download className="h-4 w-4" />
+                    アプリをインストール
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="h-4 w-4" />
                   ログアウト

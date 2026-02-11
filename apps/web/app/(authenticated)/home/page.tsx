@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
+import { MSG } from "@/lib/messages";
 
 export default function HomePage() {
   const router = useRouter();
@@ -41,7 +42,7 @@ export default function HomePage() {
           router.push("/auth/login");
           return;
         }
-        setError("旅行の取得に失敗しました");
+        setError(MSG.TRIP_FETCH_FAILED);
       })
       .finally(() => setLoading(false));
   }, [router]);
@@ -130,9 +131,9 @@ export default function HomePage() {
     }
 
     if (failed > 0) {
-      toast.error(`${failed}件の削除に失敗しました`);
+      toast.error(MSG.TRIP_BULK_DELETE_FAILED(failed));
     } else {
-      toast.success(`${succeeded}件の旅行を削除しました`);
+      toast.success(MSG.TRIP_BULK_DELETED(succeeded));
     }
 
     setSelectedIds(new Set());
@@ -160,9 +161,9 @@ export default function HomePage() {
     }
 
     if (failed > 0) {
-      toast.error(`${failed}件の複製に失敗しました`);
+      toast.error(MSG.TRIP_BULK_DUPLICATE_FAILED(failed));
     } else {
-      toast.success(`${succeeded}件の旅行を複製しました`);
+      toast.success(MSG.TRIP_BULK_DUPLICATED(succeeded));
     }
 
     setSelectedIds(new Set());

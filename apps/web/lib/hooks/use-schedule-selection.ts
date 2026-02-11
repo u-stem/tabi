@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { MSG } from "@/lib/messages";
 
 type SelectionTarget = "timeline" | "candidates";
 
@@ -84,11 +85,11 @@ export function useScheduleSelection({
           dayPatternId: currentPatternId,
         }),
       });
-      toast.success(`${selectedIds.size}件を予定に追加しました`);
+      toast.success(MSG.BATCH_ASSIGNED(selectedIds.size));
       exit();
       onDone();
     } catch {
-      toast.error("予定への追加に失敗しました");
+      toast.error(MSG.BATCH_ASSIGN_FAILED);
     } finally {
       setBatchLoading(false);
     }
@@ -102,11 +103,11 @@ export function useScheduleSelection({
         method: "POST",
         body: JSON.stringify({ scheduleIds: [...selectedIds] }),
       });
-      toast.success(`${selectedIds.size}件を候補に戻しました`);
+      toast.success(MSG.BATCH_UNASSIGNED(selectedIds.size));
       exit();
       onDone();
     } catch {
-      toast.error("候補への移動に失敗しました");
+      toast.error(MSG.BATCH_UNASSIGN_FAILED);
     } finally {
       setBatchLoading(false);
     }
@@ -130,11 +131,11 @@ export function useScheduleSelection({
           },
         );
       }
-      toast.success(`${selectedIds.size}件を削除しました`);
+      toast.success(MSG.BATCH_DELETED(selectedIds.size));
       exit();
       onDone();
     } catch {
-      toast.error("削除に失敗しました");
+      toast.error(MSG.BATCH_DELETE_FAILED);
     } finally {
       setBatchLoading(false);
       setBatchDeleteOpen(false);
@@ -149,11 +150,11 @@ export function useScheduleSelection({
         method: "POST",
         body: JSON.stringify({ scheduleIds: [...selectedIds] }),
       });
-      toast.success(`${selectedIds.size}件を複製しました`);
+      toast.success(MSG.BATCH_DUPLICATED(selectedIds.size));
       exit();
       onDone();
     } catch {
-      toast.error("複製に失敗しました");
+      toast.error(MSG.BATCH_DUPLICATE_FAILED);
     } finally {
       setBatchLoading(false);
     }
@@ -170,11 +171,11 @@ export function useScheduleSelection({
           body: JSON.stringify({ scheduleIds: [...selectedIds] }),
         },
       );
-      toast.success(`${selectedIds.size}件を複製しました`);
+      toast.success(MSG.BATCH_DUPLICATED(selectedIds.size));
       exit();
       onDone();
     } catch {
-      toast.error("複製に失敗しました");
+      toast.error(MSG.BATCH_DUPLICATE_FAILED);
     } finally {
       setBatchLoading(false);
     }

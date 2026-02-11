@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
+import { MSG } from "@/lib/messages";
 
 export default function NewTripPage() {
   const router = useRouter();
@@ -32,7 +33,7 @@ export default function NewTripPage() {
     };
 
     if (!data.startDate || !data.endDate) {
-      setError("日付を選択してください");
+      setError(MSG.TRIP_DATE_REQUIRED);
       setLoading(false);
       return;
     }
@@ -42,10 +43,10 @@ export default function NewTripPage() {
         method: "POST",
         body: JSON.stringify(data),
       });
-      toast.success("旅行を作成しました");
+      toast.success(MSG.TRIP_CREATED);
       router.push(`/trips/${trip.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "旅行の作成に失敗しました");
+      setError(err instanceof Error ? err.message : MSG.TRIP_CREATE_FAILED);
     } finally {
       setLoading(false);
     }

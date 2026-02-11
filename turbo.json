@@ -1,5 +1,11 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "DATABASE_URL",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_BASE_URL",
+    "FRONTEND_URL"
+  ],
   "tasks": {
     "dev": {
       "cache": false,

@@ -350,7 +350,8 @@ function PlaceCard({
             )}
             {!crossDayDisplay && timeStr && (
               <span className="text-xs text-muted-foreground">
-                {timeStr}{endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
+                {timeStr}
+                {endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
               </span>
             )}
           </div>
@@ -575,7 +576,8 @@ function TransportConnector({
         )}
         {!crossDayDisplay && timeStr && (
           <span className="shrink-0 text-xs text-muted-foreground">
-            {timeStr}{endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
+            {timeStr}
+            {endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
           </span>
         )}
         {!selectable && (

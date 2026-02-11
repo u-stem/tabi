@@ -32,6 +32,8 @@ npm-debug.log*
 
 # Testing
 coverage/
+test-results/
+playwright-report/
 
 # Serwist (auto-generated Service Worker)
 apps/web/public/sw.js

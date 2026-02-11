@@ -14,7 +14,6 @@ import { ERROR_MSG } from "../lib/constants";
 import { canEdit, checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
-import { broadcastToTrip } from "../ws/rooms";
 
 const candidateRoutes = new Hono<AppEnv>();
 candidateRoutes.use("*", requireAuth);
@@ -66,7 +65,6 @@ candidateRoutes.post("/:tripId/candidates", async (c) => {
     })
     .returning();
 
-  broadcastToTrip(tripId, user.id, { type: "candidate:created", schedule });
   return c.json(schedule, 201);
 });
 
@@ -124,12 +122,6 @@ candidateRoutes.post("/:tripId/candidates/batch-assign", async (c) => {
     }
   });
 
-  broadcastToTrip(tripId, user.id, {
-    type: "candidate:batch-assigned",
-    scheduleIds: parsed.data.scheduleIds,
-    dayId: pattern.tripDay.id,
-    patternId: pattern.id,
-  });
   return c.json({ ok: true });
 });
 
@@ -162,10 +154,6 @@ candidateRoutes.post("/:tripId/candidates/batch-delete", async (c) => {
 
   await db.delete(schedules).where(inArray(schedules.id, parsed.data.scheduleIds));
 
-  broadcastToTrip(tripId, user.id, {
-    type: "candidate:batch-deleted",
-    scheduleIds: parsed.data.scheduleIds,
-  });
   return c.json({ ok: true });
 });
 
@@ -228,10 +216,6 @@ candidateRoutes.post("/:tripId/candidates/batch-duplicate", async (c) => {
     )
     .returning();
 
-  broadcastToTrip(tripId, user.id, {
-    type: "candidate:batch-duplicated",
-    scheduleIds: parsed.data.scheduleIds,
-  });
   return c.json(duplicated, 201);
 });
 
@@ -273,10 +257,6 @@ candidateRoutes.patch("/:tripId/candidates/reorder", async (c) => {
     }
   });
 
-  broadcastToTrip(tripId, user.id, {
-    type: "candidate:reordered",
-    scheduleIds: parsed.data.scheduleIds,
-  });
   return c.json({ ok: true });
 });
 
@@ -328,7 +308,6 @@ candidateRoutes.patch("/:tripId/candidates/:scheduleId", async (c) => {
     return c.json({ error: ERROR_MSG.CONFLICT }, 409);
   }
 
-  broadcastToTrip(tripId, user.id, { type: "candidate:updated", schedule: updated });
   return c.json(updated);
 });
 
@@ -355,7 +334,6 @@ candidateRoutes.delete("/:tripId/candidates/:scheduleId", async (c) => {
   }
 
   await db.delete(schedules).where(eq(schedules.id, scheduleId));
-  broadcastToTrip(tripId, user.id, { type: "candidate:deleted", scheduleId });
   return c.json({ ok: true });
 });
 
@@ -410,12 +388,6 @@ candidateRoutes.post("/:tripId/candidates/:scheduleId/assign", async (c) => {
     .where(eq(schedules.id, scheduleId))
     .returning();
 
-  broadcastToTrip(tripId, user.id, {
-    type: "schedule:assigned",
-    schedule: updated,
-    dayId: pattern.tripDay.id,
-    patternId: pattern.id,
-  });
   return c.json(updated);
 });
 

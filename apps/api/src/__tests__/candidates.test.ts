@@ -49,10 +49,6 @@ vi.mock("../db/index", () => ({
   },
 }));
 
-vi.mock("../ws/rooms", () => ({
-  broadcastToTrip: vi.fn(),
-}));
-
 import { candidateRoutes } from "../routes/candidates";
 
 const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };

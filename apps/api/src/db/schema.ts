@@ -17,6 +17,7 @@ export const tripStatusEnum = pgEnum("trip_status", ["draft", "planned", "active
 export const tripMemberRoleEnum = pgEnum("trip_member_role", ["owner", "editor", "viewer"]);
 export const transportMethodEnum = pgEnum("transport_method", [
   "train",
+  "shinkansen",
   "bus",
   "taxi",
   "walk",

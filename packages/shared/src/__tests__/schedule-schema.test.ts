@@ -82,7 +82,15 @@ describe("updateScheduleSchema", () => {
 });
 
 describe("transportMethodSchema", () => {
-  it.each(["train", "bus", "taxi", "walk", "car", "airplane"])("accepts '%s'", (method) => {
+  it.each([
+    "train",
+    "shinkansen",
+    "bus",
+    "taxi",
+    "walk",
+    "car",
+    "airplane",
+  ])("accepts '%s'", (method) => {
     expect(transportMethodSchema.safeParse(method).success).toBe(true);
   });
 

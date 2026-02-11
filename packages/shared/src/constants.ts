@@ -15,6 +15,7 @@ export const CATEGORY_LABELS: Record<ScheduleCategory, string> = {
 
 export const TRANSPORT_METHOD_LABELS: Record<TransportMethod, string> = {
   train: "電車",
+  shinkansen: "新幹線",
   bus: "バス",
   taxi: "タクシー",
   walk: "徒歩",

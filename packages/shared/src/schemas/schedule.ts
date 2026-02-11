@@ -23,7 +23,15 @@ export const SCHEDULE_COLORS = [
 export const scheduleColorSchema = z.enum(SCHEDULE_COLORS);
 export type ScheduleColor = z.infer<typeof scheduleColorSchema>;
 
-export const transportMethodSchema = z.enum(["train", "bus", "taxi", "walk", "car", "airplane"]);
+export const transportMethodSchema = z.enum([
+  "train",
+  "shinkansen",
+  "bus",
+  "taxi",
+  "walk",
+  "car",
+  "airplane",
+]);
 export type TransportMethod = z.infer<typeof transportMethodSchema>;
 
 const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;

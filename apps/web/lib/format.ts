@@ -8,6 +8,7 @@ export function toDateString(date: Date): string {
 // Parse YYYY-MM-DD directly to avoid timezone issues with Date constructor
 export function formatDate(dateStr: string): string {
   const [year, month, day] = dateStr.split("-").map(Number);
+  if (!year || !month || !day) return dateStr;
   return `${year}年${month}月${day}日`;
 }
 

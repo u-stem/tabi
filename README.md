@@ -11,6 +11,7 @@
 - **認証**: Better Auth (メール/パスワード)
 - **バリデーション**: Zod (共有スキーマ)
 - **リンター/フォーマッター**: Biome
+- **Git フック**: lefthook (pre-commit / commit-msg / pre-push)
 - **地図**: Leaflet + react-leaflet
 
 ## セットアップ
@@ -28,6 +29,7 @@ bun run setup
 ```
 
 PostgreSQL + API サーバーを起動し、スキーマ反映とシードデータ投入を行う。
+`bun install` 時に lefthook が自動でインストールされ、Git フックが有効になる。
 
 ### 開発
 
@@ -83,6 +85,7 @@ tabi/
 ├── packages/
 │   └── shared/       # 共有 Zod スキーマ・型定義
 ├── biome.json        # Biome 設定 (lint/format)
+├── lefthook.yml      # Git フック設定
 ├── turbo.json        # Turborepo 設定
 └── docker-compose.yml
 ```

@@ -52,6 +52,7 @@ bun run --filter @tabi/shared check-types
 - バリデーション: Zod (packages/shared で共有)
 - リンター/フォーマッター: Biome (ルートに biome.json、各パッケージから turbo 経由で実行)
 - テスト: Vitest
+- Git フック: lefthook (pre-commit: check + check-types, commit-msg: Conventional Commits, pre-push: test)
 - 地図: Leaflet + react-leaflet
 
 ## 主要パターン
@@ -82,3 +83,4 @@ bun run --filter @tabi/shared check-types
 - コード内の言語: 英語 (コメントは What でなく Why を書く)
 - デッドコード禁止、TODO は Issue 化する
 - `biome-ignore` による lint 抑制禁止。根本的に修正する
+- Git フック (lefthook): `bun install` で自動セットアップ。`--no-verify` でのスキップ禁止

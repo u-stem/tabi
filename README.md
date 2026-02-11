@@ -24,8 +24,7 @@
 
 ```bash
 bun install
-docker compose --profile init up -d
-docker compose logs -f init   # seed 完了を待つ
+bun run setup
 ```
 
 PostgreSQL + API サーバーを起動し、スキーマ反映とシードデータ投入を行う。
@@ -44,7 +43,7 @@ bun run --filter @tabi/web dev         # フロントエンドを起動
 
 ```bash
 docker compose down -v
-docker compose --profile init up -d
+bun run setup
 ```
 
 ## スクリプト
@@ -52,7 +51,6 @@ docker compose --profile init up -d
 プロジェクトルートから実行:
 
 ```bash
-bun run dev          # 全開発サーバー起動
 bun run build        # 全パッケージビルド
 bun run test         # 全テスト実行 (Vitest)
 bun run lint         # 全パッケージ lint (Biome)
@@ -64,6 +62,7 @@ bun run db:generate  # マイグレーション生成
 bun run db:migrate   # マイグレーション実行
 bun run db:studio    # Drizzle Studio 起動
 bun run db:seed      # 開発用シードデータ投入
+bun run setup        # 初回セットアップ (Docker)
 ```
 
 パッケージ単位の実行:

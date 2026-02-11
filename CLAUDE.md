@@ -17,7 +17,6 @@ packages/shared/  共有 Zod スキーマ・型定義
 プロジェクトルートから `bun run` で実行:
 
 ```bash
-bun run dev          # 全開発サーバー起動 (turbo)
 bun run build        # 全パッケージビルド
 bun run test         # 全テスト実行 (vitest)
 bun run lint         # 全パッケージ lint (Biome via turbo)
@@ -29,6 +28,7 @@ bun run db:generate  # マイグレーション生成
 bun run db:migrate   # マイグレーション実行
 bun run db:studio    # Drizzle Studio 起動
 bun run db:seed      # 開発用シードデータ投入
+bun run setup        # 初回セットアップ (Docker)
 ```
 
 パッケージ単位の実行は `--filter` を使用:
@@ -67,12 +67,12 @@ bun run --filter @tabi/shared check-types
 
 ## 開発環境
 
-- PostgreSQL + API: `docker compose up -d`
-- 初回セットアップ (スキーマ + シード): `docker compose --profile init up`
+- 初回セットアップ: `bun run setup` (Docker で DB + API 起動、スキーマ反映、シード投入)
+- DB + API 起動: `docker compose up -d`
 - Web: `bun run --filter @tabi/web dev` (localhost:3000)
-- API ホットリロード: 有効 (ソース変更が自動反映)
+- API ホットリロード: 有効 (Docker 内でソース変更が自動反映)
 - 全起動: `docker compose up -d && bun run --filter @tabi/web dev`
-- DB リセット: `docker compose down -v && docker compose --profile init up -d`
+- DB リセット: `docker compose down -v && bun run setup`
 - 結合テスト: `bun run --filter @tabi/api test:integration` (PostgreSQL の `tabi_test` DB が必要)
 
 ## 規約

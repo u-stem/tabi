@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  createSpotSchema,
-  reorderSpotsSchema,
-  spotCategorySchema,
+  createScheduleSchema,
+  reorderSchedulesSchema,
+  scheduleCategorySchema,
   transportMethodSchema,
-  updateSpotSchema,
-} from "../schemas/spot";
+  updateScheduleSchema,
+} from "../schemas/schedule";
 
-describe("spotCategorySchema", () => {
+describe("scheduleCategorySchema", () => {
   it.each([
     "sightseeing",
     "restaurant",
@@ -16,25 +16,25 @@ describe("spotCategorySchema", () => {
     "activity",
     "other",
   ])("accepts '%s'", (cat) => {
-    expect(spotCategorySchema.safeParse(cat).success).toBe(true);
+    expect(scheduleCategorySchema.safeParse(cat).success).toBe(true);
   });
 
   it("rejects invalid category", () => {
-    expect(spotCategorySchema.safeParse("invalid").success).toBe(false);
+    expect(scheduleCategorySchema.safeParse("invalid").success).toBe(false);
   });
 });
 
-describe("createSpotSchema", () => {
-  it("validates a valid spot", () => {
-    const result = createSpotSchema.safeParse({
+describe("createScheduleSchema", () => {
+  it("validates a valid schedule", () => {
+    const result = createScheduleSchema.safeParse({
       name: "Kinkaku-ji",
       category: "sightseeing",
     });
     expect(result.success).toBe(true);
   });
 
-  it("validates spot with all optional fields", () => {
-    const result = createSpotSchema.safeParse({
+  it("validates schedule with all optional fields", () => {
+    const result = createScheduleSchema.safeParse({
       name: "Kinkaku-ji",
       category: "sightseeing",
       address: "1 Kinkakujicho, Kita Ward, Kyoto",
@@ -47,7 +47,7 @@ describe("createSpotSchema", () => {
   });
 
   it("rejects empty name", () => {
-    const result = createSpotSchema.safeParse({
+    const result = createScheduleSchema.safeParse({
       name: "",
       category: "sightseeing",
     });
@@ -55,8 +55,8 @@ describe("createSpotSchema", () => {
   });
 
   it("rejects invalid time format", () => {
-    const result = createSpotSchema.safeParse({
-      name: "Spot",
+    const result = createScheduleSchema.safeParse({
+      name: "Schedule",
       category: "sightseeing",
       startTime: "9:00",
     });
@@ -64,19 +64,19 @@ describe("createSpotSchema", () => {
   });
 });
 
-describe("updateSpotSchema", () => {
+describe("updateScheduleSchema", () => {
   it("accepts partial update with name only", () => {
-    const result = updateSpotSchema.safeParse({ name: "New Name" });
+    const result = updateScheduleSchema.safeParse({ name: "New Name" });
     expect(result.success).toBe(true);
   });
 
   it("accepts empty object", () => {
-    const result = updateSpotSchema.safeParse({});
+    const result = updateScheduleSchema.safeParse({});
     expect(result.success).toBe(true);
   });
 
   it("rejects invalid category", () => {
-    const result = updateSpotSchema.safeParse({ category: "invalid" });
+    const result = updateScheduleSchema.safeParse({ category: "invalid" });
     expect(result.success).toBe(false);
   });
 });
@@ -91,9 +91,9 @@ describe("transportMethodSchema", () => {
   });
 });
 
-describe("createSpotSchema transport fields", () => {
+describe("createScheduleSchema transport fields", () => {
   it("accepts transport-specific fields", () => {
-    const result = createSpotSchema.safeParse({
+    const result = createScheduleSchema.safeParse({
       name: "Tokyo to Osaka",
       category: "transport",
       departurePlace: "Tokyo Station",
@@ -104,7 +104,7 @@ describe("createSpotSchema transport fields", () => {
   });
 
   it("accepts without transport-specific fields", () => {
-    const result = createSpotSchema.safeParse({
+    const result = createScheduleSchema.safeParse({
       name: "Tokyo to Osaka",
       category: "transport",
     });
@@ -112,7 +112,7 @@ describe("createSpotSchema transport fields", () => {
   });
 
   it("rejects invalid transportMethod", () => {
-    const result = createSpotSchema.safeParse({
+    const result = createScheduleSchema.safeParse({
       name: "Tokyo to Osaka",
       category: "transport",
       transportMethod: "helicopter",
@@ -121,23 +121,23 @@ describe("createSpotSchema transport fields", () => {
   });
 });
 
-describe("reorderSpotsSchema", () => {
+describe("reorderSchedulesSchema", () => {
   it("accepts valid UUIDs", () => {
-    const result = reorderSpotsSchema.safeParse({
-      spotIds: ["550e8400-e29b-41d4-a716-446655440000"],
+    const result = reorderSchedulesSchema.safeParse({
+      scheduleIds: ["550e8400-e29b-41d4-a716-446655440000"],
     });
     expect(result.success).toBe(true);
   });
 
   it("rejects non-UUID strings", () => {
-    const result = reorderSpotsSchema.safeParse({
-      spotIds: ["not-a-uuid"],
+    const result = reorderSchedulesSchema.safeParse({
+      scheduleIds: ["not-a-uuid"],
     });
     expect(result.success).toBe(false);
   });
 
   it("accepts empty array", () => {
-    const result = reorderSpotsSchema.safeParse({ spotIds: [] });
+    const result = reorderSchedulesSchema.safeParse({ scheduleIds: [] });
     expect(result.success).toBe(true);
   });
 });

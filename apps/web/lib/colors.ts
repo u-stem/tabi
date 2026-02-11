@@ -1,7 +1,9 @@
-import type { SpotColor } from "@tabi/shared";
+import type { ScheduleColor } from "@tabi/shared";
 
-export const SPOT_COLOR_CLASSES: Record<
-  SpotColor,
+export const SELECTED_RING = "border-ring ring-2 ring-ring";
+
+export const SCHEDULE_COLOR_CLASSES: Record<
+  ScheduleColor,
   { bg: string; border: string; text: string; ring: string }
 > = {
   blue: {

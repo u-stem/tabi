@@ -2,7 +2,7 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { SpotCategory, SpotColor, TransportMethod } from "@tabi/shared";
+import type { ScheduleCategory, ScheduleColor, TransportMethod } from "@tabi/shared";
 import { TRANSPORT_METHOD_LABELS } from "@tabi/shared";
 import { MoreHorizontal, Pencil, Trash2, Undo2 } from "lucide-react";
 import type { CSSProperties } from "react";
@@ -24,17 +24,17 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
-import { SPOT_COLOR_CLASSES } from "@/lib/colors";
+import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
 import type { TimeStatus } from "@/lib/format";
 import { formatTime, formatTimeRange } from "@/lib/format";
 import { CATEGORY_ICONS, TRANSPORT_ICONS } from "@/lib/icons";
 import { cn } from "@/lib/utils";
-import { EditSpotDialog } from "./edit-spot-dialog";
+import { EditScheduleDialog } from "./edit-schedule-dialog";
 
-type SpotItemProps = {
+type ScheduleItemProps = {
   id: string;
   name: string;
-  category: SpotCategory;
+  category: ScheduleCategory;
   address?: string | null;
   url?: string | null;
   startTime?: string | null;
@@ -43,7 +43,7 @@ type SpotItemProps = {
   departurePlace?: string | null;
   arrivalPlace?: string | null;
   transportMethod?: string | null;
-  color?: SpotColor;
+  color?: ScheduleColor;
   tripId: string;
   dayId: string;
   patternId: string;
@@ -69,12 +69,12 @@ type SortableProps = {
   isDragging: boolean;
 };
 
-export function SpotItem(props: SpotItemProps) {
+export function ScheduleItem(props: ScheduleItemProps) {
   const { id, category, disabled, selectable } = props;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id,
     disabled: disabled || selectable,
-    data: { type: "spot" },
+    data: { type: "schedule" },
   });
 
   const style: CSSProperties = {
@@ -123,7 +123,7 @@ function DragHandle({
   );
 }
 
-function SpotMenu({
+function ScheduleMenu({
   name,
   disabled,
   onEdit,
@@ -219,10 +219,10 @@ function PlaceCard({
   selected,
   onSelect,
   sortable,
-}: SpotItemProps & { sortable: SortableProps }) {
+}: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const CategoryIcon = CATEGORY_ICONS[category];
-  const colorClasses = SPOT_COLOR_CLASSES[color];
+  const colorClasses = SCHEDULE_COLOR_CLASSES[color];
   const isPast = timeStatus === "past";
   const isCurrent = timeStatus === "current";
 
@@ -290,7 +290,7 @@ function PlaceCard({
           "min-w-0 flex-1 rounded-md border p-3",
           isPast && "opacity-50",
           selectable && "cursor-pointer transition-colors hover:bg-accent/50",
-          selectable && selected && "border-ring ring-2 ring-ring",
+          selectable && selected && SELECTED_RING,
         )}
         {...(selectable
           ? {
@@ -318,7 +318,7 @@ function PlaceCard({
             {timeStr && <span className="text-xs text-muted-foreground">{timeStr}</span>}
           </div>
           {!selectable && (
-            <SpotMenu
+            <ScheduleMenu
               name={name}
               disabled={disabled}
               onEdit={() => setEditOpen(true)}
@@ -345,11 +345,11 @@ function PlaceCard({
         )}
       </div>
 
-      <EditSpotDialog
+      <EditScheduleDialog
         tripId={tripId}
         dayId={dayId}
         patternId={patternId}
-        spot={{
+        schedule={{
           id,
           name,
           category,
@@ -399,9 +399,9 @@ function TransportConnector({
   selected,
   onSelect,
   sortable,
-}: SpotItemProps & { sortable: SortableProps }) {
+}: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
-  const colorClasses = SPOT_COLOR_CLASSES[color];
+  const colorClasses = SCHEDULE_COLOR_CLASSES[color];
   const isPast = timeStatus === "past";
   const isCurrent = timeStatus === "current";
   const TransportIcon = transportMethod
@@ -481,7 +481,7 @@ function TransportConnector({
           "flex min-w-0 flex-1 items-center gap-2 rounded border border-dashed px-3 py-1.5",
           isPast && "opacity-50",
           selectable && "cursor-pointer transition-colors hover:bg-accent/50",
-          selectable && selected && "border-ring ring-2 ring-ring",
+          selectable && selected && SELECTED_RING,
         )}
         {...(selectable
           ? {
@@ -510,7 +510,7 @@ function TransportConnector({
         {timeStr && <span className="shrink-0 text-xs text-muted-foreground">{timeStr}</span>}
         {!selectable && (
           <div className="ml-auto">
-            <SpotMenu
+            <ScheduleMenu
               name={name}
               disabled={disabled}
               onEdit={() => setEditOpen(true)}
@@ -521,11 +521,11 @@ function TransportConnector({
         )}
       </div>
 
-      <EditSpotDialog
+      <EditScheduleDialog
         tripId={tripId}
         dayId={dayId}
         patternId={patternId}
-        spot={{
+        schedule={{
           id,
           name,
           category,

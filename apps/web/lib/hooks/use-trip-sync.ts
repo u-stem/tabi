@@ -26,14 +26,14 @@ export type PresenceUser = {
 type PresenceMessage = { type: "presence"; users: PresenceUser[] };
 
 type SyncType =
-  | "spot:created"
-  | "spot:updated"
-  | "spot:deleted"
-  | "spot:reordered"
-  | "spot:assigned"
-  | "spot:unassigned"
-  | "spot:batch-unassigned"
-  | "spot:batch-deleted"
+  | "schedule:created"
+  | "schedule:updated"
+  | "schedule:deleted"
+  | "schedule:reordered"
+  | "schedule:assigned"
+  | "schedule:unassigned"
+  | "schedule:batch-unassigned"
+  | "schedule:batch-deleted"
   | "candidate:created"
   | "candidate:updated"
   | "candidate:deleted"
@@ -41,7 +41,7 @@ type SyncType =
   | "candidate:batch-assigned"
   | "candidate:batch-deleted"
   | "candidate:batch-duplicated"
-  | "spot:batch-duplicated"
+  | "schedule:batch-duplicated"
   | "pattern:created"
   | "pattern:updated"
   | "pattern:deleted"
@@ -49,14 +49,14 @@ type SyncType =
   | "trip:updated";
 
 const SYNC_TYPES: Set<string> = new Set<SyncType>([
-  "spot:created",
-  "spot:updated",
-  "spot:deleted",
-  "spot:reordered",
-  "spot:assigned",
-  "spot:unassigned",
-  "spot:batch-unassigned",
-  "spot:batch-deleted",
+  "schedule:created",
+  "schedule:updated",
+  "schedule:deleted",
+  "schedule:reordered",
+  "schedule:assigned",
+  "schedule:unassigned",
+  "schedule:batch-unassigned",
+  "schedule:batch-deleted",
   "candidate:created",
   "candidate:updated",
   "candidate:deleted",
@@ -64,7 +64,7 @@ const SYNC_TYPES: Set<string> = new Set<SyncType>([
   "candidate:batch-assigned",
   "candidate:batch-deleted",
   "candidate:batch-duplicated",
-  "spot:batch-duplicated",
+  "schedule:batch-duplicated",
   "pattern:created",
   "pattern:updated",
   "pattern:deleted",

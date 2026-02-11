@@ -1,8 +1,10 @@
 import type { MemberRole } from "./schemas/member";
-import type { SpotCategory, SpotColor, TransportMethod } from "./schemas/spot";
+import type { ScheduleCategory, ScheduleColor, TransportMethod } from "./schemas/schedule";
 import type { TripStatus } from "./schemas/trip";
 
-export const CATEGORY_LABELS: Record<SpotCategory, string> = {
+export const DEFAULT_SCHEDULE_CATEGORY: ScheduleCategory = "sightseeing";
+
+export const CATEGORY_LABELS: Record<ScheduleCategory, string> = {
   sightseeing: "観光",
   restaurant: "飲食",
   hotel: "宿泊",
@@ -33,7 +35,7 @@ export const ROLE_LABELS: Record<MemberRole, string> = {
   viewer: "閲覧者",
 };
 
-export const SPOT_COLOR_LABELS: Record<SpotColor, string> = {
+export const SCHEDULE_COLOR_LABELS: Record<ScheduleColor, string> = {
   blue: "青",
   red: "赤",
   green: "緑",

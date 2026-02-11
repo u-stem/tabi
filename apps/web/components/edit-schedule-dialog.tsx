@@ -1,7 +1,7 @@
 "use client";
 
-import type { SpotColor, SpotResponse, TransportMethod } from "@tabi/shared";
-import { SPOT_COLOR_LABELS, SPOT_COLORS } from "@tabi/shared";
+import type { ScheduleColor, ScheduleResponse, TransportMethod } from "@tabi/shared";
+import { SCHEDULE_COLOR_LABELS, SCHEDULE_COLORS } from "@tabi/shared";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,39 +25,39 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { SPOT_COLOR_CLASSES } from "@/lib/colors";
+import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { validateTimeRange } from "@/lib/format";
-import { CATEGORY_OPTIONS, getTimeLabels, TRANSPORT_METHOD_OPTIONS } from "@/lib/spot-utils";
+import { CATEGORY_OPTIONS, getTimeLabels, TRANSPORT_METHOD_OPTIONS } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 
-type EditSpotDialogProps = {
+type EditScheduleDialogProps = {
   tripId: string;
   dayId: string;
   patternId: string;
-  spot: SpotResponse;
+  schedule: ScheduleResponse;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
 };
 
-export function EditSpotDialog({
+export function EditScheduleDialog({
   tripId,
   dayId,
   patternId,
-  spot,
+  schedule,
   open,
   onOpenChange,
   onUpdate,
-}: EditSpotDialogProps) {
+}: EditScheduleDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [category, setCategory] = useState(spot.category);
+  const [category, setCategory] = useState(schedule.category);
   const [transportMethod, setTransportMethod] = useState<TransportMethod | "">(
-    (spot.transportMethod as TransportMethod) || "",
+    (schedule.transportMethod as TransportMethod) || "",
   );
-  const [color, setColor] = useState<SpotColor>(spot.color);
-  const [startTime, setStartTime] = useState<string | undefined>(spot.startTime ?? undefined);
-  const [endTime, setEndTime] = useState<string | undefined>(spot.endTime ?? undefined);
+  const [color, setColor] = useState<ScheduleColor>(schedule.color);
+  const [startTime, setStartTime] = useState<string | undefined>(schedule.startTime ?? undefined);
+  const [endTime, setEndTime] = useState<string | undefined>(schedule.endTime ?? undefined);
   const [timeError, setTimeError] = useState<string | null>(null);
 
   function handleOpenChange(isOpen: boolean) {
@@ -65,11 +65,11 @@ export function EditSpotDialog({
     if (!isOpen) {
       setError(null);
       setTimeError(null);
-      setCategory(spot.category);
-      setTransportMethod((spot.transportMethod as TransportMethod) || "");
-      setColor(spot.color);
-      setStartTime(spot.startTime ?? undefined);
-      setEndTime(spot.endTime ?? undefined);
+      setCategory(schedule.category);
+      setTransportMethod((schedule.transportMethod as TransportMethod) || "");
+      setColor(schedule.color);
+      setStartTime(schedule.startTime ?? undefined);
+      setEndTime(schedule.endTime ?? undefined);
     }
   }
 
@@ -107,10 +107,13 @@ export function EditSpotDialog({
     };
 
     try {
-      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots/${spot.id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      });
+      await api(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${schedule.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(data),
+        },
+      );
       onOpenChange(false);
       toast.success("予定を更新しました");
       onUpdate();
@@ -131,7 +134,7 @@ export function EditSpotDialog({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="edit-name">名前</Label>
-            <Input id="edit-name" name="name" defaultValue={spot.name} required />
+            <Input id="edit-name" name="name" defaultValue={schedule.name} required />
           </div>
           <div className="space-y-2">
             <Label>カテゴリ</Label>
@@ -157,17 +160,17 @@ export function EditSpotDialog({
           <div className="space-y-2">
             <Label>色</Label>
             <div className="flex gap-2">
-              {SPOT_COLORS.map((c) => (
+              {SCHEDULE_COLORS.map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setColor(c)}
                   className={cn(
                     "h-6 w-6 rounded-full",
-                    SPOT_COLOR_CLASSES[c].bg,
-                    color === c && `ring-2 ring-offset-1 ${SPOT_COLOR_CLASSES[c].ring}`,
+                    SCHEDULE_COLOR_CLASSES[c].bg,
+                    color === c && `ring-2 ring-offset-1 ${SCHEDULE_COLOR_CLASSES[c].ring}`,
                   )}
-                  aria-label={SPOT_COLOR_LABELS[c]}
+                  aria-label={SCHEDULE_COLOR_LABELS[c]}
                 />
               ))}
             </div>
@@ -178,7 +181,7 @@ export function EditSpotDialog({
               <Input
                 id="edit-address"
                 name="address"
-                defaultValue={spot.address ?? ""}
+                defaultValue={schedule.address ?? ""}
                 placeholder="京都市北区金閣寺町1"
               />
             </div>
@@ -190,7 +193,7 @@ export function EditSpotDialog({
                 <Input
                   id="edit-departurePlace"
                   name="departurePlace"
-                  defaultValue={spot.departurePlace ?? ""}
+                  defaultValue={schedule.departurePlace ?? ""}
                   placeholder="東京駅"
                 />
               </div>
@@ -199,7 +202,7 @@ export function EditSpotDialog({
                 <Input
                   id="edit-arrivalPlace"
                   name="arrivalPlace"
-                  defaultValue={spot.arrivalPlace ?? ""}
+                  defaultValue={schedule.arrivalPlace ?? ""}
                   placeholder="新大阪駅"
                 />
               </div>
@@ -229,7 +232,7 @@ export function EditSpotDialog({
               id="edit-url"
               name="url"
               type="url"
-              defaultValue={spot.url ?? ""}
+              defaultValue={schedule.url ?? ""}
               placeholder="https://..."
             />
           </div>
@@ -246,7 +249,7 @@ export function EditSpotDialog({
           {timeError && <p className="text-sm text-destructive">{timeError}</p>}
           <div className="space-y-2">
             <Label htmlFor="edit-memo">メモ</Label>
-            <Textarea id="edit-memo" name="memo" rows={3} defaultValue={spot.memo ?? ""} />
+            <Textarea id="edit-memo" name="memo" rows={3} defaultValue={schedule.memo ?? ""} />
           </div>
           {error && (
             <p role="alert" className="text-sm text-destructive">

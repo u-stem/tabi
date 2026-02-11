@@ -64,8 +64,8 @@ shareRoutes.get("/api/shared/:token", async (c) => {
           patterns: {
             orderBy: (patterns, { asc }) => [asc(patterns.sortOrder)],
             with: {
-              spots: {
-                orderBy: (spots, { asc }) => [asc(spots.sortOrder)],
+              schedules: {
+                orderBy: (schedules, { asc }) => [asc(schedules.sortOrder)],
               },
             },
           },

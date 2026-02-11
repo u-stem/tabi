@@ -4,23 +4,23 @@ import { api } from "@/lib/api";
 
 type SelectionTarget = "timeline" | "candidates";
 
-type UseSpotSelectionArgs = {
+type UseScheduleSelectionArgs = {
   tripId: string;
   currentDayId: string | null;
   currentPatternId: string | null;
-  timelineSpotIds: Set<string>;
+  timelineScheduleIds: Set<string>;
   candidateIds: Set<string>;
   onDone: () => void;
 };
 
-export function useSpotSelection({
+export function useScheduleSelection({
   tripId,
   currentDayId,
   currentPatternId,
-  timelineSpotIds,
+  timelineScheduleIds,
   candidateIds,
   onDone,
-}: UseSpotSelectionArgs) {
+}: UseScheduleSelectionArgs) {
   const [selectionTarget, setSelectionTarget] = useState<SelectionTarget | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchLoading, setBatchLoading] = useState(false);
@@ -50,7 +50,7 @@ export function useSpotSelection({
 
   function selectAll() {
     if (selectionTarget === "timeline") {
-      setSelectedIds(new Set(timelineSpotIds));
+      setSelectedIds(new Set(timelineScheduleIds));
     } else if (selectionTarget === "candidates") {
       setSelectedIds(new Set(candidateIds));
     }
@@ -64,14 +64,14 @@ export function useSpotSelection({
   useEffect(() => {
     if (!selectionTarget) return;
     setSelectedIds((prev) => {
-      const validIds = selectionTarget === "timeline" ? timelineSpotIds : candidateIds;
+      const validIds = selectionTarget === "timeline" ? timelineScheduleIds : candidateIds;
       const pruned = new Set<string>();
       for (const id of prev) {
         if (validIds.has(id)) pruned.add(id);
       }
       return pruned.size === prev.size ? prev : pruned;
     });
-  }, [selectionTarget, timelineSpotIds, candidateIds]);
+  }, [selectionTarget, timelineScheduleIds, candidateIds]);
 
   async function batchAssign() {
     if (!currentPatternId || selectedIds.size === 0) return;
@@ -80,7 +80,7 @@ export function useSpotSelection({
       await api(`/api/trips/${tripId}/candidates/batch-assign`, {
         method: "POST",
         body: JSON.stringify({
-          spotIds: [...selectedIds],
+          scheduleIds: [...selectedIds],
           dayPatternId: currentPatternId,
         }),
       });
@@ -98,9 +98,9 @@ export function useSpotSelection({
     if (selectedIds.size === 0) return;
     setBatchLoading(true);
     try {
-      await api(`/api/trips/${tripId}/spots/batch-unassign`, {
+      await api(`/api/trips/${tripId}/schedules/batch-unassign`, {
         method: "POST",
-        body: JSON.stringify({ spotIds: [...selectedIds] }),
+        body: JSON.stringify({ scheduleIds: [...selectedIds] }),
       });
       toast.success(`${selectedIds.size}件を候補に戻しました`);
       exit();
@@ -119,14 +119,14 @@ export function useSpotSelection({
       if (selectionTarget === "candidates") {
         await api(`/api/trips/${tripId}/candidates/batch-delete`, {
           method: "POST",
-          body: JSON.stringify({ spotIds: [...selectedIds] }),
+          body: JSON.stringify({ scheduleIds: [...selectedIds] }),
         });
       } else if (selectionTarget === "timeline" && currentDayId && currentPatternId) {
         await api(
-          `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/spots/batch-delete`,
+          `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/batch-delete`,
           {
             method: "POST",
-            body: JSON.stringify({ spotIds: [...selectedIds] }),
+            body: JSON.stringify({ scheduleIds: [...selectedIds] }),
           },
         );
       }
@@ -147,7 +147,7 @@ export function useSpotSelection({
     try {
       await api(`/api/trips/${tripId}/candidates/batch-duplicate`, {
         method: "POST",
-        body: JSON.stringify({ spotIds: [...selectedIds] }),
+        body: JSON.stringify({ scheduleIds: [...selectedIds] }),
       });
       toast.success(`${selectedIds.size}件を複製しました`);
       exit();
@@ -159,15 +159,15 @@ export function useSpotSelection({
     }
   }
 
-  async function batchDuplicateSpots() {
+  async function batchDuplicateSchedules() {
     if (!currentPatternId || !currentDayId || selectedIds.size === 0) return;
     setBatchLoading(true);
     try {
       await api(
-        `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/spots/batch-duplicate`,
+        `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/batch-duplicate`,
         {
           method: "POST",
-          body: JSON.stringify({ spotIds: [...selectedIds] }),
+          body: JSON.stringify({ scheduleIds: [...selectedIds] }),
         },
       );
       toast.success(`${selectedIds.size}件を複製しました`);
@@ -195,6 +195,6 @@ export function useSpotSelection({
     batchUnassign,
     batchDelete,
     batchDuplicateCandidates,
-    batchDuplicateSpots,
+    batchDuplicateSchedules,
   };
 }

@@ -13,7 +13,7 @@ const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, m
         findFirst: vi.fn(),
         findMany: vi.fn(),
       },
-      spots: {
+      schedules: {
         findMany: vi.fn(),
       },
     },
@@ -64,7 +64,7 @@ describe("Trip routes", () => {
       userId: fakeUser.id,
       role: "owner",
     });
-    mockDbQuery.spots.findMany.mockResolvedValue([]);
+    mockDbQuery.schedules.findMany.mockResolvedValue([]);
   });
 
   describe("POST /api/trips", () => {
@@ -179,7 +179,7 @@ describe("Trip routes", () => {
   });
 
   describe("GET /api/trips", () => {
-    it("returns trips with totalSpots and excludes days from response", async () => {
+    it("returns trips with totalSchedules and excludes days from response", async () => {
       mockDbQuery.tripMembers.findMany.mockResolvedValue([
         {
           tripId: "trip-1",
@@ -190,8 +190,8 @@ describe("Trip routes", () => {
             title: "Tokyo Trip",
             updatedAt: new Date("2025-07-01"),
             days: [
-              { patterns: [{ spots: [{ id: "spot-1" }, { id: "spot-2" }] }] },
-              { patterns: [{ spots: [] }] },
+              { patterns: [{ schedules: [{ id: "schedule-1" }, { id: "schedule-2" }] }] },
+              { patterns: [{ schedules: [] }] },
             ],
           },
         },
@@ -203,7 +203,7 @@ describe("Trip routes", () => {
 
       expect(res.status).toBe(200);
       expect(body).toHaveLength(1);
-      expect(body[0].totalSpots).toBe(2);
+      expect(body[0].totalSchedules).toBe(2);
       expect(body[0].days).toBeUndefined();
     });
 

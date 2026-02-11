@@ -8,7 +8,7 @@ export const WS_CLOSE_CODE = {
 
 export const ERROR_MSG = {
   TRIP_NOT_FOUND: "Trip not found",
-  SPOT_NOT_FOUND: "Spot not found",
+  SCHEDULE_NOT_FOUND: "Schedule not found",
   PATTERN_NOT_FOUND: "Pattern not found",
   CANNOT_DELETE_DEFAULT: "Cannot delete default pattern",
   INVALID_JSON: "Invalid JSON",

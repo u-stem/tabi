@@ -1,4 +1,4 @@
 export * from "./day-pattern";
 export * from "./member";
-export * from "./spot";
+export * from "./schedule";
 export * from "./trip";

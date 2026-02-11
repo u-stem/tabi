@@ -2,7 +2,7 @@ import { createDayPatternSchema, updateDayPatternSchema } from "@tabi/shared";
 import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { dayPatterns, spots } from "../db/schema";
+import { dayPatterns, schedules } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
 import { canEdit, verifyDayAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
@@ -31,7 +31,7 @@ patternRoutes.get("/:tripId/days/:dayId/patterns", async (c) => {
     where: eq(dayPatterns.tripDayId, dayId),
     orderBy: (v, { asc }) => [asc(v.sortOrder)],
     with: {
-      spots: {
+      schedules: {
         orderBy: (s, { asc }) => [asc(s.sortOrder)],
       },
     },
@@ -145,7 +145,7 @@ patternRoutes.delete("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
   return c.json({ ok: true });
 });
 
-// Duplicate pattern (with spots)
+// Duplicate pattern (with schedules)
 patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
@@ -159,7 +159,7 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
 
   const source = await db.query.dayPatterns.findFirst({
     where: and(eq(dayPatterns.id, patternId), eq(dayPatterns.tripDayId, dayId)),
-    with: { spots: true },
+    with: { schedules: true },
   });
   if (!source) {
     return c.json({ error: ERROR_MSG.PATTERN_NOT_FOUND }, 404);
@@ -181,23 +181,23 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
       })
       .returning();
 
-    if (source.spots.length > 0) {
-      await tx.insert(spots).values(
-        source.spots.map((spot) => ({
+    if (source.schedules.length > 0) {
+      await tx.insert(schedules).values(
+        source.schedules.map((schedule) => ({
           tripId,
           dayPatternId: newPattern.id,
-          name: spot.name,
-          category: spot.category,
-          address: spot.address,
-          startTime: spot.startTime,
-          endTime: spot.endTime,
-          sortOrder: spot.sortOrder,
-          memo: spot.memo,
-          url: spot.url,
-          departurePlace: spot.departurePlace,
-          arrivalPlace: spot.arrivalPlace,
-          transportMethod: spot.transportMethod,
-          color: spot.color,
+          name: schedule.name,
+          category: schedule.category,
+          address: schedule.address,
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          sortOrder: schedule.sortOrder,
+          memo: schedule.memo,
+          url: schedule.url,
+          departurePlace: schedule.departurePlace,
+          arrivalPlace: schedule.arrivalPlace,
+          transportMethod: schedule.transportMethod,
+          color: schedule.color,
         })),
       );
     }

@@ -5,8 +5,8 @@ import { authRoutes } from "./routes/auth";
 import { candidateRoutes } from "./routes/candidates";
 import { memberRoutes } from "./routes/members";
 import { patternRoutes } from "./routes/patterns";
+import { scheduleRoutes } from "./routes/schedules";
 import { shareRoutes } from "./routes/share";
-import { spotRoutes } from "./routes/spots";
 import { tripRoutes } from "./routes/trips";
 
 const app = new Hono();
@@ -34,7 +34,7 @@ app.get("/health", (c) => {
 app.route("/", authRoutes);
 app.route("/api/trips", tripRoutes);
 app.route("/api/trips", patternRoutes);
-app.route("/api/trips", spotRoutes);
+app.route("/api/trips", scheduleRoutes);
 app.route("/api/trips", candidateRoutes);
 app.route("/api/trips", memberRoutes);
 app.route("/", shareRoutes);

@@ -18,14 +18,14 @@ vi.mock("../../lib/auth", () => ({
 
 import { tripMembers } from "../../db/schema";
 import { candidateRoutes } from "../../routes/candidates";
-import { spotRoutes } from "../../routes/spots";
+import { scheduleRoutes } from "../../routes/schedules";
 import { tripRoutes } from "../../routes/trips";
 import { cleanupTables, createTestUser, getTestDb, teardownTestDb } from "./setup";
 
 function createApp() {
   const app = new Hono();
   app.route("/api/trips", tripRoutes);
-  app.route("/api/trips", spotRoutes);
+  app.route("/api/trips", scheduleRoutes);
   app.route("/api/trips", candidateRoutes);
   return app;
 }
@@ -135,10 +135,10 @@ describe("Candidates Integration", () => {
     expect(detail.candidates).toHaveLength(1);
     expect(detail.candidates[0].name).toBe("Candidate");
 
-    // Candidate should NOT appear in any pattern's spots
+    // Candidate should NOT appear in any pattern's schedules
     for (const day of detail.days) {
       for (const pattern of day.patterns) {
-        expect(pattern.spots).toHaveLength(0);
+        expect(pattern.schedules).toHaveLength(0);
       }
     }
   });
@@ -178,7 +178,7 @@ describe("Candidates Integration", () => {
     const reorderRes = await app.request(`/api/trips/${tripId}/candidates/reorder`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ spotIds: [s2.id, s1.id] }),
+      body: JSON.stringify({ scheduleIds: [s2.id, s1.id] }),
     });
     expect(reorderRes.status).toBe(200);
 
@@ -211,10 +211,10 @@ describe("Candidates Integration", () => {
     expect(candidates).toHaveLength(0);
   });
 
-  it("unassigns a spot to candidates", async () => {
-    // Create a regular spot in the pattern
+  it("unassigns a schedule to candidates", async () => {
+    // Create a regular schedule in the pattern
     const createRes = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -222,12 +222,15 @@ describe("Candidates Integration", () => {
       },
     );
     expect(createRes.status).toBe(201);
-    const spot = await createRes.json();
+    const schedule = await createRes.json();
 
     // Unassign it
-    const unassignRes = await app.request(`/api/trips/${tripId}/spots/${spot.id}/unassign`, {
-      method: "POST",
-    });
+    const unassignRes = await app.request(
+      `/api/trips/${tripId}/schedules/${schedule.id}/unassign`,
+      {
+        method: "POST",
+      },
+    );
     expect(unassignRes.status).toBe(200);
     const unassigned = await unassignRes.json();
     expect(unassigned.dayPatternId).toBeNull();

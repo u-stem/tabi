@@ -2,7 +2,7 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import type { SpotResponse } from "@tabi/shared";
+import type { ScheduleResponse } from "@tabi/shared";
 import {
   ArrowUpDown,
   CheckCheck,
@@ -22,17 +22,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { api } from "@/lib/api";
-import { compareByStartTime, formatDate, getTimeStatus, type TimeStatus } from "@/lib/format";
+import {
+  compareByStartTime,
+  formatDate,
+  getTimeStatus,
+  type TimeStatus,
+  toDateString,
+} from "@/lib/format";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
-import { AddSpotDialog } from "./add-spot-dialog";
-import { SpotItem } from "./spot-item";
+import { AddScheduleDialog } from "./add-schedule-dialog";
+import { ScheduleItem } from "./schedule-item";
 
 type DayTimelineProps = {
   tripId: string;
   dayId: string;
   patternId: string;
   date: string;
-  spots: SpotResponse[];
+  schedules: ScheduleResponse[];
   onRefresh: () => void;
   disabled?: boolean;
   headerContent?: React.ReactNode;
@@ -54,7 +60,7 @@ export function DayTimeline({
   dayId,
   patternId,
   date,
-  spots,
+  schedules,
   onRefresh,
   disabled,
   headerContent,
@@ -76,20 +82,21 @@ export function DayTimeline({
   });
 
   const now = useCurrentTime();
-  const today = new Date();
-  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-  const isToday = date === todayStr;
+  const isToday = date === toDateString(new Date());
 
-  function getSpotTimeStatus(spot: SpotResponse): TimeStatus | null {
+  function getScheduleTimeStatus(schedule: ScheduleResponse): TimeStatus | null {
     if (!isToday) return null;
-    return getTimeStatus(now, spot.startTime, spot.endTime);
+    return getTimeStatus(now, schedule.startTime, schedule.endTime);
   }
 
-  async function handleDelete(spotId: string) {
+  async function handleDelete(scheduleId: string) {
     try {
-      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots/${spotId}`, {
-        method: "DELETE",
-      });
+      await api(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${scheduleId}`,
+        {
+          method: "DELETE",
+        },
+      );
       toast.success("予定を削除しました");
       onRefresh();
     } catch {
@@ -97,9 +104,9 @@ export function DayTimeline({
     }
   }
 
-  async function handleUnassign(spotId: string) {
+  async function handleUnassign(scheduleId: string) {
     try {
-      await api(`/api/trips/${tripId}/spots/${spotId}/unassign`, {
+      await api(`/api/trips/${tripId}/schedules/${scheduleId}/unassign`, {
         method: "POST",
       });
       toast.success("候補に戻しました");
@@ -110,16 +117,18 @@ export function DayTimeline({
   }
 
   const isSorted =
-    spots.length <= 1 ||
-    spots.every((spot, i) => i === 0 || compareByStartTime(spots[i - 1], spot) <= 0);
+    schedules.length <= 1 ||
+    schedules.every(
+      (schedule, i) => i === 0 || compareByStartTime(schedules[i - 1], schedule) <= 0,
+    );
 
   async function handleSortByTime() {
-    const sorted = [...spots].sort(compareByStartTime);
-    const spotIds = sorted.map((s) => s.id);
+    const sorted = [...schedules].sort(compareByStartTime);
+    const scheduleIds = sorted.map((s) => s.id);
     try {
-      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots/reorder`, {
+      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`, {
         method: "PATCH",
-        body: JSON.stringify({ spotIds }),
+        body: JSON.stringify({ scheduleIds }),
       });
       onRefresh();
     } catch {
@@ -182,7 +191,7 @@ export function DayTimeline({
           <span className="text-sm text-muted-foreground">{formatDate(date)}</span>
           <div className="flex items-center gap-1.5">
             {!disabled && (
-              <AddSpotDialog
+              <AddScheduleDialog
                 tripId={tripId}
                 dayId={dayId}
                 patternId={patternId}
@@ -190,7 +199,7 @@ export function DayTimeline({
                 disabled={disabled}
               />
             )}
-            {!disabled && spots.length > 0 && onEnterSelectionMode && (
+            {!disabled && schedules.length > 0 && onEnterSelectionMode && (
               <Button variant="outline" size="sm" onClick={onEnterSelectionMode}>
                 <CheckSquare className="h-4 w-4" />
                 選択
@@ -212,27 +221,27 @@ export function DayTimeline({
 
       {selectionMode ? (
         /* Selection mode: plain list without DnD */
-        spots.length === 0 ? (
+        schedules.length === 0 ? (
           <div className="rounded-md border border-dashed p-6 text-center">
             <p className="text-sm text-muted-foreground">まだ予定がありません</p>
           </div>
         ) : (
           <div>
-            {spots.map((spot, index) => (
-              <SpotItem
-                key={spot.id}
-                {...spot}
+            {schedules.map((schedule, index) => (
+              <ScheduleItem
+                key={schedule.id}
+                {...schedule}
                 tripId={tripId}
                 dayId={dayId}
                 patternId={patternId}
                 isFirst={index === 0}
-                isLast={index === spots.length - 1}
-                onDelete={() => handleDelete(spot.id)}
+                isLast={index === schedules.length - 1}
+                onDelete={() => handleDelete(schedule.id)}
                 onUpdate={onRefresh}
                 disabled={disabled}
-                timeStatus={getSpotTimeStatus(spot)}
+                timeStatus={getScheduleTimeStatus(schedule)}
                 selectable
-                selected={selectedIds?.has(spot.id)}
+                selected={selectedIds?.has(schedule.id)}
                 onSelect={onToggleSelect}
               />
             ))}
@@ -240,28 +249,31 @@ export function DayTimeline({
         )
       ) : (
         <div ref={setDroppableRef}>
-          <SortableContext items={spots.map((s) => s.id)} strategy={verticalListSortingStrategy}>
-            {spots.length === 0 ? (
+          <SortableContext
+            items={schedules.map((s) => s.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {schedules.length === 0 ? (
               <div className="rounded-md border border-dashed p-6 text-center">
                 <p className="text-sm text-muted-foreground">まだ予定がありません</p>
                 <p className="mt-1 text-xs text-muted-foreground">候補から追加しましょう</p>
               </div>
             ) : (
               <div>
-                {spots.map((spot, index) => (
-                  <SpotItem
-                    key={spot.id}
-                    {...spot}
+                {schedules.map((schedule, index) => (
+                  <ScheduleItem
+                    key={schedule.id}
+                    {...schedule}
                     tripId={tripId}
                     dayId={dayId}
                     patternId={patternId}
                     isFirst={index === 0}
-                    isLast={index === spots.length - 1}
-                    onDelete={() => handleDelete(spot.id)}
+                    isLast={index === schedules.length - 1}
+                    onDelete={() => handleDelete(schedule.id)}
                     onUpdate={onRefresh}
-                    onUnassign={disabled ? undefined : () => handleUnassign(spot.id)}
+                    onUnassign={disabled ? undefined : () => handleUnassign(schedule.id)}
                     disabled={disabled}
-                    timeStatus={getSpotTimeStatus(spot)}
+                    timeStatus={getScheduleTimeStatus(schedule)}
                   />
                 ))}
               </div>

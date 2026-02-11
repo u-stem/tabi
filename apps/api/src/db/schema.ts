@@ -24,7 +24,7 @@ export const transportMethodEnum = pgEnum("transport_method", [
   "airplane",
 ]);
 
-export const spotCategoryEnum = pgEnum("spot_category", [
+export const scheduleCategoryEnum = pgEnum("schedule_category", [
   "sightseeing",
   "restaurant",
   "hotel",
@@ -33,7 +33,7 @@ export const spotCategoryEnum = pgEnum("spot_category", [
   "other",
 ]);
 
-export const spotColorEnum = pgEnum("spot_color", [
+export const scheduleColorEnum = pgEnum("schedule_color", [
   "blue",
   "red",
   "green",
@@ -148,7 +148,7 @@ export const dayPatterns = pgTable("day_patterns", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const spots = pgTable("spots", {
+export const schedules = pgTable("schedules", {
   id: uuid("id").primaryKey().defaultRandom(),
   tripId: uuid("trip_id")
     .notNull()
@@ -157,7 +157,7 @@ export const spots = pgTable("spots", {
     onDelete: "cascade",
   }),
   name: varchar("name", { length: 200 }).notNull(),
-  category: spotCategoryEnum("category").notNull(),
+  category: scheduleCategoryEnum("category").notNull(),
   address: varchar("address", { length: 500 }),
   startTime: time("start_time"),
   endTime: time("end_time"),
@@ -167,7 +167,7 @@ export const spots = pgTable("spots", {
   departurePlace: varchar("departure_place", { length: 200 }),
   arrivalPlace: varchar("arrival_place", { length: 200 }),
   transportMethod: transportMethodEnum("transport_method"),
-  color: spotColorEnum("color").notNull().default("blue"),
+  color: scheduleColorEnum("color").notNull().default("blue"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -183,7 +183,7 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
   owner: one(users, { fields: [trips.ownerId], references: [users.id] }),
   members: many(tripMembers),
   days: many(tripDays),
-  spots: many(spots),
+  schedules: many(schedules),
 }));
 
 export const tripMembersRelations = relations(tripMembers, ({ one }) => ({
@@ -198,10 +198,10 @@ export const tripDaysRelations = relations(tripDays, ({ one, many }) => ({
 
 export const dayPatternsRelations = relations(dayPatterns, ({ one, many }) => ({
   tripDay: one(tripDays, { fields: [dayPatterns.tripDayId], references: [tripDays.id] }),
-  spots: many(spots),
+  schedules: many(schedules),
 }));
 
-export const spotsRelations = relations(spots, ({ one }) => ({
-  trip: one(trips, { fields: [spots.tripId], references: [trips.id] }),
-  dayPattern: one(dayPatterns, { fields: [spots.dayPatternId], references: [dayPatterns.id] }),
+export const schedulesRelations = relations(schedules, ({ one }) => ({
+  trip: one(trips, { fields: [schedules.tripId], references: [trips.id] }),
+  dayPattern: one(dayPatterns, { fields: [schedules.dayPatternId], references: [dayPatterns.id] }),
 }));

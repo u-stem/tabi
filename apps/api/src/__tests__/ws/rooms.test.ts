@@ -81,24 +81,24 @@ describe("Room management", () => {
       joinRoom("trip-1", ws2, user2);
 
       broadcastToTrip("trip-1", "u1", {
-        type: "spot:deleted",
+        type: "schedule:deleted",
         dayId: "d1",
         patternId: "p1",
-        spotId: "s1",
+        scheduleId: "s1",
       });
 
       expect(ws1.send).not.toHaveBeenCalled();
       expect(ws2.send).toHaveBeenCalledOnce();
       const sent = JSON.parse(ws2.send.mock.calls[0][0]);
-      expect(sent.type).toBe("spot:deleted");
+      expect(sent.type).toBe("schedule:deleted");
     });
 
     it("does nothing for non-existent room", () => {
       broadcastToTrip("no-room", "u1", {
-        type: "spot:deleted",
+        type: "schedule:deleted",
         dayId: "d1",
         patternId: "p1",
-        spotId: "s1",
+        scheduleId: "s1",
       });
     });
   });
@@ -168,24 +168,24 @@ describe("Room management", () => {
       joinRoom("trip-1", ws2, user2);
 
       broadcastToTrip("trip-1", "u1", {
-        type: "spot:deleted",
+        type: "schedule:deleted",
         dayId: "d1",
         patternId: "p1",
-        spotId: "s1",
+        scheduleId: "s1",
       });
 
       expect(ws1.send).not.toHaveBeenCalled();
       expect(ws2.send).toHaveBeenCalledOnce();
       const sent = JSON.parse(ws2.send.mock.calls[0][0]);
-      expect(sent.type).toBe("spot:deleted");
+      expect(sent.type).toBe("schedule:deleted");
     });
 
     it("does nothing for non-existent room", () => {
       broadcastToTrip("no-room", "u1", {
-        type: "spot:deleted",
+        type: "schedule:deleted",
         dayId: "d1",
         patternId: "p1",
-        spotId: "s1",
+        scheduleId: "s1",
       });
     });
 
@@ -205,10 +205,10 @@ describe("Room management", () => {
       });
 
       broadcastToTrip("trip-1", "u1", {
-        type: "spot:deleted",
+        type: "schedule:deleted",
         dayId: "d1",
         patternId: "p1",
-        spotId: "s1",
+        scheduleId: "s1",
       });
 
       expect(wsHealthy.send).toHaveBeenCalledOnce();

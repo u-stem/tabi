@@ -1,7 +1,7 @@
 "use client";
 
-import type { SpotColor, TransportMethod } from "@tabi/shared";
-import { SPOT_COLOR_LABELS, SPOT_COLORS } from "@tabi/shared";
+import type { ScheduleColor, TransportMethod } from "@tabi/shared";
+import { DEFAULT_SCHEDULE_CATEGORY, SCHEDULE_COLOR_LABELS, SCHEDULE_COLORS } from "@tabi/shared";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,12 +26,12 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { SPOT_COLOR_CLASSES } from "@/lib/colors";
+import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { validateTimeRange } from "@/lib/format";
-import { CATEGORY_OPTIONS, getTimeLabels, TRANSPORT_METHOD_OPTIONS } from "@/lib/spot-utils";
+import { CATEGORY_OPTIONS, getTimeLabels, TRANSPORT_METHOD_OPTIONS } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 
-type AddSpotDialogProps = {
+type AddScheduleDialogProps = {
   tripId: string;
   dayId: string;
   patternId: string;
@@ -39,13 +39,19 @@ type AddSpotDialogProps = {
   disabled?: boolean;
 };
 
-export function AddSpotDialog({ tripId, dayId, patternId, onAdd, disabled }: AddSpotDialogProps) {
+export function AddScheduleDialog({
+  tripId,
+  dayId,
+  patternId,
+  onAdd,
+  disabled,
+}: AddScheduleDialogProps) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [category, setCategory] = useState("sightseeing");
+  const [category, setCategory] = useState<string>(DEFAULT_SCHEDULE_CATEGORY);
   const [transportMethod, setTransportMethod] = useState<TransportMethod | "">("");
-  const [color, setColor] = useState<SpotColor>("blue");
+  const [color, setColor] = useState<ScheduleColor>("blue");
   const [startTime, setStartTime] = useState<string | undefined>();
   const [endTime, setEndTime] = useState<string | undefined>();
   const [timeError, setTimeError] = useState<string | null>(null);
@@ -84,7 +90,7 @@ export function AddSpotDialog({ tripId, dayId, patternId, onAdd, disabled }: Add
     };
 
     try {
-      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`, {
+      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`, {
         method: "POST",
         body: JSON.stringify(data),
       });
@@ -105,7 +111,7 @@ export function AddSpotDialog({ tripId, dayId, patternId, onAdd, disabled }: Add
         setOpen(isOpen);
         if (!isOpen) {
           setError(null);
-          setCategory("sightseeing");
+          setCategory(DEFAULT_SCHEDULE_CATEGORY);
           setTransportMethod("");
           setColor("blue");
           setStartTime(undefined);
@@ -154,17 +160,17 @@ export function AddSpotDialog({ tripId, dayId, patternId, onAdd, disabled }: Add
           <div className="space-y-2">
             <Label>色</Label>
             <div className="flex gap-2">
-              {SPOT_COLORS.map((c) => (
+              {SCHEDULE_COLORS.map((c) => (
                 <button
                   key={c}
                   type="button"
                   onClick={() => setColor(c)}
                   className={cn(
                     "h-6 w-6 rounded-full",
-                    SPOT_COLOR_CLASSES[c].bg,
-                    color === c && `ring-2 ring-offset-1 ${SPOT_COLOR_CLASSES[c].ring}`,
+                    SCHEDULE_COLOR_CLASSES[c].bg,
+                    color === c && `ring-2 ring-offset-1 ${SCHEDULE_COLOR_CLASSES[c].ring}`,
                   )}
-                  aria-label={SPOT_COLOR_LABELS[c]}
+                  aria-label={SCHEDULE_COLOR_LABELS[c]}
                 />
               ))}
             </div>

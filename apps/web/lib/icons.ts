@@ -1,4 +1,4 @@
-import type { SpotCategory, TransportMethod } from "@tabi/shared";
+import type { ScheduleCategory, TransportMethod } from "@tabi/shared";
 import {
   Bed,
   Bus,
@@ -12,7 +12,7 @@ import {
   Utensils,
 } from "lucide-react";
 
-export const CATEGORY_ICONS: Record<SpotCategory, typeof Camera> = {
+export const CATEGORY_ICONS: Record<ScheduleCategory, typeof Camera> = {
   sightseeing: Camera,
   restaurant: Utensils,
   hotel: Bed,

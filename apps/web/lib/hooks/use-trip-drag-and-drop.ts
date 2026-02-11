@@ -8,7 +8,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import type { SpotResponse } from "@tabi/shared";
+import type { ScheduleResponse } from "@tabi/shared";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -16,15 +16,15 @@ import { api } from "@/lib/api";
 type ActiveDragItem = {
   id: string;
   name: string;
-  source: "spot" | "candidate";
+  source: "schedule" | "candidate";
 };
 
 type UseTripDragAndDropArgs = {
   tripId: string;
   currentDayId: string | null;
   currentPatternId: string | null;
-  spots: SpotResponse[];
-  candidates: SpotResponse[];
+  schedules: ScheduleResponse[];
+  candidates: ScheduleResponse[];
   onDone: () => void;
 };
 
@@ -32,13 +32,13 @@ export function useTripDragAndDrop({
   tripId,
   currentDayId,
   currentPatternId,
-  spots,
+  schedules,
   candidates,
   onDone,
 }: UseTripDragAndDropArgs) {
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
-  const [localSpots, setLocalSpots] = useState<SpotResponse[]>([]);
-  const [localCandidates, setLocalCandidates] = useState<SpotResponse[]>([]);
+  const [localSchedules, setLocalSchedules] = useState<ScheduleResponse[]>([]);
+  const [localCandidates, setLocalCandidates] = useState<ScheduleResponse[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -48,11 +48,21 @@ export function useTripDragAndDrop({
   const collisionDetection = pointerWithin;
 
   useEffect(() => {
-    setLocalSpots(spots);
-  }, [spots]);
+    setLocalSchedules((prev) => {
+      if (prev.length === schedules.length && prev.every((s, i) => s === schedules[i])) {
+        return prev;
+      }
+      return schedules;
+    });
+  }, [schedules]);
 
   useEffect(() => {
-    setLocalCandidates(candidates);
+    setLocalCandidates((prev) => {
+      if (prev.length === candidates.length && prev.every((c, i) => c === candidates[i])) {
+        return prev;
+      }
+      return candidates;
+    });
   }, [candidates]);
 
   function handleDragStart(event: DragStartEvent) {
@@ -60,10 +70,10 @@ export function useTripDragAndDrop({
     const type = active.data.current?.type as string | undefined;
     if (!type) return;
 
-    const source = type === "candidate" ? "candidate" : "spot";
+    const source = type === "candidate" ? "candidate" : "schedule";
     let name = "";
-    if (source === "spot") {
-      name = localSpots.find((s) => s.id === active.id)?.name ?? "";
+    if (source === "schedule") {
+      name = localSchedules.find((s) => s.id === active.id)?.name ?? "";
     } else {
       name = localCandidates.find((c) => c.id === active.id)?.name ?? "";
     }
@@ -79,34 +89,34 @@ export function useTripDragAndDrop({
     const overType = over.data.current?.type as string | undefined;
 
     const isOverCandidates = overType === "candidates" || overType === "candidate";
-    const isOverTimeline = overType === "timeline" || overType === "spot";
+    const isOverTimeline = overType === "timeline" || overType === "schedule";
 
-    if (sourceType === "spot" && isOverTimeline) {
+    if (sourceType === "schedule" && isOverTimeline) {
       if (active.id === over.id) return;
-      const oldIndex = localSpots.findIndex((s) => s.id === active.id);
-      const overIndex = localSpots.findIndex((s) => s.id === over.id);
+      const oldIndex = localSchedules.findIndex((s) => s.id === active.id);
+      const overIndex = localSchedules.findIndex((s) => s.id === over.id);
       if (oldIndex === -1 || overIndex === -1) return;
 
-      const reordered = arrayMove(localSpots, oldIndex, overIndex);
-      setLocalSpots(reordered);
+      const reordered = arrayMove(localSchedules, oldIndex, overIndex);
+      setLocalSchedules(reordered);
 
-      const spotIds = reordered.map((s) => s.id);
+      const scheduleIds = reordered.map((s) => s.id);
       try {
         await api(
-          `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/spots/reorder`,
+          `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/reorder`,
           {
             method: "PATCH",
-            body: JSON.stringify({ spotIds }),
+            body: JSON.stringify({ scheduleIds }),
           },
         );
         onDone();
       } catch {
-        setLocalSpots(spots);
+        setLocalSchedules(schedules);
         toast.error("並び替えに失敗しました");
       }
-    } else if (sourceType === "spot" && isOverCandidates) {
+    } else if (sourceType === "schedule" && isOverCandidates) {
       try {
-        await api(`/api/trips/${tripId}/spots/${active.id}/unassign`, {
+        await api(`/api/trips/${tripId}/schedules/${active.id}/unassign`, {
           method: "POST",
         });
         toast.success("候補に戻しました");
@@ -121,16 +131,16 @@ export function useTripDragAndDrop({
           body: JSON.stringify({ dayPatternId: currentPatternId }),
         });
 
-        if (overType === "spot") {
-          const overIndex = localSpots.findIndex((s) => s.id === over.id);
+        if (overType === "schedule") {
+          const overIndex = localSchedules.findIndex((s) => s.id === over.id);
           if (overIndex !== -1) {
-            const spotIds = localSpots.map((s) => s.id);
-            spotIds.splice(overIndex, 0, String(active.id));
+            const scheduleIds = localSchedules.map((s) => s.id);
+            scheduleIds.splice(overIndex, 0, String(active.id));
             await api(
-              `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/spots/reorder`,
+              `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/reorder`,
               {
                 method: "PATCH",
-                body: JSON.stringify({ spotIds }),
+                body: JSON.stringify({ scheduleIds }),
               },
             );
           }
@@ -150,11 +160,11 @@ export function useTripDragAndDrop({
       const reordered = arrayMove(localCandidates, oldIndex, overIndex);
       setLocalCandidates(reordered);
 
-      const spotIds = reordered.map((c) => c.id);
+      const scheduleIds = reordered.map((c) => c.id);
       try {
         await api(`/api/trips/${tripId}/candidates/reorder`, {
           method: "PATCH",
-          body: JSON.stringify({ spotIds }),
+          body: JSON.stringify({ scheduleIds }),
         });
         onDone();
       } catch {
@@ -168,7 +178,7 @@ export function useTripDragAndDrop({
     sensors,
     collisionDetection,
     activeDragItem,
-    localSpots,
+    localSchedules,
     localCandidates,
     handleDragStart,
     handleDragEnd,

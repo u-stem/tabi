@@ -89,7 +89,7 @@ describe("Pattern routes", () => {
   describe(`GET ${basePath}`, () => {
     it("returns patterns for a day", async () => {
       const patterns = [
-        { id: "p-1", label: "デフォルト", isDefault: true, sortOrder: 0, spots: [] },
+        { id: "p-1", label: "デフォルト", isDefault: true, sortOrder: 0, schedules: [] },
       ];
       mockDbQuery.dayPatterns.findMany.mockResolvedValue(patterns);
 
@@ -278,8 +278,8 @@ describe("Pattern routes", () => {
   });
 
   describe(`POST ${basePath}/${patternId}/duplicate`, () => {
-    it("duplicates a pattern with spots", async () => {
-      const sourceSpots = [
+    it("duplicates a pattern with schedules", async () => {
+      const sourceSchedules = [
         {
           name: "Tokyo Tower",
           category: "sightseeing",
@@ -299,7 +299,7 @@ describe("Pattern routes", () => {
         id: patternId,
         tripDayId: dayId,
         label: "Sunny",
-        spots: sourceSpots,
+        schedules: sourceSchedules,
       });
 
       const duplicated = {

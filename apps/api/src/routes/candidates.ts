@@ -1,15 +1,15 @@
 import {
   assignCandidateSchema,
   batchAssignCandidatesSchema,
-  batchDeleteSpotsSchema,
-  createCandidateSpotSchema,
-  reorderSpotsSchema,
-  updateSpotSchema,
+  batchDeleteSchedulesSchema,
+  createCandidateSchema,
+  reorderSchedulesSchema,
+  updateScheduleSchema,
 } from "@tabi/shared";
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { dayPatterns, spots } from "../db/schema";
+import { dayPatterns, schedules } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
 import { canEdit, checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
@@ -29,8 +29,8 @@ candidateRoutes.get("/:tripId/candidates", async (c) => {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
-  const candidates = await db.query.spots.findMany({
-    where: and(eq(spots.tripId, tripId), isNull(spots.dayPatternId)),
+  const candidates = await db.query.schedules.findMany({
+    where: and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
     orderBy: (s, { asc }) => [asc(s.sortOrder)],
   });
   return c.json(candidates);
@@ -47,18 +47,18 @@ candidateRoutes.post("/:tripId/candidates", async (c) => {
   }
 
   const body = await c.req.json();
-  const parsed = createCandidateSpotSchema.safeParse(body);
+  const parsed = createCandidateSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
   const maxOrder = await db
-    .select({ max: sql<number>`COALESCE(MAX(${spots.sortOrder}), -1)` })
-    .from(spots)
-    .where(and(eq(spots.tripId, tripId), isNull(spots.dayPatternId)));
+    .select({ max: sql<number>`COALESCE(MAX(${schedules.sortOrder}), -1)` })
+    .from(schedules)
+    .where(and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)));
 
-  const [spot] = await db
-    .insert(spots)
+  const [schedule] = await db
+    .insert(schedules)
     .values({
       tripId,
       ...parsed.data,
@@ -66,8 +66,8 @@ candidateRoutes.post("/:tripId/candidates", async (c) => {
     })
     .returning();
 
-  broadcastToTrip(tripId, user.id, { type: "candidate:created", spot });
-  return c.json(spot, 201);
+  broadcastToTrip(tripId, user.id, { type: "candidate:created", schedule });
+  return c.json(schedule, 201);
 });
 
 // Batch assign candidates to a day pattern
@@ -86,14 +86,14 @@ candidateRoutes.post("/:tripId/candidates/batch-assign", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const candidates = await db.query.spots.findMany({
+  const candidates = await db.query.schedules.findMany({
     where: and(
-      inArray(spots.id, parsed.data.spotIds),
-      eq(spots.tripId, tripId),
-      isNull(spots.dayPatternId),
+      inArray(schedules.id, parsed.data.scheduleIds),
+      eq(schedules.tripId, tripId),
+      isNull(schedules.dayPatternId),
     ),
   });
-  if (candidates.length !== parsed.data.spotIds.length) {
+  if (candidates.length !== parsed.data.scheduleIds.length) {
     return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
   }
 
@@ -107,26 +107,26 @@ candidateRoutes.post("/:tripId/candidates/batch-assign", async (c) => {
 
   await db.transaction(async (tx) => {
     const maxOrder = await tx
-      .select({ max: sql<number>`COALESCE(MAX(${spots.sortOrder}), -1)` })
-      .from(spots)
-      .where(eq(spots.dayPatternId, parsed.data.dayPatternId));
+      .select({ max: sql<number>`COALESCE(MAX(${schedules.sortOrder}), -1)` })
+      .from(schedules)
+      .where(eq(schedules.dayPatternId, parsed.data.dayPatternId));
 
     let nextOrder = (maxOrder[0]?.max ?? -1) + 1;
-    for (const spotId of parsed.data.spotIds) {
+    for (const scheduleId of parsed.data.scheduleIds) {
       await tx
-        .update(spots)
+        .update(schedules)
         .set({
           dayPatternId: parsed.data.dayPatternId,
           sortOrder: nextOrder++,
           updatedAt: new Date(),
         })
-        .where(eq(spots.id, spotId));
+        .where(eq(schedules.id, scheduleId));
     }
   });
 
   broadcastToTrip(tripId, user.id, {
     type: "candidate:batch-assigned",
-    spotIds: parsed.data.spotIds,
+    scheduleIds: parsed.data.scheduleIds,
     dayId: pattern.tripDay.id,
     patternId: pattern.id,
   });
@@ -144,27 +144,27 @@ candidateRoutes.post("/:tripId/candidates/batch-delete", async (c) => {
   }
 
   const body = await c.req.json();
-  const parsed = batchDeleteSpotsSchema.safeParse(body);
+  const parsed = batchDeleteSchedulesSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const candidates = await db.query.spots.findMany({
+  const candidates = await db.query.schedules.findMany({
     where: and(
-      inArray(spots.id, parsed.data.spotIds),
-      eq(spots.tripId, tripId),
-      isNull(spots.dayPatternId),
+      inArray(schedules.id, parsed.data.scheduleIds),
+      eq(schedules.tripId, tripId),
+      isNull(schedules.dayPatternId),
     ),
   });
-  if (candidates.length !== parsed.data.spotIds.length) {
+  if (candidates.length !== parsed.data.scheduleIds.length) {
     return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
   }
 
-  await db.delete(spots).where(inArray(spots.id, parsed.data.spotIds));
+  await db.delete(schedules).where(inArray(schedules.id, parsed.data.scheduleIds));
 
   broadcastToTrip(tripId, user.id, {
     type: "candidate:batch-deleted",
-    spotIds: parsed.data.spotIds,
+    scheduleIds: parsed.data.scheduleIds,
   });
   return c.json({ ok: true });
 });
@@ -180,49 +180,49 @@ candidateRoutes.post("/:tripId/candidates/batch-duplicate", async (c) => {
   }
 
   const body = await c.req.json();
-  const parsed = batchDeleteSpotsSchema.safeParse(body);
+  const parsed = batchDeleteSchedulesSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const candidates = await db.query.spots.findMany({
+  const candidates = await db.query.schedules.findMany({
     where: and(
-      inArray(spots.id, parsed.data.spotIds),
-      eq(spots.tripId, tripId),
-      isNull(spots.dayPatternId),
+      inArray(schedules.id, parsed.data.scheduleIds),
+      eq(schedules.tripId, tripId),
+      isNull(schedules.dayPatternId),
     ),
   });
-  if (candidates.length !== parsed.data.spotIds.length) {
+  if (candidates.length !== parsed.data.scheduleIds.length) {
     return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
   }
 
   const maxOrder = await db
-    .select({ max: sql<number>`COALESCE(MAX(${spots.sortOrder}), -1)` })
-    .from(spots)
-    .where(and(eq(spots.tripId, tripId), isNull(spots.dayPatternId)));
+    .select({ max: sql<number>`COALESCE(MAX(${schedules.sortOrder}), -1)` })
+    .from(schedules)
+    .where(and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)));
 
   let nextOrder = (maxOrder[0]?.max ?? -1) + 1;
 
-  // Preserve the order of spotIds in the request
-  const spotById = new Map(candidates.map((s) => [s.id, s]));
-  const ordered = parsed.data.spotIds.map((id) => spotById.get(id)!);
+  // Preserve the order of scheduleIds in the request
+  const scheduleById = new Map(candidates.map((s) => [s.id, s]));
+  const ordered = parsed.data.scheduleIds.map((id) => scheduleById.get(id)!);
 
   const duplicated = await db
-    .insert(spots)
+    .insert(schedules)
     .values(
-      ordered.map((spot) => ({
+      ordered.map((schedule) => ({
         tripId,
-        name: spot.name,
-        category: spot.category,
-        address: spot.address,
-        startTime: spot.startTime,
-        endTime: spot.endTime,
-        memo: spot.memo,
-        url: spot.url,
-        departurePlace: spot.departurePlace,
-        arrivalPlace: spot.arrivalPlace,
-        transportMethod: spot.transportMethod,
-        color: spot.color,
+        name: schedule.name,
+        category: schedule.category,
+        address: schedule.address,
+        startTime: schedule.startTime,
+        endTime: schedule.endTime,
+        memo: schedule.memo,
+        url: schedule.url,
+        departurePlace: schedule.departurePlace,
+        arrivalPlace: schedule.arrivalPlace,
+        transportMethod: schedule.transportMethod,
+        color: schedule.color,
         sortOrder: nextOrder++,
       })),
     )
@@ -230,12 +230,12 @@ candidateRoutes.post("/:tripId/candidates/batch-duplicate", async (c) => {
 
   broadcastToTrip(tripId, user.id, {
     type: "candidate:batch-duplicated",
-    spotIds: parsed.data.spotIds,
+    scheduleIds: parsed.data.scheduleIds,
   });
   return c.json(duplicated, 201);
 });
 
-// Reorder candidates (registered before /:spotId to avoid route conflict)
+// Reorder candidates (registered before /:scheduleId to avoid route conflict)
 candidateRoutes.patch("/:tripId/candidates/reorder", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
@@ -246,42 +246,45 @@ candidateRoutes.patch("/:tripId/candidates/reorder", async (c) => {
   }
 
   const body = await c.req.json();
-  const parsed = reorderSpotsSchema.safeParse(body);
+  const parsed = reorderSchedulesSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  if (parsed.data.spotIds.length > 0) {
-    const targets = await db.query.spots.findMany({
+  if (parsed.data.scheduleIds.length > 0) {
+    const targets = await db.query.schedules.findMany({
       where: and(
-        inArray(spots.id, parsed.data.spotIds),
-        eq(spots.tripId, tripId),
-        isNull(spots.dayPatternId),
+        inArray(schedules.id, parsed.data.scheduleIds),
+        eq(schedules.tripId, tripId),
+        isNull(schedules.dayPatternId),
       ),
     });
-    if (targets.length !== parsed.data.spotIds.length) {
-      return c.json({ error: "Some spots are not candidates of this trip" }, 400);
+    if (targets.length !== parsed.data.scheduleIds.length) {
+      return c.json({ error: "Some schedules are not candidates of this trip" }, 400);
     }
   }
 
   await db.transaction(async (tx) => {
-    for (let i = 0; i < parsed.data.spotIds.length; i++) {
-      await tx.update(spots).set({ sortOrder: i }).where(eq(spots.id, parsed.data.spotIds[i]));
+    for (let i = 0; i < parsed.data.scheduleIds.length; i++) {
+      await tx
+        .update(schedules)
+        .set({ sortOrder: i })
+        .where(eq(schedules.id, parsed.data.scheduleIds[i]));
     }
   });
 
   broadcastToTrip(tripId, user.id, {
     type: "candidate:reordered",
-    spotIds: parsed.data.spotIds,
+    scheduleIds: parsed.data.scheduleIds,
   });
   return c.json({ ok: true });
 });
 
 // Update candidate
-candidateRoutes.patch("/:tripId/candidates/:spotId", async (c) => {
+candidateRoutes.patch("/:tripId/candidates/:scheduleId", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
-  const spotId = c.req.param("spotId");
+  const scheduleId = c.req.param("scheduleId");
 
   const role = await checkTripAccess(tripId, user.id);
   if (!canEdit(role)) {
@@ -289,56 +292,64 @@ candidateRoutes.patch("/:tripId/candidates/:spotId", async (c) => {
   }
 
   const body = await c.req.json();
-  const parsed = updateSpotSchema.safeParse(body);
+  const parsed = updateScheduleSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const existing = await db.query.spots.findFirst({
-    where: and(eq(spots.id, spotId), eq(spots.tripId, tripId), isNull(spots.dayPatternId)),
+  const existing = await db.query.schedules.findFirst({
+    where: and(
+      eq(schedules.id, scheduleId),
+      eq(schedules.tripId, tripId),
+      isNull(schedules.dayPatternId),
+    ),
   });
   if (!existing) {
     return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
   }
 
   const [updated] = await db
-    .update(spots)
+    .update(schedules)
     .set({ ...parsed.data, updatedAt: new Date() })
-    .where(eq(spots.id, spotId))
+    .where(eq(schedules.id, scheduleId))
     .returning();
 
-  broadcastToTrip(tripId, user.id, { type: "candidate:updated", spot: updated });
+  broadcastToTrip(tripId, user.id, { type: "candidate:updated", schedule: updated });
   return c.json(updated);
 });
 
 // Delete candidate
-candidateRoutes.delete("/:tripId/candidates/:spotId", async (c) => {
+candidateRoutes.delete("/:tripId/candidates/:scheduleId", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
-  const spotId = c.req.param("spotId");
+  const scheduleId = c.req.param("scheduleId");
 
   const role = await checkTripAccess(tripId, user.id);
   if (!canEdit(role)) {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
-  const existing = await db.query.spots.findFirst({
-    where: and(eq(spots.id, spotId), eq(spots.tripId, tripId), isNull(spots.dayPatternId)),
+  const existing = await db.query.schedules.findFirst({
+    where: and(
+      eq(schedules.id, scheduleId),
+      eq(schedules.tripId, tripId),
+      isNull(schedules.dayPatternId),
+    ),
   });
   if (!existing) {
     return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
   }
 
-  await db.delete(spots).where(eq(spots.id, spotId));
-  broadcastToTrip(tripId, user.id, { type: "candidate:deleted", spotId });
+  await db.delete(schedules).where(eq(schedules.id, scheduleId));
+  broadcastToTrip(tripId, user.id, { type: "candidate:deleted", scheduleId });
   return c.json({ ok: true });
 });
 
 // Assign candidate to a day pattern
-candidateRoutes.post("/:tripId/candidates/:spotId/assign", async (c) => {
+candidateRoutes.post("/:tripId/candidates/:scheduleId/assign", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
-  const spotId = c.req.param("spotId");
+  const scheduleId = c.req.param("scheduleId");
 
   const role = await checkTripAccess(tripId, user.id);
   if (!canEdit(role)) {
@@ -351,8 +362,12 @@ candidateRoutes.post("/:tripId/candidates/:spotId/assign", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const existing = await db.query.spots.findFirst({
-    where: and(eq(spots.id, spotId), eq(spots.tripId, tripId), isNull(spots.dayPatternId)),
+  const existing = await db.query.schedules.findFirst({
+    where: and(
+      eq(schedules.id, scheduleId),
+      eq(schedules.tripId, tripId),
+      isNull(schedules.dayPatternId),
+    ),
   });
   if (!existing) {
     return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
@@ -367,23 +382,23 @@ candidateRoutes.post("/:tripId/candidates/:spotId/assign", async (c) => {
   }
 
   const maxOrder = await db
-    .select({ max: sql<number>`COALESCE(MAX(${spots.sortOrder}), -1)` })
-    .from(spots)
-    .where(eq(spots.dayPatternId, parsed.data.dayPatternId));
+    .select({ max: sql<number>`COALESCE(MAX(${schedules.sortOrder}), -1)` })
+    .from(schedules)
+    .where(eq(schedules.dayPatternId, parsed.data.dayPatternId));
 
   const [updated] = await db
-    .update(spots)
+    .update(schedules)
     .set({
       dayPatternId: parsed.data.dayPatternId,
       sortOrder: (maxOrder[0]?.max ?? -1) + 1,
       updatedAt: new Date(),
     })
-    .where(eq(spots.id, spotId))
+    .where(eq(schedules.id, scheduleId))
     .returning();
 
   broadcastToTrip(tripId, user.id, {
-    type: "spot:assigned",
-    spot: updated,
+    type: "schedule:assigned",
+    schedule: updated,
     dayId: pattern.tripDay.id,
     patternId: pattern.id,
   });

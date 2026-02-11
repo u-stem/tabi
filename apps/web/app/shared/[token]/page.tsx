@@ -96,35 +96,37 @@ function PatternSection({
       {showLabel && (
         <p className="mb-1 text-sm font-medium text-muted-foreground">{pattern.label}</p>
       )}
-      {pattern.spots.length === 0 ? (
+      {pattern.schedules.length === 0 ? (
         <p className="text-sm text-muted-foreground">まだ予定がありません</p>
       ) : (
         <div className="space-y-2">
-          {pattern.spots.map((spot) => (
-            <div key={spot.id} className="rounded-md border p-3">
+          {pattern.schedules.map((schedule) => (
+            <div key={schedule.id} className="rounded-md border p-3">
               <div className="flex items-center gap-2">
                 <span className="rounded bg-secondary px-1.5 py-0.5 text-xs text-secondary-foreground">
-                  {CATEGORY_LABELS[spot.category]}
+                  {CATEGORY_LABELS[schedule.category]}
                 </span>
-                <span className="font-medium">{spot.name}</span>
-                {spot.startTime && (
+                <span className="font-medium">{schedule.name}</span>
+                {schedule.startTime && (
                   <span className="text-xs text-muted-foreground">
-                    {spot.startTime}
-                    {spot.endTime && ` - ${spot.endTime}`}
+                    {schedule.startTime}
+                    {schedule.endTime && ` - ${schedule.endTime}`}
                   </span>
                 )}
               </div>
-              {spot.category === "transport" &&
-                (spot.departurePlace || spot.arrivalPlace || spot.transportMethod) && (
+              {schedule.category === "transport" &&
+                (schedule.departurePlace || schedule.arrivalPlace || schedule.transportMethod) && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    {spot.departurePlace && spot.arrivalPlace
-                      ? `${spot.departurePlace} → ${spot.arrivalPlace}`
-                      : spot.departurePlace || spot.arrivalPlace}
-                    {spot.transportMethod &&
-                      ` (${TRANSPORT_METHOD_LABELS[spot.transportMethod as TransportMethod]})`}
+                    {schedule.departurePlace && schedule.arrivalPlace
+                      ? `${schedule.departurePlace} → ${schedule.arrivalPlace}`
+                      : schedule.departurePlace || schedule.arrivalPlace}
+                    {schedule.transportMethod &&
+                      ` (${TRANSPORT_METHOD_LABELS[schedule.transportMethod as TransportMethod]})`}
                   </p>
                 )}
-              {spot.memo && <p className="mt-1 text-sm text-muted-foreground">{spot.memo}</p>}
+              {schedule.memo && (
+                <p className="mt-1 text-sm text-muted-foreground">{schedule.memo}</p>
+              )}
             </div>
           ))}
         </div>

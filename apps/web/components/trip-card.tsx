@@ -6,6 +6,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
+import { SELECTED_RING } from "@/lib/colors";
 import { formatDateRange, getDayCount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
@@ -36,7 +37,7 @@ export function TripCard({
   endDate,
   status,
   role,
-  totalSpots,
+  totalSchedules,
   selectable = false,
   selected = false,
   onSelect,
@@ -70,7 +71,7 @@ export function TripCard({
           {formatDateRange(startDate, endDate)} ({dayCount}日間)
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {totalSpots > 0 ? `${totalSpots}件の予定` : "予定なし"}
+          {totalSchedules > 0 ? `${totalSchedules}件の予定` : "予定なし"}
         </p>
       </CardContent>
     </>
@@ -87,7 +88,7 @@ export function TripCard({
         <Card
           className={cn(
             "transition-colors hover:bg-accent/50 group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring",
-            selected && "border-ring ring-2 ring-ring",
+            selected && SELECTED_RING,
           )}
         >
           {inner}

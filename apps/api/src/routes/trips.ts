@@ -2,7 +2,7 @@ import { createTripSchema, updateTripSchema } from "@tabi/shared";
 import { and, asc, eq, inArray, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { dayPatterns, spots, tripDays, tripMembers, trips } from "../db/schema";
+import { dayPatterns, schedules, tripDays, tripMembers, trips } from "../db/schema";
 import { DEFAULT_PATTERN_LABEL, ERROR_MSG, MAX_TRIP_DAYS } from "../lib/constants";
 import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
@@ -49,7 +49,7 @@ tripRoutes.get("/", async (c) => {
           days: {
             with: {
               patterns: {
-                with: { spots: { columns: { id: true } } },
+                with: { schedules: { columns: { id: true } } },
               },
             },
           },
@@ -63,8 +63,8 @@ tripRoutes.get("/", async (c) => {
     return {
       ...rest,
       role,
-      totalSpots: days.reduce(
-        (sum, day) => sum + day.patterns.reduce((vSum, v) => vSum + v.spots.length, 0),
+      totalSchedules: days.reduce(
+        (sum, day) => sum + day.patterns.reduce((vSum, v) => vSum + v.schedules.length, 0),
         0,
       ),
     };
@@ -142,7 +142,7 @@ tripRoutes.post("/", async (c) => {
   return c.json(trip, 201);
 });
 
-// Get trip detail with days and spots (any member can view)
+// Get trip detail with days and schedules (any member can view)
 tripRoutes.get("/:id", async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("id");
@@ -161,8 +161,8 @@ tripRoutes.get("/:id", async (c) => {
           patterns: {
             orderBy: (patterns, { asc }) => [asc(patterns.sortOrder)],
             with: {
-              spots: {
-                orderBy: (spots, { asc }) => [asc(spots.sortOrder)],
+              schedules: {
+                orderBy: (schedules, { asc }) => [asc(schedules.sortOrder)],
               },
             },
           },
@@ -175,8 +175,8 @@ tripRoutes.get("/:id", async (c) => {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
-  const candidates = await db.query.spots.findMany({
-    where: and(eq(spots.tripId, tripId), isNull(spots.dayPatternId)),
+  const candidates = await db.query.schedules.findMany({
+    where: and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
     orderBy: (s, { asc }) => [asc(s.sortOrder)],
   });
 
@@ -343,8 +343,8 @@ tripRoutes.post("/:id/duplicate", async (c) => {
           patterns: {
             orderBy: (patterns, { asc }) => [asc(patterns.sortOrder)],
             with: {
-              spots: {
-                orderBy: (spots, { asc }) => [asc(spots.sortOrder)],
+              schedules: {
+                orderBy: (schedules, { asc }) => [asc(schedules.sortOrder)],
               },
             },
           },
@@ -390,23 +390,23 @@ tripRoutes.post("/:id/duplicate", async (c) => {
           })
           .returning({ id: dayPatterns.id });
 
-        if (pattern.spots.length > 0) {
-          await tx.insert(spots).values(
-            pattern.spots.map((spot) => ({
+        if (pattern.schedules.length > 0) {
+          await tx.insert(schedules).values(
+            pattern.schedules.map((schedule) => ({
               tripId: created.id,
               dayPatternId: newPattern.id,
-              name: spot.name,
-              category: spot.category,
-              address: spot.address,
-              startTime: spot.startTime,
-              endTime: spot.endTime,
-              sortOrder: spot.sortOrder,
-              memo: spot.memo,
-              url: spot.url,
-              departurePlace: spot.departurePlace,
-              arrivalPlace: spot.arrivalPlace,
-              transportMethod: spot.transportMethod,
-              color: spot.color,
+              name: schedule.name,
+              category: schedule.category,
+              address: schedule.address,
+              startTime: schedule.startTime,
+              endTime: schedule.endTime,
+              sortOrder: schedule.sortOrder,
+              memo: schedule.memo,
+              url: schedule.url,
+              departurePlace: schedule.departurePlace,
+              arrivalPlace: schedule.arrivalPlace,
+              transportMethod: schedule.transportMethod,
+              color: schedule.color,
             })),
           );
         }

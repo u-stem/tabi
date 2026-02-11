@@ -34,10 +34,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
-import { formatDateRange, getDayCount, getTimeStatus } from "@/lib/format";
+import { formatDateRange, getDayCount, getTimeStatus, toDateString } from "@/lib/format";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
-import { useSpotSelection } from "@/lib/hooks/use-spot-selection";
+import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
 import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
 import { cn } from "@/lib/utils";
@@ -113,8 +113,7 @@ export default function TripDetailPage() {
     // Only owner/editor can change status; skip for viewer to avoid infinite retry
     if (trip.role === "viewer") return;
 
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+    const todayStr = toDateString(new Date());
 
     let nextStatus: string | null = null;
     let message = "";
@@ -124,10 +123,10 @@ export default function TripDetailPage() {
       if (todayStr > trip.startDate) {
         shouldActivate = true;
       } else if (todayStr === trip.startDate) {
-        const todaySpots = trip.days
+        const todaySchedules = trip.days
           .filter((d) => d.date === todayStr)
-          .flatMap((d) => d.patterns.flatMap((p) => p.spots));
-        shouldActivate = todaySpots.some(
+          .flatMap((d) => d.patterns.flatMap((p) => p.schedules));
+        shouldActivate = todaySchedules.some(
           (spot) => getTimeStatus(now, spot.startTime, spot.endTime) !== "future",
         );
       }
@@ -140,11 +139,11 @@ export default function TripDetailPage() {
       if (todayStr > trip.endDate) {
         allDone = true;
       } else if (todayStr === trip.endDate) {
-        const todaySpots = trip.days
+        const todaySchedules = trip.days
           .filter((d) => d.date === todayStr)
-          .flatMap((d) => d.patterns.flatMap((p) => p.spots));
-        if (todaySpots.length > 0) {
-          allDone = todaySpots.every(
+          .flatMap((d) => d.patterns.flatMap((p) => p.schedules));
+        if (todaySchedules.length > 0) {
+          allDone = todaySchedules.every(
             (spot) => getTimeStatus(now, spot.startTime, spot.endTime) === "past",
           );
         }
@@ -171,12 +170,16 @@ export default function TripDetailPage() {
     }
   }, [trip, now, tripId, fetchTrip]);
 
+  // Stable references to avoid infinite re-render when values are null
+  const dndSchedules = useMemo(() => currentPattern?.schedules ?? [], [currentPattern?.schedules]);
+  const dndCandidates = useMemo(() => trip?.candidates ?? [], [trip?.candidates]);
+
   const dnd = useTripDragAndDrop({
     tripId,
     currentDayId: currentDay?.id ?? null,
     currentPatternId: currentPattern?.id ?? null,
-    spots: currentPattern?.spots ?? [],
-    candidates: trip?.candidates ?? [],
+    schedules: dndSchedules,
+    candidates: dndCandidates,
     onDone: fetchTrip,
   });
 
@@ -248,9 +251,9 @@ export default function TripDetailPage() {
     }
   }
 
-  const timelineSpotIds = useMemo(
-    () => new Set(currentPattern?.spots.map((s) => s.id) ?? []),
-    [currentPattern?.spots],
+  const timelineScheduleIds = useMemo(
+    () => new Set(currentPattern?.schedules.map((s) => s.id) ?? []),
+    [currentPattern?.schedules],
   );
 
   const candidateIds = useMemo(
@@ -258,11 +261,11 @@ export default function TripDetailPage() {
     [dnd.localCandidates],
   );
 
-  const selection = useSpotSelection({
+  const selection = useScheduleSelection({
     tripId,
     currentDayId: currentDay?.id ?? null,
     currentPatternId: currentPattern?.id ?? null,
-    timelineSpotIds,
+    timelineScheduleIds,
     candidateIds,
     onDone: fetchTrip,
   });
@@ -400,7 +403,7 @@ export default function TripDetailPage() {
                   dayId={currentDay.id}
                   patternId={currentPattern.id}
                   date={currentDay.date}
-                  spots={dnd.localSpots}
+                  schedules={dnd.localSchedules}
                   onRefresh={fetchTrip}
                   disabled={!online || !canEdit}
                   selectionMode={selection.selectionTarget === "timeline"}
@@ -415,7 +418,7 @@ export default function TripDetailPage() {
                   onSelectAll={selection.selectAll}
                   onDeselectAll={selection.deselectAll}
                   onBatchUnassign={selection.batchUnassign}
-                  onBatchDuplicate={selection.batchDuplicateSpots}
+                  onBatchDuplicate={selection.batchDuplicateSchedules}
                   onBatchDelete={() => selection.setBatchDeleteOpen(true)}
                   batchLoading={selection.batchLoading}
                   headerContent={

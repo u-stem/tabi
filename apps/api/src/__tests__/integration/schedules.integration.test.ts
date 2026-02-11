@@ -18,7 +18,7 @@ vi.mock("../../lib/auth", () => ({
 
 import { tripMembers } from "../../db/schema";
 import { patternRoutes } from "../../routes/patterns";
-import { spotRoutes } from "../../routes/spots";
+import { scheduleRoutes } from "../../routes/schedules";
 import { tripRoutes } from "../../routes/trips";
 import { cleanupTables, createTestUser, getTestDb, teardownTestDb } from "./setup";
 
@@ -26,11 +26,11 @@ function createApp() {
   const app = new Hono();
   app.route("/api/trips", tripRoutes);
   app.route("/api/trips", patternRoutes);
-  app.route("/api/trips", spotRoutes);
+  app.route("/api/trips", scheduleRoutes);
   return app;
 }
 
-describe("Spots Integration", () => {
+describe("Schedules Integration", () => {
   const app = createApp();
   let owner: { id: string; name: string; email: string };
   let tripId: string;
@@ -45,12 +45,12 @@ describe("Spots Integration", () => {
       session: { id: "test-session" },
     }));
 
-    // Create a trip to use in spot tests
+    // Create a trip to use in schedule tests
     const res = await app.request("/api/trips", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        title: "Spot Test Trip",
+        title: "Schedule Test Trip",
         destination: "Tokyo",
         startDate: "2025-04-01",
         endDate: "2025-04-02",
@@ -71,9 +71,9 @@ describe("Spots Integration", () => {
     await teardownTestDb();
   });
 
-  it("creates a spot with correct sort order", async () => {
+  it("creates a schedule with correct sort order", async () => {
     const res = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,21 +85,21 @@ describe("Spots Integration", () => {
     );
 
     expect(res.status).toBe(201);
-    const spot = await res.json();
-    expect(spot.name).toBe("Tokyo Tower");
-    expect(spot.category).toBe("sightseeing");
-    expect(spot.sortOrder).toBe(0);
+    const schedule = await res.json();
+    expect(schedule.name).toBe("Tokyo Tower");
+    expect(schedule.category).toBe("sightseeing");
+    expect(schedule.sortOrder).toBe(0);
   });
 
-  it("increments sort order for subsequent spots", async () => {
-    await app.request(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`, {
+  it("increments sort order for subsequent schedules", async () => {
+    await app.request(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name: "First", category: "sightseeing" }),
     });
 
     const res = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -107,84 +107,86 @@ describe("Spots Integration", () => {
       },
     );
 
-    const spot = await res.json();
-    expect(spot.sortOrder).toBe(1);
+    const schedule = await res.json();
+    expect(schedule.sortOrder).toBe(1);
   });
 
-  it("lists spots ordered by sort_order", async () => {
-    await app.request(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`, {
+  it("lists schedules ordered by sort_order", async () => {
+    await app.request(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "A Spot", category: "sightseeing" }),
+      body: JSON.stringify({ name: "A Schedule", category: "sightseeing" }),
     });
-    await app.request(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`, {
+    await app.request(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "B Spot", category: "restaurant" }),
+      body: JSON.stringify({ name: "B Schedule", category: "restaurant" }),
     });
 
-    const res = await app.request(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`);
+    const res = await app.request(
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+    );
     expect(res.status).toBe(200);
-    const spots = await res.json();
-    expect(spots).toHaveLength(2);
-    expect(spots[0].name).toBe("A Spot");
-    expect(spots[1].name).toBe("B Spot");
+    const scheduleList = await res.json();
+    expect(scheduleList).toHaveLength(2);
+    expect(scheduleList[0].name).toBe("A Schedule");
+    expect(scheduleList[1].name).toBe("B Schedule");
   });
 
-  it("reorders spots", async () => {
+  it("reorders schedules", async () => {
     const res1 = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "First", category: "sightseeing" }),
       },
     );
-    const spot1 = await res1.json();
+    const schedule1 = await res1.json();
 
     const res2 = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "Second", category: "restaurant" }),
       },
     );
-    const spot2 = await res2.json();
+    const schedule2 = await res2.json();
 
     // Reorder: Second first, then First
     const reorderRes = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots/reorder`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spotIds: [spot2.id, spot1.id] }),
+        body: JSON.stringify({ scheduleIds: [schedule2.id, schedule1.id] }),
       },
     );
     expect(reorderRes.status).toBe(200);
 
     // Verify new order
     const listRes = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
     );
-    const spots = await listRes.json();
-    expect(spots[0].name).toBe("Second");
-    expect(spots[1].name).toBe("First");
+    const scheduleList = await listRes.json();
+    expect(scheduleList[0].name).toBe("Second");
+    expect(scheduleList[1].name).toBe("First");
   });
 
-  it("updates a spot", async () => {
+  it("updates a schedule", async () => {
     const createRes = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "Old Name", category: "sightseeing" }),
       },
     );
-    const spot = await createRes.json();
+    const schedule = await createRes.json();
 
     const res = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots/${spot.id}`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${schedule.id}`,
       {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -197,19 +199,19 @@ describe("Spots Integration", () => {
     expect(updated.memo).toBe("Updated memo");
   });
 
-  it("deletes a spot", async () => {
+  it("deletes a schedule", async () => {
     const createRes = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "Delete Me", category: "other" }),
       },
     );
-    const spot = await createRes.json();
+    const schedule = await createRes.json();
 
     const res = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots/${spot.id}`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${schedule.id}`,
       {
         method: "DELETE",
       },
@@ -218,13 +220,13 @@ describe("Spots Integration", () => {
 
     // Verify deleted
     const listRes = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
     );
-    const spots = await listRes.json();
-    expect(spots).toHaveLength(0);
+    const scheduleList = await listRes.json();
+    expect(scheduleList).toHaveLength(0);
   });
 
-  it("viewer cannot create spots", async () => {
+  it("viewer cannot create schedules", async () => {
     const viewer = await createTestUser({ name: "Viewer", email: "viewer@test.com" });
     const db = getTestDb();
     await db.insert(tripMembers).values({
@@ -239,7 +241,7 @@ describe("Spots Integration", () => {
     }));
 
     const res = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -249,9 +251,9 @@ describe("Spots Integration", () => {
     expect(res.status).toBe(404);
   });
 
-  it("creates a spot with address", async () => {
+  it("creates a schedule with address", async () => {
     const res = await app.request(
-      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`,
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -264,7 +266,7 @@ describe("Spots Integration", () => {
     );
 
     expect(res.status).toBe(201);
-    const spot = await res.json();
-    expect(spot.address).toBe("4-2-8 Shibakoen, Minato City, Tokyo");
+    const schedule = await res.json();
+    expect(schedule.address).toBe("4-2-8 Shibakoen, Minato City, Tokyo");
   });
 });

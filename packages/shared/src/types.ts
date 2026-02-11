@@ -1,11 +1,11 @@
 import type { MemberRole } from "./schemas/member";
-import type { SpotCategory, SpotColor } from "./schemas/spot";
+import type { ScheduleCategory, ScheduleColor } from "./schemas/schedule";
 import type { TripStatus } from "./schemas/trip";
 
-export type SpotResponse = {
+export type ScheduleResponse = {
   id: string;
   name: string;
-  category: SpotCategory;
+  category: ScheduleCategory;
   address?: string | null;
   startTime?: string | null;
   endTime?: string | null;
@@ -15,7 +15,7 @@ export type SpotResponse = {
   departurePlace?: string | null;
   arrivalPlace?: string | null;
   transportMethod?: string | null;
-  color: SpotColor;
+  color: ScheduleColor;
 };
 
 export type DayPatternResponse = {
@@ -23,7 +23,7 @@ export type DayPatternResponse = {
   label: string;
   isDefault: boolean;
   sortOrder: number;
-  spots: SpotResponse[];
+  schedules: ScheduleResponse[];
 };
 
 export type DayResponse = {
@@ -43,7 +43,7 @@ export type TripResponse = {
   status: TripStatus;
   role: MemberRole;
   days: DayResponse[];
-  candidates: SpotResponse[];
+  candidates: ScheduleResponse[];
 };
 
 export type TripListItem = {
@@ -54,7 +54,7 @@ export type TripListItem = {
   endDate: string;
   status: TripStatus;
   role: MemberRole;
-  totalSpots: number;
+  totalSchedules: number;
 };
 
 export type MemberResponse = {

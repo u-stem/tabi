@@ -13,7 +13,7 @@ const SAMPLE_TRIP = {
   endDate: "2025-04-03",
 };
 
-const SAMPLE_SPOTS = [
+const SAMPLE_SCHEDULES = [
   {
     dayIndex: 0,
     name: "金閣寺",
@@ -195,20 +195,20 @@ async function main() {
   }>(`/api/trips/${trip.id}`, { headers: { cookie: ownerCookies } });
   const days = tripDetail.days.sort((a, b) => a.dayNumber - b.dayNumber);
 
-  // 4. Create spots via pattern-scoped URLs
-  console.log(`\nCreating ${SAMPLE_SPOTS.length} spots...`);
-  for (const spot of SAMPLE_SPOTS) {
-    const day = days[spot.dayIndex];
+  // 4. Create schedules via pattern-scoped URLs
+  console.log(`\nCreating ${SAMPLE_SCHEDULES.length} schedules...`);
+  for (const schedule of SAMPLE_SCHEDULES) {
+    const day = days[schedule.dayIndex];
     if (!day) continue;
     const defaultPattern = day.patterns.find((v) => v.isDefault) ?? day.patterns[0];
     if (!defaultPattern) continue;
-    const { dayIndex: _, ...spotData } = spot;
-    await apiFetch(`/api/trips/${trip.id}/days/${day.id}/patterns/${defaultPattern.id}/spots`, {
+    const { dayIndex: _, ...scheduleData } = schedule;
+    await apiFetch(`/api/trips/${trip.id}/days/${day.id}/patterns/${defaultPattern.id}/schedules`, {
       method: "POST",
-      body: JSON.stringify(spotData),
+      body: JSON.stringify(scheduleData),
       headers: { cookie: ownerCookies },
     });
-    console.log(`  ${day.dayNumber}日目: ${spot.name}`);
+    console.log(`  ${day.dayNumber}日目: ${schedule.name}`);
   }
 
   // 5. Add other users as trip members

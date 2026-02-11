@@ -3,7 +3,12 @@
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { CATEGORY_LABELS, type SpotCategory, type SpotResponse } from "@tabi/shared";
+import {
+  CATEGORY_LABELS,
+  DEFAULT_SCHEDULE_CATEGORY,
+  type ScheduleCategory,
+  type ScheduleResponse,
+} from "@tabi/shared";
 import {
   ArrowLeft,
   Check,
@@ -54,13 +59,13 @@ import {
 } from "@/components/ui/select";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { api } from "@/lib/api";
-import { SPOT_COLOR_CLASSES } from "@/lib/colors";
-import { CATEGORY_OPTIONS } from "@/lib/spot-utils";
+import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
+import { CATEGORY_OPTIONS } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 
 type CandidatePanelProps = {
   tripId: string;
-  candidates: SpotResponse[];
+  candidates: ScheduleResponse[];
   currentPatternId: string;
   onRefresh: () => void;
   disabled?: boolean;
@@ -116,7 +121,7 @@ function CandidateCard({
   onSelect,
   draggable,
 }: {
-  spot: SpotResponse;
+  spot: ScheduleResponse;
   onEdit: () => void;
   onDelete: () => void;
   onAssign: () => void;
@@ -147,7 +152,7 @@ function CandidateCard({
           "flex items-center gap-2 rounded-md border p-2",
           isDragging && "opacity-50",
           selectable && "cursor-pointer transition-colors hover:bg-accent/50",
-          selectable && selected && "border-ring ring-2 ring-ring",
+          selectable && selected && SELECTED_RING,
         )}
         {...(selectable
           ? {
@@ -170,13 +175,13 @@ function CandidateCard({
           <CandidateDragHandle attributes={attributes} listeners={listeners} />
         ) : (
           <span
-            className={`h-2.5 w-2.5 shrink-0 rounded-full ${SPOT_COLOR_CLASSES[spot.color].bg}`}
+            className={`h-2.5 w-2.5 shrink-0 rounded-full ${SCHEDULE_COLOR_CLASSES[spot.color].bg}`}
           />
         )}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{spot.name}</p>
           <p className="text-xs text-muted-foreground">
-            {CATEGORY_LABELS[spot.category as SpotCategory]}
+            {CATEGORY_LABELS[spot.category as ScheduleCategory]}
           </p>
         </div>
         {!disabled && !selectable && (
@@ -256,10 +261,10 @@ export function CandidatePanel({
   });
   const [addOpen, setAddOpen] = useState(false);
   const [addLoading, setAddLoading] = useState(false);
-  const [category, setCategory] = useState("sightseeing");
-  const [editSpot, setEditSpot] = useState<SpotResponse | null>(null);
+  const [category, setCategory] = useState<string>(DEFAULT_SCHEDULE_CATEGORY);
+  const [editSchedule, setEditSchedule] = useState<ScheduleResponse | null>(null);
   const [editLoading, setEditLoading] = useState(false);
-  const [editCategory, setEditCategory] = useState("sightseeing");
+  const [editCategory, setEditCategory] = useState<string>(DEFAULT_SCHEDULE_CATEGORY);
 
   async function handleAssign(spotId: string) {
     try {
@@ -309,14 +314,14 @@ export function CandidatePanel({
     }
   }
 
-  function openEdit(spot: SpotResponse) {
-    setEditSpot(spot);
+  function openEdit(spot: ScheduleResponse) {
+    setEditSchedule(spot);
     setEditCategory(spot.category);
   }
 
   async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (!editSpot) return;
+    if (!editSchedule) return;
     setEditLoading(true);
 
     const formData = new FormData(e.currentTarget);
@@ -324,11 +329,11 @@ export function CandidatePanel({
     const memo = (formData.get("memo") as string) || undefined;
 
     try {
-      await api(`/api/trips/${tripId}/candidates/${editSpot.id}`, {
+      await api(`/api/trips/${tripId}/candidates/${editSchedule.id}`, {
         method: "PATCH",
         body: JSON.stringify({ name, category: editCategory, memo }),
       });
-      setEditSpot(null);
+      setEditSchedule(null);
       toast.success("候補を更新しました");
       onRefresh();
     } catch {
@@ -457,7 +462,7 @@ export function CandidatePanel({
         open={addOpen}
         onOpenChange={(open) => {
           setAddOpen(open);
-          if (!open) setCategory("sightseeing");
+          if (!open) setCategory(DEFAULT_SCHEDULE_CATEGORY);
         }}
       >
         <DialogContent className="sm:max-w-sm">
@@ -498,9 +503,9 @@ export function CandidatePanel({
       </Dialog>
 
       <Dialog
-        open={editSpot !== null}
+        open={editSchedule !== null}
         onOpenChange={(open) => {
-          if (!open) setEditSpot(null);
+          if (!open) setEditSchedule(null);
         }}
       >
         <DialogContent className="sm:max-w-sm">
@@ -508,11 +513,16 @@ export function CandidatePanel({
             <DialogTitle>候補を編集</DialogTitle>
             <DialogDescription>候補の情報を変更します</DialogDescription>
           </DialogHeader>
-          {editSpot && (
+          {editSchedule && (
             <form onSubmit={handleEdit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-candidate-name">名前</Label>
-                <Input id="edit-candidate-name" name="name" defaultValue={editSpot.name} required />
+                <Input
+                  id="edit-candidate-name"
+                  name="name"
+                  defaultValue={editSchedule.name}
+                  required
+                />
               </div>
               <div className="space-y-2">
                 <Label>カテゴリ</Label>
@@ -534,7 +544,7 @@ export function CandidatePanel({
                 <Input
                   id="edit-candidate-memo"
                   name="memo"
-                  defaultValue={editSpot.memo ?? ""}
+                  defaultValue={editSchedule.memo ?? ""}
                   placeholder="口コミで見た"
                 />
               </div>

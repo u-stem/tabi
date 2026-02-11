@@ -12,7 +12,7 @@ const {
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
   mockDbQuery: {
-    spots: {
+    schedules: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
     },
@@ -59,21 +59,21 @@ vi.mock("../ws/rooms", () => ({
   broadcastToTrip: vi.fn(),
 }));
 
-import { spotRoutes } from "../routes/spots";
+import { scheduleRoutes } from "../routes/schedules";
 
 const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
 const tripId = "trip-1";
 const dayId = "day-1";
 const patternId = "pattern-1";
-const basePath = `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/spots`;
+const basePath = `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`;
 
 function createApp() {
   const app = new Hono();
-  app.route("/api/trips", spotRoutes);
+  app.route("/api/trips", scheduleRoutes);
   return app;
 }
 
-describe("Spot routes", () => {
+describe("Schedule routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue({
@@ -97,18 +97,18 @@ describe("Spot routes", () => {
   });
 
   describe(`GET ${basePath}`, () => {
-    it("returns spots for a pattern", async () => {
-      const patternSpots = [
-        { id: "spot-1", name: "Tokyo Tower", category: "sightseeing", sortOrder: 0 },
+    it("returns schedules for a pattern", async () => {
+      const patternSchedules = [
+        { id: "schedule-1", name: "Tokyo Tower", category: "sightseeing", sortOrder: 0 },
       ];
-      mockDbQuery.spots.findMany.mockResolvedValue(patternSpots);
+      mockDbQuery.schedules.findMany.mockResolvedValue(patternSchedules);
 
       const app = createApp();
       const res = await app.request(basePath);
       const body = await res.json();
 
       expect(res.status).toBe(200);
-      expect(body).toEqual(patternSpots);
+      expect(body).toEqual(patternSchedules);
     });
 
     it("returns 404 when day does not belong to trip", async () => {
@@ -132,8 +132,8 @@ describe("Spot routes", () => {
 
   describe(`POST ${basePath}`, () => {
     it("returns 201 with valid data", async () => {
-      const createdSpot = {
-        id: "spot-1",
+      const createdSchedule = {
+        id: "schedule-1",
         dayPatternId: patternId,
         name: "Tokyo Tower",
         category: "sightseeing",
@@ -148,7 +148,7 @@ describe("Spot routes", () => {
 
       mockDbInsert.mockReturnValue({
         values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([createdSpot]),
+          returning: vi.fn().mockResolvedValue([createdSchedule]),
         }),
       });
 
@@ -196,8 +196,8 @@ describe("Spot routes", () => {
     });
 
     it("returns 201 with transport-specific fields", async () => {
-      const createdSpot = {
-        id: "spot-2",
+      const createdSchedule = {
+        id: "schedule-2",
         dayPatternId: patternId,
         name: "Tokyo to Osaka",
         category: "transport",
@@ -215,7 +215,7 @@ describe("Spot routes", () => {
 
       mockDbInsert.mockReturnValue({
         values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([createdSpot]),
+          returning: vi.fn().mockResolvedValue([createdSchedule]),
         }),
       });
 
@@ -271,11 +271,11 @@ describe("Spot routes", () => {
     });
   });
 
-  describe(`PATCH ${basePath}/:spotId`, () => {
-    it("returns updated spot on success", async () => {
-      const existing = { id: "spot-1", name: "Old Name", category: "sightseeing" };
+  describe(`PATCH ${basePath}/:scheduleId`, () => {
+    it("returns updated schedule on success", async () => {
+      const existing = { id: "schedule-1", name: "Old Name", category: "sightseeing" };
       const updated = { ...existing, name: "New Name" };
-      mockDbQuery.spots.findFirst.mockResolvedValue(existing);
+      mockDbQuery.schedules.findFirst.mockResolvedValue(existing);
       mockDbUpdate.mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -285,7 +285,7 @@ describe("Spot routes", () => {
       });
 
       const app = createApp();
-      const res = await app.request(`${basePath}/spot-1`, {
+      const res = await app.request(`${basePath}/schedule-1`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "New Name" }),
@@ -298,7 +298,7 @@ describe("Spot routes", () => {
 
     it("returns 400 with invalid data", async () => {
       const app = createApp();
-      const res = await app.request(`${basePath}/spot-1`, {
+      const res = await app.request(`${basePath}/schedule-1`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ category: "invalid_category" }),
@@ -309,7 +309,7 @@ describe("Spot routes", () => {
 
     it("updates transport-specific fields", async () => {
       const existing = {
-        id: "spot-1",
+        id: "schedule-1",
         name: "Move",
         category: "transport",
         departurePlace: "Tokyo",
@@ -320,7 +320,7 @@ describe("Spot routes", () => {
         departurePlace: "Shinjuku",
         transportMethod: "train",
       };
-      mockDbQuery.spots.findFirst.mockResolvedValue(existing);
+      mockDbQuery.schedules.findFirst.mockResolvedValue(existing);
       mockDbUpdate.mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -330,7 +330,7 @@ describe("Spot routes", () => {
       });
 
       const app = createApp();
-      const res = await app.request(`${basePath}/spot-1`, {
+      const res = await app.request(`${basePath}/schedule-1`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -345,11 +345,11 @@ describe("Spot routes", () => {
       expect(body.transportMethod).toBe("train");
     });
 
-    it("returns 404 when spot not found", async () => {
-      mockDbQuery.spots.findFirst.mockResolvedValue(undefined);
+    it("returns 404 when schedule not found", async () => {
+      mockDbQuery.schedules.findFirst.mockResolvedValue(undefined);
 
       const app = createApp();
-      const res = await app.request(`${basePath}/spot-1`, {
+      const res = await app.request(`${basePath}/schedule-1`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: "New Name" }),
@@ -359,15 +359,15 @@ describe("Spot routes", () => {
     });
   });
 
-  describe(`DELETE ${basePath}/:spotId`, () => {
+  describe(`DELETE ${basePath}/:scheduleId`, () => {
     it("returns ok on success", async () => {
-      mockDbQuery.spots.findFirst.mockResolvedValue({ id: "spot-1" });
+      mockDbQuery.schedules.findFirst.mockResolvedValue({ id: "schedule-1" });
       mockDbDelete.mockReturnValue({
         where: vi.fn().mockResolvedValue(undefined),
       });
 
       const app = createApp();
-      const res = await app.request(`${basePath}/spot-1`, {
+      const res = await app.request(`${basePath}/schedule-1`, {
         method: "DELETE",
       });
       const body = await res.json();
@@ -376,8 +376,8 @@ describe("Spot routes", () => {
       expect(body).toEqual({ ok: true });
     });
 
-    it("returns 404 when spot not found", async () => {
-      mockDbQuery.spots.findFirst.mockResolvedValue(undefined);
+    it("returns 404 when schedule not found", async () => {
+      mockDbQuery.schedules.findFirst.mockResolvedValue(undefined);
 
       const app = createApp();
       const res = await app.request(`${basePath}/nonexistent`, {
@@ -388,12 +388,12 @@ describe("Spot routes", () => {
     });
   });
 
-  describe("POST /api/trips/:tripId/spots/batch-unassign", () => {
+  describe("POST /api/trips/:tripId/schedules/batch-unassign", () => {
     const id1 = "00000000-0000-0000-0000-000000000001";
     const id2 = "00000000-0000-0000-0000-000000000002";
 
-    it("unassigns multiple spots to candidates", async () => {
-      mockDbQuery.spots.findMany.mockResolvedValue([
+    it("unassigns multiple schedules to candidates", async () => {
+      mockDbQuery.schedules.findMany.mockResolvedValue([
         { id: id1, tripId, dayPatternId: patternId, dayPattern: { tripDay: { id: dayId } } },
         { id: id2, tripId, dayPatternId: patternId, dayPattern: { tripDay: { id: dayId } } },
       ]);
@@ -413,10 +413,10 @@ describe("Spot routes", () => {
       });
 
       const app = createApp();
-      const res = await app.request(`/api/trips/${tripId}/spots/batch-unassign`, {
+      const res = await app.request(`/api/trips/${tripId}/schedules/batch-unassign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spotIds: [id1, id2] }),
+        body: JSON.stringify({ scheduleIds: [id1, id2] }),
       });
       const body = await res.json();
 
@@ -424,25 +424,27 @@ describe("Spot routes", () => {
       expect(body.ok).toBe(true);
     });
 
-    it("returns 400 for empty spotIds", async () => {
+    it("returns 400 for empty scheduleIds", async () => {
       const app = createApp();
-      const res = await app.request(`/api/trips/${tripId}/spots/batch-unassign`, {
+      const res = await app.request(`/api/trips/${tripId}/schedules/batch-unassign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spotIds: [] }),
+        body: JSON.stringify({ scheduleIds: [] }),
       });
 
       expect(res.status).toBe(400);
     });
 
-    it("returns 404 when some spots are not assigned", async () => {
-      mockDbQuery.spots.findMany.mockResolvedValue([{ id: id1, tripId, dayPatternId: patternId }]);
+    it("returns 404 when some schedules are not assigned", async () => {
+      mockDbQuery.schedules.findMany.mockResolvedValue([
+        { id: id1, tripId, dayPatternId: patternId },
+      ]);
 
       const app = createApp();
-      const res = await app.request(`/api/trips/${tripId}/spots/batch-unassign`, {
+      const res = await app.request(`/api/trips/${tripId}/schedules/batch-unassign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spotIds: [id1, id2] }),
+        body: JSON.stringify({ scheduleIds: [id1, id2] }),
       });
 
       expect(res.status).toBe(404);
@@ -453,8 +455,8 @@ describe("Spot routes", () => {
     const id1 = "00000000-0000-0000-0000-000000000001";
     const id2 = "00000000-0000-0000-0000-000000000002";
 
-    it("deletes multiple spots from a pattern", async () => {
-      mockDbQuery.spots.findMany.mockResolvedValue([
+    it("deletes multiple schedules from a pattern", async () => {
+      mockDbQuery.schedules.findMany.mockResolvedValue([
         { id: id1, dayPatternId: patternId },
         { id: id2, dayPatternId: patternId },
       ]);
@@ -466,7 +468,7 @@ describe("Spot routes", () => {
       const res = await app.request(`${basePath}/batch-delete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spotIds: [id1, id2] }),
+        body: JSON.stringify({ scheduleIds: [id1, id2] }),
       });
       const body = await res.json();
 
@@ -474,25 +476,25 @@ describe("Spot routes", () => {
       expect(body.ok).toBe(true);
     });
 
-    it("returns 400 for empty spotIds", async () => {
+    it("returns 400 for empty scheduleIds", async () => {
       const app = createApp();
       const res = await app.request(`${basePath}/batch-delete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spotIds: [] }),
+        body: JSON.stringify({ scheduleIds: [] }),
       });
 
       expect(res.status).toBe(400);
     });
 
-    it("returns 404 when some spots do not belong to pattern", async () => {
-      mockDbQuery.spots.findMany.mockResolvedValue([{ id: id1, dayPatternId: patternId }]);
+    it("returns 404 when some schedules do not belong to pattern", async () => {
+      mockDbQuery.schedules.findMany.mockResolvedValue([{ id: id1, dayPatternId: patternId }]);
 
       const app = createApp();
       const res = await app.request(`${basePath}/batch-delete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spotIds: [id1, id2] }),
+        body: JSON.stringify({ scheduleIds: [id1, id2] }),
       });
 
       expect(res.status).toBe(404);
@@ -503,8 +505,8 @@ describe("Spot routes", () => {
     const id1 = "00000000-0000-0000-0000-000000000001";
     const id2 = "00000000-0000-0000-0000-000000000002";
 
-    it("duplicates multiple spots and returns 201", async () => {
-      const existingSpots = [
+    it("duplicates multiple schedules and returns 201", async () => {
+      const existingSchedules = [
         {
           id: id1,
           tripId,
@@ -540,15 +542,15 @@ describe("Spot routes", () => {
           sortOrder: 1,
         },
       ];
-      mockDbQuery.spots.findMany.mockResolvedValue(existingSpots);
+      mockDbQuery.schedules.findMany.mockResolvedValue(existingSchedules);
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue([{ max: 1 }]),
         }),
       });
       const duplicated = [
-        { ...existingSpots[0], id: "new-1", sortOrder: 2 },
-        { ...existingSpots[1], id: "new-2", sortOrder: 3 },
+        { ...existingSchedules[0], id: "new-1", sortOrder: 2 },
+        { ...existingSchedules[1], id: "new-2", sortOrder: 3 },
       ];
       mockDbInsert.mockReturnValue({
         values: vi.fn().mockReturnValue({
@@ -560,7 +562,7 @@ describe("Spot routes", () => {
       const res = await app.request(`${basePath}/batch-duplicate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spotIds: [id1, id2] }),
+        body: JSON.stringify({ scheduleIds: [id1, id2] }),
       });
       const body = await res.json();
 
@@ -568,25 +570,25 @@ describe("Spot routes", () => {
       expect(body).toHaveLength(2);
     });
 
-    it("returns 400 for empty spotIds", async () => {
+    it("returns 400 for empty scheduleIds", async () => {
       const app = createApp();
       const res = await app.request(`${basePath}/batch-duplicate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spotIds: [] }),
+        body: JSON.stringify({ scheduleIds: [] }),
       });
 
       expect(res.status).toBe(400);
     });
 
-    it("returns 404 when some spots do not belong to pattern", async () => {
-      mockDbQuery.spots.findMany.mockResolvedValue([{ id: id1, dayPatternId: patternId }]);
+    it("returns 404 when some schedules do not belong to pattern", async () => {
+      mockDbQuery.schedules.findMany.mockResolvedValue([{ id: id1, dayPatternId: patternId }]);
 
       const app = createApp();
       const res = await app.request(`${basePath}/batch-duplicate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spotIds: [id1, id2] }),
+        body: JSON.stringify({ scheduleIds: [id1, id2] }),
       });
 
       expect(res.status).toBe(404);
@@ -595,12 +597,12 @@ describe("Spot routes", () => {
 
   describe(`PATCH ${basePath}/reorder`, () => {
     it("returns ok with valid UUIDs", async () => {
-      const spotId = "550e8400-e29b-41d4-a716-446655440000";
+      const scheduleId = "550e8400-e29b-41d4-a716-446655440000";
       mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
         const tx = {
           query: {
-            spots: {
-              findMany: vi.fn().mockResolvedValue([{ id: spotId, dayPatternId: patternId }]),
+            schedules: {
+              findMany: vi.fn().mockResolvedValue([{ id: scheduleId, dayPatternId: patternId }]),
             },
           },
           update: vi.fn().mockReturnValue({
@@ -617,7 +619,7 @@ describe("Spot routes", () => {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          spotIds: [spotId],
+          scheduleIds: [scheduleId],
         }),
       });
       const body = await res.json();
@@ -631,7 +633,7 @@ describe("Spot routes", () => {
       const res = await app.request(`${basePath}/reorder`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ spotIds: ["not-a-uuid"] }),
+        body: JSON.stringify({ scheduleIds: ["not-a-uuid"] }),
       });
 
       expect(res.status).toBe(400);

@@ -1,4 +1,4 @@
-import { createDayPatternSchema, updateDayPatternSchema } from "@tabi/shared";
+import { createDayPatternSchema, updateDayPatternSchema } from "@sugara/shared";
 import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";

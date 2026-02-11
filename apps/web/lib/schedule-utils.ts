@@ -1,4 +1,4 @@
-import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@tabi/shared";
+import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 
 export function getTimeLabels(category: string): { start: string; end: string } {
   if (category === "transport") return { start: "出発時間", end: "到着時間" };

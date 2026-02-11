@@ -1,7 +1,7 @@
 "use client";
 
-import type { MemberRole, TripStatus } from "@tabi/shared";
-import { STATUS_LABELS } from "@tabi/shared";
+import type { MemberRole, TripStatus } from "@sugara/shared";
+import { STATUS_LABELS } from "@sugara/shared";
 import { Link, MoreHorizontal, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

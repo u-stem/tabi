@@ -136,7 +136,7 @@ Expected: テストデータが投入される
 
 **Step 7: 既存のユニットテストが通ることを確認**
 
-Run: `bun run --filter @tabi/api test`
+Run: `bun run --filter @sugara/api test`
 Expected: 全テスト PASS (テストは vi.mock で DB をモックしているため接続先に依存しない)
 
 ---
@@ -193,7 +193,7 @@ bun サーバーエントリポイントを削除 (Route Handler に置き換わ
 
 **Step 7: テストを実行**
 
-Run: `bun run --filter @tabi/api test`
+Run: `bun run --filter @sugara/api test`
 Expected: ws 関連テストがあれば削除が必要。broadcast をモックしているテストは修正が必要。
 
 **Step 8: コミット**
@@ -220,11 +220,11 @@ refactor: WebSocket コードを削除 (Supabase Realtime に移行準備)
 CORS の origin を環境変数で制御できていることを確認。
 同一オリジンになるため CORS 設定の調整が必要になる可能性がある。
 
-**Step 2: apps/web/package.json に @tabi/api を依存に追加**
+**Step 2: apps/web/package.json に @sugara/api を依存に追加**
 
 ```json
 "dependencies": {
-  "@tabi/api": "workspace:*",
+  "@sugara/api": "workspace:*",
   ...
 }
 ```
@@ -234,7 +234,7 @@ CORS の origin を環境変数で制御できていることを確認。
 `apps/web/app/api/[[...route]]/route.ts`:
 ```ts
 import { handle } from "hono/vercel";
-import { app } from "@tabi/api/src/app";
+import { app } from "@sugara/api/src/app";
 
 const handler = handle(app);
 
@@ -286,7 +286,7 @@ feat: Hono API を Next.js Route Handler に統合
 
 **Step 1: @supabase/supabase-js を追加**
 
-Run: `bun add --filter @tabi/web @supabase/supabase-js`
+Run: `bun add --filter @sugara/web @supabase/supabase-js`
 
 **Step 2: Supabase クライアントを作成**
 

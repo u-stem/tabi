@@ -5,6 +5,6 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: process.env.DATABASE_URL || "postgresql://tabi:tabi@localhost:5432/tabi",
+    url: process.env.DATABASE_URL || "postgresql://sugara:sugara@localhost:5432/sugara",
   },
 });

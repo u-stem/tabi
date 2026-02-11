@@ -1,7 +1,7 @@
 "use client";
 
-import type { TripStatus } from "@tabi/shared";
-import { STATUS_LABELS } from "@tabi/shared";
+import type { TripStatus } from "@sugara/shared";
+import { STATUS_LABELS } from "@sugara/shared";
 import { CheckCheck, Copy, SquareMousePointer, Trash2, X } from "lucide-react";
 import {
   AlertDialog,

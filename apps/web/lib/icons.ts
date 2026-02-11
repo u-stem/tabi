@@ -1,4 +1,4 @@
-import type { ScheduleCategory, TransportMethod } from "@tabi/shared";
+import type { ScheduleCategory, TransportMethod } from "@sugara/shared";
 import {
   Bed,
   Bus,

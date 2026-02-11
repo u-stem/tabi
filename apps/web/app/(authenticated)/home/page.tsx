@@ -1,6 +1,6 @@
 "use client";
 
-import type { TripListItem } from "@tabi/shared";
+import type { TripListItem } from "@sugara/shared";
 import { Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

@@ -1,7 +1,7 @@
 "use client";
 
-import type { ScheduleColor, ScheduleResponse, TransportMethod } from "@tabi/shared";
-import { SCHEDULE_COLOR_LABELS, SCHEDULE_COLORS } from "@tabi/shared";
+import type { ScheduleColor, ScheduleResponse, TransportMethod } from "@sugara/shared";
+import { SCHEDULE_COLOR_LABELS, SCHEDULE_COLORS } from "@sugara/shared";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";

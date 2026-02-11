@@ -1,4 +1,4 @@
-import { createTripSchema, updateTripSchema } from "@tabi/shared";
+import { createTripSchema, updateTripSchema } from "@sugara/shared";
 import { and, asc, count, eq, inArray, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";

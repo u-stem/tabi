@@ -1,4 +1,4 @@
-import type { ScheduleColor } from "@tabi/shared";
+import type { ScheduleColor } from "@sugara/shared";
 
 export const SELECTED_RING = "border-ring ring-2 ring-ring";
 

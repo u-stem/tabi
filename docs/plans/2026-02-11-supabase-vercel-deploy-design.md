@@ -60,7 +60,7 @@ MIGRATION_URL=postgresql://postgres.[ref]:[password]@aws-0-ap-northeast-1.supaba
 
 ```
 apps/web/app/api/[[...route]]/route.ts
-  -> import { app } from "@tabi/api"
+  -> import { app } from "@sugara/api"
   -> handle(app) で Vercel Functions として実行
 ```
 

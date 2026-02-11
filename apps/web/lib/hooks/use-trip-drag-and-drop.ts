@@ -8,7 +8,7 @@ import {
   useSensors,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import type { ScheduleResponse } from "@tabi/shared";
+import type { ScheduleResponse } from "@sugara/shared";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";

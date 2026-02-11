@@ -1,4 +1,4 @@
-# tabi - 旅行計画アプリ
+# sugara - 旅行計画アプリ
 
 ## プロジェクト概要
 
@@ -34,9 +34,9 @@ bun run setup        # 初回セットアップ (Docker)
 パッケージ単位の実行は `--filter` を使用:
 
 ```bash
-bun run --filter @tabi/api test
-bun run --filter @tabi/web lint
-bun run --filter @tabi/shared check-types
+bun run --filter @sugara/api test
+bun run --filter @sugara/web lint
+bun run --filter @sugara/shared check-types
 ```
 
 **`cd <dir> && ...` パターンは絶対に使わない。常に `bun run` または `bun run --filter` を使う。**
@@ -70,11 +70,11 @@ bun run --filter @tabi/shared check-types
 
 - 初回セットアップ: `bun run setup` (Docker で DB + API 起動、スキーマ反映、シード投入)
 - DB + API 起動: `docker compose up -d`
-- Web: `bun run --filter @tabi/web dev` (localhost:3000)
+- Web: `bun run --filter @sugara/web dev` (localhost:3000)
 - API ホットリロード: 有効 (Docker 内でソース変更が自動反映)
-- 全起動: `docker compose up -d && bun run --filter @tabi/web dev`
+- 全起動: `docker compose up -d && bun run --filter @sugara/web dev`
 - DB リセット: `docker compose down -v && bun run setup`
-- 結合テスト: `bun run --filter @tabi/api test:integration` (PostgreSQL の `tabi_test` DB が必要)
+- 結合テスト: `bun run --filter @sugara/api test:integration` (PostgreSQL の `sugara_test` DB が必要)
 
 ## 規約
 

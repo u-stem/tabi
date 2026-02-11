@@ -1,4 +1,4 @@
-import type { MemberRole } from "@tabi/shared";
+import type { MemberRole } from "@sugara/shared";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/index";
 import { dayPatterns, tripDays, tripMembers } from "../db/schema";

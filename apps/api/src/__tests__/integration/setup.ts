@@ -5,7 +5,7 @@ import postgres from "postgres";
 import * as schema from "../../db/schema";
 
 const TEST_DB_URL =
-  process.env.TEST_DATABASE_URL || "postgresql://tabi:tabi@localhost:5432/tabi_test";
+  process.env.TEST_DATABASE_URL || "postgresql://sugara:sugara@localhost:5432/sugara_test";
 
 let _client: ReturnType<typeof postgres> | null = null;
 let _db: PostgresJsDatabase<typeof schema> | null = null;

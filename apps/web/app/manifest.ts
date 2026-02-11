@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "tabi - 旅行プランナー",
-    short_name: "tabi",
+    name: "sugara - 旅行プランナー",
+    short_name: "sugara",
     description: "あなたの旅を、もっと自由に",
     start_url: "/home",
     display: "standalone",

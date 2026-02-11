@@ -6,8 +6,8 @@ import type {
   ScheduleResponse,
   TransportMethod,
   TripStatus,
-} from "@tabi/shared";
-import { CATEGORY_LABELS, STATUS_LABELS, TRANSPORT_METHOD_LABELS } from "@tabi/shared";
+} from "@sugara/shared";
+import { CATEGORY_LABELS, STATUS_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import { Calendar, Clock, MapPin } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";

@@ -20,7 +20,7 @@ async function main() {
   run(["docker", "compose", "logs", "-f", "init"]);
 
   console.log("\nSetup complete! API is running at http://localhost:3001");
-  console.log("Run 'bun run --filter @tabi/web dev' to start the web app.");
+  console.log("Run 'bun run --filter @sugara/web dev' to start the web app.");
 }
 
 main().catch((err) => {

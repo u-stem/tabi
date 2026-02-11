@@ -2,8 +2,8 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { ScheduleCategory, ScheduleColor, TransportMethod } from "@tabi/shared";
-import { TRANSPORT_METHOD_LABELS } from "@tabi/shared";
+import type { ScheduleCategory, ScheduleColor, TransportMethod } from "@sugara/shared";
+import { TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import { MoreHorizontal, Pencil, Trash2, Undo2 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useState } from "react";

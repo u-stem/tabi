@@ -1,6 +1,6 @@
 "use client";
 
-import type { MemberResponse } from "@tabi/shared";
+import type { MemberResponse } from "@sugara/shared";
 import { UserPlus, Users } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";

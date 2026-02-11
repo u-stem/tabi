@@ -1,6 +1,6 @@
 "use client";
 
-import type { TripListItem } from "@tabi/shared";
+import type { TripListItem } from "@sugara/shared";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { TripCard } from "@/components/trip-card";

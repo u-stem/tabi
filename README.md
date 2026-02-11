@@ -1,4 +1,4 @@
-# tabi
+# sugara
 
 旅行計画Webアプリケーション。
 
@@ -35,7 +35,7 @@ PostgreSQL + API サーバーを起動し、スキーマ反映とシードデー
 
 ```bash
 docker compose up -d                   # DB + API を起動
-bun run --filter @tabi/web dev         # フロントエンドを起動
+bun run --filter @sugara/web dev       # フロントエンドを起動
 ```
 
 - Web: http://localhost:3000
@@ -70,15 +70,15 @@ bun run setup        # 初回セットアップ (Docker)
 パッケージ単位の実行:
 
 ```bash
-bun run --filter @tabi/api test
-bun run --filter @tabi/web lint
-bun run --filter @tabi/shared check-types
+bun run --filter @sugara/api test
+bun run --filter @sugara/web lint
+bun run --filter @sugara/shared check-types
 ```
 
 ## プロジェクト構成
 
 ```
-tabi/
+sugara/
 ├── apps/
 │   ├── web/          # Next.js フロントエンド
 │   └── api/          # Hono API サーバー

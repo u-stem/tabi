@@ -1,7 +1,7 @@
 "use client";
 
-import type { MemberRole, TripListItem, TripStatus } from "@tabi/shared";
-import { ROLE_LABELS, STATUS_LABELS } from "@tabi/shared";
+import type { MemberRole, TripListItem, TripStatus } from "@sugara/shared";
+import { ROLE_LABELS, STATUS_LABELS } from "@sugara/shared";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";

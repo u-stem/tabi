@@ -1,8 +1,8 @@
 "use client";
 
 import { DndContext, DragOverlay } from "@dnd-kit/core";
-import type { DayPatternResponse, TripResponse } from "@tabi/shared";
-import { PATTERN_LABEL_MAX_LENGTH } from "@tabi/shared";
+import type { DayPatternResponse, TripResponse } from "@sugara/shared";
+import { PATTERN_LABEL_MAX_LENGTH } from "@sugara/shared";
 import { ChevronDown, Copy, List, Pencil, Plus, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";

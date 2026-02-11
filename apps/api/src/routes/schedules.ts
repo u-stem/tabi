@@ -4,7 +4,7 @@ import {
   createScheduleSchema,
   reorderSchedulesSchema,
   updateScheduleSchema,
-} from "@tabi/shared";
+} from "@sugara/shared";
 import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";

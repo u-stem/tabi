@@ -8,7 +8,7 @@ import {
   DEFAULT_SCHEDULE_CATEGORY,
   type ScheduleCategory,
   type ScheduleResponse,
-} from "@tabi/shared";
+} from "@sugara/shared";
 import {
   ArrowLeft,
   Check,

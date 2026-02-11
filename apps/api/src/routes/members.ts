@@ -1,4 +1,4 @@
-import { addMemberSchema, updateMemberRoleSchema } from "@tabi/shared";
+import { addMemberSchema, updateMemberRoleSchema } from "@sugara/shared";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";

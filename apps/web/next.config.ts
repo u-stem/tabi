@@ -10,7 +10,7 @@ const withSerwist = withSerwistInit({
 });
 
 const nextConfig: NextConfig = {
-  transpilePackages: ["@tabi/shared"],
+  transpilePackages: ["@sugara/shared"],
 };
 
 export default withSerwist(nextConfig);

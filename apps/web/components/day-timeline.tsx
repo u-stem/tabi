@@ -2,7 +2,7 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import type { ScheduleResponse } from "@tabi/shared";
+import type { ScheduleResponse } from "@sugara/shared";
 import {
   ArrowUpDown,
   CheckCheck,

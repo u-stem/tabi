@@ -1,5 +1,5 @@
 {
-  "name": "@tabi/api",
+  "name": "@sugara/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -7,7 +7,7 @@
     "dev": "bun run --hot src/index.ts",
     "build": "bun build src/index.ts --outdir dist --target bun",
     "test": "vitest run --passWithNoTests --exclude 'src/__tests__/integration/**'",
-    "test:integration": "TEST_DATABASE_URL=postgresql://tabi:tabi@localhost:5432/tabi_test vitest run --fileParallelism=false src/__tests__/integration/",
+    "test:integration": "TEST_DATABASE_URL=postgresql://sugara:sugara@localhost:5432/sugara_test vitest run --fileParallelism=false src/__tests__/integration/",
     "lint": "biome lint src/",
     "format": "biome format --write src/",
     "check": "biome check --write src/",
@@ -19,7 +19,7 @@
     "db:seed": "bun run src/db/seed.ts"
   },
   "dependencies": {
-    "@tabi/shared": "workspace:*",
+    "@sugara/shared": "workspace:*",
     "better-auth": "^1.4.18",
     "drizzle-orm": "^0.45.1",
     "hono": "^4",

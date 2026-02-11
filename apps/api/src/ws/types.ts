@@ -1,4 +1,4 @@
-import type { DayPatternResponse } from "@tabi/shared";
+import type { DayPatternResponse } from "@sugara/shared";
 import type { schedules } from "../db/schema";
 
 export type PresenceUser = {

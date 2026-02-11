@@ -131,6 +131,56 @@ describe("Share Integration", () => {
     expect(res.status).toBe(404);
   });
 
+  it("returns shareTokenExpiresAt when generating a share link", async () => {
+    const res = await app.request(`/api/trips/${tripId}/share`, {
+      method: "POST",
+    });
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.shareToken).toBeDefined();
+    expect(data.shareTokenExpiresAt).toBeDefined();
+    expect(new Date(data.shareTokenExpiresAt).getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("returns 404 for expired share link", async () => {
+    await app.request(`/api/trips/${tripId}/share`, {
+      method: "POST",
+    });
+
+    const db = getTestDb();
+    const { trips } = await import("../../db/schema");
+    const { eq } = await import("drizzle-orm");
+    await db
+      .update(trips)
+      .set({ shareTokenExpiresAt: new Date("2020-01-01") })
+      .where(eq(trips.id, tripId));
+
+    const trip = await db.query.trips.findFirst({
+      where: eq(trips.id, tripId),
+    });
+    const res = await app.request(`/api/shared/${trip!.shareToken}`);
+    expect(res.status).toBe(404);
+  });
+
+  it("regenerates share link with new token and expiry", async () => {
+    const first = await app.request(`/api/trips/${tripId}/share`, {
+      method: "POST",
+    });
+    const firstData = await first.json();
+
+    const second = await app.request(`/api/trips/${tripId}/share`, {
+      method: "PUT",
+    });
+    expect(second.status).toBe(200);
+    const secondData = await second.json();
+    expect(secondData.shareToken).not.toBe(firstData.shareToken);
+
+    // Old token should not work
+    mockGetSession.mockImplementation(() => null);
+    const oldRes = await app.request(`/api/shared/${firstData.shareToken}`);
+    expect(oldRes.status).toBe(404);
+  });
+
   it("editor cannot generate share token", async () => {
     const editor = await createTestUser({ name: "Editor", email: "editor@test.com" });
     const db = getTestDb();

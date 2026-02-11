@@ -2,7 +2,7 @@
 
 import type { MemberRole, TripStatus } from "@tabi/shared";
 import { STATUS_LABELS } from "@tabi/shared";
-import { Link, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Link, MoreHorizontal, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -58,6 +58,8 @@ export function TripActions({
   const [deleting, setDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
 
   async function handleStatusChange(newStatus: string) {
     if (newStatus === status) return;
@@ -86,30 +88,54 @@ export function TripActions({
     }
   }
 
+  type ShareResponse = { shareToken: string; shareTokenExpiresAt: string | null };
+
+  async function copyToClipboard(text: string) {
+    if (navigator.clipboard) {
+      await navigator.clipboard.writeText(text);
+    } else {
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textarea);
+    }
+  }
+
   async function handleShare() {
     setSharing(true);
     try {
-      const result = await api<{ shareToken: string }>(`/api/trips/${tripId}/share`, {
+      const result = await api<ShareResponse>(`/api/trips/${tripId}/share`, {
         method: "POST",
       });
       const shareUrl = `${window.location.origin}/shared/${result.shareToken}`;
-      if (navigator.clipboard) {
-        await navigator.clipboard.writeText(shareUrl);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = shareUrl;
-        textarea.style.position = "fixed";
-        textarea.style.opacity = "0";
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
-      }
+      await copyToClipboard(shareUrl);
+      setShareExpiresAt(result.shareTokenExpiresAt);
       toast.success("共有リンクをコピーしました");
     } catch {
       toast.error("共有リンクの生成に失敗しました");
     } finally {
       setSharing(false);
+    }
+  }
+
+  async function handleRegenerate() {
+    setRegenerating(true);
+    try {
+      const result = await api<ShareResponse>(`/api/trips/${tripId}/share`, {
+        method: "PUT",
+      });
+      const shareUrl = `${window.location.origin}/shared/${result.shareToken}`;
+      await copyToClipboard(shareUrl);
+      setShareExpiresAt(result.shareTokenExpiresAt);
+      toast.success("共有リンクを再生成してコピーしました");
+    } catch {
+      toast.error("共有リンクの再生成に失敗しました");
+    } finally {
+      setRegenerating(false);
     }
   }
 
@@ -134,10 +160,35 @@ export function TripActions({
         )}
         <MemberDialog tripId={tripId} isOwner={isOwnerRole} />
         {isOwnerRole && (
-          <Button variant="outline" size="sm" onClick={handleShare} disabled={disabled || sharing}>
-            <Link className="h-4 w-4" />
-            {sharing ? "生成中..." : "共有リンク"}
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShare}
+              disabled={disabled || sharing}
+            >
+              <Link className="h-4 w-4" />
+              {sharing ? "生成中..." : "共有リンク"}
+            </Button>
+            {shareExpiresAt && (
+              <>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRegenerate}
+                  disabled={disabled || regenerating}
+                  title="共有リンクを再生成"
+                >
+                  <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
+                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(shareExpiresAt) < new Date()
+                    ? "期限切れ"
+                    : `${new Date(shareExpiresAt).toLocaleDateString("ja-JP")}まで`}
+                </span>
+              </>
+            )}
+          </div>
         )}
       </div>
       {canEditRole && (

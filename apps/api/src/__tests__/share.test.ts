@@ -92,10 +92,12 @@ describe("Share routes", () => {
       expect(res.status).toBe(404);
     });
 
-    it("returns existing shareToken if already set", async () => {
+    it("returns existing shareToken with expiresAt if already set", async () => {
       const existingToken = "abc123existingtoken";
+      const expiresAt = new Date("2026-03-01T00:00:00.000Z");
       mockDbQuery.trips.findFirst.mockResolvedValue({
         shareToken: existingToken,
+        shareTokenExpiresAt: expiresAt,
       });
 
       const app = createApp();
@@ -106,10 +108,12 @@ describe("Share routes", () => {
 
       expect(res.status).toBe(200);
       expect(body.shareToken).toBe(existingToken);
+      expect(body.shareTokenExpiresAt).toBe(expiresAt.toISOString());
     });
 
-    it("generates a new shareToken when not set", async () => {
+    it("generates a new shareToken with expiresAt when not set", async () => {
       const generatedToken = "abc123generated";
+      const expiresAt = new Date("2026-03-01T00:00:00.000Z");
       mockDbQuery.trips.findFirst.mockResolvedValue({
         shareToken: null,
       });
@@ -117,7 +121,9 @@ describe("Share routes", () => {
       mockDbUpdate.mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValue([{ shareToken: generatedToken }]),
+            returning: vi
+              .fn()
+              .mockResolvedValue([{ shareToken: generatedToken, shareTokenExpiresAt: expiresAt }]),
           }),
         }),
       });
@@ -129,9 +135,49 @@ describe("Share routes", () => {
       const body = await res.json();
 
       expect(res.status).toBe(200);
-      expect(body.shareToken).toBeDefined();
-      expect(typeof body.shareToken).toBe("string");
-      expect(body.shareToken.length).toBeGreaterThan(0);
+      expect(body.shareToken).toBe(generatedToken);
+      expect(body.shareTokenExpiresAt).toBe(expiresAt.toISOString());
+    });
+  });
+
+  describe("PUT /api/trips/:id/share", () => {
+    it("regenerates share token", async () => {
+      const newToken = "regenerated-token";
+      const expiresAt = new Date("2026-03-01T00:00:00.000Z");
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi
+              .fn()
+              .mockResolvedValue([{ shareToken: newToken, shareTokenExpiresAt: expiresAt }]),
+          }),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1/share", {
+        method: "PUT",
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.shareToken).toBe(newToken);
+      expect(body.shareTokenExpiresAt).toBe(expiresAt.toISOString());
+    });
+
+    it("returns 404 when user is not owner", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue({
+        tripId: "trip-1",
+        userId: fakeUser.id,
+        role: "editor",
+      });
+
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1/share", {
+        method: "PUT",
+      });
+
+      expect(res.status).toBe(404);
     });
   });
 
@@ -150,6 +196,7 @@ describe("Share routes", () => {
         id: "trip-1",
         ownerId: "user-1",
         shareToken: "valid-token",
+        shareTokenExpiresAt: new Date("2030-01-01"),
         title: "Tokyo Trip",
         destination: "Tokyo",
         startDate: "2025-07-01",
@@ -166,6 +213,24 @@ describe("Share routes", () => {
       expect(body.title).toBe("Tokyo Trip");
       expect(body.ownerId).toBeUndefined();
       expect(body.shareToken).toBeUndefined();
+      expect(body.shareTokenExpiresAt).toBeUndefined();
+    });
+
+    it("returns 404 for expired share link", async () => {
+      mockDbQuery.trips.findFirst.mockResolvedValue({
+        id: "trip-1",
+        ownerId: "user-1",
+        shareToken: "expired-token",
+        shareTokenExpiresAt: new Date("2020-01-01"),
+        title: "Tokyo Trip",
+        destination: "Tokyo",
+        days: [],
+      });
+
+      const app = createApp();
+      const res = await app.request("/api/shared/expired-token");
+
+      expect(res.status).toBe(404);
     });
 
     it("does not require authentication", async () => {

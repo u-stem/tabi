@@ -109,6 +109,7 @@ export const trips = pgTable("trips", {
   status: tripStatusEnum("status").notNull().default("draft"),
   coverImageUrl: varchar("cover_image_url", { length: 500 }),
   shareToken: varchar("share_token", { length: 64 }).unique(),
+  shareTokenExpiresAt: timestamp("share_token_expires_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });

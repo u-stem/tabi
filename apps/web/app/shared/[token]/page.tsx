@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/logo";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { formatDate, formatDateRange } from "@/lib/format";
 
 export default function SharedTripPage() {
@@ -20,7 +20,13 @@ export default function SharedTripPage() {
   useEffect(() => {
     api<TripResponse>(`/api/shared/${token}`)
       .then(setTrip)
-      .catch(() => setError("旅行の取得に失敗しました"))
+      .catch((err) => {
+        if (err instanceof ApiError && err.status === 404) {
+          setError("このリンクは無効か、有効期限が切れています");
+        } else {
+          setError("旅行の取得に失敗しました");
+        }
+      })
       .finally(() => setLoading(false));
   }, [token]);
 

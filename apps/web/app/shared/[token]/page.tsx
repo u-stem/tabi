@@ -219,9 +219,6 @@ export default function SharedTripPage() {
             return (
               <section key={day.id} className="rounded-lg border bg-card p-4 sm:p-5">
                 <h3 className="mb-3 flex items-center gap-2 text-base font-semibold">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
-                    {day.dayNumber}
-                  </span>
                   {day.dayNumber}日目
                   <span className="text-sm font-normal text-muted-foreground">
                     {formatDate(day.date)}
@@ -271,7 +268,6 @@ function PatternSection({
                 key={`cross-${item.entry.schedule.id}`}
                 schedule={item.entry.schedule}
                 crossDayDisplay
-                crossDaySourceDayNumber={item.entry.sourceDayNumber}
               />
             ) : (
               <ScheduleCard key={item.schedule.id} schedule={item.schedule} />
@@ -287,11 +283,9 @@ function PatternSection({
 function ScheduleCard({
   schedule,
   crossDayDisplay,
-  crossDaySourceDayNumber,
 }: {
   schedule: ScheduleResponse;
   crossDayDisplay?: boolean;
-  crossDaySourceDayNumber?: number;
 }) {
   const CategoryIcon = CATEGORY_ICONS[schedule.category];
   const colorClasses = SCHEDULE_COLOR_CLASSES[schedule.color ?? "blue"];
@@ -309,18 +303,7 @@ function ScheduleCard({
         "cursor-default rounded-md border p-3",
         crossDayDisplay && "border-dashed bg-muted/30",
       )}
-      {...(crossDayDisplay && crossDaySourceDayNumber
-        ? {
-            role: "group" as const,
-            "aria-label": `${crossDaySourceDayNumber}日目から継続: ${schedule.name}`,
-          }
-        : {})}
     >
-      {crossDayDisplay && crossDaySourceDayNumber && (
-        <span className="mb-1.5 inline-block rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-          {crossDaySourceDayNumber}日目から継続
-        </span>
-      )}
       <div className="flex flex-wrap items-center gap-2">
         <div
           className={cn(
@@ -334,13 +317,11 @@ function ScheduleCard({
         {displayTime && (
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
-            {crossDayDisplay ? "~" : ""}
+            {crossDayDisplay ? "~ " : ""}
             {displayTime.slice(0, 5)}
             {showEndTime && ` - ${schedule.endTime!.slice(0, 5)}`}
+            {!crossDayDisplay && schedule.endDayOffset != null && schedule.endDayOffset > 0 && " ~"}
           </span>
-        )}
-        {!crossDayDisplay && schedule.endDayOffset != null && schedule.endDayOffset > 0 && (
-          <span className="text-xs text-muted-foreground">→ {schedule.endDayOffset}日後</span>
         )}
       </div>
       {schedule.category === "transport" &&
@@ -359,6 +340,16 @@ function ScheduleCard({
           <MapPin className="h-3 w-3 shrink-0" />
           {schedule.address}
         </p>
+      )}
+      {schedule.url && (
+        <a
+          href={schedule.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1 block truncate text-xs text-blue-600 hover:underline"
+        >
+          {schedule.url}
+        </a>
       )}
       {schedule.memo && <p className="mt-1 text-sm text-muted-foreground">{schedule.memo}</p>}
     </div>

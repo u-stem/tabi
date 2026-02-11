@@ -346,13 +346,12 @@ function PlaceCard({
             ) : null}
             <span className="text-sm font-medium">{name}</span>
             {crossDayDisplay && timeStr && (
-              <span className="text-xs text-muted-foreground">~{timeStr}</span>
+              <span className="text-xs text-muted-foreground">~ {timeStr}</span>
             )}
             {!crossDayDisplay && timeStr && (
-              <span className="text-xs text-muted-foreground">{timeStr}</span>
-            )}
-            {!crossDayDisplay && endDayOffset != null && endDayOffset > 0 && (
-              <span className="text-xs text-muted-foreground">→ {endDayOffset}日後</span>
+              <span className="text-xs text-muted-foreground">
+                {timeStr}{endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
+              </span>
             )}
           </div>
           {!selectable && (
@@ -572,13 +571,12 @@ function TransportConnector({
           <span className="shrink-0 text-xs text-muted-foreground">({methodLabel})</span>
         )}
         {crossDayDisplay && timeStr && (
-          <span className="shrink-0 text-xs text-muted-foreground">~{timeStr}</span>
+          <span className="shrink-0 text-xs text-muted-foreground">~ {timeStr}</span>
         )}
         {!crossDayDisplay && timeStr && (
-          <span className="shrink-0 text-xs text-muted-foreground">{timeStr}</span>
-        )}
-        {!crossDayDisplay && endDayOffset != null && endDayOffset > 0 && (
-          <span className="shrink-0 text-xs text-muted-foreground">→ {endDayOffset}日後</span>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {timeStr}{endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
+          </span>
         )}
         {!selectable && (
           <div className="ml-auto">

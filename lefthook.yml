@@ -1,0 +1,17 @@
+pre-commit:
+  parallel: true
+  commands:
+    check:
+      run: bun run check
+    check-types:
+      run: bun run check-types
+
+commit-msg:
+  commands:
+    conventional-commit:
+      run: 'grep -qE "^(feat|fix|docs|refactor|test|chore|ci|perf|style|revert)(\(.+\))?: .+" {1} || { echo "Conventional Commits 形式で記述してください: <type>: <説明>"; exit 1; }'
+
+pre-push:
+  commands:
+    test:
+      run: bun run test

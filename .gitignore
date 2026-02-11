@@ -42,5 +42,8 @@ apps/web/public/swe-worker-*.js
 # Worktrees
 .worktrees/
 
+# Lefthook
+lefthook-local.yml
+
 # Misc
 *.tsbuildinfo

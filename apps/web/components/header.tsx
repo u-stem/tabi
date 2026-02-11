@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { getSeasonalBg, Logo } from "@/components/logo";
 import { OfflineBanner } from "@/components/offline-banner";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -63,7 +64,8 @@ export function Header() {
               </Link>
             ))}
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
           {session?.user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

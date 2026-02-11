@@ -12,7 +12,7 @@ export function OfflineBanner() {
   return (
     <div
       role="alert"
-      className="bg-yellow-500 px-4 py-2 text-center text-sm font-medium text-yellow-950"
+      className="bg-yellow-500 px-4 py-2 text-center text-sm font-medium text-yellow-950 dark:bg-yellow-600 dark:text-yellow-100"
     >
       オフラインです
     </div>

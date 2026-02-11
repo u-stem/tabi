@@ -460,7 +460,7 @@ export default function TripDetailPage() {
                     className={cn(
                       "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
                       selectedDay === index
-                        ? "text-blue-600 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600"
+                        ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
                         : "text-muted-foreground hover:text-foreground",
                     )}
                   >
@@ -523,7 +523,7 @@ export default function TripDetailPage() {
                             className={cn(
                               "flex shrink-0 items-center rounded-full border transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-1",
                               isActive
-                                ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"
+                                ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
                                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
                             )}
                           >

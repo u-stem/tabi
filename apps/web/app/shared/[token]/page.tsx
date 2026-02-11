@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
-import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
+import { SCHEDULE_COLOR_CLASSES, STATUS_COLORS } from "@/lib/colors";
 import { getCrossDayEntries } from "@/lib/cross-day";
 import { formatDate, formatDateRange, getDayCount } from "@/lib/format";
 import { CATEGORY_ICONS } from "@/lib/icons";
@@ -36,13 +36,6 @@ type SharedTripResponse = {
   status: TripStatus;
   days: DayResponse[];
   shareExpiresAt: string | null;
-};
-
-const STATUS_COLORS: Record<TripStatus, string> = {
-  draft: "bg-gray-200 text-gray-800 border-gray-300",
-  planned: "bg-blue-100 text-blue-800 border-blue-300",
-  active: "bg-green-100 text-green-800 border-green-300",
-  completed: "bg-purple-100 text-purple-800 border-purple-300",
 };
 
 function SharedHeader() {
@@ -176,11 +169,11 @@ export default function SharedTripPage() {
     <div className="min-h-screen">
       <SharedHeader />
       {hasUpdate && (
-        <div className="sticky top-0 z-10 border-b bg-blue-50 px-4 py-2 text-center">
+        <div className="sticky top-0 z-10 border-b bg-blue-50 px-4 py-2 text-center dark:bg-blue-950">
           <Button
             variant="ghost"
             size="sm"
-            className="gap-1.5 text-blue-700 hover:text-blue-800"
+            className="gap-1.5 text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
             onClick={fetchTrip}
           >
             <RefreshCw className="h-3.5 w-3.5" />
@@ -346,7 +339,7 @@ function ScheduleCard({
           href={schedule.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="mt-1 block truncate text-xs text-blue-600 hover:underline"
+          className="mt-1 block truncate text-xs text-blue-600 hover:underline dark:text-blue-400"
         >
           {schedule.url}
         </a>

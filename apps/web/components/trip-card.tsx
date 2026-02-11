@@ -1,27 +1,14 @@
 "use client";
 
-import type { MemberRole, TripListItem, TripStatus } from "@sugara/shared";
+import type { TripListItem } from "@sugara/shared";
 import { ROLE_LABELS, STATUS_LABELS } from "@sugara/shared";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
-import { SELECTED_RING } from "@/lib/colors";
+import { ROLE_COLORS, SELECTED_RING, STATUS_COLORS } from "@/lib/colors";
 import { formatDateRange, getDayCount } from "@/lib/format";
 import { cn } from "@/lib/utils";
-
-const STATUS_COLORS: Record<TripStatus, string> = {
-  draft: "bg-gray-200 text-gray-800 border-gray-300",
-  planned: "bg-blue-100 text-blue-800 border-blue-300",
-  active: "bg-green-100 text-green-800 border-green-300",
-  completed: "bg-purple-100 text-purple-800 border-purple-300",
-};
-
-const ROLE_COLORS: Record<MemberRole, string> = {
-  owner: "bg-amber-100 text-amber-800 border-amber-300",
-  editor: "bg-sky-100 text-sky-800 border-sky-300",
-  viewer: "bg-slate-100 text-slate-700 border-slate-300",
-};
 
 type TripCardProps = TripListItem & {
   selectable?: boolean;

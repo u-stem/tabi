@@ -1,6 +1,26 @@
-import type { ScheduleColor } from "@sugara/shared";
+import type { MemberRole, ScheduleColor, TripStatus } from "@sugara/shared";
 
 export const SELECTED_RING = "border-ring ring-2 ring-ring";
+
+export const STATUS_COLORS: Record<TripStatus, string> = {
+  draft:
+    "bg-gray-200 text-gray-800 border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600",
+  planned:
+    "bg-blue-100 text-blue-800 border-blue-300 dark:bg-blue-900 dark:text-blue-200 dark:border-blue-700",
+  active:
+    "bg-green-100 text-green-800 border-green-300 dark:bg-green-900 dark:text-green-200 dark:border-green-700",
+  completed:
+    "bg-purple-100 text-purple-800 border-purple-300 dark:bg-purple-900 dark:text-purple-200 dark:border-purple-700",
+};
+
+export const ROLE_COLORS: Record<MemberRole, string> = {
+  owner:
+    "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-900 dark:text-amber-200 dark:border-amber-700",
+  editor:
+    "bg-sky-100 text-sky-800 border-sky-300 dark:bg-sky-900 dark:text-sky-200 dark:border-sky-700",
+  viewer:
+    "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600",
+};
 
 export const SCHEDULE_COLOR_CLASSES: Record<
   ScheduleColor,

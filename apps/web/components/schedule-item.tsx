@@ -373,7 +373,7 @@ function PlaceCard({
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block truncate text-xs text-blue-600 hover:underline"
+                className="block truncate text-xs text-blue-600 hover:underline dark:text-blue-400"
               >
                 {url}
               </a>
@@ -500,7 +500,7 @@ function TransportConnector({
           )}
           <div
             className={cn(
-              "relative flex h-5 w-5 items-center justify-center rounded-full border-2 bg-white",
+              "relative flex h-5 w-5 items-center justify-center rounded-full border-2 bg-background",
               colorClasses.border,
               isPast && "opacity-50",
               isCurrent && `ring-2 ring-offset-1 ring-offset-background ${colorClasses.ring}`,

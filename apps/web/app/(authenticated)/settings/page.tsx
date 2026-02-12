@@ -36,11 +36,27 @@ export default function SettingsPage() {
           <UsernameSection defaultUsername={user.username ?? ""} />
           <PasswordSection />
           <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-            <Link href="/terms" target="_blank" className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground">
+            <Link
+              href="/news"
+              target="_blank"
+              className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
+            >
+              お知らせ
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+            <Link
+              href="/terms"
+              target="_blank"
+              className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
+            >
               利用規約
               <ExternalLink className="h-3 w-3" />
             </Link>
-            <Link href="/privacy" target="_blank" className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground">
+            <Link
+              href="/privacy"
+              target="_blank"
+              className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
+            >
               プライバシーポリシー
               <ExternalLink className="h-3 w-3" />
             </Link>

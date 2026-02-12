@@ -83,7 +83,7 @@ export function TripToolbar({
 }: TripToolbarProps) {
   if (selectionMode) {
     return (
-      <div role="toolbar" aria-label="選択操作" className="flex items-center gap-2">
+      <div role="toolbar" aria-label="選択操作" className="flex flex-wrap items-center gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -156,14 +156,14 @@ export function TripToolbar({
   }
 
   return (
-    <div role="toolbar" aria-label="旅行フィルター" className="flex items-center gap-2">
+    <div role="toolbar" aria-label="旅行フィルター" className="flex flex-wrap items-center gap-2">
       <Input
         type="search"
         placeholder="検索..."
         aria-label="旅行を検索"
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="h-8 w-40"
+        className="h-8 w-full sm:w-40"
       />
       <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>
         <SelectTrigger className="h-8 w-[120px] text-xs">

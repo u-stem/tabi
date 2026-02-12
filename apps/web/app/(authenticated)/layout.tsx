@@ -4,7 +4,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
   return (
     <div className="min-h-screen">
       <Header />
-      <main className="container py-8">{children}</main>
+      <main className="container py-4 sm:py-8">{children}</main>
     </div>
   );
 }

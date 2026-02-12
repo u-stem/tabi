@@ -75,7 +75,7 @@ export default function SharedTripsPage() {
               aria-label="旅行を検索"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-8 w-40"
+              className="h-8 w-full sm:w-40"
             />
           </div>
           {filteredTrips.length === 0 ? (

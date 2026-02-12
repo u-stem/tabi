@@ -158,7 +158,9 @@ export function Header() {
                 <SheetContent side="right">
                   <SheetHeader>
                     <SheetTitle>{session.user.name}</SheetTitle>
-                    <SheetDescription>{session.user.email}</SheetDescription>
+                    <SheetDescription>
+                      {session.user.username ? `@${session.user.username}` : ""}
+                    </SheetDescription>
                   </SheetHeader>
                   <nav className="mt-6 flex flex-col gap-1" aria-label="モバイルナビゲーション">
                     {NAV_LINKS.map((link) => (

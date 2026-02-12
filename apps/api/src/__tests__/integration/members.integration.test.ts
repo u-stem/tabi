@@ -65,16 +65,16 @@ describe("Members Integration", () => {
     const members = await res.json();
     expect(members).toHaveLength(1);
     expect(members[0].role).toBe("owner");
-    expect(members[0].email).toBe("owner@test.com");
+    expect(members[0].name).toBe("Owner");
   });
 
-  it("adds a member by email", async () => {
+  it("adds a member by userId", async () => {
     const editor = await createTestUser({ name: "Editor", email: "editor@test.com" });
 
     const res = await app.request(`/api/trips/${tripId}/members`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "editor@test.com", role: "editor" }),
+      body: JSON.stringify({ userId: editor.id, role: "editor" }),
     });
     expect(res.status).toBe(201);
 
@@ -87,18 +87,18 @@ describe("Members Integration", () => {
   });
 
   it("prevents adding duplicate member", async () => {
-    await createTestUser({ name: "Editor", email: "editor@test.com" });
+    const editor = await createTestUser({ name: "Editor", email: "editor@test.com" });
 
     await app.request(`/api/trips/${tripId}/members`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "editor@test.com", role: "editor" }),
+      body: JSON.stringify({ userId: editor.id, role: "editor" }),
     });
 
     const res = await app.request(`/api/trips/${tripId}/members`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "editor@test.com", role: "viewer" }),
+      body: JSON.stringify({ userId: editor.id, role: "viewer" }),
     });
     expect(res.status).toBe(409);
   });
@@ -109,7 +109,7 @@ describe("Members Integration", () => {
     await app.request(`/api/trips/${tripId}/members`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "editor@test.com", role: "editor" }),
+      body: JSON.stringify({ userId: editor.id, role: "editor" }),
     });
 
     const res = await app.request(`/api/trips/${tripId}/members/${editor.id}`, {
@@ -131,7 +131,7 @@ describe("Members Integration", () => {
     await app.request(`/api/trips/${tripId}/members`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "editor@test.com", role: "editor" }),
+      body: JSON.stringify({ userId: editor.id, role: "editor" }),
     });
 
     const res = await app.request(`/api/trips/${tripId}/members/${editor.id}`, {
@@ -157,7 +157,7 @@ describe("Members Integration", () => {
     await app.request(`/api/trips/${tripId}/members`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "editor@test.com", role: "editor" }),
+      body: JSON.stringify({ userId: editor.id, role: "editor" }),
     });
 
     // Switch to editor
@@ -166,11 +166,11 @@ describe("Members Integration", () => {
       session: { id: "editor-session" },
     }));
 
-    await createTestUser({ name: "New", email: "new@test.com" });
+    const newUser = await createTestUser({ name: "New", email: "new@test.com" });
     const res = await app.request(`/api/trips/${tripId}/members`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "new@test.com", role: "viewer" }),
+      body: JSON.stringify({ userId: newUser.id, role: "viewer" }),
     });
     expect(res.status).toBe(404);
   });
@@ -181,7 +181,7 @@ describe("Members Integration", () => {
     await app.request(`/api/trips/${tripId}/members`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email: "editor@test.com", role: "editor" }),
+      body: JSON.stringify({ userId: editor.id, role: "editor" }),
     });
 
     // Switch to editor

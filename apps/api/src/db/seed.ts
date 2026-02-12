@@ -3,9 +3,9 @@ export {};
 const API_URL = process.env.API_URL || "http://localhost:3000";
 
 const DEV_USERS = [
-  { name: "開発ユーザー", email: "dev@example.com", password: "password123" },
-  { name: "Alice", email: "alice@example.com", password: "password123" },
-  { name: "Bob", email: "bob@example.com", password: "password123" },
+  { name: "開発ユーザー", username: "dev", email: "dev@sugara.local", password: "Password1" },
+  { name: "Alice", username: "alice", email: "alice@sugara.local", password: "Password1" },
+  { name: "Bob", username: "bob", email: "bob@sugara.local", password: "Password1" },
 ];
 
 const SAMPLE_TRIP = {
@@ -125,11 +125,14 @@ async function apiFetch<T = ApiResponse>(path: string, options: RequestInit = {}
   return res.json() as Promise<T>;
 }
 
-async function signupOrLogin(user: {
+type DevUser = {
   name: string;
+  username: string;
   email: string;
   password: string;
-}): Promise<string> {
+};
+
+async function signupOrLogin(user: DevUser): Promise<{ cookies: string; userId: string }> {
   const res = await fetch(`${API_URL}/api/auth/sign-up/email`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -141,10 +144,10 @@ async function signupOrLogin(user: {
     const body = await res.text();
     if (body.includes("already") || body.includes("exist")) {
       console.log("  Already exists, logging in...");
-      const loginRes = await fetch(`${API_URL}/api/auth/sign-in/email`, {
+      const loginRes = await fetch(`${API_URL}/api/auth/sign-in/username`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: user.email, password: user.password }),
+        body: JSON.stringify({ username: user.username, password: user.password }),
         redirect: "manual",
       });
       cookies = loginRes.headers.getSetCookie?.().join("; ") ?? "";
@@ -155,7 +158,13 @@ async function signupOrLogin(user: {
       throw new Error(`Signup failed: ${body}`);
     }
   }
-  return cookies;
+
+  // Fetch user ID from session
+  const sessionRes = await fetch(`${API_URL}/api/auth/get-session`, {
+    headers: { cookie: cookies },
+  });
+  const session = (await sessionRes.json()) as { user: { id: string } };
+  return { cookies, userId: session.user.id };
 }
 
 async function main() {
@@ -163,13 +172,13 @@ async function main() {
   console.log(`API: ${API_URL}`);
 
   // 1. Create all dev users
-  const cookiesMap = new Map<string, string>();
+  const userMap = new Map<string, { cookies: string; userId: string }>();
   for (const user of DEV_USERS) {
-    console.log(`\nCreating user: ${user.email}`);
+    console.log(`\nCreating user: ${user.username}`);
     try {
-      const cookies = await signupOrLogin(user);
-      cookiesMap.set(user.email, cookies);
-      console.log("  Done");
+      const result = await signupOrLogin(user);
+      userMap.set(user.username, result);
+      console.log(`  Done (ID: ${result.userId})`);
     } catch (err) {
       if (err instanceof TypeError && err.message.includes("fetch")) {
         console.error(`\nError: API server is not running at ${API_URL}`);
@@ -180,8 +189,9 @@ async function main() {
     }
   }
 
-  const ownerCookies = cookiesMap.get(DEV_USERS[0].email);
-  if (!ownerCookies) throw new Error(`Cookie not found for ${DEV_USERS[0].email}`);
+  const ownerData = userMap.get(DEV_USERS[0].username);
+  if (!ownerData) throw new Error(`Data not found for ${DEV_USERS[0].username}`);
+  const ownerCookies = ownerData.cookies;
 
   // 2. Create sample trip
   console.log(`\nCreating trip: ${SAMPLE_TRIP.title}`);
@@ -218,10 +228,12 @@ async function main() {
   for (let i = 1; i < DEV_USERS.length; i++) {
     const user = DEV_USERS[i];
     const role = memberRoles[i - 1] ?? "editor";
-    console.log(`\nAdding member: ${user.email} (${role})`);
+    const userData = userMap.get(user.username);
+    if (!userData) continue;
+    console.log(`\nAdding member: ${user.username} (${role})`);
     await apiFetch(`/api/trips/${trip.id}/members`, {
       method: "POST",
-      body: JSON.stringify({ email: user.email, role }),
+      body: JSON.stringify({ userId: userData.userId, role }),
       headers: { cookie: ownerCookies },
     });
     console.log("  Done");
@@ -232,7 +244,7 @@ async function main() {
   for (let i = 0; i < DEV_USERS.length; i++) {
     const user = DEV_USERS[i];
     const role = i === 0 ? "owner" : (memberRoles[i - 1] ?? "editor");
-    console.log(`  ${user.email} / ${user.password} (${role})`);
+    console.log(`  ${user.username} / ${user.password} (${role})`);
   }
   console.log("");
 }

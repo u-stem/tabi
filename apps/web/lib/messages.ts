@@ -76,13 +76,20 @@ export const MSG = {
   // Settings
   SETTINGS_PROFILE_UPDATED: "プロフィールを更新しました",
   SETTINGS_PROFILE_UPDATE_FAILED: "プロフィールの更新に失敗しました",
+  SETTINGS_USERNAME_UPDATED: "ユーザー名を更新しました",
+  SETTINGS_USERNAME_UPDATE_FAILED: "ユーザー名の更新に失敗しました",
   SETTINGS_PASSWORD_CHANGED: "パスワードを変更しました",
   SETTINGS_PASSWORD_CHANGE_FAILED: "パスワードの変更に失敗しました",
+  SETTINGS_USER_ID_COPIED: "ユーザーIDをコピーしました",
 
   // Auth
   AUTH_LOGIN_FAILED: "ログインに失敗しました",
   AUTH_LOGIN_SUCCESS: "ログインしました",
   AUTH_LOGOUT_FAILED: "ログアウトに失敗しました",
+  AUTH_SIGNUP_SUCCESS: "アカウントを作成しました",
+  AUTH_SIGNUP_FAILED: "アカウントの作成に失敗しました",
+  AUTH_SIGNUP_PASSWORD_MISMATCH: "パスワードが一致しません",
+  AUTH_PASSWORD_TOO_WEAK: "パスワードの要件を満たしていません",
 
   // Batch operations
   BATCH_ASSIGNED: (n: number) => `${n}件を予定に追加しました`,

@@ -1,25 +1,30 @@
 // Production seed: create a single user from environment variables.
-// Usage: SEED_USER_EMAIL=you@example.com SEED_USER_PASSWORD=secret123 bun run db:seed-user
+// Usage: SEED_USER_USERNAME=admin SEED_USER_PASSWORD=Admin123 bun run db:seed-user
 export {};
 
 const API_URL = process.env.API_URL || "http://localhost:3000";
-const email = process.env.SEED_USER_EMAIL;
+const username = process.env.SEED_USER_USERNAME;
 const password = process.env.SEED_USER_PASSWORD;
 const name = process.env.SEED_USER_NAME || "Admin";
 
-if (!email || !password) {
-  console.error("SEED_USER_EMAIL and SEED_USER_PASSWORD are required");
+if (!username || !password) {
+  console.error("SEED_USER_USERNAME and SEED_USER_PASSWORD are required");
   process.exit(1);
 }
 
 async function main() {
-  console.log(`Creating user: ${email}`);
+  console.log(`Creating user: ${username}`);
   console.log(`API: ${API_URL}`);
 
   const res = await fetch(`${API_URL}/api/auth/sign-up/email`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, email, password }),
+    body: JSON.stringify({
+      name,
+      username,
+      email: `${username}@sugara.local`,
+      password,
+    }),
     redirect: "manual",
   });
 

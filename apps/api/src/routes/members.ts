@@ -24,7 +24,7 @@ memberRoutes.get("/:tripId/members", async (c) => {
 
   const members = await db.query.tripMembers.findMany({
     where: eq(tripMembers.tripId, tripId),
-    with: { user: { columns: { id: true, name: true, email: true } } },
+    with: { user: { columns: { id: true, name: true } } },
   });
 
   return c.json(
@@ -32,7 +32,6 @@ memberRoutes.get("/:tripId/members", async (c) => {
       userId: m.userId,
       role: m.role,
       name: m.user.name,
-      email: m.user.email,
     })),
   );
 });
@@ -62,7 +61,7 @@ memberRoutes.post("/:tripId/members", async (c) => {
   }
 
   const targetUser = await db.query.users.findFirst({
-    where: eq(users.email, parsed.data.email),
+    where: eq(users.id, parsed.data.userId),
   });
   if (!targetUser) {
     return c.json({ error: ERROR_MSG.USER_NOT_FOUND }, 404);
@@ -95,7 +94,6 @@ memberRoutes.post("/:tripId/members", async (c) => {
       userId: targetUser.id,
       role: parsed.data.role,
       name: targetUser.name,
-      email: targetUser.email,
     },
     201,
   );

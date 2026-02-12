@@ -72,7 +72,6 @@ export type MemberResponse = {
   userId: string;
   role: MemberRole;
   name: string;
-  email: string;
 };
 
 export type ActivityLogResponse = {

@@ -1,6 +1,7 @@
 "use client";
 
 import { LogIn } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth-client";
+import { translateAuthError } from "@/lib/auth-error";
 import { MIN_PASSWORD_LENGTH } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
 
@@ -23,12 +25,12 @@ export function AuthForm() {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
+    const username = formData.get("username") as string;
     const password = formData.get("password") as string;
 
-    const result = await signIn.email({ email, password });
+    const result = await signIn.username({ username, password });
     if (result.error) {
-      setError(result.error.message ?? MSG.AUTH_LOGIN_FAILED);
+      setError(translateAuthError(result.error, MSG.AUTH_LOGIN_FAILED));
       setLoading(false);
       return;
     }
@@ -41,20 +43,20 @@ export function AuthForm() {
     <Card className="w-full max-w-md">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">ログイン</CardTitle>
-        <CardDescription>メールアドレスでログイン</CardDescription>
+        <CardDescription>ユーザー名でログイン</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">
-              メールアドレス <span className="text-destructive">*</span>
+            <Label htmlFor="username">
+              ユーザー名 <span className="text-destructive">*</span>
             </Label>
             <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="you@example.com"
-              autoComplete="email"
+              id="username"
+              name="username"
+              type="text"
+              placeholder="username"
+              autoComplete="username"
               required
             />
           </div>
@@ -84,6 +86,12 @@ export function AuthForm() {
             <LogIn className="h-4 w-4" />
             {loading ? "ログイン中..." : "ログイン"}
           </Button>
+          <p className="text-center text-sm text-muted-foreground">
+            アカウントをお持ちでない方は{" "}
+            <Link href="/auth/signup" className="text-foreground underline underline-offset-4">
+              新規登録
+            </Link>
+          </p>
         </form>
       </CardContent>
     </Card>

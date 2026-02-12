@@ -44,7 +44,9 @@ vi.mock("../lib/activity-logger", () => ({
 import { MAX_MEMBERS_PER_TRIP } from "@sugara/shared";
 import { memberRoutes } from "../routes/members";
 
-const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
+const fakeUserId = "00000000-0000-0000-0000-000000000001";
+const fakeUser = { id: fakeUserId, name: "Test User", email: "test@sugara.local" };
+const fakeUser2Id = "00000000-0000-0000-0000-000000000002";
 const tripId = "trip-1";
 const basePath = `/api/trips/${tripId}/members`;
 
@@ -64,7 +66,7 @@ describe("Member routes", () => {
     // Default: user is owner
     mockDbQuery.tripMembers.findFirst.mockResolvedValue({
       tripId,
-      userId: fakeUser.id,
+      userId: fakeUserId,
       role: "owner",
     });
     // Default: count query returns 0 (under limit)
@@ -79,14 +81,14 @@ describe("Member routes", () => {
     it("returns list of members", async () => {
       const members = [
         {
-          userId: fakeUser.id,
+          userId: fakeUserId,
           role: "owner",
-          user: { id: fakeUser.id, name: "Owner", email: "owner@test.com" },
+          user: { id: fakeUserId, name: "Owner" },
         },
         {
-          userId: "user-2",
+          userId: fakeUser2Id,
           role: "editor",
-          user: { id: "user-2", name: "Editor", email: "editor@test.com" },
+          user: { id: fakeUser2Id, name: "Editor" },
         },
       ];
       mockDbQuery.tripMembers.findMany.mockResolvedValue(members);
@@ -98,7 +100,7 @@ describe("Member routes", () => {
       expect(res.status).toBe(200);
       expect(body).toHaveLength(2);
       expect(body[0].role).toBe("owner");
-      expect(body[1].email).toBe("editor@test.com");
+      expect(body[1].name).toBe("Editor");
     });
 
     it("returns 404 when user is not a member", async () => {
@@ -123,13 +125,12 @@ describe("Member routes", () => {
   describe(`POST ${basePath}`, () => {
     it("returns 201 when adding a member", async () => {
       mockDbQuery.users.findFirst.mockResolvedValue({
-        id: "user-2",
+        id: fakeUser2Id,
         name: "New Member",
-        email: "new@test.com",
       });
       // No existing membership (second call after owner check)
       mockDbQuery.tripMembers.findFirst
-        .mockResolvedValueOnce({ tripId, userId: fakeUser.id, role: "owner" })
+        .mockResolvedValueOnce({ tripId, userId: fakeUserId, role: "owner" })
         .mockResolvedValueOnce(undefined);
       mockDbInsert.mockReturnValue({
         values: vi.fn().mockResolvedValue(undefined),
@@ -139,12 +140,12 @@ describe("Member routes", () => {
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "new@test.com", role: "editor" }),
+        body: JSON.stringify({ userId: fakeUser2Id, role: "editor" }),
       });
       const body = await res.json();
 
       expect(res.status).toBe(201);
-      expect(body.userId).toBe("user-2");
+      expect(body.userId).toBe(fakeUser2Id);
       expect(body.role).toBe("editor");
       expect(body.name).toBe("New Member");
     });
@@ -152,7 +153,7 @@ describe("Member routes", () => {
     it("returns 404 when user is editor (not owner)", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue({
         tripId,
-        userId: fakeUser.id,
+        userId: fakeUserId,
         role: "editor",
       });
 
@@ -160,7 +161,7 @@ describe("Member routes", () => {
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "new@test.com", role: "editor" }),
+        body: JSON.stringify({ userId: fakeUser2Id, role: "editor" }),
       });
 
       expect(res.status).toBe(404);
@@ -173,7 +174,7 @@ describe("Member routes", () => {
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "nonexistent@test.com", role: "editor" }),
+        body: JSON.stringify({ userId: fakeUser2Id, role: "editor" }),
       });
 
       expect(res.status).toBe(404);
@@ -181,30 +182,30 @@ describe("Member routes", () => {
 
     it("returns 409 when user is already a member", async () => {
       mockDbQuery.users.findFirst.mockResolvedValue({
-        id: "user-2",
-        email: "existing@test.com",
+        id: fakeUser2Id,
+        name: "Existing",
       });
       // First call: owner check; second call: existing member found
       mockDbQuery.tripMembers.findFirst
-        .mockResolvedValueOnce({ tripId, userId: fakeUser.id, role: "owner" })
-        .mockResolvedValueOnce({ tripId, userId: "user-2", role: "editor" });
+        .mockResolvedValueOnce({ tripId, userId: fakeUserId, role: "owner" })
+        .mockResolvedValueOnce({ tripId, userId: fakeUser2Id, role: "editor" });
 
       const app = createApp();
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "existing@test.com", role: "editor" }),
+        body: JSON.stringify({ userId: fakeUser2Id, role: "editor" }),
       });
 
       expect(res.status).toBe(409);
     });
 
-    it("returns 400 with invalid email", async () => {
+    it("returns 400 with invalid userId", async () => {
       const app = createApp();
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "not-an-email", role: "editor" }),
+        body: JSON.stringify({ userId: "not-a-uuid", role: "editor" }),
       });
 
       expect(res.status).toBe(400);
@@ -221,7 +222,7 @@ describe("Member routes", () => {
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: "new@test.com", role: "editor" }),
+        body: JSON.stringify({ userId: fakeUser2Id, role: "editor" }),
       });
 
       expect(res.status).toBe(409);
@@ -232,10 +233,10 @@ describe("Member routes", () => {
     it("returns ok when updating role", async () => {
       // First call: owner check; second call: target member exists (with user for activity log)
       mockDbQuery.tripMembers.findFirst
-        .mockResolvedValueOnce({ tripId, userId: fakeUser.id, role: "owner" })
+        .mockResolvedValueOnce({ tripId, userId: fakeUserId, role: "owner" })
         .mockResolvedValueOnce({
           tripId,
-          userId: "user-2",
+          userId: fakeUser2Id,
           role: "editor",
           user: { name: "Editor" },
         });
@@ -246,7 +247,7 @@ describe("Member routes", () => {
       });
 
       const app = createApp();
-      const res = await app.request(`${basePath}/user-2`, {
+      const res = await app.request(`${basePath}/${fakeUser2Id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: "viewer" }),
@@ -259,7 +260,7 @@ describe("Member routes", () => {
 
     it("returns 400 when trying to change own role", async () => {
       const app = createApp();
-      const res = await app.request(`${basePath}/${fakeUser.id}`, {
+      const res = await app.request(`${basePath}/${fakeUserId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: "viewer" }),
@@ -271,12 +272,12 @@ describe("Member routes", () => {
     it("returns 404 when user is not owner", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue({
         tripId,
-        userId: fakeUser.id,
+        userId: fakeUserId,
         role: "editor",
       });
 
       const app = createApp();
-      const res = await app.request(`${basePath}/user-2`, {
+      const res = await app.request(`${basePath}/${fakeUser2Id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role: "viewer" }),
@@ -290,10 +291,10 @@ describe("Member routes", () => {
     it("returns ok when removing a member", async () => {
       // First call: owner check; second call: target member exists (with user for activity log)
       mockDbQuery.tripMembers.findFirst
-        .mockResolvedValueOnce({ tripId, userId: fakeUser.id, role: "owner" })
+        .mockResolvedValueOnce({ tripId, userId: fakeUserId, role: "owner" })
         .mockResolvedValueOnce({
           tripId,
-          userId: "user-2",
+          userId: fakeUser2Id,
           role: "editor",
           user: { name: "Editor" },
         });
@@ -302,7 +303,7 @@ describe("Member routes", () => {
       });
 
       const app = createApp();
-      const res = await app.request(`${basePath}/user-2`, {
+      const res = await app.request(`${basePath}/${fakeUser2Id}`, {
         method: "DELETE",
       });
       const body = await res.json();
@@ -313,7 +314,7 @@ describe("Member routes", () => {
 
     it("returns 400 when trying to remove self", async () => {
       const app = createApp();
-      const res = await app.request(`${basePath}/${fakeUser.id}`, {
+      const res = await app.request(`${basePath}/${fakeUserId}`, {
         method: "DELETE",
       });
 
@@ -323,12 +324,12 @@ describe("Member routes", () => {
     it("returns 404 when user is not owner", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue({
         tripId,
-        userId: fakeUser.id,
+        userId: fakeUserId,
         role: "viewer",
       });
 
       const app = createApp();
-      const res = await app.request(`${basePath}/user-2`, {
+      const res = await app.request(`${basePath}/${fakeUser2Id}`, {
         method: "DELETE",
       });
 

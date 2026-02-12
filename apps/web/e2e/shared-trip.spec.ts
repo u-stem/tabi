@@ -65,17 +65,22 @@ test.describe("Shared Trip", () => {
     browser,
   }) => {
     // Owner creates a trip and adds another user as member
-    const memberEmail = `e2e-shared-list-${Date.now()}@test.com`;
+    const memberUsername = `shared${Date.now()}`;
 
     // Create the member user
     const memberContext = await browser.newContext();
     const memberPage = await memberContext.newPage();
     await memberPage.goto("http://localhost:3000/auth/signup");
-    await memberPage.getByLabel("名前").fill("Shared List User");
-    await memberPage.getByLabel("メールアドレス").fill(memberEmail);
-    await memberPage.getByLabel("パスワード").fill("TestPassword123!");
-    await memberPage.getByRole("button", { name: "アカウントを作成" }).click();
+    await memberPage.getByLabel("ユーザー名").fill(memberUsername);
+    await memberPage.getByLabel("表示名").fill("Shared List User");
+    await memberPage.getByLabel("パスワード", { exact: true }).fill("TestPassword123!");
+    await memberPage.getByLabel("パスワード（確認）").fill("TestPassword123!");
+    await memberPage.getByRole("button", { name: "新規登録" }).click();
     await expect(memberPage).toHaveURL(/\/home/, { timeout: 10000 });
+
+    // Get member's user ID from settings page
+    await memberPage.goto("http://localhost:3000/settings");
+    const memberId = await memberPage.locator("code").first().textContent();
 
     // Owner creates a trip
     await createTripViaUI(page, {
@@ -83,14 +88,14 @@ test.describe("Shared Trip", () => {
       destination: "Kanazawa",
     });
 
-    // Add member
+    // Add member by user ID
     await page.getByRole("button", { name: "メンバー" }).click();
-    await page.getByPlaceholder("メールアドレス").fill(memberEmail);
+    await page.getByPlaceholder("ユーザーID").fill(memberId!);
     await page.getByRole("button", { name: "追加" }).click();
     await expect(page.getByText("メンバーを追加しました")).toBeVisible();
 
     // Member navigates to shared-trips page
-    await memberPage.getByRole("link", { name: "共有" }).click();
+    await memberPage.goto("http://localhost:3000/shared-trips");
     await expect(memberPage).toHaveURL(/\/shared-trips/, { timeout: 10000 });
     await expect(memberPage.getByText("Shared List Trip")).toBeVisible({
       timeout: 10000,

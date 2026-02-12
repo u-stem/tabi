@@ -53,6 +53,8 @@ export const users = pgTable("users", {
   email: varchar("email", { length: 255 }).notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
   image: varchar("image", { length: 500 }),
+  username: varchar("username", { length: 30 }).unique(),
+  displayUsername: varchar("display_username", { length: 30 }),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }).enableRLS();

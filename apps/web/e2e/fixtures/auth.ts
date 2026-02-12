@@ -2,13 +2,13 @@ import { type Page, test as base, expect } from "@playwright/test";
 
 type AuthFixtures = {
   authenticatedPage: Page;
-  userCredentials: { email: string; password: string; name: string };
+  userCredentials: { username: string; password: string; name: string };
 };
 
 export const test = base.extend<AuthFixtures>({
   userCredentials: async ({}, use) => {
     const credentials = {
-      email: `e2e-${Date.now()}-${Math.random().toString(36).slice(2, 7)}@test.com`,
+      username: `e2e_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       password: "TestPassword123!",
       name: "E2E User",
     };
@@ -17,10 +17,11 @@ export const test = base.extend<AuthFixtures>({
 
   authenticatedPage: async ({ page, userCredentials }, use) => {
     await page.goto("/auth/signup");
-    await page.getByLabel("名前").fill(userCredentials.name);
-    await page.getByLabel("メールアドレス").fill(userCredentials.email);
-    await page.getByLabel("パスワード").fill(userCredentials.password);
-    await page.getByRole("button", { name: "アカウントを作成" }).click();
+    await page.getByLabel("ユーザー名").fill(userCredentials.username);
+    await page.getByLabel("表示名").fill(userCredentials.name);
+    await page.getByLabel("パスワード", { exact: true }).fill(userCredentials.password);
+    await page.getByLabel("パスワード（確認）").fill(userCredentials.password);
+    await page.getByRole("button", { name: "新規登録" }).click();
     await expect(page).toHaveURL(/\/home/, { timeout: 10000 });
     await use(page);
   },

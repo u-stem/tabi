@@ -52,7 +52,7 @@ export function MemberDialog({
 }: MemberDialogProps) {
   const [members, setMembers] = useState<MemberResponse[]>([]);
   const [loading, setLoading] = useState(false);
-  const [email, setEmail] = useState("");
+  const [userId, setUserId] = useState("");
   const [role, setRole] = useState("editor");
   const [adding, setAdding] = useState(false);
   const [removeMember, setRemoveMember] = useState<MemberResponse | null>(null);
@@ -81,10 +81,10 @@ export function MemberDialog({
     try {
       await api(`/api/trips/${tripId}/members`, {
         method: "POST",
-        body: JSON.stringify({ email, role }),
+        body: JSON.stringify({ userId, role }),
       });
       toast.success(MSG.MEMBER_ADDED);
-      setEmail("");
+      setUserId("");
       fetchMembers();
     } catch (err) {
       const message = err instanceof Error ? err.message : MSG.MEMBER_ADD_FAILED;
@@ -125,7 +125,7 @@ export function MemberDialog({
       onOpenChange={(isOpen) => {
         onOpenChange(isOpen);
         if (!isOpen) {
-          setEmail("");
+          setUserId("");
           setRole("editor");
         }
       }}
@@ -148,7 +148,6 @@ export function MemberDialog({
                 >
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium">{member.name}</p>
-                    <p className="truncate text-xs text-muted-foreground">{member.email}</p>
                   </div>
                   {member.role === "owner" ? (
                     <span className="shrink-0 text-xs text-muted-foreground">オーナー</span>
@@ -194,10 +193,10 @@ export function MemberDialog({
                 <>
                   <div className="flex gap-2">
                     <Input
-                      type="email"
-                      placeholder="user@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
+                      type="text"
+                      placeholder="ユーザーID"
+                      value={userId}
+                      onChange={(e) => setUserId(e.target.value)}
                       required
                       className="flex-1"
                     />

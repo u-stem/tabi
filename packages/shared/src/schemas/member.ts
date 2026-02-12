@@ -7,7 +7,7 @@ export const assignableRoleSchema = z.enum(["editor", "viewer"]);
 export type AssignableRole = z.infer<typeof assignableRoleSchema>;
 
 export const addMemberSchema = z.object({
-  email: z.string().email(),
+  userId: z.string().uuid(),
   role: assignableRoleSchema,
 });
 export type AddMemberInput = z.infer<typeof addMemberSchema>;

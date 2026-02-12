@@ -21,7 +21,7 @@ export default function HomePage() {
           <Button asChild size="lg">
             <Link href="/auth/signup">
               <ArrowRight className="h-4 w-4" />
-              サインアップ
+              新規登録
             </Link>
           </Button>
           <Button asChild variant="outline" size="lg">
@@ -33,8 +33,14 @@ export default function HomePage() {
         </div>
       </main>
 
-      <footer className="container flex h-14 items-center justify-center text-sm text-muted-foreground">
-        sugara
+      <footer className="container flex h-14 items-center justify-center gap-4 text-sm text-muted-foreground">
+        <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
+          利用規約
+        </Link>
+        <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
+          プライバシーポリシー
+        </Link>
+        <span>sugara</span>
       </footer>
     </div>
   );

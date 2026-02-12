@@ -89,6 +89,7 @@ export const MSG = {
   AUTH_SIGNUP_SUCCESS: "アカウントを作成しました",
   AUTH_SIGNUP_FAILED: "アカウントの作成に失敗しました",
   AUTH_SIGNUP_PASSWORD_MISMATCH: "パスワードが一致しません",
+  AUTH_SIGNUP_TERMS_REQUIRED: "利用規約とプライバシーポリシーへの同意が必要です",
   AUTH_PASSWORD_TOO_WEAK: "パスワードの要件を満たしていません",
 
   // Batch operations

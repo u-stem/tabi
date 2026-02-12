@@ -7,6 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signUp } from "@/lib/auth-client";
@@ -22,11 +23,18 @@ export function SignupForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [agreed, setAgreed] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
+
+    if (!agreed) {
+      setError(MSG.AUTH_SIGNUP_TERMS_REQUIRED);
+      setLoading(false);
+      return;
+    }
 
     const formData = new FormData(e.currentTarget);
     const username = formData.get("username") as string;
@@ -132,6 +140,37 @@ export function SignupForm() {
               required
             />
           </div>
+          <div className="flex items-start gap-2">
+            <Checkbox
+              id="terms"
+              checked={agreed}
+              onCheckedChange={(checked) => setAgreed(checked === true)}
+              className="mt-0.5"
+            />
+            <Label
+              htmlFor="terms"
+              className="text-sm font-normal leading-relaxed text-muted-foreground"
+            >
+              <a
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground underline underline-offset-4"
+              >
+                利用規約
+              </a>
+              と
+              <a
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-foreground underline underline-offset-4"
+              >
+                プライバシーポリシー
+              </a>
+              に同意する
+            </Label>
+          </div>
           {error && (
             <div
               role="alert"
@@ -140,7 +179,7 @@ export function SignupForm() {
               {error}
             </div>
           )}
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="w-full" disabled={loading || !agreed}>
             <UserPlus className="h-4 w-4" />
             {loading ? "登録中..." : "新規登録"}
           </Button>

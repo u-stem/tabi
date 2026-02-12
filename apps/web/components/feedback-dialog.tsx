@@ -78,9 +78,14 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
             rows={5}
             required
           />
-          <p className="mt-1 text-right text-xs text-muted-foreground">
-            {body.length}/{FEEDBACK_BODY_MAX_LENGTH}
-          </p>
+          <div className="mt-1 flex items-start justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              個人情報は含めないでください
+            </p>
+            <p className="shrink-0 text-xs text-muted-foreground">
+              {body.length}/{FEEDBACK_BODY_MAX_LENGTH}
+            </p>
+          </div>
           {error && (
             <div
               role="alert"

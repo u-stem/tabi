@@ -411,8 +411,7 @@ export function CandidatePanel({
           </Button>
         </div>
       ) : (
-        <div className="mb-3 flex items-center justify-between">
-          <h3 className="text-sm font-medium">候補</h3>
+        <div className="mb-3 flex items-center justify-end gap-1.5">
           <div className="flex items-center gap-1.5">
             {!disabled && candidates.length > 0 && onEnterSelectionMode && (
               <Button variant="outline" size="sm" onClick={onEnterSelectionMode}>

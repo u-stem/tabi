@@ -66,6 +66,12 @@ export const MSG = {
   PATTERN_RENAMED: "名前を変更しました",
   PATTERN_RENAME_FAILED: "名前の変更に失敗しました",
 
+  // Settings
+  SETTINGS_PROFILE_UPDATED: "プロフィールを更新しました",
+  SETTINGS_PROFILE_UPDATE_FAILED: "プロフィールの更新に失敗しました",
+  SETTINGS_PASSWORD_CHANGED: "パスワードを変更しました",
+  SETTINGS_PASSWORD_CHANGE_FAILED: "パスワードの変更に失敗しました",
+
   // Auth
   AUTH_LOGIN_FAILED: "ログインに失敗しました",
   AUTH_LOGIN_SUCCESS: "ログインしました",

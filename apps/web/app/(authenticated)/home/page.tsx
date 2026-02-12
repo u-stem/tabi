@@ -3,10 +3,12 @@
 import { MAX_TRIPS_PER_USER, type TripListItem } from "@sugara/shared";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 
 import { toast } from "sonner";
 import { CreateTripDialog } from "@/components/create-trip-dialog";
+import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import { TripCard } from "@/components/trip-card";
 import type { SortKey, StatusFilter } from "@/components/trip-toolbar";
 import { TripToolbar } from "@/components/trip-toolbar";
@@ -16,6 +18,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ApiError, api } from "@/lib/api";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
+import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 
 export default function HomePage() {
   const router = useRouter();
@@ -37,6 +40,26 @@ export default function HomePage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const { open: openShortcutHelp } = useShortcutHelp();
+  const homeShortcuts: ShortcutGroup[] = useMemo(
+    () => [
+      {
+        group: "全般",
+        items: [
+          { key: "/", description: "検索にフォーカス" },
+          { key: "n", description: "新規旅行を作成" },
+        ],
+      },
+    ],
+    [],
+  );
+  useRegisterShortcuts(homeShortcuts);
+
+  useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
+  useHotkeys("/", () => searchInputRef.current?.focus(), { useKey: true, preventDefault: true });
+  useHotkeys("n", () => setCreateOpen(true), { preventDefault: true });
 
   const fetchTrips = useCallback(() => {
     setLoading(true);
@@ -225,6 +248,7 @@ export default function HomePage() {
         <>
           <div className="mt-4">
             <TripToolbar
+              searchInputRef={searchInputRef}
               search={search}
               onSearchChange={setSearch}
               statusFilter={statusFilter}

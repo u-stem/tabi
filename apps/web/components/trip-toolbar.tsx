@@ -46,6 +46,7 @@ type TripToolbarProps = {
   duplicating: boolean;
   disabled: boolean;
   newTripSlot?: React.ReactNode;
+  searchInputRef?: React.RefObject<HTMLInputElement | null>;
 };
 
 const statusFilters: { value: StatusFilter; label: string }[] = [
@@ -80,6 +81,7 @@ export function TripToolbar({
   duplicating,
   disabled,
   newTripSlot,
+  searchInputRef,
 }: TripToolbarProps) {
   if (selectionMode) {
     return (
@@ -158,6 +160,7 @@ export function TripToolbar({
   return (
     <div role="toolbar" aria-label="旅行フィルター" className="flex flex-wrap items-center gap-2">
       <Input
+        ref={searchInputRef}
         type="search"
         placeholder="検索..."
         aria-label="旅行を検索"

@@ -44,6 +44,7 @@
     "react": "^19",
     "react-day-picker": "^9.13.1",
     "react-dom": "^19",
+    "react-hotkeys-hook": "^5.2.4",
     "sonner": "^2",
     "tailwind-merge": "^2"
   },

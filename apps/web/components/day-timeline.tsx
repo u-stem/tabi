@@ -64,6 +64,8 @@ type DayTimelineProps = {
   crossDayEntries?: CrossDayEntry[];
   scheduleLimitReached?: boolean;
   scheduleLimitMessage?: string;
+  addScheduleOpen?: boolean;
+  onAddScheduleOpenChange?: (open: boolean) => void;
 };
 
 export function DayTimeline({
@@ -91,6 +93,8 @@ export function DayTimeline({
   crossDayEntries,
   scheduleLimitReached,
   scheduleLimitMessage,
+  addScheduleOpen,
+  onAddScheduleOpenChange,
 }: DayTimelineProps) {
   const { setNodeRef: setDroppableRef } = useDroppable({
     id: "timeline",
@@ -230,6 +234,8 @@ export function DayTimeline({
                   onAdd={onRefresh}
                   disabled={disabled}
                   maxEndDayOffset={maxEndDayOffset}
+                  open={addScheduleOpen}
+                  onOpenChange={onAddScheduleOpenChange}
                 />
               ))}
             {!disabled && schedules.length > 0 && onEnterSelectionMode && (

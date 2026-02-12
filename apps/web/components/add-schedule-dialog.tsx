@@ -45,6 +45,8 @@ type AddScheduleDialogProps = {
   onAdd: () => void;
   disabled?: boolean;
   maxEndDayOffset?: number;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 };
 
 export function AddScheduleDialog({
@@ -54,8 +56,12 @@ export function AddScheduleDialog({
   onAdd,
   disabled,
   maxEndDayOffset = 0,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: AddScheduleDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen ?? internalOpen;
+  const setOpen = controlledOnOpenChange ?? setInternalOpen;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<ScheduleCategory>(DEFAULT_SCHEDULE_CATEGORY);

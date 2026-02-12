@@ -86,6 +86,8 @@ type CandidatePanelProps = {
   batchLoading?: boolean;
   scheduleLimitReached?: boolean;
   scheduleLimitMessage?: string;
+  addDialogOpen?: boolean;
+  onAddDialogOpenChange?: (open: boolean) => void;
 };
 
 function CandidateDragHandle({
@@ -262,12 +264,16 @@ export function CandidatePanel({
   batchLoading,
   scheduleLimitReached,
   scheduleLimitMessage,
+  addDialogOpen: controlledAddOpen,
+  onAddDialogOpenChange: controlledOnAddOpenChange,
 }: CandidatePanelProps) {
   const { setNodeRef: setDroppableRef } = useDroppable({
     id: "candidates",
     data: { type: "candidates" },
   });
-  const [addOpen, setAddOpen] = useState(false);
+  const [internalAddOpen, setInternalAddOpen] = useState(false);
+  const addOpen = controlledAddOpen ?? internalAddOpen;
+  const setAddOpen = controlledOnAddOpenChange ?? setInternalAddOpen;
   const [addLoading, setAddLoading] = useState(false);
   const [category, setCategory] = useState<string>(DEFAULT_SCHEDULE_CATEGORY);
   const [editSchedule, setEditSchedule] = useState<ScheduleResponse | null>(null);

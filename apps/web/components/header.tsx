@@ -1,6 +1,15 @@
 "use client";
 
-import { Download, Home, LogOut, Menu, MessageSquare, Settings, Users } from "lucide-react";
+import {
+  Download,
+  Home,
+  Keyboard,
+  LogOut,
+  Menu,
+  MessageSquare,
+  Settings,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,6 +38,7 @@ import {
 import { signOut, useSession } from "@/lib/auth-client";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { MSG } from "@/lib/messages";
+import { useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
@@ -41,6 +51,7 @@ export function Header() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { canInstall, promptInstall } = useInstallPrompt();
+  const { open: openShortcutHelp } = useShortcutHelp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
 
@@ -108,6 +119,13 @@ export function Header() {
                       <Settings className="h-4 w-4" />
                       設定
                     </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={openShortcutHelp} className="hidden sm:flex">
+                    <Keyboard className="h-4 w-4" />
+                    ショートカット
+                    <kbd className="ml-auto rounded border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground">
+                      ?
+                    </kbd>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
                     <MessageSquare className="h-4 w-4" />

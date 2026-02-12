@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { ActivityLog } from "@/components/activity-log";
 import { CandidatePanel } from "@/components/candidate-panel";
@@ -29,6 +30,7 @@ import { DayTimeline } from "@/components/day-timeline";
 import { EditTripDialog } from "@/components/edit-trip-dialog";
 import { hashColor, PresenceAvatars } from "@/components/presence-avatars";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import { TripActions } from "@/components/trip-actions";
 import {
   AlertDialog,
@@ -71,6 +73,7 @@ import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { MSG } from "@/lib/messages";
+import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
 
 const dndAnnouncements: Announcements = {
@@ -101,6 +104,8 @@ export default function TripDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [addScheduleOpen, setAddScheduleOpen] = useState(false);
+  const [addCandidateOpen, setAddCandidateOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [addPatternOpen, setAddPatternOpen] = useState(false);
@@ -116,6 +121,72 @@ export default function TripDetailPage() {
   const [memoText, setMemoText] = useState("");
   const [memoSaving, setMemoSaving] = useState(false);
   const timelinePanelRef = useRef<HTMLDivElement>(null);
+
+  // Keyboard shortcuts
+  const { open: openShortcutHelp } = useShortcutHelp();
+  const tripShortcuts: ShortcutGroup[] = useMemo(
+    () => [
+      {
+        group: "ナビゲーション",
+        items: [
+          { key: "1-9", description: "N日目に切替" },
+          { key: "[", description: "前の日へ" },
+          { key: "]", description: "次の日へ" },
+        ],
+      },
+      {
+        group: "操作",
+        items: [
+          { key: "a", description: "予定を追加" },
+          { key: "c", description: "候補を追加" },
+          { key: "e", description: "旅行を編集" },
+        ],
+      },
+    ],
+    [],
+  );
+  useRegisterShortcuts(tripShortcuts);
+  useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
+  useHotkeys("1,2,3,4,5,6,7,8,9", (e) => {
+    const dayIndex = Number(e.key) - 1;
+    if (trip && dayIndex < trip.days.length) {
+      setSelectedDay(dayIndex);
+    }
+  });
+  useHotkeys("[", () => setSelectedDay((prev) => Math.max(0, prev - 1)), { useKey: true });
+  useHotkeys(
+    "]",
+    () => {
+      if (trip) {
+        setSelectedDay((prev) => Math.min(trip.days.length - 1, prev + 1));
+      }
+    },
+    { useKey: true },
+  );
+  useHotkeys(
+    "a",
+    () => {
+      if (canEditRef.current && online) setAddScheduleOpen(true);
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "c",
+    () => {
+      if (canEditRef.current && online) setAddCandidateOpen(true);
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "e",
+    () => {
+      if (canEditRef.current) setEditOpen(true);
+    },
+    { preventDefault: true },
+  );
+
+  // Stable ref for canEdit to avoid re-registering hotkeys on every trip change
+  const canEditRef = useRef(false);
 
   // Defined before fetchTrip so it can be passed to useTripSync below
   const fetchTripRef = useRef<() => void>(() => {});
@@ -464,7 +535,9 @@ export default function TripDetailPage() {
   }
 
   const canEdit = trip.role === "owner" || trip.role === "editor";
+  canEditRef.current = canEdit;
   const dayCount = getDayCount(trip.startDate, trip.endDate);
+
   const scheduleLimitReached = trip.scheduleCount >= MAX_SCHEDULES_PER_TRIP;
   const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
 
@@ -634,6 +707,8 @@ export default function TripDetailPage() {
                   schedules={dnd.localSchedules}
                   onRefresh={onMutate}
                   disabled={!online || !canEdit}
+                  addScheduleOpen={addScheduleOpen}
+                  onAddScheduleOpenChange={setAddScheduleOpen}
                   maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
                   totalDays={trip.days.length}
                   crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
@@ -804,6 +879,8 @@ export default function TripDetailPage() {
                     onRefresh={onMutate}
                     disabled={!online || !canEdit}
                     draggable={canEdit && online}
+                    addDialogOpen={addCandidateOpen}
+                    onAddDialogOpenChange={setAddCandidateOpen}
                     selectionMode={selection.selectionTarget === "candidates"}
                     selectedIds={
                       selection.selectionTarget === "candidates" ? selection.selectedIds : undefined

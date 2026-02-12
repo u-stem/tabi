@@ -78,12 +78,16 @@ describe("Trip routes", () => {
       role: "owner",
     });
     mockDbQuery.schedules.findMany.mockResolvedValue([]);
-    // Default: schedule count query returns empty (no schedules)
+    // Default: select queries (trip count for limit check + schedule count for list)
+    const mockWhere = vi.fn().mockImplementation(() => {
+      const result = Promise.resolve([{ count: 0 }]);
+      // Also support chaining .groupBy() for schedule count queries
+      (result as unknown as Record<string, unknown>).groupBy = vi.fn().mockResolvedValue([]);
+      return result;
+    });
     mockDbSelect.mockReturnValue({
       from: vi.fn().mockReturnValue({
-        where: vi.fn().mockReturnValue({
-          groupBy: vi.fn().mockResolvedValue([]),
-        }),
+        where: mockWhere,
       }),
     });
   });
@@ -196,6 +200,29 @@ describe("Trip routes", () => {
       });
 
       expect(res.status).toBe(401);
+    });
+
+    it("returns 409 when trip limit reached", async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: 10 }]),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request("/api/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Tokyo Trip",
+          destination: "Tokyo",
+          startDate: "2025-07-01",
+          endDate: "2025-07-03",
+        }),
+      });
+
+      expect(res.status).toBe(409);
+      expect(mockDbTransaction).not.toHaveBeenCalled();
     });
   });
 
@@ -589,6 +616,23 @@ describe("Trip routes", () => {
 
       expect(res.status).toBe(200);
       expect(mockDbTransaction).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe("POST /api/trips/:id/duplicate", () => {
+    it("returns 409 when trip limit reached", async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: 10 }]),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request("/api/trips/trip-1/duplicate", {
+        method: "POST",
+      });
+
+      expect(res.status).toBe(409);
     });
   });
 

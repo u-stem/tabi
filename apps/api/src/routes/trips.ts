@@ -1,4 +1,4 @@
-import { createTripSchema, updateTripSchema } from "@sugara/shared";
+import { createTripSchema, MAX_TRIPS_PER_USER, updateTripSchema } from "@sugara/shared";
 import { and, asc, count, eq, inArray, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
@@ -85,6 +85,14 @@ tripRoutes.post("/", async (c) => {
 
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const [tripCount] = await db
+    .select({ count: count() })
+    .from(trips)
+    .where(eq(trips.ownerId, user.id));
+  if (tripCount.count >= MAX_TRIPS_PER_USER) {
+    return c.json({ error: ERROR_MSG.LIMIT_TRIPS }, 409);
   }
 
   const { title, destination, startDate, endDate } = parsed.data;
@@ -185,7 +193,23 @@ tripRoutes.get("/:id", async (c) => {
     orderBy: (s, { asc }) => [asc(s.sortOrder)],
   });
 
-  return c.json({ ...trip, role, candidates });
+  const [scheduleCount] = await db
+    .select({ count: count() })
+    .from(schedules)
+    .where(eq(schedules.tripId, tripId));
+
+  const [memberCount] = await db
+    .select({ count: count() })
+    .from(tripMembers)
+    .where(eq(tripMembers.tripId, tripId));
+
+  return c.json({
+    ...trip,
+    role,
+    candidates,
+    scheduleCount: scheduleCount.count,
+    memberCount: memberCount.count,
+  });
 });
 
 // Update trip (owner or editor)
@@ -353,6 +377,14 @@ tripRoutes.post("/:id/duplicate", async (c) => {
   const role = await checkTripAccess(tripId, user.id);
   if (!role) {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
+  }
+
+  const [tripCount] = await db
+    .select({ count: count() })
+    .from(trips)
+    .where(eq(trips.ownerId, user.id));
+  if (tripCount.count >= MAX_TRIPS_PER_USER) {
+    return c.json({ error: ERROR_MSG.LIMIT_TRIPS }, 409);
   }
 
   const source = await db.query.trips.findFirst({

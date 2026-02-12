@@ -30,9 +30,16 @@ type MemberDialogProps = {
   isOwner: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  memberLimitReached?: boolean;
 };
 
-export function MemberDialog({ tripId, isOwner, open, onOpenChange }: MemberDialogProps) {
+export function MemberDialog({
+  tripId,
+  isOwner,
+  open,
+  onOpenChange,
+  memberLimitReached,
+}: MemberDialogProps) {
   const [members, setMembers] = useState<MemberResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -170,31 +177,37 @@ export function MemberDialog({ tripId, isOwner, open, onOpenChange }: MemberDial
           {isOwner && (
             <form onSubmit={handleAdd} className="space-y-3 border-t pt-3">
               <Label className="text-sm font-medium">メンバーを追加</Label>
-              <div className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="user@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="flex-1"
-                />
-                <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="editor">編集者</SelectItem>
-                    <SelectItem value="viewer">閲覧者</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <DialogFooter>
-                <Button type="submit" size="sm" disabled={adding}>
-                  <UserPlus className="h-4 w-4" />
-                  {adding ? "追加中..." : "追加"}
-                </Button>
-              </DialogFooter>
+              {memberLimitReached ? (
+                <p className="text-sm text-muted-foreground">{MSG.LIMIT_MEMBERS}</p>
+              ) : (
+                <>
+                  <div className="flex gap-2">
+                    <Input
+                      type="email"
+                      placeholder="user@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      className="flex-1"
+                    />
+                    <Select value={role} onValueChange={setRole}>
+                      <SelectTrigger className="w-[100px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="editor">編集者</SelectItem>
+                        <SelectItem value="viewer">閲覧者</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <DialogFooter>
+                    <Button type="submit" size="sm" disabled={adding}>
+                      <UserPlus className="h-4 w-4" />
+                      {adding ? "追加中..." : "追加"}
+                    </Button>
+                  </DialogFooter>
+                </>
+              )}
             </form>
           )}
         </div>

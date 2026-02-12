@@ -1,6 +1,6 @@
 "use client";
 
-import type { TripListItem } from "@sugara/shared";
+import { MAX_TRIPS_PER_USER, type TripListItem } from "@sugara/shared";
 import { Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -12,6 +12,7 @@ import type { SortKey, StatusFilter } from "@/components/trip-toolbar";
 import { TripToolbar } from "@/components/trip-toolbar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ApiError, api } from "@/lib/api";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
@@ -242,10 +243,24 @@ export default function HomePage() {
               duplicating={duplicating}
               disabled={!online}
               newTripSlot={
-                <Button size="sm" disabled={!online} onClick={() => setCreateOpen(true)}>
-                  <Plus className="h-4 w-4" />
-                  新規作成
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        size="sm"
+                        // trips is fetched with scope=owned, so length matches owned count
+                        disabled={!online || trips.length >= MAX_TRIPS_PER_USER}
+                        onClick={() => setCreateOpen(true)}
+                      >
+                        <Plus className="h-4 w-4" />
+                        新規作成
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  {trips.length >= MAX_TRIPS_PER_USER && (
+                    <TooltipContent>{MSG.LIMIT_TRIPS}</TooltipContent>
+                  )}
+                </Tooltip>
               }
             />
           </div>

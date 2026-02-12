@@ -42,6 +42,7 @@ type TripActionsProps = {
   onStatusChange?: () => void;
   onEdit?: () => void;
   disabled?: boolean;
+  memberLimitReached?: boolean;
 };
 
 const statuses = Object.entries(STATUS_LABELS) as [TripStatus, string][];
@@ -53,6 +54,7 @@ export function TripActions({
   onStatusChange,
   onEdit,
   disabled,
+  memberLimitReached,
 }: TripActionsProps) {
   const isOwnerRole = role === "owner";
   const canEditRole = role === "owner" || role === "editor";
@@ -260,6 +262,7 @@ export function TripActions({
         isOwner={isOwnerRole}
         open={memberOpen}
         onOpenChange={setMemberOpen}
+        memberLimitReached={memberLimitReached}
       />
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>

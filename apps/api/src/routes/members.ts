@@ -1,5 +1,5 @@
-import { addMemberSchema, updateMemberRoleSchema } from "@sugara/shared";
-import { and, eq } from "drizzle-orm";
+import { addMemberSchema, MAX_MEMBERS_PER_TRIP, updateMemberRoleSchema } from "@sugara/shared";
+import { and, count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { tripMembers, users } from "../db/schema";
@@ -51,6 +51,14 @@ memberRoutes.post("/:tripId/members", async (c) => {
   const parsed = addMemberSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const [memberCount] = await db
+    .select({ count: count() })
+    .from(tripMembers)
+    .where(eq(tripMembers.tripId, tripId));
+  if (memberCount.count >= MAX_MEMBERS_PER_TRIP) {
+    return c.json({ error: ERROR_MSG.LIMIT_MEMBERS }, 409);
   }
 
   const targetUser = await db.query.users.findFirst({

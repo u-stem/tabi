@@ -46,6 +46,8 @@ export type TripResponse = {
   role: MemberRole;
   days: DayResponse[];
   candidates: ScheduleResponse[];
+  scheduleCount: number;
+  memberCount: number;
 };
 
 export type TripListItem = {

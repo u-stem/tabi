@@ -59,6 +59,7 @@ vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
 }));
 
+import { MAX_SCHEDULES_PER_TRIP } from "@sugara/shared";
 import { logActivity } from "../lib/activity-logger";
 import { scheduleRoutes } from "../routes/schedules";
 
@@ -269,6 +270,26 @@ describe("Schedule routes", () => {
       });
 
       expect(res.status).toBe(404);
+    });
+
+    it("returns 409 when schedule limit reached", async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: MAX_SCHEDULES_PER_TRIP }]),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(basePath, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Tokyo Tower",
+          category: "sightseeing",
+        }),
+      });
+
+      expect(res.status).toBe(409);
     });
   });
 
@@ -593,6 +614,23 @@ describe("Schedule routes", () => {
       });
 
       expect(res.status).toBe(404);
+    });
+
+    it("returns 409 when schedule limit would be exceeded", async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: MAX_SCHEDULES_PER_TRIP - 1 }]),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/batch-duplicate`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduleIds: [id1, id2] }),
+      });
+
+      expect(res.status).toBe(409);
     });
   });
 

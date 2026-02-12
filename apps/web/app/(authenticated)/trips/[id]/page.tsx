@@ -2,7 +2,13 @@
 
 import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
 import type { DayPatternResponse, TripResponse } from "@sugara/shared";
-import { DAY_MEMO_MAX_LENGTH, PATTERN_LABEL_MAX_LENGTH } from "@sugara/shared";
+import {
+  DAY_MEMO_MAX_LENGTH,
+  MAX_MEMBERS_PER_TRIP,
+  MAX_PATTERNS_PER_DAY,
+  MAX_SCHEDULES_PER_TRIP,
+  PATTERN_LABEL_MAX_LENGTH,
+} from "@sugara/shared";
 import {
   Check,
   ChevronDown,
@@ -53,6 +59,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ApiError, api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
@@ -459,6 +466,8 @@ export default function TripDetailPage() {
 
   const canEdit = trip.role === "owner" || trip.role === "editor";
   const dayCount = getDayCount(trip.startDate, trip.endDate);
+  const scheduleLimitReached = trip.scheduleCount >= MAX_SCHEDULES_PER_TRIP;
+  const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
 
   return (
     <div>
@@ -480,6 +489,7 @@ export default function TripDetailPage() {
             onStatusChange={onMutate}
             onEdit={canEdit ? () => setEditOpen(true) : undefined}
             disabled={!online}
+            memberLimitReached={trip.memberCount >= MAX_MEMBERS_PER_TRIP}
           />
           <Button
             variant="outline"
@@ -669,6 +679,8 @@ export default function TripDetailPage() {
                     onBatchDuplicate={selection.batchDuplicateSchedules}
                     onBatchDelete={() => selection.setBatchDeleteOpen(true)}
                     batchLoading={selection.batchLoading}
+                    scheduleLimitReached={scheduleLimitReached}
+                    scheduleLimitMessage={scheduleLimitMessage}
                     headerContent={
                       <div className="mb-3 flex flex-wrap items-center gap-1.5">
                         {currentDay.patterns.map((pattern, index) => {
@@ -720,6 +732,7 @@ export default function TripDetailPage() {
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() => handleDuplicatePattern(pattern.id)}
+                                      disabled={currentDay.patterns.length >= MAX_PATTERNS_PER_DAY}
                                     >
                                       <Copy className="mr-2 h-3 w-3" />
                                       複製
@@ -739,15 +752,32 @@ export default function TripDetailPage() {
                             </div>
                           );
                         })}
-                        {canEdit && online && (
-                          <button
-                            type="button"
-                            onClick={() => setAddPatternOpen(true)}
-                            className="shrink-0 rounded-full border border-dashed border-muted-foreground/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
-                          >
-                            <Plus className="inline h-3 w-3" /> パターン追加
-                          </button>
-                        )}
+                        {canEdit &&
+                          online &&
+                          (currentDay.patterns.length >= MAX_PATTERNS_PER_DAY ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <span>
+                                  <button
+                                    type="button"
+                                    disabled
+                                    className="shrink-0 cursor-not-allowed rounded-full border border-dashed border-muted-foreground/20 px-3 py-1.5 text-xs text-muted-foreground/50"
+                                  >
+                                    <Plus className="inline h-3 w-3" /> パターン追加
+                                  </button>
+                                </span>
+                              </TooltipTrigger>
+                              <TooltipContent>{MSG.LIMIT_PATTERNS}</TooltipContent>
+                            </Tooltip>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setAddPatternOpen(true)}
+                              className="shrink-0 rounded-full border border-dashed border-muted-foreground/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
+                            >
+                              <Plus className="inline h-3 w-3" /> パターン追加
+                            </button>
+                          ))}
                       </div>
                     }
                   />
@@ -780,6 +810,8 @@ export default function TripDetailPage() {
                 onBatchDuplicate={selection.batchDuplicateCandidates}
                 onBatchDelete={() => selection.setBatchDeleteOpen(true)}
                 batchLoading={selection.batchLoading}
+                scheduleLimitReached={scheduleLimitReached}
+                scheduleLimitMessage={scheduleLimitMessage}
               />
             </div>
           </div>
@@ -869,6 +901,8 @@ export default function TripDetailPage() {
               onBatchDuplicate={selection.batchDuplicateCandidates}
               onBatchDelete={() => selection.setBatchDeleteOpen(true)}
               batchLoading={selection.batchLoading}
+              scheduleLimitReached={scheduleLimitReached}
+              scheduleLimitMessage={scheduleLimitMessage}
             />
           )}
         </DialogContent>

@@ -1,8 +1,8 @@
 import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete } = vi.hoisted(
-  () => ({
+const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbSelect } =
+  vi.hoisted(() => ({
     mockGetSession: vi.fn(),
     mockDbQuery: {
       tripMembers: {
@@ -16,8 +16,8 @@ const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete } 
     mockDbInsert: vi.fn(),
     mockDbUpdate: vi.fn(),
     mockDbDelete: vi.fn(),
-  }),
-);
+    mockDbSelect: vi.fn(),
+  }));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -33,6 +33,7 @@ vi.mock("../db/index", () => ({
     insert: (...args: unknown[]) => mockDbInsert(...args),
     update: (...args: unknown[]) => mockDbUpdate(...args),
     delete: (...args: unknown[]) => mockDbDelete(...args),
+    select: (...args: unknown[]) => mockDbSelect(...args),
   },
 }));
 
@@ -40,6 +41,7 @@ vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
 }));
 
+import { MAX_MEMBERS_PER_TRIP } from "@sugara/shared";
 import { memberRoutes } from "../routes/members";
 
 const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
@@ -64,6 +66,12 @@ describe("Member routes", () => {
       tripId,
       userId: fakeUser.id,
       role: "owner",
+    });
+    // Default: count query returns 0 (under limit)
+    mockDbSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([{ count: 0 }]),
+      }),
     });
   });
 
@@ -200,6 +208,23 @@ describe("Member routes", () => {
       });
 
       expect(res.status).toBe(400);
+    });
+
+    it("returns 409 when member limit reached", async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: MAX_MEMBERS_PER_TRIP }]),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(basePath, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "new@test.com", role: "editor" }),
+      });
+
+      expect(res.status).toBe(409);
     });
   });
 

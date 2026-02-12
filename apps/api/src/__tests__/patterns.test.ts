@@ -53,6 +53,7 @@ vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
 }));
 
+import { MAX_PATTERNS_PER_DAY } from "@sugara/shared";
 import { patternRoutes } from "../routes/patterns";
 
 const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
@@ -177,6 +178,23 @@ describe("Pattern routes", () => {
       });
 
       expect(res.status).toBe(404);
+    });
+
+    it("returns 409 when pattern limit reached", async () => {
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: MAX_PATTERNS_PER_DAY }]),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(basePath, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: "Rainy" }),
+      });
+
+      expect(res.status).toBe(409);
     });
   });
 
@@ -343,6 +361,27 @@ describe("Pattern routes", () => {
       });
 
       expect(res.status).toBe(404);
+    });
+
+    it("returns 409 when pattern limit reached", async () => {
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValue({
+        id: patternId,
+        tripDayId: dayId,
+        label: "Sunny",
+        schedules: [],
+      });
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: MAX_PATTERNS_PER_DAY }]),
+        }),
+      });
+
+      const app = createApp();
+      const res = await app.request(`${basePath}/${patternId}/duplicate`, {
+        method: "POST",
+      });
+
+      expect(res.status).toBe(409);
     });
   });
 });

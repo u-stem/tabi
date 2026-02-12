@@ -1,5 +1,9 @@
-import { createDayPatternSchema, updateDayPatternSchema } from "@sugara/shared";
-import { and, eq, sql } from "drizzle-orm";
+import {
+  createDayPatternSchema,
+  MAX_PATTERNS_PER_DAY,
+  updateDayPatternSchema,
+} from "@sugara/shared";
+import { and, count, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, schedules } from "../db/schema";
@@ -50,6 +54,14 @@ patternRoutes.post("/:tripId/days/:dayId/patterns", async (c) => {
   const parsed = createDayPatternSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const [patternCount] = await db
+    .select({ count: count() })
+    .from(dayPatterns)
+    .where(eq(dayPatterns.tripDayId, dayId));
+  if (patternCount.count >= MAX_PATTERNS_PER_DAY) {
+    return c.json({ error: ERROR_MSG.LIMIT_PATTERNS }, 409);
   }
 
   const maxOrderResult = await db
@@ -173,6 +185,14 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
   });
   if (!source) {
     return c.json({ error: ERROR_MSG.PATTERN_NOT_FOUND }, 404);
+  }
+
+  const [patternCount] = await db
+    .select({ count: count() })
+    .from(dayPatterns)
+    .where(eq(dayPatterns.tripDayId, dayId));
+  if (patternCount.count >= MAX_PATTERNS_PER_DAY) {
+    return c.json({ error: ERROR_MSG.LIMIT_PATTERNS }, 409);
   }
 
   const maxOrderResult = await db

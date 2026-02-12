@@ -1,3 +1,10 @@
+import {
+  MAX_MEMBERS_PER_TRIP,
+  MAX_PATTERNS_PER_DAY,
+  MAX_SCHEDULES_PER_TRIP,
+  MAX_TRIPS_PER_USER,
+} from "@sugara/shared";
+
 export const MSG = {
   // Schedule
   SCHEDULE_ADDED: "予定を追加しました",
@@ -111,6 +118,12 @@ export const MSG = {
   TIME_HOTEL_CHECKOUT_AFTER: "チェックアウト時間はチェックイン時間より後にしてください",
   TIME_TRANSPORT_DEPARTURE_REQUIRED: "出発時間を入力してください",
   TIME_TRANSPORT_ARRIVAL_AFTER: "到着時間は出発時間より後にしてください",
+
+  // Limits
+  LIMIT_TRIPS: `旅行は最大${MAX_TRIPS_PER_USER}件まで作成できます`,
+  LIMIT_SCHEDULES: `予定と候補は1旅行あたり合計${MAX_SCHEDULES_PER_TRIP}件まで追加できます`,
+  LIMIT_PATTERNS: `パターンは各日程に最大${MAX_PATTERNS_PER_DAY}件まで追加できます`,
+  LIMIT_MEMBERS: `メンバーは1旅行あたり最大${MAX_MEMBERS_PER_TRIP}名まで招待できます`,
 
   // Shared view
   SHARED_LINK_INVALID: "このリンクは無効か、有効期限が切れています",

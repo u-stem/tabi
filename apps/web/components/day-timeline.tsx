@@ -9,6 +9,7 @@ import {
   CheckSquare,
   Copy,
   MoreHorizontal,
+  Plus,
   Trash2,
   Undo2,
   X,
@@ -21,6 +22,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
 import {
   compareByStartTime,
@@ -60,6 +62,8 @@ type DayTimelineProps = {
   maxEndDayOffset?: number;
   totalDays?: number;
   crossDayEntries?: CrossDayEntry[];
+  scheduleLimitReached?: boolean;
+  scheduleLimitMessage?: string;
 };
 
 export function DayTimeline({
@@ -85,6 +89,8 @@ export function DayTimeline({
   maxEndDayOffset,
   totalDays,
   crossDayEntries,
+  scheduleLimitReached,
+  scheduleLimitMessage,
 }: DayTimelineProps) {
   const { setNodeRef: setDroppableRef } = useDroppable({
     id: "timeline",
@@ -203,16 +209,29 @@ export function DayTimeline({
         <div className="mb-3 flex items-center justify-between">
           <span className="text-sm text-muted-foreground">{formatDate(date)}</span>
           <div className="flex items-center gap-1.5">
-            {!disabled && (
-              <AddScheduleDialog
-                tripId={tripId}
-                dayId={dayId}
-                patternId={patternId}
-                onAdd={onRefresh}
-                disabled={disabled}
-                maxEndDayOffset={maxEndDayOffset}
-              />
-            )}
+            {!disabled &&
+              (scheduleLimitReached ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button variant="outline" size="sm" disabled>
+                        <Plus className="h-4 w-4" />
+                        予定を追加
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{scheduleLimitMessage}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <AddScheduleDialog
+                  tripId={tripId}
+                  dayId={dayId}
+                  patternId={patternId}
+                  onAdd={onRefresh}
+                  disabled={disabled}
+                  maxEndDayOffset={maxEndDayOffset}
+                />
+              ))}
             {!disabled && schedules.length > 0 && onEnterSelectionMode && (
               <Button variant="outline" size="sm" onClick={onEnterSelectionMode}>
                 <CheckSquare className="h-4 w-4" />

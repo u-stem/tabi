@@ -59,6 +59,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ApiError, api } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
 import { MSG } from "@/lib/messages";
@@ -83,6 +84,8 @@ type CandidatePanelProps = {
   onBatchDuplicate?: () => void;
   onBatchDelete?: () => void;
   batchLoading?: boolean;
+  scheduleLimitReached?: boolean;
+  scheduleLimitMessage?: string;
 };
 
 function CandidateDragHandle({
@@ -257,6 +260,8 @@ export function CandidatePanel({
   onBatchDuplicate,
   onBatchDelete,
   batchLoading,
+  scheduleLimitReached,
+  scheduleLimitMessage,
 }: CandidatePanelProps) {
   const { setNodeRef: setDroppableRef } = useDroppable({
     id: "candidates",
@@ -415,12 +420,25 @@ export function CandidatePanel({
                 選択
               </Button>
             )}
-            {!disabled && (
-              <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
-                <Plus className="h-4 w-4" />
-                候補を追加
-              </Button>
-            )}
+            {!disabled &&
+              (scheduleLimitReached ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button variant="outline" size="sm" disabled>
+                        <Plus className="h-4 w-4" />
+                        候補を追加
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{scheduleLimitMessage}</TooltipContent>
+                </Tooltip>
+              ) : (
+                <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  候補を追加
+                </Button>
+              ))}
           </div>
         </div>
       )}

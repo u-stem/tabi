@@ -38,6 +38,8 @@ const tripFixture: TripResponse = {
   status: "planned",
   role: "owner",
   candidates: [],
+  scheduleCount: 2,
+  memberCount: 1,
   days: [
     {
       id: "day-1",

@@ -3,10 +3,11 @@ import {
   batchAssignCandidatesSchema,
   batchDeleteSchedulesSchema,
   createCandidateSchema,
+  MAX_SCHEDULES_PER_TRIP,
   reorderSchedulesSchema,
   updateScheduleSchema,
 } from "@sugara/shared";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, count, eq, inArray, isNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, schedules } from "../db/schema";
@@ -50,6 +51,14 @@ candidateRoutes.post("/:tripId/candidates", async (c) => {
   const parsed = createCandidateSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const [scheduleCount] = await db
+    .select({ count: count() })
+    .from(schedules)
+    .where(eq(schedules.tripId, tripId));
+  if (scheduleCount.count >= MAX_SCHEDULES_PER_TRIP) {
+    return c.json({ error: ERROR_MSG.LIMIT_SCHEDULES }, 409);
   }
 
   const maxOrder = await db
@@ -196,6 +205,14 @@ candidateRoutes.post("/:tripId/candidates/batch-duplicate", async (c) => {
   const parsed = batchDeleteSchedulesSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const [scheduleCount] = await db
+    .select({ count: count() })
+    .from(schedules)
+    .where(eq(schedules.tripId, tripId));
+  if (scheduleCount.count + parsed.data.scheduleIds.length > MAX_SCHEDULES_PER_TRIP) {
+    return c.json({ error: ERROR_MSG.LIMIT_SCHEDULES }, 409);
   }
 
   const candidates = await db.query.schedules.findMany({

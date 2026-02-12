@@ -1,5 +1,6 @@
 export const DEFAULT_PATTERN_LABEL = "デフォルト";
 export const MAX_TRIP_DAYS = 365;
+export const MAX_LOGS_PER_TRIP = 50;
 
 export const ERROR_MSG = {
   TRIP_NOT_FOUND: "Trip not found",

@@ -2,7 +2,7 @@
 
 import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
 import type { DayPatternResponse, TripResponse } from "@sugara/shared";
-import { PATTERN_LABEL_MAX_LENGTH } from "@sugara/shared";
+import { DAY_MEMO_MAX_LENGTH, PATTERN_LABEL_MAX_LENGTH } from "@sugara/shared";
 import {
   Check,
   ChevronDown,
@@ -590,14 +590,14 @@ export default function TripDetailPage() {
                           value={memoText}
                           onChange={(e) => setMemoText(e.target.value)}
                           placeholder="メモを入力..."
-                          maxLength={500}
+                          maxLength={DAY_MEMO_MAX_LENGTH}
                           rows={3}
                           className="resize-none text-sm"
                           autoFocus
                         />
                         <div className="flex items-center justify-between">
                           <span className="text-xs text-muted-foreground">
-                            {memoText.length}/500
+                            {memoText.length}/{DAY_MEMO_MAX_LENGTH}
                           </span>
                           <div className="flex gap-1.5">
                             <Button

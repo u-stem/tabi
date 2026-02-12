@@ -1,8 +1,7 @@
 import { and, desc, eq, notInArray } from "drizzle-orm";
 import { db } from "../db/index";
 import { activityLogs } from "../db/schema";
-
-const MAX_LOGS_PER_TRIP = 50;
+import { MAX_LOGS_PER_TRIP } from "./constants";
 
 type LogActivityParams = {
   tripId: string;

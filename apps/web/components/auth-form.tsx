@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth-client";
+import { MIN_PASSWORD_LENGTH } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
 
 export function AuthForm() {
@@ -66,7 +67,7 @@ export function AuthForm() {
               name="password"
               type="password"
               placeholder="8文字以上"
-              minLength={8}
+              minLength={MIN_PASSWORD_LENGTH}
               autoComplete="current-password"
               required
             />

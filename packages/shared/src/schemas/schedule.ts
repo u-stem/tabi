@@ -36,19 +36,28 @@ export type TransportMethod = z.infer<typeof transportMethodSchema>;
 
 const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
 
+export const SCHEDULE_NAME_MAX_LENGTH = 200;
+export const SCHEDULE_ADDRESS_MAX_LENGTH = 500;
+export const SCHEDULE_MEMO_MAX_LENGTH = 2000;
+export const SCHEDULE_URL_MAX_LENGTH = 2000;
+export const SCHEDULE_PLACE_MAX_LENGTH = 200;
+export const MAX_END_DAY_OFFSET = 30;
+export const CANDIDATE_NAME_MAX_LENGTH = 200;
+export const CANDIDATE_MEMO_MAX_LENGTH = 2000;
+
 export const createScheduleSchema = z.object({
-  name: z.string().min(1).max(200),
+  name: z.string().min(1).max(SCHEDULE_NAME_MAX_LENGTH),
   category: scheduleCategorySchema,
-  address: z.string().max(500).optional(),
+  address: z.string().max(SCHEDULE_ADDRESS_MAX_LENGTH).optional(),
   startTime: z.string().regex(timeRegex).optional(),
   endTime: z.string().regex(timeRegex).optional(),
-  memo: z.string().max(2000).optional(),
-  url: z.string().url().max(2000).optional(),
-  departurePlace: z.string().max(200).optional(),
-  arrivalPlace: z.string().max(200).optional(),
+  memo: z.string().max(SCHEDULE_MEMO_MAX_LENGTH).optional(),
+  url: z.string().url().max(SCHEDULE_URL_MAX_LENGTH).optional(),
+  departurePlace: z.string().max(SCHEDULE_PLACE_MAX_LENGTH).optional(),
+  arrivalPlace: z.string().max(SCHEDULE_PLACE_MAX_LENGTH).optional(),
   transportMethod: transportMethodSchema.optional(),
   color: scheduleColorSchema.default("blue"),
-  endDayOffset: z.number().int().min(1).max(30).nullable().optional(),
+  endDayOffset: z.number().int().min(1).max(MAX_END_DAY_OFFSET).nullable().optional(),
 });
 export type CreateScheduleInput = z.infer<typeof createScheduleSchema>;
 
@@ -63,9 +72,9 @@ export const reorderSchedulesSchema = z.object({
 export type ReorderSchedulesInput = z.infer<typeof reorderSchedulesSchema>;
 
 export const createCandidateSchema = z.object({
-  name: z.string().min(1).max(200),
+  name: z.string().min(1).max(CANDIDATE_NAME_MAX_LENGTH),
   category: scheduleCategorySchema,
-  memo: z.string().max(2000).optional(),
+  memo: z.string().max(CANDIDATE_MEMO_MAX_LENGTH).optional(),
 });
 export type CreateCandidateInput = z.infer<typeof createCandidateSchema>;
 

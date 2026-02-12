@@ -2,7 +2,7 @@ import { and, desc, eq, lt } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { activityLogs, users } from "../db/schema";
-import { ERROR_MSG } from "../lib/constants";
+import { ERROR_MSG, MAX_LOGS_PER_TRIP } from "../lib/constants";
 import { checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -20,8 +20,8 @@ activityLogRoutes.get("/:tripId/activity-logs", async (c) => {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
-  const limitParam = Number(c.req.query("limit") || "50");
-  const limit = Math.min(Math.max(1, limitParam), 50);
+  const limitParam = Number(c.req.query("limit") || String(MAX_LOGS_PER_TRIP));
+  const limit = Math.min(Math.max(1, limitParam), MAX_LOGS_PER_TRIP);
   const cursor = c.req.query("cursor");
 
   const whereConditions = cursor

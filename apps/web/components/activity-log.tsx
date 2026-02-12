@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
+import { ACTIVITY_LOG_PAGE_SIZE } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
@@ -149,7 +150,7 @@ export function ActivityLog({ tripId, refreshKey }: ActivityLogProps) {
   const fetchLogs = useCallback(
     async (cursor?: string) => {
       try {
-        const params: Record<string, string> = { limit: "50" };
+        const params: Record<string, string> = { limit: String(ACTIVITY_LOG_PAGE_SIZE) };
         if (cursor) params.cursor = cursor;
         const data = await api<LogsResponse>(`/api/trips/${tripId}/activity-logs`, { params });
         if (cursor) {

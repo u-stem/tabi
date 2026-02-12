@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient, useSession } from "@/lib/auth-client";
+import { MIN_PASSWORD_LENGTH, PROFILE_NAME_MAX_LENGTH } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
 
 export default function SettingsPage() {
@@ -67,7 +68,7 @@ function ProfileSection({ defaultName }: { defaultName: string }) {
               defaultValue={defaultName}
               required
               minLength={1}
-              maxLength={50}
+              maxLength={PROFILE_NAME_MAX_LENGTH}
             />
           </div>
           {error && (
@@ -142,7 +143,7 @@ function PasswordSection() {
               type="password"
               autoComplete="current-password"
               required
-              minLength={8}
+              minLength={MIN_PASSWORD_LENGTH}
             />
           </div>
           <div className="space-y-2">
@@ -153,7 +154,7 @@ function PasswordSection() {
               type="password"
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={MIN_PASSWORD_LENGTH}
               placeholder="8文字以上"
             />
           </div>
@@ -165,7 +166,7 @@ function PasswordSection() {
               type="password"
               autoComplete="new-password"
               required
-              minLength={8}
+              minLength={MIN_PASSWORD_LENGTH}
             />
           </div>
           {error && (

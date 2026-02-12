@@ -97,7 +97,7 @@ export function EditTripDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>旅行を編集</DialogTitle>
           <DialogDescription>旅行の情報を変更します</DialogDescription>

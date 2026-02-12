@@ -142,8 +142,8 @@ export function TripActions({
   }
 
   return (
-    <div className="flex w-full items-center justify-between">
-      <div className="flex items-center gap-2">
+    <div className="flex w-full flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {canEditRole ? (
           <Select value={status} onValueChange={handleStatusChange} disabled={disabled}>
             <SelectTrigger className="h-8 w-[130px] text-xs">
@@ -162,7 +162,7 @@ export function TripActions({
         )}
         <MemberDialog tripId={tripId} isOwner={isOwnerRole} />
         {isOwnerRole && (
-          <div className="flex items-center gap-1">
+          <div className="flex flex-wrap items-center gap-1">
             <Button
               variant="outline"
               size="sm"

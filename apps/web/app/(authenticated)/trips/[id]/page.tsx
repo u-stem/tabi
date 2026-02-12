@@ -328,7 +328,7 @@ export default function TripDetailPage() {
           </div>
         </div>
         <div className="flex gap-4">
-          <div className="flex max-h-[calc(100vh-12rem)] min-w-0 flex-[3] flex-col rounded-lg border bg-card">
+          <div className="flex max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] min-w-0 flex-[3] flex-col rounded-lg border bg-card">
             <div className="flex gap-1 border-b px-4">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="my-2 h-5 w-14" />
@@ -444,7 +444,7 @@ export default function TripDetailPage() {
         >
           <div className="flex gap-4">
             {/* Timeline */}
-            <div className="flex min-w-0 max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
+            <div className="flex min-w-0 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
               <div
                 className="flex shrink-0 gap-1 overflow-x-auto border-b px-4"
                 role="tablist"
@@ -600,7 +600,7 @@ export default function TripDetailPage() {
             </div>
 
             {/* Candidates */}
-            <div className="hidden max-h-[calc(100vh-12rem)] overflow-y-auto lg:block flex-[2] rounded-lg border border-dashed bg-card p-4 self-start sticky top-4">
+            <div className="hidden max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] overflow-y-auto lg:block flex-[2] rounded-lg border border-dashed bg-card p-4 self-start sticky top-4">
               <CandidatePanel
                 tripId={tripId}
                 candidates={dnd.localCandidates}

@@ -399,7 +399,7 @@ export default function TripDetailPage() {
           {formatDateRange(trip.startDate, trip.endDate)}
           <span className="ml-2 text-sm">({dayCount}日間)</span>
         </p>
-        <div className="mt-3 flex items-center justify-between">
+        <div className="mt-3 flex flex-wrap items-center gap-2">
           <TripActions
             tripId={tripId}
             status={trip.status}
@@ -412,7 +412,7 @@ export default function TripDetailPage() {
             variant="outline"
             size="sm"
             onClick={() => setCandidateOpen(true)}
-            className="lg:hidden"
+            className="ml-auto lg:hidden"
           >
             <List className="h-4 w-4" />
             候補

@@ -1,7 +1,7 @@
 "use client";
 
 import type { MemberResponse } from "@sugara/shared";
-import { UserPlus, Users } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,10 +27,11 @@ import { MSG } from "@/lib/messages";
 type MemberDialogProps = {
   tripId: string;
   isOwner: boolean;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
 
-export function MemberDialog({ tripId, isOwner }: MemberDialogProps) {
-  const [open, setOpen] = useState(false);
+export function MemberDialog({ tripId, isOwner, open, onOpenChange }: MemberDialogProps) {
   const [members, setMembers] = useState<MemberResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
@@ -101,13 +101,7 @@ export function MemberDialog({ tripId, isOwner }: MemberDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm">
-          <Users className="h-4 w-4" />
-          メンバー
-        </Button>
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>メンバー管理</DialogTitle>

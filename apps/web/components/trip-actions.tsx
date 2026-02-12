@@ -2,7 +2,7 @@
 
 import type { MemberRole, TripStatus } from "@sugara/shared";
 import { STATUS_LABELS } from "@sugara/shared";
-import { FileDown, Link, MoreHorizontal, Pencil, RefreshCw, Trash2 } from "lucide-react";
+import { FileDown, Link, MoreHorizontal, Pencil, RefreshCw, Trash2, Users } from "lucide-react";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -59,6 +59,7 @@ export function TripActions({
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [memberOpen, setMemberOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
   const [regenerating, setRegenerating] = useState(false);
@@ -142,7 +143,7 @@ export function TripActions({
   }
 
   return (
-    <div className="flex w-full flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2">
       {canEditRole ? (
         <Select value={status} onValueChange={handleStatusChange} disabled={disabled}>
           <SelectTrigger className="h-8 w-[130px] text-xs">
@@ -159,7 +160,6 @@ export function TripActions({
       ) : (
         <span className="text-xs text-muted-foreground">{STATUS_LABELS[status]}</span>
       )}
-      <MemberDialog tripId={tripId} isOwner={isOwnerRole} />
       {isOwnerRole && (
         <div className="flex flex-wrap items-center gap-1">
           <Button variant="outline" size="sm" onClick={handleShare} disabled={disabled || sharing}>
@@ -186,40 +186,50 @@ export function TripActions({
           )}
         </div>
       )}
-      {canEditRole && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled={disabled}>
-              <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">旅行メニュー</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon" className="h-8 w-8" disabled={disabled}>
+            <MoreHorizontal className="h-4 w-4" />
+            <span className="sr-only">旅行メニュー</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setMemberOpen(true)}>
+            <Users className="mr-2 h-4 w-4" />
+            メンバー
+          </DropdownMenuItem>
+          {canEditRole && (
             <DropdownMenuItem asChild>
               <NextLink href={`/trips/${tripId}/print`} target="_blank">
                 <FileDown className="mr-2 h-4 w-4" />
                 PDF エクスポート
               </NextLink>
             </DropdownMenuItem>
-            {onEdit && (
-              <DropdownMenuItem onClick={onEdit}>
-                <Pencil className="mr-2 h-4 w-4" />
-                編集
-              </DropdownMenuItem>
-            )}
-            {isOwnerRole && (
-              <DropdownMenuItem
-                className="text-destructive"
-                disabled={deleting}
-                onClick={() => setDeleteOpen(true)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                {deleting ? "削除中..." : "削除"}
-              </DropdownMenuItem>
-            )}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+          )}
+          {onEdit && (
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil className="mr-2 h-4 w-4" />
+              編集
+            </DropdownMenuItem>
+          )}
+          {isOwnerRole && (
+            <DropdownMenuItem
+              className="text-destructive"
+              disabled={deleting}
+              onClick={() => setDeleteOpen(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              {deleting ? "削除中..." : "削除"}
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <MemberDialog
+        tripId={tripId}
+        isOwner={isOwnerRole}
+        open={memberOpen}
+        onOpenChange={setMemberOpen}
+      />
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

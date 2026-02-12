@@ -210,11 +210,13 @@ export default function HomePage() {
     <div>
       {loading ? (
         <>
-          <div className="mt-4 flex items-center gap-2">
-            <Skeleton className="h-8 w-40" />
-            <Skeleton className="h-8 w-[120px]" />
-            <Skeleton className="h-8 w-[100px]" />
-            <div className="ml-auto flex items-center gap-2">
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <Skeleton className="h-8 w-full sm:w-40" />
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-8 w-[120px]" />
+              <Skeleton className="h-8 w-[100px]" />
+            </div>
+            <div className="flex items-center gap-2 sm:ml-auto">
               <Skeleton className="h-8 w-16" />
               <Skeleton className="h-8 w-24" />
             </div>

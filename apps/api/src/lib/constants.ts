@@ -20,4 +20,6 @@ export const ERROR_MSG = {
   CANNOT_REMOVE_SELF: "Cannot remove yourself",
   INVALID_REORDER: "Some schedules do not belong to this pattern",
   DAY_NOT_FOUND: "Day not found",
+  GITHUB_API_FAILED: "Failed to create feedback issue",
+  GITHUB_NOT_CONFIGURED: "Feedback is not configured",
 } as const;

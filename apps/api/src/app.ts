@@ -4,6 +4,7 @@ import { ERROR_MSG } from "./lib/constants";
 import { activityLogRoutes } from "./routes/activity-logs";
 import { authRoutes } from "./routes/auth";
 import { candidateRoutes } from "./routes/candidates";
+import { feedbackRoutes } from "./routes/feedback";
 import { memberRoutes } from "./routes/members";
 import { patternRoutes } from "./routes/patterns";
 import { scheduleRoutes } from "./routes/schedules";
@@ -41,6 +42,7 @@ app.route("/api/trips", candidateRoutes);
 app.route("/api/trips", memberRoutes);
 app.route("/api/trips", tripDayRoutes);
 app.route("/api/trips", activityLogRoutes);
+app.route("/api", feedbackRoutes);
 app.route("/", shareRoutes);
 
 export { app };

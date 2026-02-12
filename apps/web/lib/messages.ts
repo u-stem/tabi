@@ -91,6 +91,10 @@ export const MSG = {
   DAY_MEMO_UPDATED: "メモを更新しました",
   DAY_MEMO_UPDATE_FAILED: "メモの更新に失敗しました",
 
+  // Feedback
+  FEEDBACK_SENT: "フィードバックを送信しました",
+  FEEDBACK_SEND_FAILED: "フィードバックの送信に失敗しました",
+
   // Activity log
   ACTIVITY_LOG_FETCH_FAILED: "履歴の取得に失敗しました",
   ACTIVITY_LOG_EMPTY: "まだ履歴がありません",

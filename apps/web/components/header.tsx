@@ -1,10 +1,11 @@
 "use client";
 
-import { Download, Home, LogOut, Menu, Settings, Users } from "lucide-react";
+import { Download, Home, LogOut, Menu, MessageSquare, Settings, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { FeedbackDialog } from "@/components/feedback-dialog";
 import { getSeasonalBg, Logo } from "@/components/logo";
 import { OfflineBanner } from "@/components/offline-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -41,6 +42,7 @@ export function Header() {
   const { data: session } = useSession();
   const { canInstall, promptInstall } = useInstallPrompt();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
 
   async function handleSignOut() {
     try {
@@ -107,6 +109,10 @@ export function Header() {
                       設定
                     </Link>
                   </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
+                    <MessageSquare className="h-4 w-4" />
+                    フィードバック
+                  </DropdownMenuItem>
                   {canInstall && (
                     <DropdownMenuItem onClick={promptInstall}>
                       <Download className="h-4 w-4" />
@@ -167,6 +173,17 @@ export function Header() {
                       <Settings className="h-4 w-4" />
                       設定
                     </Link>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFeedbackOpen(true);
+                        setMobileMenuOpen(false);
+                      }}
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <MessageSquare className="h-4 w-4" />
+                      フィードバック
+                    </button>
                     {canInstall && (
                       <button
                         type="button"
@@ -198,6 +215,7 @@ export function Header() {
           )}
         </div>
       </nav>
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </header>
   );
 }

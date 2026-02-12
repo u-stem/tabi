@@ -87,6 +87,14 @@ export const MSG = {
   BATCH_DUPLICATED: (n: number) => `${n}件を複製しました`,
   BATCH_DUPLICATE_FAILED: "複製に失敗しました",
 
+  // Day memo
+  DAY_MEMO_UPDATED: "メモを更新しました",
+  DAY_MEMO_UPDATE_FAILED: "メモの更新に失敗しました",
+
+  // Activity log
+  ACTIVITY_LOG_FETCH_FAILED: "履歴の取得に失敗しました",
+  ACTIVITY_LOG_EMPTY: "まだ履歴がありません",
+
   // Conflict
   CONFLICT: "他のユーザーが先に更新しました。画面を更新してください。",
   CONFLICT_STALE: "他のユーザーが変更を行いました。最新のデータを読み込みます。",

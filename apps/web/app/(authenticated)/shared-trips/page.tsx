@@ -18,7 +18,7 @@ export default function SharedTripsPage() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
-    document.title = "共有された旅行 - sugara";
+    document.title = "共有旅行 - sugara";
   }, []);
 
   const fetchTrips = useCallback(() => {

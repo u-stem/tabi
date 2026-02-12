@@ -18,4 +18,5 @@ export const ERROR_MSG = {
   MEMBER_NOT_FOUND: "Member not found",
   CANNOT_REMOVE_SELF: "Cannot remove yourself",
   INVALID_REORDER: "Some schedules do not belong to this pattern",
+  DAY_NOT_FOUND: "Day not found",
 } as const;

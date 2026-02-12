@@ -3,6 +3,7 @@ import { and, asc, count, eq, inArray, isNull, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, schedules, tripDays, tripMembers, trips } from "../db/schema";
+import { logActivity } from "../lib/activity-logger";
 import { DEFAULT_PATTERN_LABEL, ERROR_MSG, MAX_TRIP_DAYS } from "../lib/constants";
 import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
@@ -135,6 +136,14 @@ tripRoutes.post("/", async (c) => {
     return created;
   });
 
+  logActivity({
+    tripId: trip.id,
+    userId: user.id,
+    action: "created",
+    entityType: "trip",
+    entityName: trip.title,
+  }).catch(console.error);
+
   return c.json(trip, 201);
 });
 
@@ -208,6 +217,16 @@ tripRoutes.patch("/:id", async (c) => {
     if (!updated) {
       return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
     }
+
+    logActivity({
+      tripId,
+      userId: user.id,
+      action: "updated",
+      entityType: "trip",
+      entityName: updated.title,
+      detail: parsed.data.status ? `status: ${parsed.data.status}` : undefined,
+    }).catch(console.error);
+
     return c.json(updated);
   }
 
@@ -315,6 +334,14 @@ tripRoutes.patch("/:id", async (c) => {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "updated",
+    entityType: "trip",
+    entityName: updated.title,
+  }).catch(console.error);
+
   return c.json(updated);
 });
 
@@ -417,6 +444,14 @@ tripRoutes.post("/:id/duplicate", async (c) => {
     return created;
   });
 
+  logActivity({
+    tripId: newTrip.id,
+    userId: user.id,
+    action: "duplicated",
+    entityType: "trip",
+    entityName: newTrip.title,
+  }).catch(console.error);
+
   return c.json(newTrip, 201);
 });
 
@@ -430,6 +465,7 @@ tripRoutes.delete("/:id", async (c) => {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
+  // Log before delete since cascade will remove logs too
   await db.delete(trips).where(eq(trips.id, tripId));
   return c.json({ ok: true });
 });

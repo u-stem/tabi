@@ -36,6 +36,10 @@ vi.mock("../db/index", () => ({
   },
 }));
 
+vi.mock("../lib/activity-logger", () => ({
+  logActivity: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { memberRoutes } from "../routes/members";
 
 const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
@@ -201,10 +205,15 @@ describe("Member routes", () => {
 
   describe(`PATCH ${basePath}/:userId`, () => {
     it("returns ok when updating role", async () => {
-      // First call: owner check; second call: target member exists
+      // First call: owner check; second call: target member exists (with user for activity log)
       mockDbQuery.tripMembers.findFirst
         .mockResolvedValueOnce({ tripId, userId: fakeUser.id, role: "owner" })
-        .mockResolvedValueOnce({ tripId, userId: "user-2", role: "editor" });
+        .mockResolvedValueOnce({
+          tripId,
+          userId: "user-2",
+          role: "editor",
+          user: { name: "Editor" },
+        });
       mockDbUpdate.mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockResolvedValue(undefined),
@@ -254,10 +263,15 @@ describe("Member routes", () => {
 
   describe(`DELETE ${basePath}/:userId`, () => {
     it("returns ok when removing a member", async () => {
-      // First call: owner check; second call: target member exists
+      // First call: owner check; second call: target member exists (with user for activity log)
       mockDbQuery.tripMembers.findFirst
         .mockResolvedValueOnce({ tripId, userId: fakeUser.id, role: "owner" })
-        .mockResolvedValueOnce({ tripId, userId: "user-2", role: "editor" });
+        .mockResolvedValueOnce({
+          tripId,
+          userId: "user-2",
+          role: "editor",
+          user: { name: "Editor" },
+        });
       mockDbDelete.mockReturnValue({
         where: vi.fn().mockResolvedValue(undefined),
       });

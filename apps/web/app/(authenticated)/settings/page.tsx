@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,9 +12,12 @@ import { MSG } from "@/lib/messages";
 export default function SettingsPage() {
   const { data: session } = useSession();
 
+  useEffect(() => {
+    document.title = "設定 - sugara";
+  }, []);
+
   return (
     <div className="container max-w-2xl py-8 space-y-8">
-      <h1 className="text-2xl font-bold">設定</h1>
       {session?.user && (
         <>
           <ProfileSection defaultName={session.user.name ?? ""} />

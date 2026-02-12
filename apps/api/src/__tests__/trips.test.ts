@@ -50,6 +50,10 @@ vi.mock("../db/index", () => ({
   },
 }));
 
+vi.mock("../lib/activity-logger", () => ({
+  logActivity: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { tripRoutes } from "../routes/trips";
 
 const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };

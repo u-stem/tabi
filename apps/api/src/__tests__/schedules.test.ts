@@ -55,6 +55,11 @@ vi.mock("../db/index", () => ({
   },
 }));
 
+vi.mock("../lib/activity-logger", () => ({
+  logActivity: vi.fn().mockResolvedValue(undefined),
+}));
+
+import { logActivity } from "../lib/activity-logger";
 import { scheduleRoutes } from "../routes/schedules";
 
 const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
@@ -622,6 +627,7 @@ describe("Schedule routes", () => {
 
       expect(res.status).toBe(200);
       expect(body).toEqual({ ok: true });
+      expect(logActivity).not.toHaveBeenCalled();
     });
 
     it("returns 400 with invalid data", async () => {

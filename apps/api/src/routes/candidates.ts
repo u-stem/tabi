@@ -10,6 +10,7 @@ import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, schedules } from "../db/schema";
+import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { canEdit, checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
@@ -64,6 +65,14 @@ candidateRoutes.post("/:tripId/candidates", async (c) => {
       sortOrder: (maxOrder[0]?.max ?? -1) + 1,
     })
     .returning();
+
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "created",
+    entityType: "candidate",
+    entityName: schedule.name,
+  }).catch(console.error);
 
   return c.json(schedule, 201);
 });
@@ -122,6 +131,14 @@ candidateRoutes.post("/:tripId/candidates/batch-assign", async (c) => {
     }
   });
 
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "assigned",
+    entityType: "candidate",
+    detail: `${parsed.data.scheduleIds.length}件`,
+  }).catch(console.error);
+
   return c.json({ ok: true });
 });
 
@@ -153,6 +170,14 @@ candidateRoutes.post("/:tripId/candidates/batch-delete", async (c) => {
   }
 
   await db.delete(schedules).where(inArray(schedules.id, parsed.data.scheduleIds));
+
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "deleted",
+    entityType: "candidate",
+    detail: `${parsed.data.scheduleIds.length}件`,
+  }).catch(console.error);
 
   return c.json({ ok: true });
 });
@@ -215,6 +240,14 @@ candidateRoutes.post("/:tripId/candidates/batch-duplicate", async (c) => {
       })),
     )
     .returning();
+
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "duplicated",
+    entityType: "candidate",
+    detail: `${duplicated.length}件`,
+  }).catch(console.error);
 
   return c.json(duplicated, 201);
 });
@@ -308,6 +341,14 @@ candidateRoutes.patch("/:tripId/candidates/:scheduleId", async (c) => {
     return c.json({ error: ERROR_MSG.CONFLICT }, 409);
   }
 
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "updated",
+    entityType: "candidate",
+    entityName: updated.name,
+  }).catch(console.error);
+
   return c.json(updated);
 });
 
@@ -334,6 +375,15 @@ candidateRoutes.delete("/:tripId/candidates/:scheduleId", async (c) => {
   }
 
   await db.delete(schedules).where(eq(schedules.id, scheduleId));
+
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "deleted",
+    entityType: "candidate",
+    entityName: existing.name,
+  }).catch(console.error);
+
   return c.json({ ok: true });
 });
 
@@ -387,6 +437,14 @@ candidateRoutes.post("/:tripId/candidates/:scheduleId/assign", async (c) => {
     })
     .where(eq(schedules.id, scheduleId))
     .returning();
+
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "assigned",
+    entityType: "candidate",
+    entityName: updated.name,
+  }).catch(console.error);
 
   return c.json(updated);
 });

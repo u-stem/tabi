@@ -3,10 +3,22 @@
 import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
 import type { DayPatternResponse, TripResponse } from "@sugara/shared";
 import { PATTERN_LABEL_MAX_LENGTH } from "@sugara/shared";
-import { Check, ChevronDown, Copy, List, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  Clock,
+  Copy,
+  List,
+  MessageSquare,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { ActivityLog } from "@/components/activity-log";
 import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
 import { EditTripDialog } from "@/components/edit-trip-dialog";
@@ -40,6 +52,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Textarea } from "@/components/ui/textarea";
 import { ApiError, api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
@@ -91,6 +104,11 @@ export default function TripDetailPage() {
   const [renameLabel, setRenameLabel] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
   const [candidateOpen, setCandidateOpen] = useState(false);
+  const [showActivityLog, setShowActivityLog] = useState(false);
+  const [activityLogRefreshKey, setActivityLogRefreshKey] = useState(0);
+  const [editingMemo, setEditingMemo] = useState<string | null>(null);
+  const [memoText, setMemoText] = useState("");
+  const [memoSaving, setMemoSaving] = useState(false);
   const timelinePanelRef = useRef<HTMLDivElement>(null);
 
   // Defined before fetchTrip so it can be passed to useTripSync below
@@ -138,6 +156,7 @@ export default function TripDetailPage() {
   const onMutate = useCallback(async () => {
     await fetchTrip();
     broadcastChange();
+    setActivityLogRefreshKey((k) => k + 1);
   }, [fetchTrip, broadcastChange]);
 
   useEffect(() => {
@@ -324,6 +343,35 @@ export default function TripDetailPage() {
     }
   }
 
+  function startMemoEdit(dayId: string, currentMemo: string | null | undefined) {
+    setEditingMemo(dayId);
+    setMemoText(currentMemo ?? "");
+  }
+
+  function cancelMemoEdit() {
+    setEditingMemo(null);
+    setMemoText("");
+  }
+
+  async function handleSaveMemo() {
+    if (!currentDay || editingMemo !== currentDay.id) return;
+    setMemoSaving(true);
+    try {
+      await api(`/api/trips/${tripId}/days/${currentDay.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ memo: memoText.trim() || null }),
+      });
+      toast.success(MSG.DAY_MEMO_UPDATED);
+      setEditingMemo(null);
+      setMemoText("");
+      onMutate();
+    } catch {
+      toast.error(MSG.DAY_MEMO_UPDATE_FAILED);
+    } finally {
+      setMemoSaving(false);
+    }
+  }
+
   const timelineScheduleIds = useMemo(
     () => new Set(currentPattern?.schedules.map((s) => s.id) ?? []),
     [currentPattern?.schedules],
@@ -356,10 +404,11 @@ export default function TripDetailPage() {
         </div>
         <div className="flex gap-4">
           <div className="flex max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] min-w-0 flex-[3] flex-col rounded-lg border bg-card">
-            <div className="flex gap-1 border-b px-4">
+            <div className="flex shrink-0 gap-1 px-4 py-2">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="my-2 h-5 w-14" />
+                <Skeleton key={i} className="h-5 w-14" />
               ))}
+              <Skeleton className="ml-auto h-5 w-10" />
             </div>
             <div className="p-4">
               <div className="mb-3 flex items-center gap-1.5">
@@ -369,11 +418,8 @@ export default function TripDetailPage() {
               <div className="space-y-3">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="flex gap-3">
-                    <div className="flex flex-col items-center">
-                      <Skeleton className="h-7 w-7 rounded-full" />
-                      {i < 3 && <Skeleton className="mt-1 h-10 w-0.5" />}
-                    </div>
-                    <div className="flex-1 rounded-md border p-3 space-y-2">
+                    <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
+                    <div className="flex-1 space-y-2">
                       <div className="flex items-center gap-2">
                         <Skeleton className="h-5 w-12 rounded-full" />
                         <Skeleton className="h-4 w-28" />
@@ -390,10 +436,10 @@ export default function TripDetailPage() {
               <Skeleton className="h-5 w-20" />
               <Skeleton className="h-8 w-20 rounded-md" />
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               {[1, 2].map((i) => (
-                <div key={i} className="flex items-center gap-2 rounded-md border p-2">
-                  <Skeleton className="h-2.5 w-2.5 rounded-full" />
+                <div key={i} className="flex items-center gap-2 py-1">
+                  <Skeleton className="h-2.5 w-2.5 shrink-0 rounded-full" />
                   <div className="flex-1 space-y-1">
                     <Skeleton className="h-4 w-24" />
                     <Skeleton className="h-3 w-16" />
@@ -472,160 +518,242 @@ export default function TripDetailPage() {
           <div className="flex gap-4">
             {/* Timeline */}
             <div className="flex min-w-0 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
-              <div
-                className="flex shrink-0 gap-1 overflow-x-auto border-b px-4"
-                role="tablist"
-                aria-label="日程タブ"
-              >
-                {trip.days.map((day, index) => (
-                  <button
-                    key={day.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={selectedDay === index}
-                    aria-controls={`day-panel-${day.id}`}
-                    onClick={() => setSelectedDay(index)}
-                    className={cn(
-                      "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-                      selectedDay === index
-                        ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    {day.dayNumber}日目
-                    {otherPresence
-                      .filter((u) => u.dayId === day.id)
-                      .slice(0, 3)
-                      .map((u, i) => (
-                        <span
-                          key={u.userId}
-                          className={cn(
-                            "absolute top-1 h-1.5 w-1.5 rounded-full",
-                            hashColor(u.userId),
-                          )}
-                          style={{ right: `${4 + i * 6}px` }}
-                        />
-                      ))}
-                  </button>
-                ))}
-              </div>
-              <div
-                ref={timelinePanelRef}
-                id={`day-panel-${currentDay.id}`}
-                role="tabpanel"
-                className="min-h-0 overflow-y-auto p-4"
-              >
-                <DayTimeline
-                  key={currentPattern.id}
-                  tripId={tripId}
-                  dayId={currentDay.id}
-                  patternId={currentPattern.id}
-                  date={currentDay.date}
-                  schedules={dnd.localSchedules}
-                  onRefresh={onMutate}
-                  disabled={!online || !canEdit}
-                  maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
-                  totalDays={trip.days.length}
-                  crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
-                  selectionMode={selection.selectionTarget === "timeline"}
-                  selectedIds={
-                    selection.selectionTarget === "timeline" ? selection.selectedIds : undefined
-                  }
-                  onToggleSelect={selection.toggle}
-                  onEnterSelectionMode={
-                    canEdit && online ? () => selection.enter("timeline") : undefined
-                  }
-                  onExitSelectionMode={selection.exit}
-                  onSelectAll={selection.selectAll}
-                  onDeselectAll={selection.deselectAll}
-                  onBatchUnassign={selection.batchUnassign}
-                  onBatchDuplicate={selection.batchDuplicateSchedules}
-                  onBatchDelete={() => selection.setBatchDeleteOpen(true)}
-                  batchLoading={selection.batchLoading}
-                  headerContent={
-                    <div className="mb-3 flex flex-wrap items-center gap-1.5">
-                      {currentDay.patterns.map((pattern, index) => {
-                        const isActive = currentPatternIndex === index;
-                        return (
-                          <div
-                            key={pattern.id}
+              <div className="flex shrink-0 border-b" role="tablist" aria-label="日程タブ">
+                <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto px-4">
+                  {trip.days.map((day, index) => (
+                    <button
+                      key={day.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={!showActivityLog && selectedDay === index}
+                      aria-controls={`day-panel-${day.id}`}
+                      onClick={() => {
+                        setSelectedDay(index);
+                        setShowActivityLog(false);
+                      }}
+                      className={cn(
+                        "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
+                        !showActivityLog && selectedDay === index
+                          ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      {day.dayNumber}日目
+                      {otherPresence
+                        .filter((u) => u.dayId === day.id)
+                        .slice(0, 3)
+                        .map((u, i) => (
+                          <span
+                            key={u.userId}
                             className={cn(
-                              "flex shrink-0 items-center rounded-full border transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-1",
-                              isActive
-                                ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
-                                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
+                              "absolute top-1 h-1.5 w-1.5 rounded-full",
+                              hashColor(u.userId),
                             )}
-                          >
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setSelectedPattern((prev) => ({
-                                  ...prev,
-                                  [currentDay.id]: index,
-                                }))
-                              }
+                            style={{ right: `${4 + i * 6}px` }}
+                          />
+                        ))}
+                    </button>
+                  ))}
+                </div>
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={showActivityLog}
+                  onClick={() => setShowActivityLog(true)}
+                  className={cn(
+                    "relative flex shrink-0 items-center gap-1 border-l px-4 py-2 text-sm font-medium transition-colors",
+                    showActivityLog
+                      ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
+                      : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  <Clock className="h-3.5 w-3.5" />
+                  履歴
+                </button>
+              </div>
+              {showActivityLog ? (
+                <div className="min-h-0 overflow-y-auto p-4">
+                  <ActivityLog tripId={tripId} refreshKey={activityLogRefreshKey} />
+                </div>
+              ) : (
+                <div
+                  ref={timelinePanelRef}
+                  id={`day-panel-${currentDay.id}`}
+                  role="tabpanel"
+                  className="min-h-0 overflow-y-auto p-4"
+                >
+                  {/* Day memo */}
+                  <div className="mb-3">
+                    {editingMemo === currentDay.id ? (
+                      <div className="space-y-2">
+                        <Textarea
+                          value={memoText}
+                          onChange={(e) => setMemoText(e.target.value)}
+                          placeholder="メモを入力..."
+                          maxLength={500}
+                          rows={3}
+                          className="resize-none text-sm"
+                          autoFocus
+                        />
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            {memoText.length}/500
+                          </span>
+                          <div className="flex gap-1.5">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={cancelMemoEdit}
+                              disabled={memoSaving}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                              キャンセル
+                            </Button>
+                            <Button size="sm" onClick={handleSaveMemo} disabled={memoSaving}>
+                              <Check className="h-3.5 w-3.5" />
+                              {memoSaving ? "保存中..." : "保存"}
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          canEdit && online
+                            ? startMemoEdit(currentDay.id, currentDay.memo)
+                            : undefined
+                        }
+                        className={cn(
+                          "flex w-full items-start gap-2 rounded-md border border-dashed px-3 py-2 text-left text-sm transition-colors",
+                          canEdit && online
+                            ? "cursor-pointer hover:border-border hover:bg-muted/50"
+                            : "cursor-default",
+                          currentDay.memo
+                            ? "border-border text-foreground"
+                            : "border-muted-foreground/20 text-muted-foreground",
+                        )}
+                      >
+                        <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <span className="whitespace-pre-wrap">
+                          {currentDay.memo || "メモを追加"}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+
+                  <DayTimeline
+                    key={currentPattern.id}
+                    tripId={tripId}
+                    dayId={currentDay.id}
+                    patternId={currentPattern.id}
+                    date={currentDay.date}
+                    schedules={dnd.localSchedules}
+                    onRefresh={onMutate}
+                    disabled={!online || !canEdit}
+                    maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
+                    totalDays={trip.days.length}
+                    crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
+                    selectionMode={selection.selectionTarget === "timeline"}
+                    selectedIds={
+                      selection.selectionTarget === "timeline" ? selection.selectedIds : undefined
+                    }
+                    onToggleSelect={selection.toggle}
+                    onEnterSelectionMode={
+                      canEdit && online ? () => selection.enter("timeline") : undefined
+                    }
+                    onExitSelectionMode={selection.exit}
+                    onSelectAll={selection.selectAll}
+                    onDeselectAll={selection.deselectAll}
+                    onBatchUnassign={selection.batchUnassign}
+                    onBatchDuplicate={selection.batchDuplicateSchedules}
+                    onBatchDelete={() => selection.setBatchDeleteOpen(true)}
+                    batchLoading={selection.batchLoading}
+                    headerContent={
+                      <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                        {currentDay.patterns.map((pattern, index) => {
+                          const isActive = currentPatternIndex === index;
+                          return (
+                            <div
+                              key={pattern.id}
                               className={cn(
-                                "py-1.5 text-xs font-medium focus:outline-none",
-                                canEdit ? "pl-3 pr-1" : "px-3",
+                                "flex shrink-0 items-center rounded-full border transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-1",
+                                isActive
+                                  ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
+                                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
                               )}
                             >
-                              {pattern.label}
-                            </button>
-                            {canEdit && (
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <button
-                                    type="button"
-                                    className="py-1.5 pr-2 pl-0.5 text-xs focus:outline-none"
-                                  >
-                                    <ChevronDown className="h-3 w-3" />
-                                  </button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setRenamePattern(pattern);
-                                      setRenameLabel(pattern.label);
-                                    }}
-                                  >
-                                    <Pencil className="mr-2 h-3 w-3" />
-                                    名前変更
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem
-                                    onClick={() => handleDuplicatePattern(pattern.id)}
-                                  >
-                                    <Copy className="mr-2 h-3 w-3" />
-                                    複製
-                                  </DropdownMenuItem>
-                                  {!pattern.isDefault && (
-                                    <DropdownMenuItem
-                                      className="text-destructive"
-                                      onClick={() => handleDeletePattern(pattern.id)}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setSelectedPattern((prev) => ({
+                                    ...prev,
+                                    [currentDay.id]: index,
+                                  }))
+                                }
+                                className={cn(
+                                  "py-1.5 text-xs font-medium focus:outline-none",
+                                  canEdit ? "pl-3 pr-1" : "px-3",
+                                )}
+                              >
+                                {pattern.label}
+                              </button>
+                              {canEdit && (
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className="py-1.5 pr-2 pl-0.5 text-xs focus:outline-none"
                                     >
-                                      <Trash2 className="mr-2 h-3 w-3" />
-                                      削除
+                                      <ChevronDown className="h-3 w-3" />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="start">
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setRenamePattern(pattern);
+                                        setRenameLabel(pattern.label);
+                                      }}
+                                    >
+                                      <Pencil className="mr-2 h-3 w-3" />
+                                      名前変更
                                     </DropdownMenuItem>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            )}
-                          </div>
-                        );
-                      })}
-                      {canEdit && online && (
-                        <button
-                          type="button"
-                          onClick={() => setAddPatternOpen(true)}
-                          className="shrink-0 rounded-full border border-dashed border-muted-foreground/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
-                        >
-                          <Plus className="inline h-3 w-3" /> パターン追加
-                        </button>
-                      )}
-                    </div>
-                  }
-                />
-                <ScrollToTop containerRef={timelinePanelRef} />
-              </div>
+                                    <DropdownMenuItem
+                                      onClick={() => handleDuplicatePattern(pattern.id)}
+                                    >
+                                      <Copy className="mr-2 h-3 w-3" />
+                                      複製
+                                    </DropdownMenuItem>
+                                    {!pattern.isDefault && (
+                                      <DropdownMenuItem
+                                        className="text-destructive"
+                                        onClick={() => handleDeletePattern(pattern.id)}
+                                      >
+                                        <Trash2 className="mr-2 h-3 w-3" />
+                                        削除
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {canEdit && online && (
+                          <button
+                            type="button"
+                            onClick={() => setAddPatternOpen(true)}
+                            className="shrink-0 rounded-full border border-dashed border-muted-foreground/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
+                          >
+                            <Plus className="inline h-3 w-3" /> パターン追加
+                          </button>
+                        )}
+                      </div>
+                    }
+                  />
+                  <ScrollToTop containerRef={timelinePanelRef} />
+                </div>
+              )}
             </div>
 
             {/* Candidates */}

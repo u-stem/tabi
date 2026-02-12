@@ -3,6 +3,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, schedules } from "../db/schema";
+import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { canEdit, verifyDayAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
@@ -66,6 +67,14 @@ patternRoutes.post("/:tripId/days/:dayId/patterns", async (c) => {
     })
     .returning();
 
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "created",
+    entityType: "pattern",
+    entityName: pattern.label,
+  }).catch(console.error);
+
   return c.json(pattern, 201);
 });
 
@@ -100,6 +109,14 @@ patternRoutes.patch("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
     .where(eq(dayPatterns.id, patternId))
     .returning();
 
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "updated",
+    entityType: "pattern",
+    entityName: updated.label,
+  }).catch(console.error);
+
   return c.json(updated);
 });
 
@@ -126,6 +143,15 @@ patternRoutes.delete("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
   }
 
   await db.delete(dayPatterns).where(eq(dayPatterns.id, patternId));
+
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "deleted",
+    entityType: "pattern",
+    entityName: existing.label,
+  }).catch(console.error);
+
   return c.json({ ok: true });
 });
 
@@ -188,6 +214,14 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
 
     return newPattern;
   });
+
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "duplicated",
+    entityType: "pattern",
+    entityName: result.label,
+  }).catch(console.error);
 
   return c.json(result, 201);
 });

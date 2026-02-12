@@ -175,6 +175,21 @@ export const schedules = pgTable("schedules", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }).enableRLS();
 
+export const activityLogs = pgTable("activity_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  action: varchar("action", { length: 50 }).notNull(),
+  entityType: varchar("entity_type", { length: 50 }).notNull(),
+  entityName: varchar("entity_name", { length: 200 }),
+  detail: varchar("detail", { length: 200 }),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}).enableRLS();
+
 // --- Relations ---
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -187,6 +202,7 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
   members: many(tripMembers),
   days: many(tripDays),
   schedules: many(schedules),
+  activityLogs: many(activityLogs),
 }));
 
 export const tripMembersRelations = relations(tripMembers, ({ one }) => ({
@@ -207,4 +223,9 @@ export const dayPatternsRelations = relations(dayPatterns, ({ one, many }) => ({
 export const schedulesRelations = relations(schedules, ({ one }) => ({
   trip: one(trips, { fields: [schedules.tripId], references: [trips.id] }),
   dayPattern: one(dayPatterns, { fields: [schedules.dayPatternId], references: [dayPatterns.id] }),
+}));
+
+export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
+  trip: one(trips, { fields: [activityLogs.tripId], references: [trips.id] }),
+  user: one(users, { fields: [activityLogs.userId], references: [users.id] }),
 }));

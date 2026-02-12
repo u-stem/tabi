@@ -1,12 +1,14 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { ERROR_MSG } from "./lib/constants";
+import { activityLogRoutes } from "./routes/activity-logs";
 import { authRoutes } from "./routes/auth";
 import { candidateRoutes } from "./routes/candidates";
 import { memberRoutes } from "./routes/members";
 import { patternRoutes } from "./routes/patterns";
 import { scheduleRoutes } from "./routes/schedules";
 import { shareRoutes } from "./routes/share";
+import { tripDayRoutes } from "./routes/trip-days";
 import { tripRoutes } from "./routes/trips";
 
 const app = new Hono();
@@ -37,6 +39,8 @@ app.route("/api/trips", patternRoutes);
 app.route("/api/trips", scheduleRoutes);
 app.route("/api/trips", candidateRoutes);
 app.route("/api/trips", memberRoutes);
+app.route("/api/trips", tripDayRoutes);
+app.route("/api/trips", activityLogRoutes);
 app.route("/", shareRoutes);
 
 export { app };

@@ -9,6 +9,7 @@ import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { schedules } from "../db/schema";
+import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { canEdit, checkTripAccess, verifyPatternAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
@@ -71,6 +72,14 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules", async 
     })
     .returning();
 
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "created",
+    entityType: "schedule",
+    entityName: schedule.name,
+  }).catch(console.error);
+
   return c.json(schedule, 201);
 });
 
@@ -105,6 +114,14 @@ scheduleRoutes.post(
     }
 
     await db.delete(schedules).where(inArray(schedules.id, parsed.data.scheduleIds));
+
+    logActivity({
+      tripId,
+      userId: user.id,
+      action: "deleted",
+      entityType: "schedule",
+      detail: `${parsed.data.scheduleIds.length}件`,
+    }).catch(console.error);
 
     return c.json({ ok: true });
   },
@@ -172,6 +189,14 @@ scheduleRoutes.post(
         })),
       )
       .returning();
+
+    logActivity({
+      tripId,
+      userId: user.id,
+      action: "duplicated",
+      entityType: "schedule",
+      detail: `${duplicated.length}件`,
+    }).catch(console.error);
 
     return c.json(duplicated, 201);
   },
@@ -274,6 +299,14 @@ scheduleRoutes.patch(
       return c.json({ error: ERROR_MSG.CONFLICT }, 409);
     }
 
+    logActivity({
+      tripId,
+      userId: user.id,
+      action: "updated",
+      entityType: "schedule",
+      entityName: updated.name,
+    }).catch(console.error);
+
     return c.json(updated);
   },
 );
@@ -302,6 +335,15 @@ scheduleRoutes.delete(
     }
 
     await db.delete(schedules).where(eq(schedules.id, scheduleId));
+
+    logActivity({
+      tripId,
+      userId: user.id,
+      action: "deleted",
+      entityType: "schedule",
+      entityName: existing.name,
+    }).catch(console.error);
+
     return c.json({ ok: true });
   },
 );
@@ -353,6 +395,14 @@ scheduleRoutes.post("/:tripId/schedules/batch-unassign", async (c) => {
     }
   });
 
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "unassigned",
+    entityType: "schedule",
+    detail: `${parsed.data.scheduleIds.length}件`,
+  }).catch(console.error);
+
   return c.json({ ok: true });
 });
 
@@ -389,6 +439,14 @@ scheduleRoutes.post("/:tripId/schedules/:scheduleId/unassign", async (c) => {
     })
     .where(eq(schedules.id, scheduleId))
     .returning();
+
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "unassigned",
+    entityType: "schedule",
+    entityName: updated.name,
+  }).catch(console.error);
 
   return c.json(updated);
 });

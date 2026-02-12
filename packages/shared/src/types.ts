@@ -72,3 +72,14 @@ export type MemberResponse = {
   name: string;
   email: string;
 };
+
+export type ActivityLogResponse = {
+  id: string;
+  userId: string;
+  userName: string;
+  action: string;
+  entityType: string;
+  entityName?: string | null;
+  detail?: string | null;
+  createdAt: string;
+};

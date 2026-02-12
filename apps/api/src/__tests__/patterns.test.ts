@@ -49,6 +49,10 @@ vi.mock("../db/index", () => ({
   },
 }));
 
+vi.mock("../lib/activity-logger", () => ({
+  logActivity: vi.fn().mockResolvedValue(undefined),
+}));
+
 import { patternRoutes } from "../routes/patterns";
 
 const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };

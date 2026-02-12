@@ -3,6 +3,7 @@ import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { tripMembers, users } from "../db/schema";
+import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
@@ -72,6 +73,15 @@ memberRoutes.post("/:tripId/members", async (c) => {
     role: parsed.data.role,
   });
 
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "created",
+    entityType: "member",
+    entityName: targetUser.name,
+    detail: parsed.data.role,
+  }).catch(console.error);
+
   return c.json(
     {
       userId: targetUser.id,
@@ -106,6 +116,7 @@ memberRoutes.patch("/:tripId/members/:userId", async (c) => {
 
   const existing = await db.query.tripMembers.findFirst({
     where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, targetUserId)),
+    with: { user: { columns: { name: true } } },
   });
   if (!existing) {
     return c.json({ error: ERROR_MSG.MEMBER_NOT_FOUND }, 404);
@@ -115,6 +126,15 @@ memberRoutes.patch("/:tripId/members/:userId", async (c) => {
     .update(tripMembers)
     .set({ role: parsed.data.role })
     .where(and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, targetUserId)));
+
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "role_changed",
+    entityType: "member",
+    entityName: existing.user.name,
+    detail: `${existing.role} → ${parsed.data.role}`,
+  }).catch(console.error);
 
   return c.json({ ok: true });
 });
@@ -136,6 +156,7 @@ memberRoutes.delete("/:tripId/members/:userId", async (c) => {
 
   const existing = await db.query.tripMembers.findFirst({
     where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, targetUserId)),
+    with: { user: { columns: { name: true } } },
   });
   if (!existing) {
     return c.json({ error: ERROR_MSG.MEMBER_NOT_FOUND }, 404);
@@ -144,6 +165,14 @@ memberRoutes.delete("/:tripId/members/:userId", async (c) => {
   await db
     .delete(tripMembers)
     .where(and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, targetUserId)));
+
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "deleted",
+    entityType: "member",
+    entityName: existing.user.name,
+  }).catch(console.error);
 
   return c.json({ ok: true });
 });

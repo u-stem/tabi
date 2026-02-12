@@ -114,10 +114,14 @@ export function TripActions({
       const result = await api<ShareResponse>(`/api/trips/${tripId}/share`, {
         method: "POST",
       });
-      const shareUrl = `${window.location.origin}/shared/${result.shareToken}`;
-      await copyToClipboard(shareUrl);
       setShareExpiresAt(result.shareTokenExpiresAt);
-      toast.success(MSG.SHARE_LINK_COPIED);
+      const shareUrl = `${window.location.origin}/shared/${result.shareToken}`;
+      try {
+        await copyToClipboard(shareUrl);
+        toast.success(MSG.SHARE_LINK_COPIED);
+      } catch {
+        toast.success(MSG.SHARE_LINK_CREATED);
+      }
     } catch {
       toast.error(MSG.SHARE_LINK_FAILED);
     } finally {
@@ -131,10 +135,14 @@ export function TripActions({
       const result = await api<ShareResponse>(`/api/trips/${tripId}/share`, {
         method: "PUT",
       });
-      const shareUrl = `${window.location.origin}/shared/${result.shareToken}`;
-      await copyToClipboard(shareUrl);
       setShareExpiresAt(result.shareTokenExpiresAt);
-      toast.success(MSG.SHARE_LINK_REGENERATED);
+      const shareUrl = `${window.location.origin}/shared/${result.shareToken}`;
+      try {
+        await copyToClipboard(shareUrl);
+        toast.success(MSG.SHARE_LINK_REGENERATED);
+      } catch {
+        toast.success(MSG.SHARE_LINK_REGENERATED_NO_COPY);
+      }
     } catch {
       toast.error(MSG.SHARE_LINK_REGENERATE_FAILED);
     } finally {

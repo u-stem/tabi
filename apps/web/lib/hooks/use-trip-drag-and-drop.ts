@@ -16,7 +16,7 @@ import type {
 } from "@sugara/shared";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import {
   buildMergedTimeline,
   timelineScheduleOrder,
@@ -135,9 +135,14 @@ export function useTripDragAndDrop({
           },
         );
         onDone();
-      } catch {
+      } catch (err) {
         setLocalSchedules(schedules);
-        toast.error(MSG.SCHEDULE_REORDER_FAILED);
+        if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
+          toast.error(MSG.CONFLICT_STALE);
+        } else {
+          toast.error(MSG.SCHEDULE_REORDER_FAILED);
+        }
+        onDone();
       }
     } else if (sourceType === "schedule" && isOverCandidates) {
       try {
@@ -146,8 +151,13 @@ export function useTripDragAndDrop({
         });
         toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
         onDone();
-      } catch {
-        toast.error(MSG.SCHEDULE_MOVE_FAILED);
+      } catch (err) {
+        if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
+          toast.error(MSG.CONFLICT_STALE);
+        } else {
+          toast.error(MSG.SCHEDULE_MOVE_FAILED);
+        }
+        onDone();
       }
     } else if (sourceType === "candidate" && isOverTimeline) {
       try {
@@ -191,8 +201,13 @@ export function useTripDragAndDrop({
 
         toast.success(MSG.CANDIDATE_ASSIGNED);
         onDone();
-      } catch {
-        toast.error(MSG.CANDIDATE_ASSIGN_FAILED);
+      } catch (err) {
+        if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
+          toast.error(MSG.CONFLICT_STALE);
+        } else {
+          toast.error(MSG.CANDIDATE_ASSIGN_FAILED);
+        }
+        onDone();
       }
     } else if (sourceType === "candidate" && isOverCandidates) {
       if (active.id === over.id) return;
@@ -210,9 +225,14 @@ export function useTripDragAndDrop({
           body: JSON.stringify({ scheduleIds }),
         });
         onDone();
-      } catch {
+      } catch (err) {
         setLocalCandidates(candidates);
-        toast.error(MSG.SCHEDULE_REORDER_FAILED);
+        if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
+          toast.error(MSG.CONFLICT_STALE);
+        } else {
+          toast.error(MSG.SCHEDULE_REORDER_FAILED);
+        }
+        onDone();
       }
     }
   }

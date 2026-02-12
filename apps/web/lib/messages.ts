@@ -81,6 +81,8 @@ export const MSG = {
 
   // Conflict
   CONFLICT: "他のユーザーが先に更新しました。画面を更新してください。",
+  CONFLICT_STALE: "他のユーザーが変更を行いました。最新のデータを読み込みます。",
+  CONFLICT_DELETED: "対象が他のユーザーにより削除されました。",
 
   // Time validation
   TIME_START_REQUIRED: "開始時間を入力してください",

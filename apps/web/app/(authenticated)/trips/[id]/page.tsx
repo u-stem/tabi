@@ -87,6 +87,8 @@ export default function TripDetailPage() {
 
   // Defined before fetchTrip so it can be passed to useTripSync below
   const fetchTripRef = useRef<() => void>(() => {});
+  const fetchInFlightRef = useRef(false);
+  const fetchPendingRef = useRef(false);
 
   const syncUser = useMemo(
     () => (session?.user ? { id: session.user.id, name: session.user.name } : null),
@@ -99,6 +101,12 @@ export default function TripDetailPage() {
   );
 
   const fetchTrip = useCallback(async () => {
+    if (fetchInFlightRef.current) {
+      fetchPendingRef.current = true;
+      return;
+    }
+    fetchInFlightRef.current = true;
+    fetchPendingRef.current = false;
     try {
       const data = await api<TripResponse>(`/api/trips/${tripId}`);
       setTrip(data);
@@ -110,6 +118,11 @@ export default function TripDetailPage() {
       setError(MSG.TRIP_FETCH_FAILED);
     } finally {
       setLoading(false);
+      fetchInFlightRef.current = false;
+      if (fetchPendingRef.current) {
+        fetchPendingRef.current = false;
+        fetchTrip();
+      }
     }
   }, [tripId, router]);
 

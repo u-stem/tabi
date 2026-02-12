@@ -347,6 +347,10 @@ export function CandidatePanel({
         toast.error(MSG.CONFLICT);
         setEditSchedule(null);
         onRefresh();
+      } else if (err instanceof ApiError && err.status === 404) {
+        toast.error(MSG.CONFLICT_DELETED);
+        setEditSchedule(null);
+        onRefresh();
       } else {
         toast.error(MSG.CANDIDATE_UPDATE_FAILED);
       }

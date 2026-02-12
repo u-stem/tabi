@@ -10,6 +10,7 @@ export type PresenceUser = {
 };
 
 const SYNC_DEBOUNCE_MS = 300;
+const SYNC_JITTER_MS = 200;
 
 export function useTripSync(
   tripId: string,
@@ -32,10 +33,11 @@ export function useTripSync(
     if (syncTimer.current) {
       clearTimeout(syncTimer.current);
     }
+    const delay = SYNC_DEBOUNCE_MS + Math.floor(Math.random() * SYNC_JITTER_MS);
     syncTimer.current = setTimeout(() => {
       syncTimer.current = null;
       onSyncRef.current();
-    }, SYNC_DEBOUNCE_MS);
+    }, delay);
   }, []);
 
   useEffect(() => {

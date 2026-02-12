@@ -136,6 +136,10 @@ export function EditScheduleDialog({
       if (err instanceof ApiError && err.status === 409) {
         setError(MSG.CONFLICT);
         onUpdate();
+      } else if (err instanceof ApiError && err.status === 404) {
+        toast.error(MSG.CONFLICT_DELETED);
+        onOpenChange(false);
+        onUpdate();
       } else {
         setError(err instanceof Error ? err.message : MSG.SCHEDULE_UPDATE_FAILED);
       }

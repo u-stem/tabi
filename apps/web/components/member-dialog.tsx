@@ -4,6 +4,16 @@ import type { MemberResponse } from "@sugara/shared";
 import { UserPlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -45,6 +55,7 @@ export function MemberDialog({
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("editor");
   const [adding, setAdding] = useState(false);
+  const [removeMember, setRemoveMember] = useState<MemberResponse | null>(null);
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
@@ -159,7 +170,7 @@ export function MemberDialog({
                         type="button"
                         className="text-xs text-muted-foreground hover:text-destructive"
                         aria-label={`${member.name}を削除`}
-                        onClick={() => handleRemove(member.userId)}
+                        onClick={() => setRemoveMember(member)}
                       >
                         削除
                       </button>
@@ -212,6 +223,28 @@ export function MemberDialog({
           )}
         </div>
       </DialogContent>
+      <AlertDialog open={removeMember !== null} onOpenChange={(v) => !v && setRemoveMember(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>メンバーを削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              「{removeMember?.name}」を旅行から削除します。この操作は取り消せません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (removeMember) handleRemove(removeMember.userId);
+                setRemoveMember(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }

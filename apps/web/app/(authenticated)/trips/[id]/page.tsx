@@ -111,6 +111,7 @@ export default function TripDetailPage() {
   const [addPatternOpen, setAddPatternOpen] = useState(false);
   const [addPatternLabel, setAddPatternLabel] = useState("");
   const [addPatternLoading, setAddPatternLoading] = useState(false);
+  const [deletePatternTarget, setDeletePatternTarget] = useState<DayPatternResponse | null>(null);
   const [renamePattern, setRenamePattern] = useState<DayPatternResponse | null>(null);
   const [renameLabel, setRenameLabel] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
@@ -788,7 +789,7 @@ export default function TripDetailPage() {
                                   {!pattern.isDefault && (
                                     <DropdownMenuItem
                                       className="text-destructive"
-                                      onClick={() => handleDeletePattern(pattern.id)}
+                                      onClick={() => setDeletePatternTarget(pattern)}
                                     >
                                       <Trash2 className="mr-2 h-3 w-3" />
                                       削除
@@ -1089,6 +1090,33 @@ export default function TripDetailPage() {
               disabled={selection.batchLoading}
             >
               <Trash2 className="h-4 w-4" />
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      {/* Pattern delete confirmation dialog */}
+      <AlertDialog
+        open={deletePatternTarget !== null}
+        onOpenChange={(v) => !v && setDeletePatternTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>パターンを削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              「{deletePatternTarget?.label}
+              」とその中のすべての予定を削除します。この操作は取り消せません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deletePatternTarget) handleDeletePattern(deletePatternTarget.id);
+                setDeletePatternTarget(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
               削除する
             </AlertDialogAction>
           </AlertDialogFooter>

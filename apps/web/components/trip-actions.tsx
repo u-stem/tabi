@@ -142,57 +142,50 @@ export function TripActions({
   }
 
   return (
-    <div className="flex w-full flex-wrap items-center justify-between gap-2">
-      <div className="flex flex-wrap items-center gap-2">
-        {canEditRole ? (
-          <Select value={status} onValueChange={handleStatusChange} disabled={disabled}>
-            <SelectTrigger className="h-8 w-[130px] text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statuses.map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  {label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <span className="text-xs text-muted-foreground">{STATUS_LABELS[status]}</span>
-        )}
-        <MemberDialog tripId={tripId} isOwner={isOwnerRole} />
-        {isOwnerRole && (
-          <div className="flex flex-wrap items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleShare}
-              disabled={disabled || sharing}
-            >
-              <Link className="h-4 w-4" />
-              {sharing ? "生成中..." : "共有リンク"}
-            </Button>
-            {shareExpiresAt && (
-              <>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRegenerate}
-                  disabled={disabled || regenerating}
-                  title="共有リンクを再生成"
-                >
-                  <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
-                </Button>
-                <span className="text-xs text-muted-foreground">
-                  {new Date(shareExpiresAt) < new Date()
-                    ? "期限切れ"
-                    : `${new Date(shareExpiresAt).toLocaleDateString("ja-JP")}まで`}
-                </span>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+    <div className="flex w-full flex-wrap items-center gap-2">
+      {canEditRole ? (
+        <Select value={status} onValueChange={handleStatusChange} disabled={disabled}>
+          <SelectTrigger className="h-8 w-[130px] text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {statuses.map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : (
+        <span className="text-xs text-muted-foreground">{STATUS_LABELS[status]}</span>
+      )}
+      <MemberDialog tripId={tripId} isOwner={isOwnerRole} />
+      {isOwnerRole && (
+        <div className="flex flex-wrap items-center gap-1">
+          <Button variant="outline" size="sm" onClick={handleShare} disabled={disabled || sharing}>
+            <Link className="h-4 w-4" />
+            {sharing ? "生成中..." : "共有リンク"}
+          </Button>
+          {shareExpiresAt && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRegenerate}
+                disabled={disabled || regenerating}
+                title="共有リンクを再生成"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
+              </Button>
+              <span className="text-xs text-muted-foreground">
+                {new Date(shareExpiresAt) < new Date()
+                  ? "期限切れ"
+                  : `${new Date(shareExpiresAt).toLocaleDateString("ja-JP")}まで`}
+              </span>
+            </>
+          )}
+        </div>
+      )}
       {canEditRole && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

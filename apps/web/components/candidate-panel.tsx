@@ -39,6 +39,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -152,7 +153,8 @@ function CandidateCard({
         className={cn(
           "flex items-center gap-2 rounded-md border p-2",
           isDragging && "opacity-50",
-          selectable && "cursor-pointer transition-colors hover:bg-accent/50",
+          selectable &&
+            "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           selectable && selected && SELECTED_RING,
         )}
         {...(selectable
@@ -488,7 +490,9 @@ export function CandidatePanel({
           </DialogHeader>
           <form onSubmit={handleAdd} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="candidate-name">名前</Label>
+              <Label htmlFor="candidate-name">
+                名前 <span className="text-destructive">*</span>
+              </Label>
               <Input id="candidate-name" name="name" placeholder="金閣寺" required />
             </div>
             <div className="space-y-2">
@@ -510,10 +514,12 @@ export function CandidatePanel({
               <Label htmlFor="candidate-memo">メモ</Label>
               <Input id="candidate-memo" name="memo" placeholder="口コミで見た" />
             </div>
-            <Button type="submit" className="w-full" disabled={addLoading}>
-              <Plus className="h-4 w-4" />
-              {addLoading ? "追加中..." : "追加"}
-            </Button>
+            <DialogFooter>
+              <Button type="submit" disabled={addLoading}>
+                <Plus className="h-4 w-4" />
+                {addLoading ? "追加中..." : "追加"}
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
@@ -532,7 +538,9 @@ export function CandidatePanel({
           {editSchedule && (
             <form onSubmit={handleEdit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-candidate-name">名前</Label>
+                <Label htmlFor="edit-candidate-name">
+                  名前 <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="edit-candidate-name"
                   name="name"
@@ -564,10 +572,12 @@ export function CandidatePanel({
                   placeholder="口コミで見た"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={editLoading}>
-                <Check className="h-4 w-4" />
-                {editLoading ? "更新中..." : "更新"}
-              </Button>
+              <DialogFooter>
+                <Button type="submit" disabled={editLoading}>
+                  <Check className="h-4 w-4" />
+                  {editLoading ? "更新中..." : "更新"}
+                </Button>
+              </DialogFooter>
             </form>
           )}
         </DialogContent>

@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: "sugara",
     short_name: "sugara",
-    description: "旅行計画をみんなで作成・共有できるアプリ",
+    description: "旅行の計画を作成・共有できる共同編集アプリ。",
     start_url: "/home",
     display: "standalone",
     background_color: "#ffffff",

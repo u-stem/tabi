@@ -11,6 +11,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -147,7 +148,9 @@ export function AddScheduleDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">名前</Label>
+            <Label htmlFor="name">
+              名前 <span className="text-destructive">*</span>
+            </Label>
             <Input id="name" name="name" placeholder="金閣寺" required />
           </div>
           <div className="space-y-2">
@@ -269,10 +272,12 @@ export function AddScheduleDialog({
               {error}
             </p>
           )}
-          <Button type="submit" className="w-full" disabled={loading}>
-            <Plus className="h-4 w-4" />
-            {loading ? "追加中..." : "予定を追加"}
-          </Button>
+          <DialogFooter>
+            <Button type="submit" disabled={loading}>
+              <Plus className="h-4 w-4" />
+              {loading ? "追加中..." : "予定を追加"}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

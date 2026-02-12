@@ -45,7 +45,9 @@ export function AuthForm() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">メールアドレス</Label>
+            <Label htmlFor="email">
+              メールアドレス <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="email"
               name="email"
@@ -56,7 +58,9 @@ export function AuthForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">パスワード</Label>
+            <Label htmlFor="password">
+              パスワード <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="password"
               name="password"

@@ -309,7 +309,8 @@ function PlaceCard({
           "min-w-0 flex-1 rounded-md border p-3",
           isPast && "opacity-50",
           crossDayDisplay && "border-dashed bg-muted/30",
-          selectable && "cursor-pointer transition-colors hover:bg-accent/50",
+          selectable &&
+            "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           selectable && selected && SELECTED_RING,
         )}
         {...(selectable
@@ -530,7 +531,8 @@ function TransportConnector({
           "flex min-w-0 flex-1 flex-wrap items-center gap-2 rounded border border-dashed px-3 py-1.5",
           isPast && "opacity-50",
           crossDayDisplay && "bg-muted/30",
-          selectable && "cursor-pointer transition-colors hover:bg-accent/50",
+          selectable &&
+            "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           selectable && selected && SELECTED_RING,
         )}
         {...(selectable

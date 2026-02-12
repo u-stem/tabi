@@ -9,6 +9,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -101,18 +102,27 @@ export function MemberDialog({ tripId, isOwner, open, onOpenChange }: MemberDial
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={(isOpen) => {
+        onOpenChange(isOpen);
+        if (!isOpen) {
+          setEmail("");
+          setRole("editor");
+        }
+      }}
+    >
       <DialogContent>
         <DialogHeader>
           <DialogTitle>メンバー管理</DialogTitle>
           <DialogDescription>旅行メンバーの招待と権限を管理します</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <div className="flex min-h-0 flex-col gap-4">
           {loading ? (
             <p className="text-sm text-muted-foreground">読み込み中...</p>
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "40vh" }}>
               {members.map((member) => (
                 <div
                   key={member.userId}
@@ -163,7 +173,7 @@ export function MemberDialog({ tripId, isOwner, open, onOpenChange }: MemberDial
               <div className="flex gap-2">
                 <Input
                   type="email"
-                  placeholder="メールアドレス"
+                  placeholder="user@example.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -179,10 +189,12 @@ export function MemberDialog({ tripId, isOwner, open, onOpenChange }: MemberDial
                   </SelectContent>
                 </Select>
               </div>
-              <Button type="submit" size="sm" className="w-full" disabled={adding}>
-                <UserPlus className="h-4 w-4" />
-                {adding ? "追加中..." : "追加"}
-              </Button>
+              <DialogFooter>
+                <Button type="submit" size="sm" disabled={adding}>
+                  <UserPlus className="h-4 w-4" />
+                  {adding ? "追加中..." : "追加"}
+                </Button>
+              </DialogFooter>
             </form>
           )}
         </div>

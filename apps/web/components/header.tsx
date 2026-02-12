@@ -1,6 +1,6 @@
 "use client";
 
-import { Download, LogOut, Menu } from "lucide-react";
+import { Download, Home, LogOut, Menu, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -31,8 +31,8 @@ import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 const NAV_LINKS = [
-  { href: "/home", label: "ホーム" },
-  { href: "/shared-trips", label: "共有" },
+  { href: "/home", label: "ホーム", icon: Home },
+  { href: "/shared-trips", label: "共有旅行", icon: Users },
 ] as const;
 
 export function Header() {
@@ -130,22 +130,24 @@ export function Header() {
                     <SheetTitle>{session.user.name}</SheetTitle>
                     <SheetDescription>{session.user.email}</SheetDescription>
                   </SheetHeader>
-                  <nav className="mt-6 flex flex-col gap-2" aria-label="モバイルナビゲーション">
+                  <nav className="mt-6 flex flex-col gap-1" aria-label="モバイルナビゲーション">
                     {NAV_LINKS.map((link) => (
                       <Link
                         key={link.href}
                         href={link.href}
                         onClick={() => setMobileMenuOpen(false)}
                         className={cn(
-                          "rounded-md px-3 py-2 text-sm transition-colors",
+                          "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
                           pathname === link.href
                             ? "bg-muted font-medium text-foreground"
                             : "text-muted-foreground hover:text-foreground",
                         )}
                       >
+                        <link.icon className="h-4 w-4" />
                         {link.label}
                       </Link>
                     ))}
+                    <div className="my-2 border-t" />
                     {canInstall && (
                       <button
                         type="button"

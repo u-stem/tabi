@@ -146,7 +146,7 @@ export function TripActions({
     <div className="flex flex-wrap items-center gap-2">
       {canEditRole ? (
         <Select value={status} onValueChange={handleStatusChange} disabled={disabled}>
-          <SelectTrigger className="h-8 w-[130px] text-xs">
+          <SelectTrigger className="h-8 w-[130px] text-xs" aria-label="ステータス変更">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -160,30 +160,46 @@ export function TripActions({
       ) : (
         <span className="text-xs text-muted-foreground">{STATUS_LABELS[status]}</span>
       )}
+      {/* Desktop inline buttons (sm+) */}
+      <Button
+        variant="outline"
+        size="sm"
+        className="hidden sm:inline-flex"
+        onClick={() => setMemberOpen(true)}
+        disabled={disabled}
+      >
+        <Users className="h-4 w-4" />
+        メンバー
+      </Button>
       {isOwnerRole && (
-        <div className="flex flex-wrap items-center gap-1">
-          <Button variant="outline" size="sm" onClick={handleShare} disabled={disabled || sharing}>
-            <Link className="h-4 w-4" />
-            {sharing ? "生成中..." : "共有リンク"}
+        <Button
+          variant="outline"
+          size="sm"
+          className="hidden sm:inline-flex"
+          onClick={handleShare}
+          disabled={disabled || sharing}
+        >
+          <Link className="h-4 w-4" />
+          {sharing ? "生成中..." : "共有リンク"}
+        </Button>
+      )}
+      {/* Share expiry + regenerate (all sizes) */}
+      {isOwnerRole && shareExpiresAt && (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleRegenerate}
+            disabled={disabled || regenerating}
+            aria-label="共有リンクを再生成"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
           </Button>
-          {shareExpiresAt && (
-            <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleRegenerate}
-                disabled={disabled || regenerating}
-                title="共有リンクを再生成"
-              >
-                <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
-              </Button>
-              <span className="text-xs text-muted-foreground">
-                {new Date(shareExpiresAt) < new Date()
-                  ? "期限切れ"
-                  : `${new Date(shareExpiresAt).toLocaleDateString("ja-JP")}まで`}
-              </span>
-            </>
-          )}
+          <span className="text-xs text-muted-foreground">
+            {new Date(shareExpiresAt) < new Date()
+              ? "期限切れ"
+              : `${new Date(shareExpiresAt).toLocaleDateString("ja-JP")}まで`}
+          </span>
         </div>
       )}
       <DropdownMenu>
@@ -194,10 +210,17 @@ export function TripActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setMemberOpen(true)}>
+          {/* Mobile-only items (hidden on sm+) */}
+          <DropdownMenuItem className="sm:hidden" onClick={() => setMemberOpen(true)}>
             <Users className="mr-2 h-4 w-4" />
             メンバー
           </DropdownMenuItem>
+          {isOwnerRole && (
+            <DropdownMenuItem className="sm:hidden" onClick={handleShare} disabled={sharing}>
+              <Link className="mr-2 h-4 w-4" />
+              {sharing ? "生成中..." : "共有リンク"}
+            </DropdownMenuItem>
+          )}
           {canEditRole && (
             <DropdownMenuItem asChild>
               <NextLink href={`/trips/${tripId}/print`} target="_blank">

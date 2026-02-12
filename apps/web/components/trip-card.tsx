@@ -36,9 +36,9 @@ export function TripCard({
     <>
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             {selectable && <SelectionIndicator checked={selected} />}
-            <CardTitle className="text-lg">{title}</CardTitle>
+            <CardTitle className="truncate text-lg">{title}</CardTitle>
           </div>
           <div className="flex items-center gap-1.5">
             {showRole && (
@@ -51,7 +51,7 @@ export function TripCard({
             </Badge>
           </div>
         </div>
-        <CardDescription>{destination}</CardDescription>
+        <CardDescription className="truncate">{destination}</CardDescription>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">

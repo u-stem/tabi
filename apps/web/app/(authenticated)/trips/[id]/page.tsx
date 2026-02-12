@@ -3,7 +3,7 @@
 import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
 import type { DayPatternResponse, TripResponse } from "@sugara/shared";
 import { PATTERN_LABEL_MAX_LENGTH } from "@sugara/shared";
-import { ChevronDown, Copy, List, Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, ChevronDown, Copy, List, Pencil, Plus, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -11,6 +11,7 @@ import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
 import { EditTripDialog } from "@/components/edit-trip-dialog";
 import { hashColor, PresenceAvatars } from "@/components/presence-avatars";
+import { ScrollToTop } from "@/components/scroll-to-top";
 import { TripActions } from "@/components/trip-actions";
 import {
   AlertDialog,
@@ -23,7 +24,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,6 +91,7 @@ export default function TripDetailPage() {
   const [renameLabel, setRenameLabel] = useState("");
   const [renameLoading, setRenameLoading] = useState(false);
   const [candidateOpen, setCandidateOpen] = useState(false);
+  const timelinePanelRef = useRef<HTMLDivElement>(null);
 
   // Defined before fetchTrip so it can be passed to useTripSync below
   const fetchTripRef = useRef<() => void>(() => {});
@@ -139,6 +147,12 @@ export default function TripDetailPage() {
   useEffect(() => {
     fetchTrip();
   }, [fetchTrip]);
+
+  useEffect(() => {
+    if (trip) {
+      document.title = `${trip.title} - sugara`;
+    }
+  }, [trip?.title]);
 
   const currentDay = trip?.days[selectedDay] ?? null;
   const currentPatternIndex = currentDay ? (selectedPattern[currentDay.id] ?? 0) : 0;
@@ -496,6 +510,7 @@ export default function TripDetailPage() {
                 ))}
               </div>
               <div
+                ref={timelinePanelRef}
                 id={`day-panel-${currentDay.id}`}
                 role="tabpanel"
                 className="min-h-0 overflow-y-auto p-4"
@@ -609,6 +624,7 @@ export default function TripDetailPage() {
                     </div>
                   }
                 />
+                <ScrollToTop containerRef={timelinePanelRef} />
               </div>
             </div>
 
@@ -685,13 +701,12 @@ export default function TripDetailPage() {
                 maxLength={PATTERN_LABEL_MAX_LENGTH}
               />
             </div>
-            <Button
-              type="submit"
-              disabled={addPatternLoading || !addPatternLabel.trim()}
-              className="w-full"
-            >
-              {addPatternLoading ? "追加中..." : "追加"}
-            </Button>
+            <DialogFooter>
+              <Button type="submit" disabled={addPatternLoading || !addPatternLabel.trim()}>
+                <Plus className="h-4 w-4" />
+                {addPatternLoading ? "追加中..." : "追加"}
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
@@ -755,13 +770,12 @@ export default function TripDetailPage() {
                 maxLength={PATTERN_LABEL_MAX_LENGTH}
               />
             </div>
-            <Button
-              type="submit"
-              disabled={renameLoading || !renameLabel.trim()}
-              className="w-full"
-            >
-              {renameLoading ? "変更中..." : "変更"}
-            </Button>
+            <DialogFooter>
+              <Button type="submit" disabled={renameLoading || !renameLabel.trim()}>
+                <Check className="h-4 w-4" />
+                {renameLoading ? "変更中..." : "変更"}
+              </Button>
+            </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>

@@ -71,6 +71,7 @@ export function DateRangePicker({
           size="icon"
           className="h-7 w-7"
           onClick={handlePrevMonth}
+          aria-label="前の月"
         >
           <ChevronLeft className="h-4 w-4" />
         </Button>
@@ -78,6 +79,7 @@ export function DateRangePicker({
           value={month.getFullYear()}
           onChange={(e) => setMonth(new Date(Number(e.target.value), month.getMonth()))}
           className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+          aria-label="年"
         >
           {yearOptions.map((y) => (
             <option key={y} value={y}>
@@ -89,6 +91,7 @@ export function DateRangePicker({
           value={month.getMonth()}
           onChange={(e) => setMonth(new Date(month.getFullYear(), Number(e.target.value)))}
           className="rounded-md border border-input bg-background px-2 py-1 text-sm"
+          aria-label="月"
         >
           {monthOptions.map((m) => (
             <option key={m.value} value={m.value}>
@@ -102,6 +105,7 @@ export function DateRangePicker({
           size="icon"
           className="h-7 w-7"
           onClick={handleNextMonth}
+          aria-label="次の月"
         >
           <ChevronRight className="h-4 w-4" />
         </Button>

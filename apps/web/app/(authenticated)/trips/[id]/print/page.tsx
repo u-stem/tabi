@@ -51,6 +51,12 @@ export default function TripPrintPage() {
   }, [fetchTrip]);
 
   useEffect(() => {
+    if (trip) {
+      document.title = `${trip.title}（印刷） - sugara`;
+    }
+  }, [trip?.title]);
+
+  useEffect(() => {
     if (!trip || searchParams.get("auto") !== "1") return;
     // Allow a brief render before triggering print
     const timer = setTimeout(() => window.print(), 500);

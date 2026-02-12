@@ -2,8 +2,9 @@
 
 import type { TripListItem } from "@sugara/shared";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { TripCard } from "@/components/trip-card";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
@@ -17,6 +18,12 @@ export default function SharedTripsPage() {
   const [search, setSearch] = useState("");
 
   useEffect(() => {
+    document.title = "共有された旅行 - sugara";
+  }, []);
+
+  const fetchTrips = useCallback(() => {
+    setLoading(true);
+    setError(null);
     api<TripListItem[]>("/api/trips?scope=shared")
       .then((data) => setTrips(data))
       .catch((err) => {
@@ -28,6 +35,10 @@ export default function SharedTripsPage() {
       })
       .finally(() => setLoading(false));
   }, [router]);
+
+  useEffect(() => {
+    fetchTrips();
+  }, [fetchTrips]);
 
   const filteredTrips = useMemo(() => {
     if (!search) return trips;
@@ -63,7 +74,12 @@ export default function SharedTripsPage() {
           </div>
         </>
       ) : error ? (
-        <p className="mt-8 text-destructive">{error}</p>
+        <div className="mt-8 text-center">
+          <p className="text-destructive">{error}</p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={fetchTrips}>
+            再試行
+          </Button>
+        </div>
       ) : trips.length === 0 ? (
         <p className="mt-8 text-center text-muted-foreground">共有された旅行はありません</p>
       ) : (

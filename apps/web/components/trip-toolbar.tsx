@@ -166,7 +166,7 @@ export function TripToolbar({
         className="h-8 w-full sm:w-40"
       />
       <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>
-        <SelectTrigger className="h-8 w-[120px] text-xs">
+        <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -178,7 +178,7 @@ export function TripToolbar({
         </SelectContent>
       </Select>
       <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
-        <SelectTrigger className="h-8 w-[100px] text-xs">
+        <SelectTrigger className="h-8 w-[100px] text-xs" aria-label="並び替え">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>

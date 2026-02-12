@@ -11,6 +11,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -157,7 +158,9 @@ export function EditScheduleDialog({
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="edit-name">名前</Label>
+            <Label htmlFor="edit-name">
+              名前 <span className="text-destructive">*</span>
+            </Label>
             <Input id="edit-name" name="name" defaultValue={schedule.name} required />
           </div>
           <div className="space-y-2">
@@ -300,10 +303,12 @@ export function EditScheduleDialog({
               {error}
             </p>
           )}
-          <Button type="submit" className="w-full" disabled={loading}>
-            <Check className="h-4 w-4" />
-            {loading ? "更新中..." : "予定を更新"}
-          </Button>
+          <DialogFooter>
+            <Button type="submit" disabled={loading}>
+              <Check className="h-4 w-4" />
+              {loading ? "更新中..." : "予定を更新"}
+            </Button>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

@@ -164,21 +164,23 @@ export function DayTimeline({
   return (
     <div>
       {selectionMode ? (
-        <div className="mb-3 flex items-center gap-1.5">
-          <Button variant="outline" size="sm" onClick={onSelectAll}>
-            <CheckCheck className="h-4 w-4" />
-            全選択
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onDeselectAll}
-            disabled={selectedCount === 0}
-          >
-            <X className="h-4 w-4" />
-            選択解除
-          </Button>
-          <div className="ml-auto flex items-center gap-1.5">
+        <div className="mb-3 flex flex-col gap-1.5 sm:flex-row sm:items-center">
+          <div className="flex items-center gap-1.5">
+            <Button variant="outline" size="sm" onClick={onSelectAll}>
+              <CheckCheck className="h-4 w-4" />
+              全選択
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onDeselectAll}
+              disabled={selectedCount === 0}
+            >
+              <X className="h-4 w-4" />
+              選択解除
+            </Button>
+          </div>
+          <div className="flex items-center gap-1.5 sm:ml-auto">
             <Button
               size="sm"
               onClick={onBatchUnassign}
@@ -210,9 +212,9 @@ export function DayTimeline({
           </div>
         </div>
       ) : (
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-col gap-1.5 sm:flex-row sm:items-center">
           <span className="text-sm text-muted-foreground">{formatDate(date)}</span>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 sm:ml-auto">
             {!disabled &&
               (scheduleLimitReached ? (
                 <Tooltip>

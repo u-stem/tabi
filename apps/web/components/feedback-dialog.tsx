@@ -93,9 +93,6 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
             </div>
           )}
           <DialogFooter className="mt-4">
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              キャンセル
-            </Button>
             <Button type="submit" disabled={loading || !body.trim() || cooldown}>
               {loading ? "送信中..." : "送信"}
             </Button>

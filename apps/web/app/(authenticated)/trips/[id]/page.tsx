@@ -9,17 +9,7 @@ import {
   MAX_SCHEDULES_PER_TRIP,
   PATTERN_LABEL_MAX_LENGTH,
 } from "@sugara/shared";
-import {
-  Check,
-  ChevronDown,
-  Copy,
-  List,
-  MessageSquare,
-  Pencil,
-  Plus,
-  Trash2,
-  X,
-} from "lucide-react";
+import { Check, ChevronDown, Copy, List, MessageSquare, Pencil, Plus, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -665,7 +655,6 @@ export default function TripDetailPage() {
                             onClick={cancelMemoEdit}
                             disabled={memoSaving}
                           >
-                            <X className="h-3.5 w-3.5" />
                             キャンセル
                           </Button>
                           <Button size="sm" onClick={handleSaveMemo} disabled={memoSaving}>

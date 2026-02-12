@@ -85,26 +85,32 @@ export function TripToolbar({
 }: TripToolbarProps) {
   if (selectionMode) {
     return (
-      <div role="toolbar" aria-label="選択操作" className="flex flex-wrap items-center gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onSelectAll}
-          disabled={deleting || duplicating}
-        >
-          <CheckCheck className="h-4 w-4" />
-          全選択
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onDeselectAll}
-          disabled={deleting || duplicating}
-        >
-          <X className="h-4 w-4" />
-          選択解除
-        </Button>
-        <div className="ml-auto flex items-center gap-2">
+      <div
+        role="toolbar"
+        aria-label="選択操作"
+        className="flex flex-col gap-2 sm:flex-row sm:items-center"
+      >
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onSelectAll}
+            disabled={deleting || duplicating}
+          >
+            <CheckCheck className="h-4 w-4" />
+            全選択
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onDeselectAll}
+            disabled={deleting || duplicating}
+          >
+            <X className="h-4 w-4" />
+            選択解除
+          </Button>
+        </div>
+        <div className="flex items-center gap-2 sm:ml-auto">
           <Button
             variant="outline"
             size="sm"
@@ -158,9 +164,15 @@ export function TripToolbar({
   }
 
   return (
-    <div role="toolbar" aria-label="旅行フィルター" className="flex flex-wrap items-center gap-2">
+    <div
+      role="toolbar"
+      aria-label="旅行フィルター"
+      className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
+    >
       <Input
         ref={searchInputRef}
+        id="trips-search"
+        name="search"
         type="search"
         placeholder="検索..."
         aria-label="旅行を検索"
@@ -168,31 +180,33 @@ export function TripToolbar({
         onChange={(e) => onSearchChange(e.target.value)}
         className="h-8 w-full sm:w-40"
       />
-      <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>
-        <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {statusFilters.map((f) => (
-            <SelectItem key={f.value} value={f.value}>
-              {f.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
-        <SelectTrigger className="h-8 w-[100px] text-xs" aria-label="並び替え">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {sortOptions.map((s) => (
-            <SelectItem key={s.value} value={s.value}>
-              {s.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      <div className="ml-auto flex items-center gap-2">
+      <div className="flex items-center gap-2">
+        <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>
+          <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {statusFilters.map((f) => (
+              <SelectItem key={f.value} value={f.value}>
+                {f.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
+          <SelectTrigger className="h-8 w-[100px] text-xs" aria-label="並び替え">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {sortOptions.map((s) => (
+              <SelectItem key={s.value} value={s.value}>
+                {s.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex items-center gap-2 sm:ml-auto">
         <Button
           variant="outline"
           size="sm"

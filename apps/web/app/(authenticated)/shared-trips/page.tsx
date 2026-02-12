@@ -86,6 +86,8 @@ export default function SharedTripsPage() {
         <>
           <div className="mt-4">
             <Input
+              id="shared-trips-search"
+              name="search"
               type="search"
               placeholder="検索..."
               aria-label="旅行を検索"

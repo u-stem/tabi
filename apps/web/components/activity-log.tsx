@@ -1,6 +1,6 @@
 "use client";
 
-import type { ActivityLogResponse } from "@sugara/shared";
+import { type ActivityLogResponse, type MemberRole, ROLE_LABELS } from "@sugara/shared";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRightLeft, Copy, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -95,10 +95,20 @@ type ActionParts = {
   detail: string | null;
 };
 
+function translateRole(role: string): string {
+  return ROLE_LABELS[role as MemberRole] ?? role;
+}
+
+function translateDetail(detail: string): string {
+  // "editor → viewer" -> "編集者 → 閲覧者"
+  return detail.replace(/\b(owner|editor|viewer)\b/g, (match) => translateRole(match));
+}
+
 function parseAction(log: ActivityLogResponse): ActionParts {
   const template =
     ACTION_TEMPLATES[log.entityType]?.[log.action] ?? `${log.entityType}を${log.action}`;
   const name = log.entityName ? `「${log.entityName}」` : "";
+  const detail = log.detail ? `(${translateDetail(log.detail)})` : null;
 
   if (template.includes("{name}")) {
     const [before, after] = template.split("{name}");
@@ -106,7 +116,7 @@ function parseAction(log: ActivityLogResponse): ActionParts {
       before,
       entityName: log.entityName ? name : null,
       after,
-      detail: log.detail ? `(${log.detail})` : null,
+      detail,
     };
   }
 
@@ -114,7 +124,7 @@ function parseAction(log: ActivityLogResponse): ActionParts {
     before: template,
     entityName: log.entityName ? ` ${name}` : null,
     after: "",
-    detail: log.detail ? `(${log.detail})` : null,
+    detail,
   };
 }
 

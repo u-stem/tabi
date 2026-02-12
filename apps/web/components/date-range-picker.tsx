@@ -76,6 +76,7 @@ export function DateRangePicker({
           <ChevronLeft className="h-4 w-4" />
         </Button>
         <select
+          id="date-picker-year"
           value={month.getFullYear()}
           onChange={(e) => setMonth(new Date(Number(e.target.value), month.getMonth()))}
           className="rounded-md border border-input bg-background px-2 py-1 text-sm"
@@ -88,6 +89,7 @@ export function DateRangePicker({
           ))}
         </select>
         <select
+          id="date-picker-month"
           value={month.getMonth()}
           onChange={(e) => setMonth(new Date(month.getFullYear(), Number(e.target.value)))}
           className="rounded-md border border-input bg-background px-2 py-1 text-sm"

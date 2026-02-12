@@ -193,6 +193,8 @@ export function MemberDialog({
                 <>
                   <div className="flex gap-2">
                     <Input
+                      id="member-user-id"
+                      name="userId"
                       type="text"
                       placeholder="ユーザーID"
                       value={userId}

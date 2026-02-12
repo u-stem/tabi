@@ -34,8 +34,8 @@ export default function SettingsPage() {
           <UserIdSection userId={user.id} />
           <ProfileSection defaultName={user.name ?? ""} />
           <UsernameSection defaultUsername={user.username ?? ""} />
-          <PasswordSection />
-          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+          <PasswordSection username={user.username ?? ""} />
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <Link
               href="/news"
               target="_blank"
@@ -235,7 +235,7 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
   );
 }
 
-function PasswordSection() {
+function PasswordSection({ username }: { username: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -290,6 +290,7 @@ function PasswordSection() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          <input type="hidden" name="username" autoComplete="username" value={username} />
           <div className="space-y-2">
             <Label htmlFor="currentPassword">現在のパスワード</Label>
             <Input

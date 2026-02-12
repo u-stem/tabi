@@ -1,6 +1,7 @@
 "use client";
 
-import { Check, Copy } from "lucide-react";
+import { Check, Copy, ExternalLink } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -34,6 +35,16 @@ export default function SettingsPage() {
           <ProfileSection defaultName={user.name ?? ""} />
           <UsernameSection defaultUsername={user.username ?? ""} />
           <PasswordSection />
+          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+            <Link href="/terms" target="_blank" className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground">
+              利用規約
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+            <Link href="/privacy" target="_blank" className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground">
+              プライバシーポリシー
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          </div>
         </>
       )}
     </div>
@@ -85,16 +96,16 @@ function UserIdSection({ userId }: { userId: string }) {
 function ProfileSection({ defaultName }: { defaultName: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [name, setName] = useState(defaultName);
+  const dirty = name.trim() !== defaultName;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const name = (formData.get("name") as string).trim();
-
-    const result = await authClient.updateUser({ name });
+    const trimmed = name.trim();
+    const result = await authClient.updateUser({ name: trimmed });
     if (result.error) {
       setError(translateAuthError(result.error, MSG.SETTINGS_PROFILE_UPDATE_FAILED));
       setLoading(false);
@@ -118,7 +129,8 @@ function ProfileSection({ defaultName }: { defaultName: string }) {
             <Input
               id="name"
               name="name"
-              defaultValue={defaultName}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
               required
               minLength={1}
               maxLength={PROFILE_NAME_MAX_LENGTH}
@@ -132,7 +144,7 @@ function ProfileSection({ defaultName }: { defaultName: string }) {
               {error}
             </div>
           )}
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading || !dirty}>
             {loading ? "更新中..." : "更新"}
           </Button>
         </form>
@@ -144,18 +156,18 @@ function ProfileSection({ defaultName }: { defaultName: string }) {
 function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [username, setUsername] = useState(defaultUsername);
+  const dirty = username.trim() !== defaultUsername;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const newUsername = (formData.get("username") as string).trim();
-
+    const trimmed = username.trim();
     // Email is a one-time dummy set at signup; no need to sync on rename.
     const result = await authClient.updateUser({
-      username: newUsername,
+      username: trimmed,
     });
     if (result.error) {
       setError(translateAuthError(result.error, MSG.SETTINGS_USERNAME_UPDATE_FAILED));
@@ -180,7 +192,8 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
             <Input
               id="username"
               name="username"
-              defaultValue={defaultUsername}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               pattern="^[a-zA-Z0-9_]+$"
               title="英数字とアンダースコアのみ使用できます"
               minLength={3}
@@ -197,7 +210,7 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
               {error}
             </div>
           )}
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading || !dirty}>
             {loading ? "更新中..." : "更新"}
           </Button>
         </form>
@@ -209,16 +222,15 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
 function PasswordSection() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const filled = currentPassword.length > 0 && newPassword.length > 0 && confirmPassword.length > 0;
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const currentPassword = formData.get("currentPassword") as string;
-    const newPassword = formData.get("newPassword") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
 
     const { valid, errors } = validatePassword(newPassword);
     if (!valid) {
@@ -246,7 +258,9 @@ function PasswordSection() {
     }
 
     toast.success(MSG.SETTINGS_PASSWORD_CHANGED);
-    e.currentTarget.reset();
+    setCurrentPassword("");
+    setNewPassword("");
+    setConfirmPassword("");
     setLoading(false);
   }
 
@@ -269,6 +283,8 @@ function PasswordSection() {
               autoComplete="current-password"
               required
               minLength={MIN_PASSWORD_LENGTH}
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
             />
           </div>
           <div className="space-y-2">
@@ -281,6 +297,8 @@ function PasswordSection() {
               required
               minLength={MIN_PASSWORD_LENGTH}
               placeholder="8文字以上"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">{getPasswordRequirementsText()}</p>
           </div>
@@ -293,6 +311,8 @@ function PasswordSection() {
               autoComplete="new-password"
               required
               minLength={MIN_PASSWORD_LENGTH}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
             />
           </div>
           {error && (
@@ -303,7 +323,7 @@ function PasswordSection() {
               {error}
             </div>
           )}
-          <Button type="submit" disabled={loading}>
+          <Button type="submit" disabled={loading || !filled}>
             {loading ? "変更中..." : "パスワードを変更"}
           </Button>
         </form>

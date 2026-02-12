@@ -2,11 +2,11 @@
 
 import type { TripListItem } from "@sugara/shared";
 import { Plus } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { toast } from "sonner";
+import { CreateTripDialog } from "@/components/create-trip-dialog";
 import { TripCard } from "@/components/trip-card";
 import type { SortKey, StatusFilter } from "@/components/trip-toolbar";
 import { TripToolbar } from "@/components/trip-toolbar";
@@ -23,16 +23,23 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    document.title = "ホーム - sugara";
+  }, []);
+
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("updatedAt");
 
+  const [createOpen, setCreateOpen] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
 
-  useEffect(() => {
+  const fetchTrips = useCallback(() => {
+    setLoading(true);
+    setError(null);
     api<TripListItem[]>("/api/trips?scope=owned")
       .then((data) => {
         setTrips(data);
@@ -46,6 +53,10 @@ export default function HomePage() {
       })
       .finally(() => setLoading(false));
   }, [router]);
+
+  useEffect(() => {
+    fetchTrips();
+  }, [fetchTrips]);
 
   const filteredTrips = useMemo(() => {
     let result = trips;
@@ -203,7 +214,12 @@ export default function HomePage() {
           </div>
         </>
       ) : error ? (
-        <p className="mt-8 text-destructive">{error}</p>
+        <div className="mt-8 text-center">
+          <p className="text-destructive">{error}</p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={fetchTrips}>
+            再試行
+          </Button>
+        </div>
       ) : (
         <>
           <div className="mt-4">
@@ -226,19 +242,10 @@ export default function HomePage() {
               duplicating={duplicating}
               disabled={!online}
               newTripSlot={
-                online ? (
-                  <Button asChild size="sm">
-                    <Link href="/trips/new">
-                      <Plus className="h-4 w-4" />
-                      新規作成
-                    </Link>
-                  </Button>
-                ) : (
-                  <Button size="sm" disabled>
-                    <Plus className="h-4 w-4" />
-                    新規作成
-                  </Button>
-                )
+                <Button size="sm" disabled={!online} onClick={() => setCreateOpen(true)}>
+                  <Plus className="h-4 w-4" />
+                  新規作成
+                </Button>
               }
             />
           </div>
@@ -263,6 +270,7 @@ export default function HomePage() {
           )}
         </>
       )}
+      <CreateTripDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={fetchTrips} />
     </div>
   );
 }

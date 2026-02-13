@@ -553,7 +553,7 @@ export function CandidatePanel({
           </div>
         </div>
       )}
-      {draggable && sortBy === "order" ? (
+      {draggable ? (
         <div ref={setDroppableRef}>
           <SortableContext
             items={sortedCandidates.map((c) => c.id)}

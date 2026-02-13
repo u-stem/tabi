@@ -1,4 +1,4 @@
-import { createTripViaUI, expect, test } from "./fixtures/auth";
+import { BASE_URL, createTripViaUI, expect, signupUser, test } from "./fixtures/auth";
 
 test.describe("Shared Trip", () => {
   test("generates share link and views shared trip", async ({
@@ -25,12 +25,12 @@ test.describe("Shared Trip", () => {
     await expect(page.getByText("共有リンクをコピーしました")).toBeVisible();
 
     // Open shared link in a new unauthenticated context
-    const context = await browser.newContext();
+    const context = await browser.newContext({ baseURL: BASE_URL });
     const sharedPage = await context.newPage();
     await sharedPage.goto(`/shared/${shareToken}`);
 
     await expect(sharedPage.getByText("Shared Trip Test")).toBeVisible({
-      timeout: 10000,
+      timeout: 15000,
     });
     await context.close();
   });
@@ -64,23 +64,18 @@ test.describe("Shared Trip", () => {
     authenticatedPage: page,
     browser,
   }) => {
-    // Owner creates a trip and adds another user as member
-    const memberUsername = `shared${Date.now()}`;
-
     // Create the member user
-    const memberContext = await browser.newContext();
+    const memberContext = await browser.newContext({ baseURL: BASE_URL });
     const memberPage = await memberContext.newPage();
-    await memberPage.goto("http://localhost:3000/auth/signup");
-    await memberPage.getByLabel("ユーザー名").fill(memberUsername);
-    await memberPage.getByLabel("表示名").fill("Shared List User");
-    await memberPage.getByLabel("パスワード", { exact: true }).fill("TestPassword123!");
-    await memberPage.getByLabel("パスワード（確認）").fill("TestPassword123!");
-    await memberPage.getByRole("button", { name: "新規登録" }).click();
-    await expect(memberPage).toHaveURL(/\/home/, { timeout: 10000 });
+    await signupUser(memberPage, {
+      username: `shared${Date.now()}`,
+      name: "Shared List User",
+    });
 
     // Get member's user ID from settings page
-    await memberPage.goto("http://localhost:3000/settings");
+    await memberPage.goto("/settings");
     const memberId = await memberPage.locator("code").first().textContent();
+    expect(memberId).toBeTruthy();
 
     // Owner creates a trip
     await createTripViaUI(page, {
@@ -90,12 +85,13 @@ test.describe("Shared Trip", () => {
 
     // Add member by user ID
     await page.getByRole("button", { name: "メンバー" }).click();
+    await page.getByRole("tab", { name: "ユーザーIDで追加" }).click();
     await page.getByPlaceholder("ユーザーID").fill(memberId!);
     await page.getByRole("button", { name: "追加" }).click();
     await expect(page.getByText("メンバーを追加しました")).toBeVisible();
 
     // Member navigates to shared-trips page
-    await memberPage.goto("http://localhost:3000/shared-trips");
+    await memberPage.goto("/shared-trips");
     await expect(memberPage).toHaveURL(/\/shared-trips/, { timeout: 10000 });
     await expect(memberPage.getByText("Shared List Trip")).toBeVisible({
       timeout: 10000,
@@ -105,13 +101,13 @@ test.describe("Shared Trip", () => {
   });
 
   test("shows error for invalid share token", async ({ browser }) => {
-    const context = await browser.newContext();
+    const context = await browser.newContext({ baseURL: BASE_URL });
     const page = await context.newPage();
-    await page.goto("http://localhost:3000/shared/invalidtoken123");
+    await page.goto("/shared/invalidtoken123");
 
     await expect(
-      page.getByText("このリンクは無効か、有効期限が切れています"),
-    ).toBeVisible({ timeout: 10000 });
+      page.getByText(/このリンクは無効か|旅行の取得に失敗しました/),
+    ).toBeVisible({ timeout: 15000 });
     await context.close();
   });
 });

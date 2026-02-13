@@ -10,8 +10,9 @@ test.describe("Authentication", () => {
     await page.goto("/auth/signup");
     await page.getByLabel("ユーザー名").fill(username);
     await page.getByLabel("表示名").fill(name);
-    await page.getByLabel("パスワード", { exact: true }).fill(password);
-    await page.getByLabel("パスワード（確認）").fill(password);
+    await page.locator("#password").fill(password);
+    await page.locator("#confirmPassword").fill(password);
+    await page.getByLabel("利用規約").check({ force: true });
     await page.getByRole("button", { name: "新規登録" }).click();
     await expect(page).toHaveURL(/\/home/, { timeout: 10000 });
 

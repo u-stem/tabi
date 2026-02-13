@@ -9,17 +9,9 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
-  webServer: [
-    {
-      command: "docker compose up -d",
-      url: "http://localhost:3001/health",
-      reuseExistingServer: true,
-      cwd: "../..",
-    },
-    {
-      command: "bun run dev",
-      url: "http://localhost:3000",
-      reuseExistingServer: true,
-    },
-  ],
+  webServer: {
+    command: "bun run dev",
+    url: "http://localhost:3000",
+    reuseExistingServer: true,
+  },
 });

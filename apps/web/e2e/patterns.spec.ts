@@ -66,6 +66,9 @@ test.describe("Patterns", () => {
       .click();
     await page.getByRole("menuitem", { name: "削除" }).click();
 
+    // Confirm deletion in the alert dialog
+    await page.getByRole("button", { name: "削除する" }).click();
+
     await expect(page.getByText("パターンを削除しました")).toBeVisible();
     await expect(
       page.getByRole("button", { name: "削除対象プラン" }),

@@ -1,5 +1,4 @@
-import { expect, test } from "./fixtures/auth";
-import { createTripViaUI } from "./fixtures/auth";
+import { BASE_URL, createTripViaUI, expect, signupUser, test } from "./fixtures/auth";
 
 test.describe("Members", () => {
   test("adds a member and changes role", async ({
@@ -7,20 +6,17 @@ test.describe("Members", () => {
     browser,
   }) => {
     // Create a second user in a separate context
-    const memberUsername = `member${Date.now()}`;
-    const memberContext = await browser.newContext();
+    const memberContext = await browser.newContext({ baseURL: BASE_URL });
     const memberPage = await memberContext.newPage();
-    await memberPage.goto("http://localhost:3000/auth/signup");
-    await memberPage.getByLabel("ユーザー名").fill(memberUsername);
-    await memberPage.getByLabel("表示名").fill("Member User");
-    await memberPage.getByLabel("パスワード", { exact: true }).fill("TestPassword123!");
-    await memberPage.getByLabel("パスワード（確認）").fill("TestPassword123!");
-    await memberPage.getByRole("button", { name: "新規登録" }).click();
-    await expect(memberPage).toHaveURL(/\/home/, { timeout: 10000 });
+    await signupUser(memberPage, {
+      username: `member${Date.now()}`,
+      name: "Member User",
+    });
 
     // Get member's user ID from settings page
-    await memberPage.goto("http://localhost:3000/settings");
+    await memberPage.goto("/settings");
     const memberId = await memberPage.locator("code").first().textContent();
+    expect(memberId).toBeTruthy();
     await memberContext.close();
 
     // Owner creates a trip
@@ -31,6 +27,7 @@ test.describe("Members", () => {
 
     // Open member dialog and add the member by user ID
     await page.getByRole("button", { name: "メンバー" }).click();
+    await page.getByRole("tab", { name: "ユーザーIDで追加" }).click();
     await page.getByPlaceholder("ユーザーID").fill(memberId!);
     await page.getByRole("button", { name: "追加" }).click();
     await expect(page.getByText("メンバーを追加しました")).toBeVisible();
@@ -47,20 +44,17 @@ test.describe("Members", () => {
 
   test("removes a member", async ({ authenticatedPage: page, browser }) => {
     // Create a second user
-    const memberUsername = `remove${Date.now()}`;
-    const memberContext = await browser.newContext();
+    const memberContext = await browser.newContext({ baseURL: BASE_URL });
     const memberPage = await memberContext.newPage();
-    await memberPage.goto("http://localhost:3000/auth/signup");
-    await memberPage.getByLabel("ユーザー名").fill(memberUsername);
-    await memberPage.getByLabel("表示名").fill("Remove User");
-    await memberPage.getByLabel("パスワード", { exact: true }).fill("TestPassword123!");
-    await memberPage.getByLabel("パスワード（確認）").fill("TestPassword123!");
-    await memberPage.getByRole("button", { name: "新規登録" }).click();
-    await expect(memberPage).toHaveURL(/\/home/, { timeout: 10000 });
+    await signupUser(memberPage, {
+      username: `remove${Date.now()}`,
+      name: "Remove User",
+    });
 
     // Get member's user ID from settings page
-    await memberPage.goto("http://localhost:3000/settings");
+    await memberPage.goto("/settings");
     const memberId = await memberPage.locator("code").first().textContent();
+    expect(memberId).toBeTruthy();
     await memberContext.close();
 
     // Owner creates a trip and adds member
@@ -70,13 +64,15 @@ test.describe("Members", () => {
     });
 
     await page.getByRole("button", { name: "メンバー" }).click();
+    await page.getByRole("tab", { name: "ユーザーIDで追加" }).click();
     await page.getByPlaceholder("ユーザーID").fill(memberId!);
     await page.getByRole("button", { name: "追加" }).click();
     await expect(page.getByText("メンバーを追加しました")).toBeVisible();
     await expect(page.getByText("Remove User")).toBeVisible();
 
-    // Remove the member
+    // Remove the member - click delete icon, then confirm
     await page.getByRole("button", { name: "Remove Userを削除" }).click();
+    await page.getByRole("button", { name: "削除する" }).click();
     await expect(page.getByText("メンバーを削除しました")).toBeVisible();
     await expect(page.getByText("Remove User")).not.toBeVisible();
   });

@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { MSG } from "@/lib/messages";
 
@@ -175,7 +176,20 @@ function FriendListSection({
         </CardHeader>
         <CardContent>
           {loading ? (
-            <p className="text-sm text-muted-foreground">読み込み中...</p>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-2">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-8 w-14" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-8 w-14" />
+              </div>
+              <div className="flex items-center justify-between gap-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-8 w-14" />
+              </div>
+            </div>
           ) : friends.length === 0 ? (
             <p className="text-sm text-muted-foreground">フレンドがいません</p>
           ) : (

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { getSeasonalBg, getSeasonalGradient } from "@/lib/season";
 import { cn } from "@/lib/utils";
-import { getSeasonalGradient, getSeasonalBg } from "@/lib/season";
 
 export { getSeasonalGradient, getSeasonalBg };
 

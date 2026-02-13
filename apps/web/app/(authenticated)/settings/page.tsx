@@ -82,7 +82,7 @@ function UserIdSection({ userId }: { userId: string }) {
     <Card>
       <CardHeader>
         <CardTitle>ユーザーID</CardTitle>
-        <CardDescription>メンバー追加時にこのIDを共有してください</CardDescription>
+        <CardDescription>フレンド申請やメンバー追加時にこのIDを共有してください</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-2">

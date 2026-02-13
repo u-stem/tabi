@@ -8,7 +8,18 @@ export default defineConfig({
     baseURL: "http://localhost:3000",
     trace: "on-first-retry",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      use: { ...devices["Desktop Chrome"] },
+      testIgnore: "e2e/mobile-*.spec.ts",
+    },
+    {
+      name: "mobile",
+      use: { ...devices["Pixel 7"] },
+      testMatch: "e2e/mobile-*.spec.ts",
+    },
+  ],
   webServer: {
     command: "bun run dev",
     url: "http://localhost:3000",

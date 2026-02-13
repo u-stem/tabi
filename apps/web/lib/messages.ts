@@ -92,6 +92,10 @@ export const MSG = {
   AUTH_SIGNUP_TERMS_REQUIRED: "利用規約とプライバシーポリシーへの同意が必要です",
   AUTH_PASSWORD_TOO_WEAK: "パスワードの要件を満たしていません",
 
+  // Reaction
+  REACTION_FAILED: "リアクションに失敗しました",
+  REACTION_REMOVE_FAILED: "リアクションの取り消しに失敗しました",
+
   // Batch operations
   BATCH_ASSIGNED: (n: number) => `${n}件を予定に追加しました`,
   BATCH_ASSIGN_FAILED: "予定への追加に失敗しました",

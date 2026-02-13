@@ -117,21 +117,31 @@ function CandidateDragHandle({
   );
 }
 
+type CandidateCardSpot = ScheduleResponse & {
+  likeCount?: number;
+  hmmCount?: number;
+  myReaction?: string | null;
+};
+
 function CandidateCard({
   spot,
   onEdit,
   onDelete,
   onAssign,
+  onReact,
+  onRemoveReaction,
   disabled,
   selectable,
   selected,
   onSelect,
   draggable,
 }: {
-  spot: ScheduleResponse;
+  spot: CandidateCardSpot;
   onEdit: () => void;
   onDelete: () => void;
   onAssign: () => void;
+  onReact?: (type: "like" | "hmm") => void;
+  onRemoveReaction?: () => void;
   disabled?: boolean;
   selectable?: boolean;
   selected?: boolean;
@@ -192,6 +202,36 @@ function CandidateCard({
             {CATEGORY_LABELS[spot.category as ScheduleCategory]}
           </p>
         </div>
+        {!disabled && !selectable && onReact && (
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => (spot.myReaction === "like" ? onRemoveReaction?.() : onReact("like"))}
+              className={cn(
+                "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs transition-colors",
+                spot.myReaction === "like" ? "bg-accent font-medium" : "hover:bg-muted",
+              )}
+              aria-label="いいね"
+              aria-pressed={spot.myReaction === "like"}
+            >
+              <span aria-hidden="true">{"👍"}</span>
+              {(spot.likeCount ?? 0) > 0 && <span>{spot.likeCount}</span>}
+            </button>
+            <button
+              type="button"
+              onClick={() => (spot.myReaction === "hmm" ? onRemoveReaction?.() : onReact("hmm"))}
+              className={cn(
+                "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs transition-colors",
+                spot.myReaction === "hmm" ? "bg-accent font-medium" : "hover:bg-muted",
+              )}
+              aria-label="うーん"
+              aria-pressed={spot.myReaction === "hmm"}
+            >
+              <span aria-hidden="true">{"🤔"}</span>
+              {(spot.hmmCount ?? 0) > 0 && <span>{spot.hmmCount}</span>}
+            </button>
+          </div>
+        )}
         {!disabled && !selectable && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -302,6 +342,29 @@ export function CandidatePanel({
       onRefresh();
     } catch {
       toast.error(MSG.CANDIDATE_DELETE_FAILED);
+    }
+  }
+
+  async function handleReact(scheduleId: string, type: "like" | "hmm") {
+    try {
+      await api(`/api/trips/${tripId}/candidates/${scheduleId}/reaction`, {
+        method: "PUT",
+        body: JSON.stringify({ type }),
+      });
+      onRefresh();
+    } catch {
+      toast.error(MSG.REACTION_FAILED);
+    }
+  }
+
+  async function handleRemoveReaction(scheduleId: string) {
+    try {
+      await api(`/api/trips/${tripId}/candidates/${scheduleId}/reaction`, {
+        method: "DELETE",
+      });
+      onRefresh();
+    } catch {
+      toast.error(MSG.REACTION_REMOVE_FAILED);
     }
   }
 
@@ -475,6 +538,8 @@ export function CandidatePanel({
                     onEdit={() => openEdit(spot)}
                     onDelete={() => handleDelete(spot.id)}
                     onAssign={() => handleAssign(spot.id)}
+                    onReact={(type) => handleReact(spot.id, type)}
+                    onRemoveReaction={() => handleRemoveReaction(spot.id)}
                     disabled={disabled}
                     draggable={!selectionMode}
                     selectable={selectionMode}
@@ -499,6 +564,8 @@ export function CandidatePanel({
               onEdit={() => openEdit(spot)}
               onDelete={() => handleDelete(spot.id)}
               onAssign={() => handleAssign(spot.id)}
+              onReact={(type) => handleReact(spot.id, type)}
+              onRemoveReaction={() => handleRemoveReaction(spot.id)}
               disabled={disabled}
               selectable={selectionMode}
               selected={selectedIds?.has(spot.id)}

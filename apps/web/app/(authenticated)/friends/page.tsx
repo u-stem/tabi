@@ -25,9 +25,8 @@ import { useDelayedLoading } from "@/lib/use-delayed-loading";
 export default function FriendsPage() {
   const [friends, setFriends] = useState<FriendResponse[]>([]);
   const [requests, setRequests] = useState<FriendRequestResponse[]>([]);
-  const [loadingFriends, setLoadingFriends] = useState(true);
-  const [loadingRequests, setLoadingRequests] = useState(true);
-  const showFriendsSkeleton = useDelayedLoading(loadingFriends);
+  const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedLoading(loading);
 
   const fetchFriends = useCallback(async () => {
     try {
@@ -35,8 +34,6 @@ export default function FriendsPage() {
       setFriends(data);
     } catch {
       toast.error(MSG.FRIEND_LIST_FAILED);
-    } finally {
-      setLoadingFriends(false);
     }
   }, []);
 
@@ -46,20 +43,51 @@ export default function FriendsPage() {
       setRequests(data);
     } catch {
       toast.error(MSG.FRIEND_REQUESTS_FAILED);
-    } finally {
-      setLoadingRequests(false);
     }
   }, []);
 
   useEffect(() => {
     document.title = "フレンド - sugara";
-    fetchFriends();
-    fetchRequests();
+    Promise.all([fetchFriends(), fetchRequests()]).finally(() => setLoading(false));
   }, [fetchFriends, fetchRequests]);
+
+  if (loading && !showSkeleton) return <div />;
+
+  if (showSkeleton) {
+    return (
+      <div className="container max-w-2xl py-8 space-y-8">
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-28" />
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-center justify-between gap-2">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-8 w-14" />
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-28" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-9 w-full" />
+            </div>
+            <Skeleton className="h-9 w-16" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container max-w-2xl py-8 space-y-8">
-      {!loadingRequests && requests.length > 0 && (
+      {requests.length > 0 && (
         <RequestsSection
           requests={requests}
           onUpdate={() => {
@@ -68,7 +96,7 @@ export default function FriendsPage() {
           }}
         />
       )}
-      <FriendListSection friends={friends} loading={loadingFriends} showSkeleton={showFriendsSkeleton} onRemoved={fetchFriends} />
+      <FriendListSection friends={friends} onRemoved={fetchFriends} />
       <SendRequestSection onSent={fetchRequests} />
     </div>
   );
@@ -147,13 +175,9 @@ function RequestsSection({
 
 function FriendListSection({
   friends,
-  loading,
-  showSkeleton,
   onRemoved,
 }: {
   friends: FriendResponse[];
-  loading: boolean;
-  showSkeleton: boolean;
   onRemoved: () => void;
 }) {
   const [removingFriend, setRemovingFriend] = useState<FriendResponse | null>(null);
@@ -179,22 +203,7 @@ function FriendListSection({
           <CardTitle>フレンド一覧</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading && !showSkeleton ? null : showSkeleton ? (
-            <div className="space-y-3">
-              <div className="flex items-center justify-between gap-2">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-8 w-14" />
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-8 w-14" />
-              </div>
-              <div className="flex items-center justify-between gap-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-8 w-14" />
-              </div>
-            </div>
-          ) : friends.length === 0 ? (
+          {friends.length === 0 ? (
             <p className="text-sm text-muted-foreground">フレンドがいません</p>
           ) : (
             <div className="space-y-3">

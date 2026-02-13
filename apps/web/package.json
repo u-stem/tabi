@@ -35,6 +35,7 @@
     "@sugara/api": "workspace:*",
     "@sugara/shared": "workspace:*",
     "@supabase/supabase-js": "^2",
+    "@tanstack/react-query": "^5.90.21",
     "better-auth": "^1.4.18",
     "class-variance-authority": "^0.7",
     "clsx": "^2",

@@ -342,7 +342,16 @@ function PlaceCard({
         </div>
         {(address || url || memo) && (
           <div className="mt-1 space-y-0.5">
-            {address && <p className="text-xs text-muted-foreground">{address}</p>}
+            {address && (
+              <a
+                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block text-xs text-blue-600 hover:underline dark:text-blue-400"
+              >
+                {address}
+              </a>
+            )}
             {url && (
               <a
                 href={url}

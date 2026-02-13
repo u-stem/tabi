@@ -219,10 +219,15 @@ function PrintScheduleCard({
           </p>
         )}
       {schedule.address && (
-        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(schedule.address)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1 flex items-center gap-1 text-xs text-muted-foreground hover:underline"
+        >
           <MapPin className="h-3 w-3 shrink-0" />
           {schedule.address}
-        </p>
+        </a>
       )}
       {schedule.memo && <p className="mt-1 text-sm text-muted-foreground">{schedule.memo}</p>}
     </div>

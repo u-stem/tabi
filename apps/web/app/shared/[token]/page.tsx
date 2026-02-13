@@ -329,10 +329,15 @@ function ScheduleCard({
           </p>
         )}
       {schedule.address && (
-        <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
+        <a
+          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(schedule.address)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-1 flex items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
+        >
           <MapPin className="h-3 w-3 shrink-0" />
           {schedule.address}
-        </p>
+        </a>
       )}
       {schedule.url && (
         <a

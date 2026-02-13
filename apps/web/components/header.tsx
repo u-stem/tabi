@@ -40,9 +40,9 @@ import {
 } from "@/components/ui/sheet";
 import { api } from "@/lib/api";
 import { signOut, useSession } from "@/lib/auth-client";
-import { queryKeys } from "@/lib/query-keys";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 import { useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
 

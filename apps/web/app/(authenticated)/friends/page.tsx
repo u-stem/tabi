@@ -44,8 +44,7 @@ export default function FriendsPage() {
     document.title = "フレンド - sugara";
   }, []);
 
-  const invalidateAll = () =>
-    queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
+  const invalidateAll = () => queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
 
   if (loading && !showSkeleton) return <div />;
 
@@ -83,9 +82,7 @@ export default function FriendsPage() {
 
   return (
     <div className="container max-w-2xl py-8 space-y-8">
-      {requests.length > 0 && (
-        <RequestsSection requests={requests} onUpdate={invalidateAll} />
-      )}
+      {requests.length > 0 && <RequestsSection requests={requests} onUpdate={invalidateAll} />}
       <FriendListSection
         friends={friends}
         onRemoved={() => queryClient.invalidateQueries({ queryKey: queryKeys.friends.list() })}

@@ -63,9 +63,7 @@ export default function FaqPage() {
         <Accordion type="single" collapsible className="mt-8">
           {faqItems.map((item) => (
             <AccordionItem key={item.question} value={item.question}>
-              <AccordionTrigger className="hover:no-underline">
-                {item.question}
-              </AccordionTrigger>
+              <AccordionTrigger className="hover:no-underline">{item.question}</AccordionTrigger>
               <AccordionContent>
                 <p className="text-muted-foreground leading-relaxed">{item.answer}</p>
               </AccordionContent>

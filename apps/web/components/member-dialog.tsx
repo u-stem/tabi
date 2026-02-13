@@ -192,7 +192,7 @@ export function MemberDialog({
                     <p className="truncate text-sm font-medium">{member.name}</p>
                   </div>
                   {member.role === "owner" ? (
-                    <span className="shrink-0 text-xs text-muted-foreground">オーナー</span>
+                    <span className="shrink-0 select-none text-xs text-muted-foreground">オーナー</span>
                   ) : isOwner ? (
                     <div className="flex shrink-0 items-center gap-1">
                       <Select
@@ -209,7 +209,7 @@ export function MemberDialog({
                       </Select>
                       <button
                         type="button"
-                        className="text-xs text-muted-foreground hover:text-destructive"
+                        className="select-none text-xs text-muted-foreground hover:text-destructive"
                         aria-label={`${member.name}を削除`}
                         onClick={() => setRemoveMember(member)}
                       >
@@ -217,7 +217,7 @@ export function MemberDialog({
                       </button>
                     </div>
                   ) : (
-                    <span className="shrink-0 text-xs text-muted-foreground">
+                    <span className="shrink-0 select-none text-xs text-muted-foreground">
                       {member.role === "editor" ? "編集者" : "閲覧者"}
                     </span>
                   )}
@@ -249,7 +249,7 @@ export function MemberDialog({
                       </p>
                     ) : (
                       <div className="space-y-2">
-                        <div className="flex items-center justify-end gap-2 py-1">
+                        <div className="flex select-none items-center justify-end gap-2 py-1">
                           <span className="text-xs text-muted-foreground">ロール:</span>
                           <Select value={friendRole} onValueChange={setFriendRole}>
                             <SelectTrigger className="h-7 w-[100px] text-xs">
@@ -275,7 +275,7 @@ export function MemberDialog({
                                   {friend.name}
                                 </p>
                                 {isMember ? (
-                                  <span className="shrink-0 text-xs text-muted-foreground">
+                                  <span className="shrink-0 select-none text-xs text-muted-foreground">
                                     追加済み
                                   </span>
                                 ) : (
@@ -298,7 +298,7 @@ export function MemberDialog({
 
                   <TabsContent value="userId">
                     <form onSubmit={handleAdd} className="space-y-3">
-                      <div className="flex items-center justify-end gap-2 py-1">
+                      <div className="flex select-none items-center justify-end gap-2 py-1">
                         <div className="flex items-center gap-2 me-auto">
                           <Checkbox
                             id="send-friend-request"

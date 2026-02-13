@@ -571,7 +571,7 @@ export default function TripDetailPage() {
           <div className="flex gap-4">
             {/* Timeline */}
             <div className="flex min-w-0 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
-              <div className="flex shrink-0 border-b" role="tablist" aria-label="日程タブ">
+              <div className="flex shrink-0 select-none border-b" role="tablist" aria-label="日程タブ">
                 <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto px-4">
                   {trip.days.map((day, index) => (
                     <button
@@ -654,7 +654,7 @@ export default function TripDetailPage() {
                           : undefined
                       }
                       className={cn(
-                        "flex w-full items-start gap-2 rounded-md border border-dashed px-3 py-2 text-left text-sm transition-colors",
+                        "flex w-full select-none items-start gap-2 rounded-md border border-dashed px-3 py-2 text-left text-sm transition-colors",
                         canEdit && online
                           ? "cursor-pointer hover:border-border hover:bg-muted/50"
                           : "cursor-default",
@@ -701,7 +701,7 @@ export default function TripDetailPage() {
                   scheduleLimitReached={scheduleLimitReached}
                   scheduleLimitMessage={scheduleLimitMessage}
                   headerContent={
-                    <div className="mb-3 flex flex-wrap items-center gap-1.5">
+                    <div className="mb-3 flex flex-wrap select-none items-center gap-1.5">
                       {currentDay.patterns.map((pattern, index) => {
                         const isActive = currentPatternIndex === index;
                         return (
@@ -806,7 +806,7 @@ export default function TripDetailPage() {
 
             {/* Candidates / Activity */}
             <div className="hidden max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] lg:flex flex-[2] flex-col rounded-lg border border-dashed bg-card self-start sticky top-4">
-              <div className="flex shrink-0 border-b" role="tablist" aria-label="候補・履歴タブ">
+              <div className="flex shrink-0 select-none border-b" role="tablist" aria-label="候補・履歴タブ">
                 <button
                   type="button"
                   role="tab"
@@ -936,7 +936,7 @@ export default function TripDetailPage() {
       <Dialog open={candidateOpen} onOpenChange={setCandidateOpen}>
         <DialogContent className="flex max-h-[80vh] flex-col overflow-hidden sm:max-w-sm">
           <DialogTitle className="sr-only">候補・履歴</DialogTitle>
-          <div className="flex shrink-0 border-b" role="tablist">
+          <div className="flex shrink-0 select-none border-b" role="tablist">
             <button
               type="button"
               role="tab"

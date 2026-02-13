@@ -22,8 +22,6 @@ export function BottomNav() {
   });
   const friendRequestCount = friendRequests?.length ?? 0;
 
-  if (!session?.user) return null;
-
   return (
     <nav
       aria-label="ボトムナビゲーション"

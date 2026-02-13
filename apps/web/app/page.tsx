@@ -11,7 +11,7 @@ export default function HomePage() {
       </header>
 
       <main className="flex flex-1 flex-col items-center justify-center px-4 text-center">
-        <h1 className="text-3xl font-bold tracking-tight sm:text-5xl">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-5xl">
           計画もまた、旅の楽しみだ。
         </h1>
         <p className="mt-4 max-w-lg text-base text-muted-foreground sm:text-lg">

@@ -72,26 +72,25 @@ export function Header() {
       >
         <div className="flex items-center gap-6">
           <Logo href="/home" />
-          {session?.user &&
-            NAV_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "hidden items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors sm:inline-flex",
-                  pathname === link.href
-                    ? "bg-muted font-medium text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {link.label}
-                {link.href === "/friends" && friendRequestCount > 0 && (
-                  <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-medium text-destructive-foreground">
-                    {friendRequestCount}
-                  </span>
-                )}
-              </Link>
-            ))}
+          {NAV_LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className={cn(
+                "hidden items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors sm:inline-flex",
+                pathname === link.href
+                  ? "bg-muted font-medium text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {link.label}
+              {link.href === "/friends" && friendRequestCount > 0 && (
+                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-medium text-destructive-foreground">
+                  {friendRequestCount}
+                </span>
+              )}
+            </Link>
+          ))}
         </div>
         <div className="flex items-center gap-1">
           <ThemeToggle />

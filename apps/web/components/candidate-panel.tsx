@@ -173,7 +173,7 @@ function CandidateCard({
           </p>
         </div>
         {!disabled && !selectable && onReact && (
-          <div className="flex items-center gap-0.5">
+          <div className="flex select-none items-center gap-0.5">
             <button
               type="button"
               onClick={() => (spot.myReaction === "like" ? onRemoveReaction?.() : onReact("like"))}

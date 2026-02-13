@@ -36,7 +36,7 @@ export default function SettingsPage() {
           <ProfileSection defaultName={user.name ?? ""} />
           <UsernameSection defaultUsername={user.username ?? ""} />
           <PasswordSection username={user.username ?? ""} />
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+          <div className="flex flex-wrap select-none items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <Link
               href="/faq"
               target="_blank"
@@ -213,7 +213,7 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
               maxLength={20}
               required
             />
-            <p className="text-xs text-muted-foreground">3〜20文字、英数字とアンダースコアのみ</p>
+            <p className="select-none text-xs text-muted-foreground">3〜20文字、英数字とアンダースコアのみ</p>
           </div>
           {error && (
             <div
@@ -314,7 +314,7 @@ function PasswordSection({ username }: { username: string }) {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">{getPasswordRequirementsText()}</p>
+            <p className="select-none text-xs text-muted-foreground">{getPasswordRequirementsText()}</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">新しいパスワード（確認）</Label>

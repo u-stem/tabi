@@ -27,7 +27,7 @@ export function ShortcutHelpDialog({ open, onOpenChange, shortcuts }: ShortcutHe
           <DialogTitle>キーボードショートカット</DialogTitle>
           <DialogDescription>このページで使えるショートカット一覧</DialogDescription>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="select-none space-y-4">
           {shortcuts.map((group) => (
             <div key={group.group}>
               <h3 className="mb-2 text-sm font-medium text-muted-foreground">{group.group}</h3>

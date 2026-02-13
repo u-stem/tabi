@@ -9,7 +9,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       <ShortcutHelpProvider>
         <div className="min-h-screen">
           <Header />
-          <main className="container py-4 pb-20 sm:py-8 sm:pb-8">{children}</main>
+          <main className="container py-4 pb-16 sm:py-8 sm:pb-8">{children}</main>
           <BottomNav />
         </div>
       </ShortcutHelpProvider>

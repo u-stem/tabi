@@ -30,7 +30,7 @@ export function BottomNav() {
       className="fixed inset-x-0 bottom-0 z-40 border-t bg-background sm:hidden print:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <div className="flex h-14 items-stretch">
+      <div className="flex h-12 items-stretch">
         {NAV_LINKS.map((link) => {
           const active = pathname === link.href;
           return (
@@ -43,7 +43,7 @@ export function BottomNav() {
               )}
             >
               <link.icon className="h-5 w-5" />
-              {link.label}
+              <span className="sr-only">{link.label}</span>
               {link.href === "/friends" && friendRequestCount > 0 && (
                 <span className="absolute top-1.5 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground">
                   {friendRequestCount}

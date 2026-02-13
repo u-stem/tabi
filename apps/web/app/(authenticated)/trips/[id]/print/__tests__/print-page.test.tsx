@@ -1,5 +1,7 @@
 import type { TripResponse } from "@sugara/shared";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
+import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 const mockPush = vi.fn();
@@ -28,6 +30,13 @@ vi.mock("@/lib/api", () => ({
 
 import { MSG } from "@/lib/messages";
 import TripPrintPage from "../page";
+
+function renderWithQuery(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+}
 
 const tripFixture: TripResponse = {
   id: "trip-1",
@@ -79,7 +88,7 @@ describe("TripPrintPage", () => {
   it("renders trip data after successful fetch", async () => {
     mockApi.mockResolvedValueOnce(tripFixture);
 
-    render(<TripPrintPage />);
+    renderWithQuery(<TripPrintPage />);
 
     expect(await screen.findByText("Tokyo Trip")).toBeDefined();
     expect(screen.getByText("Asakusa Temple")).toBeDefined();
@@ -88,7 +97,7 @@ describe("TripPrintPage", () => {
   it("renders error message on fetch failure", async () => {
     mockApi.mockRejectedValueOnce(new Error("Network error"));
 
-    render(<TripPrintPage />);
+    renderWithQuery(<TripPrintPage />);
 
     expect(await screen.findByText(MSG.TRIP_FETCH_FAILED)).toBeDefined();
   });
@@ -98,7 +107,7 @@ describe("TripPrintPage", () => {
     mockApi.mockResolvedValueOnce(tripFixture);
     const printSpy = vi.spyOn(window, "print").mockImplementation(() => {});
 
-    render(<TripPrintPage />);
+    renderWithQuery(<TripPrintPage />);
 
     await screen.findByText("Tokyo Trip");
     await vi.waitFor(() => {
@@ -110,7 +119,7 @@ describe("TripPrintPage", () => {
     mockApi.mockResolvedValueOnce(tripFixture);
     const printSpy = vi.spyOn(window, "print").mockImplementation(() => {});
 
-    render(<TripPrintPage />);
+    renderWithQuery(<TripPrintPage />);
 
     await screen.findByText("Tokyo Trip");
     // Allow time for potential setTimeout to fire

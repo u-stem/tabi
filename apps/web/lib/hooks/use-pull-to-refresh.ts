@@ -13,8 +13,17 @@ export function usePullToRefresh({ onRefresh, enabled = true }: UsePullToRefresh
   const [pullDistance, setPullDistance] = useState(0);
   const startY = useRef(0);
   const currentY = useRef(0);
+  // Use refs so event listeners don't need to re-register on state changes
+  const pullingRef = useRef(false);
+  const pullDistanceRef = useRef(0);
+  const refreshingRef = useRef(false);
+
+  pullingRef.current = pulling;
+  pullDistanceRef.current = pullDistance;
+  refreshingRef.current = refreshing;
 
   const handleRefresh = useCallback(async () => {
+    if (refreshingRef.current) return;
     setRefreshing(true);
     try {
       await onRefresh();
@@ -24,32 +33,34 @@ export function usePullToRefresh({ onRefresh, enabled = true }: UsePullToRefresh
     }
   }, [onRefresh]);
 
+  const handleRefreshRef = useRef(handleRefresh);
+  handleRefreshRef.current = handleRefresh;
+
   useEffect(() => {
     if (!enabled) return;
 
     function onTouchStart(e: TouchEvent) {
-      if (window.scrollY > 0 || refreshing) return;
+      if (window.scrollY > 0 || refreshingRef.current) return;
       startY.current = e.touches[0].clientY;
       currentY.current = startY.current;
     }
 
     function onTouchMove(e: TouchEvent) {
-      if (window.scrollY > 0 || refreshing) return;
+      if (window.scrollY > 0 || refreshingRef.current) return;
       currentY.current = e.touches[0].clientY;
       const distance = currentY.current - startY.current;
       if (distance > 0) {
-        // Dampen the pull distance for a natural feel
         const dampened = Math.min(distance * 0.4, THRESHOLD * 2);
-        setPulling(true);
+        if (!pullingRef.current) setPulling(true);
         setPullDistance(dampened);
       }
     }
 
     function onTouchEnd() {
-      if (!pulling) return;
+      if (!pullingRef.current) return;
       setPulling(false);
-      if (pullDistance >= THRESHOLD) {
-        handleRefresh();
+      if (pullDistanceRef.current >= THRESHOLD) {
+        handleRefreshRef.current();
       } else {
         setPullDistance(0);
       }
@@ -63,7 +74,7 @@ export function usePullToRefresh({ onRefresh, enabled = true }: UsePullToRefresh
       document.removeEventListener("touchmove", onTouchMove);
       document.removeEventListener("touchend", onTouchEnd);
     };
-  }, [enabled, pulling, pullDistance, refreshing, handleRefresh]);
+  }, [enabled]);
 
   return { pulling, refreshing, pullDistance, threshold: THRESHOLD };
 }

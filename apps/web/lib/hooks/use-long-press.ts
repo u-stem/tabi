@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 const LONG_PRESS_DURATION = 500;
 
@@ -17,6 +17,9 @@ export function useLongPress({ onLongPress }: UseLongPressOptions) {
       timerRef.current = null;
     }
   }, []);
+
+  // Clear pending timer on unmount
+  useEffect(() => () => clear(), [clear]);
 
   const onTouchStart = useCallback(
     (e: React.TouchEvent) => {

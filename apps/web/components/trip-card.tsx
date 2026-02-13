@@ -53,6 +53,15 @@ export function TripCard({
 
   const longPressHandlers = useLongPress({ onLongPress: handleLongPress });
 
+  const handleContextMenu = useCallback(
+    (e: React.MouseEvent) => {
+      if (selectable || (!onDuplicate && !onDelete)) return;
+      e.preventDefault();
+      setContextOpen(true);
+    },
+    [selectable, onDuplicate, onDelete],
+  );
+
   const inner = (
     <>
       <CardHeader>
@@ -110,6 +119,7 @@ export function TripCard({
       <Link
         href={`/trips/${id}`}
         className="group block focus-visible:outline-none"
+        onContextMenu={handleContextMenu}
         {...longPressHandlers}
       >
         <Card className="transition-colors hover:bg-accent/50 active:scale-[0.98] group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">

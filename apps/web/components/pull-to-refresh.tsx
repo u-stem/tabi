@@ -18,7 +18,8 @@ export function PullToRefresh({ onRefresh, enabled = true, children }: PullToRef
 
   return (
     <div>
-      <div
+      <output
+        aria-live="polite"
         className={cn(
           "flex items-center justify-center overflow-hidden transition-[height] sm:hidden",
           refreshing && "h-10",
@@ -30,7 +31,8 @@ export function PullToRefresh({ onRefresh, enabled = true, children }: PullToRef
             className={cn("h-5 w-5 text-muted-foreground", (refreshing || ready) && "animate-spin")}
           />
         )}
-      </div>
+        {refreshing && <span className="sr-only">更新中</span>}
+      </output>
       {children}
     </div>
   );

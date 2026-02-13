@@ -64,6 +64,7 @@ import { useTripSync } from "@/lib/hooks/use-trip-sync";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { MSG } from "@/lib/messages";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
+import { useDelayedLoading } from "@/lib/use-delayed-loading";
 import { cn } from "@/lib/utils";
 
 const dndAnnouncements: Announcements = {
@@ -92,6 +93,7 @@ export default function TripDetailPage() {
   const { data: session } = useSession();
   const [trip, setTrip] = useState<TripResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedLoading(loading);
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [addScheduleOpen, setAddScheduleOpen] = useState(false);
@@ -459,7 +461,7 @@ export default function TripDetailPage() {
     onDone: onMutate,
   });
 
-  if (loading) {
+  if (showSkeleton) {
     return (
       <div>
         <div className="mb-6">
@@ -520,6 +522,9 @@ export default function TripDetailPage() {
       </div>
     );
   }
+
+  // Avoid flashing "not found" during the 200ms skeleton delay
+  if (loading) return null;
 
   if (error || !trip) {
     return <p className="text-destructive">{error ?? MSG.TRIP_NOT_FOUND}</p>;

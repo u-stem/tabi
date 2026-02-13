@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES, STATUS_COLORS } from "@/lib/colors";
+import { useDelayedLoading } from "@/lib/use-delayed-loading";
 import { getCrossDayEntries } from "@/lib/cross-day";
 import { formatDate, formatDateRange, getDayCount } from "@/lib/format";
 import { CATEGORY_ICONS } from "@/lib/icons";
@@ -54,6 +55,7 @@ export default function SharedTripPage() {
   const token = params.token as string;
   const [trip, setTrip] = useState<SharedTripResponse | null>(null);
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedLoading(loading);
   const [error, setError] = useState<string | null>(null);
   const [hasUpdate, setHasUpdate] = useState(false);
   const tripIdRef = useRef<string | null>(null);
@@ -94,7 +96,7 @@ export default function SharedTripPage() {
     };
   }, [trip?.id]);
 
-  if (loading) {
+  if (showSkeleton) {
     return (
       <div className="min-h-screen">
         <SharedHeader />
@@ -133,6 +135,15 @@ export default function SharedTripPage() {
             ))}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Avoid flashing error/not-found during the 200ms skeleton delay
+  if (loading) {
+    return (
+      <div className="min-h-screen">
+        <SharedHeader />
       </div>
     );
   }

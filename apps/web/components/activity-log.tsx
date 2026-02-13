@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { ACTIVITY_LOG_PAGE_SIZE } from "@/lib/constants";
+import { useDelayedLoading } from "@/lib/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
@@ -152,6 +153,7 @@ type LogsResponse = {
 export function ActivityLog({ tripId, refreshKey }: ActivityLogProps) {
   const [logs, setLogs] = useState<ActivityLogResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedLoading(loading);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState(false);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
@@ -197,7 +199,7 @@ export function ActivityLog({ tripId, refreshKey }: ActivityLogProps) {
     setLoadingMore(false);
   }
 
-  if (loading) {
+  if (showSkeleton) {
     return (
       <div className="space-y-0">
         {[1, 2, 3, 4, 5].map((i) => (
@@ -215,6 +217,9 @@ export function ActivityLog({ tripId, refreshKey }: ActivityLogProps) {
       </div>
     );
   }
+
+  // Avoid flashing empty state during the 200ms skeleton delay
+  if (loading) return null;
 
   if (error) {
     return (

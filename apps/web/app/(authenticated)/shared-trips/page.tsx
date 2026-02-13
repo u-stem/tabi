@@ -9,11 +9,13 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
 import { MSG } from "@/lib/messages";
+import { useDelayedLoading } from "@/lib/use-delayed-loading";
 
 export default function SharedTripsPage() {
   const router = useRouter();
   const [trips, setTrips] = useState<TripListItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const showSkeleton = useDelayedLoading(loading);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
 
@@ -48,9 +50,12 @@ export default function SharedTripsPage() {
     );
   }, [trips, search]);
 
+  // Avoid flashing empty state during the 200ms skeleton delay
+  if (loading && !showSkeleton) return <div />;
+
   return (
     <div>
-      {loading ? (
+      {showSkeleton ? (
         <>
           <div className="mt-4">
             <Skeleton className="h-8 w-40" />

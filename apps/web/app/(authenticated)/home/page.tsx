@@ -18,6 +18,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { ApiError, api } from "@/lib/api";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
+import { useDelayedLoading } from "@/lib/use-delayed-loading";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 
 export default function HomePage() {
@@ -56,6 +57,7 @@ export default function HomePage() {
     [],
   );
   useRegisterShortcuts(homeShortcuts);
+  const showSkeleton = useDelayedLoading(loading);
 
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
   useHotkeys("/", () => searchInputRef.current?.focus(), { useKey: true, preventDefault: true });
@@ -206,9 +208,12 @@ export default function HomePage() {
     setDuplicating(false);
   }
 
+  // Avoid flashing empty state during the 200ms skeleton delay
+  if (loading && !showSkeleton) return <div />;
+
   return (
     <div>
-      {loading ? (
+      {showSkeleton ? (
         <>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
             <Skeleton className="h-8 w-full sm:w-40" />

@@ -20,12 +20,14 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { MSG } from "@/lib/messages";
+import { useDelayedLoading } from "@/lib/use-delayed-loading";
 
 export default function FriendsPage() {
   const [friends, setFriends] = useState<FriendResponse[]>([]);
   const [requests, setRequests] = useState<FriendRequestResponse[]>([]);
   const [loadingFriends, setLoadingFriends] = useState(true);
   const [loadingRequests, setLoadingRequests] = useState(true);
+  const showFriendsSkeleton = useDelayedLoading(loadingFriends);
 
   const fetchFriends = useCallback(async () => {
     try {
@@ -66,7 +68,7 @@ export default function FriendsPage() {
           }}
         />
       )}
-      <FriendListSection friends={friends} loading={loadingFriends} onRemoved={fetchFriends} />
+      <FriendListSection friends={friends} loading={loadingFriends} showSkeleton={showFriendsSkeleton} onRemoved={fetchFriends} />
       <SendRequestSection onSent={fetchRequests} />
     </div>
   );
@@ -146,10 +148,12 @@ function RequestsSection({
 function FriendListSection({
   friends,
   loading,
+  showSkeleton,
   onRemoved,
 }: {
   friends: FriendResponse[];
   loading: boolean;
+  showSkeleton: boolean;
   onRemoved: () => void;
 }) {
   const [removingFriend, setRemovingFriend] = useState<FriendResponse | null>(null);
@@ -175,7 +179,7 @@ function FriendListSection({
           <CardTitle>フレンド一覧</CardTitle>
         </CardHeader>
         <CardContent>
-          {loading ? (
+          {loading && !showSkeleton ? null : showSkeleton ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-2">
                 <Skeleton className="h-4 w-28" />

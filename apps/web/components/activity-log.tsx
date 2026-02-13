@@ -1,20 +1,20 @@
 "use client";
 
 import { type ActivityLogResponse, type MemberRole, ROLE_LABELS } from "@sugara/shared";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRightLeft, Copy, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { ACTIVITY_LOG_PAGE_SIZE } from "@/lib/constants";
-import { useDelayedLoading } from "@/lib/use-delayed-loading";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
+import { useDelayedLoading } from "@/lib/use-delayed-loading";
 import { cn } from "@/lib/utils";
 
 type ActivityLogProps = {
   tripId: string;
-  refreshKey: number;
 };
 
 type ActionStyle = {
@@ -150,54 +150,21 @@ type LogsResponse = {
   nextCursor: string | null;
 };
 
-export function ActivityLog({ tripId, refreshKey }: ActivityLogProps) {
-  const [logs, setLogs] = useState<ActivityLogResponse[]>([]);
-  const [loading, setLoading] = useState(true);
-  const showSkeleton = useDelayedLoading(loading);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState(false);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const prevRefreshKey = useRef(refreshKey);
-
-  const fetchLogs = useCallback(
-    async (cursor?: string) => {
-      try {
+export function ActivityLog({ tripId }: ActivityLogProps) {
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, isError } =
+    useInfiniteQuery({
+      queryKey: queryKeys.trips.activityLogs(tripId),
+      queryFn: ({ pageParam }) => {
         const params: Record<string, string> = { limit: String(ACTIVITY_LOG_PAGE_SIZE) };
-        if (cursor) params.cursor = cursor;
-        const data = await api<LogsResponse>(`/api/trips/${tripId}/activity-logs`, { params });
-        if (cursor) {
-          setLogs((prev) => [...prev, ...data.items]);
-        } else {
-          setLogs(data.items);
-        }
-        setNextCursor(data.nextCursor);
-        setError(false);
-      } catch {
-        setError(true);
-      }
-    },
-    [tripId],
-  );
+        if (pageParam) params.cursor = pageParam;
+        return api<LogsResponse>(`/api/trips/${tripId}/activity-logs`, { params });
+      },
+      initialPageParam: "" as string,
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+    });
 
-  useEffect(() => {
-    setLoading(true);
-    fetchLogs().finally(() => setLoading(false));
-  }, [fetchLogs]);
-
-  // Re-fetch when refreshKey changes (from onMutate)
-  useEffect(() => {
-    if (prevRefreshKey.current !== refreshKey) {
-      prevRefreshKey.current = refreshKey;
-      fetchLogs();
-    }
-  }, [refreshKey, fetchLogs]);
-
-  async function handleLoadMore() {
-    if (!nextCursor) return;
-    setLoadingMore(true);
-    await fetchLogs(nextCursor);
-    setLoadingMore(false);
-  }
+  const logs = data?.pages.flatMap((page) => page.items) ?? [];
+  const showSkeleton = useDelayedLoading(isLoading);
 
   if (showSkeleton) {
     return (
@@ -219,9 +186,9 @@ export function ActivityLog({ tripId, refreshKey }: ActivityLogProps) {
   }
 
   // Avoid flashing empty state during the 200ms skeleton delay
-  if (loading) return null;
+  if (isLoading) return null;
 
-  if (error) {
+  if (isError) {
     return (
       <p className="py-4 text-center text-sm text-destructive">{MSG.ACTIVITY_LOG_FETCH_FAILED}</p>
     );
@@ -269,10 +236,15 @@ export function ActivityLog({ tripId, refreshKey }: ActivityLogProps) {
           </div>
         );
       })}
-      {nextCursor && (
+      {hasNextPage && (
         <div className="pt-2 text-center">
-          <Button variant="ghost" size="sm" onClick={handleLoadMore} disabled={loadingMore}>
-            {loadingMore ? (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+          >
+            {isFetchingNextPage ? (
               <>
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 読み込み中...

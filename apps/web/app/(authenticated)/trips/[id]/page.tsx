@@ -9,6 +9,7 @@ import {
   MAX_SCHEDULES_PER_TRIP,
   PATTERN_LABEL_MAX_LENGTH,
 } from "@sugara/shared";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, Copy, List, MessageSquare, Pencil, Plus, Trash2 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -51,7 +52,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ApiError, api } from "@/lib/api";
+import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { getCrossDayEntries } from "@/lib/cross-day";
@@ -61,8 +62,10 @@ import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
 import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
+import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { useDelayedLoading } from "@/lib/use-delayed-loading";
 import { cn } from "@/lib/utils";
@@ -91,10 +94,19 @@ export default function TripDetailPage() {
   const online = useOnlineStatus();
   const now = useCurrentTime();
   const { data: session } = useSession();
-  const [trip, setTrip] = useState<TripResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const showSkeleton = useDelayedLoading(loading);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+
+  const {
+    data: trip = null,
+    isLoading,
+    error: queryError,
+  } = useQuery({
+    queryKey: queryKeys.trips.detail(tripId),
+    queryFn: () => api<TripResponse>(`/api/trips/${tripId}`),
+  });
+  useAuthRedirect(queryError);
+  const showSkeleton = useDelayedLoading(isLoading);
+
   const [editOpen, setEditOpen] = useState(false);
   const [addScheduleOpen, setAddScheduleOpen] = useState(false);
   const [addCandidateOpen, setAddCandidateOpen] = useState(false);
@@ -109,7 +121,6 @@ export default function TripDetailPage() {
   const [renameLoading, setRenameLoading] = useState(false);
   const [candidateOpen, setCandidateOpen] = useState(false);
   const [rightPanelTab, setRightPanelTab] = useState<"candidates" | "activity">("candidates");
-  const [activityLogRefreshKey, setActivityLogRefreshKey] = useState(0);
   const [editingMemo, setEditingMemo] = useState<string | null>(null);
   const [memoText, setMemoText] = useState("");
   const [memoSaving, setMemoSaving] = useState(false);
@@ -181,10 +192,10 @@ export default function TripDetailPage() {
   // Stable ref for canEdit to avoid re-registering hotkeys on every trip change
   const canEditRef = useRef(false);
 
-  // Defined before fetchTrip so it can be passed to useTripSync below
-  const fetchTripRef = useRef<() => void>(() => {});
-  const fetchInFlightRef = useRef(false);
-  const fetchPendingRef = useRef(false);
+  const invalidateTrip = useCallback(
+    () => queryClient.invalidateQueries({ queryKey: queryKeys.trips.detail(tripId) }),
+    [queryClient, tripId],
+  );
 
   const syncUser = useMemo(
     () => (session?.user ? { id: session.user.id, name: session.user.name } : null),
@@ -193,49 +204,15 @@ export default function TripDetailPage() {
   const { presence, isConnected, updatePresence, broadcastChange } = useTripSync(
     tripId,
     syncUser,
-    () => fetchTripRef.current(),
+    invalidateTrip,
   );
-
-  const fetchTrip = useCallback(async () => {
-    if (fetchInFlightRef.current) {
-      fetchPendingRef.current = true;
-      return;
-    }
-    fetchInFlightRef.current = true;
-    fetchPendingRef.current = false;
-    try {
-      const data = await api<TripResponse>(`/api/trips/${tripId}`);
-      setTrip(data);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        router.push("/auth/login");
-        return;
-      }
-      setError(MSG.TRIP_FETCH_FAILED);
-    } finally {
-      setLoading(false);
-      fetchInFlightRef.current = false;
-      if (fetchPendingRef.current) {
-        fetchPendingRef.current = false;
-        fetchTrip();
-      }
-    }
-  }, [tripId, router]);
 
   // Mutation callback: refetch + broadcast to other clients
   const onMutate = useCallback(async () => {
-    await fetchTrip();
+    await invalidateTrip();
     broadcastChange();
-    setActivityLogRefreshKey((k) => k + 1);
-  }, [fetchTrip, broadcastChange]);
-
-  useEffect(() => {
-    fetchTripRef.current = fetchTrip;
-  }, [fetchTrip]);
-
-  useEffect(() => {
-    fetchTrip();
-  }, [fetchTrip]);
+    await queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId) });
+  }, [invalidateTrip, broadcastChange, queryClient, tripId]);
 
   useEffect(() => {
     if (trip) {
@@ -325,7 +302,7 @@ export default function TripDetailPage() {
           autoTransitionTriggered.current = false;
         });
     }
-  }, [trip, now, tripId, fetchTrip, onMutate]);
+  }, [trip, now, tripId, onMutate]);
 
   // Stable references to avoid infinite re-render when values are null
   const dndSchedules = useMemo(() => currentPattern?.schedules ?? [], [currentPattern?.schedules]);
@@ -524,10 +501,10 @@ export default function TripDetailPage() {
   }
 
   // Avoid flashing "not found" during the 200ms skeleton delay
-  if (loading) return null;
+  if (isLoading) return null;
 
-  if (error || !trip) {
-    return <p className="text-destructive">{error ?? MSG.TRIP_NOT_FOUND}</p>;
+  if (queryError || !trip) {
+    return <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>;
   }
 
   const canEdit = trip.role === "owner" || trip.role === "editor";
@@ -895,7 +872,7 @@ export default function TripDetailPage() {
                     scheduleLimitMessage={scheduleLimitMessage}
                   />
                 ) : (
-                  <ActivityLog tripId={tripId} refreshKey={activityLogRefreshKey} />
+                  <ActivityLog tripId={tripId} />
                 )}
               </div>
             </div>
@@ -1027,7 +1004,7 @@ export default function TripDetailPage() {
               )
             ) : (
               <div className="p-4">
-                <ActivityLog tripId={tripId} refreshKey={activityLogRefreshKey} />
+                <ActivityLog tripId={tripId} />
               </div>
             )}
           </div>

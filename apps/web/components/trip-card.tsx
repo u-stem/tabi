@@ -117,9 +117,12 @@ export function TripCard({
         </Card>
       </Link>
       <DropdownMenu open={contextOpen} onOpenChange={setContextOpen}>
-        {/* Hidden trigger -- menu is controlled by long-press state only */}
-        <DropdownMenuTrigger className="sr-only" tabIndex={-1} />
-        <DropdownMenuContent>
+        {/* Hidden trigger centered on card -- menu is controlled by long-press state only */}
+        <DropdownMenuTrigger
+          className="pointer-events-none absolute left-1/2 top-1/2 h-0 w-0 opacity-0"
+          tabIndex={-1}
+        />
+        <DropdownMenuContent align="center">
           <DropdownMenuItem asChild>
             <Link href={`/trips/${id}`}>
               <ExternalLink className="h-4 w-4" />

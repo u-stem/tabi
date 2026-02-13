@@ -2,24 +2,9 @@
 
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { getSeasonalGradient, getSeasonalBg } from "@/lib/season";
 
-export function getSeasonalGradient(): string {
-  const month = new Date().getMonth() + 1;
-  if (month >= 3 && month <= 5) {
-    return "from-pink-400 to-purple-400";
-  }
-  if (month >= 6 && month <= 8) {
-    return "from-green-500 to-teal-400";
-  }
-  if (month >= 9 && month <= 11) {
-    return "from-amber-500 to-red-500";
-  }
-  return "from-blue-400 to-indigo-400";
-}
-
-export function getSeasonalBg(): string {
-  return `bg-gradient-to-br ${getSeasonalGradient()}`;
-}
+export { getSeasonalGradient, getSeasonalBg };
 
 export function Logo({ href, className }: { href?: string; className?: string }) {
   const gradient = getSeasonalGradient();

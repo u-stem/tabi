@@ -82,10 +82,20 @@ describe("Candidate routes", () => {
   describe("GET /api/trips/:tripId/candidates", () => {
     it("returns candidates sorted by sortOrder", async () => {
       const candidates = [
-        { id: "s1", name: "Spot A", category: "restaurant", sortOrder: 0 },
-        { id: "s2", name: "Spot B", category: "sightseeing", sortOrder: 1 },
+        { id: "s1", name: "Spot A", category: "restaurant", sortOrder: 0, likeCount: 0, hmmCount: 0, myReaction: null },
+        { id: "s2", name: "Spot B", category: "sightseeing", sortOrder: 1, likeCount: 0, hmmCount: 0, myReaction: null },
       ];
-      mockDbQuery.schedules.findMany.mockResolvedValue(candidates);
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          leftJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              groupBy: vi.fn().mockReturnValue({
+                orderBy: vi.fn().mockResolvedValue(candidates),
+              }),
+            }),
+          }),
+        }),
+      });
 
       const app = createApp();
       const res = await app.request(`/api/trips/${tripId}/candidates`);

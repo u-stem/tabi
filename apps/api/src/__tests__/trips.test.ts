@@ -78,7 +78,7 @@ describe("Trip routes", () => {
       role: "owner",
     });
     mockDbQuery.schedules.findMany.mockResolvedValue([]);
-    // Default: select queries (trip count for limit check + schedule count for list)
+    // Default: select queries (trip count, schedule count, member count, candidate query)
     const mockWhere = vi.fn().mockImplementation(() => {
       const result = Promise.resolve([{ count: 0 }]);
       // Also support chaining .groupBy() for schedule count queries
@@ -88,6 +88,13 @@ describe("Trip routes", () => {
     mockDbSelect.mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: mockWhere,
+        leftJoin: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            groupBy: vi.fn().mockReturnValue({
+              orderBy: vi.fn().mockResolvedValue([]),
+            }),
+          }),
+        }),
       }),
     });
   });

@@ -98,3 +98,11 @@ export const batchDeleteSchedulesSchema = z.object({
   scheduleIds: z.array(z.string().uuid()).min(1),
 });
 export type BatchDeleteSchedulesInput = z.infer<typeof batchDeleteSchedulesSchema>;
+
+export const REACTION_TYPES = ["like", "hmm"] as const;
+export type ReactionType = (typeof REACTION_TYPES)[number];
+
+export const reactionSchema = z.object({
+  type: z.enum(REACTION_TYPES),
+});
+export type ReactionInput = z.infer<typeof reactionSchema>;

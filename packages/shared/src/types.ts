@@ -1,5 +1,5 @@
 import type { MemberRole } from "./schemas/member";
-import type { ScheduleCategory, ScheduleColor } from "./schemas/schedule";
+import type { ReactionType, ScheduleCategory, ScheduleColor } from "./schemas/schedule";
 import type { TripStatus } from "./schemas/trip";
 
 export type ScheduleResponse = {
@@ -18,6 +18,12 @@ export type ScheduleResponse = {
   color: ScheduleColor;
   endDayOffset?: number | null;
   updatedAt: string;
+};
+
+export type CandidateResponse = ScheduleResponse & {
+  likeCount: number;
+  hmmCount: number;
+  myReaction: ReactionType | null;
 };
 
 export type DayPatternResponse = {
@@ -45,7 +51,7 @@ export type TripResponse = {
   status: TripStatus;
   role: MemberRole;
   days: DayResponse[];
-  candidates: ScheduleResponse[];
+  candidates: CandidateResponse[];
   scheduleCount: number;
   memberCount: number;
 };

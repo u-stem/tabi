@@ -106,45 +106,43 @@ export function TripCard({
   }
 
   return (
-    <DropdownMenu open={contextOpen} onOpenChange={setContextOpen}>
-      <DropdownMenuTrigger asChild>
-        <Link
-          href={`/trips/${id}`}
-          className="group block focus-visible:outline-none"
-          {...longPressHandlers}
-          onClick={(e) => {
-            // Prevent navigation when opening context menu
-            if (contextOpen) e.preventDefault();
-          }}
-        >
-          <Card className="transition-colors hover:bg-accent/50 active:scale-[0.98] group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
-            {inner}
-          </Card>
-        </Link>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuItem asChild>
-          <Link href={`/trips/${id}`}>
-            <ExternalLink className="h-4 w-4" />
-            開く
-          </Link>
-        </DropdownMenuItem>
-        {onDuplicate && (
-          <DropdownMenuItem onClick={() => onDuplicate(id)}>
-            <Copy className="h-4 w-4" />
-            複製
+    <div className="relative">
+      <Link
+        href={`/trips/${id}`}
+        className="group block focus-visible:outline-none"
+        {...longPressHandlers}
+      >
+        <Card className="transition-colors hover:bg-accent/50 active:scale-[0.98] group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
+          {inner}
+        </Card>
+      </Link>
+      <DropdownMenu open={contextOpen} onOpenChange={setContextOpen}>
+        {/* Hidden trigger -- menu is controlled by long-press state only */}
+        <DropdownMenuTrigger className="sr-only" tabIndex={-1} />
+        <DropdownMenuContent>
+          <DropdownMenuItem asChild>
+            <Link href={`/trips/${id}`}>
+              <ExternalLink className="h-4 w-4" />
+              開く
+            </Link>
           </DropdownMenuItem>
-        )}
-        {onDelete && (
-          <DropdownMenuItem
-            onClick={() => onDelete(id)}
-            className="text-destructive focus:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-            削除
-          </DropdownMenuItem>
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+          {onDuplicate && (
+            <DropdownMenuItem onClick={() => onDuplicate(id)}>
+              <Copy className="h-4 w-4" />
+              複製
+            </DropdownMenuItem>
+          )}
+          {onDelete && (
+            <DropdownMenuItem
+              onClick={() => onDelete(id)}
+              className="text-destructive focus:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+              削除
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }

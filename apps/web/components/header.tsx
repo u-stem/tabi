@@ -64,7 +64,7 @@ export function Header() {
   }
 
   return (
-    <header className="border-b">
+    <header className="select-none border-b">
       <OfflineBanner />
       <nav
         aria-label="メインナビゲーション"

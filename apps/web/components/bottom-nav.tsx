@@ -27,7 +27,7 @@ export function BottomNav() {
   return (
     <nav
       aria-label="ボトムナビゲーション"
-      className="fixed inset-x-0 bottom-0 z-40 border-t bg-background sm:hidden print:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 select-none border-t bg-background sm:hidden print:hidden"
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div className="flex h-12 items-stretch">

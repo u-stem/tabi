@@ -1,7 +1,7 @@
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import type { PrecacheEntry, RuntimeCaching } from "serwist";
-import { CacheFirst, ExpirationPlugin, NetworkFirst, Serwist } from "serwist";
+import { ExpirationPlugin, NetworkFirst, Serwist } from "serwist";
 
 declare const self: ServiceWorkerGlobalScope & {
   __SW_MANIFEST: (PrecacheEntry | string)[] | undefined;
@@ -21,25 +21,12 @@ const apiCache: RuntimeCaching = {
   }),
 };
 
-const mapTileCache: RuntimeCaching = {
-  matcher: /^https:\/\/[abc]\.tile\.openstreetmap\.org\/.*/,
-  handler: new CacheFirst({
-    cacheName: "map-tiles",
-    plugins: [
-      new ExpirationPlugin({
-        maxEntries: 500,
-        maxAgeSeconds: 30 * 24 * 60 * 60,
-      }),
-    ],
-  }),
-};
-
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
   skipWaiting: true,
   clientsClaim: true,
   navigationPreload: true,
-  runtimeCaching: [apiCache, mapTileCache, ...defaultCache],
+  runtimeCaching: [apiCache, ...defaultCache],
 });
 
 serwist.addEventListeners();

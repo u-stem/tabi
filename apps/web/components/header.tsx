@@ -1,5 +1,7 @@
 "use client";
 
+import type { FriendRequestResponse } from "@sugara/shared";
+import { useQuery } from "@tanstack/react-query";
 import {
   Download,
   Home,
@@ -13,7 +15,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { getSeasonalBg, Logo } from "@/components/logo";
@@ -38,6 +40,7 @@ import {
 } from "@/components/ui/sheet";
 import { api } from "@/lib/api";
 import { signOut, useSession } from "@/lib/auth-client";
+import { queryKeys } from "@/lib/query-keys";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { MSG } from "@/lib/messages";
 import { useShortcutHelp } from "@/lib/shortcut-help-context";
@@ -57,22 +60,14 @@ export function Header() {
   const { open: openShortcutHelp } = useShortcutHelp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [friendRequestCount, setFriendRequestCount] = useState(0);
 
-  const fetchFriendRequestCount = useCallback(async () => {
-    try {
-      const data = await api<{ id: string }[]>("/api/friends/requests");
-      setFriendRequestCount(data.length);
-    } catch {
-      // Silently ignore - badge is non-critical
-    }
-  }, []);
-
-  useEffect(() => {
-    if (session?.user) {
-      fetchFriendRequestCount();
-    }
-  }, [session?.user, fetchFriendRequestCount]);
+  const { data: friendRequests } = useQuery({
+    queryKey: queryKeys.friends.requests(),
+    queryFn: () => api<FriendRequestResponse[]>("/api/friends/requests"),
+    enabled: !!session?.user,
+    refetchInterval: 60_000,
+  });
+  const friendRequestCount = friendRequests?.length ?? 0;
 
   async function handleSignOut() {
     try {

@@ -1,7 +1,8 @@
 "use client";
 
 import type { FriendRequestResponse, FriendResponse } from "@sugara/shared";
-import { useCallback, useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -20,36 +21,31 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 import { useDelayedLoading } from "@/lib/use-delayed-loading";
 
 export default function FriendsPage() {
-  const [friends, setFriends] = useState<FriendResponse[]>([]);
-  const [requests, setRequests] = useState<FriendRequestResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
+
+  const { data: friends = [], isLoading: friendsLoading } = useQuery({
+    queryKey: queryKeys.friends.list(),
+    queryFn: () => api<FriendResponse[]>("/api/friends"),
+  });
+
+  const { data: requests = [], isLoading: requestsLoading } = useQuery({
+    queryKey: queryKeys.friends.requests(),
+    queryFn: () => api<FriendRequestResponse[]>("/api/friends/requests"),
+  });
+
+  const loading = friendsLoading || requestsLoading;
   const showSkeleton = useDelayedLoading(loading);
-
-  const fetchFriends = useCallback(async () => {
-    try {
-      const data = await api<FriendResponse[]>("/api/friends");
-      setFriends(data);
-    } catch {
-      toast.error(MSG.FRIEND_LIST_FAILED);
-    }
-  }, []);
-
-  const fetchRequests = useCallback(async () => {
-    try {
-      const data = await api<FriendRequestResponse[]>("/api/friends/requests");
-      setRequests(data);
-    } catch {
-      toast.error(MSG.FRIEND_REQUESTS_FAILED);
-    }
-  }, []);
 
   useEffect(() => {
     document.title = "フレンド - sugara";
-    Promise.all([fetchFriends(), fetchRequests()]).finally(() => setLoading(false));
-  }, [fetchFriends, fetchRequests]);
+  }, []);
+
+  const invalidateAll = () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
 
   if (loading && !showSkeleton) return <div />;
 
@@ -88,16 +84,15 @@ export default function FriendsPage() {
   return (
     <div className="container max-w-2xl py-8 space-y-8">
       {requests.length > 0 && (
-        <RequestsSection
-          requests={requests}
-          onUpdate={() => {
-            fetchRequests();
-            fetchFriends();
-          }}
-        />
+        <RequestsSection requests={requests} onUpdate={invalidateAll} />
       )}
-      <FriendListSection friends={friends} onRemoved={fetchFriends} />
-      <SendRequestSection onSent={fetchRequests} />
+      <FriendListSection
+        friends={friends}
+        onRemoved={() => queryClient.invalidateQueries({ queryKey: queryKeys.friends.list() })}
+      />
+      <SendRequestSection
+        onSent={() => queryClient.invalidateQueries({ queryKey: queryKeys.friends.requests() })}
+      />
     </div>
   );
 }

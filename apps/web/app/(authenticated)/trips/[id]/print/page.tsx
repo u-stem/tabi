@@ -9,46 +9,36 @@ import type {
   TripResponse,
 } from "@sugara/shared";
 import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
+import { useQuery } from "@tanstack/react-query";
 import { Clock, MapPin, Printer } from "lucide-react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
-import { ApiError, api } from "@/lib/api";
+import { api } from "@/lib/api";
 import { getCrossDayEntries } from "@/lib/cross-day";
 import { formatDate, formatDateRange, getDayCount } from "@/lib/format";
+import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { buildMergedTimeline } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
 export default function TripPrintPage() {
   const params = useParams();
-  const router = useRouter();
   const searchParams = useSearchParams();
   const tripId = params.id as string;
-  const [trip, setTrip] = useState<TripResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchTrip = useCallback(async () => {
-    try {
-      const data = await api<TripResponse>(`/api/trips/${tripId}`);
-      setTrip(data);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        router.push("/auth/login");
-        return;
-      }
-      setError(MSG.TRIP_FETCH_FAILED);
-    } finally {
-      setLoading(false);
-    }
-  }, [tripId, router]);
-
-  useEffect(() => {
-    fetchTrip();
-  }, [fetchTrip]);
+  const {
+    data: trip,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: queryKeys.trips.detail(tripId),
+    queryFn: () => api<TripResponse>(`/api/trips/${tripId}`),
+  });
+  useAuthRedirect(error);
 
   useEffect(() => {
     if (trip) {
@@ -63,7 +53,7 @@ export default function TripPrintPage() {
     return () => clearTimeout(timer);
   }, [trip, searchParams]);
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p className="text-muted-foreground">読み込み中...</p>
@@ -74,7 +64,7 @@ export default function TripPrintPage() {
   if (error || !trip) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-destructive">{error ?? MSG.TRIP_NOT_FOUND}</p>
+        <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
       </div>
     );
   }

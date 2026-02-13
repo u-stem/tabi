@@ -11,7 +11,7 @@ import {
 } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ChevronDown, Copy, List, MessageSquare, Pencil, Plus, Trash2 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
@@ -57,12 +57,12 @@ import { useSession } from "@/lib/auth-client";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { getCrossDayEntries } from "@/lib/cross-day";
 import { formatDateRange, getDayCount, getTimeStatus, toDateString } from "@/lib/format";
+import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
 import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
-import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -89,7 +89,6 @@ const dndAnnouncements: Announcements = {
 
 export default function TripDetailPage() {
   const params = useParams();
-  const router = useRouter();
   const tripId = params.id as string;
   const online = useOnlineStatus();
   const now = useCurrentTime();

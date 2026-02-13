@@ -9,9 +9,10 @@ import type {
   TripStatus,
 } from "@sugara/shared";
 import { STATUS_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, Clock, MapPin, RefreshCw } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
@@ -19,13 +20,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES, STATUS_COLORS } from "@/lib/colors";
-import { useDelayedLoading } from "@/lib/use-delayed-loading";
 import { getCrossDayEntries } from "@/lib/cross-day";
 import { formatDate, formatDateRange, getDayCount } from "@/lib/format";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { buildMergedTimeline } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
+import { useDelayedLoading } from "@/lib/use-delayed-loading";
 import { cn } from "@/lib/utils";
 
 type SharedTripResponse = {
@@ -53,38 +55,37 @@ function SharedHeader() {
 export default function SharedTripPage() {
   const params = useParams();
   const token = params.token as string;
-  const [trip, setTrip] = useState<SharedTripResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const showSkeleton = useDelayedLoading(loading);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
   const [hasUpdate, setHasUpdate] = useState(false);
-  const tripIdRef = useRef<string | null>(null);
 
-  const fetchTrip = useCallback(() => {
-    api<SharedTripResponse>(`/api/shared/${token}`)
-      .then((data) => {
-        setTrip(data);
-        tripIdRef.current = data.id;
-        setHasUpdate(false);
-      })
-      .catch((err) => {
-        if (err instanceof ApiError && err.status === 404) {
-          setError(MSG.SHARED_LINK_INVALID);
-        } else {
-          setError(MSG.SHARED_TRIP_FETCH_FAILED);
-        }
-      })
-      .finally(() => setLoading(false));
-  }, [token]);
+  const {
+    data: trip,
+    isLoading,
+    error: queryError,
+  } = useQuery({
+    queryKey: queryKeys.shared.trip(token),
+    queryFn: () => api<SharedTripResponse>(`/api/shared/${token}`),
+  });
 
-  useEffect(() => {
-    fetchTrip();
-  }, [fetchTrip]);
+  const showSkeleton = useDelayedLoading(isLoading);
+
+  // Derive error message from query error
+  const error =
+    queryError instanceof ApiError && queryError.status === 404
+      ? MSG.SHARED_LINK_INVALID
+      : queryError
+        ? MSG.SHARED_TRIP_FETCH_FAILED
+        : null;
+
+  function handleRefresh() {
+    setHasUpdate(false);
+    queryClient.invalidateQueries({ queryKey: queryKeys.shared.trip(token) });
+  }
 
   // Subscribe to broadcast updates
   useEffect(() => {
-    if (!tripIdRef.current) return;
-    const tripId = tripIdRef.current;
+    if (!trip?.id) return;
+    const tripId = trip.id;
     const channel = supabase
       .channel(`trip:${tripId}`)
       .on("broadcast", { event: "trip:updated" }, () => {
@@ -140,7 +141,7 @@ export default function SharedTripPage() {
   }
 
   // Avoid flashing error/not-found during the 200ms skeleton delay
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen">
         <SharedHeader />
@@ -185,7 +186,7 @@ export default function SharedTripPage() {
             variant="ghost"
             size="sm"
             className="gap-1.5 text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
-            onClick={fetchTrip}
+            onClick={handleRefresh}
           >
             <RefreshCw className="h-3.5 w-3.5" />
             内容が更新されました。タップして最新を表示

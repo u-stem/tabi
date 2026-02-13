@@ -1,8 +1,9 @@
 "use client";
 
 import type { FriendResponse, MemberResponse } from "@sugara/shared";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserPlus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -36,6 +37,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/lib/api";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 
 type MemberDialogProps = {
   tripId: string;
@@ -52,9 +54,7 @@ export function MemberDialog({
   onOpenChange,
   memberLimitReached,
 }: MemberDialogProps) {
-  const [members, setMembers] = useState<MemberResponse[]>([]);
-  const [friends, setFriends] = useState<FriendResponse[]>([]);
-  const [loading, setLoading] = useState(false);
+  const queryClient = useQueryClient();
   const [userId, setUserId] = useState("");
   const [role, setRole] = useState("editor");
   const [friendRole, setFriendRole] = useState("editor");
@@ -62,33 +62,20 @@ export function MemberDialog({
   const [sendFriendRequest, setSendFriendRequest] = useState(true);
   const [removeMember, setRemoveMember] = useState<MemberResponse | null>(null);
 
-  const fetchMembers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await api<MemberResponse[]>(`/api/trips/${tripId}/members`);
-      setMembers(data);
-    } catch {
-      toast.error(MSG.MEMBER_LIST_FAILED);
-    } finally {
-      setLoading(false);
-    }
-  }, [tripId]);
+  const { data: members = [], isLoading: loading } = useQuery({
+    queryKey: queryKeys.trips.members(tripId),
+    queryFn: () => api<MemberResponse[]>(`/api/trips/${tripId}/members`),
+    enabled: open,
+  });
 
-  const fetchFriends = useCallback(async () => {
-    try {
-      const data = await api<FriendResponse[]>("/api/friends");
-      setFriends(data);
-    } catch {
-      // Non-critical, silently ignore
-    }
-  }, []);
+  const { data: friends = [] } = useQuery({
+    queryKey: queryKeys.friends.list(),
+    queryFn: () => api<FriendResponse[]>("/api/friends"),
+    enabled: open,
+  });
 
-  useEffect(() => {
-    if (open) {
-      fetchMembers();
-      fetchFriends();
-    }
-  }, [open, fetchMembers, fetchFriends]);
+  const invalidateMembers = () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.trips.members(tripId) });
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -107,7 +94,7 @@ export function MemberDialog({
         }).catch(() => {});
       }
       setUserId("");
-      fetchMembers();
+      invalidateMembers();
     } catch (err) {
       const message = err instanceof Error ? err.message : MSG.MEMBER_ADD_FAILED;
       toast.error(message);
@@ -124,7 +111,7 @@ export function MemberDialog({
         body: JSON.stringify({ userId: friendUserId, role: friendRole }),
       });
       toast.success(MSG.MEMBER_ADDED);
-      fetchMembers();
+      invalidateMembers();
     } catch (err) {
       const message = err instanceof Error ? err.message : MSG.MEMBER_ADD_FAILED;
       toast.error(message);
@@ -140,7 +127,7 @@ export function MemberDialog({
         body: JSON.stringify({ role: newRole }),
       });
       toast.success(MSG.MEMBER_ROLE_CHANGED);
-      fetchMembers();
+      invalidateMembers();
     } catch {
       toast.error(MSG.MEMBER_ROLE_CHANGE_FAILED);
     }
@@ -152,7 +139,7 @@ export function MemberDialog({
         method: "DELETE",
       });
       toast.success(MSG.MEMBER_REMOVED);
-      fetchMembers();
+      invalidateMembers();
     } catch {
       toast.error(MSG.MEMBER_REMOVE_FAILED);
     }

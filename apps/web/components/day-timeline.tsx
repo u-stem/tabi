@@ -164,11 +164,11 @@ export function DayTimeline({
   return (
     <div>
       {selectionMode ? (
-        <div className="mb-3 flex flex-col gap-1.5 sm:flex-row sm:items-center">
+        <div className="mb-3 flex flex-wrap items-center gap-1.5">
           <div className="flex items-center gap-1.5">
             <Button variant="outline" size="sm" onClick={onSelectAll}>
               <CheckCheck className="h-4 w-4" />
-              全選択
+              <span className="hidden sm:inline">全選択</span>
             </Button>
             <Button
               variant="outline"
@@ -177,18 +177,23 @@ export function DayTimeline({
               disabled={selectedCount === 0}
             >
               <X className="h-4 w-4" />
-              選択解除
+              <span className="hidden sm:inline">選択解除</span>
             </Button>
           </div>
-          <div className="flex items-center gap-1.5 sm:ml-auto">
-            <Button
-              size="sm"
-              onClick={onBatchUnassign}
-              disabled={selectedCount === 0 || batchLoading}
-            >
-              <Undo2 className="h-4 w-4" />
-              候補に戻す
-            </Button>
+          <div className="flex items-center gap-1.5 ml-auto">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  size="sm"
+                  onClick={onBatchUnassign}
+                  disabled={selectedCount === 0 || batchLoading}
+                >
+                  <Undo2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">候補に戻す</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">候補に戻す</TooltipContent>
+            </Tooltip>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" disabled={selectedCount === 0 || batchLoading}>
@@ -212,9 +217,9 @@ export function DayTimeline({
           </div>
         </div>
       ) : (
-        <div className="mb-3 flex flex-col gap-1.5 sm:flex-row sm:items-center">
+        <div className="mb-3 flex flex-wrap items-center gap-1.5">
           <span className="text-sm text-muted-foreground">{formatDate(date)}</span>
-          <div className="flex items-center gap-1.5 sm:ml-auto">
+          <div className="flex items-center gap-1.5 ml-auto">
             {!disabled &&
               (scheduleLimitReached ? (
                 <Tooltip>
@@ -243,18 +248,23 @@ export function DayTimeline({
             {!disabled && schedules.length > 0 && onEnterSelectionMode && (
               <Button variant="outline" size="sm" onClick={onEnterSelectionMode}>
                 <CheckSquare className="h-4 w-4" />
-                選択
+                <span className="hidden sm:inline">選択</span>
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSortByTime}
-              disabled={disabled || isSorted}
-            >
-              <ArrowUpDown className="h-4 w-4" />
-              時刻順
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSortByTime}
+                  disabled={disabled || isSorted}
+                >
+                  <ArrowUpDown className="h-4 w-4" />
+                  <span className="hidden sm:inline">時刻順</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent className="sm:hidden">時刻順に並べ替え</TooltipContent>
+            </Tooltip>
           </div>
         </div>
       )}

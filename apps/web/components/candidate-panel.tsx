@@ -380,7 +380,7 @@ export function CandidatePanel({
         <div className="mb-3 flex items-center gap-1.5">
           <Button variant="outline" size="sm" onClick={onSelectAll}>
             <CheckCheck className="h-4 w-4" />
-            全選択
+            <span className="hidden sm:inline">全選択</span>
           </Button>
           <Button
             variant="outline"
@@ -389,12 +389,21 @@ export function CandidatePanel({
             disabled={selectedCount === 0}
           >
             <X className="h-4 w-4" />
-            選択解除
+            <span className="hidden sm:inline">選択解除</span>
           </Button>
-          <Button size="sm" onClick={onBatchAssign} disabled={selectedCount === 0 || batchLoading}>
-            <ArrowLeft className="h-4 w-4" />
-            予定に追加
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                size="sm"
+                onClick={onBatchAssign}
+                disabled={selectedCount === 0 || batchLoading}
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">予定に追加</span>
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent className="sm:hidden">予定に追加</TooltipContent>
+          </Tooltip>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" disabled={selectedCount === 0 || batchLoading}>
@@ -422,7 +431,7 @@ export function CandidatePanel({
             {!disabled && candidates.length > 0 && onEnterSelectionMode && (
               <Button variant="outline" size="sm" onClick={onEnterSelectionMode}>
                 <CheckSquare className="h-4 w-4" />
-                選択
+                <span className="hidden sm:inline">選択</span>
               </Button>
             )}
             {!disabled &&

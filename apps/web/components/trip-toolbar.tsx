@@ -85,11 +85,7 @@ export function TripToolbar({
 }: TripToolbarProps) {
   if (selectionMode) {
     return (
-      <div
-        role="toolbar"
-        aria-label="選択操作"
-        className="flex flex-col gap-2 sm:flex-row sm:items-center"
-      >
+      <div role="toolbar" aria-label="選択操作" className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
@@ -98,7 +94,7 @@ export function TripToolbar({
             disabled={deleting || duplicating}
           >
             <CheckCheck className="h-4 w-4" />
-            全選択
+            <span className="hidden sm:inline">全選択</span>
           </Button>
           <Button
             variant="outline"
@@ -107,10 +103,10 @@ export function TripToolbar({
             disabled={deleting || duplicating}
           >
             <X className="h-4 w-4" />
-            選択解除
+            <span className="hidden sm:inline">選択解除</span>
           </Button>
         </div>
-        <div className="flex items-center gap-2 sm:ml-auto">
+        <div className="flex items-center gap-2 ml-auto">
           <Button
             variant="outline"
             size="sm"
@@ -118,7 +114,7 @@ export function TripToolbar({
             disabled={selectedCount === 0 || deleting || duplicating}
           >
             <Copy className="h-4 w-4" />
-            {duplicating ? "複製中..." : "複製"}
+            <span className="hidden sm:inline">{duplicating ? "複製中..." : "複製"}</span>
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -128,7 +124,7 @@ export function TripToolbar({
                 disabled={selectedCount === 0 || deleting || duplicating}
               >
                 <Trash2 className="h-4 w-4" />
-                {deleting ? "削除中..." : "削除"}
+                <span className="hidden sm:inline">{deleting ? "削除中..." : "削除"}</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
@@ -164,11 +160,7 @@ export function TripToolbar({
   }
 
   return (
-    <div
-      role="toolbar"
-      aria-label="旅行フィルター"
-      className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center"
-    >
+    <div role="toolbar" aria-label="旅行フィルター" className="flex flex-wrap items-center gap-2">
       <Input
         ref={searchInputRef}
         id="trips-search"
@@ -182,7 +174,7 @@ export function TripToolbar({
       />
       <div className="flex items-center gap-2">
         <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>
-          <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
+          <SelectTrigger className="h-8 w-[100px] text-xs" aria-label="ステータスで絞り込み">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -194,7 +186,7 @@ export function TripToolbar({
           </SelectContent>
         </Select>
         <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
-          <SelectTrigger className="h-8 w-[100px] text-xs" aria-label="並び替え">
+          <SelectTrigger className="h-8 w-20 text-xs" aria-label="並び替え">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -206,7 +198,7 @@ export function TripToolbar({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex items-center gap-2 sm:ml-auto">
+      <div className="flex items-center gap-2 ml-auto">
         <Button
           variant="outline"
           size="sm"
@@ -214,7 +206,7 @@ export function TripToolbar({
           disabled={disabled || totalCount === 0}
         >
           <SquareMousePointer className="h-4 w-4" />
-          選択
+          <span className="hidden sm:inline">選択</span>
         </Button>
         {newTripSlot}
       </div>

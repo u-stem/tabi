@@ -20,7 +20,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -312,6 +311,31 @@ export function MemberDialog({
 
                   <TabsContent value="userId">
                     <form onSubmit={handleAdd} className="space-y-3">
+                      <div className="flex items-center justify-end gap-2 py-1">
+                        <div className="flex items-center gap-2 me-auto">
+                          <Checkbox
+                            id="send-friend-request"
+                            checked={sendFriendRequest}
+                            onCheckedChange={(checked) => setSendFriendRequest(checked === true)}
+                          />
+                          <Label
+                            htmlFor="send-friend-request"
+                            className="text-xs text-muted-foreground"
+                          >
+                            フレンド申請も送る
+                          </Label>
+                        </div>
+                        <span className="text-xs text-muted-foreground">ロール:</span>
+                        <Select value={role} onValueChange={setRole}>
+                          <SelectTrigger className="h-7 w-[100px] text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="editor">編集者</SelectItem>
+                            <SelectItem value="viewer">閲覧者</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
                       <div className="flex gap-2">
                         <Input
                           id="member-user-id"
@@ -323,35 +347,11 @@ export function MemberDialog({
                           required
                           className="flex-1"
                         />
-                        <Select value={role} onValueChange={setRole}>
-                          <SelectTrigger className="w-[100px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="editor">編集者</SelectItem>
-                            <SelectItem value="viewer">閲覧者</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Checkbox
-                          id="send-friend-request"
-                          checked={sendFriendRequest}
-                          onCheckedChange={(checked) => setSendFriendRequest(checked === true)}
-                        />
-                        <Label
-                          htmlFor="send-friend-request"
-                          className="text-xs text-muted-foreground"
-                        >
-                          フレンド申請も送る
-                        </Label>
-                      </div>
-                      <DialogFooter>
-                        <Button type="submit" size="sm" disabled={adding}>
+                        <Button type="submit" size="sm" variant="outline" disabled={adding}>
                           <UserPlus className="h-4 w-4" />
                           {adding ? "追加中..." : "追加"}
                         </Button>
-                      </DialogFooter>
+                      </div>
                     </form>
                   </TabsContent>
                 </Tabs>

@@ -177,6 +177,23 @@ export const schedules = pgTable("schedules", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 }).enableRLS();
 
+export const reactionTypeEnum = pgEnum("reaction_type", ["like", "hmm"]);
+
+export const scheduleReactions = pgTable(
+  "schedule_reactions",
+  {
+    scheduleId: uuid("schedule_id")
+      .notNull()
+      .references(() => schedules.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: reactionTypeEnum("type").notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [primaryKey({ columns: [table.scheduleId, table.userId] })],
+).enableRLS();
+
 export const activityLogs = pgTable("activity_logs", {
   id: uuid("id").primaryKey().defaultRandom(),
   tripId: uuid("trip_id")
@@ -222,9 +239,21 @@ export const dayPatternsRelations = relations(dayPatterns, ({ one, many }) => ({
   schedules: many(schedules),
 }));
 
-export const schedulesRelations = relations(schedules, ({ one }) => ({
+export const schedulesRelations = relations(schedules, ({ one, many }) => ({
   trip: one(trips, { fields: [schedules.tripId], references: [trips.id] }),
   dayPattern: one(dayPatterns, { fields: [schedules.dayPatternId], references: [dayPatterns.id] }),
+  reactions: many(scheduleReactions),
+}));
+
+export const scheduleReactionsRelations = relations(scheduleReactions, ({ one }) => ({
+  schedule: one(schedules, {
+    fields: [scheduleReactions.scheduleId],
+    references: [schedules.id],
+  }),
+  user: one(users, {
+    fields: [scheduleReactions.userId],
+    references: [users.id],
+  }),
 }));
 
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({

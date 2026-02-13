@@ -11,6 +11,7 @@ import {
 } from "@sugara/shared";
 import {
   ArrowLeft,
+  ArrowUpDown,
   Check,
   CheckCheck,
   CheckSquare,
@@ -22,7 +23,7 @@ import {
   X,
 } from "lucide-react";
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -319,6 +320,20 @@ export function CandidatePanel({
   const [editSchedule, setEditSchedule] = useState<ScheduleResponse | null>(null);
   const [editLoading, setEditLoading] = useState(false);
   const [editCategory, setEditCategory] = useState<string>(DEFAULT_SCHEDULE_CATEGORY);
+  const [sortBy, setSortBy] = useState<"order" | "popular">("order");
+
+  const sortedCandidates = useMemo(() => {
+    if (sortBy === "popular") {
+      return [...candidates].sort((a, b) => {
+        const aSpot = a as CandidateCardSpot;
+        const bSpot = b as CandidateCardSpot;
+        const diff = (bSpot.likeCount ?? 0) - (aSpot.likeCount ?? 0);
+        if (diff !== 0) return diff;
+        return (aSpot.hmmCount ?? 0) - (bSpot.hmmCount ?? 0);
+      });
+    }
+    return candidates;
+  }, [candidates, sortBy]);
 
   async function handleAssign(spotId: string) {
     try {
@@ -491,6 +506,25 @@ export function CandidatePanel({
       ) : (
         <div className="mb-3 flex items-center justify-end gap-1.5">
           <div className="flex items-center gap-1.5">
+            {candidates.length > 0 && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant={sortBy === "popular" ? "secondary" : "outline"}
+                    size="sm"
+                    onClick={() => setSortBy(sortBy === "popular" ? "order" : "popular")}
+                  >
+                    <ArrowUpDown className="h-4 w-4" />
+                    <span className="hidden sm:inline">
+                      {sortBy === "popular" ? "人気順" : "作成順"}
+                    </span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="sm:hidden">
+                  {sortBy === "popular" ? "人気順" : "作成順"}
+                </TooltipContent>
+              </Tooltip>
+            )}
             {!disabled && candidates.length > 0 && onEnterSelectionMode && (
               <Button variant="outline" size="sm" onClick={onEnterSelectionMode}>
                 <CheckSquare className="h-4 w-4" />
@@ -519,19 +553,19 @@ export function CandidatePanel({
           </div>
         </div>
       )}
-      {draggable ? (
+      {draggable && sortBy === "order" ? (
         <div ref={setDroppableRef}>
           <SortableContext
-            items={candidates.map((c) => c.id)}
+            items={sortedCandidates.map((c) => c.id)}
             strategy={verticalListSortingStrategy}
           >
-            {candidates.length === 0 ? (
+            {sortedCandidates.length === 0 ? (
               <div className="flex min-h-24 items-center justify-center rounded-md border border-dashed text-center">
                 <p className="text-xs text-muted-foreground">候補がありません</p>
               </div>
             ) : (
               <div className="space-y-1.5">
-                {candidates.map((spot) => (
+                {sortedCandidates.map((spot) => (
                   <CandidateCard
                     key={spot.id}
                     spot={spot}
@@ -551,13 +585,13 @@ export function CandidatePanel({
             )}
           </SortableContext>
         </div>
-      ) : candidates.length === 0 ? (
+      ) : sortedCandidates.length === 0 ? (
         <div className="flex min-h-24 items-center justify-center rounded-md border border-dashed text-center">
           <p className="text-xs text-muted-foreground">候補がありません</p>
         </div>
       ) : (
         <div className="space-y-1.5">
-          {candidates.map((spot) => (
+          {sortedCandidates.map((spot) => (
             <CandidateCard
               key={spot.id}
               spot={spot}

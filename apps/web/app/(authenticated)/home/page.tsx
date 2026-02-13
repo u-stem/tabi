@@ -8,7 +8,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 
 import { toast } from "sonner";
 import { CreateTripDialog } from "@/components/create-trip-dialog";
-import { PullToRefresh } from "@/components/pull-to-refresh";
+
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import { TripCard } from "@/components/trip-card";
 import type { SortKey, StatusFilter } from "@/components/trip-toolbar";
@@ -212,7 +212,7 @@ export default function HomePage() {
   if (isLoading && !showSkeleton) return <div />;
 
   return (
-    <PullToRefresh onRefresh={invalidateTrips} enabled={!isLoading}>
+    <>
       {showSkeleton ? (
         <>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -323,6 +323,6 @@ export default function HomePage() {
         onOpenChange={setCreateOpen}
         onCreated={invalidateTrips}
       />
-    </PullToRefresh>
+    </>
   );
 }

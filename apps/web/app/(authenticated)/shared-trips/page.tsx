@@ -3,7 +3,7 @@
 import type { TripListItem } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { PullToRefresh } from "@/components/pull-to-refresh";
+
 import { TripCard } from "@/components/trip-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,11 +45,8 @@ export default function SharedTripsPage() {
   // Avoid flashing empty state during the 200ms skeleton delay
   if (isLoading && !showSkeleton) return <div />;
 
-  const invalidateTrips = () =>
-    queryClient.invalidateQueries({ queryKey: queryKeys.trips.shared() });
-
   return (
-    <PullToRefresh onRefresh={invalidateTrips} enabled={!isLoading}>
+    <>
       {showSkeleton ? (
         <>
           <div className="mt-4">
@@ -112,6 +109,6 @@ export default function SharedTripsPage() {
           )}
         </>
       )}
-    </PullToRefresh>
+    </>
   );
 }

@@ -118,11 +118,12 @@ export function TripCard({
     <div className="relative">
       <Link
         href={`/trips/${id}`}
-        className="group block focus-visible:outline-none"
+        className="group block select-none focus-visible:outline-none"
+        style={{ WebkitTouchCallout: "none" }}
         onContextMenu={handleContextMenu}
         {...longPressHandlers}
       >
-        <Card className="transition-colors hover:bg-accent/50 active:scale-[0.98] group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
+        <Card className="transition-colors hover:bg-accent/50 active:scale-[0.98] sm:active:scale-100 group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
           {inner}
         </Card>
       </Link>

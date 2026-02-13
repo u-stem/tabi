@@ -213,7 +213,9 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
               maxLength={20}
               required
             />
-            <p className="select-none text-xs text-muted-foreground">3〜20文字、英数字とアンダースコアのみ</p>
+            <p className="select-none text-xs text-muted-foreground">
+              3〜20文字、英数字とアンダースコアのみ
+            </p>
           </div>
           {error && (
             <div
@@ -314,7 +316,9 @@ function PasswordSection({ username }: { username: string }) {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />
-            <p className="select-none text-xs text-muted-foreground">{getPasswordRequirementsText()}</p>
+            <p className="select-none text-xs text-muted-foreground">
+              {getPasswordRequirementsText()}
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">新しいパスワード（確認）</Label>

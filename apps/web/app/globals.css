@@ -109,6 +109,10 @@
   [role="button"] {
     cursor: pointer;
   }
+  /* Prevent Cmd+A from selecting content behind open dialogs */
+  body > [aria-hidden="true"] {
+    user-select: none;
+  }
 }
 
 @page {

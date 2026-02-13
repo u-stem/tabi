@@ -170,7 +170,7 @@ export function TripToolbar({
         aria-label="旅行を検索"
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="h-8 w-full select-none focus:select-text sm:w-40"
+        className="h-8 w-full sm:w-40"
       />
       <div className="flex items-center gap-2">
         <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>

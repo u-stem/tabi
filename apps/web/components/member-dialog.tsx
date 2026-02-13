@@ -192,7 +192,9 @@ export function MemberDialog({
                     <p className="truncate text-sm font-medium">{member.name}</p>
                   </div>
                   {member.role === "owner" ? (
-                    <span className="shrink-0 select-none text-xs text-muted-foreground">オーナー</span>
+                    <span className="shrink-0 select-none text-xs text-muted-foreground">
+                      オーナー
+                    </span>
                   ) : isOwner ? (
                     <div className="flex shrink-0 items-center gap-1">
                       <Select

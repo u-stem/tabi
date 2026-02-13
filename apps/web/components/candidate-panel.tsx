@@ -5,6 +5,7 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 import {
   CATEGORY_LABELS,
+  type CandidateResponse,
   DEFAULT_SCHEDULE_CATEGORY,
   type ScheduleCategory,
   type ScheduleResponse,
@@ -69,7 +70,7 @@ import { cn } from "@/lib/utils";
 
 type CandidatePanelProps = {
   tripId: string;
-  candidates: ScheduleResponse[];
+  candidates: CandidateResponse[];
   currentPatternId: string;
   onRefresh: () => void;
   disabled?: boolean;
@@ -118,12 +119,6 @@ function CandidateDragHandle({
   );
 }
 
-type CandidateCardSpot = ScheduleResponse & {
-  likeCount?: number;
-  hmmCount?: number;
-  myReaction?: string | null;
-};
-
 function CandidateCard({
   spot,
   onEdit,
@@ -137,7 +132,7 @@ function CandidateCard({
   onSelect,
   draggable,
 }: {
-  spot: CandidateCardSpot;
+  spot: CandidateResponse;
   onEdit: () => void;
   onDelete: () => void;
   onAssign: () => void;
@@ -215,8 +210,10 @@ function CandidateCard({
               aria-label="いいね"
               aria-pressed={spot.myReaction === "like"}
             >
-              <span className="text-base" aria-hidden="true">{"👍"}</span>
-              {(spot.likeCount ?? 0) > 0 && <span>{spot.likeCount}</span>}
+              <span className="text-base" aria-hidden="true">
+                {"👍"}
+              </span>
+              {spot.likeCount > 0 && <span>{spot.likeCount}</span>}
             </button>
             <button
               type="button"
@@ -228,8 +225,10 @@ function CandidateCard({
               aria-label="うーん"
               aria-pressed={spot.myReaction === "hmm"}
             >
-              <span className="text-base" aria-hidden="true">{"🤔"}</span>
-              {(spot.hmmCount ?? 0) > 0 && <span>{spot.hmmCount}</span>}
+              <span className="text-base" aria-hidden="true">
+                {"🤔"}
+              </span>
+              {spot.hmmCount > 0 && <span>{spot.hmmCount}</span>}
             </button>
           </div>
         )}
@@ -325,11 +324,9 @@ export function CandidatePanel({
   const sortedCandidates = useMemo(() => {
     if (sortBy === "popular") {
       return [...candidates].sort((a, b) => {
-        const aSpot = a as CandidateCardSpot;
-        const bSpot = b as CandidateCardSpot;
-        const diff = (bSpot.likeCount ?? 0) - (aSpot.likeCount ?? 0);
+        const diff = b.likeCount - a.likeCount;
         if (diff !== 0) return diff;
-        return (aSpot.hmmCount ?? 0) - (bSpot.hmmCount ?? 0);
+        return a.hmmCount - b.hmmCount;
       });
     }
     return candidates;

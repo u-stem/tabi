@@ -9,6 +9,7 @@ import {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import type {
+  CandidateResponse,
   CrossDayEntry,
   ScheduleCategory,
   ScheduleColor,
@@ -37,7 +38,7 @@ type UseTripDragAndDropArgs = {
   currentDayId: string | null;
   currentPatternId: string | null;
   schedules: ScheduleResponse[];
-  candidates: ScheduleResponse[];
+  candidates: CandidateResponse[];
   crossDayEntries?: CrossDayEntry[];
   onDone: () => void;
 };
@@ -53,7 +54,7 @@ export function useTripDragAndDrop({
 }: UseTripDragAndDropArgs) {
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
   const [localSchedules, setLocalSchedules] = useState<ScheduleResponse[]>([]);
-  const [localCandidates, setLocalCandidates] = useState<ScheduleResponse[]>([]);
+  const [localCandidates, setLocalCandidates] = useState<CandidateResponse[]>([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),

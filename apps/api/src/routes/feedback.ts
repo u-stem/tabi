@@ -9,9 +9,7 @@ const REPO_FORMAT = /^[\w.-]+\/[\w.-]+$/;
 
 export const feedbackRoutes = new Hono();
 
-feedbackRoutes.use("*", requireAuth);
-
-feedbackRoutes.post("/feedback", async (c) => {
+feedbackRoutes.post("/feedback", requireAuth, async (c) => {
   const json = await c.req.json();
   const parsed = createFeedbackSchema.safeParse(json);
   if (!parsed.success) {

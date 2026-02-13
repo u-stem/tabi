@@ -1,9 +1,9 @@
 "use client";
 
 import { MAX_TRIPS_PER_USER, type TripListItem } from "@sugara/shared";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { toast } from "sonner";
@@ -15,18 +15,27 @@ import { TripToolbar } from "@/components/trip-toolbar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ApiError, api } from "@/lib/api";
+import { api } from "@/lib/api";
+import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
-import { useDelayedLoading } from "@/lib/use-delayed-loading";
+import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
+import { useDelayedLoading } from "@/lib/use-delayed-loading";
 
 export default function HomePage() {
-  const router = useRouter();
+  const queryClient = useQueryClient();
   const online = useOnlineStatus();
-  const [trips, setTrips] = useState<TripListItem[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+
+  const {
+    data: trips = [],
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: queryKeys.trips.owned(),
+    queryFn: () => api<TripListItem[]>("/api/trips?scope=owned"),
+  });
+  useAuthRedirect(error);
 
   useEffect(() => {
     document.title = "ホーム - sugara";
@@ -57,32 +66,14 @@ export default function HomePage() {
     [],
   );
   useRegisterShortcuts(homeShortcuts);
-  const showSkeleton = useDelayedLoading(loading);
+  const showSkeleton = useDelayedLoading(isLoading);
 
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
   useHotkeys("/", () => searchInputRef.current?.focus(), { useKey: true, preventDefault: true });
   useHotkeys("n", () => setCreateOpen(true), { preventDefault: true });
 
-  const fetchTrips = useCallback(() => {
-    setLoading(true);
-    setError(null);
-    api<TripListItem[]>("/api/trips?scope=owned")
-      .then((data) => {
-        setTrips(data);
-      })
-      .catch((err) => {
-        if (err instanceof ApiError && err.status === 401) {
-          router.push("/auth/login");
-          return;
-        }
-        setError(MSG.TRIP_FETCH_FAILED);
-      })
-      .finally(() => setLoading(false));
-  }, [router]);
-
-  useEffect(() => {
-    fetchTrips();
-  }, [fetchTrips]);
+  const invalidateTrips = () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.trips.owned() });
 
   const filteredTrips = useMemo(() => {
     let result = trips;
@@ -157,14 +148,7 @@ export default function HomePage() {
     const succeeded = results.filter((r) => r.status === "fulfilled").length;
 
     if (succeeded > 0) {
-      try {
-        const fresh = await api<TripListItem[]>("/api/trips?scope=owned");
-        setTrips(fresh);
-      } catch {
-        // Fallback: remove only successfully deleted trips
-        const succeededIds = new Set(ids.filter((_, i) => results[i].status === "fulfilled"));
-        setTrips((prev) => prev.filter((t) => !succeededIds.has(t.id)));
-      }
+      await invalidateTrips();
     }
 
     if (failed > 0) {
@@ -189,12 +173,7 @@ export default function HomePage() {
     const succeeded = results.filter((r) => r.status === "fulfilled").length;
 
     if (succeeded > 0) {
-      try {
-        const fresh = await api<TripListItem[]>("/api/trips?scope=owned");
-        setTrips(fresh);
-      } catch {
-        // Ignore: list will be stale but not broken
-      }
+      await invalidateTrips();
     }
 
     if (failed > 0) {
@@ -209,7 +188,7 @@ export default function HomePage() {
   }
 
   // Avoid flashing empty state during the 200ms skeleton delay
-  if (loading && !showSkeleton) return <div />;
+  if (isLoading && !showSkeleton) return <div />;
 
   return (
     <div>
@@ -246,8 +225,8 @@ export default function HomePage() {
         </>
       ) : error ? (
         <div className="mt-8 text-center">
-          <p className="text-destructive">{error}</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={fetchTrips}>
+          <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => invalidateTrips()}>
             再試行
           </Button>
         </div>
@@ -316,7 +295,11 @@ export default function HomePage() {
           )}
         </>
       )}
-      <CreateTripDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={fetchTrips} />
+      <CreateTripDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={invalidateTrips}
+      />
     </div>
   );
 }

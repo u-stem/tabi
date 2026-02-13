@@ -138,26 +138,6 @@ export default function HomePage() {
     setSelectedIds(new Set());
   }
 
-  async function handleDeleteSingle(id: string) {
-    try {
-      await api(`/api/trips/${id}`, { method: "DELETE" });
-      toast.success(MSG.TRIP_BULK_DELETED(1));
-      await invalidateTrips();
-    } catch {
-      toast.error(MSG.TRIP_BULK_DELETE_FAILED(1));
-    }
-  }
-
-  async function handleDuplicateSingle(id: string) {
-    try {
-      await api(`/api/trips/${id}/duplicate`, { method: "POST" });
-      toast.success(MSG.TRIP_BULK_DUPLICATED(1));
-      await invalidateTrips();
-    } catch {
-      toast.error(MSG.TRIP_BULK_DUPLICATE_FAILED(1));
-    }
-  }
-
   async function handleDeleteSelected() {
     const ids = [...selectedIds];
     setDeleting(true);
@@ -310,8 +290,6 @@ export default function HomePage() {
                   selectable={selectionMode}
                   selected={selectedIds.has(trip.id)}
                   onSelect={handleSelect}
-                  onDuplicate={handleDuplicateSingle}
-                  onDelete={handleDeleteSingle}
                 />
               ))}
             </div>

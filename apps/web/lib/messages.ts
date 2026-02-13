@@ -1,4 +1,5 @@
 import {
+  MAX_FRIENDS_PER_USER,
   MAX_MEMBERS_PER_TRIP,
   MAX_PATTERNS_PER_DAY,
   MAX_SCHEDULES_PER_TRIP,
@@ -92,6 +93,20 @@ export const MSG = {
   AUTH_SIGNUP_TERMS_REQUIRED: "利用規約とプライバシーポリシーへの同意が必要です",
   AUTH_PASSWORD_TOO_WEAK: "パスワードの要件を満たしていません",
 
+  // Friend
+  FRIEND_REQUEST_SENT: "フレンド申請を送信しました",
+  FRIEND_REQUEST_SEND_FAILED: "フレンド申請の送信に失敗しました",
+  FRIEND_REQUEST_ACCEPTED: "フレンド申請を承認しました",
+  FRIEND_REQUEST_ACCEPT_FAILED: "フレンド申請の承認に失敗しました",
+  FRIEND_REQUEST_REJECTED: "フレンド申請を拒否しました",
+  FRIEND_REQUEST_REJECT_FAILED: "フレンド申請の拒否に失敗しました",
+  FRIEND_REQUEST_CANCELLED: "フレンド申請を取り消しました",
+  FRIEND_REQUEST_CANCEL_FAILED: "フレンド申請の取り消しに失敗しました",
+  FRIEND_REMOVED: "フレンドを解除しました",
+  FRIEND_REMOVE_FAILED: "フレンドの解除に失敗しました",
+  FRIEND_LIST_FAILED: "フレンド一覧の取得に失敗しました",
+  FRIEND_REQUESTS_FAILED: "フレンド申請一覧の取得に失敗しました",
+
   // Reaction
   REACTION_FAILED: "リアクションに失敗しました",
   REACTION_REMOVE_FAILED: "リアクションの取り消しに失敗しました",
@@ -136,6 +151,7 @@ export const MSG = {
   LIMIT_SCHEDULES: `予定と候補は1旅行あたり合計${MAX_SCHEDULES_PER_TRIP}件まで追加できます`,
   LIMIT_PATTERNS: `パターンは各日程に最大${MAX_PATTERNS_PER_DAY}件まで追加できます`,
   LIMIT_MEMBERS: `メンバーは1旅行あたり最大${MAX_MEMBERS_PER_TRIP}名まで招待できます`,
+  LIMIT_FRIENDS: `フレンドは最大${MAX_FRIENDS_PER_USER}人まで登録できます`,
 
   // Shared view
   SHARED_LINK_INVALID: "このリンクは無効か、有効期限が切れています",

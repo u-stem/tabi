@@ -8,11 +8,12 @@ import {
   Menu,
   MessageSquare,
   Settings,
+  UserPlus,
   Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { getSeasonalBg, Logo } from "@/components/logo";
@@ -35,6 +36,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { api } from "@/lib/api";
 import { signOut, useSession } from "@/lib/auth-client";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { MSG } from "@/lib/messages";
@@ -44,6 +46,7 @@ import { cn } from "@/lib/utils";
 const NAV_LINKS = [
   { href: "/home", label: "ホーム", icon: Home },
   { href: "/shared-trips", label: "共有旅行", icon: Users },
+  { href: "/friends", label: "フレンド", icon: UserPlus },
 ] as const;
 
 export function Header() {
@@ -54,6 +57,22 @@ export function Header() {
   const { open: openShortcutHelp } = useShortcutHelp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [friendRequestCount, setFriendRequestCount] = useState(0);
+
+  const fetchFriendRequestCount = useCallback(async () => {
+    try {
+      const data = await api<{ id: string }[]>("/api/friends/requests");
+      setFriendRequestCount(data.length);
+    } catch {
+      // Silently ignore - badge is non-critical
+    }
+  }, []);
+
+  useEffect(() => {
+    if (session?.user) {
+      fetchFriendRequestCount();
+    }
+  }, [session?.user, fetchFriendRequestCount]);
 
   async function handleSignOut() {
     try {
@@ -79,13 +98,18 @@ export function Header() {
                 key={link.href}
                 href={link.href}
                 className={cn(
-                  "hidden rounded-md px-3 py-1.5 text-sm transition-colors sm:inline-flex",
+                  "hidden items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors sm:inline-flex",
                   pathname === link.href
                     ? "bg-muted font-medium text-foreground"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {link.label}
+                {link.href === "/friends" && friendRequestCount > 0 && (
+                  <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-medium text-destructive-foreground">
+                    {friendRequestCount}
+                  </span>
+                )}
               </Link>
             ))}
         </div>
@@ -177,6 +201,11 @@ export function Header() {
                       >
                         <link.icon className="h-4 w-4" />
                         {link.label}
+                        {link.href === "/friends" && friendRequestCount > 0 && (
+                          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-medium text-destructive-foreground">
+                            {friendRequestCount}
+                          </span>
+                        )}
                       </Link>
                     ))}
                     <div className="my-2 border-t" />

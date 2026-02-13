@@ -90,3 +90,16 @@ export type ActivityLogResponse = {
   detail?: string | null;
   createdAt: string;
 };
+
+export type FriendResponse = {
+  friendId: string;
+  userId: string;
+  name: string;
+};
+
+export type FriendRequestResponse = {
+  id: string;
+  requesterId: string;
+  name: string;
+  createdAt: string;
+};

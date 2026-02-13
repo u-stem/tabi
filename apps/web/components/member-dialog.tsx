@@ -1,6 +1,6 @@
 "use client";
 
-import type { MemberResponse } from "@sugara/shared";
+import type { FriendResponse, MemberResponse } from "@sugara/shared";
 import { UserPlus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -32,6 +33,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/lib/api";
 import { MSG } from "@/lib/messages";
 
@@ -51,10 +53,13 @@ export function MemberDialog({
   memberLimitReached,
 }: MemberDialogProps) {
   const [members, setMembers] = useState<MemberResponse[]>([]);
+  const [friends, setFriends] = useState<FriendResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [userId, setUserId] = useState("");
   const [role, setRole] = useState("editor");
+  const [friendRole, setFriendRole] = useState("editor");
   const [adding, setAdding] = useState(false);
+  const [sendFriendRequest, setSendFriendRequest] = useState(true);
   const [removeMember, setRemoveMember] = useState<MemberResponse | null>(null);
 
   const fetchMembers = useCallback(async () => {
@@ -69,11 +74,21 @@ export function MemberDialog({
     }
   }, [tripId]);
 
+  const fetchFriends = useCallback(async () => {
+    try {
+      const data = await api<FriendResponse[]>("/api/friends");
+      setFriends(data);
+    } catch {
+      // Non-critical, silently ignore
+    }
+  }, []);
+
   useEffect(() => {
     if (open) {
       fetchMembers();
+      fetchFriends();
     }
-  }, [open, fetchMembers]);
+  }, [open, fetchMembers, fetchFriends]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -84,7 +99,31 @@ export function MemberDialog({
         body: JSON.stringify({ userId, role }),
       });
       toast.success(MSG.MEMBER_ADDED);
+      if (sendFriendRequest) {
+        // Send friend request silently - ignore errors (already friends, etc.)
+        api("/api/friends/requests", {
+          method: "POST",
+          body: JSON.stringify({ addresseeId: userId }),
+        }).catch(() => {});
+      }
       setUserId("");
+      fetchMembers();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : MSG.MEMBER_ADD_FAILED;
+      toast.error(message);
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function handleAddFriend(friendUserId: string) {
+    setAdding(true);
+    try {
+      await api(`/api/trips/${tripId}/members`, {
+        method: "POST",
+        body: JSON.stringify({ userId: friendUserId, role: friendRole }),
+      });
+      toast.success(MSG.MEMBER_ADDED);
       fetchMembers();
     } catch (err) {
       const message = err instanceof Error ? err.message : MSG.MEMBER_ADD_FAILED;
@@ -119,6 +158,8 @@ export function MemberDialog({
     }
   }
 
+  const memberUserIds = new Set(members.map((m) => m.userId));
+
   return (
     <Dialog
       open={open}
@@ -127,6 +168,7 @@ export function MemberDialog({
         if (!isOpen) {
           setUserId("");
           setRole("editor");
+          setFriendRole("editor");
         }
       }}
     >
@@ -185,42 +227,122 @@ export function MemberDialog({
           )}
 
           {isOwner && (
-            <form onSubmit={handleAdd} className="space-y-3 border-t pt-3">
+            <div className="space-y-3 border-t pt-3">
               <Label className="text-sm font-medium">メンバーを追加</Label>
               {memberLimitReached ? (
                 <p className="text-sm text-muted-foreground">{MSG.LIMIT_MEMBERS}</p>
               ) : (
-                <>
-                  <div className="flex gap-2">
-                    <Input
-                      id="member-user-id"
-                      name="userId"
-                      type="text"
-                      placeholder="ユーザーID"
-                      value={userId}
-                      onChange={(e) => setUserId(e.target.value)}
-                      required
-                      className="flex-1"
-                    />
-                    <Select value={role} onValueChange={setRole}>
-                      <SelectTrigger className="w-[100px]">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="editor">編集者</SelectItem>
-                        <SelectItem value="viewer">閲覧者</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <DialogFooter>
-                    <Button type="submit" size="sm" disabled={adding}>
-                      <UserPlus className="h-4 w-4" />
-                      {adding ? "追加中..." : "追加"}
-                    </Button>
-                  </DialogFooter>
-                </>
+                <Tabs defaultValue="friends">
+                  <TabsList className="w-full">
+                    <TabsTrigger value="friends" className="flex-1">
+                      フレンドから
+                    </TabsTrigger>
+                    <TabsTrigger value="userId" className="flex-1">
+                      ユーザーIDで追加
+                    </TabsTrigger>
+                  </TabsList>
+
+                  <TabsContent value="friends">
+                    {friends.length === 0 ? (
+                      <p className="py-4 text-center text-sm text-muted-foreground">
+                        フレンドがいません
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-end gap-2 py-1">
+                          <span className="text-xs text-muted-foreground">ロール:</span>
+                          <Select value={friendRole} onValueChange={setFriendRole}>
+                            <SelectTrigger className="h-7 w-[100px] text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="editor">編集者</SelectItem>
+                              <SelectItem value="viewer">閲覧者</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "30vh" }}>
+                          {friends.map((friend) => {
+                            const isMember = memberUserIds.has(friend.userId);
+                            return (
+                              <div
+                                key={friend.friendId}
+                                className="flex items-center justify-between gap-2 rounded-md border p-2"
+                              >
+                                <p
+                                  className={`truncate text-sm ${isMember ? "text-muted-foreground" : "font-medium"}`}
+                                >
+                                  {friend.name}
+                                </p>
+                                {isMember ? (
+                                  <span className="shrink-0 text-xs text-muted-foreground">
+                                    追加済み
+                                  </span>
+                                ) : (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={adding}
+                                    onClick={() => handleAddFriend(friend.userId)}
+                                  >
+                                    追加
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </TabsContent>
+
+                  <TabsContent value="userId">
+                    <form onSubmit={handleAdd} className="space-y-3">
+                      <div className="flex gap-2">
+                        <Input
+                          id="member-user-id"
+                          name="userId"
+                          type="text"
+                          placeholder="ユーザーID"
+                          value={userId}
+                          onChange={(e) => setUserId(e.target.value)}
+                          required
+                          className="flex-1"
+                        />
+                        <Select value={role} onValueChange={setRole}>
+                          <SelectTrigger className="w-[100px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="editor">編集者</SelectItem>
+                            <SelectItem value="viewer">閲覧者</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Checkbox
+                          id="send-friend-request"
+                          checked={sendFriendRequest}
+                          onCheckedChange={(checked) => setSendFriendRequest(checked === true)}
+                        />
+                        <Label
+                          htmlFor="send-friend-request"
+                          className="text-xs text-muted-foreground"
+                        >
+                          フレンド申請も送る
+                        </Label>
+                      </div>
+                      <DialogFooter>
+                        <Button type="submit" size="sm" disabled={adding}>
+                          <UserPlus className="h-4 w-4" />
+                          {adding ? "追加中..." : "追加"}
+                        </Button>
+                      </DialogFooter>
+                    </form>
+                  </TabsContent>
+                </Tabs>
               )}
-            </form>
+            </div>
           )}
         </div>
       </DialogContent>

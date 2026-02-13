@@ -25,6 +25,8 @@ export const transportMethodEnum = pgEnum("transport_method", [
   "airplane",
 ]);
 
+export const friendStatusEnum = pgEnum("friend_status", ["pending", "accepted"]);
+
 export const scheduleCategoryEnum = pgEnum("schedule_category", [
   "sightseeing",
   "restaurant",
@@ -209,11 +211,26 @@ export const activityLogs = pgTable("activity_logs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }).enableRLS();
 
+export const friends = pgTable("friends", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  requesterId: uuid("requester_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  addresseeId: uuid("addressee_id")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  status: friendStatusEnum("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}).enableRLS();
+
 // --- Relations ---
 
 export const usersRelations = relations(users, ({ many }) => ({
   trips: many(trips),
   tripMembers: many(tripMembers),
+  sentFriendRequests: many(friends, { relationName: "friendRequester" }),
+  receivedFriendRequests: many(friends, { relationName: "friendAddressee" }),
 }));
 
 export const tripsRelations = relations(trips, ({ one, many }) => ({
@@ -259,4 +276,17 @@ export const scheduleReactionsRelations = relations(scheduleReactions, ({ one })
 export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   trip: one(trips, { fields: [activityLogs.tripId], references: [trips.id] }),
   user: one(users, { fields: [activityLogs.userId], references: [users.id] }),
+}));
+
+export const friendsRelations = relations(friends, ({ one }) => ({
+  requester: one(users, {
+    fields: [friends.requesterId],
+    references: [users.id],
+    relationName: "friendRequester",
+  }),
+  addressee: one(users, {
+    fields: [friends.addresseeId],
+    references: [users.id],
+    relationName: "friendAddressee",
+  }),
 }));

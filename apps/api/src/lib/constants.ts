@@ -26,4 +26,9 @@ export const ERROR_MSG = {
   LIMIT_SCHEDULES: "Schedule limit reached",
   LIMIT_PATTERNS: "Pattern limit reached",
   LIMIT_MEMBERS: "Member limit reached",
+  CANNOT_FRIEND_SELF: "Cannot send friend request to yourself",
+  ALREADY_FRIENDS: "Already friends or request pending",
+  FRIEND_REQUEST_NOT_FOUND: "Friend request not found",
+  FRIEND_NOT_FOUND: "Friend not found",
+  LIMIT_FRIENDS: "Friend limit reached",
 } as const;

@@ -215,7 +215,7 @@ function CandidateCard({
               aria-label="いいね"
               aria-pressed={spot.myReaction === "like"}
             >
-              <span aria-hidden="true">{"👍"}</span>
+              <span className="text-base" aria-hidden="true">{"👍"}</span>
               {(spot.likeCount ?? 0) > 0 && <span>{spot.likeCount}</span>}
             </button>
             <button
@@ -228,7 +228,7 @@ function CandidateCard({
               aria-label="うーん"
               aria-pressed={spot.myReaction === "hmm"}
             >
-              <span aria-hidden="true">{"🤔"}</span>
+              <span className="text-base" aria-hidden="true">{"🤔"}</span>
               {(spot.hmmCount ?? 0) > 0 && <span>{spot.hmmCount}</span>}
             </button>
           </div>

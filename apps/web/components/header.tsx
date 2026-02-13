@@ -2,17 +2,7 @@
 
 import type { FriendRequestResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Download,
-  Home,
-  Keyboard,
-  LogOut,
-  Menu,
-  MessageSquare,
-  Settings,
-  UserPlus,
-  Users,
-} from "lucide-react";
+import { Download, Keyboard, LogOut, MessageSquare, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -42,15 +32,10 @@ import { api } from "@/lib/api";
 import { signOut, useSession } from "@/lib/auth-client";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { MSG } from "@/lib/messages";
+import { NAV_LINKS } from "@/lib/nav-links";
 import { queryKeys } from "@/lib/query-keys";
 import { useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
-
-const NAV_LINKS = [
-  { href: "/home", label: "ホーム", icon: Home },
-  { href: "/shared-trips", label: "共有旅行", icon: Users },
-  { href: "/friends", label: "フレンド", icon: UserPlus },
-] as const;
 
 export function Header() {
   const router = useRouter();
@@ -163,15 +148,19 @@ export function Header() {
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Mobile: hamburger + sheet */}
+              {/* Mobile: avatar + sheet (nav links handled by BottomNav) */}
               <Button
                 variant="ghost"
                 size="icon"
-                className="sm:hidden"
+                className="rounded-full sm:hidden"
                 onClick={() => setMobileMenuOpen(true)}
               >
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">メニュー</span>
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className={`${getSeasonalBg()} text-sm font-medium text-white`}>
+                    {session.user.name?.charAt(0).toUpperCase() ?? "?"}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="sr-only">ユーザーメニュー</span>
               </Button>
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetContent side="right">
@@ -181,29 +170,7 @@ export function Header() {
                       {session.user.username ? `@${session.user.username}` : ""}
                     </SheetDescription>
                   </SheetHeader>
-                  <nav className="mt-6 flex flex-col gap-1" aria-label="モバイルナビゲーション">
-                    {NAV_LINKS.map((link) => (
-                      <Link
-                        key={link.href}
-                        href={link.href}
-                        onClick={() => setMobileMenuOpen(false)}
-                        className={cn(
-                          "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                          pathname === link.href
-                            ? "bg-muted font-medium text-foreground"
-                            : "text-muted-foreground hover:text-foreground",
-                        )}
-                      >
-                        <link.icon className="h-4 w-4" />
-                        {link.label}
-                        {link.href === "/friends" && friendRequestCount > 0 && (
-                          <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-medium text-destructive-foreground">
-                            {friendRequestCount}
-                          </span>
-                        )}
-                      </Link>
-                    ))}
-                    <div className="my-2 border-t" />
+                  <nav className="mt-6 flex flex-col gap-1" aria-label="モバイルメニュー">
                     <Link
                       href="/settings"
                       onClick={() => setMobileMenuOpen(false)}

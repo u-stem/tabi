@@ -39,7 +39,7 @@ export function ScrollToTop({ containerRef, threshold = 200 }: ScrollToTopProps)
       <Button
         variant="outline"
         size="icon"
-        className="h-8 w-8 rounded-full shadow-md"
+        className="h-10 w-10 rounded-full shadow-md"
         onClick={scrollToTop}
         aria-label="トップに戻る"
       >

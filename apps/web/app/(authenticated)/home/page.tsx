@@ -8,6 +8,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 
 import { toast } from "sonner";
 import { CreateTripDialog } from "@/components/create-trip-dialog";
+import { PullToRefresh } from "@/components/pull-to-refresh";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import { TripCard } from "@/components/trip-card";
 import type { SortKey, StatusFilter } from "@/components/trip-toolbar";
@@ -137,6 +138,26 @@ export default function HomePage() {
     setSelectedIds(new Set());
   }
 
+  async function handleDeleteSingle(id: string) {
+    try {
+      await api(`/api/trips/${id}`, { method: "DELETE" });
+      toast.success(MSG.TRIP_BULK_DELETED(1));
+      await invalidateTrips();
+    } catch {
+      toast.error(MSG.TRIP_BULK_DELETE_FAILED(1));
+    }
+  }
+
+  async function handleDuplicateSingle(id: string) {
+    try {
+      await api(`/api/trips/${id}/duplicate`, { method: "POST" });
+      toast.success(MSG.TRIP_BULK_DUPLICATED(1));
+      await invalidateTrips();
+    } catch {
+      toast.error(MSG.TRIP_BULK_DUPLICATE_FAILED(1));
+    }
+  }
+
   async function handleDeleteSelected() {
     const ids = [...selectedIds];
     setDeleting(true);
@@ -191,7 +212,7 @@ export default function HomePage() {
   if (isLoading && !showSkeleton) return <div />;
 
   return (
-    <div>
+    <PullToRefresh onRefresh={invalidateTrips} enabled={!isLoading}>
       {showSkeleton ? (
         <>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
@@ -289,6 +310,8 @@ export default function HomePage() {
                   selectable={selectionMode}
                   selected={selectedIds.has(trip.id)}
                   onSelect={handleSelect}
+                  onDuplicate={handleDuplicateSingle}
+                  onDelete={handleDeleteSingle}
                 />
               ))}
             </div>
@@ -300,6 +323,6 @@ export default function HomePage() {
         onOpenChange={setCreateOpen}
         onCreated={invalidateTrips}
       />
-    </div>
+    </PullToRefresh>
   );
 }

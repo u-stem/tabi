@@ -1,3 +1,4 @@
+import { BottomNav } from "@/components/bottom-nav";
 import { Header } from "@/components/header";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ShortcutHelpProvider } from "@/lib/shortcut-help-context";
@@ -8,7 +9,8 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       <ShortcutHelpProvider>
         <div className="min-h-screen">
           <Header />
-          <main className="container py-4 sm:py-8">{children}</main>
+          <main className="container py-4 pb-20 sm:py-8 sm:pb-8">{children}</main>
+          <BottomNav />
         </div>
       </ShortcutHelpProvider>
     </TooltipProvider>

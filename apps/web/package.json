@@ -12,6 +12,7 @@
     "check": "biome check --write app/ components/ lib/",
     "check-types": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
+    "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test"
   },
   "dependencies": {
@@ -60,6 +61,7 @@
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.0.18",
     "autoprefixer": "^10",
     "jsdom": "^28.0.0",
     "postcss": "^8",

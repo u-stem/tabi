@@ -13,5 +13,10 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     exclude: ["e2e/**", "node_modules/**"],
+    coverage: {
+      provider: "v8",
+      include: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
+      exclude: ["**/*.test.{ts,tsx}", "**/__tests__/**", "e2e/**", "components/ui/**"],
+    },
   },
 });

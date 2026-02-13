@@ -1,6 +1,7 @@
 import { createFeedbackSchema } from "@sugara/shared";
 import { Hono } from "hono";
 import { ERROR_MSG } from "../lib/constants";
+import { env } from "../lib/env";
 import { requireAuth } from "../middleware/auth";
 
 const TITLE_MAX_LENGTH = 50;
@@ -19,8 +20,8 @@ feedbackRoutes.post("/feedback", async (c) => {
 
   const { body } = parsed.data;
 
-  const token = process.env.GITHUB_TOKEN;
-  const repo = process.env.GITHUB_FEEDBACK_REPO;
+  const token = env.GITHUB_TOKEN;
+  const repo = env.GITHUB_FEEDBACK_REPO;
   if (!token || !repo || !REPO_FORMAT.test(repo)) {
     return c.json({ error: ERROR_MSG.GITHUB_NOT_CONFIGURED }, 500);
   }

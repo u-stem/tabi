@@ -67,6 +67,7 @@ import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
 import { MSG } from "@/lib/messages";
 import { CATEGORY_OPTIONS } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
+import { DragHandle } from "./drag-handle";
 
 type CandidatePanelProps = {
   tripId: string;
@@ -91,33 +92,6 @@ type CandidatePanelProps = {
   addDialogOpen?: boolean;
   onAddDialogOpenChange?: (open: boolean) => void;
 };
-
-function CandidateDragHandle({
-  attributes,
-  listeners,
-}: {
-  attributes: ReturnType<typeof useSortable>["attributes"];
-  listeners: ReturnType<typeof useSortable>["listeners"];
-}) {
-  return (
-    <button
-      type="button"
-      className="shrink-0 cursor-grab touch-none text-muted-foreground hover:text-foreground"
-      aria-label="ドラッグで並び替え"
-      {...attributes}
-      {...listeners}
-    >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-        <circle cx="5" cy="3" r="1.5" />
-        <circle cx="11" cy="3" r="1.5" />
-        <circle cx="5" cy="8" r="1.5" />
-        <circle cx="11" cy="8" r="1.5" />
-        <circle cx="5" cy="13" r="1.5" />
-        <circle cx="11" cy="13" r="1.5" />
-      </svg>
-    </button>
-  );
-}
 
 function CandidateCard({
   spot,
@@ -186,7 +160,7 @@ function CandidateCard({
         {selectable ? (
           <SelectionIndicator checked={!!selected} />
         ) : draggable ? (
-          <CandidateDragHandle attributes={attributes} listeners={listeners} />
+          <DragHandle attributes={attributes} listeners={listeners} />
         ) : (
           <span
             className={`h-2.5 w-2.5 shrink-0 rounded-full ${SCHEDULE_COLOR_CLASSES[spot.color].bg}`}

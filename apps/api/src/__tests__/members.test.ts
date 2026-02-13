@@ -1,5 +1,5 @@
-import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createTestApp } from "./test-helpers";
 
 const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbSelect } =
   vi.hoisted(() => ({
@@ -50,12 +50,6 @@ const fakeUser2Id = "00000000-0000-0000-0000-000000000002";
 const tripId = "trip-1";
 const basePath = `/api/trips/${tripId}/members`;
 
-function createApp() {
-  const app = new Hono();
-  app.route("/api/trips", memberRoutes);
-  return app;
-}
-
 describe("Member routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -93,7 +87,7 @@ describe("Member routes", () => {
       ];
       mockDbQuery.tripMembers.findMany.mockResolvedValue(members);
 
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(basePath);
       const body = await res.json();
 
@@ -106,7 +100,7 @@ describe("Member routes", () => {
     it("returns 404 when user is not a member", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(basePath);
 
       expect(res.status).toBe(404);
@@ -115,7 +109,7 @@ describe("Member routes", () => {
     it("returns 401 when unauthenticated", async () => {
       mockGetSession.mockResolvedValue(null);
 
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(basePath);
 
       expect(res.status).toBe(401);
@@ -136,7 +130,7 @@ describe("Member routes", () => {
         values: vi.fn().mockResolvedValue(undefined),
       });
 
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -157,7 +151,7 @@ describe("Member routes", () => {
         role: "editor",
       });
 
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -170,7 +164,7 @@ describe("Member routes", () => {
     it("returns 404 when target user not found", async () => {
       mockDbQuery.users.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -190,7 +184,7 @@ describe("Member routes", () => {
         .mockResolvedValueOnce({ tripId, userId: fakeUserId, role: "owner" })
         .mockResolvedValueOnce({ tripId, userId: fakeUser2Id, role: "editor" });
 
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -201,7 +195,7 @@ describe("Member routes", () => {
     });
 
     it("returns 400 with invalid userId", async () => {
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -218,7 +212,7 @@ describe("Member routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -246,7 +240,7 @@ describe("Member routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${fakeUser2Id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -259,7 +253,7 @@ describe("Member routes", () => {
     });
 
     it("returns 400 when trying to change own role", async () => {
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${fakeUserId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -276,7 +270,7 @@ describe("Member routes", () => {
         role: "editor",
       });
 
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${fakeUser2Id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -302,7 +296,7 @@ describe("Member routes", () => {
         where: vi.fn().mockResolvedValue(undefined),
       });
 
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${fakeUser2Id}`, {
         method: "DELETE",
       });
@@ -313,7 +307,7 @@ describe("Member routes", () => {
     });
 
     it("returns 400 when trying to remove self", async () => {
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${fakeUserId}`, {
         method: "DELETE",
       });
@@ -328,7 +322,7 @@ describe("Member routes", () => {
         role: "viewer",
       });
 
-      const app = createApp();
+      const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${fakeUser2Id}`, {
         method: "DELETE",
       });

@@ -1,5 +1,5 @@
-import { Hono } from "hono";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createTestApp, TEST_USER } from "./test-helpers";
 
 const { mockGetSession, mockFetch } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
@@ -16,13 +16,7 @@ vi.mock("../lib/auth", () => ({
 
 import { feedbackRoutes } from "../routes/feedback";
 
-const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
-
-function createApp() {
-  const app = new Hono();
-  app.route("/api", feedbackRoutes);
-  return app;
-}
+const fakeUser = TEST_USER;
 
 describe("Feedback routes", () => {
   beforeEach(() => {
@@ -43,7 +37,7 @@ describe("Feedback routes", () => {
 
   it("returns 401 without auth", async () => {
     mockGetSession.mockResolvedValue(null);
-    const app = createApp();
+    const app = createTestApp(feedbackRoutes, "/api");
     const res = await app.request("/api/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -53,7 +47,7 @@ describe("Feedback routes", () => {
   });
 
   it("returns 400 for empty body", async () => {
-    const app = createApp();
+    const app = createTestApp(feedbackRoutes, "/api");
     const res = await app.request("/api/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -63,7 +57,7 @@ describe("Feedback routes", () => {
   });
 
   it("returns 400 for body exceeding max length", async () => {
-    const app = createApp();
+    const app = createTestApp(feedbackRoutes, "/api");
     const res = await app.request("/api/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -78,7 +72,7 @@ describe("Feedback routes", () => {
         status: 201,
       }),
     );
-    const app = createApp();
+    const app = createTestApp(feedbackRoutes, "/api");
     const res = await app.request("/api/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -103,7 +97,7 @@ describe("Feedback routes", () => {
         status: 201,
       }),
     );
-    const app = createApp();
+    const app = createTestApp(feedbackRoutes, "/api");
     const longBody = "a".repeat(60);
     await app.request("/api/feedback", {
       method: "POST",
@@ -118,7 +112,7 @@ describe("Feedback routes", () => {
     mockFetch.mockResolvedValue(
       new Response(JSON.stringify({ message: "Bad credentials" }), { status: 401 }),
     );
-    const app = createApp();
+    const app = createTestApp(feedbackRoutes, "/api");
     const res = await app.request("/api/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -130,7 +124,7 @@ describe("Feedback routes", () => {
   it("returns 500 when GitHub env vars are not configured", async () => {
     vi.stubEnv("GITHUB_TOKEN", "");
     vi.stubEnv("GITHUB_FEEDBACK_REPO", "");
-    const app = createApp();
+    const app = createTestApp(feedbackRoutes, "/api");
     const res = await app.request("/api/feedback", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

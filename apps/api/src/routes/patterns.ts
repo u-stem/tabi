@@ -3,13 +3,14 @@ import {
   MAX_PATTERNS_PER_DAY,
   updateDayPatternSchema,
 } from "@sugara/shared";
-import { and, count, eq, sql } from "drizzle-orm";
+import { and, count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { canEdit, verifyDayAccess } from "../lib/permissions";
+import { getNextSortOrder } from "../lib/sort-order";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -64,10 +65,12 @@ patternRoutes.post("/:tripId/days/:dayId/patterns", async (c) => {
     return c.json({ error: ERROR_MSG.LIMIT_PATTERNS }, 409);
   }
 
-  const maxOrderResult = await db
-    .select({ max: sql<number>`COALESCE(MAX(${dayPatterns.sortOrder}), -1)` })
-    .from(dayPatterns)
-    .where(eq(dayPatterns.tripDayId, dayId));
+  const nextOrder = await getNextSortOrder(
+    db,
+    dayPatterns.sortOrder,
+    dayPatterns,
+    eq(dayPatterns.tripDayId, dayId),
+  );
 
   const [pattern] = await db
     .insert(dayPatterns)
@@ -75,7 +78,7 @@ patternRoutes.post("/:tripId/days/:dayId/patterns", async (c) => {
       tripDayId: dayId,
       label: parsed.data.label,
       isDefault: false,
-      sortOrder: (maxOrderResult[0]?.max ?? -1) + 1,
+      sortOrder: nextOrder,
     })
     .returning();
 
@@ -195,10 +198,12 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
     return c.json({ error: ERROR_MSG.LIMIT_PATTERNS }, 409);
   }
 
-  const maxOrderResult = await db
-    .select({ max: sql<number>`COALESCE(MAX(${dayPatterns.sortOrder}), -1)` })
-    .from(dayPatterns)
-    .where(eq(dayPatterns.tripDayId, dayId));
+  const nextOrder = await getNextSortOrder(
+    db,
+    dayPatterns.sortOrder,
+    dayPatterns,
+    eq(dayPatterns.tripDayId, dayId),
+  );
 
   const result = await db.transaction(async (tx) => {
     const [newPattern] = await tx
@@ -207,7 +212,7 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
         tripDayId: dayId,
         label: `${source.label} (copy)`,
         isDefault: false,
-        sortOrder: (maxOrderResult[0]?.max ?? -1) + 1,
+        sortOrder: nextOrder,
       })
       .returning();
 

@@ -1,9 +1,9 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { env } from "../lib/env";
 import * as schema from "./schema";
 
-const connectionString =
-  process.env.DATABASE_URL || "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+const connectionString = env.DATABASE_URL;
 
 // Supabase requires SSL for external connections (non-localhost)
 const isLocalhost =
@@ -12,4 +12,3 @@ const client = postgres(connectionString, {
   ssl: isLocalhost ? false : "require",
 });
 export const db = drizzle(client, { schema });
-export type Database = typeof db;

@@ -1,5 +1,5 @@
-import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createTestApp, TEST_USER } from "./test-helpers";
 
 const {
   mockGetSession,
@@ -63,17 +63,11 @@ import { MAX_SCHEDULES_PER_TRIP } from "@sugara/shared";
 import { logActivity } from "../lib/activity-logger";
 import { scheduleRoutes } from "../routes/schedules";
 
-const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
+const fakeUser = TEST_USER;
 const tripId = "trip-1";
 const dayId = "day-1";
 const patternId = "pattern-1";
 const basePath = `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`;
-
-function createApp() {
-  const app = new Hono();
-  app.route("/api/trips", scheduleRoutes);
-  return app;
-}
 
 describe("Schedule routes", () => {
   beforeEach(() => {
@@ -105,7 +99,7 @@ describe("Schedule routes", () => {
       ];
       mockDbQuery.schedules.findMany.mockResolvedValue(patternSchedules);
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(basePath);
       const body = await res.json();
 
@@ -116,7 +110,7 @@ describe("Schedule routes", () => {
     it("returns 404 when day does not belong to trip", async () => {
       mockDbQuery.tripDays.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(basePath);
 
       expect(res.status).toBe(404);
@@ -125,7 +119,7 @@ describe("Schedule routes", () => {
     it("returns 404 when pattern does not belong to day", async () => {
       mockDbQuery.dayPatterns.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(basePath);
 
       expect(res.status).toBe(404);
@@ -154,7 +148,7 @@ describe("Schedule routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -170,7 +164,7 @@ describe("Schedule routes", () => {
     });
 
     it("returns 400 with empty name", async () => {
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -184,7 +178,7 @@ describe("Schedule routes", () => {
     });
 
     it("returns 400 with invalid category", async () => {
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -221,7 +215,7 @@ describe("Schedule routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -242,7 +236,7 @@ describe("Schedule routes", () => {
     });
 
     it("returns 400 with invalid transportMethod", async () => {
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -259,7 +253,7 @@ describe("Schedule routes", () => {
     it("returns 404 when day does not belong to user", async () => {
       mockDbQuery.tripDays.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -279,7 +273,7 @@ describe("Schedule routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -306,7 +300,7 @@ describe("Schedule routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/schedule-1`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -319,7 +313,7 @@ describe("Schedule routes", () => {
     });
 
     it("returns 400 with invalid data", async () => {
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/schedule-1`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -351,7 +345,7 @@ describe("Schedule routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/schedule-1`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -370,7 +364,7 @@ describe("Schedule routes", () => {
     it("returns 404 when schedule not found", async () => {
       mockDbQuery.schedules.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/schedule-1`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -378,6 +372,30 @@ describe("Schedule routes", () => {
       });
 
       expect(res.status).toBe(404);
+    });
+
+    it("returns 409 when expectedUpdatedAt does not match", async () => {
+      const existing = { id: "schedule-1", name: "Old", category: "sightseeing" };
+      mockDbQuery.schedules.findFirst.mockResolvedValue(existing);
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([]),
+          }),
+        }),
+      });
+
+      const app = createTestApp(scheduleRoutes, "/api/trips");
+      const res = await app.request(`${basePath}/schedule-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Stale Update",
+          expectedUpdatedAt: "2024-01-01T00:00:00.000Z",
+        }),
+      });
+
+      expect(res.status).toBe(409);
     });
   });
 
@@ -388,7 +406,7 @@ describe("Schedule routes", () => {
         where: vi.fn().mockResolvedValue(undefined),
       });
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/schedule-1`, {
         method: "DELETE",
       });
@@ -401,7 +419,7 @@ describe("Schedule routes", () => {
     it("returns 404 when schedule not found", async () => {
       mockDbQuery.schedules.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/nonexistent`, {
         method: "DELETE",
       });
@@ -434,7 +452,7 @@ describe("Schedule routes", () => {
         });
       });
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`/api/trips/${tripId}/schedules/batch-unassign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -447,7 +465,7 @@ describe("Schedule routes", () => {
     });
 
     it("returns 400 for empty scheduleIds", async () => {
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`/api/trips/${tripId}/schedules/batch-unassign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -462,7 +480,7 @@ describe("Schedule routes", () => {
         { id: id1, tripId, dayPatternId: patternId },
       ]);
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`/api/trips/${tripId}/schedules/batch-unassign`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -486,7 +504,7 @@ describe("Schedule routes", () => {
         where: vi.fn().mockResolvedValue(undefined),
       });
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/batch-delete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -499,7 +517,7 @@ describe("Schedule routes", () => {
     });
 
     it("returns 400 for empty scheduleIds", async () => {
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/batch-delete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -512,7 +530,7 @@ describe("Schedule routes", () => {
     it("returns 404 when some schedules do not belong to pattern", async () => {
       mockDbQuery.schedules.findMany.mockResolvedValue([{ id: id1, dayPatternId: patternId }]);
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/batch-delete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -580,7 +598,7 @@ describe("Schedule routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/batch-duplicate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -593,7 +611,7 @@ describe("Schedule routes", () => {
     });
 
     it("returns 400 for empty scheduleIds", async () => {
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/batch-duplicate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -606,7 +624,7 @@ describe("Schedule routes", () => {
     it("returns 404 when some schedules do not belong to pattern", async () => {
       mockDbQuery.schedules.findMany.mockResolvedValue([{ id: id1, dayPatternId: patternId }]);
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/batch-duplicate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -623,7 +641,7 @@ describe("Schedule routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/batch-duplicate`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -653,7 +671,7 @@ describe("Schedule routes", () => {
         await fn(tx);
       });
 
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/reorder`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -669,7 +687,7 @@ describe("Schedule routes", () => {
     });
 
     it("returns 400 with invalid data", async () => {
-      const app = createApp();
+      const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(`${basePath}/reorder`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

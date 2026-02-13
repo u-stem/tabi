@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockGetSession, mockDbQuery, mockDbUpdate } = vi.hoisted(() => ({
@@ -34,17 +33,12 @@ vi.mock("../lib/activity-logger", () => ({
 }));
 
 import { tripDayRoutes } from "../routes/trip-days";
+import { createTestApp, TEST_USER } from "./test-helpers";
 
-const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
+const fakeUser = TEST_USER;
 const tripId = "trip-1";
 const dayId = "day-1";
 const basePath = `/api/trips/${tripId}/days/${dayId}`;
-
-function createApp() {
-  const app = new Hono();
-  app.route("/api/trips", tripDayRoutes);
-  return app;
-}
 
 describe("Trip day routes", () => {
   beforeEach(() => {
@@ -84,7 +78,7 @@ describe("Trip day routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(tripDayRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -112,7 +106,7 @@ describe("Trip day routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(tripDayRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -131,7 +125,7 @@ describe("Trip day routes", () => {
         role: "viewer",
       });
 
-      const app = createApp();
+      const app = createTestApp(tripDayRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -144,7 +138,7 @@ describe("Trip day routes", () => {
     it("returns 404 for non-existent day", async () => {
       mockDbQuery.tripDays.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(tripDayRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -155,7 +149,7 @@ describe("Trip day routes", () => {
     });
 
     it("returns 400 for memo exceeding max length", async () => {
-      const app = createApp();
+      const app = createTestApp(tripDayRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },

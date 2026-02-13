@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockGetSession, mockDbQuery, mockDbUpdate } = vi.hoisted(() => ({
@@ -30,14 +29,9 @@ vi.mock("../db/index", () => ({
 }));
 
 import { shareRoutes } from "../routes/share";
+import { createTestApp, TEST_USER } from "./test-helpers";
 
-const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
-
-function createApp() {
-  const app = new Hono();
-  app.route("/", shareRoutes);
-  return app;
-}
+const fakeUser = TEST_USER;
 
 describe("Share routes", () => {
   beforeEach(() => {
@@ -58,7 +52,7 @@ describe("Share routes", () => {
     it("returns 401 when unauthenticated", async () => {
       mockGetSession.mockResolvedValue(null);
 
-      const app = createApp();
+      const app = createTestApp(shareRoutes, "/");
       const res = await app.request("/api/trips/trip-1/share", {
         method: "POST",
       });
@@ -69,7 +63,7 @@ describe("Share routes", () => {
     it("returns 404 when user is not owner", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(shareRoutes, "/");
       const res = await app.request("/api/trips/trip-1/share", {
         method: "POST",
       });
@@ -84,7 +78,7 @@ describe("Share routes", () => {
         role: "editor",
       });
 
-      const app = createApp();
+      const app = createTestApp(shareRoutes, "/");
       const res = await app.request("/api/trips/trip-1/share", {
         method: "POST",
       });
@@ -100,7 +94,7 @@ describe("Share routes", () => {
         shareTokenExpiresAt: expiresAt,
       });
 
-      const app = createApp();
+      const app = createTestApp(shareRoutes, "/");
       const res = await app.request("/api/trips/trip-1/share", {
         method: "POST",
       });
@@ -128,7 +122,7 @@ describe("Share routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(shareRoutes, "/");
       const res = await app.request("/api/trips/trip-1/share", {
         method: "POST",
       });
@@ -154,7 +148,7 @@ describe("Share routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(shareRoutes, "/");
       const res = await app.request("/api/trips/trip-1/share", {
         method: "PUT",
       });
@@ -172,7 +166,7 @@ describe("Share routes", () => {
         role: "editor",
       });
 
-      const app = createApp();
+      const app = createTestApp(shareRoutes, "/");
       const res = await app.request("/api/trips/trip-1/share", {
         method: "PUT",
       });
@@ -185,7 +179,7 @@ describe("Share routes", () => {
     it("returns 404 with invalid token", async () => {
       mockDbQuery.trips.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(shareRoutes, "/");
       const res = await app.request("/api/shared/invalid-token");
 
       expect(res.status).toBe(404);
@@ -205,7 +199,7 @@ describe("Share routes", () => {
       };
       mockDbQuery.trips.findFirst.mockResolvedValue(sharedTrip);
 
-      const app = createApp();
+      const app = createTestApp(shareRoutes, "/");
       const res = await app.request("/api/shared/valid-token");
       const body = await res.json();
 
@@ -227,7 +221,7 @@ describe("Share routes", () => {
         days: [],
       });
 
-      const app = createApp();
+      const app = createTestApp(shareRoutes, "/");
       const res = await app.request("/api/shared/expired-token");
 
       expect(res.status).toBe(404);
@@ -244,7 +238,7 @@ describe("Share routes", () => {
         days: [],
       });
 
-      const app = createApp();
+      const app = createTestApp(shareRoutes, "/");
       const res = await app.request("/api/shared/valid-token");
 
       expect(res.status).toBe(200);

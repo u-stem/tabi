@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient, useSession } from "@/lib/auth-client";
 import { translateAuthError } from "@/lib/auth-error";
+import { copyToClipboard } from "@/lib/clipboard";
 import {
   getPasswordRequirementsText,
   MIN_PASSWORD_LENGTH,
@@ -71,19 +72,7 @@ function UserIdSection({ userId }: { userId: string }) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
-    try {
-      await navigator.clipboard.writeText(userId);
-    } catch {
-      // Fallback for environments where Clipboard API is unavailable
-      const textarea = document.createElement("textarea");
-      textarea.value = userId;
-      textarea.style.position = "fixed";
-      textarea.style.opacity = "0";
-      document.body.appendChild(textarea);
-      textarea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textarea);
-    }
+    await copyToClipboard(userId);
     setCopied(true);
     toast.success(MSG.SETTINGS_USER_ID_COPIED);
     setTimeout(() => setCopied(false), 2000);

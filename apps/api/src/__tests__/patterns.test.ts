@@ -1,5 +1,5 @@
-import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createTestApp, TEST_USER } from "./test-helpers";
 
 const {
   mockGetSession,
@@ -56,17 +56,11 @@ vi.mock("../lib/activity-logger", () => ({
 import { MAX_PATTERNS_PER_DAY } from "@sugara/shared";
 import { patternRoutes } from "../routes/patterns";
 
-const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
+const fakeUser = TEST_USER;
 const tripId = "trip-1";
 const dayId = "day-1";
 const patternId = "pattern-1";
 const basePath = `/api/trips/${tripId}/days/${dayId}/patterns`;
-
-function createApp() {
-  const app = new Hono();
-  app.route("/api/trips", patternRoutes);
-  return app;
-}
 
 describe("Pattern routes", () => {
   beforeEach(() => {
@@ -98,7 +92,7 @@ describe("Pattern routes", () => {
       ];
       mockDbQuery.dayPatterns.findMany.mockResolvedValue(patterns);
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(basePath);
       const body = await res.json();
 
@@ -109,7 +103,7 @@ describe("Pattern routes", () => {
     it("returns 404 when day does not belong to trip", async () => {
       mockDbQuery.tripDays.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(basePath);
 
       expect(res.status).toBe(404);
@@ -118,7 +112,7 @@ describe("Pattern routes", () => {
     it("returns 404 for non-member", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue(null);
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(basePath);
 
       expect(res.status).toBe(404);
@@ -140,7 +134,7 @@ describe("Pattern routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -153,7 +147,7 @@ describe("Pattern routes", () => {
     });
 
     it("returns 400 for empty label", async () => {
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -170,7 +164,7 @@ describe("Pattern routes", () => {
         role: "viewer",
       });
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -187,7 +181,7 @@ describe("Pattern routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(basePath, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -216,7 +210,7 @@ describe("Pattern routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${patternId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -231,7 +225,7 @@ describe("Pattern routes", () => {
     it("returns 404 for non-existent pattern", async () => {
       mockDbQuery.dayPatterns.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${patternId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -242,7 +236,7 @@ describe("Pattern routes", () => {
     });
 
     it("returns 400 for invalid data", async () => {
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${patternId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -264,7 +258,7 @@ describe("Pattern routes", () => {
         where: vi.fn().mockResolvedValue(undefined),
       });
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${patternId}`, {
         method: "DELETE",
       });
@@ -279,7 +273,7 @@ describe("Pattern routes", () => {
         isDefault: true,
       });
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${patternId}`, {
         method: "DELETE",
       });
@@ -290,7 +284,7 @@ describe("Pattern routes", () => {
     it("returns 404 for non-existent pattern", async () => {
       mockDbQuery.dayPatterns.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${patternId}`, {
         method: "DELETE",
       });
@@ -342,7 +336,7 @@ describe("Pattern routes", () => {
         return fn(tx);
       });
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${patternId}/duplicate`, {
         method: "POST",
       });
@@ -355,7 +349,7 @@ describe("Pattern routes", () => {
     it("returns 404 for non-existent pattern", async () => {
       mockDbQuery.dayPatterns.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${patternId}/duplicate`, {
         method: "POST",
       });
@@ -376,7 +370,7 @@ describe("Pattern routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(patternRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${patternId}/duplicate`, {
         method: "POST",
       });

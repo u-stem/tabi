@@ -1,10 +1,9 @@
 import { z } from "zod";
 
-export const fullMemberRoleSchema = z.enum(["owner", "editor", "viewer"]);
+const fullMemberRoleSchema = z.enum(["owner", "editor", "viewer"]);
 export type MemberRole = z.infer<typeof fullMemberRoleSchema>;
 
-export const assignableRoleSchema = z.enum(["editor", "viewer"]);
-export type AssignableRole = z.infer<typeof assignableRoleSchema>;
+const assignableRoleSchema = z.enum(["editor", "viewer"]);
 
 export const addMemberSchema = z.object({
   userId: z.string().uuid(),

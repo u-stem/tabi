@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockGetSession, mockDbQuery, mockDbSelect, mockDbInsert, mockDbDelete } = vi.hoisted(
@@ -33,16 +32,11 @@ vi.mock("../db/index", () => ({
 }));
 
 import { activityLogRoutes } from "../routes/activity-logs";
+import { createTestApp, TEST_USER } from "./test-helpers";
 
-const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
+const fakeUser = TEST_USER;
 const tripId = "trip-1";
 const basePath = `/api/trips/${tripId}/activity-logs`;
-
-function createApp() {
-  const app = new Hono();
-  app.route("/api/trips", activityLogRoutes);
-  return app;
-}
 
 describe("Activity log routes", () => {
   beforeEach(() => {
@@ -84,7 +78,7 @@ describe("Activity log routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(activityLogRoutes, "/api/trips");
       const res = await app.request(basePath);
       const body = await res.json();
 
@@ -119,7 +113,7 @@ describe("Activity log routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(activityLogRoutes, "/api/trips");
       const res = await app.request(basePath);
       const body = await res.json();
 
@@ -146,7 +140,7 @@ describe("Activity log routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(activityLogRoutes, "/api/trips");
       const res = await app.request(basePath);
 
       expect(res.status).toBe(200);
@@ -155,7 +149,7 @@ describe("Activity log routes", () => {
     it("returns 404 for non-member", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue(null);
 
-      const app = createApp();
+      const app = createTestApp(activityLogRoutes, "/api/trips");
       const res = await app.request(basePath);
 
       expect(res.status).toBe(404);
@@ -174,7 +168,7 @@ describe("Activity log routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(activityLogRoutes, "/api/trips");
       const res = await app.request(`${basePath}?limit=10`);
       const body = await res.json();
 

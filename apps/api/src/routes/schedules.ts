@@ -13,6 +13,7 @@ import { schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { canEdit, checkTripAccess, verifyPatternAccess } from "../lib/permissions";
+import { getNextSortOrder } from "../lib/sort-order";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -66,10 +67,12 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules", async 
   }
 
   // Get next sort order
-  const maxOrder = await db
-    .select({ max: sql<number>`COALESCE(MAX(${schedules.sortOrder}), -1)` })
-    .from(schedules)
-    .where(eq(schedules.dayPatternId, patternId));
+  const nextOrder = await getNextSortOrder(
+    db,
+    schedules.sortOrder,
+    schedules,
+    eq(schedules.dayPatternId, patternId),
+  );
 
   const [schedule] = await db
     .insert(schedules)
@@ -77,7 +80,7 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules", async 
       tripId,
       dayPatternId: patternId,
       ...parsed.data,
-      sortOrder: (maxOrder[0]?.max ?? -1) + 1,
+      sortOrder: nextOrder,
     })
     .returning();
 
@@ -174,12 +177,14 @@ scheduleRoutes.post(
       return c.json({ error: ERROR_MSG.SCHEDULE_NOT_FOUND }, 404);
     }
 
-    const maxOrder = await db
-      .select({ max: sql<number>`COALESCE(MAX(${schedules.sortOrder}), -1)` })
-      .from(schedules)
-      .where(eq(schedules.dayPatternId, patternId));
+    const nextOrder = await getNextSortOrder(
+      db,
+      schedules.sortOrder,
+      schedules,
+      eq(schedules.dayPatternId, patternId),
+    );
 
-    let nextOrder = (maxOrder[0]?.max ?? -1) + 1;
+    let currentOrder = nextOrder;
 
     const scheduleById = new Map(targetSchedules.map((s) => [s.id, s]));
     const ordered = parsed.data.scheduleIds.map((id) => scheduleById.get(id)!);
@@ -202,7 +207,7 @@ scheduleRoutes.post(
           transportMethod: schedule.transportMethod,
           color: schedule.color,
           endDayOffset: schedule.endDayOffset,
-          sortOrder: nextOrder++,
+          sortOrder: currentOrder++,
         })),
       )
       .returning();
@@ -394,18 +399,20 @@ scheduleRoutes.post("/:tripId/schedules/batch-unassign", async (c) => {
   }
 
   await db.transaction(async (tx) => {
-    const maxOrder = await tx
-      .select({ max: sql<number>`COALESCE(MAX(${schedules.sortOrder}), -1)` })
-      .from(schedules)
-      .where(and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)));
+    const nextOrder = await getNextSortOrder(
+      tx,
+      schedules.sortOrder,
+      schedules,
+      and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
+    );
 
-    let nextOrder = (maxOrder[0]?.max ?? -1) + 1;
+    let currentOrder = nextOrder;
     for (const scheduleId of parsed.data.scheduleIds) {
       await tx
         .update(schedules)
         .set({
           dayPatternId: null,
-          sortOrder: nextOrder++,
+          sortOrder: currentOrder++,
           updatedAt: new Date(),
         })
         .where(eq(schedules.id, scheduleId));
@@ -442,16 +449,18 @@ scheduleRoutes.post("/:tripId/schedules/:scheduleId/unassign", async (c) => {
     return c.json({ error: ERROR_MSG.SCHEDULE_NOT_FOUND }, 404);
   }
 
-  const maxOrder = await db
-    .select({ max: sql<number>`COALESCE(MAX(${schedules.sortOrder}), -1)` })
-    .from(schedules)
-    .where(and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)));
+  const nextOrder = await getNextSortOrder(
+    db,
+    schedules.sortOrder,
+    schedules,
+    and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
+  );
 
   const [updated] = await db
     .update(schedules)
     .set({
       dayPatternId: null,
-      sortOrder: (maxOrder[0]?.max ?? -1) + 1,
+      sortOrder: nextOrder,
       updatedAt: new Date(),
     })
     .where(eq(schedules.id, scheduleId))

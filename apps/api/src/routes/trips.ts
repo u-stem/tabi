@@ -10,6 +10,75 @@ import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
+// biome-ignore lint/suspicious/noExplicitAny: Drizzle transaction type is complex
+type TxOrDb = any;
+
+async function syncTripDays(
+  tx: TxOrDb,
+  tripId: string,
+  effectiveStart: string,
+  effectiveEnd: string,
+) {
+  const newDates = generateDateRange(effectiveStart, effectiveEnd);
+
+  const existingDays = await tx
+    .select()
+    .from(tripDays)
+    .where(eq(tripDays.tripId, tripId))
+    .orderBy(asc(tripDays.date));
+
+  const existingDateSet = new Set(existingDays.map((d: { date: string }) => d.date));
+  const newDateSet = new Set(newDates);
+
+  // Delete days outside new range
+  const idsToDelete = existingDays
+    .filter((d: { date: string }) => !newDateSet.has(d.date))
+    .map((d: { id: string }) => d.id);
+  if (idsToDelete.length > 0) {
+    await tx.delete(tripDays).where(inArray(tripDays.id, idsToDelete));
+  }
+
+  // Insert new days with default patterns
+  const datesToInsert = newDates.filter((d) => !existingDateSet.has(d));
+  if (datesToInsert.length > 0) {
+    const newDays = await tx
+      .insert(tripDays)
+      .values(
+        datesToInsert.map((date) => ({
+          tripId,
+          date,
+          dayNumber: 0,
+        })),
+      )
+      .returning({ id: tripDays.id });
+
+    await tx.insert(dayPatterns).values(
+      newDays.map((day: { id: string }) => ({
+        tripDayId: day.id,
+        label: DEFAULT_PATTERN_LABEL,
+        isDefault: true,
+        sortOrder: 0,
+      })),
+    );
+  }
+
+  // Re-number all days sequentially
+  const allDays = await tx
+    .select()
+    .from(tripDays)
+    .where(eq(tripDays.tripId, tripId))
+    .orderBy(asc(tripDays.date));
+
+  for (let i = 0; i < allDays.length; i++) {
+    if (allDays[i].dayNumber !== i + 1) {
+      await tx
+        .update(tripDays)
+        .set({ dayNumber: i + 1 })
+        .where(eq(tripDays.id, allDays[i].id));
+    }
+  }
+}
+
 function generateDateRange(startDate: string, endDate: string): string[] {
   const start = new Date(`${startDate}T00:00:00`);
   const end = new Date(`${endDate}T00:00:00`);
@@ -277,67 +346,8 @@ tripRoutes.patch("/:id", async (c) => {
   }
 
   const updated = await db.transaction(async (tx) => {
-    // Generate new date set
-    const newDates = generateDateRange(effectiveStart, effectiveEnd);
+    await syncTripDays(tx, tripId, effectiveStart, effectiveEnd);
 
-    // Get existing trip_days
-    const existingDays = await tx
-      .select()
-      .from(tripDays)
-      .where(eq(tripDays.tripId, tripId))
-      .orderBy(asc(tripDays.date));
-
-    const existingDateSet = new Set(existingDays.map((d) => d.date));
-    const newDateSet = new Set(newDates);
-
-    // Delete days outside new range
-    const idsToDelete = existingDays.filter((d) => !newDateSet.has(d.date)).map((d) => d.id);
-    if (idsToDelete.length > 0) {
-      await tx.delete(tripDays).where(inArray(tripDays.id, idsToDelete));
-    }
-
-    // Insert new days
-    const datesToInsert = newDates.filter((d) => !existingDateSet.has(d));
-    if (datesToInsert.length > 0) {
-      const newDays = await tx
-        .insert(tripDays)
-        .values(
-          datesToInsert.map((date) => ({
-            tripId,
-            date,
-            dayNumber: 0, // Will be corrected below
-          })),
-        )
-        .returning({ id: tripDays.id });
-
-      // Create default pattern for each new day
-      await tx.insert(dayPatterns).values(
-        newDays.map((day) => ({
-          tripDayId: day.id,
-          label: DEFAULT_PATTERN_LABEL,
-          isDefault: true,
-          sortOrder: 0,
-        })),
-      );
-    }
-
-    // Re-fetch all days and update dayNumber
-    const allDays = await tx
-      .select()
-      .from(tripDays)
-      .where(eq(tripDays.tripId, tripId))
-      .orderBy(asc(tripDays.date));
-
-    for (let i = 0; i < allDays.length; i++) {
-      if (allDays[i].dayNumber !== i + 1) {
-        await tx
-          .update(tripDays)
-          .set({ dayNumber: i + 1 })
-          .where(eq(tripDays.id, allDays[i].id));
-      }
-    }
-
-    // Update trip
     const [result] = await tx
       .update(trips)
       .set({

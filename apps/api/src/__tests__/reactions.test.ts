@@ -1,4 +1,3 @@
-import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const { mockGetSession, mockDbQuery, mockDbInsert, mockDbDelete, mockDbSelect } = vi.hoisted(
@@ -36,16 +35,11 @@ vi.mock("../lib/activity-logger", () => ({
 }));
 
 import { reactionRoutes } from "../routes/reactions";
+import { createTestApp, TEST_USER } from "./test-helpers";
 
-const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
+const fakeUser = TEST_USER;
 const tripId = "trip-1";
 const scheduleId = "schedule-1";
-
-function createApp() {
-  const app = new Hono();
-  app.route("/api/trips", reactionRoutes);
-  return app;
-}
 
 describe("Reaction routes", () => {
   beforeEach(() => {
@@ -64,7 +58,7 @@ describe("Reaction routes", () => {
   describe("PUT /:tripId/candidates/:scheduleId/reaction", () => {
     it("returns 404 if not a trip member", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue(null);
-      const app = createApp();
+      const app = createTestApp(reactionRoutes, "/api/trips");
       const res = await app.request(`/api/trips/${tripId}/candidates/${scheduleId}/reaction`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -74,7 +68,7 @@ describe("Reaction routes", () => {
     });
 
     it("returns 400 for invalid reaction type", async () => {
-      const app = createApp();
+      const app = createTestApp(reactionRoutes, "/api/trips");
       const res = await app.request(`/api/trips/${tripId}/candidates/${scheduleId}/reaction`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -85,7 +79,7 @@ describe("Reaction routes", () => {
 
     it("returns 404 if schedule is not a candidate", async () => {
       mockDbQuery.schedules.findFirst.mockResolvedValue(null);
-      const app = createApp();
+      const app = createTestApp(reactionRoutes, "/api/trips");
       const res = await app.request(`/api/trips/${tripId}/candidates/${scheduleId}/reaction`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -112,7 +106,7 @@ describe("Reaction routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(reactionRoutes, "/api/trips");
       const res = await app.request(`/api/trips/${tripId}/candidates/${scheduleId}/reaction`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -147,7 +141,7 @@ describe("Reaction routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(reactionRoutes, "/api/trips");
       const res = await app.request(`/api/trips/${tripId}/candidates/${scheduleId}/reaction`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -160,7 +154,7 @@ describe("Reaction routes", () => {
   describe("DELETE /:tripId/candidates/:scheduleId/reaction", () => {
     it("returns 404 if not a trip member", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue(null);
-      const app = createApp();
+      const app = createTestApp(reactionRoutes, "/api/trips");
       const res = await app.request(`/api/trips/${tripId}/candidates/${scheduleId}/reaction`, {
         method: "DELETE",
       });
@@ -169,7 +163,7 @@ describe("Reaction routes", () => {
 
     it("returns 404 if schedule is not a candidate", async () => {
       mockDbQuery.schedules.findFirst.mockResolvedValue(null);
-      const app = createApp();
+      const app = createTestApp(reactionRoutes, "/api/trips");
       const res = await app.request(`/api/trips/${tripId}/candidates/${scheduleId}/reaction`, {
         method: "DELETE",
       });
@@ -191,7 +185,7 @@ describe("Reaction routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(reactionRoutes, "/api/trips");
       const res = await app.request(`/api/trips/${tripId}/candidates/${scheduleId}/reaction`, {
         method: "DELETE",
       });

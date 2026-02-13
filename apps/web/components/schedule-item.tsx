@@ -29,6 +29,7 @@ import type { TimeStatus } from "@/lib/format";
 import { formatTime, formatTimeRange } from "@/lib/format";
 import { CATEGORY_ICONS, TRANSPORT_ICONS } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { DragHandle } from "./drag-handle";
 import { EditScheduleDialog } from "./edit-schedule-dialog";
 
 type ScheduleItemProps = {
@@ -105,33 +106,6 @@ export function ScheduleItem(props: ScheduleItemProps) {
     return <TransportConnector {...props} sortable={sortable} />;
   }
   return <PlaceCard {...props} sortable={sortable} />;
-}
-
-function DragHandle({
-  attributes,
-  listeners,
-}: {
-  attributes: UseSortableReturn["attributes"];
-  listeners: UseSortableReturn["listeners"];
-}) {
-  return (
-    <button
-      type="button"
-      className="shrink-0 cursor-grab touch-none text-muted-foreground hover:text-foreground"
-      aria-label="ドラッグで並び替え"
-      {...attributes}
-      {...listeners}
-    >
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
-        <circle cx="5" cy="3" r="1.5" />
-        <circle cx="11" cy="3" r="1.5" />
-        <circle cx="5" cy="8" r="1.5" />
-        <circle cx="11" cy="8" r="1.5" />
-        <circle cx="5" cy="13" r="1.5" />
-        <circle cx="11" cy="13" r="1.5" />
-      </svg>
-    </button>
-  );
 }
 
 function ScheduleMenu({

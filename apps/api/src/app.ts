@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { ERROR_MSG } from "./lib/constants";
+import { env } from "./lib/env";
 import { activityLogRoutes } from "./routes/activity-logs";
 import { authRoutes } from "./routes/auth";
 import { candidateRoutes } from "./routes/candidates";
@@ -18,7 +19,7 @@ const app = new Hono();
 app.use(
   "*",
   cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    origin: env.FRONTEND_URL,
     credentials: true,
   }),
 );

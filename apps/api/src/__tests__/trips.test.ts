@@ -1,5 +1,5 @@
-import { Hono } from "hono";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createTestApp, TEST_USER } from "./test-helpers";
 
 const {
   mockGetSession,
@@ -56,13 +56,7 @@ vi.mock("../lib/activity-logger", () => ({
 
 import { tripRoutes } from "../routes/trips";
 
-const fakeUser = { id: "user-1", name: "Test User", email: "test@example.com" };
-
-function createApp() {
-  const app = new Hono();
-  app.route("/api/trips", tripRoutes);
-  return app;
-}
+const fakeUser = TEST_USER;
 
 describe("Trip routes", () => {
   beforeEach(() => {
@@ -144,7 +138,7 @@ describe("Trip routes", () => {
         return fn(tx);
       });
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -160,7 +154,7 @@ describe("Trip routes", () => {
     });
 
     it("returns 400 with empty title", async () => {
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -176,7 +170,7 @@ describe("Trip routes", () => {
     });
 
     it("returns 400 when endDate is before startDate", async () => {
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -194,7 +188,7 @@ describe("Trip routes", () => {
     it("returns 401 when unauthenticated", async () => {
       mockGetSession.mockResolvedValue(null);
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -216,7 +210,7 @@ describe("Trip routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -255,7 +249,7 @@ describe("Trip routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips");
       const body = await res.json();
 
@@ -288,7 +282,7 @@ describe("Trip routes", () => {
         },
       ]);
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips");
       const body = await res.json();
 
@@ -310,7 +304,7 @@ describe("Trip routes", () => {
         },
       ]);
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips?scope=owned");
       const body = await res.json();
 
@@ -333,7 +327,7 @@ describe("Trip routes", () => {
         },
       ]);
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips?scope=shared");
       const body = await res.json();
 
@@ -345,7 +339,7 @@ describe("Trip routes", () => {
     it("returns 401 when unauthenticated", async () => {
       mockGetSession.mockResolvedValue(null);
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips");
 
       expect(res.status).toBe(401);
@@ -362,7 +356,7 @@ describe("Trip routes", () => {
       };
       mockDbQuery.trips.findFirst.mockResolvedValue(tripDetail);
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1");
       const body = await res.json();
 
@@ -383,7 +377,7 @@ describe("Trip routes", () => {
         days: [],
       });
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1");
       const body = await res.json();
 
@@ -394,7 +388,7 @@ describe("Trip routes", () => {
     it("returns 404 when user is not a member", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/nonexistent");
 
       expect(res.status).toBe(404);
@@ -412,7 +406,7 @@ describe("Trip routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -427,7 +421,7 @@ describe("Trip routes", () => {
     it("returns 404 when user is not a member", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/nonexistent", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -444,7 +438,7 @@ describe("Trip routes", () => {
         role: "viewer",
       });
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -455,7 +449,7 @@ describe("Trip routes", () => {
     });
 
     it("returns 400 with invalid data", async () => {
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -480,7 +474,7 @@ describe("Trip routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -493,7 +487,7 @@ describe("Trip routes", () => {
     });
 
     it("returns 400 with invalid status", async () => {
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -548,7 +542,7 @@ describe("Trip routes", () => {
         return fn(tx);
       });
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -560,7 +554,7 @@ describe("Trip routes", () => {
     });
 
     it("returns 400 when startDate is after endDate", async () => {
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -614,7 +608,7 @@ describe("Trip routes", () => {
         return fn(tx);
       });
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -634,7 +628,7 @@ describe("Trip routes", () => {
         }),
       });
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1/duplicate", {
         method: "POST",
       });
@@ -649,7 +643,7 @@ describe("Trip routes", () => {
         where: vi.fn().mockResolvedValue(undefined),
       });
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1", {
         method: "DELETE",
       });
@@ -662,7 +656,7 @@ describe("Trip routes", () => {
     it("returns 404 when user is not a member", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/nonexistent", {
         method: "DELETE",
       });
@@ -677,7 +671,7 @@ describe("Trip routes", () => {
         role: "editor",
       });
 
-      const app = createApp();
+      const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1", {
         method: "DELETE",
       });

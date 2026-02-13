@@ -42,8 +42,8 @@ export const SCHEDULE_MEMO_MAX_LENGTH = 2000;
 export const SCHEDULE_URL_MAX_LENGTH = 2000;
 export const SCHEDULE_PLACE_MAX_LENGTH = 200;
 export const MAX_END_DAY_OFFSET = 30;
-export const CANDIDATE_NAME_MAX_LENGTH = 200;
-export const CANDIDATE_MEMO_MAX_LENGTH = 2000;
+const CANDIDATE_NAME_MAX_LENGTH = 200;
+const CANDIDATE_MEMO_MAX_LENGTH = 2000;
 
 export const createScheduleSchema = z.object({
   name: z.string().min(1).max(SCHEDULE_NAME_MAX_LENGTH),

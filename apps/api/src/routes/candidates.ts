@@ -12,6 +12,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
+import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
 import { canEdit, checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
@@ -30,10 +31,7 @@ candidateRoutes.get("/:tripId/candidates", async (c) => {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
-  const candidates = await db.query.schedules.findMany({
-    where: and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
-    orderBy: (s, { asc }) => [asc(s.sortOrder)],
-  });
+  const candidates = await queryCandidatesWithReactions(tripId, user.id);
   return c.json(candidates);
 });
 

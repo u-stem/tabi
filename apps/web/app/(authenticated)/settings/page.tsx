@@ -38,6 +38,14 @@ export default function SettingsPage() {
           <PasswordSection username={user.username ?? ""} />
           <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <Link
+              href="/faq"
+              target="_blank"
+              className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
+            >
+              よくある質問
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+            <Link
               href="/news"
               target="_blank"
               className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"

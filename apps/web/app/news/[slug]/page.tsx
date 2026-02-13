@@ -54,6 +54,9 @@ export default async function NewsArticlePage({ params }: Props) {
       </main>
 
       <footer className="container flex h-14 items-center justify-center gap-4 text-sm text-muted-foreground">
+        <Link href="/faq" className="underline underline-offset-4 hover:text-foreground">
+          よくある質問
+        </Link>
         <Link href="/news" className="underline underline-offset-4 hover:text-foreground">
           お知らせ
         </Link>
@@ -63,7 +66,6 @@ export default async function NewsArticlePage({ params }: Props) {
         <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
           プライバシーポリシー
         </Link>
-        <span>sugara</span>
       </footer>
     </div>
   );

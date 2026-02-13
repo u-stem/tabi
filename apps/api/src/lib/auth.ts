@@ -12,6 +12,12 @@ export const auth = betterAuth({
       generateId: "uuid",
     },
   },
+  session: {
+    cookieCache: {
+      enabled: true,
+      maxAge: 5 * 60,
+    },
+  },
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {

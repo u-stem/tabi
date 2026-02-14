@@ -6,11 +6,14 @@ import { db } from "../db/index";
 import { accounts, users } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
 import { requireAuth } from "../middleware/auth";
+import { rateLimitByIp } from "../middleware/rate-limit";
 import type { AppEnv } from "../types";
 
 export const accountRoutes = new Hono<AppEnv>();
 
-accountRoutes.delete("/account", requireAuth, async (c) => {
+const deleteRateLimit = rateLimitByIp({ window: 300, max: 5 });
+
+accountRoutes.delete("/account", deleteRateLimit, requireAuth, async (c) => {
   const json = await c.req.json();
   const parsed = deleteAccountSchema.safeParse(json);
   if (!parsed.success) {

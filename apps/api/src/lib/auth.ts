@@ -7,6 +7,17 @@ import { env } from "./env";
 
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_BASE_URL,
+  rateLimit: {
+    enabled: true,
+    window: 60,
+    max: 30,
+    storage: "memory",
+    customRules: {
+      "/api/auth/sign-in/*": { window: 60, max: 5 },
+      "/api/auth/sign-up/*": { window: 60, max: 3 },
+      "/api/auth/change-password": { window: 60, max: 3 },
+    },
+  },
   advanced: {
     database: {
       generateId: "uuid",

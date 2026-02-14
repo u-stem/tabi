@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   date,
@@ -9,6 +9,7 @@ import {
   text,
   time,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -133,15 +134,19 @@ export const tripMembers = pgTable(
   (table) => [primaryKey({ columns: [table.tripId, table.userId] })],
 ).enableRLS();
 
-export const tripDays = pgTable("trip_days", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tripId: uuid("trip_id")
-    .notNull()
-    .references(() => trips.id, { onDelete: "cascade" }),
-  date: date("date").notNull(),
-  dayNumber: integer("day_number").notNull(),
-  memo: text("memo"),
-}).enableRLS();
+export const tripDays = pgTable(
+  "trip_days",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tripId: uuid("trip_id")
+      .notNull()
+      .references(() => trips.id, { onDelete: "cascade" }),
+    date: date("date").notNull(),
+    dayNumber: integer("day_number").notNull(),
+    memo: text("memo"),
+  },
+  (table) => [uniqueIndex("trip_days_trip_date_unique").on(table.tripId, table.date)],
+).enableRLS();
 
 export const dayPatterns = pgTable("day_patterns", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -211,18 +216,27 @@ export const activityLogs = pgTable("activity_logs", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }).enableRLS();
 
-export const friends = pgTable("friends", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  requesterId: uuid("requester_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  addresseeId: uuid("addressee_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  status: friendStatusEnum("status").notNull().default("pending"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}).enableRLS();
+export const friends = pgTable(
+  "friends",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    requesterId: uuid("requester_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    addresseeId: uuid("addressee_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    status: friendStatusEnum("status").notNull().default("pending"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("friends_pair_unique").on(
+      sql`least(${table.requesterId}, ${table.addresseeId})`,
+      sql`greatest(${table.requesterId}, ${table.addresseeId})`,
+    ),
+  ],
+).enableRLS();
 
 // --- Relations ---
 

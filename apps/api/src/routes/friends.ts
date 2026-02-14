@@ -112,15 +112,23 @@ friendRoutes.post("/requests", async (c) => {
     return c.json({ error: ERROR_MSG.ALREADY_FRIENDS }, 409);
   }
 
-  const [created] = await db
-    .insert(friends)
-    .values({
-      requesterId: user.id,
-      addresseeId,
-    })
-    .returning({ id: friends.id });
+  try {
+    const [created] = await db
+      .insert(friends)
+      .values({
+        requesterId: user.id,
+        addresseeId,
+      })
+      .returning({ id: friends.id });
 
-  return c.json({ id: created.id }, 201);
+    return c.json({ id: created.id }, 201);
+  } catch (e) {
+    // Unique constraint violation from friends_pair_unique index (race condition)
+    if (e instanceof Error && "code" in e && e.code === "23505") {
+      return c.json({ error: ERROR_MSG.ALREADY_FRIENDS }, 409);
+    }
+    throw e;
+  }
 });
 
 // Accept friend request

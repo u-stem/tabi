@@ -17,8 +17,6 @@ export const createTripSchema = z
     message: "End date must be on or after start date",
     path: ["endDate"],
   });
-export type CreateTripInput = z.infer<typeof createTripSchema>;
-
 export const updateTripSchema = z
   .object({
     title: z.string().min(1).max(TRIP_TITLE_MAX_LENGTH).optional(),
@@ -34,4 +32,3 @@ export const updateTripSchema = z
     },
     { message: "End date must be on or after start date", path: ["endDate"] },
   );
-export type UpdateTripInput = z.infer<typeof updateTripSchema>;

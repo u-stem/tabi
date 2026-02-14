@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   compareByStartTime,
   formatDate,
+  formatDateFromISO,
   formatDateRange,
   formatDateShort,
   formatTime,
@@ -24,6 +25,16 @@ describe("formatDate", () => {
 
   it("handles single-digit month and day", () => {
     expect(formatDate("2025-01-03")).toBe("2025年1月3日");
+  });
+});
+
+describe("formatDateFromISO", () => {
+  it("formats an ISO datetime string to Japanese format", () => {
+    expect(formatDateFromISO("2026-02-18T00:00:00.000Z")).toBe("2026年2月18日");
+  });
+
+  it("formats an ISO datetime with timezone offset", () => {
+    expect(formatDateFromISO("2026-03-06T15:00:00+09:00")).toBe("2026年3月6日");
   });
 });
 

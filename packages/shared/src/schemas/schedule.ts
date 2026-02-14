@@ -59,45 +59,36 @@ export const createScheduleSchema = z.object({
   color: scheduleColorSchema.default("blue"),
   endDayOffset: z.number().int().min(1).max(MAX_END_DAY_OFFSET).nullable().optional(),
 });
-export type CreateScheduleInput = z.infer<typeof createScheduleSchema>;
-
 export const updateScheduleSchema = createScheduleSchema.partial().extend({
   expectedUpdatedAt: z.string().datetime().optional(),
 });
-export type UpdateScheduleInput = z.infer<typeof updateScheduleSchema>;
 
 export const reorderSchedulesSchema = z.object({
   scheduleIds: z.array(z.string().uuid()),
 });
-export type ReorderSchedulesInput = z.infer<typeof reorderSchedulesSchema>;
 
 export const createCandidateSchema = z.object({
   name: z.string().min(1).max(CANDIDATE_NAME_MAX_LENGTH),
   category: scheduleCategorySchema,
   memo: z.string().max(CANDIDATE_MEMO_MAX_LENGTH).optional(),
 });
-export type CreateCandidateInput = z.infer<typeof createCandidateSchema>;
 
 export const assignCandidateSchema = z.object({
   dayPatternId: z.string().uuid(),
 });
-export type AssignCandidateInput = z.infer<typeof assignCandidateSchema>;
 
 export const batchAssignCandidatesSchema = z.object({
   scheduleIds: z.array(z.string().uuid()).min(1),
   dayPatternId: z.string().uuid(),
 });
-export type BatchAssignCandidatesInput = z.infer<typeof batchAssignCandidatesSchema>;
 
 export const batchUnassignSchedulesSchema = z.object({
   scheduleIds: z.array(z.string().uuid()).min(1),
 });
-export type BatchUnassignSchedulesInput = z.infer<typeof batchUnassignSchedulesSchema>;
 
 export const batchDeleteSchedulesSchema = z.object({
   scheduleIds: z.array(z.string().uuid()).min(1),
 });
-export type BatchDeleteSchedulesInput = z.infer<typeof batchDeleteSchedulesSchema>;
 
 export const REACTION_TYPES = ["like", "hmm"] as const;
 export type ReactionType = (typeof REACTION_TYPES)[number];
@@ -105,4 +96,3 @@ export type ReactionType = (typeof REACTION_TYPES)[number];
 export const reactionSchema = z.object({
   type: z.enum(REACTION_TYPES),
 });
-export type ReactionInput = z.infer<typeof reactionSchema>;

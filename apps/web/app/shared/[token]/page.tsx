@@ -22,7 +22,7 @@ import { ApiError, api } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES, STATUS_COLORS } from "@/lib/colors";
 import { getCrossDayEntries } from "@/lib/cross-day";
 import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
-import { formatDate, formatDateRange, getDayCount } from "@/lib/format";
+import { formatDate, formatDateFromISO, formatDateRange, getDayCount } from "@/lib/format";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { buildMergedTimeline } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
@@ -215,7 +215,7 @@ export default function SharedTripPage() {
           </div>
           {trip.shareExpiresAt && (
             <p className="mt-2 text-xs text-muted-foreground">
-              共有リンクの有効期限: {new Date(trip.shareExpiresAt).toLocaleDateString("ja-JP")}
+              共有リンクの有効期限: {formatDateFromISO(trip.shareExpiresAt)}
             </p>
           )}
         </div>

@@ -43,6 +43,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { formatDateFromISO } from "@/lib/format";
 import { MSG } from "@/lib/messages";
 
 type TripActionsProps = {
@@ -195,7 +196,7 @@ export function TripActions({
           <span className="text-xs text-muted-foreground">
             {new Date(shareExpiresAt) < new Date()
               ? "期限切れ"
-              : `${new Date(shareExpiresAt).toLocaleDateString("ja-JP")}まで`}
+              : `${formatDateFromISO(shareExpiresAt)}まで`}
           </span>
         </div>
       )}

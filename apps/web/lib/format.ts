@@ -15,6 +15,12 @@ export function formatDate(dateStr: string): string {
   return `${year}年${month}月${day}日`;
 }
 
+// Format ISO datetime string (e.g. "2026-02-18T00:00:00Z") using local timezone
+export function formatDateFromISO(isoStr: string): string {
+  const d = new Date(isoStr);
+  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+}
+
 export function formatTime(time: string): string {
   return time.slice(0, 5);
 }

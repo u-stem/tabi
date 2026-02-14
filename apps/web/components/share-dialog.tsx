@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { copyToClipboard } from "@/lib/clipboard";
+import { formatDateFromISO } from "@/lib/format";
 import { MSG } from "@/lib/messages";
 
 type ShareDialogProps = {
@@ -71,9 +72,7 @@ export function ShareDialog({ open, onOpenChange, shareUrl, expiresAt }: ShareDi
           {expiresAt && (
             <p className="text-center text-xs text-muted-foreground">
               有効期限:{" "}
-              {new Date(expiresAt) < new Date()
-                ? "期限切れ"
-                : new Date(expiresAt).toLocaleDateString("ja-JP")}
+              {new Date(expiresAt) < new Date() ? "期限切れ" : formatDateFromISO(expiresAt)}
             </p>
           )}
         </div>

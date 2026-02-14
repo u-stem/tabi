@@ -4,10 +4,21 @@ import { Check, Copy, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ApiError, api } from "@/lib/api";
 import { authClient, useSession } from "@/lib/auth-client";
 import { translateAuthError } from "@/lib/auth-error";
 import { copyToClipboard } from "@/lib/clipboard";
@@ -36,6 +47,7 @@ export default function SettingsPage() {
           <ProfileSection defaultName={user.name ?? ""} />
           <UsernameSection defaultUsername={user.username ?? ""} />
           <PasswordSection username={user.username ?? ""} />
+          <DeleteAccountSection username={user.username ?? ""} />
           <div className="flex flex-wrap select-none items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <Link
               href="/faq"
@@ -345,6 +357,99 @@ function PasswordSection({ username }: { username: string }) {
             {loading ? "変更中..." : "パスワードを変更"}
           </Button>
         </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+function DeleteAccountSection({ username }: { username: string }) {
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [password, setPassword] = useState("");
+
+  async function handleDelete() {
+    setError(null);
+    setLoading(true);
+
+    try {
+      await api("/api/account", {
+        method: "DELETE",
+        body: JSON.stringify({ password }),
+      });
+      toast.success(MSG.ACCOUNT_DELETED);
+      window.location.href = "/auth/login";
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setError("パスワードが正しくありません");
+      } else {
+        setError(MSG.ACCOUNT_DELETE_FAILED);
+      }
+      setLoading(false);
+    }
+  }
+
+  function handleOpenChange(next: boolean) {
+    setOpen(next);
+    if (!next) {
+      setPassword("");
+      setError(null);
+    }
+  }
+
+  return (
+    <Card className="border-destructive">
+      <CardHeader>
+        <CardTitle>アカウント削除</CardTitle>
+        <CardDescription>
+          アカウントと全てのデータが完全に削除されます。この操作は取り消せません。
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <AlertDialog open={open} onOpenChange={handleOpenChange}>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">アカウントを削除</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>本当にアカウントを削除しますか？</AlertDialogTitle>
+              <AlertDialogDescription>
+                全ての旅行、メンバーシップ、フレンド情報が完全に削除されます。この操作は元に戻せません。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="space-y-2">
+              <input type="hidden" name="username" autoComplete="username" value={username} />
+              <Label htmlFor="deletePassword">パスワードを入力して確認</Label>
+              <Input
+                id="deletePassword"
+                name="deletePassword"
+                type="password"
+                autoComplete="current-password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+            {error && (
+              <div
+                role="alert"
+                className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
+                {error}
+              </div>
+            )}
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={loading}>キャンセル</AlertDialogCancel>
+              <Button
+                variant="destructive"
+                disabled={loading || password.length === 0}
+                onClick={handleDelete}
+              >
+                {loading ? "削除中..." : "削除する"}
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </CardContent>
     </Card>
   );

@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { ERROR_MSG } from "./lib/constants";
 import { env } from "./lib/env";
+import { accountRoutes } from "./routes/account";
 import { activityLogRoutes } from "./routes/activity-logs";
 import { authRoutes } from "./routes/auth";
 import { candidateRoutes } from "./routes/candidates";
@@ -47,6 +48,7 @@ app.route("/api/trips", memberRoutes);
 app.route("/api/trips", tripDayRoutes);
 app.route("/api/trips", activityLogRoutes);
 app.route("/api/friends", friendRoutes);
+app.route("/api", accountRoutes);
 app.route("/api", feedbackRoutes);
 app.route("/", shareRoutes);
 

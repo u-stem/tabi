@@ -31,4 +31,6 @@ export const ERROR_MSG = {
   FRIEND_REQUEST_NOT_FOUND: "Friend request not found",
   FRIEND_NOT_FOUND: "Friend not found",
   LIMIT_FRIENDS: "Friend limit reached",
+  INVALID_PASSWORD: "Invalid password",
+  ACCOUNT_NOT_FOUND: "Account not found",
 } as const;

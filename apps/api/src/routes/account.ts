@@ -1,0 +1,43 @@
+import { deleteAccountSchema } from "@sugara/shared";
+import { verifyPassword } from "better-auth/crypto";
+import { and, eq } from "drizzle-orm";
+import { Hono } from "hono";
+import { db } from "../db/index";
+import { accounts, users } from "../db/schema";
+import { ERROR_MSG } from "../lib/constants";
+import { requireAuth } from "../middleware/auth";
+import type { AppEnv } from "../types";
+
+export const accountRoutes = new Hono<AppEnv>();
+
+accountRoutes.delete("/account", requireAuth, async (c) => {
+  const json = await c.req.json();
+  const parsed = deleteAccountSchema.safeParse(json);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.issues[0].message }, 400);
+  }
+
+  const user = c.get("user");
+
+  const account = await db.query.accounts.findFirst({
+    where: and(eq(accounts.userId, user.id), eq(accounts.providerId, "credential")),
+    columns: { password: true },
+  });
+
+  if (!account) {
+    return c.json({ error: ERROR_MSG.ACCOUNT_NOT_FOUND }, 404);
+  }
+
+  const valid = await verifyPassword({
+    password: parsed.data.password,
+    hash: account.password!,
+  });
+
+  if (!valid) {
+    return c.json({ error: ERROR_MSG.INVALID_PASSWORD }, 401);
+  }
+
+  await db.delete(users).where(eq(users.id, user.id));
+
+  return c.body(null, 204);
+});

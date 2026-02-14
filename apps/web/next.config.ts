@@ -1,13 +1,5 @@
-import withSerwistInit from "@serwist/next";
+import { withSerwist } from "@serwist/turbopack";
 import type { NextConfig } from "next";
-
-const withSerwist = withSerwistInit({
-  swSrc: "app/sw.ts",
-  swDest: "public/sw.js",
-  cacheOnNavigation: true,
-  reloadOnOnline: false,
-  disable: process.env.NODE_ENV === "development",
-});
 
 const cspDirectives = [
   "default-src 'self'",

@@ -17,6 +17,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { MemberDialog } from "@/components/member-dialog";
+import { ShareDialog } from "@/components/share-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,7 +43,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
-import { copyToClipboard } from "@/lib/clipboard";
 import { MSG } from "@/lib/messages";
 
 type TripActionsProps = {
@@ -73,7 +73,9 @@ export function TripActions({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [memberOpen, setMemberOpen] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
 
   async function handleStatusChange(newStatus: string) {
@@ -112,13 +114,8 @@ export function TripActions({
         method: "POST",
       });
       setShareExpiresAt(result.shareTokenExpiresAt);
-      const shareUrl = `${window.location.origin}/shared/${result.shareToken}`;
-      try {
-        await copyToClipboard(shareUrl);
-        toast.success(MSG.SHARE_LINK_COPIED);
-      } catch {
-        toast.success(MSG.SHARE_LINK_CREATED);
-      }
+      setShareUrl(`${window.location.origin}/shared/${result.shareToken}`);
+      setShareDialogOpen(true);
     } catch {
       toast.error(MSG.SHARE_LINK_FAILED);
     } finally {
@@ -133,13 +130,8 @@ export function TripActions({
         method: "PUT",
       });
       setShareExpiresAt(result.shareTokenExpiresAt);
-      const shareUrl = `${window.location.origin}/shared/${result.shareToken}`;
-      try {
-        await copyToClipboard(shareUrl);
-        toast.success(MSG.SHARE_LINK_REGENERATED);
-      } catch {
-        toast.success(MSG.SHARE_LINK_REGENERATED_NO_COPY);
-      }
+      setShareUrl(`${window.location.origin}/shared/${result.shareToken}`);
+      toast.success(MSG.SHARE_LINK_REGENERATED);
     } catch {
       toast.error(MSG.SHARE_LINK_REGENERATE_FAILED);
     } finally {
@@ -265,6 +257,14 @@ export function TripActions({
         onOpenChange={setMemberOpen}
         memberLimitReached={memberLimitReached}
       />
+      {shareUrl && (
+        <ShareDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          shareUrl={shareUrl}
+          expiresAt={shareExpiresAt}
+        />
+      )}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

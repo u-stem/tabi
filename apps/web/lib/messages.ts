@@ -54,6 +54,7 @@ export const MSG = {
   SHARE_LINK_REGENERATED: "共有リンクを再生成してコピーしました",
   SHARE_LINK_REGENERATED_NO_COPY: "共有リンクを再生成しました（手動でコピーしてください）",
   SHARE_LINK_REGENERATE_FAILED: "共有リンクの再生成に失敗しました",
+  COPY_FAILED: "コピーに失敗しました",
 
   // Member
   MEMBER_ADDED: "メンバーを追加しました",

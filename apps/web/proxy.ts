@@ -3,7 +3,7 @@ import type { NextRequest } from "next/server";
 
 const protectedPaths = ["/home", "/trips"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const isProtected = protectedPaths.some((path) =>
     request.nextUrl.pathname.startsWith(path),
   );
@@ -31,7 +31,7 @@ export async function middleware(request: NextRequest) {
 
     return NextResponse.next();
   } catch (err) {
-    console.error("[Middleware] Session check failed:", err);
+    console.error("[Proxy] Session check failed:", err);
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 }

@@ -72,6 +72,7 @@ export type CrossDayEntry = {
   sourceDayId: string;
   sourcePatternId: string;
   sourceDayNumber: number;
+  crossDayPosition: "intermediate" | "final";
 };
 
 export type MemberResponse = {

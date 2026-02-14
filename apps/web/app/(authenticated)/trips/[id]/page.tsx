@@ -10,7 +10,16 @@ import {
   PATTERN_LABEL_MAX_LENGTH,
 } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, ChevronDown, Copy, List, MessageSquare, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  Check,
+  Copy,
+  List,
+  MessageSquare,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -728,7 +737,7 @@ export default function TripDetailPage() {
                               }
                               className={cn(
                                 "py-1.5 text-xs font-medium focus:outline-none",
-                                canEdit ? "pl-3 pr-1" : "px-3",
+                                canEdit ? "pl-3 pr-0.5" : "px-3",
                               )}
                             >
                               {pattern.label}
@@ -738,9 +747,10 @@ export default function TripDetailPage() {
                                 <DropdownMenuTrigger asChild>
                                   <button
                                     type="button"
-                                    className="py-1.5 pr-2 pl-0.5 text-xs focus:outline-none"
+                                    className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none sm:h-6 sm:w-6"
+                                    aria-label={`${pattern.label}のメニュー`}
                                   >
-                                    <ChevronDown className="h-3 w-3" />
+                                    <MoreHorizontal className="h-4 w-4" />
                                   </button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start">
@@ -750,14 +760,14 @@ export default function TripDetailPage() {
                                       setRenameLabel(pattern.label);
                                     }}
                                   >
-                                    <Pencil className="mr-2 h-3 w-3" />
+                                    <Pencil className="mr-2 h-4 w-4" />
                                     名前変更
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     onClick={() => handleDuplicatePattern(pattern.id)}
                                     disabled={currentDay.patterns.length >= MAX_PATTERNS_PER_DAY}
                                   >
-                                    <Copy className="mr-2 h-3 w-3" />
+                                    <Copy className="mr-2 h-4 w-4" />
                                     複製
                                   </DropdownMenuItem>
                                   {!pattern.isDefault && (
@@ -765,7 +775,7 @@ export default function TripDetailPage() {
                                       className="text-destructive"
                                       onClick={() => setDeletePatternTarget(pattern)}
                                     >
-                                      <Trash2 className="mr-2 h-3 w-3" />
+                                      <Trash2 className="mr-2 h-4 w-4" />
                                       削除
                                     </DropdownMenuItem>
                                   )}

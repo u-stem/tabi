@@ -20,6 +20,7 @@ function makeCrossDayEntry(overrides: Partial<ScheduleResponse> = {}): CrossDayE
     sourceDayId: "day-1",
     sourcePatternId: "pattern-1",
     sourceDayNumber: 1,
+    crossDayPosition: "final",
   };
 }
 

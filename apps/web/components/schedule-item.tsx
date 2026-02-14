@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
+import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
 import type { TimeStatus } from "@/lib/format";
 import { formatTime, formatTimeRange } from "@/lib/format";
 import { CATEGORY_ICONS, TRANSPORT_ICONS } from "@/lib/icons";
@@ -65,6 +66,8 @@ type ScheduleItemProps = {
   crossDayDisplay?: boolean;
   /** Source day number for cross-day display (e.g. "1日目から継続") */
   crossDaySourceDayNumber?: number;
+  /** Position within multi-day span: "intermediate" or "final" */
+  crossDayPosition?: "intermediate" | "final";
 };
 
 type UseSortableReturn = ReturnType<typeof useSortable>;
@@ -209,6 +212,7 @@ function PlaceCard({
   maxEndDayOffset,
   crossDayDisplay,
   crossDaySourceDayNumber,
+  crossDayPosition,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const CategoryIcon = CATEGORY_ICONS[category];
@@ -303,13 +307,14 @@ function PlaceCard({
           : crossDayDisplay && crossDaySourceDayNumber
             ? {
                 role: "group" as const,
-                "aria-label": `${crossDaySourceDayNumber}日目から継続: ${name}`,
+                "aria-label": `${getCrossDayLabel(category, crossDayPosition!) ?? `${crossDaySourceDayNumber}日目から継続`}: ${name}`,
               }
             : {})}
       >
-        {crossDayDisplay && crossDaySourceDayNumber && (
+        {crossDayDisplay && crossDayPosition && (
           <span className="mb-1.5 inline-block rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-            {crossDaySourceDayNumber}日目から継続
+            {getCrossDayLabel(category, crossDayPosition) ??
+              `${crossDaySourceDayNumber}日目から継続`}
           </span>
         )}
         <div className="flex items-center justify-between gap-2">
@@ -320,6 +325,17 @@ function PlaceCard({
               <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
             ) : null}
             <span className="text-sm font-medium">{name}</span>
+            {!crossDayDisplay &&
+              endDayOffset != null &&
+              endDayOffset > 0 &&
+              (() => {
+                const label = getStartDayLabel(category);
+                return label ? (
+                  <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    {label}
+                  </span>
+                ) : null;
+              })()}
             {crossDayDisplay && timeStr && (
               <span className="text-xs text-muted-foreground">~ {timeStr}</span>
             )}
@@ -341,7 +357,7 @@ function PlaceCard({
           )}
         </div>
         {(address || url || memo) && (
-          <div className="mt-1 space-y-0.5">
+          <div className="mt-1 space-y-0.5 pl-6">
             {address && (
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
@@ -429,6 +445,7 @@ function TransportConnector({
   maxEndDayOffset,
   crossDayDisplay,
   crossDaySourceDayNumber,
+  crossDayPosition,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
@@ -534,13 +551,13 @@ function TransportConnector({
           : crossDayDisplay && crossDaySourceDayNumber
             ? {
                 role: "group" as const,
-                "aria-label": `${crossDaySourceDayNumber}日目から継続: ${name}`,
+                "aria-label": `${getCrossDayLabel(category, crossDayPosition!) ?? `${crossDaySourceDayNumber}日目から`}: ${name}`,
               }
             : {})}
       >
-        {crossDayDisplay && crossDaySourceDayNumber && (
+        {crossDayDisplay && crossDayPosition && (
           <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-            {crossDaySourceDayNumber}日目から
+            {getCrossDayLabel(category, crossDayPosition) ?? `${crossDaySourceDayNumber}日目から`}
           </span>
         )}
         {selectable ? (

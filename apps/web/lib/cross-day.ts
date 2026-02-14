@@ -9,13 +9,16 @@ export function getCrossDayEntries(days: DayResponse[], targetDayNumber: number)
         if (
           schedule.endDayOffset != null &&
           schedule.endDayOffset > 0 &&
-          day.dayNumber + schedule.endDayOffset === targetDayNumber
+          day.dayNumber < targetDayNumber &&
+          day.dayNumber + schedule.endDayOffset >= targetDayNumber
         ) {
+          const isFinal = day.dayNumber + schedule.endDayOffset === targetDayNumber;
           entries.push({
             schedule,
             sourceDayId: day.id,
             sourcePatternId: pattern.id,
             sourceDayNumber: day.dayNumber,
+            crossDayPosition: isFinal ? "final" : "intermediate",
           });
         }
       }

@@ -293,7 +293,13 @@ export function DayTimeline({
             // Cross-day entries are not selectable in batch mode because they
             // belong to a different day's pattern and batch operations target
             // the current day's schedules only.
-            const { schedule: s, sourceDayId, sourcePatternId, sourceDayNumber } = item.entry;
+            const {
+              schedule: s,
+              sourceDayId,
+              sourcePatternId,
+              sourceDayNumber,
+              crossDayPosition,
+            } = item.entry;
             // Calculate maxEndDayOffset from the source day, not the display day
             const sourceMaxEndDayOffset =
               totalDays != null ? totalDays - sourceDayNumber : maxEndDayOffset;
@@ -314,6 +320,7 @@ export function DayTimeline({
                 maxEndDayOffset={sourceMaxEndDayOffset}
                 crossDayDisplay
                 crossDaySourceDayNumber={sourceDayNumber}
+                crossDayPosition={crossDayPosition}
               />
             );
           }

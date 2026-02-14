@@ -27,13 +27,9 @@ test.describe("Patterns", () => {
     await page.getByRole("button", { name: "追加" }).click();
     await expect(page.getByText("パターンを追加しました")).toBeVisible();
 
-    // Open pattern dropdown menu via the ChevronDown button next to the label
+    // Open pattern dropdown menu via the MoreHorizontal button
     await page.getByRole("button", { name: "晴れの日プラン" }).click();
-    // The ChevronDown button is the sibling of the pattern label button
-    await page
-      .getByRole("button", { name: "晴れの日プラン" })
-      .locator(".. >> button:last-child")
-      .click();
+    await page.getByRole("button", { name: "晴れの日プランのメニュー" }).click();
     await page.getByRole("menuitem", { name: "名前変更" }).click();
 
     await page.locator("#rename-label").clear();
@@ -60,10 +56,7 @@ test.describe("Patterns", () => {
 
     // Open pattern dropdown menu
     await page.getByRole("button", { name: "削除対象プラン" }).click();
-    await page
-      .getByRole("button", { name: "削除対象プラン" })
-      .locator(".. >> button:last-child")
-      .click();
+    await page.getByRole("button", { name: "削除対象プランのメニュー" }).click();
     await page.getByRole("menuitem", { name: "削除" }).click();
 
     // Confirm deletion in the alert dialog

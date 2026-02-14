@@ -153,6 +153,10 @@ export const MSG = {
   LIMIT_MEMBERS: `メンバーは1旅行あたり最大${MAX_MEMBERS_PER_TRIP}名まで招待できます`,
   LIMIT_FRIENDS: `フレンドは最大${MAX_FRIENDS_PER_USER}人まで登録できます`,
 
+  // Export
+  EXPORT_SUCCESS: "エクスポートしました",
+  EXPORT_FAILED: "エクスポートに失敗しました",
+
   // Shared view
   SHARED_LINK_INVALID: "このリンクは無効か、有効期限が切れています",
   SHARED_TRIP_FETCH_FAILED: "旅行の取得に失敗しました",

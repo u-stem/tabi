@@ -276,7 +276,10 @@ export function DayTimeline({
 
         if (total === 0) {
           return (
-            <div className="rounded-md border border-dashed p-6 text-center">
+            <div
+              ref={selectionMode ? undefined : setDroppableRef}
+              className="rounded-md border border-dashed p-6 text-center"
+            >
               <p className="text-sm text-muted-foreground">まだ予定がありません</p>
             </div>
           );

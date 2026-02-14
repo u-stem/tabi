@@ -29,7 +29,7 @@ export default function SettingsPage() {
   const user = session?.user;
 
   return (
-    <div className="container max-w-2xl py-8 space-y-8">
+    <div className="mt-4 mx-auto max-w-2xl space-y-8">
       {user && (
         <>
           <UserIdSection userId={user.id} />

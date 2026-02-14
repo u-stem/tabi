@@ -50,7 +50,7 @@ export default function FriendsPage() {
 
   if (showSkeleton) {
     return (
-      <div className="container max-w-2xl py-8 space-y-8">
+      <div className="mt-4 mx-auto max-w-2xl space-y-8">
         <Card>
           <CardHeader>
             <Skeleton className="h-6 w-28" />
@@ -81,7 +81,7 @@ export default function FriendsPage() {
   }
 
   return (
-    <div className="container max-w-2xl py-8 space-y-8">
+    <div className="mt-4 mx-auto max-w-2xl space-y-8">
       {requests.length > 0 && <RequestsSection requests={requests} onUpdate={invalidateAll} />}
       <FriendListSection
         friends={friends}

@@ -439,7 +439,7 @@ export default function TripDetailPage() {
 
   if (showSkeleton) {
     return (
-      <div>
+      <div className="mt-4">
         <div className="mb-6">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="mt-2 h-4 w-64" />
@@ -514,7 +514,7 @@ export default function TripDetailPage() {
   const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
 
   return (
-    <div>
+    <div className="mt-4">
       <div className="mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">{trip.title}</h1>

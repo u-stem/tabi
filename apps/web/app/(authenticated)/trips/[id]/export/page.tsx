@@ -402,7 +402,7 @@ export default function TripExportPage() {
       </div>
 
       {/* Preview + Export */}
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
         <div className="flex items-center gap-2">
           <Input
             id="export-filename"

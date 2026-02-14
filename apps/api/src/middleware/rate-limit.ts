@@ -14,8 +14,7 @@ export function rateLimitByIp(opts: { window: number; max: number }) {
   }, opts.window * 1000).unref();
 
   return async (c: Context, next: Next) => {
-    const ip =
-      c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
+    const ip = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
     const now = Date.now();
     const entry = store.get(ip);
 

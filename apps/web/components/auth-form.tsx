@@ -55,7 +55,7 @@ export function AuthForm() {
               id="username"
               name="username"
               type="text"
-              placeholder="username"
+              placeholder="taro_123"
               autoComplete="username"
               required
             />
@@ -68,7 +68,7 @@ export function AuthForm() {
               id="password"
               name="password"
               type="password"
-              placeholder="8文字以上"
+              placeholder="パスワード"
               minLength={MIN_PASSWORD_LENGTH}
               autoComplete="current-password"
               required

@@ -324,7 +324,6 @@ function PasswordSection({ username }: { username: string }) {
               autoComplete="new-password"
               required
               minLength={MIN_PASSWORD_LENGTH}
-              placeholder="8文字以上"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
             />

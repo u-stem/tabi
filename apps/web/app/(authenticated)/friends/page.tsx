@@ -285,7 +285,7 @@ function SendRequestSection({ onSent }: { onSent: () => void }) {
               name="addresseeId"
               value={addresseeId}
               onChange={(e) => setAddresseeId(e.target.value)}
-              placeholder="申請先のユーザーIDを入力"
+              placeholder="taro_123"
               required
             />
           </div>

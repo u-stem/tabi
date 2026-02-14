@@ -87,7 +87,7 @@ export function SignupForm() {
               id="username"
               name="username"
               type="text"
-              placeholder="username"
+              placeholder="taro_123"
               autoComplete="username"
               pattern="^[a-zA-Z0-9_]+$"
               title="英数字とアンダースコアのみ使用できます"
@@ -105,7 +105,7 @@ export function SignupForm() {
               id="name"
               name="name"
               type="text"
-              placeholder="表示名"
+              placeholder="たろう"
               autoComplete="name"
               required
               minLength={1}

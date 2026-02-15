@@ -58,6 +58,8 @@ export function useTripDragAndDrop({
   const [overCandidateId, setOverCandidateId] = useState<string | null>(null);
   const [localSchedules, setLocalSchedules] = useState<ScheduleResponse[]>([]);
   const [localCandidates, setLocalCandidates] = useState<CandidateResponse[]>([]);
+  // Track last known drop zone so we can handle drops in empty space below the last item
+  const [lastOverZone, setLastOverZone] = useState<"timeline" | "candidates" | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -103,6 +105,7 @@ export function useTripDragAndDrop({
     });
     setOverScheduleId(null);
     setOverCandidateId(null);
+    setLastOverZone(null);
   }
 
   function handleDragOver(event: DragOverEvent) {
@@ -113,15 +116,18 @@ export function useTripDragAndDrop({
       return;
     }
     const overType = over.data.current?.type as string | undefined;
-    if (overType === "schedule") {
-      setOverScheduleId(String(over.id));
+    if (overType === "schedule" || overType === "timeline") {
+      setOverScheduleId(overType === "schedule" ? String(over.id) : null);
       setOverCandidateId(null);
-    } else if (overType === "candidate") {
-      setOverCandidateId(String(over.id));
+      setLastOverZone("timeline");
+    } else if (overType === "candidate" || overType === "candidates") {
+      setOverCandidateId(overType === "candidate" ? String(over.id) : null);
       setOverScheduleId(null);
+      setLastOverZone("candidates");
     } else {
       setOverScheduleId(null);
       setOverCandidateId(null);
+      setLastOverZone(null);
     }
   }
 
@@ -130,24 +136,34 @@ export function useTripDragAndDrop({
     setOverScheduleId(null);
     setOverCandidateId(null);
     const { active, over } = event;
-    if (!over || !currentPatternId || !currentDayId) return;
+    const savedLastOverZone = lastOverZone;
+    setLastOverZone(null);
+    if (!currentPatternId || !currentDayId) return;
 
     const sourceType = active.data.current?.type as string | undefined;
-    const overType = over.data.current?.type as string | undefined;
+    const overType = over?.data.current?.type as string | undefined;
 
-    const isOverCandidates = overType === "candidates" || overType === "candidate";
-    const isOverTimeline = overType === "timeline" || overType === "schedule";
+    // When over is null (e.g. dropped below the last item), use lastOverZone
+    const isOverCandidates = over
+      ? overType === "candidates" || overType === "candidate"
+      : savedLastOverZone === "candidates";
+    const isOverTimeline = over
+      ? overType === "timeline" || overType === "schedule"
+      : savedLastOverZone === "timeline";
+
+    if (!over && !isOverTimeline && !isOverCandidates) return;
 
     if (sourceType === "schedule" && isOverTimeline) {
-      if (active.id === over.id) return;
+      if (over && active.id === over.id) return;
       // Use merged timeline so schedules can be dragged past cross-day entries
       const merged = buildMergedTimeline(localSchedules, crossDayEntries);
       const mergedIds = timelineSortableIds(merged);
       const activeId = String(active.id);
-      const overId = String(over.id);
       const oldIndex = mergedIds.indexOf(activeId);
-      const overIndex = mergedIds.indexOf(overId);
+      // When over is null (dropped below last item), move to end
+      const overIndex = over ? mergedIds.indexOf(String(over.id)) : merged.length - 1;
       if (oldIndex === -1 || overIndex === -1) return;
+      if (oldIndex === overIndex) return;
 
       const reorderedMerged = arrayMove(merged, oldIndex, overIndex);
       const reordered = timelineScheduleOrder(reorderedMerged);
@@ -179,18 +195,25 @@ export function useTripDragAndDrop({
       const prevCandidates = [...localCandidates];
       const prevSchedules = [...localSchedules];
 
+      // Calculate insertion position
+      let insertIdx = localCandidates.length;
+      if (overType === "candidate" && over) {
+        const idx = localCandidates.findIndex((c) => c.id === over.id);
+        if (idx !== -1) insertIdx = idx;
+      }
+
+      const newCandidate = { ...schedule, likeCount: 0, hmmCount: 0, myReaction: null };
       setLocalSchedules((prev) => prev.filter((s) => s.id !== active.id));
-      setLocalCandidates((prev) => [
-        ...prev,
-        { ...schedule, likeCount: 0, hmmCount: 0, myReaction: null },
-      ]);
+      setLocalCandidates((prev) => {
+        const next = [...prev];
+        next.splice(insertIdx, 0, newCandidate);
+        return next;
+      });
 
       try {
         await api(`/api/trips/${tripId}/schedules/${active.id}/unassign`, {
           method: "POST",
         });
-        toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
-        onDone();
       } catch (err) {
         setLocalCandidates(prevCandidates);
         setLocalSchedules(prevSchedules);
@@ -200,7 +223,26 @@ export function useTripDragAndDrop({
           toast.error(MSG.SCHEDULE_MOVE_FAILED);
         }
         onDone();
+        return;
       }
+
+      try {
+        if (overType === "candidate") {
+          // Build expected order from pre-mutation snapshot
+          const reordered = [...prevCandidates];
+          reordered.splice(insertIdx, 0, newCandidate);
+          const scheduleIds = reordered.map((c) => c.id);
+          await api(`/api/trips/${tripId}/candidates/reorder`, {
+            method: "PATCH",
+            body: JSON.stringify({ scheduleIds }),
+          });
+        }
+        toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
+      } catch {
+        // unassign succeeded but reorder failed — refetch to sync
+        toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
+      }
+      onDone();
     } else if (sourceType === "candidate" && isOverTimeline) {
       const candidate = localCandidates.find((c) => c.id === active.id);
       if (!candidate) return;
@@ -212,7 +254,7 @@ export function useTripDragAndDrop({
 
       // Calculate insertion position (same logic as before)
       let insertIdx = localSchedules.length;
-      if (overType === "schedule") {
+      if (overType === "schedule" && over) {
         const merged = buildMergedTimeline(localSchedules, crossDayEntries);
         const mergedIds = timelineSortableIds(merged);
         const overIdx = mergedIds.indexOf(String(over.id));
@@ -293,10 +335,14 @@ export function useTripDragAndDrop({
       }
       onDone();
     } else if (sourceType === "candidate" && isOverCandidates) {
-      if (active.id === over.id) return;
+      if (over && active.id === over.id) return;
       const oldIndex = localCandidates.findIndex((c) => c.id === active.id);
-      const overIndex = localCandidates.findIndex((c) => c.id === over.id);
+      // When over is null (dropped below last item), move to end
+      const overIndex = over
+        ? localCandidates.findIndex((c) => c.id === over.id)
+        : localCandidates.length - 1;
       if (oldIndex === -1 || overIndex === -1) return;
+      if (oldIndex === overIndex) return;
 
       const reordered = arrayMove(localCandidates, oldIndex, overIndex);
       setLocalCandidates(reordered);

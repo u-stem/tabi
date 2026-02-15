@@ -528,13 +528,7 @@ export function CandidatePanel({
         </div>
       )}
       {draggable ? (
-        <div
-          ref={setDroppableRef}
-          className={cn(
-            "rounded-md transition-colors",
-            isOverCandidates && "bg-blue-50/50 dark:bg-blue-950/20",
-          )}
-        >
+        <div ref={setDroppableRef}>
           <SortableContext
             items={sortedCandidates.map((c) => c.id)}
             strategy={verticalListSortingStrategy}
@@ -550,29 +544,37 @@ export function CandidatePanel({
               </div>
             ) : (
               <div className="space-y-1.5">
-                {sortedCandidates.map((spot) => (
-                  <div key={spot.id}>
-                    {overCandidateId === spot.id && (
-                      <div className="flex items-center gap-2 py-1" aria-hidden="true">
-                        <div className="h-2 w-2 rounded-full bg-blue-500" />
-                        <div className="h-0.5 flex-1 bg-blue-500" />
-                      </div>
-                    )}
-                    <CandidateCard
-                      spot={spot}
-                      onEdit={() => openEdit(spot)}
-                      onDelete={() => handleDelete(spot.id)}
-                      onAssign={() => handleAssign(spot.id)}
-                      onReact={(type) => handleReact(spot.id, type)}
-                      onRemoveReaction={() => handleRemoveReaction(spot.id)}
-                      disabled={disabled}
-                      draggable={!selectionMode}
-                      selectable={selectionMode}
-                      selected={selectedIds?.has(spot.id)}
-                      onSelect={onToggleSelect}
-                    />
-                  </div>
-                ))}
+                {(() => {
+                  const insertIndicator = (
+                    <div className="flex items-center gap-2 py-1" aria-hidden="true">
+                      <div className="h-2 w-2 rounded-full bg-blue-500" />
+                      <div className="h-0.5 flex-1 bg-blue-500" />
+                    </div>
+                  );
+                  return (
+                    <>
+                      {sortedCandidates.map((spot) => (
+                        <div key={spot.id}>
+                          {overCandidateId === spot.id && insertIndicator}
+                          <CandidateCard
+                            spot={spot}
+                            onEdit={() => openEdit(spot)}
+                            onDelete={() => handleDelete(spot.id)}
+                            onAssign={() => handleAssign(spot.id)}
+                            onReact={(type) => handleReact(spot.id, type)}
+                            onRemoveReaction={() => handleRemoveReaction(spot.id)}
+                            disabled={disabled}
+                            draggable={!selectionMode}
+                            selectable={selectionMode}
+                            selected={selectedIds?.has(spot.id)}
+                            onSelect={onToggleSelect}
+                          />
+                        </div>
+                      ))}
+                      {isOverCandidates && overCandidateId === null && insertIndicator}
+                    </>
+                  );
+                })()}
               </div>
             )}
           </SortableContext>

@@ -379,18 +379,15 @@ export function DayTimeline({
         return selectionMode ? (
           <div>{merged.map((item, i) => renderItem(item, i, { selectable: true }))}</div>
         ) : (
-          <div
-            ref={setDroppableRef}
-            className={cn(
-              "rounded-md transition-colors",
-              isOverTimeline && "bg-blue-50/50 dark:bg-blue-950/20",
-            )}
-          >
+          <div ref={setDroppableRef}>
             <SortableContext
               items={timelineSortableIds(merged)}
               strategy={verticalListSortingStrategy}
             >
-              <div>{merged.map((item, i) => renderItem(item, i))}</div>
+              <div>
+                {merged.map((item, i) => renderItem(item, i))}
+                {isOverTimeline && overScheduleId === null && insertIndicator}
+              </div>
             </SortableContext>
           </div>
         );

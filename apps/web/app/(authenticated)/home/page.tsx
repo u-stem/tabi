@@ -23,25 +23,42 @@ import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { useDelayedLoading } from "@/lib/use-delayed-loading";
+import { cn } from "@/lib/utils";
+
+type TripTab = "owned" | "shared";
 
 export default function HomePage() {
   const queryClient = useQueryClient();
   const online = useOnlineStatus();
 
   const {
-    data: trips = [],
-    isLoading,
-    error,
+    data: ownedTrips = [],
+    isLoading: ownedLoading,
+    error: ownedError,
   } = useQuery({
     queryKey: queryKeys.trips.owned(),
     queryFn: () => api<TripListItem[]>("/api/trips?scope=owned"),
   });
-  useAuthRedirect(error);
+  useAuthRedirect(ownedError);
+
+  const {
+    data: sharedTrips = [],
+    isLoading: sharedLoading,
+    error: sharedError,
+  } = useQuery({
+    queryKey: queryKeys.trips.shared(),
+    queryFn: () => api<TripListItem[]>("/api/trips?scope=shared"),
+  });
+  useAuthRedirect(sharedError);
+
+  const isLoading = ownedLoading || sharedLoading;
+  const error = ownedError || sharedError;
 
   useEffect(() => {
     document.title = "ホーム - sugara";
   }, []);
 
+  const [tab, setTab] = useState<TripTab>("owned");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("updatedAt");
@@ -73,11 +90,20 @@ export default function HomePage() {
   useHotkeys("/", () => searchInputRef.current?.focus(), { useKey: true, preventDefault: true });
   useHotkeys("n", () => setCreateOpen(true), { preventDefault: true });
 
-  const invalidateTrips = () =>
-    queryClient.invalidateQueries({ queryKey: queryKeys.trips.owned() });
+  const invalidateTrips = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.trips.owned() }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.trips.shared() }),
+    ]);
+  };
+
+  const baseTrips = useMemo(
+    () => (tab === "shared" ? sharedTrips : ownedTrips),
+    [tab, ownedTrips, sharedTrips],
+  );
 
   const filteredTrips = useMemo(() => {
-    let result = trips;
+    let result = baseTrips;
 
     if (search) {
       const q = search.toLowerCase();
@@ -98,7 +124,17 @@ export default function HomePage() {
     // "updatedAt" preserves API order (already sorted by updatedAt desc)
 
     return result;
-  }, [trips, search, statusFilter, sortKey]);
+  }, [baseTrips, search, statusFilter, sortKey]);
+
+  function handleTabChange(newTab: TripTab) {
+    if (newTab === tab) return;
+    setTab(newTab);
+    setSearch("");
+    setStatusFilter("all");
+    setSortKey("updatedAt");
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }
 
   // Prune selectedIds to only include visible trips when filters change
   useEffect(() => {
@@ -188,6 +224,11 @@ export default function HomePage() {
     setDuplicating(false);
   }
 
+  const emptyMessage =
+    tab === "shared"
+      ? "共有された旅行はありません"
+      : "まだ旅行がありません。新規作成から旅行プランを作成してみましょう";
+
   // Avoid flashing empty state during the 200ms skeleton delay
   if (isLoading && !showSkeleton) return <div />;
 
@@ -233,6 +274,28 @@ export default function HomePage() {
         </div>
       ) : (
         <>
+          <div className="mt-4 flex gap-1 border-b">
+            {(
+              [
+                { value: "owned", label: "自分の旅行" },
+                { value: "shared", label: "共有された旅行" },
+              ] as const
+            ).map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => handleTabChange(value)}
+                className={cn(
+                  "relative px-4 py-2 text-sm font-medium transition-colors",
+                  tab === value
+                    ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
           <div className="mt-4">
             <TripToolbar
               searchInputRef={searchInputRef}
@@ -243,7 +306,7 @@ export default function HomePage() {
               sortKey={sortKey}
               onSortKeyChange={setSortKey}
               selectionMode={selectionMode}
-              onSelectionModeChange={handleSelectionModeChange}
+              onSelectionModeChange={tab !== "shared" ? handleSelectionModeChange : undefined}
               selectedCount={selectedIds.size}
               totalCount={filteredTrips.length}
               onSelectAll={handleSelectAll}
@@ -254,31 +317,30 @@ export default function HomePage() {
               duplicating={duplicating}
               disabled={!online}
               newTripSlot={
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span>
-                      <Button
-                        size="sm"
-                        // trips is fetched with scope=owned, so length matches owned count
-                        disabled={!online || trips.length >= MAX_TRIPS_PER_USER}
-                        onClick={() => setCreateOpen(true)}
-                      >
-                        <Plus className="h-4 w-4" />
-                        新規作成
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  {trips.length >= MAX_TRIPS_PER_USER && (
-                    <TooltipContent>{MSG.LIMIT_TRIPS}</TooltipContent>
-                  )}
-                </Tooltip>
+                tab !== "shared" ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          size="sm"
+                          disabled={!online || ownedTrips.length >= MAX_TRIPS_PER_USER}
+                          onClick={() => setCreateOpen(true)}
+                        >
+                          <Plus className="h-4 w-4" />
+                          新規作成
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {ownedTrips.length >= MAX_TRIPS_PER_USER && (
+                      <TooltipContent>{MSG.LIMIT_TRIPS}</TooltipContent>
+                    )}
+                  </Tooltip>
+                ) : undefined
               }
             />
           </div>
-          {trips.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">
-              まだ旅行がありません。新規作成から旅行プランを作成してみましょう
-            </p>
+          {baseTrips.length === 0 ? (
+            <p className="mt-8 text-center text-muted-foreground">{emptyMessage}</p>
           ) : filteredTrips.length === 0 ? (
             <p className="mt-8 text-center text-muted-foreground">条件に一致する旅行がありません</p>
           ) : (
@@ -287,7 +349,7 @@ export default function HomePage() {
                 <TripCard
                   key={trip.id}
                   {...trip}
-                  selectable={selectionMode}
+                  selectable={selectionMode && tab !== "shared"}
                   selected={selectedIds.has(trip.id)}
                   onSelect={handleSelect}
                 />

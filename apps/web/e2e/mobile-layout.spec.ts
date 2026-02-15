@@ -1,22 +1,18 @@
 import { expect, test } from "./fixtures/auth";
 
 test.describe("Mobile layout", () => {
-  test("BottomNav is visible with 3 nav links", async ({ authenticatedPage: page }) => {
+  test("BottomNav is visible with 2 nav links", async ({ authenticatedPage: page }) => {
     const bottomNav = page.locator("nav[aria-label='ボトムナビゲーション']");
     await expect(bottomNav).toBeVisible();
 
     const links = bottomNav.getByRole("link");
-    await expect(links).toHaveCount(3);
+    await expect(links).toHaveCount(2);
     await expect(bottomNav.getByRole("link", { name: "ホーム" })).toBeVisible();
-    await expect(bottomNav.getByRole("link", { name: "共有旅行" })).toBeVisible();
     await expect(bottomNav.getByRole("link", { name: "フレンド" })).toBeVisible();
   });
 
   test("BottomNav links navigate to correct pages", async ({ authenticatedPage: page }) => {
     const bottomNav = page.locator("nav[aria-label='ボトムナビゲーション']");
-
-    await bottomNav.getByRole("link", { name: "共有旅行" }).click();
-    await expect(page).toHaveURL(/\/shared-trips/);
 
     await bottomNav.getByRole("link", { name: "フレンド" }).click();
     await expect(page).toHaveURL(/\/friends/);
@@ -30,7 +26,6 @@ test.describe("Mobile layout", () => {
   }) => {
     const headerNav = page.locator("header nav[aria-label='メインナビゲーション']");
     await expect(headerNav.getByRole("link", { name: "ホーム" })).toBeHidden();
-    await expect(headerNav.getByRole("link", { name: "共有旅行" })).toBeHidden();
     await expect(headerNav.getByRole("link", { name: "フレンド" })).toBeHidden();
   });
 

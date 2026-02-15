@@ -90,9 +90,10 @@ test.describe("Shared Trip", () => {
     await page.getByRole("button", { name: "追加" }).click();
     await expect(page.getByText("メンバーを追加しました")).toBeVisible();
 
-    // Member navigates to shared-trips page
-    await memberPage.goto("/shared-trips");
-    await expect(memberPage).toHaveURL(/\/shared-trips/, { timeout: 10000 });
+    // Member navigates to home and switches to shared tab
+    await memberPage.goto("/home");
+    await expect(memberPage).toHaveURL(/\/home/, { timeout: 10000 });
+    await memberPage.getByRole("button", { name: "共有旅行" }).click();
     await expect(memberPage.getByText("Shared List Trip")).toBeVisible({
       timeout: 10000,
     });

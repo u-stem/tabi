@@ -1,5 +1,6 @@
 import {
   type DragEndEvent,
+  type DragOverEvent,
   type DragStartEvent,
   PointerSensor,
   pointerWithin,
@@ -53,6 +54,8 @@ export function useTripDragAndDrop({
   onDone,
 }: UseTripDragAndDropArgs) {
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
+  const [overScheduleId, setOverScheduleId] = useState<string | null>(null);
+  const [overCandidateId, setOverCandidateId] = useState<string | null>(null);
   const [localSchedules, setLocalSchedules] = useState<ScheduleResponse[]>([]);
   const [localCandidates, setLocalCandidates] = useState<CandidateResponse[]>([]);
 
@@ -98,10 +101,34 @@ export function useTripDragAndDrop({
       color: item?.color ?? "blue",
       source,
     });
+    setOverScheduleId(null);
+    setOverCandidateId(null);
+  }
+
+  function handleDragOver(event: DragOverEvent) {
+    const { over } = event;
+    if (!over) {
+      setOverScheduleId(null);
+      setOverCandidateId(null);
+      return;
+    }
+    const overType = over.data.current?.type as string | undefined;
+    if (overType === "schedule") {
+      setOverScheduleId(String(over.id));
+      setOverCandidateId(null);
+    } else if (overType === "candidate") {
+      setOverCandidateId(String(over.id));
+      setOverScheduleId(null);
+    } else {
+      setOverScheduleId(null);
+      setOverCandidateId(null);
+    }
   }
 
   async function handleDragEnd(event: DragEndEvent) {
     setActiveDragItem(null);
+    setOverScheduleId(null);
+    setOverCandidateId(null);
     const { active, over } = event;
     if (!over || !currentPatternId || !currentDayId) return;
 
@@ -146,6 +173,18 @@ export function useTripDragAndDrop({
         onDone();
       }
     } else if (sourceType === "schedule" && isOverCandidates) {
+      const schedule = localSchedules.find((s) => s.id === active.id);
+      if (!schedule) return;
+
+      const prevCandidates = [...localCandidates];
+      const prevSchedules = [...localSchedules];
+
+      setLocalSchedules((prev) => prev.filter((s) => s.id !== active.id));
+      setLocalCandidates((prev) => [
+        ...prev,
+        { ...schedule, likeCount: 0, hmmCount: 0, myReaction: null },
+      ]);
+
       try {
         await api(`/api/trips/${tripId}/schedules/${active.id}/unassign`, {
           method: "POST",
@@ -153,6 +192,8 @@ export function useTripDragAndDrop({
         toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
         onDone();
       } catch (err) {
+        setLocalCandidates(prevCandidates);
+        setLocalSchedules(prevSchedules);
         if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
           toast.error(MSG.CONFLICT_STALE);
         } else {
@@ -161,55 +202,96 @@ export function useTripDragAndDrop({
         onDone();
       }
     } else if (sourceType === "candidate" && isOverTimeline) {
+      const candidate = localCandidates.find((c) => c.id === active.id);
+      if (!candidate) return;
+
+      const prevCandidates = [...localCandidates];
+      const prevSchedules = [...localSchedules];
+
+      setLocalCandidates((prev) => prev.filter((c) => c.id !== active.id));
+
+      // Calculate insertion position (same logic as before)
+      let insertIdx = localSchedules.length;
+      if (overType === "schedule") {
+        const merged = buildMergedTimeline(localSchedules, crossDayEntries);
+        const mergedIds = timelineSortableIds(merged);
+        const overIdx = mergedIds.indexOf(String(over.id));
+        if (overIdx !== -1) {
+          let insertBeforeId: string | null = null;
+          for (let k = overIdx; k < merged.length; k++) {
+            const item = merged[k];
+            if (item.type === "schedule") {
+              insertBeforeId = item.schedule.id;
+              break;
+            }
+          }
+          const idx = insertBeforeId
+            ? localSchedules.findIndex((s) => s.id === insertBeforeId)
+            : -1;
+          if (idx !== -1) insertIdx = idx;
+        }
+      }
+
+      const newSchedule: ScheduleResponse = {
+        id: candidate.id,
+        name: candidate.name,
+        category: candidate.category,
+        address: candidate.address,
+        startTime: candidate.startTime,
+        endTime: candidate.endTime,
+        sortOrder: insertIdx,
+        memo: candidate.memo,
+        url: candidate.url,
+        departurePlace: candidate.departurePlace,
+        arrivalPlace: candidate.arrivalPlace,
+        transportMethod: candidate.transportMethod,
+        color: candidate.color,
+        endDayOffset: candidate.endDayOffset,
+        updatedAt: candidate.updatedAt,
+      };
+
+      setLocalSchedules((prev) => {
+        const next = [...prev];
+        next.splice(insertIdx, 0, newSchedule);
+        return next;
+      });
+
       try {
         await api(`/api/trips/${tripId}/candidates/${active.id}/assign`, {
           method: "POST",
           body: JSON.stringify({ dayPatternId: currentPatternId }),
         });
-
-        if (overType === "schedule") {
-          // Find the insertion position in schedule-only order.
-          // When dropped on a cross-day entry, insert before the next
-          // regular schedule in the merged timeline.
-          const merged = buildMergedTimeline(localSchedules, crossDayEntries);
-          const mergedIds = timelineSortableIds(merged);
-          const overIdx = mergedIds.indexOf(String(over.id));
-          if (overIdx !== -1) {
-            let insertBeforeId: string | null = null;
-            for (let k = overIdx; k < merged.length; k++) {
-              const item = merged[k];
-              if (item.type === "schedule") {
-                insertBeforeId = item.schedule.id;
-                break;
-              }
-            }
-            const scheduleIds = localSchedules.map((s) => s.id);
-            const insertIdx = insertBeforeId ? scheduleIds.indexOf(insertBeforeId) : -1;
-            if (insertIdx !== -1) {
-              scheduleIds.splice(insertIdx, 0, String(active.id));
-            } else {
-              scheduleIds.push(String(active.id));
-            }
-            await api(
-              `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/reorder`,
-              {
-                method: "PATCH",
-                body: JSON.stringify({ scheduleIds }),
-              },
-            );
-          }
-        }
-
-        toast.success(MSG.CANDIDATE_ASSIGNED);
-        onDone();
       } catch (err) {
+        // assign failed — full rollback
+        setLocalCandidates(prevCandidates);
+        setLocalSchedules(prevSchedules);
         if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
           toast.error(MSG.CONFLICT_STALE);
         } else {
           toast.error(MSG.CANDIDATE_ASSIGN_FAILED);
         }
         onDone();
+        return;
       }
+
+      try {
+        if (overType === "schedule") {
+          const scheduleIds = [...localSchedules.map((s) => s.id)];
+          scheduleIds.splice(insertIdx, 0, String(active.id));
+          await api(
+            `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/reorder`,
+            {
+              method: "PATCH",
+              body: JSON.stringify({ scheduleIds }),
+            },
+          );
+        }
+        toast.success(MSG.CANDIDATE_ASSIGNED);
+      } catch {
+        // assign succeeded but reorder failed — refetch to sync
+        toast.success(MSG.CANDIDATE_ASSIGNED);
+      }
+      onDone();
     } else if (sourceType === "candidate" && isOverCandidates) {
       if (active.id === over.id) return;
       const oldIndex = localCandidates.findIndex((c) => c.id === active.id);
@@ -242,9 +324,12 @@ export function useTripDragAndDrop({
     sensors,
     collisionDetection,
     activeDragItem,
+    overScheduleId,
+    overCandidateId,
     localSchedules,
     localCandidates,
     handleDragStart,
+    handleDragOver,
     handleDragEnd,
   };
 }

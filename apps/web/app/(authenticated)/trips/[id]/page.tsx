@@ -551,6 +551,7 @@ export default function TripDetailPage() {
             className="ml-auto lg:hidden"
           >
             <List className="h-4 w-4" />
+            <span>候補</span>
             {dnd.localCandidates.length > 0 && (
               <span className="rounded-full bg-muted px-1.5 text-xs">
                 {dnd.localCandidates.length}
@@ -574,10 +575,11 @@ export default function TripDetailPage() {
           sensors={dnd.sensors}
           collisionDetection={dnd.collisionDetection}
           onDragStart={dnd.handleDragStart}
+          onDragOver={dnd.handleDragOver}
           onDragEnd={dnd.handleDragEnd}
           accessibility={{ announcements: dndAnnouncements }}
         >
-          <div className="flex gap-4">
+          <div className="flex items-start gap-4">
             {/* Timeline */}
             <div className="flex min-w-0 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
               <div
@@ -696,6 +698,7 @@ export default function TripDetailPage() {
                   maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
                   totalDays={trip.days.length}
                   crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
+                  overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
                   selectionMode={selection.selectionTarget === "timeline"}
                   selectedIds={
                     selection.selectionTarget === "timeline" ? selection.selectedIds : undefined
@@ -887,6 +890,7 @@ export default function TripDetailPage() {
                     batchLoading={selection.batchLoading}
                     scheduleLimitReached={scheduleLimitReached}
                     scheduleLimitMessage={scheduleLimitMessage}
+                    overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
                   />
                 ) : (
                   <ActivityLog tripId={tripId} />

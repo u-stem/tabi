@@ -35,7 +35,7 @@ type TripToolbarProps = {
   sortKey: SortKey;
   onSortKeyChange: (value: SortKey) => void;
   selectionMode: boolean;
-  onSelectionModeChange: (value: boolean) => void;
+  onSelectionModeChange?: (value: boolean) => void;
   selectedCount: number;
   totalCount: number;
   onSelectAll: () => void;
@@ -149,7 +149,7 @@ export function TripToolbar({
           <Button
             variant="outline"
             size="sm"
-            onClick={() => onSelectionModeChange(false)}
+            onClick={() => onSelectionModeChange?.(false)}
             disabled={deleting || duplicating}
           >
             キャンセル
@@ -199,15 +199,17 @@ export function TripToolbar({
         </Select>
       </div>
       <div className="flex items-center gap-2 ml-auto">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => onSelectionModeChange(true)}
-          disabled={disabled || totalCount === 0}
-        >
-          <SquareMousePointer className="h-4 w-4" />
-          <span className="hidden sm:inline">選択</span>
-        </Button>
+        {onSelectionModeChange && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onSelectionModeChange(true)}
+            disabled={disabled || totalCount === 0}
+          >
+            <SquareMousePointer className="h-4 w-4" />
+            <span className="hidden sm:inline">選択</span>
+          </Button>
+        )}
         {newTripSlot}
       </div>
     </div>

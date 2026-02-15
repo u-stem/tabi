@@ -91,6 +91,7 @@ type CandidatePanelProps = {
   scheduleLimitMessage?: string;
   addDialogOpen?: boolean;
   onAddDialogOpenChange?: (open: boolean) => void;
+  overCandidateId?: string | null;
 };
 
 function CandidateCard({
@@ -171,6 +172,7 @@ function CandidateCard({
           <p className="text-xs text-muted-foreground">
             {CATEGORY_LABELS[spot.category as ScheduleCategory]}
           </p>
+          {spot.memo && <p className="truncate text-xs text-muted-foreground/70">{spot.memo}</p>}
         </div>
         {!disabled && !selectable && onReact && (
           <div className="flex select-none items-center gap-0.5">
@@ -280,8 +282,9 @@ export function CandidatePanel({
   scheduleLimitMessage,
   addDialogOpen: controlledAddOpen,
   onAddDialogOpenChange: controlledOnAddOpenChange,
+  overCandidateId,
 }: CandidatePanelProps) {
-  const { setNodeRef: setDroppableRef } = useDroppable({
+  const { setNodeRef: setDroppableRef, isOver: isOverCandidates } = useDroppable({
     id: "candidates",
     data: { type: "candidates" },
   });
@@ -525,32 +528,50 @@ export function CandidatePanel({
         </div>
       )}
       {draggable ? (
-        <div ref={setDroppableRef}>
+        <div
+          ref={setDroppableRef}
+          className={cn(
+            "rounded-md transition-colors",
+            isOverCandidates && "bg-blue-50/50 dark:bg-blue-950/20",
+          )}
+        >
           <SortableContext
             items={sortedCandidates.map((c) => c.id)}
             strategy={verticalListSortingStrategy}
           >
             {sortedCandidates.length === 0 ? (
-              <div className="flex min-h-24 items-center justify-center rounded-md border border-dashed text-center">
+              <div
+                className={cn(
+                  "flex min-h-24 items-center justify-center rounded-md border border-dashed text-center transition-colors",
+                  isOverCandidates && "border-blue-400 bg-blue-50 dark:bg-blue-950/30",
+                )}
+              >
                 <p className="text-xs text-muted-foreground">候補がありません</p>
               </div>
             ) : (
               <div className="space-y-1.5">
                 {sortedCandidates.map((spot) => (
-                  <CandidateCard
-                    key={spot.id}
-                    spot={spot}
-                    onEdit={() => openEdit(spot)}
-                    onDelete={() => handleDelete(spot.id)}
-                    onAssign={() => handleAssign(spot.id)}
-                    onReact={(type) => handleReact(spot.id, type)}
-                    onRemoveReaction={() => handleRemoveReaction(spot.id)}
-                    disabled={disabled}
-                    draggable={!selectionMode}
-                    selectable={selectionMode}
-                    selected={selectedIds?.has(spot.id)}
-                    onSelect={onToggleSelect}
-                  />
+                  <div key={spot.id}>
+                    {overCandidateId === spot.id && (
+                      <div className="flex items-center gap-2 py-1" aria-hidden="true">
+                        <div className="h-2 w-2 rounded-full bg-blue-500" />
+                        <div className="h-0.5 flex-1 bg-blue-500" />
+                      </div>
+                    )}
+                    <CandidateCard
+                      spot={spot}
+                      onEdit={() => openEdit(spot)}
+                      onDelete={() => handleDelete(spot.id)}
+                      onAssign={() => handleAssign(spot.id)}
+                      onReact={(type) => handleReact(spot.id, type)}
+                      onRemoveReaction={() => handleRemoveReaction(spot.id)}
+                      disabled={disabled}
+                      draggable={!selectionMode}
+                      selectable={selectionMode}
+                      selected={selectedIds?.has(spot.id)}
+                      onSelect={onToggleSelect}
+                    />
+                  </div>
                 ))}
               </div>
             )}

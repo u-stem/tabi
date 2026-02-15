@@ -466,8 +466,15 @@ function TransportConnector({
     ? TRANSPORT_METHOD_LABELS[transportMethod as TransportMethod]
     : "";
 
-  const visibleTime = crossDayDisplay ? endTime : startTime;
-  const timeStr = visibleTime ? formatTime(visibleTime) : "";
+  const timeStr = crossDayDisplay
+    ? endTime
+      ? formatTime(endTime)
+      : ""
+    : startTime
+      ? endTime && (endDayOffset == null || endDayOffset === 0)
+        ? `${formatTime(startTime)} - ${formatTime(endTime)}`
+        : formatTime(startTime)
+      : "";
 
   return (
     <div
@@ -565,6 +572,7 @@ function TransportConnector({
         ) : !crossDayDisplay ? (
           <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
         ) : null}
+        <span className="truncate text-sm font-medium">{name}</span>
         {routeStr && (
           <span className="truncate text-sm text-muted-foreground">
             {crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}

@@ -92,6 +92,11 @@ export function AuthForm() {
               新規登録
             </Link>
           </p>
+          <p className="text-center text-xs text-muted-foreground">
+            ユーザー名・パスワードを忘れた場合はリセットできません。
+            <br />
+            管理者にお問い合わせください。
+          </p>
         </form>
       </CardContent>
     </Card>

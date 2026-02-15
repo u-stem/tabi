@@ -25,11 +25,10 @@ export default function PrivacyPage() {
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold">2. 運営者情報</h2>
-            <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
-              <li>運営者: [運営者名]</li>
-              <li>連絡先: [連絡先]</li>
-            </ul>
+            <h2 className="text-lg font-semibold">2. 運営者への連絡</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              本サービスは個人が運営しています。お問い合わせはサービス内のフィードバック機能をご利用ください。
+            </p>
           </div>
 
           <div>
@@ -39,7 +38,7 @@ export default function PrivacyPage() {
             </p>
             <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
               <li>
-                アカウント情報: ユーザー名、表示名、パスワード（bcrypt によるハッシュ値として保存）
+                アカウント情報: ユーザー名、表示名、パスワード（ハッシュ値として保存）
               </li>
               <li>
                 旅行計画データ:
@@ -89,20 +88,14 @@ export default function PrivacyPage() {
           <div>
             <h2 className="text-lg font-semibold">7. 安全管理措置</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              個人情報の安全管理のため、以下の措置を講じています。
+              個人情報の安全管理のため、パスワードのハッシュ化、通信の暗号化（SSL/TLS）など適切な技術的措置を講じています。
             </p>
-            <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
-              <li>パスワードの bcrypt ハッシュ化</li>
-              <li>SSL/TLS による通信の暗号化</li>
-              <li>データベースの AES-256 暗号化</li>
-              <li>Row Level Security (RLS) によるデータベースレベルのアクセス制御</li>
-            </ul>
           </div>
 
           <div>
             <h2 className="text-lg font-semibold">8. 開示・訂正・削除の請求</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              ユーザーは、本サービスが保有する自己の個人情報について、開示・訂正・利用停止・削除を請求することができます。請求は運営者の連絡先までご連絡ください。本人確認の上、合理的な期間内に対応いたします。
+              ユーザーは、設定画面からアカウントおよび関連データを削除できます。その他の開示・訂正・利用停止の請求は、フィードバック機能よりご連絡ください。
             </p>
           </div>
 
@@ -115,7 +108,11 @@ export default function PrivacyPage() {
 
           <div>
             <h2 className="text-lg font-semibold">10. 施行日</h2>
-            <p className="mt-2 text-sm text-muted-foreground">2026年2月12日 制定</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              2026年2月12日 制定
+              <br />
+              2026年2月15日 改定
+            </p>
           </div>
         </section>
       </main>

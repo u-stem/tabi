@@ -78,27 +78,21 @@ export default function TermsPage() {
               <li>
                 ユーザーが本サービスに入力したコンテンツ（旅行計画データ等）の権利は、ユーザーに帰属します。
               </li>
-              <li>
-                運営者は、サービス提供に必要な範囲でユーザーのコンテンツを利用できるものとします。
-              </li>
             </ol>
           </div>
 
           <div>
             <h2 className="text-lg font-semibold">第7条（アカウント削除）</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              ユーザーは、運営者に連絡することでアカウントの削除を申請できます。アカウント削除後、当該ユーザーに関連するデータは合理的な期間内に削除されます。
+              ユーザーは、設定画面からアカウントを削除できます。アカウント削除後、当該ユーザーに関連するデータは速やかに削除されます。
             </p>
           </div>
 
           <div>
-            <h2 className="text-lg font-semibold">第8条（準拠法・管轄裁判所）</h2>
-            <ol className="mt-2 list-inside list-decimal space-y-1 text-sm text-muted-foreground">
-              <li>本規約は日本法に準拠し、解釈されます。</li>
-              <li>
-                本サービスに関する紛争については、[管轄裁判所]を第一審の専属的合意管轄裁判所とします。
-              </li>
-            </ol>
+            <h2 className="text-lg font-semibold">第8条（準拠法）</h2>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              本規約は日本法に準拠し、解釈されます。
+            </p>
           </div>
 
           <div>
@@ -110,7 +104,11 @@ export default function TermsPage() {
 
           <div>
             <h2 className="text-lg font-semibold">第10条（施行日）</h2>
-            <p className="mt-2 text-sm text-muted-foreground">2026年2月12日 制定</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              2026年2月12日 制定
+              <br />
+              2026年2月15日 改定
+            </p>
           </div>
         </section>
       </main>

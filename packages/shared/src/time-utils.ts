@@ -1,0 +1,61 @@
+/** "HH:MM" or "HH:MM:SS" -> total minutes from 00:00 */
+export function timeToMinutes(time: string): number {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
+
+/** total minutes -> "HH:MM" (0-1439 range) */
+export function minutesToTime(mins: number): string {
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
+/**
+ * Add deltaMinutes to a time string.
+ * Returns null if result is outside 00:00-23:59.
+ */
+export function shiftTime(time: string, deltaMinutes: number): string | null {
+  const mins = timeToMinutes(time) + deltaMinutes;
+  if (mins < 0 || mins > 1439) return null;
+  return minutesToTime(mins);
+}
+
+export type TimeDelta = { delta: number; source: "start" | "end" };
+
+type TimeFields = {
+  startTime?: string | null;
+  endTime?: string | null;
+  endDayOffset?: number | null;
+};
+
+/**
+ * Compare original and updated time fields to compute the delta in minutes.
+ * Returns null if no meaningful time change occurred.
+ * Prioritizes end time change over start time change.
+ */
+export function computeTimeDelta(original: TimeFields, updated: TimeFields): TimeDelta | null {
+  const oldEndOffset = original.endDayOffset ?? 0;
+  const newEndOffset = updated.endDayOffset ?? 0;
+
+  // End time changed (same endDayOffset)
+  if (
+    original.endTime &&
+    updated.endTime &&
+    oldEndOffset === newEndOffset &&
+    original.endTime !== updated.endTime
+  ) {
+    return {
+      delta: timeToMinutes(updated.endTime) - timeToMinutes(original.endTime),
+      source: "end",
+    };
+  }
+  // Start time changed
+  if (original.startTime && updated.startTime && original.startTime !== updated.startTime) {
+    return {
+      delta: timeToMinutes(updated.startTime) - timeToMinutes(original.startTime),
+      source: "start",
+    };
+  }
+  return null;
+}

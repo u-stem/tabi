@@ -348,6 +348,7 @@ export function DayTimeline({
           }
 
           const { schedule } = item;
+          const schedulesAfter = schedules.filter((s) => s.sortOrder > schedule.sortOrder);
           return (
             <div key={schedule.id}>
               {showInsertIndicator && insertIndicator}
@@ -369,6 +370,7 @@ export function DayTimeline({
                 selectable={opts?.selectable}
                 selected={opts?.selectable ? selectedIds?.has(schedule.id) : undefined}
                 onSelect={opts?.selectable ? onToggleSelect : undefined}
+                siblingSchedules={schedulesAfter}
               />
             </div>
           );

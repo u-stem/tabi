@@ -1,9 +1,11 @@
 import {
   batchDeleteSchedulesSchema,
+  batchShiftSchedulesSchema,
   batchUnassignSchedulesSchema,
   createScheduleSchema,
   MAX_SCHEDULES_PER_TRIP,
   reorderSchedulesSchema,
+  shiftTime,
   updateScheduleSchema,
 } from "@sugara/shared";
 import { and, count, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
@@ -138,6 +140,109 @@ scheduleRoutes.post(
     return c.json({ ok: true });
   },
 );
+
+// Batch shift schedule times
+scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules/batch-shift", async (c) => {
+  const user = c.get("user");
+  const tripId = c.req.param("tripId");
+  const dayId = c.req.param("dayId");
+  const patternId = c.req.param("patternId");
+
+  const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
+  if (!canEdit(role)) {
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
+  }
+
+  const body = await c.req.json();
+  const parsed = batchShiftSchedulesSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const { scheduleIds, deltaMinutes } = parsed.data;
+
+  const targetSchedules = await db.query.schedules.findMany({
+    where: and(inArray(schedules.id, scheduleIds), eq(schedules.dayPatternId, patternId)),
+  });
+  if (targetSchedules.length !== scheduleIds.length) {
+    return c.json({ error: ERROR_MSG.SCHEDULE_NOT_FOUND }, 404);
+  }
+
+  let updatedCount = 0;
+  let skippedCount = 0;
+
+  await db.transaction(async (tx) => {
+    for (const schedule of targetSchedules) {
+      // Skip hotels spanning multiple days
+      if (schedule.category === "hotel" && schedule.endDayOffset && schedule.endDayOffset > 0) {
+        skippedCount++;
+        continue;
+      }
+
+      // Skip schedules without any time
+      if (!schedule.startTime && !schedule.endTime) {
+        skippedCount++;
+        continue;
+      }
+
+      let newStartTime = schedule.startTime;
+      let newEndTime = schedule.endTime;
+      let shouldSkip = false;
+
+      if (schedule.startTime) {
+        const shifted = shiftTime(schedule.startTime, deltaMinutes);
+        if (shifted === null) {
+          shouldSkip = true;
+        } else {
+          newStartTime = shifted;
+        }
+      }
+
+      if (!shouldSkip && schedule.endTime) {
+        // Don't shift endTime for cross-day schedules
+        if (schedule.endDayOffset && schedule.endDayOffset > 0) {
+          // Keep endTime as-is
+        } else {
+          const shifted = shiftTime(schedule.endTime, deltaMinutes);
+          if (shifted === null) {
+            shouldSkip = true;
+          } else {
+            newEndTime = shifted;
+          }
+        }
+      }
+
+      if (shouldSkip) {
+        skippedCount++;
+        continue;
+      }
+
+      await tx
+        .update(schedules)
+        .set({
+          startTime: newStartTime,
+          endTime: newEndTime,
+          updatedAt: new Date(),
+        })
+        .where(eq(schedules.id, schedule.id));
+      updatedCount++;
+    }
+  });
+
+  if (updatedCount > 0) {
+    const direction = deltaMinutes > 0 ? "後ろ" : "前";
+    const abs = Math.abs(deltaMinutes);
+    logActivity({
+      tripId,
+      userId: user.id,
+      action: "updated",
+      entityType: "schedule",
+      detail: `${updatedCount}件の時間を${abs}分${direction}に移動`,
+    }).catch(console.error);
+  }
+
+  return c.json({ updatedCount, skippedCount });
+});
 
 // Batch duplicate schedules in a pattern
 scheduleRoutes.post(

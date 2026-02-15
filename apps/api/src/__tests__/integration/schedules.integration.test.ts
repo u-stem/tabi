@@ -331,4 +331,253 @@ describe("Schedules Integration", () => {
     const schedule = await res.json();
     expect(schedule.address).toBe("4-2-8 Shibakoen, Minato City, Tokyo");
   });
+
+  describe("batch-shift", () => {
+    const batchShiftUrl = () =>
+      `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/batch-shift`;
+
+    async function createSchedule(
+      name: string,
+      category: string,
+      overrides?: Record<string, unknown>,
+    ) {
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, category, ...overrides }),
+        },
+      );
+      return res.json();
+    }
+
+    it("shifts start and end times of multiple schedules", async () => {
+      const s1 = await createSchedule("Lunch", "restaurant", {
+        startTime: "12:00",
+        endTime: "13:00",
+      });
+      const s2 = await createSchedule("Museum", "sightseeing", {
+        startTime: "14:00",
+        endTime: "16:00",
+      });
+
+      const res = await app.request(batchShiftUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleIds: [s1.id, s2.id],
+          deltaMinutes: 30,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.updatedCount).toBe(2);
+      expect(body.skippedCount).toBe(0);
+
+      const listRes = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+      );
+      const list = await listRes.json();
+      const lunch = list.find((s: { id: string }) => s.id === s1.id);
+      const museum = list.find((s: { id: string }) => s.id === s2.id);
+      expect(lunch.startTime).toBe("12:30");
+      expect(lunch.endTime).toBe("13:30");
+      expect(museum.startTime).toBe("14:30");
+      expect(museum.endTime).toBe("16:30");
+    });
+
+    it("skips hotel with endDayOffset > 0", async () => {
+      const hotel = await createSchedule("Hotel Stay", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+
+      const res = await app.request(batchShiftUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleIds: [hotel.id],
+          deltaMinutes: 30,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.updatedCount).toBe(0);
+      expect(body.skippedCount).toBe(1);
+    });
+
+    it("skips schedules that would exceed 23:59", async () => {
+      const late = await createSchedule("Late Event", "activity", {
+        startTime: "23:50",
+      });
+
+      const res = await app.request(batchShiftUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleIds: [late.id],
+          deltaMinutes: 15,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.updatedCount).toBe(0);
+      expect(body.skippedCount).toBe(1);
+    });
+
+    it("skips schedules without any time set", async () => {
+      const noTime = await createSchedule("No Time", "sightseeing");
+
+      const res = await app.request(batchShiftUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleIds: [noTime.id],
+          deltaMinutes: 15,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.updatedCount).toBe(0);
+      expect(body.skippedCount).toBe(1);
+    });
+
+    it("returns 404 when schedule does not belong to pattern", async () => {
+      const res = await app.request(batchShiftUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleIds: ["00000000-0000-0000-0000-000000000000"],
+          deltaMinutes: 15,
+        }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 404 for viewer role", async () => {
+      const s1 = await createSchedule("Cafe", "restaurant", {
+        startTime: "10:00",
+      });
+
+      const viewer = await createTestUser({ name: "Viewer2", email: "viewer2@test.com" });
+      const db = getTestDb();
+      await db.insert(tripMembers).values({
+        tripId,
+        userId: viewer.id,
+        role: "viewer",
+      });
+      mockGetSession.mockImplementation(() => ({
+        user: viewer,
+        session: { id: "viewer-session" },
+      }));
+
+      const res = await app.request(batchShiftUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleIds: [s1.id],
+          deltaMinutes: 15,
+        }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("skips schedules that would go before 00:00", async () => {
+      const early = await createSchedule("Early Walk", "activity", {
+        startTime: "00:10",
+      });
+
+      const res = await app.request(batchShiftUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleIds: [early.id],
+          deltaMinutes: -20,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.updatedCount).toBe(0);
+      expect(body.skippedCount).toBe(1);
+    });
+
+    it("returns 400 for deltaMinutes of 0", async () => {
+      const s1 = await createSchedule("Cafe", "restaurant", {
+        startTime: "10:00",
+      });
+
+      const res = await app.request(batchShiftUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleIds: [s1.id],
+          deltaMinutes: 0,
+        }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("updates some and skips others in a mixed batch", async () => {
+      const shiftable = await createSchedule("Lunch", "restaurant", {
+        startTime: "12:00",
+        endTime: "13:00",
+      });
+      const tooLate = await createSchedule("Late Event", "activity", {
+        startTime: "23:50",
+      });
+
+      const res = await app.request(batchShiftUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleIds: [shiftable.id, tooLate.id],
+          deltaMinutes: 15,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.updatedCount).toBe(1);
+      expect(body.skippedCount).toBe(1);
+    });
+
+    it("does not shift endTime when endDayOffset > 0", async () => {
+      const overnight = await createSchedule("Night Bus", "transport", {
+        startTime: "22:00",
+        endTime: "06:00",
+        endDayOffset: 1,
+      });
+
+      const res = await app.request(batchShiftUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scheduleIds: [overnight.id],
+          deltaMinutes: -30,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.updatedCount).toBe(1);
+
+      const listRes = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+      );
+      const list = await listRes.json();
+      const bus = list.find((s: { id: string }) => s.id === overnight.id);
+      expect(bus.startTime).toBe("21:30");
+      expect(bus.endTime).toBe("06:00");
+    });
+  });
 });

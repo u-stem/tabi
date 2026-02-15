@@ -2,8 +2,14 @@
 
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { ScheduleCategory, ScheduleColor, TransportMethod } from "@sugara/shared";
-import { TRANSPORT_METHOD_LABELS } from "@sugara/shared";
+import type {
+  ScheduleCategory,
+  ScheduleColor,
+  ScheduleResponse,
+  TimeDelta,
+  TransportMethod,
+} from "@sugara/shared";
+import { shiftTime, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import { MoreHorizontal, Pencil, Trash2, Undo2 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useState } from "react";
@@ -30,6 +36,7 @@ import type { TimeStatus } from "@/lib/format";
 import { formatTime, formatTimeRange } from "@/lib/format";
 import { CATEGORY_ICONS, TRANSPORT_ICONS } from "@/lib/icons";
 import { cn } from "@/lib/utils";
+import { BatchShiftDialog } from "./batch-shift-dialog";
 import { DragHandle } from "./drag-handle";
 import { EditScheduleDialog } from "./edit-schedule-dialog";
 
@@ -68,6 +75,8 @@ type ScheduleItemProps = {
   crossDaySourceDayNumber?: number;
   /** Position within multi-day span: "intermediate" or "final" */
   crossDayPosition?: "intermediate" | "final";
+  /** Subsequent schedules for batch time shift (sorted by sortOrder) */
+  siblingSchedules?: ScheduleResponse[];
 };
 
 type UseSortableReturn = ReturnType<typeof useSortable>;
@@ -180,6 +189,64 @@ function ScheduleMenu({
   );
 }
 
+function partitionShiftTargets(
+  schedules: ScheduleResponse[],
+  delta: number,
+): { shiftable: ScheduleResponse[]; skipped: ScheduleResponse[] } {
+  const shiftable: ScheduleResponse[] = [];
+  const skipped: ScheduleResponse[] = [];
+  for (const s of schedules) {
+    if (!s.startTime && !s.endTime) continue;
+    if (s.category === "hotel" && s.endDayOffset && s.endDayOffset > 0) {
+      skipped.push(s);
+      continue;
+    }
+    const canShiftStart = s.startTime ? shiftTime(s.startTime, delta) !== null : true;
+    const canShiftEnd =
+      !s.endTime || (s.endDayOffset && s.endDayOffset > 0)
+        ? true
+        : shiftTime(s.endTime, delta) !== null;
+    if (canShiftStart && canShiftEnd) {
+      shiftable.push(s);
+    } else {
+      skipped.push(s);
+    }
+  }
+  return { shiftable, skipped };
+}
+
+function useShiftProposal(siblingSchedules?: ScheduleResponse[]) {
+  const [shiftDialogOpen, setShiftDialogOpen] = useState(false);
+  const [shiftDelta, setShiftDelta] = useState(0);
+  const [shiftSource, setShiftSource] = useState<"start" | "end">("start");
+  const [shiftTargets, setShiftTargets] = useState<ScheduleResponse[]>([]);
+  const [shiftSkipped, setShiftSkipped] = useState<ScheduleResponse[]>([]);
+
+  const onShiftProposal =
+    siblingSchedules && siblingSchedules.length > 0
+      ? (timeDelta: TimeDelta) => {
+          const { shiftable, skipped } = partitionShiftTargets(siblingSchedules, timeDelta.delta);
+          if (shiftable.length > 0) {
+            setShiftDelta(timeDelta.delta);
+            setShiftSource(timeDelta.source);
+            setShiftTargets(shiftable);
+            setShiftSkipped(skipped);
+            setShiftDialogOpen(true);
+          }
+        }
+      : undefined;
+
+  return {
+    shiftDialogOpen,
+    setShiftDialogOpen,
+    shiftDelta,
+    shiftSource,
+    shiftTargets,
+    shiftSkipped,
+    onShiftProposal,
+  };
+}
+
 function PlaceCard({
   id,
   name,
@@ -213,8 +280,18 @@ function PlaceCard({
   crossDayDisplay,
   crossDaySourceDayNumber,
   crossDayPosition,
+  siblingSchedules,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
+  const {
+    shiftDialogOpen,
+    setShiftDialogOpen,
+    shiftDelta,
+    shiftSource,
+    shiftTargets,
+    shiftSkipped,
+    onShiftProposal,
+  } = useShiftProposal(siblingSchedules);
   const CategoryIcon = CATEGORY_ICONS[category];
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
   const isPast = timeStatus === "past";
@@ -408,6 +485,20 @@ function PlaceCard({
         onOpenChange={setEditOpen}
         onUpdate={onUpdate}
         maxEndDayOffset={maxEndDayOffset}
+        onShiftProposal={onShiftProposal}
+      />
+      <BatchShiftDialog
+        open={shiftDialogOpen}
+        onOpenChange={setShiftDialogOpen}
+        tripId={tripId}
+        dayId={dayId}
+        patternId={patternId}
+        scheduleName={name}
+        deltaMinutes={shiftDelta}
+        deltaSource={shiftSource}
+        targetSchedules={shiftTargets}
+        skippedSchedules={shiftSkipped}
+        onDone={onUpdate}
       />
     </div>
   );
@@ -446,8 +537,18 @@ function TransportConnector({
   crossDayDisplay,
   crossDaySourceDayNumber,
   crossDayPosition,
+  siblingSchedules,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
+  const {
+    shiftDialogOpen,
+    setShiftDialogOpen,
+    shiftDelta,
+    shiftSource,
+    shiftTargets,
+    shiftSkipped,
+    onShiftProposal,
+  } = useShiftProposal(siblingSchedules);
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
   const isPast = timeStatus === "past";
   const isCurrent = timeStatus === "current";
@@ -628,6 +729,20 @@ function TransportConnector({
         onOpenChange={setEditOpen}
         onUpdate={onUpdate}
         maxEndDayOffset={maxEndDayOffset}
+        onShiftProposal={onShiftProposal}
+      />
+      <BatchShiftDialog
+        open={shiftDialogOpen}
+        onOpenChange={setShiftDialogOpen}
+        tripId={tripId}
+        dayId={dayId}
+        patternId={patternId}
+        scheduleName={name}
+        deltaMinutes={shiftDelta}
+        deltaSource={shiftSource}
+        targetSchedules={shiftTargets}
+        skippedSchedules={shiftSkipped}
+        onDone={onUpdate}
       />
     </div>
   );

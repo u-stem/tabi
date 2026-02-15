@@ -90,6 +90,16 @@ export const batchDeleteSchedulesSchema = z.object({
   scheduleIds: z.array(z.string().uuid()).min(1),
 });
 
+export const batchShiftSchedulesSchema = z.object({
+  scheduleIds: z.array(z.string().uuid()).min(1),
+  deltaMinutes: z
+    .number()
+    .int()
+    .min(-1440)
+    .max(1440)
+    .refine((v) => v !== 0, "deltaMinutes must be non-zero"),
+});
+
 export const REACTION_TYPES = ["like", "hmm"] as const;
 export type ReactionType = (typeof REACTION_TYPES)[number];
 

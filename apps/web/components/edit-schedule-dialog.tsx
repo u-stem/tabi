@@ -1,7 +1,7 @@
 "use client";
 
-import type { ScheduleColor, ScheduleResponse, TransportMethod } from "@sugara/shared";
-import { SCHEDULE_COLOR_LABELS, SCHEDULE_COLORS } from "@sugara/shared";
+import type { ScheduleColor, ScheduleResponse, TimeDelta, TransportMethod } from "@sugara/shared";
+import { computeTimeDelta, SCHEDULE_COLOR_LABELS, SCHEDULE_COLORS } from "@sugara/shared";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -46,6 +46,7 @@ type EditScheduleDialogProps = {
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
   maxEndDayOffset?: number;
+  onShiftProposal?: (timeDelta: TimeDelta) => void;
 };
 
 export function EditScheduleDialog({
@@ -57,6 +58,7 @@ export function EditScheduleDialog({
   onOpenChange,
   onUpdate,
   maxEndDayOffset = 0,
+  onShiftProposal,
 }: EditScheduleDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -130,9 +132,19 @@ export function EditScheduleDialog({
           body: JSON.stringify(data),
         },
       );
+      const timeDelta = computeTimeDelta(schedule, {
+        startTime: startTime || undefined,
+        endTime: endTime || undefined,
+        endDayOffset: endDayOffset > 0 ? endDayOffset : null,
+      });
+
       onOpenChange(false);
       toast.success(MSG.SCHEDULE_UPDATED);
       onUpdate();
+
+      if (timeDelta && onShiftProposal) {
+        onShiftProposal(timeDelta);
+      }
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setError(MSG.CONFLICT);

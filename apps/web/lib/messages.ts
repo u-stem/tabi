@@ -121,6 +121,10 @@ export const MSG = {
   BATCH_DELETE_FAILED: "削除に失敗しました",
   BATCH_DUPLICATED: (n: number) => `${n}件を複製しました`,
   BATCH_DUPLICATE_FAILED: "複製に失敗しました",
+  BATCH_SHIFT_SUCCESS: (n: number) => `${n}件の予定の時間を更新しました`,
+  BATCH_SHIFT_PARTIAL: (updated: number, skipped: number) =>
+    `${updated}件の時間を更新しました（${skipped}件はスキップ）`,
+  BATCH_SHIFT_FAILED: "時間の一括更新に失敗しました",
 
   // Day memo
   DAY_MEMO_UPDATED: "メモを更新しました",

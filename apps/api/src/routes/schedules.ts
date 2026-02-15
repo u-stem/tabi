@@ -14,9 +14,10 @@ import { db } from "../db/index";
 import { schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
-import { canEdit, checkTripAccess, verifyPatternAccess } from "../lib/permissions";
+import { canEdit, verifyPatternAccess } from "../lib/permissions";
 import { getNextSortOrder } from "../lib/sort-order";
 import { requireAuth } from "../middleware/auth";
+import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
 
 const scheduleRoutes = new Hono<AppEnv>();
@@ -92,7 +93,7 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules", async 
     action: "created",
     entityType: "schedule",
     entityName: schedule.name,
-  }).catch(console.error);
+  });
 
   return c.json(schedule, 201);
 });
@@ -135,7 +136,7 @@ scheduleRoutes.post(
       action: "deleted",
       entityType: "schedule",
       detail: `${parsed.data.scheduleIds.length}件`,
-    }).catch(console.error);
+    });
 
     return c.json({ ok: true });
   },
@@ -238,7 +239,7 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules/batch-sh
       action: "updated",
       entityType: "schedule",
       detail: `${updatedCount}件の時間を${abs}分${direction}に移動`,
-    }).catch(console.error);
+    });
   }
 
   return c.json({ updatedCount, skippedCount });
@@ -323,7 +324,7 @@ scheduleRoutes.post(
       action: "duplicated",
       entityType: "schedule",
       detail: `${duplicated.length}件`,
-    }).catch(console.error);
+    });
 
     return c.json(duplicated, 201);
   },
@@ -432,7 +433,7 @@ scheduleRoutes.patch(
       action: "updated",
       entityType: "schedule",
       entityName: updated.name,
-    }).catch(console.error);
+    });
 
     return c.json(updated);
   },
@@ -469,21 +470,16 @@ scheduleRoutes.delete(
       action: "deleted",
       entityType: "schedule",
       entityName: existing.name,
-    }).catch(console.error);
+    });
 
     return c.json({ ok: true });
   },
 );
 
 // Batch unassign schedules (move to candidates)
-scheduleRoutes.post("/:tripId/schedules/batch-unassign", async (c) => {
+scheduleRoutes.post("/:tripId/schedules/batch-unassign", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!canEdit(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const body = await c.req.json();
   const parsed = batchUnassignSchedulesSchema.safeParse(body);
@@ -530,56 +526,55 @@ scheduleRoutes.post("/:tripId/schedules/batch-unassign", async (c) => {
     action: "unassigned",
     entityType: "schedule",
     detail: `${parsed.data.scheduleIds.length}件`,
-  }).catch(console.error);
+  });
 
   return c.json({ ok: true });
 });
 
 // Unassign schedule (move to candidates)
-scheduleRoutes.post("/:tripId/schedules/:scheduleId/unassign", async (c) => {
-  const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const scheduleId = c.req.param("scheduleId");
+scheduleRoutes.post(
+  "/:tripId/schedules/:scheduleId/unassign",
+  requireTripAccess("editor"),
+  async (c) => {
+    const user = c.get("user");
+    const tripId = c.req.param("tripId");
+    const scheduleId = c.req.param("scheduleId");
 
-  const role = await checkTripAccess(tripId, user.id);
-  if (!canEdit(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
+    const existing = await db.query.schedules.findFirst({
+      where: and(eq(schedules.id, scheduleId), eq(schedules.tripId, tripId)),
+      with: { dayPattern: { with: { tripDay: true } } },
+    });
+    if (!existing || !existing.dayPatternId) {
+      return c.json({ error: ERROR_MSG.SCHEDULE_NOT_FOUND }, 404);
+    }
 
-  const existing = await db.query.schedules.findFirst({
-    where: and(eq(schedules.id, scheduleId), eq(schedules.tripId, tripId)),
-    with: { dayPattern: { with: { tripDay: true } } },
-  });
-  if (!existing || !existing.dayPatternId) {
-    return c.json({ error: ERROR_MSG.SCHEDULE_NOT_FOUND }, 404);
-  }
+    const nextOrder = await getNextSortOrder(
+      db,
+      schedules.sortOrder,
+      schedules,
+      and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
+    );
 
-  const nextOrder = await getNextSortOrder(
-    db,
-    schedules.sortOrder,
-    schedules,
-    and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
-  );
+    const [updated] = await db
+      .update(schedules)
+      .set({
+        dayPatternId: null,
+        sortOrder: nextOrder,
+        updatedAt: new Date(),
+      })
+      .where(eq(schedules.id, scheduleId))
+      .returning();
 
-  const [updated] = await db
-    .update(schedules)
-    .set({
-      dayPatternId: null,
-      sortOrder: nextOrder,
-      updatedAt: new Date(),
-    })
-    .where(eq(schedules.id, scheduleId))
-    .returning();
+    logActivity({
+      tripId,
+      userId: user.id,
+      action: "unassigned",
+      entityType: "schedule",
+      entityName: updated.name,
+    });
 
-  logActivity({
-    tripId,
-    userId: user.id,
-    action: "unassigned",
-    entityType: "schedule",
-    entityName: updated.name,
-  }).catch(console.error);
-
-  return c.json(updated);
-});
+    return c.json(updated);
+  },
+);
 
 export { scheduleRoutes };

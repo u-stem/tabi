@@ -10,6 +10,7 @@ import {
   getCrossDayTimeStatus,
   getDayCount,
   getTimeStatus,
+  isSafeUrl,
   validateTimeRange,
 } from "../format";
 import { MSG } from "../messages";
@@ -261,5 +262,26 @@ describe("getCrossDayTimeStatus", () => {
 
   it("returns null when endTime is null", () => {
     expect(getCrossDayTimeStatus("10:00", null)).toBeNull();
+  });
+});
+
+describe("isSafeUrl", () => {
+  it.each([
+    "https://example.com",
+    "http://example.com/path?q=1",
+    "https://a.b.c:8080/",
+  ])("returns true for safe URL '%s'", (url) => {
+    expect(isSafeUrl(url)).toBe(true);
+  });
+
+  it.each([
+    "javascript:alert(1)",
+    "javascript:void(0)",
+    "data:text/html,<script>alert(1)</script>",
+    "vbscript:msgbox",
+    "not-a-url",
+    "",
+  ])("returns false for dangerous or invalid URL '%s'", (url) => {
+    expect(isSafeUrl(url)).toBe(false);
   });
 });

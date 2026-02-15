@@ -4,8 +4,8 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { scheduleReactions, schedules } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
-import { checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
+import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
 
 const reactionRoutes = new Hono<AppEnv>();
@@ -22,15 +22,10 @@ async function getReactionCounts(scheduleId: string) {
   return { likeCount: counts.likeCount, hmmCount: counts.hmmCount };
 }
 
-reactionRoutes.put("/:tripId/candidates/:scheduleId/reaction", async (c) => {
+reactionRoutes.put("/:tripId/candidates/:scheduleId/reaction", requireTripAccess(), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
   const scheduleId = c.req.param("scheduleId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!role) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const body = await c.req.json();
   const parsed = reactionSchema.safeParse(body);
@@ -67,36 +62,35 @@ reactionRoutes.put("/:tripId/candidates/:scheduleId/reaction", async (c) => {
   return c.json({ type: reaction.type, ...counts });
 });
 
-reactionRoutes.delete("/:tripId/candidates/:scheduleId/reaction", async (c) => {
-  const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const scheduleId = c.req.param("scheduleId");
+reactionRoutes.delete(
+  "/:tripId/candidates/:scheduleId/reaction",
+  requireTripAccess(),
+  async (c) => {
+    const user = c.get("user");
+    const tripId = c.req.param("tripId");
+    const scheduleId = c.req.param("scheduleId");
 
-  const role = await checkTripAccess(tripId, user.id);
-  if (!role) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
+    const existing = await db.query.schedules.findFirst({
+      where: and(
+        eq(schedules.id, scheduleId),
+        eq(schedules.tripId, tripId),
+        isNull(schedules.dayPatternId),
+      ),
+    });
+    if (!existing) {
+      return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
+    }
 
-  const existing = await db.query.schedules.findFirst({
-    where: and(
-      eq(schedules.id, scheduleId),
-      eq(schedules.tripId, tripId),
-      isNull(schedules.dayPatternId),
-    ),
-  });
-  if (!existing) {
-    return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
-  }
+    await db
+      .delete(scheduleReactions)
+      .where(
+        and(eq(scheduleReactions.scheduleId, scheduleId), eq(scheduleReactions.userId, user.id)),
+      );
 
-  await db
-    .delete(scheduleReactions)
-    .where(
-      and(eq(scheduleReactions.scheduleId, scheduleId), eq(scheduleReactions.userId, user.id)),
-    );
+    const counts = await getReactionCounts(scheduleId);
 
-  const counts = await getReactionCounts(scheduleId);
-
-  return c.json(counts);
-});
+    return c.json(counts);
+  },
+);
 
 export { reactionRoutes };

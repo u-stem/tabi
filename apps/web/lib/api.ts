@@ -47,3 +47,21 @@ export async function api<T>(path: string, options: FetchOptions = {}): Promise<
 
   return res.json();
 }
+
+/**
+ * Extract a user-facing error message from an unknown catch value.
+ * Handles ApiError (conflict / not-found) with dedicated messages.
+ */
+export function getApiErrorMessage(
+  err: unknown,
+  fallback: string,
+  opts?: { conflict?: string; notFound?: string },
+): string {
+  if (err instanceof ApiError) {
+    if (err.status === 409) return opts?.conflict ?? err.message;
+    if (err.status === 404) return opts?.notFound ?? err.message;
+    return err.message;
+  }
+  if (err instanceof Error) return err.message;
+  return fallback;
+}

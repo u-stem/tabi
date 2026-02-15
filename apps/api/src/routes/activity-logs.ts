@@ -2,23 +2,17 @@ import { and, desc, eq, lt } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { activityLogs, users } from "../db/schema";
-import { ERROR_MSG, MAX_LOGS_PER_TRIP } from "../lib/constants";
-import { checkTripAccess } from "../lib/permissions";
+import { MAX_LOGS_PER_TRIP } from "../lib/constants";
 import { requireAuth } from "../middleware/auth";
+import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
 
 const activityLogRoutes = new Hono<AppEnv>();
 activityLogRoutes.use("*", requireAuth);
 
 // List activity logs for a trip
-activityLogRoutes.get("/:tripId/activity-logs", async (c) => {
-  const user = c.get("user");
+activityLogRoutes.get("/:tripId/activity-logs", requireTripAccess(), async (c) => {
   const tripId = c.req.param("tripId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!role) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const limitParam = Number(c.req.query("limit") || String(MAX_LOGS_PER_TRIP));
   const limit = Math.min(Math.max(1, limitParam), MAX_LOGS_PER_TRIP);

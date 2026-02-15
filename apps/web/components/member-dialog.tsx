@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { api } from "@/lib/api";
+import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -96,7 +96,7 @@ export function MemberDialog({
       setUserId("");
       invalidateMembers();
     } catch (err) {
-      const message = err instanceof Error ? err.message : MSG.MEMBER_ADD_FAILED;
+      const message = getApiErrorMessage(err, MSG.MEMBER_ADD_FAILED);
       toast.error(message);
     } finally {
       setAdding(false);
@@ -113,7 +113,7 @@ export function MemberDialog({
       toast.success(MSG.MEMBER_ADDED);
       invalidateMembers();
     } catch (err) {
-      const message = err instanceof Error ? err.message : MSG.MEMBER_ADD_FAILED;
+      const message = getApiErrorMessage(err, MSG.MEMBER_ADD_FAILED);
       toast.error(message);
     } finally {
       setAdding(false);

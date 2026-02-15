@@ -46,6 +46,9 @@ feedbackRoutes.post("/feedback", requireAuth, async (c) => {
     return c.json({ error: ERROR_MSG.GITHUB_API_FAILED }, 502);
   }
 
-  const data = await res.json();
+  const data = await res.json().catch(() => null);
+  if (!data?.html_url) {
+    return c.json({ error: ERROR_MSG.GITHUB_API_FAILED }, 502);
+  }
   return c.json({ url: data.html_url }, 201);
 });

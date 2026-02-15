@@ -22,7 +22,13 @@ import { ApiError, api } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES, STATUS_COLORS } from "@/lib/colors";
 import { getCrossDayEntries } from "@/lib/cross-day";
 import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
-import { formatDate, formatDateFromISO, formatDateRange, getDayCount } from "@/lib/format";
+import {
+  formatDate,
+  formatDateFromISO,
+  formatDateRange,
+  getDayCount,
+  isSafeUrl,
+} from "@/lib/format";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { buildMergedTimeline } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
@@ -378,7 +384,7 @@ function ScheduleCard({
         )}
       </div>
 
-      {schedule.url && (
+      {schedule.url && isSafeUrl(schedule.url) && (
         <a
           href={schedule.url}
           target="_blank"

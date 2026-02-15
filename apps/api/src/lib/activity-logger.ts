@@ -12,7 +12,17 @@ type LogActivityParams = {
   detail?: string;
 };
 
-export async function logActivity(params: LogActivityParams): Promise<void> {
+/**
+ * Fire-and-forget activity logging. Errors are caught internally
+ * so callers do not need `.catch()`.
+ */
+export function logActivity(params: LogActivityParams): Promise<void> {
+  return logActivityInternal(params).catch((err) => {
+    console.error("[logActivity]", params.entityType, params.action, err);
+  });
+}
+
+async function logActivityInternal(params: LogActivityParams): Promise<void> {
   await db.insert(activityLogs).values({
     tripId: params.tripId,
     userId: params.userId,

@@ -37,9 +37,7 @@ export default function PrivacyPage() {
               本サービスでは、以下の情報を収集します。
             </p>
             <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
-              <li>
-                アカウント情報: ユーザー名、表示名、パスワード（ハッシュ値として保存）
-              </li>
+              <li>アカウント情報: ユーザー名、表示名、パスワード（ハッシュ値として保存）</li>
               <li>
                 旅行計画データ:
                 旅行タイトル、目的地、日程、スケジュール、メモなどユーザーが入力した情報

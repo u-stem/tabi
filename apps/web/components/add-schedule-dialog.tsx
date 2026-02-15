@@ -1,7 +1,16 @@
 "use client";
 
 import type { ScheduleCategory, ScheduleColor, TransportMethod } from "@sugara/shared";
-import { DEFAULT_SCHEDULE_CATEGORY, SCHEDULE_COLOR_LABELS, SCHEDULE_COLORS } from "@sugara/shared";
+import {
+  DEFAULT_SCHEDULE_CATEGORY,
+  SCHEDULE_ADDRESS_MAX_LENGTH,
+  SCHEDULE_COLOR_LABELS,
+  SCHEDULE_COLORS,
+  SCHEDULE_MEMO_MAX_LENGTH,
+  SCHEDULE_NAME_MAX_LENGTH,
+  SCHEDULE_PLACE_MAX_LENGTH,
+  SCHEDULE_URL_MAX_LENGTH,
+} from "@sugara/shared";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -26,7 +35,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { api } from "@/lib/api";
+import { api, getApiErrorMessage } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
@@ -118,7 +127,7 @@ export function AddScheduleDialog({
       toast.success(MSG.SCHEDULE_ADDED);
       onAdd();
     } catch (err) {
-      setError(err instanceof Error ? err.message : MSG.SCHEDULE_ADD_FAILED);
+      setError(getApiErrorMessage(err, MSG.SCHEDULE_ADD_FAILED));
     } finally {
       setLoading(false);
     }
@@ -157,7 +166,13 @@ export function AddScheduleDialog({
             <Label htmlFor="name">
               名前 <span className="text-destructive">*</span>
             </Label>
-            <Input id="name" name="name" placeholder="金閣寺" required />
+            <Input
+              id="name"
+              name="name"
+              placeholder="金閣寺"
+              required
+              maxLength={SCHEDULE_NAME_MAX_LENGTH}
+            />
           </div>
           <div className="space-y-2">
             <Label>カテゴリ</Label>
@@ -201,18 +216,33 @@ export function AddScheduleDialog({
           {category !== "transport" && (
             <div className="space-y-2">
               <Label htmlFor="address">住所</Label>
-              <Input id="address" name="address" placeholder="京都市北区金閣寺町1" />
+              <Input
+                id="address"
+                name="address"
+                placeholder="京都市北区金閣寺町1"
+                maxLength={SCHEDULE_ADDRESS_MAX_LENGTH}
+              />
             </div>
           )}
           {category === "transport" && (
             <>
               <div className="space-y-2">
                 <Label htmlFor="departurePlace">出発地</Label>
-                <Input id="departurePlace" name="departurePlace" placeholder="東京駅" />
+                <Input
+                  id="departurePlace"
+                  name="departurePlace"
+                  placeholder="東京駅"
+                  maxLength={SCHEDULE_PLACE_MAX_LENGTH}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="arrivalPlace">到着地</Label>
-                <Input id="arrivalPlace" name="arrivalPlace" placeholder="新大阪駅" />
+                <Input
+                  id="arrivalPlace"
+                  name="arrivalPlace"
+                  placeholder="新大阪駅"
+                  maxLength={SCHEDULE_PLACE_MAX_LENGTH}
+                />
               </div>
               <div className="space-y-2">
                 <Label>交通手段</Label>
@@ -236,7 +266,13 @@ export function AddScheduleDialog({
           )}
           <div className="space-y-2">
             <Label htmlFor="url">URL</Label>
-            <Input id="url" name="url" type="url" placeholder="https://..." />
+            <Input
+              id="url"
+              name="url"
+              type="url"
+              placeholder="https://..."
+              maxLength={SCHEDULE_URL_MAX_LENGTH}
+            />
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -271,7 +307,7 @@ export function AddScheduleDialog({
           {timeError && <p className="text-sm text-destructive">{timeError}</p>}
           <div className="space-y-2">
             <Label htmlFor="memo">メモ</Label>
-            <Textarea id="memo" name="memo" rows={3} />
+            <Textarea id="memo" name="memo" rows={3} maxLength={SCHEDULE_MEMO_MAX_LENGTH} />
           </div>
           {error && (
             <p role="alert" className="text-sm text-destructive">

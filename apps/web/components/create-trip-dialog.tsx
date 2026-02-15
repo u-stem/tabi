@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api } from "@/lib/api";
+import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
 
 type CreateTripDialogProps = {
@@ -70,7 +70,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
       onCreated();
       router.push(`/trips/${trip.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : MSG.TRIP_CREATE_FAILED);
+      setError(getApiErrorMessage(err, MSG.TRIP_CREATE_FAILED));
     } finally {
       setLoading(false);
     }

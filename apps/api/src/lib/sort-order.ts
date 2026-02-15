@@ -2,9 +2,10 @@ import type { SQL } from "drizzle-orm";
 import { sql } from "drizzle-orm";
 import type { PgColumn, PgTable } from "drizzle-orm/pg-core";
 
-// Simplified type to work with both db and transaction contexts
-// biome-ignore lint/suspicious/noExplicitAny: Drizzle's type system makes it impractical to type this precisely
-type QueryExecutor = any;
+import type { db } from "../db/index";
+
+type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type QueryExecutor = typeof db | Transaction;
 
 export async function getNextSortOrder(
   dbOrTx: QueryExecutor,

@@ -93,9 +93,9 @@ export function AuthForm() {
             </Link>
           </p>
           <p className="text-center text-xs text-muted-foreground">
-            ユーザー名・パスワードを忘れた場合はリセットできません。
+            ユーザー名・パスワードを忘れてしまうと
             <br />
-            管理者にお問い合わせください。
+            ログインができなくなりますのでご注意ください。
           </p>
         </form>
       </CardContent>

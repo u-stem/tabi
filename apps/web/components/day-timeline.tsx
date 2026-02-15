@@ -32,6 +32,7 @@ import {
   type TimeStatus,
   toDateString,
 } from "@/lib/format";
+import { useSelection } from "@/lib/hooks/selection-context";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import type { TimelineItem } from "@/lib/merge-timeline";
 import { buildMergedTimeline, timelineSortableIds } from "@/lib/merge-timeline";
@@ -49,17 +50,6 @@ type DayTimelineProps = {
   onRefresh: () => void;
   disabled?: boolean;
   headerContent?: React.ReactNode;
-  selectionMode?: boolean;
-  selectedIds?: Set<string>;
-  onToggleSelect?: (id: string) => void;
-  onEnterSelectionMode?: () => void;
-  onExitSelectionMode?: () => void;
-  onSelectAll?: () => void;
-  onDeselectAll?: () => void;
-  onBatchUnassign?: () => void;
-  onBatchDuplicate?: () => void;
-  onBatchDelete?: () => void;
-  batchLoading?: boolean;
   maxEndDayOffset?: number;
   totalDays?: number;
   crossDayEntries?: CrossDayEntry[];
@@ -79,17 +69,6 @@ export function DayTimeline({
   onRefresh,
   disabled,
   headerContent,
-  selectionMode,
-  selectedIds,
-  onToggleSelect,
-  onEnterSelectionMode,
-  onExitSelectionMode,
-  onSelectAll,
-  onDeselectAll,
-  onBatchUnassign,
-  onBatchDuplicate,
-  onBatchDelete,
-  batchLoading,
   maxEndDayOffset,
   totalDays,
   crossDayEntries,
@@ -99,6 +78,10 @@ export function DayTimeline({
   onAddScheduleOpenChange,
   overScheduleId,
 }: DayTimelineProps) {
+  const sel = useSelection();
+  const selectionMode = sel.selectionTarget === "timeline";
+  const selectedIds = selectionMode ? sel.selectedIds : undefined;
+  const selectedCount = selectedIds?.size ?? 0;
   const { setNodeRef: setDroppableRef, isOver: isOverTimeline } = useDroppable({
     id: "timeline",
     data: { type: "timeline" },
@@ -162,21 +145,19 @@ export function DayTimeline({
     }
   }
 
-  const selectedCount = selectedIds?.size ?? 0;
-
   return (
     <div>
       {selectionMode ? (
         <div className="mb-3 flex flex-wrap select-none items-center gap-1.5">
           <div className="flex items-center gap-1.5">
-            <Button variant="outline" size="sm" onClick={onSelectAll}>
+            <Button variant="outline" size="sm" onClick={sel.selectAll}>
               <CheckCheck className="h-4 w-4" />
               <span className="hidden sm:inline">全選択</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={onDeselectAll}
+              onClick={sel.deselectAll}
               disabled={selectedCount === 0}
             >
               <X className="h-4 w-4" />
@@ -188,8 +169,8 @@ export function DayTimeline({
               <TooltipTrigger asChild>
                 <Button
                   size="sm"
-                  onClick={onBatchUnassign}
-                  disabled={selectedCount === 0 || batchLoading}
+                  onClick={sel.batchUnassign}
+                  disabled={selectedCount === 0 || sel.batchLoading}
                 >
                   <Undo2 className="h-4 w-4" />
                   <span className="hidden sm:inline">候補に戻す</span>
@@ -199,22 +180,29 @@ export function DayTimeline({
             </Tooltip>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" disabled={selectedCount === 0 || batchLoading}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={selectedCount === 0 || sel.batchLoading}
+                >
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onBatchDuplicate}>
+                <DropdownMenuItem onClick={sel.batchDuplicateSchedules}>
                   <Copy className="mr-2 h-3 w-3" />
                   複製
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive" onClick={onBatchDelete}>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => sel.setBatchDeleteOpen(true)}
+                >
                   <Trash2 className="mr-2 h-3 w-3" />
                   削除
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" size="sm" onClick={onExitSelectionMode}>
+            <Button variant="outline" size="sm" onClick={sel.exit}>
               キャンセル
             </Button>
           </div>
@@ -248,8 +236,8 @@ export function DayTimeline({
                   onOpenChange={onAddScheduleOpenChange}
                 />
               ))}
-            {!disabled && schedules.length > 0 && onEnterSelectionMode && (
-              <Button variant="outline" size="sm" onClick={onEnterSelectionMode}>
+            {!disabled && schedules.length > 0 && sel.canEnter && (
+              <Button variant="outline" size="sm" onClick={() => sel.enter("timeline")}>
                 <CheckSquare className="h-4 w-4" />
                 <span className="hidden sm:inline">選択</span>
               </Button>
@@ -369,7 +357,7 @@ export function DayTimeline({
                 maxEndDayOffset={maxEndDayOffset}
                 selectable={opts?.selectable}
                 selected={opts?.selectable ? selectedIds?.has(schedule.id) : undefined}
-                onSelect={opts?.selectable ? onToggleSelect : undefined}
+                onSelect={opts?.selectable ? sel.toggle : undefined}
                 siblingSchedules={schedulesAfter}
               />
             </div>

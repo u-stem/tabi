@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { api } from "@/lib/api";
+import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
 
 type EditTripDialogProps = {
@@ -89,7 +89,7 @@ export function EditTripDialog({
       toast.success(MSG.TRIP_UPDATED);
       onUpdate();
     } catch (err) {
-      setError(err instanceof Error ? err.message : MSG.TRIP_UPDATE_FAILED);
+      setError(getApiErrorMessage(err, MSG.TRIP_UPDATE_FAILED));
     } finally {
       setLoading(false);
     }

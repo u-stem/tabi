@@ -14,37 +14,27 @@ import { dayPatterns, schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
-import { canEdit, checkTripAccess } from "../lib/permissions";
 import { getNextSortOrder } from "../lib/sort-order";
 import { requireAuth } from "../middleware/auth";
+import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
 
 const candidateRoutes = new Hono<AppEnv>();
 candidateRoutes.use("*", requireAuth);
 
 // List candidates for a trip
-candidateRoutes.get("/:tripId/candidates", async (c) => {
+candidateRoutes.get("/:tripId/candidates", requireTripAccess(), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!role) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const candidates = await queryCandidatesWithReactions(tripId, user.id);
   return c.json(candidates);
 });
 
 // Create candidate
-candidateRoutes.post("/:tripId/candidates", async (c) => {
+candidateRoutes.post("/:tripId/candidates", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!canEdit(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const body = await c.req.json();
   const parsed = createCandidateSchema.safeParse(body);
@@ -82,20 +72,15 @@ candidateRoutes.post("/:tripId/candidates", async (c) => {
     action: "created",
     entityType: "candidate",
     entityName: schedule.name,
-  }).catch(console.error);
+  });
 
   return c.json(schedule, 201);
 });
 
 // Batch assign candidates to a day pattern
-candidateRoutes.post("/:tripId/candidates/batch-assign", async (c) => {
+candidateRoutes.post("/:tripId/candidates/batch-assign", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!canEdit(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const body = await c.req.json();
   const parsed = batchAssignCandidatesSchema.safeParse(body);
@@ -148,20 +133,15 @@ candidateRoutes.post("/:tripId/candidates/batch-assign", async (c) => {
     action: "assigned",
     entityType: "candidate",
     detail: `${parsed.data.scheduleIds.length}件`,
-  }).catch(console.error);
+  });
 
   return c.json({ ok: true });
 });
 
 // Batch delete candidates
-candidateRoutes.post("/:tripId/candidates/batch-delete", async (c) => {
+candidateRoutes.post("/:tripId/candidates/batch-delete", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!canEdit(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const body = await c.req.json();
   const parsed = batchDeleteSchedulesSchema.safeParse(body);
@@ -188,98 +168,91 @@ candidateRoutes.post("/:tripId/candidates/batch-delete", async (c) => {
     action: "deleted",
     entityType: "candidate",
     detail: `${parsed.data.scheduleIds.length}件`,
-  }).catch(console.error);
+  });
 
   return c.json({ ok: true });
 });
 
 // Batch duplicate candidates
-candidateRoutes.post("/:tripId/candidates/batch-duplicate", async (c) => {
-  const user = c.get("user");
-  const tripId = c.req.param("tripId");
+candidateRoutes.post(
+  "/:tripId/candidates/batch-duplicate",
+  requireTripAccess("editor"),
+  async (c) => {
+    const user = c.get("user");
+    const tripId = c.req.param("tripId");
 
-  const role = await checkTripAccess(tripId, user.id);
-  if (!canEdit(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
+    const body = await c.req.json();
+    const parsed = batchDeleteSchedulesSchema.safeParse(body);
+    if (!parsed.success) {
+      return c.json({ error: parsed.error.flatten() }, 400);
+    }
 
-  const body = await c.req.json();
-  const parsed = batchDeleteSchedulesSchema.safeParse(body);
-  if (!parsed.success) {
-    return c.json({ error: parsed.error.flatten() }, 400);
-  }
+    const [scheduleCount] = await db
+      .select({ count: count() })
+      .from(schedules)
+      .where(eq(schedules.tripId, tripId));
+    if (scheduleCount.count + parsed.data.scheduleIds.length > MAX_SCHEDULES_PER_TRIP) {
+      return c.json({ error: ERROR_MSG.LIMIT_SCHEDULES }, 409);
+    }
 
-  const [scheduleCount] = await db
-    .select({ count: count() })
-    .from(schedules)
-    .where(eq(schedules.tripId, tripId));
-  if (scheduleCount.count + parsed.data.scheduleIds.length > MAX_SCHEDULES_PER_TRIP) {
-    return c.json({ error: ERROR_MSG.LIMIT_SCHEDULES }, 409);
-  }
+    const candidates = await db.query.schedules.findMany({
+      where: and(
+        inArray(schedules.id, parsed.data.scheduleIds),
+        eq(schedules.tripId, tripId),
+        isNull(schedules.dayPatternId),
+      ),
+    });
+    if (candidates.length !== parsed.data.scheduleIds.length) {
+      return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
+    }
 
-  const candidates = await db.query.schedules.findMany({
-    where: and(
-      inArray(schedules.id, parsed.data.scheduleIds),
-      eq(schedules.tripId, tripId),
-      isNull(schedules.dayPatternId),
-    ),
-  });
-  if (candidates.length !== parsed.data.scheduleIds.length) {
-    return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
-  }
+    let nextOrder = await getNextSortOrder(
+      db,
+      schedules.sortOrder,
+      schedules,
+      and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
+    );
 
-  let nextOrder = await getNextSortOrder(
-    db,
-    schedules.sortOrder,
-    schedules,
-    and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
-  );
+    // Preserve the order of scheduleIds in the request
+    const scheduleById = new Map(candidates.map((s) => [s.id, s]));
+    const ordered = parsed.data.scheduleIds.map((id) => scheduleById.get(id)!);
 
-  // Preserve the order of scheduleIds in the request
-  const scheduleById = new Map(candidates.map((s) => [s.id, s]));
-  const ordered = parsed.data.scheduleIds.map((id) => scheduleById.get(id)!);
+    const duplicated = await db
+      .insert(schedules)
+      .values(
+        ordered.map((schedule) => ({
+          tripId,
+          name: schedule.name,
+          category: schedule.category,
+          address: schedule.address,
+          startTime: schedule.startTime,
+          endTime: schedule.endTime,
+          memo: schedule.memo,
+          url: schedule.url,
+          departurePlace: schedule.departurePlace,
+          arrivalPlace: schedule.arrivalPlace,
+          transportMethod: schedule.transportMethod,
+          color: schedule.color,
+          sortOrder: nextOrder++,
+        })),
+      )
+      .returning();
 
-  const duplicated = await db
-    .insert(schedules)
-    .values(
-      ordered.map((schedule) => ({
-        tripId,
-        name: schedule.name,
-        category: schedule.category,
-        address: schedule.address,
-        startTime: schedule.startTime,
-        endTime: schedule.endTime,
-        memo: schedule.memo,
-        url: schedule.url,
-        departurePlace: schedule.departurePlace,
-        arrivalPlace: schedule.arrivalPlace,
-        transportMethod: schedule.transportMethod,
-        color: schedule.color,
-        sortOrder: nextOrder++,
-      })),
-    )
-    .returning();
+    logActivity({
+      tripId,
+      userId: user.id,
+      action: "duplicated",
+      entityType: "candidate",
+      detail: `${duplicated.length}件`,
+    });
 
-  logActivity({
-    tripId,
-    userId: user.id,
-    action: "duplicated",
-    entityType: "candidate",
-    detail: `${duplicated.length}件`,
-  }).catch(console.error);
-
-  return c.json(duplicated, 201);
-});
+    return c.json(duplicated, 201);
+  },
+);
 
 // Reorder candidates (registered before /:scheduleId to avoid route conflict)
-candidateRoutes.patch("/:tripId/candidates/reorder", async (c) => {
-  const user = c.get("user");
+candidateRoutes.patch("/:tripId/candidates/reorder", requireTripAccess("editor"), async (c) => {
   const tripId = c.req.param("tripId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!canEdit(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const body = await c.req.json();
   const parsed = reorderSchedulesSchema.safeParse(body);
@@ -313,15 +286,10 @@ candidateRoutes.patch("/:tripId/candidates/reorder", async (c) => {
 });
 
 // Update candidate
-candidateRoutes.patch("/:tripId/candidates/:scheduleId", async (c) => {
+candidateRoutes.patch("/:tripId/candidates/:scheduleId", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
   const scheduleId = c.req.param("scheduleId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!canEdit(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const body = await c.req.json();
   const parsed = updateScheduleSchema.safeParse(body);
@@ -366,108 +334,106 @@ candidateRoutes.patch("/:tripId/candidates/:scheduleId", async (c) => {
     action: "updated",
     entityType: "candidate",
     entityName: updated.name,
-  }).catch(console.error);
+  });
 
   return c.json(updated);
 });
 
 // Delete candidate
-candidateRoutes.delete("/:tripId/candidates/:scheduleId", async (c) => {
-  const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const scheduleId = c.req.param("scheduleId");
+candidateRoutes.delete(
+  "/:tripId/candidates/:scheduleId",
+  requireTripAccess("editor"),
+  async (c) => {
+    const user = c.get("user");
+    const tripId = c.req.param("tripId");
+    const scheduleId = c.req.param("scheduleId");
 
-  const role = await checkTripAccess(tripId, user.id);
-  if (!canEdit(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
+    const existing = await db.query.schedules.findFirst({
+      where: and(
+        eq(schedules.id, scheduleId),
+        eq(schedules.tripId, tripId),
+        isNull(schedules.dayPatternId),
+      ),
+    });
+    if (!existing) {
+      return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
+    }
 
-  const existing = await db.query.schedules.findFirst({
-    where: and(
-      eq(schedules.id, scheduleId),
-      eq(schedules.tripId, tripId),
-      isNull(schedules.dayPatternId),
-    ),
-  });
-  if (!existing) {
-    return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
-  }
+    await db.delete(schedules).where(eq(schedules.id, scheduleId));
 
-  await db.delete(schedules).where(eq(schedules.id, scheduleId));
+    logActivity({
+      tripId,
+      userId: user.id,
+      action: "deleted",
+      entityType: "candidate",
+      entityName: existing.name,
+    });
 
-  logActivity({
-    tripId,
-    userId: user.id,
-    action: "deleted",
-    entityType: "candidate",
-    entityName: existing.name,
-  }).catch(console.error);
-
-  return c.json({ ok: true });
-});
+    return c.json({ ok: true });
+  },
+);
 
 // Assign candidate to a day pattern
-candidateRoutes.post("/:tripId/candidates/:scheduleId/assign", async (c) => {
-  const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const scheduleId = c.req.param("scheduleId");
+candidateRoutes.post(
+  "/:tripId/candidates/:scheduleId/assign",
+  requireTripAccess("editor"),
+  async (c) => {
+    const user = c.get("user");
+    const tripId = c.req.param("tripId");
+    const scheduleId = c.req.param("scheduleId");
 
-  const role = await checkTripAccess(tripId, user.id);
-  if (!canEdit(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
+    const body = await c.req.json();
+    const parsed = assignCandidateSchema.safeParse(body);
+    if (!parsed.success) {
+      return c.json({ error: parsed.error.flatten() }, 400);
+    }
 
-  const body = await c.req.json();
-  const parsed = assignCandidateSchema.safeParse(body);
-  if (!parsed.success) {
-    return c.json({ error: parsed.error.flatten() }, 400);
-  }
+    const existing = await db.query.schedules.findFirst({
+      where: and(
+        eq(schedules.id, scheduleId),
+        eq(schedules.tripId, tripId),
+        isNull(schedules.dayPatternId),
+      ),
+    });
+    if (!existing) {
+      return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
+    }
 
-  const existing = await db.query.schedules.findFirst({
-    where: and(
-      eq(schedules.id, scheduleId),
-      eq(schedules.tripId, tripId),
-      isNull(schedules.dayPatternId),
-    ),
-  });
-  if (!existing) {
-    return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
-  }
+    const pattern = await db.query.dayPatterns.findFirst({
+      where: eq(dayPatterns.id, parsed.data.dayPatternId),
+      with: { tripDay: true },
+    });
+    if (!pattern || pattern.tripDay.tripId !== tripId) {
+      return c.json({ error: ERROR_MSG.PATTERN_NOT_FOUND }, 404);
+    }
 
-  const pattern = await db.query.dayPatterns.findFirst({
-    where: eq(dayPatterns.id, parsed.data.dayPatternId),
-    with: { tripDay: true },
-  });
-  if (!pattern || pattern.tripDay.tripId !== tripId) {
-    return c.json({ error: ERROR_MSG.PATTERN_NOT_FOUND }, 404);
-  }
+    const nextOrder = await getNextSortOrder(
+      db,
+      schedules.sortOrder,
+      schedules,
+      eq(schedules.dayPatternId, parsed.data.dayPatternId),
+    );
 
-  const nextOrder = await getNextSortOrder(
-    db,
-    schedules.sortOrder,
-    schedules,
-    eq(schedules.dayPatternId, parsed.data.dayPatternId),
-  );
+    const [updated] = await db
+      .update(schedules)
+      .set({
+        dayPatternId: parsed.data.dayPatternId,
+        sortOrder: nextOrder,
+        updatedAt: new Date(),
+      })
+      .where(eq(schedules.id, scheduleId))
+      .returning();
 
-  const [updated] = await db
-    .update(schedules)
-    .set({
-      dayPatternId: parsed.data.dayPatternId,
-      sortOrder: nextOrder,
-      updatedAt: new Date(),
-    })
-    .where(eq(schedules.id, scheduleId))
-    .returning();
+    logActivity({
+      tripId,
+      userId: user.id,
+      action: "assigned",
+      entityType: "candidate",
+      entityName: updated.name,
+    });
 
-  logActivity({
-    tripId,
-    userId: user.id,
-    action: "assigned",
-    entityType: "candidate",
-    entityName: updated.name,
-  }).catch(console.error);
-
-  return c.json(updated);
-});
+    return c.json(updated);
+  },
+);
 
 export { candidateRoutes };

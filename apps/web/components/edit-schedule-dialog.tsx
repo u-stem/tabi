@@ -1,7 +1,16 @@
 "use client";
 
 import type { ScheduleColor, ScheduleResponse, TimeDelta, TransportMethod } from "@sugara/shared";
-import { computeTimeDelta, SCHEDULE_COLOR_LABELS, SCHEDULE_COLORS } from "@sugara/shared";
+import {
+  computeTimeDelta,
+  SCHEDULE_ADDRESS_MAX_LENGTH,
+  SCHEDULE_COLOR_LABELS,
+  SCHEDULE_COLORS,
+  SCHEDULE_MEMO_MAX_LENGTH,
+  SCHEDULE_NAME_MAX_LENGTH,
+  SCHEDULE_PLACE_MAX_LENGTH,
+  SCHEDULE_URL_MAX_LENGTH,
+} from "@sugara/shared";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -173,7 +182,13 @@ export function EditScheduleDialog({
             <Label htmlFor="edit-name">
               名前 <span className="text-destructive">*</span>
             </Label>
-            <Input id="edit-name" name="name" defaultValue={schedule.name} required />
+            <Input
+              id="edit-name"
+              name="name"
+              defaultValue={schedule.name}
+              required
+              maxLength={SCHEDULE_NAME_MAX_LENGTH}
+            />
           </div>
           <div className="space-y-2">
             <Label>カテゴリ</Label>
@@ -222,6 +237,7 @@ export function EditScheduleDialog({
                 name="address"
                 defaultValue={schedule.address ?? ""}
                 placeholder="京都市北区金閣寺町1"
+                maxLength={SCHEDULE_ADDRESS_MAX_LENGTH}
               />
             </div>
           )}
@@ -234,6 +250,7 @@ export function EditScheduleDialog({
                   name="departurePlace"
                   defaultValue={schedule.departurePlace ?? ""}
                   placeholder="東京駅"
+                  maxLength={SCHEDULE_PLACE_MAX_LENGTH}
                 />
               </div>
               <div className="space-y-2">
@@ -243,6 +260,7 @@ export function EditScheduleDialog({
                   name="arrivalPlace"
                   defaultValue={schedule.arrivalPlace ?? ""}
                   placeholder="新大阪駅"
+                  maxLength={SCHEDULE_PLACE_MAX_LENGTH}
                 />
               </div>
               <div className="space-y-2">
@@ -273,6 +291,7 @@ export function EditScheduleDialog({
               type="url"
               defaultValue={schedule.url ?? ""}
               placeholder="https://..."
+              maxLength={SCHEDULE_URL_MAX_LENGTH}
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -308,7 +327,13 @@ export function EditScheduleDialog({
           {timeError && <p className="text-sm text-destructive">{timeError}</p>}
           <div className="space-y-2">
             <Label htmlFor="edit-memo">メモ</Label>
-            <Textarea id="edit-memo" name="memo" rows={3} defaultValue={schedule.memo ?? ""} />
+            <Textarea
+              id="edit-memo"
+              name="memo"
+              rows={3}
+              defaultValue={schedule.memo ?? ""}
+              maxLength={SCHEDULE_MEMO_MAX_LENGTH}
+            />
           </div>
           {error && (
             <p role="alert" className="text-sm text-destructive">

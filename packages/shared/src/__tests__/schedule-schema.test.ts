@@ -62,6 +62,32 @@ describe("createScheduleSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it.each([
+    "https://example.com",
+    "http://example.com/path?q=1",
+  ])("accepts safe URL '%s'", (url) => {
+    const result = createScheduleSchema.safeParse({
+      name: "Place",
+      category: "sightseeing",
+      url,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it.each([
+    "javascript:alert(1)",
+    "javascript:void(0)",
+    "data:text/html,<script>alert(1)</script>",
+    "vbscript:msgbox",
+  ])("rejects dangerous URL '%s'", (url) => {
+    const result = createScheduleSchema.safeParse({
+      name: "Place",
+      category: "sightseeing",
+      url,
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("updateScheduleSchema", () => {

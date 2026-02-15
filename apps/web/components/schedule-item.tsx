@@ -33,7 +33,7 @@ import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
 import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
 import type { TimeStatus } from "@/lib/format";
-import { formatTime, formatTimeRange } from "@/lib/format";
+import { formatTime, formatTimeRange, isSafeUrl } from "@/lib/format";
 import { CATEGORY_ICONS, TRANSPORT_ICONS } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { BatchShiftDialog } from "./batch-shift-dialog";
@@ -247,6 +247,142 @@ function useShiftProposal(siblingSchedules?: ScheduleResponse[]) {
   };
 }
 
+function TimelineNode({
+  variant,
+  icon: Icon,
+  isFirst,
+  isLast,
+  isPast,
+  isCurrent,
+  colorClasses,
+}: {
+  variant: "place" | "transport";
+  icon: React.ComponentType<{ className?: string }>;
+  isFirst?: boolean;
+  isLast?: boolean;
+  isPast: boolean;
+  isCurrent: boolean;
+  colorClasses: (typeof SCHEDULE_COLOR_CLASSES)[ScheduleColor];
+}) {
+  const isPlace = variant === "place";
+  const nodeSize = isPlace ? "h-7 w-7" : "h-5 w-5";
+  const iconSize = isPlace ? "h-3.5 w-3.5" : "h-2.5 w-2.5";
+  const ringOffset = isPlace ? "ring-offset-2" : "ring-offset-1";
+
+  const lineSegment = (hidden: boolean) => (
+    <div
+      className={cn(
+        "w-px flex-1",
+        hidden
+          ? "border-transparent"
+          : cn(
+              "border-l",
+              isPast
+                ? `border-solid ${colorClasses.border}`
+                : "border-dashed border-muted-foreground/30",
+            ),
+      )}
+    />
+  );
+
+  return (
+    <div className={cn("flex flex-col items-center", !isPlace && "w-7")} aria-hidden="true">
+      {lineSegment(!!isFirst)}
+      <div className="relative flex shrink-0 items-center justify-center">
+        {isCurrent && (
+          <span
+            className={cn(
+              "absolute animate-ping rounded-full opacity-30",
+              nodeSize,
+              colorClasses.bg,
+            )}
+          />
+        )}
+        <div
+          className={cn(
+            "relative flex items-center justify-center rounded-full",
+            nodeSize,
+            isPlace
+              ? cn("text-white", colorClasses.bg)
+              : cn("border-2 bg-background", colorClasses.border),
+            isPast && "opacity-50",
+            isCurrent && `ring-2 ${ringOffset} ring-offset-background ${colorClasses.ring}`,
+          )}
+        >
+          <Icon className={cn(iconSize, !isPlace && colorClasses.text)} />
+        </div>
+      </div>
+      {lineSegment(!!isLast)}
+    </div>
+  );
+}
+
+function ScheduleItemDialogs({
+  tripId,
+  dayId,
+  patternId,
+  schedule,
+  editOpen,
+  onEditOpenChange,
+  onUpdate,
+  maxEndDayOffset,
+  shift,
+}: {
+  tripId: string;
+  dayId: string;
+  patternId: string;
+  schedule: {
+    id: string;
+    name: string;
+    category: ScheduleCategory;
+    address?: string | null;
+    url?: string | null;
+    startTime?: string | null;
+    endTime?: string | null;
+    endDayOffset?: number | null;
+    memo?: string | null;
+    departurePlace?: string | null;
+    arrivalPlace?: string | null;
+    transportMethod?: string | null;
+    color?: ScheduleColor;
+    updatedAt: string;
+  };
+  editOpen: boolean;
+  onEditOpenChange: (open: boolean) => void;
+  onUpdate: () => void;
+  maxEndDayOffset?: number;
+  shift: ReturnType<typeof useShiftProposal>;
+}) {
+  return (
+    <>
+      <EditScheduleDialog
+        tripId={tripId}
+        dayId={dayId}
+        patternId={patternId}
+        schedule={{ ...schedule, color: schedule.color ?? "blue", sortOrder: 0 }}
+        open={editOpen}
+        onOpenChange={onEditOpenChange}
+        onUpdate={onUpdate}
+        maxEndDayOffset={maxEndDayOffset}
+        onShiftProposal={shift.onShiftProposal}
+      />
+      <BatchShiftDialog
+        open={shift.shiftDialogOpen}
+        onOpenChange={shift.setShiftDialogOpen}
+        tripId={tripId}
+        dayId={dayId}
+        patternId={patternId}
+        scheduleName={schedule.name}
+        deltaMinutes={shift.shiftDelta}
+        deltaSource={shift.shiftSource}
+        targetSchedules={shift.shiftTargets}
+        skippedSchedules={shift.shiftSkipped}
+        onDone={onUpdate}
+      />
+    </>
+  );
+}
+
 function PlaceCard({
   id,
   name,
@@ -283,15 +419,7 @@ function PlaceCard({
   siblingSchedules,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
-  const {
-    shiftDialogOpen,
-    setShiftDialogOpen,
-    shiftDelta,
-    shiftSource,
-    shiftTargets,
-    shiftSkipped,
-    onShiftProposal,
-  } = useShiftProposal(siblingSchedules);
+  const shift = useShiftProposal(siblingSchedules);
   const CategoryIcon = CATEGORY_ICONS[category];
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
   const isPast = timeStatus === "past";
@@ -308,55 +436,15 @@ function PlaceCard({
       style={sortable.style}
       className={cn("flex gap-3 py-1.5", sortable.isDragging && "opacity-50")}
     >
-      {/* Timeline node with line segments */}
-      <div className="flex flex-col items-center" aria-hidden="true">
-        <div
-          className={cn(
-            "w-px flex-1",
-            isFirst
-              ? "border-transparent"
-              : cn(
-                  "border-l",
-                  isPast
-                    ? `border-solid ${colorClasses.border}`
-                    : "border-dashed border-muted-foreground/30",
-                ),
-          )}
-        />
-        <div className="relative flex shrink-0 items-center justify-center">
-          {isCurrent && (
-            <span
-              className={cn(
-                "absolute h-7 w-7 animate-ping rounded-full opacity-30",
-                colorClasses.bg,
-              )}
-            />
-          )}
-          <div
-            className={cn(
-              "relative flex h-7 w-7 items-center justify-center rounded-full text-white",
-              colorClasses.bg,
-              isPast && "opacity-50",
-              isCurrent && `ring-2 ring-offset-2 ring-offset-background ${colorClasses.ring}`,
-            )}
-          >
-            <CategoryIcon className="h-3.5 w-3.5" />
-          </div>
-        </div>
-        <div
-          className={cn(
-            "w-px flex-1",
-            isLast
-              ? "border-transparent"
-              : cn(
-                  "border-l",
-                  isPast
-                    ? `border-solid ${colorClasses.border}`
-                    : "border-dashed border-muted-foreground/30",
-                ),
-          )}
-        />
-      </div>
+      <TimelineNode
+        variant="place"
+        icon={CategoryIcon}
+        isFirst={isFirst}
+        isLast={isLast}
+        isPast={isPast}
+        isCurrent={isCurrent}
+        colorClasses={colorClasses}
+      />
 
       {/* Card body */}
       <div
@@ -445,7 +533,7 @@ function PlaceCard({
                 {address}
               </a>
             )}
-            {url && (
+            {url && isSafeUrl(url) && (
               <a
                 href={url}
                 target="_blank"
@@ -460,7 +548,7 @@ function PlaceCard({
         )}
       </div>
 
-      <EditScheduleDialog
+      <ScheduleItemDialogs
         tripId={tripId}
         dayId={dayId}
         patternId={patternId}
@@ -479,26 +567,12 @@ function PlaceCard({
           transportMethod,
           color,
           updatedAt,
-          sortOrder: 0,
         }}
-        open={editOpen}
-        onOpenChange={setEditOpen}
+        editOpen={editOpen}
+        onEditOpenChange={setEditOpen}
         onUpdate={onUpdate}
         maxEndDayOffset={maxEndDayOffset}
-        onShiftProposal={onShiftProposal}
-      />
-      <BatchShiftDialog
-        open={shiftDialogOpen}
-        onOpenChange={setShiftDialogOpen}
-        tripId={tripId}
-        dayId={dayId}
-        patternId={patternId}
-        scheduleName={name}
-        deltaMinutes={shiftDelta}
-        deltaSource={shiftSource}
-        targetSchedules={shiftTargets}
-        skippedSchedules={shiftSkipped}
-        onDone={onUpdate}
+        shift={shift}
       />
     </div>
   );
@@ -540,15 +614,7 @@ function TransportConnector({
   siblingSchedules,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
-  const {
-    shiftDialogOpen,
-    setShiftDialogOpen,
-    shiftDelta,
-    shiftSource,
-    shiftTargets,
-    shiftSkipped,
-    onShiftProposal,
-  } = useShiftProposal(siblingSchedules);
+  const shift = useShiftProposal(siblingSchedules);
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
   const isPast = timeStatus === "past";
   const isCurrent = timeStatus === "current";
@@ -583,55 +649,15 @@ function TransportConnector({
       style={sortable.style}
       className={cn("flex gap-3 py-0.5", sortable.isDragging && "opacity-50")}
     >
-      {/* Timeline node with line segments */}
-      <div className="flex w-7 flex-col items-center" aria-hidden="true">
-        <div
-          className={cn(
-            "w-px flex-1",
-            isFirst
-              ? "border-transparent"
-              : cn(
-                  "border-l",
-                  isPast
-                    ? `border-solid ${colorClasses.border}`
-                    : "border-dashed border-muted-foreground/30",
-                ),
-          )}
-        />
-        <div className="relative flex shrink-0 items-center justify-center">
-          {isCurrent && (
-            <span
-              className={cn(
-                "absolute h-5 w-5 animate-ping rounded-full opacity-30",
-                colorClasses.bg,
-              )}
-            />
-          )}
-          <div
-            className={cn(
-              "relative flex h-5 w-5 items-center justify-center rounded-full border-2 bg-background",
-              colorClasses.border,
-              isPast && "opacity-50",
-              isCurrent && `ring-2 ring-offset-1 ring-offset-background ${colorClasses.ring}`,
-            )}
-          >
-            <TransportIcon className={cn("h-2.5 w-2.5", colorClasses.text)} />
-          </div>
-        </div>
-        <div
-          className={cn(
-            "w-px flex-1",
-            isLast
-              ? "border-transparent"
-              : cn(
-                  "border-l",
-                  isPast
-                    ? `border-solid ${colorClasses.border}`
-                    : "border-dashed border-muted-foreground/30",
-                ),
-          )}
-        />
-      </div>
+      <TimelineNode
+        variant="transport"
+        icon={TransportIcon}
+        isFirst={isFirst}
+        isLast={isLast}
+        isPast={isPast}
+        isCurrent={isCurrent}
+        colorClasses={colorClasses}
+      />
 
       {/* Compact connector row */}
       <div
@@ -704,7 +730,7 @@ function TransportConnector({
         )}
       </div>
 
-      <EditScheduleDialog
+      <ScheduleItemDialogs
         tripId={tripId}
         dayId={dayId}
         patternId={patternId}
@@ -723,26 +749,12 @@ function TransportConnector({
           transportMethod,
           color,
           updatedAt,
-          sortOrder: 0,
         }}
-        open={editOpen}
-        onOpenChange={setEditOpen}
+        editOpen={editOpen}
+        onEditOpenChange={setEditOpen}
         onUpdate={onUpdate}
         maxEndDayOffset={maxEndDayOffset}
-        onShiftProposal={onShiftProposal}
-      />
-      <BatchShiftDialog
-        open={shiftDialogOpen}
-        onOpenChange={setShiftDialogOpen}
-        tripId={tripId}
-        dayId={dayId}
-        patternId={patternId}
-        scheduleName={name}
-        deltaMinutes={shiftDelta}
-        deltaSource={shiftSource}
-        targetSchedules={shiftTargets}
-        skippedSchedules={shiftSkipped}
-        onDone={onUpdate}
+        shift={shift}
       />
     </div>
   );

@@ -6,12 +6,12 @@ import { dayPatterns, schedules, tripDays, tripMembers, trips } from "../db/sche
 import { logActivity } from "../lib/activity-logger";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { DEFAULT_PATTERN_LABEL, ERROR_MSG, MAX_TRIP_DAYS } from "../lib/constants";
-import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
+import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
 
-// biome-ignore lint/suspicious/noExplicitAny: Drizzle transaction type is complex
-type TxOrDb = any;
+type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type TxOrDb = typeof db | Transaction;
 
 async function syncTripDays(
   tx: TxOrDb,
@@ -220,20 +220,16 @@ tripRoutes.post("/", async (c) => {
     action: "created",
     entityType: "trip",
     entityName: trip.title,
-  }).catch(console.error);
+  });
 
   return c.json(trip, 201);
 });
 
 // Get trip detail with days and schedules (any member can view)
-tripRoutes.get("/:id", async (c) => {
+tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("id");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!role) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
+  const role = c.get("tripRole");
 
   const trip = await db.query.trips.findFirst({
     where: eq(trips.id, tripId),
@@ -280,7 +276,7 @@ tripRoutes.get("/:id", async (c) => {
 });
 
 // Update trip (owner or editor)
-tripRoutes.patch("/:id", async (c) => {
+tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("id");
   const body = await c.req.json();
@@ -288,11 +284,6 @@ tripRoutes.patch("/:id", async (c) => {
 
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
-  }
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!canEdit(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
   const { startDate: newStart, endDate: newEnd, ...otherFields } = parsed.data;
@@ -316,7 +307,7 @@ tripRoutes.patch("/:id", async (c) => {
       entityType: "trip",
       entityName: updated.title,
       detail: parsed.data.status ? `status: ${parsed.data.status}` : undefined,
-    }).catch(console.error);
+    });
 
     return c.json(updated);
   }
@@ -372,20 +363,15 @@ tripRoutes.patch("/:id", async (c) => {
     action: "updated",
     entityType: "trip",
     entityName: updated.title,
-  }).catch(console.error);
+  });
 
   return c.json(updated);
 });
 
 // Duplicate trip (any member can duplicate, new trip is owned by current user)
-tripRoutes.post("/:id/duplicate", async (c) => {
+tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("id");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!role) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const [tripCount] = await db
     .select({ count: count() })
@@ -490,20 +476,14 @@ tripRoutes.post("/:id/duplicate", async (c) => {
     action: "duplicated",
     entityType: "trip",
     entityName: newTrip.title,
-  }).catch(console.error);
+  });
 
   return c.json(newTrip, 201);
 });
 
 // Delete trip (owner only)
-tripRoutes.delete("/:id", async (c) => {
-  const user = c.get("user");
+tripRoutes.delete("/:id", requireTripAccess("owner", "id"), async (c) => {
   const tripId = c.req.param("id");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!isOwner(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   // Log before delete since cascade will remove logs too
   await db.delete(trips).where(eq(trips.id, tripId));

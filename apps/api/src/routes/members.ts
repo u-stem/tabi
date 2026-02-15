@@ -5,22 +5,16 @@ import { db } from "../db/index";
 import { tripMembers, users } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
-import { checkTripAccess, isOwner } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
+import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
 
 const memberRoutes = new Hono<AppEnv>();
 memberRoutes.use("*", requireAuth);
 
 // List members (any member can view)
-memberRoutes.get("/:tripId/members", async (c) => {
-  const user = c.get("user");
+memberRoutes.get("/:tripId/members", requireTripAccess(), async (c) => {
   const tripId = c.req.param("tripId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!role) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const members = await db.query.tripMembers.findMany({
     where: eq(tripMembers.tripId, tripId),
@@ -37,14 +31,9 @@ memberRoutes.get("/:tripId/members", async (c) => {
 });
 
 // Add member (owner only)
-memberRoutes.post("/:tripId/members", async (c) => {
+memberRoutes.post("/:tripId/members", requireTripAccess("owner"), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!isOwner(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const body = await c.req.json();
   const parsed = addMemberSchema.safeParse(body);
@@ -87,7 +76,7 @@ memberRoutes.post("/:tripId/members", async (c) => {
     entityType: "member",
     entityName: targetUser.name,
     detail: parsed.data.role,
-  }).catch(console.error);
+  });
 
   return c.json(
     {
@@ -100,15 +89,10 @@ memberRoutes.post("/:tripId/members", async (c) => {
 });
 
 // Update member role (owner only)
-memberRoutes.patch("/:tripId/members/:userId", async (c) => {
+memberRoutes.patch("/:tripId/members/:userId", requireTripAccess("owner"), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
   const targetUserId = c.req.param("userId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!isOwner(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   if (targetUserId === user.id) {
     return c.json({ error: ERROR_MSG.CANNOT_CHANGE_OWN_ROLE }, 400);
@@ -140,21 +124,16 @@ memberRoutes.patch("/:tripId/members/:userId", async (c) => {
     entityType: "member",
     entityName: existing.user.name,
     detail: `${existing.role} → ${parsed.data.role}`,
-  }).catch(console.error);
+  });
 
   return c.json({ ok: true });
 });
 
 // Remove member (owner only)
-memberRoutes.delete("/:tripId/members/:userId", async (c) => {
+memberRoutes.delete("/:tripId/members/:userId", requireTripAccess("owner"), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
   const targetUserId = c.req.param("userId");
-
-  const role = await checkTripAccess(tripId, user.id);
-  if (!isOwner(role)) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   if (targetUserId === user.id) {
     return c.json({ error: ERROR_MSG.CANNOT_REMOVE_SELF }, 400);
@@ -178,7 +157,7 @@ memberRoutes.delete("/:tripId/members/:userId", async (c) => {
     action: "deleted",
     entityType: "member",
     entityName: existing.user.name,
-  }).catch(console.error);
+  });
 
   return c.json({ ok: true });
 });

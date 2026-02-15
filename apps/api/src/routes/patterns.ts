@@ -88,7 +88,7 @@ patternRoutes.post("/:tripId/days/:dayId/patterns", async (c) => {
     action: "created",
     entityType: "pattern",
     entityName: pattern.label,
-  }).catch(console.error);
+  });
 
   return c.json(pattern, 201);
 });
@@ -130,7 +130,7 @@ patternRoutes.patch("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
     action: "updated",
     entityType: "pattern",
     entityName: updated.label,
-  }).catch(console.error);
+  });
 
   return c.json(updated);
 });
@@ -165,7 +165,7 @@ patternRoutes.delete("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
     action: "deleted",
     entityType: "pattern",
     entityName: existing.label,
-  }).catch(console.error);
+  });
 
   return c.json({ ok: true });
 });
@@ -233,6 +233,7 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
           arrivalPlace: schedule.arrivalPlace,
           transportMethod: schedule.transportMethod,
           color: schedule.color,
+          endDayOffset: schedule.endDayOffset,
         })),
       );
     }
@@ -246,7 +247,7 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
     action: "duplicated",
     entityType: "pattern",
     entityName: result.label,
-  }).catch(console.error);
+  });
 
   return c.json(result, 201);
 });

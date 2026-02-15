@@ -4,6 +4,8 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  CANDIDATE_MEMO_MAX_LENGTH,
+  CANDIDATE_NAME_MAX_LENGTH,
   CATEGORY_LABELS,
   type CandidateResponse,
   DEFAULT_SCHEDULE_CATEGORY,
@@ -64,6 +66,7 @@ import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ApiError, api } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
+import { useSelection } from "@/lib/hooks/selection-context";
 import { MSG } from "@/lib/messages";
 import { CATEGORY_OPTIONS } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
@@ -76,17 +79,6 @@ type CandidatePanelProps = {
   onRefresh: () => void;
   disabled?: boolean;
   draggable?: boolean;
-  selectionMode?: boolean;
-  selectedIds?: Set<string>;
-  onToggleSelect?: (id: string) => void;
-  onEnterSelectionMode?: () => void;
-  onExitSelectionMode?: () => void;
-  onSelectAll?: () => void;
-  onDeselectAll?: () => void;
-  onBatchAssign?: () => void;
-  onBatchDuplicate?: () => void;
-  onBatchDelete?: () => void;
-  batchLoading?: boolean;
   scheduleLimitReached?: boolean;
   scheduleLimitMessage?: string;
   addDialogOpen?: boolean;
@@ -267,23 +259,15 @@ export function CandidatePanel({
   onRefresh,
   disabled,
   draggable,
-  selectionMode,
-  selectedIds,
-  onToggleSelect,
-  onEnterSelectionMode,
-  onExitSelectionMode,
-  onSelectAll,
-  onDeselectAll,
-  onBatchAssign,
-  onBatchDuplicate,
-  onBatchDelete,
-  batchLoading,
   scheduleLimitReached,
   scheduleLimitMessage,
   addDialogOpen: controlledAddOpen,
   onAddDialogOpenChange: controlledOnAddOpenChange,
   overCandidateId,
 }: CandidatePanelProps) {
+  const sel = useSelection();
+  const selectionMode = sel.selectionTarget === "candidates";
+  const selectedIds = selectionMode ? sel.selectedIds : undefined;
   const { setNodeRef: setDroppableRef, isOver: isOverCandidates } = useDroppable({
     id: "candidates",
     data: { type: "candidates" },
@@ -430,14 +414,14 @@ export function CandidatePanel({
     <div>
       {selectionMode ? (
         <div className="mb-3 flex items-center gap-1.5">
-          <Button variant="outline" size="sm" onClick={onSelectAll}>
+          <Button variant="outline" size="sm" onClick={sel.selectAll}>
             <CheckCheck className="h-4 w-4" />
             <span className="hidden sm:inline">全選択</span>
           </Button>
           <Button
             variant="outline"
             size="sm"
-            onClick={onDeselectAll}
+            onClick={sel.deselectAll}
             disabled={selectedCount === 0}
           >
             <X className="h-4 w-4" />
@@ -447,8 +431,8 @@ export function CandidatePanel({
             <TooltipTrigger asChild>
               <Button
                 size="sm"
-                onClick={onBatchAssign}
-                disabled={selectedCount === 0 || batchLoading}
+                onClick={sel.batchAssign}
+                disabled={selectedCount === 0 || sel.batchLoading}
               >
                 <ArrowLeft className="h-4 w-4" />
                 <span className="hidden sm:inline">予定に追加</span>
@@ -458,22 +442,29 @@ export function CandidatePanel({
           </Tooltip>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" disabled={selectedCount === 0 || batchLoading}>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={selectedCount === 0 || sel.batchLoading}
+              >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onBatchDuplicate}>
+              <DropdownMenuItem onClick={sel.batchDuplicateCandidates}>
                 <Copy className="mr-2 h-3 w-3" />
                 複製
               </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive" onClick={onBatchDelete}>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => sel.setBatchDeleteOpen(true)}
+              >
                 <Trash2 className="mr-2 h-3 w-3" />
                 削除
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" size="sm" onClick={onExitSelectionMode}>
+          <Button variant="outline" size="sm" onClick={sel.exit}>
             キャンセル
           </Button>
         </div>
@@ -499,8 +490,8 @@ export function CandidatePanel({
                 </TooltipContent>
               </Tooltip>
             )}
-            {!disabled && candidates.length > 0 && onEnterSelectionMode && (
-              <Button variant="outline" size="sm" onClick={onEnterSelectionMode}>
+            {!disabled && candidates.length > 0 && sel.canEnter && (
+              <Button variant="outline" size="sm" onClick={() => sel.enter("candidates")}>
                 <CheckSquare className="h-4 w-4" />
                 <span className="hidden sm:inline">選択</span>
               </Button>
@@ -567,7 +558,7 @@ export function CandidatePanel({
                             draggable={!selectionMode}
                             selectable={selectionMode}
                             selected={selectedIds?.has(spot.id)}
-                            onSelect={onToggleSelect}
+                            onSelect={sel.toggle}
                           />
                         </div>
                       ))}
@@ -597,7 +588,7 @@ export function CandidatePanel({
               disabled={disabled}
               selectable={selectionMode}
               selected={selectedIds?.has(spot.id)}
-              onSelect={onToggleSelect}
+              onSelect={sel.toggle}
             />
           ))}
         </div>
@@ -620,7 +611,13 @@ export function CandidatePanel({
               <Label htmlFor="candidate-name">
                 名前 <span className="text-destructive">*</span>
               </Label>
-              <Input id="candidate-name" name="name" placeholder="金閣寺" required />
+              <Input
+                id="candidate-name"
+                name="name"
+                placeholder="金閣寺"
+                required
+                maxLength={CANDIDATE_NAME_MAX_LENGTH}
+              />
             </div>
             <div className="space-y-2">
               <Label>カテゴリ</Label>
@@ -639,7 +636,12 @@ export function CandidatePanel({
             </div>
             <div className="space-y-2">
               <Label htmlFor="candidate-memo">メモ</Label>
-              <Input id="candidate-memo" name="memo" placeholder="口コミで見た" />
+              <Input
+                id="candidate-memo"
+                name="memo"
+                placeholder="口コミで見た"
+                maxLength={CANDIDATE_MEMO_MAX_LENGTH}
+              />
             </div>
             <DialogFooter>
               <Button type="submit" disabled={addLoading}>
@@ -673,6 +675,7 @@ export function CandidatePanel({
                   name="name"
                   defaultValue={editSchedule.name}
                   required
+                  maxLength={CANDIDATE_NAME_MAX_LENGTH}
                 />
               </div>
               <div className="space-y-2">
@@ -697,6 +700,7 @@ export function CandidatePanel({
                   name="memo"
                   defaultValue={editSchedule.memo ?? ""}
                   placeholder="口コミで見た"
+                  maxLength={CANDIDATE_MEMO_MAX_LENGTH}
                 />
               </div>
               <DialogFooter>

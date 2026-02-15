@@ -166,7 +166,11 @@ export function Header() {
                   <SheetHeader>
                     <SheetTitle>{session.user.name}</SheetTitle>
                     <SheetDescription>
-                      {session.user.username ? `@${session.user.username}` : ""}
+                      {session.user.displayUsername
+                        ? `@${session.user.displayUsername}`
+                        : session.user.username
+                          ? `@${session.user.username}`
+                          : ""}
                     </SheetDescription>
                   </SheetHeader>
                   <nav className="mt-6 flex flex-col gap-1" aria-label="モバイルメニュー">

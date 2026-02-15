@@ -45,7 +45,7 @@ export default function SettingsPage() {
         <>
           <UserIdSection userId={user.id} />
           <ProfileSection defaultName={user.name ?? ""} />
-          <UsernameSection defaultUsername={user.username ?? ""} />
+          <UsernameSection defaultUsername={user.displayUsername ?? user.username ?? ""} />
           <PasswordSection username={user.username ?? ""} />
           <DeleteAccountSection username={user.username ?? ""} />
           <div className="flex flex-wrap select-none items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">

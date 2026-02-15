@@ -330,7 +330,7 @@ export function MemberDialog({
                           id="member-user-id"
                           name="userId"
                           type="text"
-                          placeholder="taro_123"
+                          placeholder="550e8400-e29b-41d4-..."
                           value={userId}
                           onChange={(e) => setUserId(e.target.value)}
                           required

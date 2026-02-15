@@ -285,7 +285,7 @@ function SendRequestSection({ onSent }: { onSent: () => void }) {
               name="addresseeId"
               value={addresseeId}
               onChange={(e) => setAddresseeId(e.target.value)}
-              placeholder="taro_123"
+              placeholder="550e8400-e29b-41d4-..."
               required
             />
           </div>

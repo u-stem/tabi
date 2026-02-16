@@ -14,7 +14,16 @@ export function useCurrentTime(): string {
     const id = setInterval(() => {
       setTime(formatHHMM());
     }, 60_000);
-    return () => clearInterval(id);
+    function handleVisibilityChange() {
+      if (!document.hidden) {
+        setTime(formatHHMM());
+      }
+    }
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, []);
 
   return time;

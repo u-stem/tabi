@@ -34,6 +34,18 @@ describe("useCurrentTime", () => {
     expect(result.current).toBe("09:05");
   });
 
+  it("updates immediately on tab visibility change", () => {
+    vi.setSystemTime(new Date(2026, 1, 9, 14, 30, 0));
+    const { result } = renderHook(() => useCurrentTime());
+    expect(result.current).toBe("14:30");
+
+    vi.setSystemTime(new Date(2026, 1, 9, 14, 45, 0));
+    act(() => {
+      document.dispatchEvent(new Event("visibilitychange"));
+    });
+    expect(result.current).toBe("14:45");
+  });
+
   it("cleans up interval on unmount", () => {
     const clearSpy = vi.spyOn(globalThis, "clearInterval");
     const { unmount } = renderHook(() => useCurrentTime());

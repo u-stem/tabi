@@ -103,4 +103,29 @@ describe("buildSchedulePayload", () => {
 
     expect(result).not.toHaveProperty("endDayOffset");
   });
+
+  it("sends null for cleared memo (not undefined)", () => {
+    const fd = makeFormData({ name: "Place", memo: "" });
+    const result = buildSchedulePayload(fd, baseState);
+
+    expect(result.memo).toBeNull();
+  });
+
+  it("sends null for cleared address (not undefined)", () => {
+    const fd = makeFormData({ name: "Place", address: "" });
+    const result = buildSchedulePayload(fd, baseState);
+
+    expect(result.address).toBeNull();
+  });
+
+  it("sends null for cleared transport places", () => {
+    const fd = makeFormData({ name: "Move", departurePlace: "", arrivalPlace: "" });
+    const result = buildSchedulePayload(fd, {
+      ...baseState,
+      category: "transport",
+    });
+
+    expect(result.departurePlace).toBeNull();
+    expect(result.arrivalPlace).toBeNull();
+  });
 });

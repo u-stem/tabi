@@ -191,7 +191,10 @@ export default function TripDetailPage() {
   );
 
   const syncUser = useMemo(
-    () => (session?.user ? { id: session.user.id, name: session.user.name } : null),
+    () =>
+      session?.user
+        ? { id: session.user.id, name: session.user.name, image: session.user.image }
+        : null,
     [session?.user],
   );
   const { presence, isConnected, updatePresence, broadcastChange } = useTripSync(

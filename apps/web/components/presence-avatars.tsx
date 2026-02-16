@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
 import { cn } from "@/lib/utils";
 
@@ -42,16 +43,25 @@ export function PresenceAvatars({ users, isConnected }: PresenceAvatarsProps) {
           &#x26A0;
         </span>
       )}
+      {/* Uses hashColor instead of UserAvatar for stable per-user colors in presence */}
       {visible.map((user) => (
         <span
           key={user.userId}
           title={user.name}
-          className={cn(
-            "flex h-7 w-7 items-center justify-center rounded-full text-xs font-medium text-white",
-            hashColor(user.userId),
-          )}
+          className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full"
         >
-          {getInitial(user.name)}
+          {user.image ? (
+            <Image src={user.image} alt={user.name} width={28} height={28} unoptimized />
+          ) : (
+            <span
+              className={cn(
+                "flex h-full w-full items-center justify-center text-xs font-medium text-white",
+                hashColor(user.userId),
+              )}
+            >
+              {getInitial(user.name)}
+            </span>
+          )}
         </span>
       ))}
       {overflow > 0 && (

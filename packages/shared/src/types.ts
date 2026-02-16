@@ -79,6 +79,7 @@ export type MemberResponse = {
   userId: string;
   role: MemberRole;
   name: string;
+  image?: string | null;
 };
 
 export type ActivityLogResponse = {
@@ -96,11 +97,13 @@ export type FriendResponse = {
   friendId: string;
   userId: string;
   name: string;
+  image?: string | null;
 };
 
 export type FriendRequestResponse = {
   id: string;
   requesterId: string;
   name: string;
+  image?: string | null;
   createdAt: string;
 };

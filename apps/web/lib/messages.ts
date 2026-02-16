@@ -83,6 +83,9 @@ export const MSG = {
   SETTINGS_PASSWORD_CHANGED: "パスワードを変更しました",
   SETTINGS_PASSWORD_CHANGE_FAILED: "パスワードの変更に失敗しました",
   SETTINGS_USER_ID_COPIED: "ユーザーIDをコピーしました",
+  SETTINGS_AVATAR_UPDATED: "アバターを設定しました",
+  SETTINGS_AVATAR_UPDATE_FAILED: "アバターの設定に失敗しました",
+  SETTINGS_AVATAR_RESET: "アバターをリセットしました",
 
   // Auth
   AUTH_LOGIN_FAILED: "ログインに失敗しました",

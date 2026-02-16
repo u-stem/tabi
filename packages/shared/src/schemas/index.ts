@@ -1,4 +1,5 @@
 export * from "./account";
+export * from "./avatar";
 export * from "./day-pattern";
 export * from "./feedback";
 export * from "./friend";

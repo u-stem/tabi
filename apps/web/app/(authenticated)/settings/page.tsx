@@ -1,8 +1,10 @@
 "use client";
 
-import { Check, Copy, ExternalLink } from "lucide-react";
+import { buildDiceBearUrl, DICEBEAR_STYLES, type DiceBearStyle } from "@sugara/shared";
+import { Check, Copy, ExternalLink, RefreshCw } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -18,6 +20,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api } from "@/lib/api";
 import { authClient, useSession } from "@/lib/auth-client";
 import { translateAuthError } from "@/lib/auth-error";
@@ -44,6 +54,7 @@ export default function SettingsPage() {
       {user && (
         <>
           <UserIdSection userId={user.id} />
+          <AvatarSection name={user.name ?? ""} currentImage={user.image ?? null} />
           <ProfileSection defaultName={user.name ?? ""} />
           <UsernameSection defaultUsername={user.displayUsername ?? user.username ?? ""} />
           <PasswordSection username={user.username ?? ""} />
@@ -356,6 +367,164 @@ function PasswordSection({ username }: { username: string }) {
             {loading ? "変更中..." : "パスワードを変更"}
           </Button>
         </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+const STYLE_LABELS: Record<DiceBearStyle, string> = {
+  glass: "Glass",
+  identicon: "Identicon",
+  rings: "Rings",
+  shapes: "Shapes",
+  thumbs: "Thumbs",
+  lorelei: "Lorelei",
+  "lorelei-neutral": "Lorelei Neutral",
+  notionists: "Notionists",
+  "notionists-neutral": "Notionists Neutral",
+  "open-peeps": "Open Peeps",
+  "pixel-art": "Pixel Art",
+  "pixel-art-neutral": "Pixel Art Neutral",
+};
+
+const CANDIDATE_COUNT = 6;
+
+function generateSeeds(count: number): string[] {
+  return Array.from({ length: count }, () => crypto.randomUUID().slice(0, 8));
+}
+
+function AvatarSection({ name, currentImage }: { name: string; currentImage: string | null }) {
+  const [style, setStyle] = useState<DiceBearStyle>("glass");
+  const [seeds, setSeeds] = useState<string[]>(() => generateSeeds(CANDIDATE_COUNT));
+  const [selected, setSelected] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const shuffle = useCallback(() => {
+    setSeeds(generateSeeds(CANDIDATE_COUNT));
+    setSelected(null);
+  }, []);
+
+  async function handleSave() {
+    if (!selected) return;
+    setLoading(true);
+    try {
+      const image = buildDiceBearUrl(style, selected);
+      const result = await authClient.updateUser({ image });
+      if (result.error) {
+        toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
+        return;
+      }
+      toast.success(MSG.SETTINGS_AVATAR_UPDATED);
+      setSelected(null);
+    } catch {
+      toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleReset() {
+    setLoading(true);
+    try {
+      // Better Auth treats undefined as "skip" — null clears the field
+      const result = await authClient.updateUser({ image: null as unknown as string });
+      if (result.error) {
+        toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
+        return;
+      }
+      toast.success(MSG.SETTINGS_AVATAR_RESET);
+      setSelected(null);
+    } catch {
+      toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>アバター</CardTitle>
+        <CardDescription>プロフィールに表示されるアバターを設定します</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex items-center gap-4">
+          <UserAvatar name={name} image={currentImage} className="h-16 w-16" />
+          <div className="text-sm text-muted-foreground">
+            {currentImage ? "カスタムアバターを設定中" : "デフォルト（イニシャル）"}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="avatar-style">スタイル</Label>
+          <Select
+            value={style}
+            onValueChange={(v) => {
+              setStyle(v as DiceBearStyle);
+              setSelected(null);
+            }}
+          >
+            <SelectTrigger id="avatar-style" className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {DICEBEAR_STYLES.map((s) => (
+                <SelectItem key={s} value={s}>
+                  {STYLE_LABELS[s]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+          {seeds.map((seed) => {
+            const url = buildDiceBearUrl(style, seed);
+            const isSelected = selected === seed;
+            return (
+              <button
+                key={seed}
+                type="button"
+                onClick={() => setSelected(isSelected ? null : seed)}
+                className={`flex items-center justify-center rounded-lg border-2 p-2 transition-colors ${
+                  isSelected
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                    : "border-transparent hover:border-border"
+                }`}
+              >
+                <Image
+                  src={url}
+                  alt={`${STYLE_LABELS[style]} avatar ${seed}`}
+                  width={48}
+                  height={48}
+                  className="rounded-full"
+                  unoptimized
+                />
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" size="sm" onClick={shuffle}>
+            <RefreshCw className="h-4 w-4" />
+            シャッフル
+          </Button>
+          <Button type="button" size="sm" disabled={!selected || loading} onClick={handleSave}>
+            {loading ? "設定中..." : "設定する"}
+          </Button>
+          {currentImage && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={loading}
+              onClick={handleReset}
+            >
+              リセット
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -188,7 +189,13 @@ export function MemberDialog({
                   key={member.userId}
                   className="flex items-center justify-between gap-2 rounded-md border p-2"
                 >
-                  <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 flex-1 items-center gap-2">
+                    <UserAvatar
+                      name={member.name}
+                      image={member.image}
+                      className="h-6 w-6 shrink-0"
+                      fallbackClassName="text-xs"
+                    />
                     <p className="truncate text-sm font-medium">{member.name}</p>
                   </div>
                   {member.role === "owner" ? (

@@ -13,10 +13,9 @@ const FeedbackDialog = dynamic(() =>
   import("@/components/feedback-dialog").then((mod) => mod.FeedbackDialog),
 );
 
-import { getSeasonalBg, Logo } from "@/components/logo";
+import { Logo } from "@/components/logo";
 import { OfflineBanner } from "@/components/offline-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -33,6 +32,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
 import { signOut, useSession } from "@/lib/auth-client";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
@@ -109,13 +109,11 @@ export function Header() {
                     size="icon"
                     className="hidden rounded-full sm:inline-flex"
                   >
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback
-                        className={`${getSeasonalBg()} text-sm font-medium text-white`}
-                      >
-                        {session.user.name?.charAt(0).toUpperCase() ?? "?"}
-                      </AvatarFallback>
-                    </Avatar>
+                    <UserAvatar
+                      name={session.user.name ?? ""}
+                      image={session.user.image}
+                      className="h-8 w-8"
+                    />
                     <span className="sr-only">ユーザーメニュー</span>
                   </Button>
                 </DropdownMenuTrigger>
@@ -159,11 +157,11 @@ export function Header() {
                 className="rounded-full sm:hidden"
                 onClick={() => setMobileMenuOpen(true)}
               >
-                <Avatar className="h-8 w-8">
-                  <AvatarFallback className={`${getSeasonalBg()} text-sm font-medium text-white`}>
-                    {session.user.name?.charAt(0).toUpperCase() ?? "?"}
-                  </AvatarFallback>
-                </Avatar>
+                <UserAvatar
+                  name={session.user.name ?? ""}
+                  image={session.user.image}
+                  className="h-8 w-8"
+                />
                 <span className="sr-only">ユーザーメニュー</span>
               </Button>
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>

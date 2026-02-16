@@ -18,7 +18,7 @@ memberRoutes.get("/:tripId/members", requireTripAccess(), async (c) => {
 
   const members = await db.query.tripMembers.findMany({
     where: eq(tripMembers.tripId, tripId),
-    with: { user: { columns: { id: true, name: true } } },
+    with: { user: { columns: { id: true, name: true, image: true } } },
   });
 
   return c.json(
@@ -26,6 +26,7 @@ memberRoutes.get("/:tripId/members", requireTripAccess(), async (c) => {
       userId: m.userId,
       role: m.role,
       name: m.user.name,
+      image: m.user.image,
     })),
   );
 });

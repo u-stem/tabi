@@ -1,3 +1,4 @@
+import { isValidAvatarUrl } from "@sugara/shared";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { username } from "better-auth/plugins/username";
@@ -40,6 +41,18 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+  },
+  databaseHooks: {
+    user: {
+      update: {
+        before: async (userData) => {
+          // Reject arbitrary image URLs — only DiceBear or null allowed
+          if (userData.image && !isValidAvatarUrl(userData.image)) {
+            return false;
+          }
+        },
+      },
+    },
   },
   plugins: [username({ minUsernameLength: 3, maxUsernameLength: 20 })],
   trustedOrigins: [env.FRONTEND_URL],

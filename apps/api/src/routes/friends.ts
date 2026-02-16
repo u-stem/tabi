@@ -24,8 +24,8 @@ friendRoutes.get("/", async (c) => {
       or(eq(friends.requesterId, user.id), eq(friends.addresseeId, user.id)),
     ),
     with: {
-      requester: { columns: { id: true, name: true } },
-      addressee: { columns: { id: true, name: true } },
+      requester: { columns: { id: true, name: true, image: true } },
+      addressee: { columns: { id: true, name: true, image: true } },
     },
   });
 
@@ -37,6 +37,7 @@ friendRoutes.get("/", async (c) => {
         friendId: r.id,
         userId: other.id,
         name: other.name,
+        image: other.image,
       };
     }),
   );
@@ -49,7 +50,7 @@ friendRoutes.get("/requests", async (c) => {
   const records = await db.query.friends.findMany({
     where: and(eq(friends.status, "pending"), eq(friends.addresseeId, user.id)),
     with: {
-      requester: { columns: { id: true, name: true } },
+      requester: { columns: { id: true, name: true, image: true } },
     },
   });
 
@@ -58,6 +59,7 @@ friendRoutes.get("/requests", async (c) => {
       id: r.id,
       requesterId: r.requesterId,
       name: r.requester.name,
+      image: r.requester.image,
       createdAt: r.createdAt,
     })),
   );

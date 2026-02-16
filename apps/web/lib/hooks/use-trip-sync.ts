@@ -7,6 +7,7 @@ import { supabase } from "../supabase";
 export type PresenceUser = {
   userId: string;
   name: string;
+  image?: string | null;
   dayId: string | null;
   patternId: string | null;
 };
@@ -19,7 +20,7 @@ const RETRY_MAX_MS = 10_000;
 
 export function useTripSync(
   tripId: string,
-  user: { id: string; name: string } | null,
+  user: { id: string; name: string; image?: string | null } | null,
   onSync: () => void,
 ): {
   presence: PresenceUser[];
@@ -71,6 +72,7 @@ export function useTripSync(
                 users.push({
                   userId: p.userId,
                   name: p.name,
+                  image: p.image,
                   dayId: p.dayId,
                   patternId: p.patternId,
                 });
@@ -87,7 +89,7 @@ export function useTripSync(
             const u = userRef.current;
             const lp = lastPresenceRef.current;
             if (u && lp) {
-              channel.track({ userId: u.id, name: u.name, ...lp });
+              channel.track({ userId: u.id, name: u.name, image: u.image, ...lp });
             }
           }
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
@@ -165,6 +167,7 @@ export function useTripSync(
       channelRef.current?.track({
         userId: user.id,
         name: user.name,
+        image: user.image,
         dayId,
         patternId,
       });

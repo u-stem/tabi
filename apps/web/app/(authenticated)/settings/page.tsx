@@ -393,6 +393,7 @@ function generateSeeds(count: number): string[] {
 }
 
 function AvatarSection({ name, currentImage }: { name: string; currentImage: string | null }) {
+  const { refetch } = useSession();
   const [style, setStyle] = useState<DiceBearStyle>("glass");
   const [seeds, setSeeds] = useState<string[]>(() => generateSeeds(CANDIDATE_COUNT));
   const [selected, setSelected] = useState<string | null>(null);
@@ -402,6 +403,11 @@ function AvatarSection({ name, currentImage }: { name: string; currentImage: str
     setSeeds(generateSeeds(CANDIDATE_COUNT));
     setSelected(null);
   }, []);
+
+  async function refreshSession() {
+    // Bypass cookie cache to get fresh user data from DB
+    await refetch({ query: { disableCookieCache: true } });
+  }
 
   async function handleSave() {
     if (!selected) return;
@@ -413,6 +419,7 @@ function AvatarSection({ name, currentImage }: { name: string; currentImage: str
         toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
         return;
       }
+      await refreshSession();
       toast.success(MSG.SETTINGS_AVATAR_UPDATED);
       setSelected(null);
     } catch {
@@ -431,6 +438,7 @@ function AvatarSection({ name, currentImage }: { name: string; currentImage: str
         toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
         return;
       }
+      await refreshSession();
       toast.success(MSG.SETTINGS_AVATAR_RESET);
       setSelected(null);
     } catch {

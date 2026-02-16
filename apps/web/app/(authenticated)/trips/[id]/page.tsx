@@ -195,7 +195,7 @@ export default function TripDetailPage() {
       session?.user
         ? { id: session.user.id, name: session.user.name, image: session.user.image }
         : null,
-    [session?.user],
+    [session?.user?.id, session?.user?.name, session?.user?.image],
   );
   const { presence, isConnected, updatePresence, broadcastChange } = useTripSync(
     tripId,

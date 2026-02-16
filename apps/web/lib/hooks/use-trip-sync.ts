@@ -160,20 +160,18 @@ export function useTripSync(
     };
   }, [tripId, debouncedSync]);
 
-  const updatePresence = useCallback(
-    (dayId: string, patternId: string | null) => {
-      lastPresenceRef.current = { dayId, patternId };
-      if (!user) return;
-      channelRef.current?.track({
-        userId: user.id,
-        name: user.name,
-        image: user.image,
-        dayId,
-        patternId,
-      });
-    },
-    [user],
-  );
+  const updatePresence = useCallback((dayId: string, patternId: string | null) => {
+    lastPresenceRef.current = { dayId, patternId };
+    const u = userRef.current;
+    if (!u) return;
+    channelRef.current?.track({
+      userId: u.id,
+      name: u.name,
+      image: u.image,
+      dayId,
+      patternId,
+    });
+  }, []);
 
   const broadcastChange = useCallback(() => {
     channelRef.current?.send({

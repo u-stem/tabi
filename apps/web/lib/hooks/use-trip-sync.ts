@@ -30,6 +30,9 @@ export function useTripSync(
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onSyncRef = useRef(onSync);
   onSyncRef.current = onSync;
+  const userRef = useRef(user);
+  userRef.current = user;
+  const lastPresenceRef = useRef<{ dayId: string; patternId: string | null } | null>(null);
 
   const debouncedSync = useCallback(() => {
     if (syncTimer.current) {
@@ -43,55 +46,87 @@ export function useTripSync(
   }, []);
 
   useEffect(() => {
-    const channel = supabase.channel(`trip:${tripId}`);
+    function connect() {
+      const channel = supabase.channel(`trip:${tripId}`);
 
-    channel
-      .on("broadcast", { event: "trip:updated" }, () => {
-        debouncedSync();
-      })
-      .on("presence", { event: "sync" }, () => {
-        const state = channel.presenceState<PresenceUser>();
-        const users: PresenceUser[] = [];
-        const seen = new Set<string>();
-        for (const key of Object.keys(state)) {
-          for (const p of state[key]) {
-            if (p.userId && !seen.has(p.userId)) {
-              seen.add(p.userId);
-              users.push({
-                userId: p.userId,
-                name: p.name,
-                dayId: p.dayId,
-                patternId: p.patternId,
-              });
+      channel
+        .on("broadcast", { event: "trip:updated" }, () => {
+          debouncedSync();
+        })
+        .on("presence", { event: "sync" }, () => {
+          const state = channel.presenceState<PresenceUser>();
+          const users: PresenceUser[] = [];
+          const seen = new Set<string>();
+          for (const key of Object.keys(state)) {
+            for (const p of state[key]) {
+              if (p.userId && !seen.has(p.userId)) {
+                seen.add(p.userId);
+                users.push({
+                  userId: p.userId,
+                  name: p.name,
+                  dayId: p.dayId,
+                  patternId: p.patternId,
+                });
+              }
             }
           }
-        }
-        setPresence(users);
-      })
-      .subscribe((status) => {
-        setIsConnected(status === "SUBSCRIBED");
-        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-          console.error(`[Realtime] Channel subscription failed: ${status}`);
-          toast.error(MSG.REALTIME_CONNECTION_FAILED);
-        }
-      });
+          setPresence(users);
+        })
+        .subscribe((status) => {
+          setIsConnected(status === "SUBSCRIBED");
+          if (status === "SUBSCRIBED") {
+            toast.dismiss("realtime-error");
+            // Re-track presence after reconnect
+            const u = userRef.current;
+            const lp = lastPresenceRef.current;
+            if (u && lp) {
+              channel.track({ userId: u.id, name: u.name, ...lp });
+            }
+          }
+          if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
+            console.error(`[Realtime] Channel subscription failed: ${status}`);
+            toast.error(MSG.REALTIME_CONNECTION_FAILED, { id: "realtime-error" });
+          }
+        });
 
-    channelRef.current = channel;
+      channelRef.current = channel;
+    }
+
+    function disconnect() {
+      const channel = channelRef.current;
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+      channelRef.current = null;
+      setIsConnected(false);
+    }
+
+    function handleVisibilityChange() {
+      if (document.hidden) {
+        disconnect();
+      } else {
+        connect();
+        onSyncRef.current();
+      }
+    }
+
+    connect();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
       if (syncTimer.current) {
         clearTimeout(syncTimer.current);
         syncTimer.current = null;
       }
-      channel.unsubscribe();
-      channelRef.current = null;
-      setIsConnected(false);
+      disconnect();
       setPresence([]);
     };
   }, [tripId, debouncedSync]);
 
   const updatePresence = useCallback(
     (dayId: string, patternId: string | null) => {
+      lastPresenceRef.current = { dayId, patternId };
       if (!user) return;
       channelRef.current?.track({
         userId: user.id,

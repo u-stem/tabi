@@ -771,6 +771,7 @@ export default function TripDetailPage() {
                       scheduleLimitReached={scheduleLimitReached}
                       scheduleLimitMessage={scheduleLimitMessage}
                       overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
+                      maxEndDayOffset={Math.max(0, trip.days.length - 1)}
                     />
                   ) : (
                     <ActivityLog tripId={tripId} />
@@ -883,6 +884,7 @@ export default function TripDetailPage() {
                     draggable={false}
                     scheduleLimitReached={scheduleLimitReached}
                     scheduleLimitMessage={scheduleLimitMessage}
+                    maxEndDayOffset={Math.max(0, trip.days.length - 1)}
                   />
                 )
               ) : (

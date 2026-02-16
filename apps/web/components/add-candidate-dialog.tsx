@@ -14,37 +14,27 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { api } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
 import { buildSchedulePayload } from "@/lib/schedule-form-utils";
 
-type AddScheduleDialogProps = {
+type AddCandidateDialogProps = {
   tripId: string;
-  dayId: string;
-  patternId: string;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
   onAdd: () => void;
-  disabled?: boolean;
   maxEndDayOffset?: number;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
 };
 
-export function AddScheduleDialog({
+export function AddCandidateDialog({
   tripId,
-  dayId,
-  patternId,
+  open,
+  onOpenChange,
   onAdd,
-  disabled,
   maxEndDayOffset = 0,
-  open: controlledOpen,
-  onOpenChange: controlledOnOpenChange,
-}: AddScheduleDialogProps) {
-  const [internalOpen, setInternalOpen] = useState(false);
-  const open = controlledOpen ?? internalOpen;
-  const setOpen = controlledOnOpenChange ?? setInternalOpen;
+}: AddCandidateDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<ScheduleCategory>(DEFAULT_SCHEDULE_CATEGORY);
@@ -82,15 +72,15 @@ export function AddScheduleDialog({
     });
 
     try {
-      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`, {
+      await api(`/api/trips/${tripId}/candidates`, {
         method: "POST",
         body: JSON.stringify(data),
       });
-      setOpen(false);
-      toast.success(MSG.SCHEDULE_ADDED);
+      onOpenChange(false);
+      toast.success(MSG.CANDIDATE_ADDED);
       onAdd();
-    } catch (err) {
-      setError(getApiErrorMessage(err, MSG.SCHEDULE_ADD_FAILED));
+    } catch {
+      setError(MSG.CANDIDATE_ADD_FAILED);
     } finally {
       setLoading(false);
     }
@@ -100,7 +90,7 @@ export function AddScheduleDialog({
     <Dialog
       open={open}
       onOpenChange={(isOpen) => {
-        setOpen(isOpen);
+        onOpenChange(isOpen);
         if (!isOpen) {
           setError(null);
           setCategory(DEFAULT_SCHEDULE_CATEGORY);
@@ -113,16 +103,10 @@ export function AddScheduleDialog({
         }
       }}
     >
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={disabled}>
-          <Plus className="h-4 w-4" />
-          予定を追加
-        </Button>
-      </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>予定を追加</DialogTitle>
-          <DialogDescription>旅行の日程に予定を追加します</DialogDescription>
+          <DialogTitle>候補を追加</DialogTitle>
+          <DialogDescription>気になる場所を候補に追加しましょう</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <ScheduleFormFields
@@ -140,6 +124,7 @@ export function AddScheduleDialog({
             onEndDayOffsetChange={setEndDayOffset}
             maxEndDayOffset={maxEndDayOffset}
             timeError={timeError}
+            idPrefix="candidate-"
           />
           {error && (
             <p role="alert" className="text-sm text-destructive">
@@ -149,7 +134,7 @@ export function AddScheduleDialog({
           <DialogFooter>
             <Button type="submit" disabled={loading}>
               <Plus className="h-4 w-4" />
-              {loading ? "追加中..." : "予定を追加"}
+              {loading ? "追加中..." : "追加"}
             </Button>
           </DialogFooter>
         </form>

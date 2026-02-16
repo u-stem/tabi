@@ -160,6 +160,99 @@ describe("Candidate routes", () => {
       expect(body.name).toBe("New Spot");
     });
 
+    it("creates candidate with url", async () => {
+      const created = {
+        id: "s1",
+        tripId,
+        name: "Cafe",
+        category: "restaurant",
+        memo: null,
+        url: "https://example.com",
+        sortOrder: 0,
+      };
+
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ max: -1 }]),
+        }),
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([created]),
+        }),
+      });
+
+      const app = createTestApp(candidateRoutes, "/api/trips");
+      const res = await app.request(`/api/trips/${tripId}/candidates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Cafe",
+          category: "restaurant",
+          url: "https://example.com",
+        }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(body.url).toBe("https://example.com");
+    });
+
+    it("creates candidate with all schedule fields", async () => {
+      const created = {
+        id: "s1",
+        tripId,
+        name: "Tokyo to Osaka",
+        category: "transport",
+        address: "Tokyo Station",
+        startTime: "08:00",
+        endTime: "10:30",
+        memo: "Nozomi express",
+        url: "https://example.com",
+        departurePlace: "Tokyo Station",
+        arrivalPlace: "Shin-Osaka Station",
+        transportMethod: "shinkansen",
+        color: "red",
+        endDayOffset: 1,
+        sortOrder: 0,
+      };
+
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ max: -1 }]),
+        }),
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([created]),
+        }),
+      });
+
+      const app = createTestApp(candidateRoutes, "/api/trips");
+      const res = await app.request(`/api/trips/${tripId}/candidates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Tokyo to Osaka",
+          category: "transport",
+          address: "Tokyo Station",
+          startTime: "08:00",
+          endTime: "10:30",
+          memo: "Nozomi express",
+          url: "https://example.com",
+          departurePlace: "Tokyo Station",
+          arrivalPlace: "Shin-Osaka Station",
+          transportMethod: "shinkansen",
+          color: "red",
+          endDayOffset: 1,
+        }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(body.name).toBe("Tokyo to Osaka");
+    });
+
     it("returns 400 for empty name", async () => {
       const app = createTestApp(candidateRoutes, "/api/trips");
       const res = await app.request(`/api/trips/${tripId}/candidates`, {

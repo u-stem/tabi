@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  createCandidateSchema,
   createScheduleSchema,
   reorderSchedulesSchema,
   scheduleCategorySchema,
@@ -237,5 +238,64 @@ describe("reorderSchedulesSchema", () => {
   it("accepts empty array", () => {
     const result = reorderSchedulesSchema.safeParse({ scheduleIds: [] });
     expect(result.success).toBe(true);
+  });
+});
+
+describe("createCandidateSchema", () => {
+  it("accepts name and category only", () => {
+    const result = createCandidateSchema.safeParse({
+      name: "Cafe",
+      category: "restaurant",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts url", () => {
+    const result = createCandidateSchema.safeParse({
+      name: "Cafe",
+      category: "restaurant",
+      url: "https://example.com",
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.url).toBe("https://example.com");
+  });
+
+  it("accepts memo and url together", () => {
+    const result = createCandidateSchema.safeParse({
+      name: "Cafe",
+      category: "restaurant",
+      memo: "Good reviews",
+      url: "https://example.com",
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.memo).toBe("Good reviews");
+    expect(result.data?.url).toBe("https://example.com");
+  });
+
+  it("accepts all schedule fields", () => {
+    const result = createCandidateSchema.safeParse({
+      name: "Tokyo to Osaka",
+      category: "transport",
+      address: "Tokyo Station",
+      startTime: "08:00",
+      endTime: "10:30",
+      memo: "Nozomi express",
+      url: "https://example.com",
+      departurePlace: "Tokyo Station",
+      arrivalPlace: "Shin-Osaka Station",
+      transportMethod: "shinkansen",
+      color: "red",
+      endDayOffset: 1,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid time format", () => {
+    const result = createCandidateSchema.safeParse({
+      name: "Spot",
+      category: "sightseeing",
+      startTime: "9:00",
+    });
+    expect(result.success).toBe(false);
   });
 });

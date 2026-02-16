@@ -317,6 +317,7 @@ export function DayTimeline({
                   tripId={tripId}
                   dayId={sourceDayId}
                   patternId={sourcePatternId}
+                  date={date}
                   isFirst={isFirst}
                   isLast={isLast}
                   onDelete={() => handleDelete(s.id, sourceDayId, sourcePatternId)}
@@ -345,6 +346,7 @@ export function DayTimeline({
                 tripId={tripId}
                 dayId={dayId}
                 patternId={patternId}
+                date={date}
                 isFirst={isFirst}
                 isLast={isLast}
                 onDelete={() => handleDelete(schedule.id)}

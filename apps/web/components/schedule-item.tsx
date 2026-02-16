@@ -10,7 +10,16 @@ import type {
   TransportMethod,
 } from "@sugara/shared";
 import { shiftTime, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
-import { MoreHorizontal, Pencil, Trash2, Undo2 } from "lucide-react";
+import {
+  ExternalLink,
+  MapPin,
+  MoreHorizontal,
+  Pencil,
+  Route,
+  StickyNote,
+  Trash2,
+  Undo2,
+} from "lucide-react";
 import type { CSSProperties } from "react";
 import { useState } from "react";
 import {
@@ -35,6 +44,7 @@ import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
 import type { TimeStatus } from "@/lib/format";
 import { formatTime, formatTimeRange, isSafeUrl } from "@/lib/format";
 import { CATEGORY_ICONS, TRANSPORT_ICONS } from "@/lib/icons";
+import { buildTransportUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
 import { BatchShiftDialog } from "./batch-shift-dialog";
 import { DragHandle } from "./drag-handle";
@@ -77,6 +87,8 @@ type ScheduleItemProps = {
   crossDayPosition?: "intermediate" | "final";
   /** Subsequent schedules for batch time shift (sorted by sortOrder) */
   siblingSchedules?: ScheduleResponse[];
+  /** ISO date string (YYYY-MM-DD) for transit search links */
+  date?: string;
 };
 
 type UseSortableReturn = ReturnType<typeof useSortable>;
@@ -476,25 +488,31 @@ function PlaceCard({
               }
             : {})}
       >
-        {crossDayDisplay && crossDayPosition && (
-          <span className="mb-1.5 inline-block rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-            {getCrossDayLabel(category, crossDayPosition) ??
-              `${crossDaySourceDayNumber}日目から継続`}
-          </span>
-        )}
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             {selectable ? (
               <SelectionIndicator checked={!!selected} />
             ) : !crossDayDisplay ? (
               <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
-            ) : null}
+            ) : (
+              <span className="inline-block w-4 shrink-0" aria-hidden="true" />
+            )}
             <span className="text-sm font-medium">{name}</span>
             {!crossDayDisplay &&
               endDayOffset != null &&
               endDayOffset > 0 &&
               (() => {
                 const label = getStartDayLabel(category);
+                return label ? (
+                  <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    {label}
+                  </span>
+                ) : null;
+              })()}
+            {crossDayDisplay &&
+              crossDayPosition &&
+              (() => {
+                const label = getCrossDayLabel(category, crossDayPosition);
                 return label ? (
                   <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                     {label}
@@ -522,14 +540,15 @@ function PlaceCard({
           )}
         </div>
         {(address || url || memo) && (
-          <div className="mt-1 space-y-0.5 pl-6">
+          <div className="mt-1 space-y-1 pl-6">
             {address && (
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-xs text-blue-600 hover:underline dark:text-blue-400"
+                className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
               >
+                <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
                 {address}
               </a>
             )}
@@ -538,12 +557,18 @@ function PlaceCard({
                 href={url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block truncate text-xs text-blue-600 hover:underline dark:text-blue-400"
+                className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
               >
-                {url}
+                <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                <span className="truncate">{url}</span>
               </a>
             )}
-            {memo && <p className="text-sm text-muted-foreground">{memo}</p>}
+            {memo && (
+              <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
+                <p>{memo}</p>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -612,6 +637,7 @@ function TransportConnector({
   crossDaySourceDayNumber,
   crossDayPosition,
   siblingSchedules,
+  date,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
@@ -643,6 +669,17 @@ function TransportConnector({
         : formatTime(startTime)
       : "";
 
+  const transitUrl =
+    departurePlace && arrivalPlace
+      ? buildTransportUrl({
+          from: departurePlace,
+          to: arrivalPlace,
+          method: transportMethod,
+          date,
+          time: startTime,
+        })
+      : null;
+
   return (
     <div
       ref={sortable.nodeRef}
@@ -659,12 +696,12 @@ function TransportConnector({
         colorClasses={colorClasses}
       />
 
-      {/* Compact connector row */}
+      {/* Card body */}
       <div
         className={cn(
-          "flex min-w-0 flex-1 flex-wrap items-center gap-2 rounded border border-dashed px-3 py-1.5",
+          "min-w-0 flex-1 rounded-md border p-3",
           isPast && "opacity-50",
-          crossDayDisplay && "bg-muted/30",
+          crossDayDisplay && "border-dashed bg-muted/30",
           selectable &&
             "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
           selectable && selected && SELECTED_RING,
@@ -689,36 +726,37 @@ function TransportConnector({
               }
             : {})}
       >
-        {crossDayDisplay && crossDayPosition && (
-          <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-            {getCrossDayLabel(category, crossDayPosition) ?? `${crossDaySourceDayNumber}日目から`}
-          </span>
-        )}
-        {selectable ? (
-          <SelectionIndicator checked={!!selected} />
-        ) : !crossDayDisplay ? (
-          <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
-        ) : null}
-        <span className="truncate text-sm font-medium">{name}</span>
-        {routeStr && (
-          <span className="truncate text-sm text-muted-foreground">
-            {crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}
-          </span>
-        )}
-        {methodLabel && (
-          <span className="shrink-0 text-xs text-muted-foreground">({methodLabel})</span>
-        )}
-        {crossDayDisplay && timeStr && (
-          <span className="shrink-0 text-xs text-muted-foreground">~ {timeStr}</span>
-        )}
-        {!crossDayDisplay && timeStr && (
-          <span className="shrink-0 text-xs text-muted-foreground">
-            {timeStr}
-            {endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
-          </span>
-        )}
-        {!selectable && (
-          <div className="ml-auto">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            {selectable ? (
+              <SelectionIndicator checked={!!selected} />
+            ) : !crossDayDisplay ? (
+              <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
+            ) : (
+              <span className="inline-block w-4 shrink-0" aria-hidden="true" />
+            )}
+            <span className="text-sm font-medium">{name}</span>
+            {crossDayDisplay &&
+              crossDayPosition &&
+              (() => {
+                const label = getCrossDayLabel(category, crossDayPosition);
+                return label ? (
+                  <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                    {label}
+                  </span>
+                ) : null;
+              })()}
+            {crossDayDisplay && timeStr && (
+              <span className="text-xs text-muted-foreground">~ {timeStr}</span>
+            )}
+            {!crossDayDisplay && timeStr && (
+              <span className="text-xs text-muted-foreground">
+                {timeStr}
+                {endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
+              </span>
+            )}
+          </div>
+          {!selectable && (
             <ScheduleMenu
               name={name}
               disabled={disabled}
@@ -726,6 +764,46 @@ function TransportConnector({
               onDelete={onDelete}
               onUnassign={onUnassign}
             />
+          )}
+        </div>
+        {(routeStr || url || memo) && (
+          <div className="mt-1 space-y-1 pl-6">
+            {routeStr && (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                {transitUrl ? (
+                  <a
+                    href={transitUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline dark:text-blue-400"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}
+                  </a>
+                ) : (
+                  <span>{crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}</span>
+                )}
+                {methodLabel && <span>({methodLabel})</span>}
+              </span>
+            )}
+            {url && isSafeUrl(url) && (
+              <a
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+              >
+                <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                <span className="truncate">{url}</span>
+              </a>
+            )}
+            {memo && (
+              <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
+                <p>{memo}</p>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -50,8 +50,20 @@ export const SCHEDULE_MEMO_MAX_LENGTH = 2000;
 export const SCHEDULE_URL_MAX_LENGTH = 2000;
 export const SCHEDULE_PLACE_MAX_LENGTH = 200;
 export const MAX_END_DAY_OFFSET = 30;
-export const CANDIDATE_NAME_MAX_LENGTH = 200;
-export const CANDIDATE_MEMO_MAX_LENGTH = 2000;
+
+const urlSchema = z
+  .string()
+  .url()
+  .max(SCHEDULE_URL_MAX_LENGTH)
+  .refine((v) => {
+    try {
+      const { protocol } = new URL(v);
+      return protocol === "http:" || protocol === "https:";
+    } catch {
+      return false;
+    }
+  }, "Only http and https URLs are allowed")
+  .optional();
 
 export const createScheduleSchema = z.object({
   name: z.string().min(1).max(SCHEDULE_NAME_MAX_LENGTH),
@@ -60,19 +72,7 @@ export const createScheduleSchema = z.object({
   startTime: timeSchema.optional(),
   endTime: timeSchema.optional(),
   memo: z.string().max(SCHEDULE_MEMO_MAX_LENGTH).optional(),
-  url: z
-    .string()
-    .url()
-    .max(SCHEDULE_URL_MAX_LENGTH)
-    .refine((v) => {
-      try {
-        const { protocol } = new URL(v);
-        return protocol === "http:" || protocol === "https:";
-      } catch {
-        return false;
-      }
-    }, "Only http and https URLs are allowed")
-    .optional(),
+  url: urlSchema,
   departurePlace: z.string().max(SCHEDULE_PLACE_MAX_LENGTH).optional(),
   arrivalPlace: z.string().max(SCHEDULE_PLACE_MAX_LENGTH).optional(),
   transportMethod: transportMethodSchema.optional(),
@@ -87,11 +87,7 @@ export const reorderSchedulesSchema = z.object({
   scheduleIds: z.array(z.string().uuid()),
 });
 
-export const createCandidateSchema = z.object({
-  name: z.string().min(1).max(CANDIDATE_NAME_MAX_LENGTH),
-  category: scheduleCategorySchema,
-  memo: z.string().max(CANDIDATE_MEMO_MAX_LENGTH).optional(),
-});
+export const createCandidateSchema = createScheduleSchema;
 
 export const assignCandidateSchema = z.object({
   dayPatternId: z.string().uuid(),

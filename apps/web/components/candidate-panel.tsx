@@ -4,30 +4,35 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  CANDIDATE_MEMO_MAX_LENGTH,
-  CANDIDATE_NAME_MAX_LENGTH,
   CATEGORY_LABELS,
   type CandidateResponse,
-  DEFAULT_SCHEDULE_CATEGORY,
   type ScheduleCategory,
   type ScheduleResponse,
+  TRANSPORT_METHOD_LABELS,
+  type TransportMethod,
 } from "@sugara/shared";
 import {
   ArrowLeft,
   ArrowUpDown,
-  Check,
   CheckCheck,
   CheckSquare,
+  Clock,
   Copy,
+  ExternalLink,
+  MapPin,
   MoreHorizontal,
   Pencil,
   Plus,
+  Route,
+  StickyNote,
   Trash2,
   X,
 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { AddCandidateDialog } from "@/components/add-candidate-dialog";
+import { EditCandidateDialog } from "@/components/edit-candidate-dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -40,35 +45,18 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ApiError, api } from "@/lib/api";
-import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
+import { api } from "@/lib/api";
+import { SELECTED_RING } from "@/lib/colors";
+import { formatTimeRange } from "@/lib/format";
 import { useSelection } from "@/lib/hooks/selection-context";
 import { MSG } from "@/lib/messages";
-import { CATEGORY_OPTIONS } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 import { DragHandle } from "./drag-handle";
 
@@ -84,6 +72,7 @@ type CandidatePanelProps = {
   addDialogOpen?: boolean;
   onAddDialogOpenChange?: (open: boolean) => void;
   overCandidateId?: string | null;
+  maxEndDayOffset?: number;
 };
 
 function CandidateCard({
@@ -123,6 +112,11 @@ function CandidateCard({
     transition,
   };
 
+  const timeStr = formatTimeRange(spot.startTime, spot.endTime);
+  const transportLabel = spot.transportMethod
+    ? TRANSPORT_METHOD_LABELS[spot.transportMethod as TransportMethod]
+    : null;
+
   return (
     <>
       <div
@@ -154,17 +148,59 @@ function CandidateCard({
           <SelectionIndicator checked={!!selected} />
         ) : draggable ? (
           <DragHandle attributes={attributes} listeners={listeners} />
-        ) : (
-          <span
-            className={`h-2.5 w-2.5 shrink-0 rounded-full ${SCHEDULE_COLOR_CLASSES[spot.color].bg}`}
-          />
-        )}
+        ) : null}
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{spot.name}</p>
           <p className="text-xs text-muted-foreground">
             {CATEGORY_LABELS[spot.category as ScheduleCategory]}
           </p>
-          {spot.memo && <p className="truncate text-xs text-muted-foreground/70">{spot.memo}</p>}
+          {spot.address && (
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spot.address)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+              <span className="truncate">{spot.address}</span>
+            </a>
+          )}
+          {spot.category === "transport" && (spot.departurePlace || spot.arrivalPlace) && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+              <span className="truncate">
+                {spot.departurePlace && spot.arrivalPlace
+                  ? `${spot.departurePlace} → ${spot.arrivalPlace}`
+                  : spot.departurePlace || spot.arrivalPlace}
+              </span>
+              {transportLabel && <span>({transportLabel})</span>}
+            </div>
+          )}
+          {timeStr && (
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Clock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+              <span>{timeStr}</span>
+            </div>
+          )}
+          {spot.url && (
+            <a
+              href={spot.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+              <span className="truncate">{spot.url.replace(/^https?:\/\//, "")}</span>
+            </a>
+          )}
+          {spot.memo && (
+            <div className="flex items-start gap-1.5 text-xs text-muted-foreground/70">
+              <StickyNote className="mt-0.5 h-3 w-3 shrink-0" />
+              <p className="truncate">{spot.memo}</p>
+            </div>
+          )}
         </div>
         {!disabled && !selectable && onReact && (
           <div className="flex select-none items-center gap-0.5">
@@ -264,6 +300,7 @@ export function CandidatePanel({
   addDialogOpen: controlledAddOpen,
   onAddDialogOpenChange: controlledOnAddOpenChange,
   overCandidateId,
+  maxEndDayOffset = 0,
 }: CandidatePanelProps) {
   const sel = useSelection();
   const selectionMode = sel.selectionTarget === "candidates";
@@ -275,11 +312,7 @@ export function CandidatePanel({
   const [internalAddOpen, setInternalAddOpen] = useState(false);
   const addOpen = controlledAddOpen ?? internalAddOpen;
   const setAddOpen = controlledOnAddOpenChange ?? setInternalAddOpen;
-  const [addLoading, setAddLoading] = useState(false);
-  const [category, setCategory] = useState<string>(DEFAULT_SCHEDULE_CATEGORY);
   const [editSchedule, setEditSchedule] = useState<ScheduleResponse | null>(null);
-  const [editLoading, setEditLoading] = useState(false);
-  const [editCategory, setEditCategory] = useState<string>(DEFAULT_SCHEDULE_CATEGORY);
   const [sortBy, setSortBy] = useState<"order" | "popular">("order");
 
   const sortedCandidates = useMemo(() => {
@@ -338,73 +371,6 @@ export function CandidatePanel({
       onRefresh();
     } catch {
       toast.error(MSG.REACTION_REMOVE_FAILED);
-    }
-  }
-
-  async function handleAdd(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setAddLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const memo = (formData.get("memo") as string) || undefined;
-
-    try {
-      await api(`/api/trips/${tripId}/candidates`, {
-        method: "POST",
-        body: JSON.stringify({ name, category, memo }),
-      });
-      setAddOpen(false);
-      toast.success(MSG.CANDIDATE_ADDED);
-      onRefresh();
-    } catch {
-      toast.error(MSG.CANDIDATE_ADD_FAILED);
-    } finally {
-      setAddLoading(false);
-    }
-  }
-
-  function openEdit(spot: ScheduleResponse) {
-    setEditSchedule(spot);
-    setEditCategory(spot.category);
-  }
-
-  async function handleEdit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    if (!editSchedule) return;
-    setEditLoading(true);
-
-    const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const memo = (formData.get("memo") as string) || undefined;
-
-    try {
-      await api(`/api/trips/${tripId}/candidates/${editSchedule.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({
-          name,
-          category: editCategory,
-          memo,
-          expectedUpdatedAt: editSchedule.updatedAt,
-        }),
-      });
-      setEditSchedule(null);
-      toast.success(MSG.CANDIDATE_UPDATED);
-      onRefresh();
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        toast.error(MSG.CONFLICT);
-        setEditSchedule(null);
-        onRefresh();
-      } else if (err instanceof ApiError && err.status === 404) {
-        toast.error(MSG.CONFLICT_DELETED);
-        setEditSchedule(null);
-        onRefresh();
-      } else {
-        toast.error(MSG.CANDIDATE_UPDATE_FAILED);
-      }
-    } finally {
-      setEditLoading(false);
     }
   }
 
@@ -549,7 +515,7 @@ export function CandidatePanel({
                           {overCandidateId === spot.id && insertIndicator}
                           <CandidateCard
                             spot={spot}
-                            onEdit={() => openEdit(spot)}
+                            onEdit={() => setEditSchedule(spot)}
                             onDelete={() => handleDelete(spot.id)}
                             onAssign={() => handleAssign(spot.id)}
                             onReact={(type) => handleReact(spot.id, type)}
@@ -580,7 +546,7 @@ export function CandidatePanel({
             <CandidateCard
               key={spot.id}
               spot={spot}
-              onEdit={() => openEdit(spot)}
+              onEdit={() => setEditSchedule(spot)}
               onDelete={() => handleDelete(spot.id)}
               onAssign={() => handleAssign(spot.id)}
               onReact={(type) => handleReact(spot.id, type)}
@@ -594,125 +560,26 @@ export function CandidatePanel({
         </div>
       )}
 
-      <Dialog
+      <AddCandidateDialog
+        tripId={tripId}
         open={addOpen}
-        onOpenChange={(open) => {
-          setAddOpen(open);
-          if (!open) setCategory(DEFAULT_SCHEDULE_CATEGORY);
-        }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>候補を追加</DialogTitle>
-            <DialogDescription>気になる場所を候補に追加しましょう</DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleAdd} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="candidate-name">
-                名前 <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="candidate-name"
-                name="name"
-                placeholder="金閣寺"
-                required
-                maxLength={CANDIDATE_NAME_MAX_LENGTH}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>カテゴリ</Label>
-              <Select value={category} onValueChange={setCategory}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORY_OPTIONS.map((cat) => (
-                    <SelectItem key={cat.value} value={cat.value}>
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="candidate-memo">メモ</Label>
-              <Input
-                id="candidate-memo"
-                name="memo"
-                placeholder="口コミで見た"
-                maxLength={CANDIDATE_MEMO_MAX_LENGTH}
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit" disabled={addLoading}>
-                <Plus className="h-4 w-4" />
-                {addLoading ? "追加中..." : "追加"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+        onOpenChange={setAddOpen}
+        onAdd={onRefresh}
+        maxEndDayOffset={maxEndDayOffset}
+      />
 
-      <Dialog
-        open={editSchedule !== null}
-        onOpenChange={(open) => {
-          if (!open) setEditSchedule(null);
-        }}
-      >
-        <DialogContent className="sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>候補を編集</DialogTitle>
-            <DialogDescription>候補の情報を変更します</DialogDescription>
-          </DialogHeader>
-          {editSchedule && (
-            <form onSubmit={handleEdit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-candidate-name">
-                  名前 <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="edit-candidate-name"
-                  name="name"
-                  defaultValue={editSchedule.name}
-                  required
-                  maxLength={CANDIDATE_NAME_MAX_LENGTH}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>カテゴリ</Label>
-                <Select value={editCategory} onValueChange={setEditCategory}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORY_OPTIONS.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-candidate-memo">メモ</Label>
-                <Input
-                  id="edit-candidate-memo"
-                  name="memo"
-                  defaultValue={editSchedule.memo ?? ""}
-                  placeholder="口コミで見た"
-                  maxLength={CANDIDATE_MEMO_MAX_LENGTH}
-                />
-              </div>
-              <DialogFooter>
-                <Button type="submit" disabled={editLoading}>
-                  <Check className="h-4 w-4" />
-                  {editLoading ? "更新中..." : "更新"}
-                </Button>
-              </DialogFooter>
-            </form>
-          )}
-        </DialogContent>
-      </Dialog>
+      {editSchedule && (
+        <EditCandidateDialog
+          tripId={tripId}
+          schedule={editSchedule}
+          open={editSchedule !== null}
+          onOpenChange={(open) => {
+            if (!open) setEditSchedule(null);
+          }}
+          onUpdate={onRefresh}
+          maxEndDayOffset={maxEndDayOffset}
+        />
+      )}
     </div>
   );
 }

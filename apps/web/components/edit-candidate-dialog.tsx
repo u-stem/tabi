@@ -1,7 +1,6 @@
 "use client";
 
-import type { ScheduleColor, ScheduleResponse, TimeDelta, TransportMethod } from "@sugara/shared";
-import { computeTimeDelta } from "@sugara/shared";
+import type { ScheduleColor, ScheduleResponse, TransportMethod } from "@sugara/shared";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -20,29 +19,23 @@ import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
 import { buildSchedulePayload } from "@/lib/schedule-form-utils";
 
-type EditScheduleDialogProps = {
+type EditCandidateDialogProps = {
   tripId: string;
-  dayId: string;
-  patternId: string;
   schedule: ScheduleResponse;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
   maxEndDayOffset?: number;
-  onShiftProposal?: (timeDelta: TimeDelta) => void;
 };
 
-export function EditScheduleDialog({
+export function EditCandidateDialog({
   tripId,
-  dayId,
-  patternId,
   schedule,
   open,
   onOpenChange,
   onUpdate,
   maxEndDayOffset = 0,
-  onShiftProposal,
-}: EditScheduleDialogProps) {
+}: EditCandidateDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState(schedule.category);
@@ -100,36 +93,24 @@ export function EditScheduleDialog({
     };
 
     try {
-      await api(
-        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${schedule.id}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(data),
-        },
-      );
-      const timeDelta = computeTimeDelta(schedule, {
-        startTime: startTime || undefined,
-        endTime: endTime || undefined,
-        endDayOffset: endDayOffset > 0 ? endDayOffset : null,
+      await api(`/api/trips/${tripId}/candidates/${schedule.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
       });
-
       onOpenChange(false);
-      toast.success(MSG.SCHEDULE_UPDATED);
+      toast.success(MSG.CANDIDATE_UPDATED);
       onUpdate();
-
-      if (timeDelta && onShiftProposal) {
-        onShiftProposal(timeDelta);
-      }
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        setError(MSG.CONFLICT);
+        toast.error(MSG.CONFLICT);
+        onOpenChange(false);
         onUpdate();
       } else if (err instanceof ApiError && err.status === 404) {
         toast.error(MSG.CONFLICT_DELETED);
         onOpenChange(false);
         onUpdate();
       } else {
-        setError(err instanceof Error ? err.message : MSG.SCHEDULE_UPDATE_FAILED);
+        setError(err instanceof Error ? err.message : MSG.CANDIDATE_UPDATE_FAILED);
       }
     } finally {
       setLoading(false);
@@ -140,8 +121,8 @@ export function EditScheduleDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>予定を編集</DialogTitle>
-          <DialogDescription>予定の情報を変更します</DialogDescription>
+          <DialogTitle>候補を編集</DialogTitle>
+          <DialogDescription>候補の情報を変更します</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <ScheduleFormFields
@@ -167,7 +148,7 @@ export function EditScheduleDialog({
               arrivalPlace: schedule.arrivalPlace ?? "",
               memo: schedule.memo ?? "",
             }}
-            idPrefix="edit-"
+            idPrefix="edit-candidate-"
           />
           {error && (
             <p role="alert" className="text-sm text-destructive">
@@ -177,7 +158,7 @@ export function EditScheduleDialog({
           <DialogFooter>
             <Button type="submit" disabled={loading}>
               <Check className="h-4 w-4" />
-              {loading ? "更新中..." : "予定を更新"}
+              {loading ? "更新中..." : "更新"}
             </Button>
           </DialogFooter>
         </form>

@@ -13,6 +13,9 @@ export type PresenceUser = {
 
 const SYNC_DEBOUNCE_MS = 300;
 const SYNC_JITTER_MS = 200;
+const RETRY_MAX = 5;
+const RETRY_BASE_MS = 1000;
+const RETRY_MAX_MS = 10_000;
 
 export function useTripSync(
   tripId: string,
@@ -28,6 +31,8 @@ export function useTripSync(
   const [isConnected, setIsConnected] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryCount = useRef(0);
   const onSyncRef = useRef(onSync);
   onSyncRef.current = onSync;
   const userRef = useRef(user);
@@ -47,6 +52,8 @@ export function useTripSync(
 
   useEffect(() => {
     function connect() {
+      // Cleanup existing channel and pending retry to prevent duplicates
+      disconnect();
       const channel = supabase.channel(`trip:${tripId}`);
 
       channel
@@ -75,8 +82,8 @@ export function useTripSync(
         .subscribe((status) => {
           setIsConnected(status === "SUBSCRIBED");
           if (status === "SUBSCRIBED") {
+            retryCount.current = 0;
             toast.dismiss("realtime-error");
-            // Re-track presence after reconnect
             const u = userRef.current;
             const lp = lastPresenceRef.current;
             if (u && lp) {
@@ -84,8 +91,22 @@ export function useTripSync(
             }
           }
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-            console.error(`[Realtime] Channel subscription failed: ${status}`);
-            toast.error(MSG.REALTIME_CONNECTION_FAILED, { id: "realtime-error" });
+            if (retryCount.current < RETRY_MAX) {
+              console.debug(
+                `[Realtime] Retry ${retryCount.current + 1}/${RETRY_MAX} after ${status}`,
+              );
+              const base = Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** retryCount.current);
+              // Equal Jitter: delay = base * [0.5, 1.0)
+              const delay = base * (0.5 + Math.random() * 0.5);
+              retryCount.current += 1;
+              retryTimer.current = setTimeout(() => {
+                retryTimer.current = null;
+                connect();
+              }, delay);
+            } else {
+              console.error(`[Realtime] All retries exhausted after ${status}`);
+              toast.error(MSG.REALTIME_CONNECTION_FAILED, { id: "realtime-error" });
+            }
           }
         });
 
@@ -93,6 +114,10 @@ export function useTripSync(
     }
 
     function disconnect() {
+      if (retryTimer.current) {
+        clearTimeout(retryTimer.current);
+        retryTimer.current = null;
+      }
       const channel = channelRef.current;
       if (channel) {
         supabase.removeChannel(channel);
@@ -105,6 +130,7 @@ export function useTripSync(
       if (document.hidden) {
         disconnect();
       } else {
+        retryCount.current = 0;
         connect();
         onSyncRef.current();
       }

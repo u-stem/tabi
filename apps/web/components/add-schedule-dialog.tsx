@@ -1,7 +1,13 @@
 "use client";
 
-import type { ScheduleCategory, ScheduleColor, TransportMethod } from "@sugara/shared";
+import type {
+  ScheduleCategory,
+  ScheduleColor,
+  TransportMethod,
+  TripResponse,
+} from "@sugara/shared";
 import { DEFAULT_SCHEDULE_CATEGORY } from "@sugara/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -19,7 +25,9 @@ import {
 import { api, getApiErrorMessage } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 import { buildSchedulePayload } from "@/lib/schedule-form-utils";
+import { addScheduleToPattern, toScheduleResponse } from "@/lib/trip-cache";
 
 type AddScheduleDialogProps = {
   tripId: string;
@@ -42,6 +50,9 @@ export function AddScheduleDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
 }: AddScheduleDialogProps) {
+  const queryClient = useQueryClient();
+  const cacheKey = queryKeys.trips.detail(tripId);
+
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen ?? internalOpen;
   const setOpen = controlledOnOpenChange ?? setInternalOpen;
@@ -84,10 +95,20 @@ export function AddScheduleDialog({
     });
 
     try {
-      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      const result = await api<Record<string, unknown>>(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+        {
+          method: "POST",
+          body: JSON.stringify(data),
+        },
+      );
+      const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+      if (prev) {
+        queryClient.setQueryData(
+          cacheKey,
+          addScheduleToPattern(prev, dayId, patternId, toScheduleResponse(result)),
+        );
+      }
       setOpen(false);
       toast.success(MSG.SCHEDULE_ADDED);
       onAdd();

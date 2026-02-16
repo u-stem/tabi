@@ -1,6 +1,12 @@
 "use client";
 
-import type { ScheduleColor, ScheduleResponse, TransportMethod } from "@sugara/shared";
+import type {
+  ScheduleColor,
+  ScheduleResponse,
+  TransportMethod,
+  TripResponse,
+} from "@sugara/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -17,7 +23,9 @@ import {
 import { ApiError, api } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 import { buildSchedulePayload } from "@/lib/schedule-form-utils";
+import { toCandidateResponse, updateCandidate } from "@/lib/trip-cache";
 
 type EditCandidateDialogProps = {
   tripId: string;
@@ -36,6 +44,9 @@ export function EditCandidateDialog({
   onUpdate,
   maxEndDayOffset = 0,
 }: EditCandidateDialogProps) {
+  const queryClient = useQueryClient();
+  const cacheKey = queryKeys.trips.detail(tripId);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState(schedule.category);
@@ -96,10 +107,20 @@ export function EditCandidateDialog({
     };
 
     try {
-      await api(`/api/trips/${tripId}/candidates/${schedule.id}`, {
-        method: "PATCH",
-        body: JSON.stringify(data),
-      });
+      const result = await api<Record<string, unknown>>(
+        `/api/trips/${tripId}/candidates/${schedule.id}`,
+        {
+          method: "PATCH",
+          body: JSON.stringify(data),
+        },
+      );
+      const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+      if (prev) {
+        queryClient.setQueryData(
+          cacheKey,
+          updateCandidate(prev, schedule.id, toCandidateResponse(result)),
+        );
+      }
       onOpenChange(false);
       toast.success(MSG.CANDIDATE_UPDATED);
       onUpdate();

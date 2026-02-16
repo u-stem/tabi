@@ -2,7 +2,8 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import type { CrossDayEntry, ScheduleResponse } from "@sugara/shared";
+import type { CrossDayEntry, ScheduleResponse, TripResponse } from "@sugara/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
   CheckCheck,
@@ -37,6 +38,12 @@ import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import type { TimelineItem } from "@/lib/merge-timeline";
 import { buildMergedTimeline, timelineSortableIds } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
+import {
+  moveScheduleToCandidate,
+  removeScheduleFromPattern,
+  toScheduleResponse,
+} from "@/lib/trip-cache";
 import { cn } from "@/lib/utils";
 import { AddScheduleDialog } from "./add-schedule-dialog";
 import { ScheduleItem } from "./schedule-item";
@@ -78,6 +85,9 @@ export function DayTimeline({
   onAddScheduleOpenChange,
   overScheduleId,
 }: DayTimelineProps) {
+  const queryClient = useQueryClient();
+  const cacheKey = queryKeys.trips.detail(tripId);
+
   const sel = useSelection();
   const selectionMode = sel.selectionTarget === "timeline";
   const selectedIds = selectionMode ? sel.selectedIds : undefined;
@@ -102,6 +112,14 @@ export function DayTimeline({
   ) {
     const dId = overrideDayId ?? dayId;
     const pId = overridePatternId ?? patternId;
+
+    // Cancel in-flight refetches to prevent them from overwriting the optimistic update
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(cacheKey, removeScheduleFromPattern(prev, dId, pId, scheduleId));
+    }
+
     try {
       await api(`/api/trips/${tripId}/days/${dId}/patterns/${pId}/schedules/${scheduleId}`, {
         method: "DELETE",
@@ -109,15 +127,24 @@ export function DayTimeline({
       toast.success(MSG.SCHEDULE_DELETED);
       onRefresh();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.SCHEDULE_DELETE_FAILED);
     }
   }
 
   async function handleUnassign(scheduleId: string) {
     try {
-      await api(`/api/trips/${tripId}/schedules/${scheduleId}/unassign`, {
-        method: "POST",
-      });
+      const result = await api<Record<string, unknown>>(
+        `/api/trips/${tripId}/schedules/${scheduleId}/unassign`,
+        { method: "POST" },
+      );
+      const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+      if (prev) {
+        queryClient.setQueryData(
+          cacheKey,
+          moveScheduleToCandidate(prev, dayId, patternId, scheduleId, toScheduleResponse(result)),
+        );
+      }
       toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
       onRefresh();
     } catch {

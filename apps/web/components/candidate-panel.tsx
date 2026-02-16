@@ -10,7 +10,9 @@ import {
   type ScheduleResponse,
   TRANSPORT_METHOD_LABELS,
   type TransportMethod,
+  type TripResponse,
 } from "@sugara/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowUpDown,
@@ -57,13 +59,16 @@ import { SELECTED_RING } from "@/lib/colors";
 import { formatTimeRange, isSafeUrl } from "@/lib/format";
 import { useSelection } from "@/lib/hooks/selection-context";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 import { buildTransportUrl } from "@/lib/transport-link";
+import { moveCandidateToSchedule, removeCandidate, toScheduleResponse } from "@/lib/trip-cache";
 import { cn } from "@/lib/utils";
 import { DragHandle } from "./drag-handle";
 
 type CandidatePanelProps = {
   tripId: string;
   candidates: CandidateResponse[];
+  currentDayId: string;
   currentPatternId: string;
   onRefresh: () => void;
   disabled?: boolean;
@@ -320,6 +325,7 @@ function CandidateCard({
 export function CandidatePanel({
   tripId,
   candidates,
+  currentDayId,
   currentPatternId,
   onRefresh,
   disabled,
@@ -331,6 +337,9 @@ export function CandidatePanel({
   overCandidateId,
   maxEndDayOffset = 0,
 }: CandidatePanelProps) {
+  const queryClient = useQueryClient();
+  const cacheKey = queryKeys.trips.detail(tripId);
+
   const sel = useSelection();
   const selectionMode = sel.selectionTarget === "candidates";
   const selectedIds = selectionMode ? sel.selectedIds : undefined;
@@ -357,10 +366,26 @@ export function CandidatePanel({
 
   async function handleAssign(spotId: string) {
     try {
-      await api(`/api/trips/${tripId}/candidates/${spotId}/assign`, {
-        method: "POST",
-        body: JSON.stringify({ dayPatternId: currentPatternId }),
-      });
+      const result = await api<Record<string, unknown>>(
+        `/api/trips/${tripId}/candidates/${spotId}/assign`,
+        {
+          method: "POST",
+          body: JSON.stringify({ dayPatternId: currentPatternId }),
+        },
+      );
+      const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+      if (prev) {
+        queryClient.setQueryData(
+          cacheKey,
+          moveCandidateToSchedule(
+            prev,
+            spotId,
+            currentDayId,
+            currentPatternId,
+            toScheduleResponse(result),
+          ),
+        );
+      }
       toast.success(MSG.CANDIDATE_ASSIGNED);
       onRefresh();
     } catch {
@@ -369,6 +394,13 @@ export function CandidatePanel({
   }
 
   async function handleDelete(spotId: string) {
+    // Cancel in-flight refetches to prevent them from overwriting the optimistic update
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(cacheKey, removeCandidate(prev, spotId));
+    }
+
     try {
       await api(`/api/trips/${tripId}/candidates/${spotId}`, {
         method: "DELETE",
@@ -376,6 +408,7 @@ export function CandidatePanel({
       toast.success(MSG.CANDIDATE_DELETED);
       onRefresh();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.CANDIDATE_DELETE_FAILED);
     }
   }

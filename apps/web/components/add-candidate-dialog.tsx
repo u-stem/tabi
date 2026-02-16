@@ -1,7 +1,13 @@
 "use client";
 
-import type { ScheduleCategory, ScheduleColor, TransportMethod } from "@sugara/shared";
+import type {
+  ScheduleCategory,
+  ScheduleColor,
+  TransportMethod,
+  TripResponse,
+} from "@sugara/shared";
 import { DEFAULT_SCHEDULE_CATEGORY } from "@sugara/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -18,7 +24,9 @@ import {
 import { api } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 import { buildSchedulePayload } from "@/lib/schedule-form-utils";
+import { addCandidate, toCandidateResponse } from "@/lib/trip-cache";
 
 type AddCandidateDialogProps = {
   tripId: string;
@@ -35,6 +43,9 @@ export function AddCandidateDialog({
   onAdd,
   maxEndDayOffset = 0,
 }: AddCandidateDialogProps) {
+  const queryClient = useQueryClient();
+  const cacheKey = queryKeys.trips.detail(tripId);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<ScheduleCategory>(DEFAULT_SCHEDULE_CATEGORY);
@@ -74,10 +85,14 @@ export function AddCandidateDialog({
     });
 
     try {
-      await api(`/api/trips/${tripId}/candidates`, {
+      const result = await api<Record<string, unknown>>(`/api/trips/${tripId}/candidates`, {
         method: "POST",
         body: JSON.stringify(data),
       });
+      const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+      if (prev) {
+        queryClient.setQueryData(cacheKey, addCandidate(prev, toCandidateResponse(result)));
+      }
       onOpenChange(false);
       toast.success(MSG.CANDIDATE_ADDED);
       onAdd();

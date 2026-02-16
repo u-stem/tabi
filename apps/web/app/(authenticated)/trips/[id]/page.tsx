@@ -762,6 +762,7 @@ export default function TripDetailPage() {
                     <CandidatePanel
                       tripId={tripId}
                       candidates={dnd.localCandidates}
+                      currentDayId={currentDay.id}
                       currentPatternId={currentPattern.id}
                       onRefresh={onMutate}
                       disabled={!online || !canEdit}
@@ -878,6 +879,7 @@ export default function TripDetailPage() {
                   <CandidatePanel
                     tripId={tripId}
                     candidates={dnd.localCandidates}
+                    currentDayId={currentDay.id}
                     currentPatternId={currentPattern.id}
                     onRefresh={onMutate}
                     disabled={!online || !canEdit}

@@ -1,7 +1,14 @@
 "use client";
 
-import type { ScheduleColor, ScheduleResponse, TimeDelta, TransportMethod } from "@sugara/shared";
+import type {
+  ScheduleColor,
+  ScheduleResponse,
+  TimeDelta,
+  TransportMethod,
+  TripResponse,
+} from "@sugara/shared";
 import { computeTimeDelta } from "@sugara/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { Check } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -18,7 +25,9 @@ import {
 import { ApiError, api } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 import { buildSchedulePayload } from "@/lib/schedule-form-utils";
+import { toScheduleResponse, updateScheduleInPattern } from "@/lib/trip-cache";
 
 type EditScheduleDialogProps = {
   tripId: string;
@@ -43,6 +52,9 @@ export function EditScheduleDialog({
   maxEndDayOffset = 0,
   onShiftProposal,
 }: EditScheduleDialogProps) {
+  const queryClient = useQueryClient();
+  const cacheKey = queryKeys.trips.detail(tripId);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState(schedule.category);
@@ -103,13 +115,20 @@ export function EditScheduleDialog({
     };
 
     try {
-      await api(
+      const result = await api<Record<string, unknown>>(
         `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${schedule.id}`,
         {
           method: "PATCH",
           body: JSON.stringify(data),
         },
       );
+      const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+      if (prev) {
+        queryClient.setQueryData(
+          cacheKey,
+          updateScheduleInPattern(prev, dayId, patternId, schedule.id, toScheduleResponse(result)),
+        );
+      }
       const timeDelta = computeTimeDelta(schedule, {
         startTime: startTime || undefined,
         endTime: endTime || undefined,

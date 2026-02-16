@@ -23,9 +23,7 @@ export function buildSchedulePayload(formData: FormData, state: ScheduleFormStat
     category: state.category,
     color: state.color,
     address:
-      state.category !== "transport"
-        ? emptyToNull(formData.get("address") as string)
-        : undefined,
+      state.category !== "transport" ? emptyToNull(formData.get("address") as string) : undefined,
     urls: state.urls.filter((u) => u.trim() !== ""),
     startTime: state.startTime || undefined,
     endTime: state.endTime || undefined,

@@ -493,12 +493,12 @@ function AvatarSection({ name, currentImage }: { name: string; currentImage: str
                 }`}
               >
                 <Image
+                  loader={({ src }) => src}
                   src={url}
                   alt={`${STYLE_LABELS[style]} avatar ${seed}`}
                   width={48}
                   height={48}
                   className="rounded-full"
-                  unoptimized
                 />
               </button>
             );

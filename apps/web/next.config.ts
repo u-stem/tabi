@@ -51,6 +51,17 @@ if (process.env.NODE_ENV === "production") {
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@sugara/api", "@sugara/shared"],
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "api.dicebear.com",
+      },
+    ],
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
+  },
   experimental: {
     optimizePackageImports: ["lucide-react", "date-fns"],
   },

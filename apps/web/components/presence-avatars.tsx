@@ -51,7 +51,13 @@ export function PresenceAvatars({ users, isConnected }: PresenceAvatarsProps) {
           className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full"
         >
           {user.image ? (
-            <Image src={user.image} alt={user.name} width={28} height={28} unoptimized />
+            <Image
+              loader={({ src }) => src}
+              src={user.image}
+              alt={user.name}
+              width={28}
+              height={28}
+            />
           ) : (
             <span
               className={cn(

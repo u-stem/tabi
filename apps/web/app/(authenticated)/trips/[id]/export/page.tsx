@@ -446,7 +446,7 @@ export default function TripExportPage() {
           <div className="overflow-x-auto overscroll-x-contain">
             {activeFields.length > 0 && activeRows.length > 0 ? (
               <>
-                <table className="w-full text-xs">
+                <table className="text-xs">
                   <thead>
                     <tr className="border-b bg-muted/50">
                       {activeFields.map((field) => (
@@ -471,7 +471,7 @@ export default function TripExportPage() {
                               className={cn(
                                 "px-3 py-1.5",
                                 field === "urls" || field === "memo"
-                                  ? "whitespace-pre-line"
+                                  ? "whitespace-pre"
                                   : "h-8 max-w-[200px] whitespace-nowrap truncate",
                               )}
                             >
@@ -489,7 +489,7 @@ export default function TripExportPage() {
                     <div className="border-t px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/30">
                       --- 候補 ---
                     </div>
-                    <table className="w-full text-xs">
+                    <table className="text-xs">
                       <thead>
                         <tr className="border-b bg-muted/50">
                           {candidateSheetData.fields.map((field) => (
@@ -512,10 +512,10 @@ export default function TripExportPage() {
                                 <td
                                   key={field}
                                   className={cn(
-                                    "px-3 py-1.5 whitespace-nowrap",
-                                    field === "urls"
+                                    "px-3 py-1.5",
+                                    field === "urls" || field === "memo"
                                       ? "whitespace-pre"
-                                      : "h-8 max-w-[200px] truncate",
+                                      : "h-8 max-w-[200px] whitespace-nowrap truncate",
                                   )}
                                 >
                                   {row[EXPORT_FIELD_LABELS[field]] ?? ""}

@@ -106,47 +106,43 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
   const tripId = c.req.param("id");
   const role = c.get("tripRole");
 
-  const trip = await db.query.trips.findFirst({
-    where: eq(trips.id, tripId),
-    with: {
-      days: {
-        orderBy: (days, { asc }) => [asc(days.dayNumber)],
-        with: {
-          patterns: {
-            orderBy: (patterns, { asc }) => [asc(patterns.sortOrder)],
-            with: {
-              schedules: {
-                orderBy: (schedules, { asc }) => [asc(schedules.sortOrder)],
+  const [trip, candidates, [{ count: memberCount }]] = await Promise.all([
+    db.query.trips.findFirst({
+      where: eq(trips.id, tripId),
+      with: {
+        days: {
+          orderBy: (days, { asc }) => [asc(days.dayNumber)],
+          with: {
+            patterns: {
+              orderBy: (patterns, { asc }) => [asc(patterns.sortOrder)],
+              with: {
+                schedules: {
+                  orderBy: (schedules, { asc }) => [asc(schedules.sortOrder)],
+                },
               },
             },
           },
         },
       },
-    },
-  });
+    }),
+    queryCandidatesWithReactions(tripId, user.id),
+    db.select({ count: count() }).from(tripMembers).where(eq(tripMembers.tripId, tripId)),
+  ]);
 
   if (!trip) {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
-  const candidates = await queryCandidatesWithReactions(tripId, user.id);
-
-  const [scheduleCount] = await db
-    .select({ count: count() })
-    .from(schedules)
-    .where(eq(schedules.tripId, tripId));
-
-  const [memberCount] = await db
-    .select({ count: count() })
-    .from(tripMembers)
-    .where(eq(tripMembers.tripId, tripId));
+  // Derive from already-fetched data instead of an extra DB query
+  const scheduleCount =
+    trip.days.flatMap((d) => d.patterns).flatMap((p) => p.schedules).length + candidates.length;
 
   return c.json({
     ...trip,
     role,
     candidates,
-    scheduleCount: scheduleCount.count,
-    memberCount: memberCount.count,
+    scheduleCount,
+    memberCount,
   });
 });
 

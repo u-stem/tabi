@@ -419,6 +419,75 @@ describe("Trip routes", () => {
       expect(body.role).toBe("editor");
     });
 
+    it("computes scheduleCount from days and candidates", async () => {
+      const tripDetail = {
+        id: "trip-1",
+        title: "Tokyo Trip",
+        ownerId: fakeUser.id,
+        days: [
+          {
+            id: "day-1",
+            dayNumber: 1,
+            patterns: [
+              {
+                id: "pat-1",
+                sortOrder: 0,
+                schedules: [
+                  { id: "s-1", sortOrder: 0 },
+                  { id: "s-2", sortOrder: 1 },
+                ],
+              },
+            ],
+          },
+          {
+            id: "day-2",
+            dayNumber: 2,
+            patterns: [
+              {
+                id: "pat-2",
+                sortOrder: 0,
+                schedules: [{ id: "s-3", sortOrder: 0 }],
+              },
+            ],
+          },
+        ],
+      };
+      mockDbQuery.trips.findFirst.mockResolvedValue(tripDetail);
+
+      // 2 candidates returned by queryCandidatesWithReactions
+      const mockCandidates = [
+        { id: "c-1", sortOrder: 0 },
+        { id: "c-2", sortOrder: 1 },
+      ];
+      const mockWhere = vi.fn().mockImplementation(() => {
+        const result = Promise.resolve([{ count: 3 }]);
+        (result as unknown as Record<string, unknown>).groupBy = vi
+          .fn()
+          .mockResolvedValue(mockCandidates);
+        return result;
+      });
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: mockWhere,
+          leftJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              groupBy: vi.fn().mockReturnValue({
+                orderBy: vi.fn().mockResolvedValue(mockCandidates),
+              }),
+            }),
+          }),
+        }),
+      });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips/trip-1");
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      // 3 assigned schedules + 2 candidates = 5
+      expect(body.scheduleCount).toBe(5);
+    });
+
     it("returns 404 when user is not a member", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
 

@@ -15,6 +15,7 @@ import {
   Undo2,
   X,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -45,7 +46,11 @@ import {
   toScheduleResponse,
 } from "@/lib/trip-cache";
 import { cn } from "@/lib/utils";
-import { AddScheduleDialog } from "./add-schedule-dialog";
+
+const AddScheduleDialog = dynamic(() =>
+  import("./add-schedule-dialog").then((mod) => mod.AddScheduleDialog),
+);
+
 import { ScheduleItem } from "./schedule-item";
 
 type DayTimelineProps = {

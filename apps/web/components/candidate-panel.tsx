@@ -30,10 +30,15 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import type { CSSProperties } from "react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { AddCandidateDialog } from "@/components/add-candidate-dialog";
+
+const AddCandidateDialog = dynamic(() =>
+  import("@/components/add-candidate-dialog").then((mod) => mod.AddCandidateDialog),
+);
+
 import { EditCandidateDialog } from "@/components/edit-candidate-dialog";
 import {
   AlertDialog,

@@ -19,13 +19,18 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { ActivityLog } from "@/components/activity-log";
 import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
-import { EditTripDialog } from "@/components/edit-trip-dialog";
+
+const EditTripDialog = dynamic(() =>
+  import("@/components/edit-trip-dialog").then((mod) => mod.EditTripDialog),
+);
+
 import { hashColor, PresenceAvatars } from "@/components/presence-avatars";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";

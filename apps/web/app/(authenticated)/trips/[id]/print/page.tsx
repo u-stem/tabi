@@ -237,7 +237,9 @@ function PrintTableRow({
           </div>
         )}
       </td>
-      <td className="py-1 align-top text-muted-foreground">{schedule.memo || ""}</td>
+      <td className="whitespace-pre-line py-1 align-top text-muted-foreground">
+        {schedule.memo || ""}
+      </td>
     </tr>
   );
 }

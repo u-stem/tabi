@@ -409,10 +409,10 @@ function ScheduleCard({
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(schedule.address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-blue-600 hover:underline dark:text-blue-400"
+                className="flex w-fit max-w-full items-center gap-1.5 text-blue-600 hover:underline dark:text-blue-400"
               >
                 <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                {schedule.address}
+                <span className="truncate">{schedule.address}</span>
               </a>
             )}
             {safeUrls.map((u) => (
@@ -421,7 +421,7 @@ function ScheduleCard({
                 href={u}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-blue-600 hover:underline dark:text-blue-400"
+                className="flex w-fit max-w-full items-center gap-1.5 text-blue-600 hover:underline dark:text-blue-400"
               >
                 <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
                 <span className="truncate">{u.replace(/^https?:\/\//, "")}</span>
@@ -430,7 +430,7 @@ function ScheduleCard({
             {schedule.memo && (
               <div className="flex items-start gap-1.5">
                 <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <p className="line-clamp-2">{schedule.memo}</p>
+                <p className="whitespace-pre-line">{schedule.memo}</p>
               </div>
             )}
           </div>

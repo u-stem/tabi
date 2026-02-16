@@ -469,8 +469,10 @@ export default function TripExportPage() {
                             <td
                               key={field}
                               className={cn(
-                                "px-3 py-1.5 whitespace-nowrap",
-                                field === "urls" ? "whitespace-pre" : "h-8 max-w-[200px] truncate",
+                                "px-3 py-1.5",
+                                field === "urls" || field === "memo"
+                                  ? "whitespace-pre-line"
+                                  : "h-8 max-w-[200px] whitespace-nowrap truncate",
                               )}
                             >
                               {row[EXPORT_FIELD_LABELS[field]] ?? ""}

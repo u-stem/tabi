@@ -11,6 +11,7 @@ import type {
 } from "@sugara/shared";
 import { shiftTime, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import {
+  Clock,
   ExternalLink,
   MapPin,
   MoreHorizontal,
@@ -493,45 +494,93 @@ function PlaceCard({
               }
             : {})}
       >
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            {selectable ? (
-              <SelectionIndicator checked={!!selected} />
-            ) : !crossDayDisplay ? (
-              <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
-            ) : (
-              <span className="inline-block w-4 shrink-0" aria-hidden="true" />
-            )}
-            <span className="text-sm font-medium">{name}</span>
-            {!crossDayDisplay &&
-              endDayOffset != null &&
-              endDayOffset > 0 &&
-              (() => {
-                const label = getStartDayLabel(category);
-                return label ? (
-                  <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    {label}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              {selectable ? (
+                <SelectionIndicator checked={!!selected} />
+              ) : !crossDayDisplay ? (
+                <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
+              ) : (
+                <span className="inline-block w-4 shrink-0" aria-hidden="true" />
+              )}
+              <span className="min-w-0 truncate text-sm font-medium">{name}</span>
+            </div>
+            {(() => {
+              const labelEl = !crossDayDisplay
+                ? endDayOffset != null && endDayOffset > 0
+                  ? (() => {
+                      const label = getStartDayLabel(category);
+                      return label ? (
+                        <span className="shrink-0 whitespace-nowrap rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                          {label}
+                        </span>
+                      ) : null;
+                    })()
+                  : null
+                : crossDayPosition
+                  ? (() => {
+                      const label = getCrossDayLabel(category, crossDayPosition);
+                      return label ? (
+                        <span className="shrink-0 whitespace-nowrap rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                          {label}
+                        </span>
+                      ) : null;
+                    })()
+                  : null;
+              const timeEl = crossDayDisplay ? (
+                timeStr ? (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3 shrink-0 text-muted-foreground/70" />~ {timeStr}
                   </span>
-                ) : null;
-              })()}
-            {crossDayDisplay &&
-              crossDayPosition &&
-              (() => {
-                const label = getCrossDayLabel(category, crossDayPosition);
-                return label ? (
-                  <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    {label}
-                  </span>
-                ) : null;
-              })()}
-            {crossDayDisplay && timeStr && (
-              <span className="text-xs text-muted-foreground">~ {timeStr}</span>
-            )}
-            {!crossDayDisplay && timeStr && (
-              <span className="text-xs text-muted-foreground">
-                {timeStr}
-                {endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
-              </span>
+                ) : null
+              ) : timeStr ? (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                  {timeStr}
+                  {endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
+                </span>
+              ) : null;
+              if (!labelEl && !timeEl) return null;
+              return (
+                <div className="mt-0.5 flex items-center gap-1.5 pl-6">
+                  {labelEl}
+                  {timeEl}
+                </div>
+              );
+            })()}
+            {(address || urls.length > 0 || memo) && (
+              <div className={cn("mt-1 space-y-1 pl-6", selectable && "pointer-events-none")}>
+                {address && (
+                  <a
+                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                    <span className="truncate">{address}</span>
+                  </a>
+                )}
+                {urls.filter(isSafeUrl).map((u) => (
+                  <a
+                    key={u}
+                    href={u}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                    <span className="truncate">{u.replace(/^https?:\/\//, "")}</span>
+                  </a>
+                ))}
+                {memo && (
+                  <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                    <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
+                    <p className="whitespace-pre-line">{memo}</p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
           {!selectable && (
@@ -544,39 +593,6 @@ function PlaceCard({
             />
           )}
         </div>
-        {(address || urls.length > 0 || memo) && (
-          <div className="mt-1 space-y-1 pl-6">
-            {address && (
-              <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
-              >
-                <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                {address}
-              </a>
-            )}
-            {urls.filter(isSafeUrl).map((u) => (
-              <a
-                key={u}
-                href={u}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
-              >
-                <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <span className="truncate">{u.replace(/^https?:\/\//, "")}</span>
-              </a>
-            ))}
-            {memo && (
-              <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <p className="line-clamp-2">{memo}</p>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <ScheduleItemDialogs
@@ -732,34 +748,91 @@ function TransportConnector({
               }
             : {})}
       >
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-2">
-            {selectable ? (
-              <SelectionIndicator checked={!!selected} />
-            ) : !crossDayDisplay ? (
-              <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
-            ) : (
-              <span className="inline-block w-4 shrink-0" aria-hidden="true" />
-            )}
-            <span className="text-sm font-medium">{name}</span>
-            {crossDayDisplay &&
-              crossDayPosition &&
-              (() => {
-                const label = getCrossDayLabel(category, crossDayPosition);
-                return label ? (
-                  <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                    {label}
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 items-center gap-2">
+              {selectable ? (
+                <SelectionIndicator checked={!!selected} />
+              ) : !crossDayDisplay ? (
+                <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
+              ) : (
+                <span className="inline-block w-4 shrink-0" aria-hidden="true" />
+              )}
+              <span className="min-w-0 truncate text-sm font-medium">{name}</span>
+            </div>
+            {(() => {
+              const labelEl =
+                crossDayDisplay && crossDayPosition
+                  ? (() => {
+                      const label = getCrossDayLabel(category, crossDayPosition);
+                      return label ? (
+                        <span className="shrink-0 whitespace-nowrap rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                          {label}
+                        </span>
+                      ) : null;
+                    })()
+                  : null;
+              const timeEl = crossDayDisplay ? (
+                timeStr ? (
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3 shrink-0 text-muted-foreground/70" />~ {timeStr}
                   </span>
-                ) : null;
-              })()}
-            {crossDayDisplay && timeStr && (
-              <span className="text-xs text-muted-foreground">~ {timeStr}</span>
-            )}
-            {!crossDayDisplay && timeStr && (
-              <span className="text-xs text-muted-foreground">
-                {timeStr}
-                {endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
-              </span>
+                ) : null
+              ) : timeStr ? (
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <Clock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                  {timeStr}
+                  {endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
+                </span>
+              ) : null;
+              if (!labelEl && !timeEl) return null;
+              return (
+                <div className="mt-0.5 flex items-center gap-1.5 pl-6">
+                  {labelEl}
+                  {timeEl}
+                </div>
+              );
+            })()}
+            {(routeStr || urls.length > 0 || memo) && (
+              <div className={cn("mt-1 space-y-1 pl-6", selectable && "pointer-events-none")}>
+                {routeStr && (
+                  <span className="flex w-fit max-w-full items-center gap-1.5 text-xs text-muted-foreground">
+                    <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                    {transitUrl ? (
+                      <a
+                        href={transitUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:underline dark:text-blue-400"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}
+                      </a>
+                    ) : (
+                      <span>{crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}</span>
+                    )}
+                    {methodLabel && <span className="shrink-0">({methodLabel})</span>}
+                  </span>
+                )}
+                {urls.filter(isSafeUrl).map((u) => (
+                  <a
+                    key={u}
+                    href={u}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                    <span className="truncate">{u.replace(/^https?:\/\//, "")}</span>
+                  </a>
+                ))}
+                {memo && (
+                  <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+                    <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
+                    <p className="whitespace-pre-line">{memo}</p>
+                  </div>
+                )}
+              </div>
             )}
           </div>
           {!selectable && (
@@ -772,47 +845,6 @@ function TransportConnector({
             />
           )}
         </div>
-        {(routeStr || urls.length > 0 || memo) && (
-          <div className="mt-1 space-y-1 pl-6">
-            {routeStr && (
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                {transitUrl ? (
-                  <a
-                    href={transitUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 hover:underline dark:text-blue-400"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    {crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}
-                  </a>
-                ) : (
-                  <span>{crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}</span>
-                )}
-                {methodLabel && <span className="shrink-0">({methodLabel})</span>}
-              </span>
-            )}
-            {urls.filter(isSafeUrl).map((u) => (
-              <a
-                key={u}
-                href={u}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
-              >
-                <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <span className="truncate">{u.replace(/^https?:\/\//, "")}</span>
-              </a>
-            ))}
-            {memo && (
-              <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
-                <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <p className="line-clamp-2">{memo}</p>
-              </div>
-            )}
-          </div>
-        )}
       </div>
 
       <ScheduleItemDialogs

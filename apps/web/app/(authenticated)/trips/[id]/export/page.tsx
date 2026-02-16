@@ -468,7 +468,10 @@ export default function TripExportPage() {
                           {activeFields.map((field) => (
                             <td
                               key={field}
-                              className="h-8 max-w-[200px] truncate whitespace-nowrap px-3 py-1.5"
+                              className={cn(
+                                "px-3 py-1.5 whitespace-nowrap",
+                                field === "urls" ? "whitespace-pre" : "h-8 max-w-[200px] truncate",
+                              )}
                             >
                               {row[EXPORT_FIELD_LABELS[field]] ?? ""}
                             </td>
@@ -506,7 +509,12 @@ export default function TripExportPage() {
                               {candidateSheetData.fields.map((field) => (
                                 <td
                                   key={field}
-                                  className="h-8 max-w-[200px] truncate whitespace-nowrap px-3 py-1.5"
+                                  className={cn(
+                                    "px-3 py-1.5 whitespace-nowrap",
+                                    field === "urls"
+                                      ? "whitespace-pre"
+                                      : "h-8 max-w-[200px] truncate",
+                                  )}
                                 >
                                   {row[EXPORT_FIELD_LABELS[field]] ?? ""}
                                 </td>

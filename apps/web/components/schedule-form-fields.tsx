@@ -2,6 +2,7 @@
 
 import type { ScheduleCategory, ScheduleColor, TransportMethod } from "@sugara/shared";
 import {
+  MAX_URLS_PER_SCHEDULE,
   SCHEDULE_ADDRESS_MAX_LENGTH,
   SCHEDULE_COLOR_LABELS,
   SCHEDULE_COLORS,
@@ -10,7 +11,10 @@ import {
   SCHEDULE_PLACE_MAX_LENGTH,
   SCHEDULE_URL_MAX_LENGTH,
 } from "@sugara/shared";
+import { Minus, Plus } from "lucide-react";
+import { useCallback, useState } from "react";
 import { TimeInput } from "@/components/time-input";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -45,10 +49,11 @@ type ScheduleFormFieldsProps = {
   onEndDayOffsetChange: (offset: number) => void;
   maxEndDayOffset: number;
   timeError: string | null;
+  urls: string[];
+  onUrlsChange: (urls: string[]) => void;
   defaultValues?: {
     name?: string;
     address?: string;
-    url?: string;
     departurePlace?: string;
     arrivalPlace?: string;
     memo?: string;
@@ -71,9 +76,35 @@ export function ScheduleFormFields({
   onEndDayOffsetChange,
   maxEndDayOffset,
   timeError,
+  urls,
+  onUrlsChange,
   defaultValues,
   idPrefix = "",
 }: ScheduleFormFieldsProps) {
+  // Always show at least one URL input
+  const displayUrls = urls.length > 0 ? urls : [""];
+
+  // Stable keys for the dynamic URL list to avoid index-based keys.
+  // Key counter and key array are managed via state so they only change through event handlers.
+  const [urlKeys, setUrlKeys] = useState<number[]>(() => displayUrls.map((_, i) => i));
+  const [nextKey, setNextKey] = useState(displayUrls.length);
+
+  // Sync keys when displayUrls length changes from parent (e.g. dialog reset)
+  if (urlKeys.length !== displayUrls.length) {
+    const synced = Array.from({ length: displayUrls.length }, (_, i) => i);
+    setUrlKeys(synced);
+    setNextKey(displayUrls.length);
+  }
+
+  const addUrlKey = useCallback(() => {
+    setUrlKeys((prev) => [...prev, nextKey]);
+    setNextKey((k) => k + 1);
+  }, [nextKey]);
+
+  const removeUrlKey = useCallback((index: number) => {
+    setUrlKeys((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
   return (
     <>
       <div className="space-y-2">
@@ -183,15 +214,49 @@ export function ScheduleFormFields({
         </>
       )}
       <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}url`}>URL</Label>
-        <Input
-          id={`${idPrefix}url`}
-          name="url"
-          type="url"
-          defaultValue={defaultValues?.url}
-          placeholder="https://..."
-          maxLength={SCHEDULE_URL_MAX_LENGTH}
-        />
+        <Label>URL</Label>
+        {displayUrls.map((url, index) => (
+          <div key={urlKeys[index]} className="flex items-center gap-1">
+            <Input
+              type="url"
+              value={url}
+              onChange={(e) => {
+                const next = [...displayUrls];
+                next[index] = e.target.value;
+                onUrlsChange(next);
+              }}
+              placeholder="https://..."
+              maxLength={SCHEDULE_URL_MAX_LENGTH}
+            />
+            {index > 0 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => {
+                  removeUrlKey(index);
+                  onUrlsChange(displayUrls.filter((_, i) => i !== index));
+                }}
+                aria-label="URL を削除"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        ))}
+        {displayUrls.length < MAX_URLS_PER_SCHEDULE && (
+          <button
+            type="button"
+            className="text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              addUrlKey();
+              onUrlsChange([...displayUrls, ""]);
+            }}
+          >
+            <Plus className="inline h-3 w-3" /> URL を追加
+          </button>
+        )}
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">

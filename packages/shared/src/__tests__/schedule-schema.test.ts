@@ -42,7 +42,7 @@ describe("createScheduleSchema", () => {
       startTime: "09:00",
       endTime: "10:30",
       memo: "Golden Pavilion",
-      url: "https://example.com",
+      urls: ["https://example.com"],
     });
     expect(result.success).toBe(true);
   });
@@ -71,9 +71,55 @@ describe("createScheduleSchema", () => {
     const result = createScheduleSchema.safeParse({
       name: "Place",
       category: "sightseeing",
-      url,
+      urls: [url],
     });
     expect(result.success).toBe(true);
+  });
+
+  it("accepts multiple URLs up to 5", () => {
+    const result = createScheduleSchema.safeParse({
+      name: "Place",
+      category: "sightseeing",
+      urls: ["https://example.com", "https://maps.google.com", "https://review.example.com"],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects more than 5 URLs", () => {
+    const result = createScheduleSchema.safeParse({
+      name: "Place",
+      category: "sightseeing",
+      urls: Array.from({ length: 6 }, (_, i) => `https://example.com/${i}`),
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects duplicate URLs", () => {
+    const result = createScheduleSchema.safeParse({
+      name: "Place",
+      category: "sightseeing",
+      urls: ["https://example.com", "https://example.com"],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("defaults urls to empty array when omitted", () => {
+    const result = createScheduleSchema.safeParse({
+      name: "Place",
+      category: "sightseeing",
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.urls).toEqual([]);
+  });
+
+  it("accepts explicit empty array for urls", () => {
+    const result = createScheduleSchema.safeParse({
+      name: "Place",
+      category: "sightseeing",
+      urls: [],
+    });
+    expect(result.success).toBe(true);
+    expect(result.data?.urls).toEqual([]);
   });
 
   it.each([
@@ -85,7 +131,7 @@ describe("createScheduleSchema", () => {
     const result = createScheduleSchema.safeParse({
       name: "Place",
       category: "sightseeing",
-      url,
+      urls: [url],
     });
     expect(result.success).toBe(false);
   });
@@ -250,26 +296,26 @@ describe("createCandidateSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts url", () => {
+  it("accepts urls", () => {
     const result = createCandidateSchema.safeParse({
       name: "Cafe",
       category: "restaurant",
-      url: "https://example.com",
+      urls: ["https://example.com"],
     });
     expect(result.success).toBe(true);
-    expect(result.data?.url).toBe("https://example.com");
+    expect(result.data?.urls).toEqual(["https://example.com"]);
   });
 
-  it("accepts memo and url together", () => {
+  it("accepts memo and urls together", () => {
     const result = createCandidateSchema.safeParse({
       name: "Cafe",
       category: "restaurant",
       memo: "Good reviews",
-      url: "https://example.com",
+      urls: ["https://example.com"],
     });
     expect(result.success).toBe(true);
     expect(result.data?.memo).toBe("Good reviews");
-    expect(result.data?.url).toBe("https://example.com");
+    expect(result.data?.urls).toEqual(["https://example.com"]);
   });
 
   it("accepts all schedule fields", () => {
@@ -280,7 +326,7 @@ describe("createCandidateSchema", () => {
       startTime: "08:00",
       endTime: "10:30",
       memo: "Nozomi express",
-      url: "https://example.com",
+      urls: ["https://example.com"],
       departurePlace: "Tokyo Station",
       arrivalPlace: "Shin-Osaka Station",
       transportMethod: "shinkansen",

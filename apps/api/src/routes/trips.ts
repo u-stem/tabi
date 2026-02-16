@@ -449,7 +449,7 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
               endTime: schedule.endTime,
               sortOrder: schedule.sortOrder,
               memo: schedule.memo,
-              url: schedule.url,
+              urls: schedule.urls,
               departurePlace: schedule.departurePlace,
               arrivalPlace: schedule.arrivalPlace,
               transportMethod: schedule.transportMethod,

@@ -20,7 +20,7 @@ export const EXPORT_FIELDS = [
   "departurePlace",
   "arrivalPlace",
   "transportMethod",
-  "url",
+  "urls",
   "memo",
   "pattern",
 ] as const;
@@ -38,7 +38,7 @@ export const EXPORT_FIELD_LABELS: Record<ExportField, string> = {
   departurePlace: "出発地",
   arrivalPlace: "到着地",
   transportMethod: "移動手段",
-  url: "URL",
+  urls: "URL",
   memo: "メモ",
   pattern: "パターン",
 };
@@ -49,7 +49,7 @@ export const DEFAULT_SELECTED_FIELDS: ExportField[] = [
   "startTime",
   "endTime",
   "address",
-  "url",
+  "urls",
 ];
 
 export type ExportFormat = "xlsx" | "csv";
@@ -125,6 +125,9 @@ export function scheduleToRow(
               schedule.transportMethod as keyof typeof TRANSPORT_METHOD_LABELS
             ] ?? schedule.transportMethod)
           : "";
+        break;
+      case "urls":
+        row[label] = schedule.urls.join("\n");
         break;
       default:
         row[label] = (schedule[field as keyof ScheduleResponse] as string) ?? "";

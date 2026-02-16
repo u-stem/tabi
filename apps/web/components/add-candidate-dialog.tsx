@@ -44,6 +44,7 @@ export function AddCandidateDialog({
   const [endTime, setEndTime] = useState<string | undefined>();
   const [endDayOffset, setEndDayOffset] = useState(0);
   const [timeError, setTimeError] = useState<string | null>(null);
+  const [urls, setUrls] = useState<string[]>([]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -69,6 +70,7 @@ export function AddCandidateDialog({
       endTime,
       transportMethod,
       endDayOffset,
+      urls,
     });
 
     try {
@@ -100,6 +102,7 @@ export function AddCandidateDialog({
           setEndTime(undefined);
           setEndDayOffset(0);
           setTimeError(null);
+          setUrls([]);
         }
       }}
     >
@@ -124,6 +127,8 @@ export function AddCandidateDialog({
             onEndDayOffsetChange={setEndDayOffset}
             maxEndDayOffset={maxEndDayOffset}
             timeError={timeError}
+            urls={urls}
+            onUrlsChange={setUrls}
             idPrefix="candidate-"
           />
           {error && (

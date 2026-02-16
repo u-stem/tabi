@@ -228,7 +228,7 @@ candidateRoutes.post(
           startTime: schedule.startTime,
           endTime: schedule.endTime,
           memo: schedule.memo,
-          url: schedule.url,
+          urls: schedule.urls,
           departurePlace: schedule.departurePlace,
           arrivalPlace: schedule.arrivalPlace,
           transportMethod: schedule.transportMethod,

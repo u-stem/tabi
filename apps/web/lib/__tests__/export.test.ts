@@ -35,7 +35,7 @@ function makeSchedule(overrides: Partial<ScheduleResponse> = {}): ScheduleRespon
     endTime: "11:00",
     sortOrder: 0,
     memo: "Great view",
-    url: "https://example.com",
+    urls: ["https://example.com"],
     departurePlace: "Hotel",
     arrivalPlace: "Tokyo Tower",
     transportMethod: "train",
@@ -151,7 +151,7 @@ describe("scheduleToRow", () => {
       address: null,
       startTime: null,
       memo: null,
-      url: null,
+      urls: [],
       transportMethod: null,
     });
     const day = makeDay();
@@ -159,15 +159,25 @@ describe("scheduleToRow", () => {
       "address",
       "startTime",
       "memo",
-      "url",
+      "urls",
       "transportMethod",
     ]);
 
     expect(row[EXPORT_FIELD_LABELS.address]).toBe("");
     expect(row[EXPORT_FIELD_LABELS.startTime]).toBe("");
     expect(row[EXPORT_FIELD_LABELS.memo]).toBe("");
-    expect(row[EXPORT_FIELD_LABELS.url]).toBe("");
+    expect(row[EXPORT_FIELD_LABELS.urls]).toBe("");
     expect(row[EXPORT_FIELD_LABELS.transportMethod]).toBe("");
+  });
+
+  it("joins multiple urls with newline", () => {
+    const schedule = makeSchedule({
+      urls: ["https://example.com", "https://maps.google.com"],
+    });
+    const day = makeDay();
+    const row = scheduleToRow(schedule, day, null, ["urls"]);
+
+    expect(row[EXPORT_FIELD_LABELS.urls]).toBe("https://example.com\nhttps://maps.google.com");
   });
 
   it("includes dayNumber", () => {
@@ -276,7 +286,7 @@ describe("filterCandidateFields", () => {
       "departurePlace",
       "arrivalPlace",
       "transportMethod",
-      "url",
+      "urls",
       "memo",
       "pattern",
     ];
@@ -291,16 +301,16 @@ describe("filterCandidateFields", () => {
       "departurePlace",
       "arrivalPlace",
       "transportMethod",
-      "url",
+      "urls",
       "memo",
     ]);
   });
 
   it("preserves order of remaining fields", () => {
-    const fields: ExportField[] = ["memo", "name", "url"];
+    const fields: ExportField[] = ["memo", "name", "urls"];
     const filtered = filterCandidateFields(fields);
 
-    expect(filtered).toEqual(["memo", "name", "url"]);
+    expect(filtered).toEqual(["memo", "name", "urls"]);
   });
 });
 

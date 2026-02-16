@@ -717,7 +717,7 @@ export default function TripDetailPage() {
               </div>
 
               {/* Candidates / Activity */}
-              <div className="hidden max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] lg:flex flex-[2] flex-col rounded-lg border border-dashed bg-card self-start sticky top-4">
+              <div className="hidden max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] lg:flex min-w-0 flex-[2] flex-col rounded-lg border border-dashed bg-card self-start sticky top-4">
                 <div
                   className="flex shrink-0 select-none border-b"
                   role="tablist"

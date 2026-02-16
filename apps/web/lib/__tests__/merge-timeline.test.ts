@@ -8,6 +8,7 @@ function makeSchedule(overrides: Partial<ScheduleResponse> = {}): ScheduleRespon
     name: "Default",
     category: "sightseeing",
     color: "blue",
+    urls: [],
     sortOrder: 0,
     updatedAt: "",
     ...overrides,

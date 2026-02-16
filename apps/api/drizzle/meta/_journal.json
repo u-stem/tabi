@@ -15,6 +15,13 @@
       "when": 1770597698992,
       "tag": "0001_hot_centennial",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1771207537668,
+      "tag": "0002_silky_wendell_vaughn",
+      "breakpoints": true
     }
   ]
 }

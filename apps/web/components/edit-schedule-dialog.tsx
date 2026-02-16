@@ -54,6 +54,7 @@ export function EditScheduleDialog({
   const [endTime, setEndTime] = useState<string | undefined>(schedule.endTime ?? undefined);
   const [endDayOffset, setEndDayOffset] = useState(schedule.endDayOffset ?? 0);
   const [timeError, setTimeError] = useState<string | null>(null);
+  const [urls, setUrls] = useState<string[]>(schedule.urls ?? []);
 
   function handleOpenChange(isOpen: boolean) {
     onOpenChange(isOpen);
@@ -66,6 +67,7 @@ export function EditScheduleDialog({
       setStartTime(schedule.startTime ?? undefined);
       setEndTime(schedule.endTime ?? undefined);
       setEndDayOffset(schedule.endDayOffset ?? 0);
+      setUrls(schedule.urls ?? []);
     }
   }
 
@@ -94,6 +96,7 @@ export function EditScheduleDialog({
         endTime,
         transportMethod,
         endDayOffset,
+        urls,
       }),
       endDayOffset: endDayOffset > 0 ? endDayOffset : null,
       expectedUpdatedAt: schedule.updatedAt,
@@ -159,10 +162,11 @@ export function EditScheduleDialog({
             onEndDayOffsetChange={setEndDayOffset}
             maxEndDayOffset={maxEndDayOffset}
             timeError={timeError}
+            urls={urls}
+            onUrlsChange={setUrls}
             defaultValues={{
               name: schedule.name,
               address: schedule.address ?? "",
-              url: schedule.url ?? "",
               departurePlace: schedule.departurePlace ?? "",
               arrivalPlace: schedule.arrivalPlace ?? "",
               memo: schedule.memo ?? "",

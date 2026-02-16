@@ -54,9 +54,10 @@ import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
 import { SELECTED_RING } from "@/lib/colors";
-import { formatTimeRange } from "@/lib/format";
+import { formatTimeRange, isSafeUrl } from "@/lib/format";
 import { useSelection } from "@/lib/hooks/selection-context";
 import { MSG } from "@/lib/messages";
+import { buildTransportUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
 import { DragHandle } from "./drag-handle";
 
@@ -123,7 +124,7 @@ function CandidateCard({
         ref={setNodeRef}
         style={style}
         className={cn(
-          "flex items-center gap-2 rounded-md border p-2",
+          "flex items-center gap-2 rounded-md border p-3",
           isDragging && "opacity-50",
           selectable &&
             "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -149,10 +150,12 @@ function CandidateCard({
         ) : draggable ? (
           <DragHandle attributes={attributes} listeners={listeners} />
         ) : null}
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{spot.name}</p>
-          <p className="text-xs text-muted-foreground">
-            {CATEGORY_LABELS[spot.category as ScheduleCategory]}
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="flex items-baseline gap-1.5 text-sm">
+            <span className="truncate font-medium">{spot.name}</span>
+            <span className="shrink-0 text-xs text-muted-foreground">
+              {CATEGORY_LABELS[spot.category as ScheduleCategory]}
+            </span>
           </p>
           {spot.address && (
             <a
@@ -166,39 +169,65 @@ function CandidateCard({
               <span className="truncate">{spot.address}</span>
             </a>
           )}
-          {spot.category === "transport" && (spot.departurePlace || spot.arrivalPlace) && (
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-              <span className="truncate">
-                {spot.departurePlace && spot.arrivalPlace
+          {spot.category === "transport" &&
+            (spot.departurePlace || spot.arrivalPlace) &&
+            (() => {
+              const routeStr =
+                spot.departurePlace && spot.arrivalPlace
                   ? `${spot.departurePlace} → ${spot.arrivalPlace}`
-                  : spot.departurePlace || spot.arrivalPlace}
-              </span>
-              {transportLabel && <span>({transportLabel})</span>}
-            </div>
-          )}
+                  : spot.departurePlace || spot.arrivalPlace;
+              const transitUrl =
+                spot.departurePlace && spot.arrivalPlace
+                  ? buildTransportUrl({
+                      from: spot.departurePlace,
+                      to: spot.arrivalPlace,
+                      method: spot.transportMethod,
+                      time: spot.startTime,
+                    })
+                  : null;
+              return (
+                <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                  {transitUrl ? (
+                    <a
+                      href={transitUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="truncate text-blue-600 hover:underline dark:text-blue-400"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {routeStr}
+                    </a>
+                  ) : (
+                    <span className="truncate">{routeStr}</span>
+                  )}
+                  {transportLabel && <span>({transportLabel})</span>}
+                </span>
+              );
+            })()}
           {timeStr && (
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Clock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
               <span>{timeStr}</span>
             </div>
           )}
-          {spot.url && (
+          {spot.urls.filter(isSafeUrl).map((u) => (
             <a
-              href={spot.url}
+              key={u}
+              href={u}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
               onClick={(e) => e.stopPropagation()}
             >
               <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-              <span className="truncate">{spot.url.replace(/^https?:\/\//, "")}</span>
+              <span className="truncate">{u.replace(/^https?:\/\//, "")}</span>
             </a>
-          )}
+          ))}
           {spot.memo && (
             <div className="flex items-start gap-1.5 text-xs text-muted-foreground/70">
               <StickyNote className="mt-0.5 h-3 w-3 shrink-0" />
-              <p className="truncate">{spot.memo}</p>
+              <p className="line-clamp-2">{spot.memo}</p>
             </div>
           )}
         </div>

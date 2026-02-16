@@ -55,7 +55,7 @@ type ScheduleItemProps = {
   name: string;
   category: ScheduleCategory;
   address?: string | null;
-  url?: string | null;
+  urls: string[];
   startTime?: string | null;
   endTime?: string | null;
   endDayOffset?: number | null;
@@ -348,7 +348,7 @@ function ScheduleItemDialogs({
     name: string;
     category: ScheduleCategory;
     address?: string | null;
-    url?: string | null;
+    urls: string[];
     startTime?: string | null;
     endTime?: string | null;
     endDayOffset?: number | null;
@@ -371,7 +371,12 @@ function ScheduleItemDialogs({
         tripId={tripId}
         dayId={dayId}
         patternId={patternId}
-        schedule={{ ...schedule, color: schedule.color ?? "blue", sortOrder: 0 }}
+        schedule={{
+          ...schedule,
+          color: schedule.color ?? "blue",
+          urls: schedule.urls,
+          sortOrder: 0,
+        }}
         open={editOpen}
         onOpenChange={onEditOpenChange}
         onUpdate={onUpdate}
@@ -400,7 +405,7 @@ function PlaceCard({
   name,
   category,
   address,
-  url,
+  urls,
   startTime,
   endTime,
   endDayOffset,
@@ -539,7 +544,7 @@ function PlaceCard({
             />
           )}
         </div>
-        {(address || url || memo) && (
+        {(address || urls.length > 0 || memo) && (
           <div className="mt-1 space-y-1 pl-6">
             {address && (
               <a
@@ -552,21 +557,22 @@ function PlaceCard({
                 {address}
               </a>
             )}
-            {url && isSafeUrl(url) && (
+            {urls.filter(isSafeUrl).map((u) => (
               <a
-                href={url}
+                key={u}
+                href={u}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
               >
                 <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <span className="truncate">{url}</span>
+                <span className="truncate">{u.replace(/^https?:\/\//, "")}</span>
               </a>
-            )}
+            ))}
             {memo && (
               <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
                 <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <p>{memo}</p>
+                <p className="line-clamp-2">{memo}</p>
               </div>
             )}
           </div>
@@ -582,7 +588,7 @@ function PlaceCard({
           name,
           category,
           address,
-          url,
+          urls,
           startTime,
           endTime,
           endDayOffset,
@@ -608,7 +614,7 @@ function TransportConnector({
   name,
   category,
   address,
-  url,
+  urls,
   startTime,
   endTime,
   endDayOffset,
@@ -766,7 +772,7 @@ function TransportConnector({
             />
           )}
         </div>
-        {(routeStr || url || memo) && (
+        {(routeStr || urls.length > 0 || memo) && (
           <div className="mt-1 space-y-1 pl-6">
             {routeStr && (
               <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -787,21 +793,22 @@ function TransportConnector({
                 {methodLabel && <span>({methodLabel})</span>}
               </span>
             )}
-            {url && isSafeUrl(url) && (
+            {urls.filter(isSafeUrl).map((u) => (
               <a
-                href={url}
+                key={u}
+                href={u}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
               >
                 <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <span className="truncate">{url}</span>
+                <span className="truncate">{u.replace(/^https?:\/\//, "")}</span>
               </a>
-            )}
+            ))}
             {memo && (
               <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
                 <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <p>{memo}</p>
+                <p className="line-clamp-2">{memo}</p>
               </div>
             )}
           </div>
@@ -817,7 +824,7 @@ function TransportConnector({
           name,
           category,
           address,
-          url,
+          urls,
           startTime,
           endTime,
           endDayOffset,

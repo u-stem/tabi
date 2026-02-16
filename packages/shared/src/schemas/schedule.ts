@@ -48,10 +48,11 @@ export const SCHEDULE_NAME_MAX_LENGTH = 200;
 export const SCHEDULE_ADDRESS_MAX_LENGTH = 500;
 export const SCHEDULE_MEMO_MAX_LENGTH = 2000;
 export const SCHEDULE_URL_MAX_LENGTH = 2000;
+export const MAX_URLS_PER_SCHEDULE = 5;
 export const SCHEDULE_PLACE_MAX_LENGTH = 200;
 export const MAX_END_DAY_OFFSET = 30;
 
-const urlSchema = z
+const singleUrlSchema = z
   .string()
   .url()
   .max(SCHEDULE_URL_MAX_LENGTH)
@@ -62,8 +63,13 @@ const urlSchema = z
     } catch {
       return false;
     }
-  }, "Only http and https URLs are allowed")
-  .optional();
+  }, "Only http and https URLs are allowed");
+
+const urlsSchema = z
+  .array(singleUrlSchema)
+  .max(MAX_URLS_PER_SCHEDULE)
+  .refine((arr) => new Set(arr).size === arr.length, "Duplicate URLs are not allowed")
+  .default([]);
 
 export const createScheduleSchema = z.object({
   name: z.string().min(1).max(SCHEDULE_NAME_MAX_LENGTH),
@@ -72,7 +78,7 @@ export const createScheduleSchema = z.object({
   startTime: timeSchema.optional(),
   endTime: timeSchema.optional(),
   memo: z.string().max(SCHEDULE_MEMO_MAX_LENGTH).optional(),
-  url: urlSchema,
+  urls: urlsSchema,
   departurePlace: z.string().max(SCHEDULE_PLACE_MAX_LENGTH).optional(),
   arrivalPlace: z.string().max(SCHEDULE_PLACE_MAX_LENGTH).optional(),
   transportMethod: transportMethodSchema.optional(),

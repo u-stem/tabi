@@ -10,7 +10,7 @@ import type {
 } from "@sugara/shared";
 import { STATUS_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, ExternalLink, MapPin, RefreshCw } from "lucide-react";
+import { Calendar, ExternalLink, MapPin, RefreshCw, Route, StickyNote } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -34,6 +34,7 @@ import { buildMergedTimeline } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
+import { buildTransportUrl } from "@/lib/transport-link";
 import { useDelayedLoading } from "@/lib/use-delayed-loading";
 import { cn } from "@/lib/utils";
 
@@ -240,6 +241,7 @@ export default function SharedTripPage() {
                   <PatternSection
                     key={pattern.id}
                     pattern={pattern}
+                    dayDate={day.date}
                     showLabel={(day.patterns ?? []).length > 1}
                     crossDayEntries={i === 0 ? crossDayEntries : undefined}
                   />
@@ -255,10 +257,12 @@ export default function SharedTripPage() {
 
 function PatternSection({
   pattern,
+  dayDate,
   showLabel,
   crossDayEntries,
 }: {
   pattern: DayPatternResponse;
+  dayDate: string;
   showLabel: boolean;
   crossDayEntries?: CrossDayEntry[];
 }) {
@@ -279,11 +283,12 @@ function PatternSection({
               <ScheduleCard
                 key={`cross-${item.entry.schedule.id}`}
                 schedule={item.entry.schedule}
+                dayDate={dayDate}
                 crossDayDisplay
                 crossDayPosition={item.entry.crossDayPosition}
               />
             ) : (
-              <ScheduleCard key={item.schedule.id} schedule={item.schedule} />
+              <ScheduleCard key={item.schedule.id} schedule={item.schedule} dayDate={dayDate} />
             ),
           )}
         </div>
@@ -295,10 +300,12 @@ function PatternSection({
 /** Compact read-only schedule row for the public shared view. */
 function ScheduleCard({
   schedule,
+  dayDate,
   crossDayDisplay,
   crossDayPosition,
 }: {
   schedule: ScheduleResponse;
+  dayDate: string;
   crossDayDisplay?: boolean;
   crossDayPosition?: "intermediate" | "final";
 }) {
@@ -319,14 +326,33 @@ function ScheduleCard({
         ? getStartDayLabel(schedule.category)
         : null;
 
+  const safeUrls = schedule.urls.filter(isSafeUrl);
+
+  const routeStr = crossDayDisplay
+    ? schedule.arrivalPlace || ""
+    : schedule.departurePlace && schedule.arrivalPlace
+      ? `${schedule.departurePlace} → ${schedule.arrivalPlace}`
+      : schedule.departurePlace || schedule.arrivalPlace || "";
+
+  const transitUrl =
+    schedule.departurePlace && schedule.arrivalPlace
+      ? buildTransportUrl({
+          from: schedule.departurePlace,
+          to: schedule.arrivalPlace,
+          method: schedule.transportMethod,
+          date: dayDate,
+          time: schedule.startTime,
+        })
+      : null;
+
   const hasDetails =
-    (schedule.category === "transport" &&
-      (schedule.departurePlace || schedule.arrivalPlace || transportLabel)) ||
+    (schedule.category === "transport" && (routeStr || transportLabel)) ||
     schedule.address ||
+    safeUrls.length > 0 ||
     schedule.memo;
 
   return (
-    <div className={cn("flex items-start gap-2 px-2 py-1.5", crossDayDisplay && "bg-muted/30")}>
+    <div className={cn("flex items-start gap-2 px-3 py-2", crossDayDisplay && "bg-muted/30")}>
       <div
         className={cn(
           "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white",
@@ -357,44 +383,59 @@ function ScheduleCard({
         </div>
 
         {hasDetails && (
-          <div className="mt-0.5 space-y-0.5 pl-24 text-xs text-muted-foreground">
-            {schedule.category === "transport" && (
-              <p>
-                {crossDayDisplay
-                  ? schedule.arrivalPlace && `→ ${schedule.arrivalPlace}`
-                  : schedule.departurePlace && schedule.arrivalPlace
-                    ? `${schedule.departurePlace} → ${schedule.arrivalPlace}`
-                    : schedule.departurePlace || schedule.arrivalPlace}
-                {transportLabel && ` (${transportLabel})`}
-              </p>
+          <div className="mt-1 space-y-1 pl-24 text-xs text-muted-foreground">
+            {schedule.category === "transport" && routeStr && (
+              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                {transitUrl ? (
+                  <a
+                    href={transitUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    {crossDayDisplay && schedule.arrivalPlace ? `→ ${routeStr}` : routeStr}
+                  </a>
+                ) : (
+                  <span>
+                    {crossDayDisplay && schedule.arrivalPlace ? `→ ${routeStr}` : routeStr}
+                  </span>
+                )}
+                {transportLabel && <span>({transportLabel})</span>}
+              </span>
             )}
             {schedule.address && (
               <a
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(schedule.address)}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex w-fit items-center gap-0.5 text-blue-600 hover:underline dark:text-blue-400"
+                className="flex items-center gap-1.5 text-blue-600 hover:underline dark:text-blue-400"
               >
-                <MapPin className="h-3 w-3 shrink-0" />
+                <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
                 {schedule.address}
               </a>
             )}
-            {schedule.memo && <p>{schedule.memo}</p>}
+            {safeUrls.map((u) => (
+              <a
+                key={u}
+                href={u}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1.5 text-blue-600 hover:underline dark:text-blue-400"
+              >
+                <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                <span className="truncate">{u.replace(/^https?:\/\//, "")}</span>
+              </a>
+            ))}
+            {schedule.memo && (
+              <div className="flex items-start gap-1.5">
+                <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
+                <p className="line-clamp-2">{schedule.memo}</p>
+              </div>
+            )}
           </div>
         )}
       </div>
-
-      {schedule.url && isSafeUrl(schedule.url) && (
-        <a
-          href={schedule.url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-0.5 shrink-0 text-blue-600 hover:text-blue-800 dark:text-blue-400"
-          aria-label="リンクを開く"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-        </a>
-      )}
     </div>
   );
 }

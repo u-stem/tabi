@@ -28,7 +28,10 @@ const SAMPLE_SCHEDULES = [
     transportMethod: "shinkansen",
     color: "orange",
     memo: "のぞみ7号 7号車12A",
-    url: "https://smartex.jr-central.co.jp/",
+    urls: [
+      "https://smartex.jr-central.co.jp/",
+      "https://railway.jr-central.co.jp/timetable/nr/13/",
+    ],
   },
   {
     dayIndex: 0,
@@ -37,7 +40,11 @@ const SAMPLE_SCHEDULES = [
     startTime: "10:30",
     endTime: "12:00",
     address: "京都市北区金閣寺町1",
-    url: "https://www.shokoku-ji.jp/kinkakuji/",
+    urls: [
+      "https://www.shokoku-ji.jp/kinkakuji/",
+      "https://www.google.com/maps/place/金閣寺",
+      "https://ja.wikipedia.org/wiki/鹿苑寺",
+    ],
     color: "blue",
     memo: "拝観料: 500円",
   },
@@ -67,7 +74,7 @@ const SAMPLE_SCHEDULES = [
     startTime: "14:15",
     endTime: "15:15",
     address: "京都市右京区嵯峨天龍寺芒ノ馬場町45",
-    url: "https://www.yudofu-sagano.com/",
+    urls: ["https://www.yudofu-sagano.com/"],
     memo: "予約済み 14:30 / 湯豆腐コース 4,000円",
     color: "red",
   },
@@ -89,7 +96,7 @@ const SAMPLE_SCHEDULES = [
     endTime: "10:00",
     endDayOffset: 1,
     address: "京都市下京区烏丸通七条下る東塩小路町721-1",
-    url: "https://www.kyoto-tower-hotel.co.jp/",
+    urls: ["https://www.kyoto-tower-hotel.co.jp/", "https://travel.rakuten.co.jp/HOTEL/8987/"],
     memo: "予約番号: KTH-20260320 / ツイン / 朝食付き 15,800円",
     color: "purple",
   },
@@ -111,7 +118,7 @@ const SAMPLE_SCHEDULES = [
     startTime: "08:00",
     endTime: "10:00",
     address: "京都市伏見区深草藪之内町68",
-    url: "https://inari.jp/",
+    urls: ["https://inari.jp/"],
     color: "red",
   },
   {
@@ -154,7 +161,7 @@ const SAMPLE_SCHEDULES = [
     startTime: "14:00",
     endTime: "16:00",
     address: "京都市東山区清水1丁目294",
-    url: "https://www.kiyomizudera.or.jp/",
+    urls: ["https://www.kiyomizudera.or.jp/"],
     memo: "拝観料: 400円 / 舞台からの眺望",
     color: "blue",
   },
@@ -207,7 +214,7 @@ const SAMPLE_SCHEDULES = [
     endTime: "09:00",
     endDayOffset: 1,
     address: "京都市下京区烏丸通塩小路下る JR京都駅中央口",
-    url: "https://www.granvia-kyoto.co.jp/",
+    urls: ["https://www.granvia-kyoto.co.jp/"],
     memo: "予約番号: GV-88432 / デラックスツイン / 22,000円",
     color: "purple",
   },
@@ -230,7 +237,7 @@ const SAMPLE_SCHEDULES = [
     startTime: "10:00",
     endTime: "11:00",
     address: "京都市左京区銀閣寺町2",
-    url: "https://www.shokoku-ji.jp/ginkakuji/",
+    urls: ["https://www.shokoku-ji.jp/ginkakuji/"],
     memo: "拝観料: 500円",
     color: "blue",
   },
@@ -251,7 +258,7 @@ const SAMPLE_SCHEDULES = [
     startTime: "12:00",
     endTime: "13:00",
     address: "京都市左京区浄土寺石橋町74",
-    url: "https://www.omen.co.jp/",
+    urls: ["https://www.omen.co.jp/"],
     memo: "名物うどん / 予約不要",
     color: "red",
   },
@@ -267,51 +274,143 @@ const SAMPLE_SCHEDULES = [
     color: "orange",
     memo: "のぞみ32号 自由席",
   },
+  // Long data: long name, long address, long memo, many URLs
+  {
+    dayIndex: 2,
+    name: "京都伝統産業ミュージアム（京都市勧業館みやこめっせ地下1階）",
+    category: "sightseeing",
+    startTime: "11:30",
+    endTime: "12:30",
+    address: "京都市左京区岡崎成勝寺町9番地の1 京都市勧業館みやこめっせ 地下1階",
+    urls: [
+      "https://kmtc.jp/",
+      "https://www.google.com/maps/place/京都伝統産業ミュージアム",
+      "https://ja.wikipedia.org/wiki/京都伝統産業ミュージアム",
+      "https://www.tripadvisor.jp/Attraction_Review-g298564-d1386890-Reviews",
+      "https://www.jalan.net/kankou/spt_26103cc3290031914/",
+    ],
+    memo: "入館無料 / 西陣織・京友禅・清水焼・京漆器など74品目の伝統工芸品を展示 / 体験コーナーあり（要予約・別途料金）/ 所要時間の目安は60〜90分",
+    color: "yellow",
+  },
 ];
 
 const SAMPLE_CANDIDATES = [
+  // sightseeing: URL multiple + address + memo
   {
     name: "二条城",
     category: "sightseeing",
+    address: "京都市中京区二条通堀川西入二条城町541",
     memo: "世界遺産 / 二の丸御殿のうぐいす張りが有名",
-    url: "https://nijo-jocastle.city.kyoto.lg.jp/",
+    urls: ["https://nijo-jocastle.city.kyoto.lg.jp/", "https://www.google.com/maps/place/二条城"],
+    color: "blue",
   },
+  // sightseeing: URL single only
   {
     name: "鈴虫寺",
     category: "sightseeing",
-    url: "https://www.suzutera.or.jp/",
+    urls: ["https://www.suzutera.or.jp/"],
   },
+  // sightseeing: memo only, no URL
   {
     name: "天龍寺",
     category: "sightseeing",
     memo: "嵐山にあるので竹林の小径とセットで回れる",
   },
+  // restaurant: URL + memo + address + time
   {
     name: "% Arabica 京都 東山",
     category: "restaurant",
-    url: "https://arabica.coffee/",
+    address: "京都市東山区星野町87-5",
+    urls: ["https://arabica.coffee/"],
     memo: "八坂の塔の近く / テイクアウトのみ",
+    startTime: "09:00",
+    endTime: "10:00",
+    color: "red",
   },
+  // restaurant: memo only
   {
     name: "出町ふたば",
     category: "restaurant",
     memo: "名代豆餅 / 行列必須",
   },
+  // activity: URL only
   {
     name: "京都サイクリングツアー",
     category: "activity",
-    url: "https://www.kctp.net/",
+    urls: ["https://www.kctp.net/"],
+    color: "green",
   },
+  // activity: multiple URLs + memo
   {
     name: "着物レンタル 夢館",
     category: "activity",
     memo: "祇園散策用 / 要予約",
-    url: "https://www.yumeyakata.com/",
+    urls: ["https://www.yumeyakata.com/", "https://www.yumeyakata.com/plan/"],
+    color: "pink",
   },
+  // transport: candidate with route info
+  {
+    name: "京都〜奈良 近鉄特急",
+    category: "transport",
+    departurePlace: "京都駅",
+    arrivalPlace: "近鉄奈良駅",
+    transportMethod: "train",
+    memo: "片道約35分 / 特急料金520円",
+    urls: ["https://www.kintetsu.co.jp/"],
+    color: "orange",
+  },
+  // hotel: address + multiple URLs + time
+  {
+    name: "THE THOUSAND KYOTO",
+    category: "hotel",
+    address: "京都市下京区東塩小路町570",
+    startTime: "15:00",
+    endTime: "11:00",
+    urls: [
+      "https://www.the-thousand-kyoto.jp/",
+      "https://travel.rakuten.co.jp/HOTEL/176498/",
+      "https://www.booking.com/hotel/jp/the-thousand-kyoto.html",
+    ],
+    memo: "京都駅直結 / 朝食ビュッフェが人気",
+    color: "purple",
+  },
+  // other: memo only, no URL/address
   {
     name: "京都駅ビル 大階段",
     category: "other",
     memo: "夜のイルミネーションがきれい",
+  },
+  // sightseeing: minimal (name + category only)
+  {
+    name: "平等院鳳凰堂",
+    category: "sightseeing",
+  },
+  // Long data: long name, long address, long memo, max URLs, long route
+  {
+    name: "京都鉄道博物館（旧梅小路蒸気機関車館・旧交通科学博物館）",
+    category: "sightseeing",
+    address: "京都市下京区観喜寺町 梅小路公園内 京都鉄道博物館",
+    urls: [
+      "https://www.kyotorailwaymuseum.jp/",
+      "https://www.google.com/maps/place/京都鉄道博物館",
+      "https://www.tripadvisor.jp/Attraction_Review-g298564-d10020717-Reviews",
+      "https://www.jalan.net/kankou/spt_guide000000190292/",
+      "https://ja.wikipedia.org/wiki/京都鉄道博物館",
+    ],
+    memo: "入館料: 大人1,500円 / SLスチーム号の乗車体験あり（別途300円）/ 日本最大級の鉄道博物館で所要時間は2〜3時間 / 梅小路公園の散歩もおすすめ",
+    startTime: "10:00",
+    endTime: "13:00",
+    color: "orange",
+  },
+  {
+    name: "嵐山〜貴船 1日観光タクシープラン（MKタクシー）",
+    category: "transport",
+    departurePlace: "京都駅八条口 MKタクシーのりば",
+    arrivalPlace: "貴船神社前（叡山電車 貴船口駅経由）",
+    transportMethod: "taxi",
+    memo: "所要約6時間 / 嵐山→天龍寺→竹林→大覚寺→鷹峯→貴船を巡るコース / 要事前予約（2日前まで）/ 料金目安: 35,000円〜",
+    urls: ["https://www.mktaxi-japan.com/"],
+    color: "yellow",
   },
 ];
 

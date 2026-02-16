@@ -174,7 +174,7 @@ export const schedules = pgTable("schedules", {
   endTime: time("end_time"),
   sortOrder: integer("sort_order").notNull().default(0),
   memo: text("memo"),
-  url: varchar("url", { length: 2000 }),
+  urls: text("urls").array().notNull().default([]),
   departurePlace: varchar("departure_place", { length: 200 }),
   arrivalPlace: varchar("arrival_place", { length: 200 }),
   transportMethod: transportMethodEnum("transport_method"),

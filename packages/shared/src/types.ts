@@ -11,7 +11,7 @@ export type ScheduleResponse = {
   endTime?: string | null;
   sortOrder: number;
   memo?: string | null;
-  url?: string | null;
+  urls: string[];
   departurePlace?: string | null;
   arrivalPlace?: string | null;
   transportMethod?: string | null;

@@ -54,6 +54,7 @@ export function AddScheduleDialog({
   const [endTime, setEndTime] = useState<string | undefined>();
   const [endDayOffset, setEndDayOffset] = useState(0);
   const [timeError, setTimeError] = useState<string | null>(null);
+  const [urls, setUrls] = useState<string[]>([]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -79,6 +80,7 @@ export function AddScheduleDialog({
       endTime,
       transportMethod,
       endDayOffset,
+      urls,
     });
 
     try {
@@ -110,6 +112,7 @@ export function AddScheduleDialog({
           setEndTime(undefined);
           setEndDayOffset(0);
           setTimeError(null);
+          setUrls([]);
         }
       }}
     >
@@ -140,6 +143,8 @@ export function AddScheduleDialog({
             onEndDayOffsetChange={setEndDayOffset}
             maxEndDayOffset={maxEndDayOffset}
             timeError={timeError}
+            urls={urls}
+            onUrlsChange={setUrls}
           />
           {error && (
             <p role="alert" className="text-sm text-destructive">

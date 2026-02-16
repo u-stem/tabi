@@ -283,7 +283,7 @@ export function useTripDragAndDrop({
         endTime: candidate.endTime,
         sortOrder: insertIdx,
         memo: candidate.memo,
-        url: candidate.url,
+        urls: candidate.urls,
         departurePlace: candidate.departurePlace,
         arrivalPlace: candidate.arrivalPlace,
         transportMethod: candidate.transportMethod,

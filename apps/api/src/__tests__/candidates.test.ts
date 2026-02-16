@@ -160,14 +160,14 @@ describe("Candidate routes", () => {
       expect(body.name).toBe("New Spot");
     });
 
-    it("creates candidate with url", async () => {
+    it("creates candidate with urls", async () => {
       const created = {
         id: "s1",
         tripId,
         name: "Cafe",
         category: "restaurant",
         memo: null,
-        url: "https://example.com",
+        urls: ["https://example.com"],
         sortOrder: 0,
       };
 
@@ -189,13 +189,13 @@ describe("Candidate routes", () => {
         body: JSON.stringify({
           name: "Cafe",
           category: "restaurant",
-          url: "https://example.com",
+          urls: ["https://example.com"],
         }),
       });
       const body = await res.json();
 
       expect(res.status).toBe(201);
-      expect(body.url).toBe("https://example.com");
+      expect(body.urls).toEqual(["https://example.com"]);
     });
 
     it("creates candidate with all schedule fields", async () => {
@@ -208,7 +208,7 @@ describe("Candidate routes", () => {
         startTime: "08:00",
         endTime: "10:30",
         memo: "Nozomi express",
-        url: "https://example.com",
+        urls: ["https://example.com"],
         departurePlace: "Tokyo Station",
         arrivalPlace: "Shin-Osaka Station",
         transportMethod: "shinkansen",
@@ -239,7 +239,7 @@ describe("Candidate routes", () => {
           startTime: "08:00",
           endTime: "10:30",
           memo: "Nozomi express",
-          url: "https://example.com",
+          urls: ["https://example.com"],
           departurePlace: "Tokyo Station",
           arrivalPlace: "Shin-Osaka Station",
           transportMethod: "shinkansen",
@@ -596,7 +596,7 @@ describe("Candidate routes", () => {
           address: null,
           startTime: null,
           endTime: null,
-          url: null,
+          urls: [],
           departurePlace: null,
           arrivalPlace: null,
           transportMethod: null,
@@ -613,7 +613,7 @@ describe("Candidate routes", () => {
           address: "Tokyo",
           startTime: null,
           endTime: null,
-          url: "https://example.com",
+          urls: ["https://example.com"],
           departurePlace: null,
           arrivalPlace: null,
           transportMethod: null,

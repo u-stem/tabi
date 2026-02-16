@@ -7,6 +7,7 @@ type ScheduleFormState = {
   endTime: string | undefined;
   transportMethod: TransportMethod | "";
   endDayOffset: number;
+  urls: string[];
 };
 
 export function buildSchedulePayload(formData: FormData, state: ScheduleFormState) {
@@ -16,7 +17,7 @@ export function buildSchedulePayload(formData: FormData, state: ScheduleFormStat
     color: state.color,
     address:
       state.category !== "transport" ? (formData.get("address") as string) || undefined : undefined,
-    url: (formData.get("url") as string) || undefined,
+    urls: state.urls.filter((u) => u.trim() !== ""),
     startTime: state.startTime || undefined,
     endTime: state.endTime || undefined,
     memo: (formData.get("memo") as string) || undefined,

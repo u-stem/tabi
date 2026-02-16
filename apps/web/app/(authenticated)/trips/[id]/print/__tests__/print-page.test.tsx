@@ -69,6 +69,7 @@ const tripFixture: TripResponse = {
               endTime: "11:00",
               sortOrder: 0,
               color: "blue",
+              urls: [],
               updatedAt: "2025-07-01T00:00:00Z",
             },
           ],

@@ -228,7 +228,7 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
           endTime: schedule.endTime,
           sortOrder: schedule.sortOrder,
           memo: schedule.memo,
-          url: schedule.url,
+          urls: schedule.urls,
           departurePlace: schedule.departurePlace,
           arrivalPlace: schedule.arrivalPlace,
           transportMethod: schedule.transportMethod,

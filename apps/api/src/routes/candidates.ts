@@ -215,7 +215,11 @@ candidateRoutes.post(
 
     // Preserve the order of scheduleIds in the request
     const scheduleById = new Map(candidates.map((s) => [s.id, s]));
-    const ordered = parsed.data.scheduleIds.map((id) => scheduleById.get(id)!);
+    const ordered = parsed.data.scheduleIds.reduce<typeof candidates>((acc, id) => {
+      const schedule = scheduleById.get(id);
+      if (schedule) acc.push(schedule);
+      return acc;
+    }, []);
 
     const duplicated = await db
       .insert(schedules)
@@ -269,7 +273,7 @@ candidateRoutes.patch("/:tripId/candidates/reorder", requireTripAccess("editor")
       ),
     });
     if (targets.length !== parsed.data.scheduleIds.length) {
-      return c.json({ error: "Some schedules are not candidates of this trip" }, 400);
+      return c.json({ error: ERROR_MSG.INVALID_CANDIDATE_REORDER }, 400);
     }
   }
 

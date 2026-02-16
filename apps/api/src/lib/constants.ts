@@ -2,6 +2,8 @@ export const DEFAULT_PATTERN_LABEL = "デフォルト";
 export const MAX_TRIP_DAYS = 365;
 export const MAX_LOGS_PER_TRIP = 50;
 
+export const PG_UNIQUE_VIOLATION = "23505";
+
 export const ERROR_MSG = {
   TRIP_NOT_FOUND: "Trip not found",
   SCHEDULE_NOT_FOUND: "Schedule not found",
@@ -19,6 +21,7 @@ export const ERROR_MSG = {
   MEMBER_NOT_FOUND: "Member not found",
   CANNOT_REMOVE_SELF: "Cannot remove yourself",
   INVALID_REORDER: "Some schedules do not belong to this pattern",
+  INVALID_CANDIDATE_REORDER: "Some schedules are not candidates of this trip",
   DAY_NOT_FOUND: "Day not found",
   GITHUB_API_FAILED: "Failed to create feedback issue",
   GITHUB_NOT_CONFIGURED: "Feedback is not configured",
@@ -33,4 +36,6 @@ export const ERROR_MSG = {
   LIMIT_FRIENDS: "Friend limit reached",
   INVALID_PASSWORD: "Invalid password",
   ACCOUNT_NOT_FOUND: "Account not found",
+  UNAUTHORIZED: "Unauthorized",
+  TOO_MANY_REQUESTS: "Too many requests",
 } as const;

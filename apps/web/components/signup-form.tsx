@@ -37,10 +37,19 @@ export function SignupForm() {
     }
 
     const formData = new FormData(e.currentTarget);
-    const username = formData.get("username") as string;
-    const name = formData.get("name") as string;
-    const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
+    const username = formData.get("username");
+    const name = formData.get("name");
+    const password = formData.get("password");
+    const confirmPassword = formData.get("confirmPassword");
+    if (
+      typeof username !== "string" ||
+      typeof name !== "string" ||
+      typeof password !== "string" ||
+      typeof confirmPassword !== "string"
+    ) {
+      setLoading(false);
+      return;
+    }
 
     const { valid, errors } = validatePassword(password);
     if (!valid) {

@@ -1,4 +1,5 @@
 import type { Context, Next } from "hono";
+import { ERROR_MSG } from "../lib/constants";
 
 type RateLimitEntry = { count: number; resetAt: number };
 
@@ -14,13 +15,16 @@ export function rateLimitByIp(opts: { window: number; max: number }) {
     storeCache.set(cacheKey, store);
 
     // Evict expired entries to prevent unbounded memory growth
+    const storeRef = store;
     setInterval(() => {
       const now = Date.now();
-      for (const [key, entry] of store!) {
-        if (entry.resetAt <= now) store!.delete(key);
+      for (const [key, entry] of storeRef) {
+        if (entry.resetAt <= now) storeRef.delete(key);
       }
     }, opts.window * 1000).unref();
   }
+
+  const storeRef = store;
 
   return async (c: Context, next: Next) => {
     const ip =
@@ -28,16 +32,16 @@ export function rateLimitByIp(opts: { window: number; max: number }) {
       c.req.header("x-real-ip") ||
       "unknown";
     const now = Date.now();
-    const entry = store!.get(ip);
+    const entry = storeRef.get(ip);
 
     if (!entry || entry.resetAt <= now) {
-      store!.set(ip, { count: 1, resetAt: now + opts.window * 1000 });
+      storeRef.set(ip, { count: 1, resetAt: now + opts.window * 1000 });
       return next();
     }
 
     entry.count++;
     if (entry.count > opts.max) {
-      return c.json({ error: "Too many requests" }, 429);
+      return c.json({ error: ERROR_MSG.TOO_MANY_REQUESTS }, 429);
     }
     return next();
   };

@@ -7,7 +7,7 @@ import { and, count, eq, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { friends, users } from "../db/schema";
-import { ERROR_MSG } from "../lib/constants";
+import { ERROR_MSG, PG_UNIQUE_VIOLATION } from "../lib/constants";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -124,7 +124,7 @@ friendRoutes.post("/requests", async (c) => {
     return c.json({ id: created.id }, 201);
   } catch (e) {
     // Unique constraint violation from friends_pair_unique index (race condition)
-    if (e instanceof Error && "code" in e && e.code === "23505") {
+    if (e instanceof Error && "code" in e && e.code === PG_UNIQUE_VIOLATION) {
       return c.json({ error: ERROR_MSG.ALREADY_FRIENDS }, 409);
     }
     throw e;

@@ -1,6 +1,13 @@
 /** "HH:MM" or "HH:MM:SS" -> total minutes from 00:00 */
 export function timeToMinutes(time: string): number {
-  const [h, m] = time.split(":").map(Number);
+  const parts = time.split(":");
+  if (parts.length < 2) {
+    throw new Error(`Invalid time format: ${time}`);
+  }
+  const [h, m] = parts.map(Number);
+  if (Number.isNaN(h) || Number.isNaN(m)) {
+    throw new Error(`Invalid time format: ${time}`);
+  }
   return h * 60 + m;
 }
 

@@ -1,5 +1,6 @@
 import type { Context, Next } from "hono";
 import { auth } from "../lib/auth";
+import { ERROR_MSG } from "../lib/constants";
 
 export async function requireAuth(c: Context, next: Next) {
   try {
@@ -8,7 +9,7 @@ export async function requireAuth(c: Context, next: Next) {
     });
 
     if (!session) {
-      return c.json({ error: "Unauthorized" }, 401);
+      return c.json({ error: ERROR_MSG.UNAUTHORIZED }, 401);
     }
 
     c.set("user", session.user);
@@ -16,6 +17,6 @@ export async function requireAuth(c: Context, next: Next) {
     await next();
   } catch (err) {
     console.error("Auth middleware error:", err);
-    return c.json({ error: "Unauthorized" }, 401);
+    return c.json({ error: ERROR_MSG.UNAUTHORIZED }, 401);
   }
 }

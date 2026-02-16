@@ -36,8 +36,11 @@ export type TransportMethod = z.infer<typeof transportMethodSchema>;
 
 const timeRegex = /^\d{2}:\d{2}(:\d{2})?$/;
 function isValidTime(val: string): boolean {
-  const [h, m] = val.split(":").map(Number);
-  return h >= 0 && h <= 23 && m >= 0 && m <= 59;
+  const parts = val.split(":").map(Number);
+  const [h, m] = parts;
+  if (h < 0 || h > 23 || m < 0 || m > 59) return false;
+  if (parts.length === 3 && (parts[2] < 0 || parts[2] > 59)) return false;
+  return true;
 }
 const timeSchema = z
   .string()
@@ -57,12 +60,8 @@ const singleUrlSchema = z
   .url()
   .max(SCHEDULE_URL_MAX_LENGTH)
   .refine((v) => {
-    try {
-      const { protocol } = new URL(v);
-      return protocol === "http:" || protocol === "https:";
-    } catch {
-      return false;
-    }
+    const { protocol } = new URL(v);
+    return protocol === "http:" || protocol === "https:";
   }, "Only http and https URLs are allowed");
 
 const urlsSchema = z
@@ -75,15 +74,15 @@ export const createScheduleSchema = z.object({
   name: z.string().min(1).max(SCHEDULE_NAME_MAX_LENGTH),
   category: scheduleCategorySchema,
   address: z.string().max(SCHEDULE_ADDRESS_MAX_LENGTH).nullish(),
-  startTime: timeSchema.optional(),
-  endTime: timeSchema.optional(),
+  startTime: timeSchema.nullish(),
+  endTime: timeSchema.nullish(),
   memo: z.string().max(SCHEDULE_MEMO_MAX_LENGTH).nullish(),
   urls: urlsSchema,
   departurePlace: z.string().max(SCHEDULE_PLACE_MAX_LENGTH).nullish(),
   arrivalPlace: z.string().max(SCHEDULE_PLACE_MAX_LENGTH).nullish(),
-  transportMethod: transportMethodSchema.optional(),
+  transportMethod: transportMethodSchema.nullish(),
   color: scheduleColorSchema.default("blue"),
-  endDayOffset: z.number().int().min(1).max(MAX_END_DAY_OFFSET).nullable().optional(),
+  endDayOffset: z.number().int().min(1).max(MAX_END_DAY_OFFSET).nullish(),
 });
 export const updateScheduleSchema = createScheduleSchema.partial().extend({
   expectedUpdatedAt: z.string().datetime().optional(),

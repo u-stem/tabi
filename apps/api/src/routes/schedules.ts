@@ -293,7 +293,11 @@ scheduleRoutes.post(
     let currentOrder = nextOrder;
 
     const scheduleById = new Map(targetSchedules.map((s) => [s.id, s]));
-    const ordered = parsed.data.scheduleIds.map((id) => scheduleById.get(id)!);
+    const ordered = parsed.data.scheduleIds.reduce<typeof targetSchedules>((acc, id) => {
+      const schedule = scheduleById.get(id);
+      if (schedule) acc.push(schedule);
+      return acc;
+    }, []);
 
     const duplicated = await db
       .insert(schedules)

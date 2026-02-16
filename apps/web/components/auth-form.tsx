@@ -25,8 +25,12 @@ export function AuthForm() {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const username = formData.get("username") as string;
-    const password = formData.get("password") as string;
+    const username = formData.get("username");
+    const password = formData.get("password");
+    if (typeof username !== "string" || typeof password !== "string") {
+      setLoading(false);
+      return;
+    }
 
     const result = await signIn.username({ username, password });
     if (result.error) {

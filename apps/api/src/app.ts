@@ -30,7 +30,7 @@ app.onError((err, c) => {
   if (err instanceof SyntaxError) {
     return c.json({ error: ERROR_MSG.INVALID_JSON }, 400);
   }
-  console.error(err);
+  console.error("Unhandled error:", err.stack || err);
   return c.json({ error: ERROR_MSG.INTERNAL_ERROR }, 500);
 });
 

@@ -27,13 +27,13 @@ accountRoutes.delete("/account", deleteRateLimit, requireAuth, async (c) => {
     columns: { password: true },
   });
 
-  if (!account) {
+  if (!account || !account.password) {
     return c.json({ error: ERROR_MSG.ACCOUNT_NOT_FOUND }, 404);
   }
 
   const valid = await verifyPassword({
     password: parsed.data.password,
-    hash: account.password!,
+    hash: account.password,
   });
 
   if (!valid) {

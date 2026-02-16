@@ -29,13 +29,13 @@ import {
   getDayCount,
   isSafeUrl,
 } from "@/lib/format";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { buildMergedTimeline } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import { buildTransportUrl } from "@/lib/transport-link";
-import { useDelayedLoading } from "@/lib/use-delayed-loading";
 import { cn } from "@/lib/utils";
 
 type SharedTripResponse = {

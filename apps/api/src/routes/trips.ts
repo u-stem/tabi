@@ -1,5 +1,5 @@
 import { createTripSchema, MAX_TRIPS_PER_USER, updateTripSchema } from "@sugara/shared";
-import { and, asc, count, eq, inArray, ne } from "drizzle-orm";
+import { and, asc, count, eq, inArray, ne, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, schedules, tripDays, tripMembers, trips } from "../db/schema";
@@ -62,35 +62,43 @@ async function syncTripDays(
     );
   }
 
-  // Re-number all days sequentially
+  // Re-number all days sequentially (bulk update)
   const allDays = await tx
-    .select()
+    .select({ id: tripDays.id, dayNumber: tripDays.dayNumber })
     .from(tripDays)
     .where(eq(tripDays.tripId, tripId))
     .orderBy(asc(tripDays.date));
 
-  for (let i = 0; i < allDays.length; i++) {
-    if (allDays[i].dayNumber !== i + 1) {
-      await tx
-        .update(tripDays)
-        .set({ dayNumber: i + 1 })
-        .where(eq(tripDays.id, allDays[i].id));
-    }
+  const updates = allDays
+    .map((day, i) => ({ id: day.id, dayNumber: i + 1 }))
+    .filter((u, i) => allDays[i].dayNumber !== u.dayNumber);
+
+  if (updates.length > 0) {
+    const ids = updates.map((u) => u.id);
+    // Use SQL CASE expression for single-query bulk update
+    const caseParts = updates.map((u) => sql`WHEN ${u.id} THEN ${u.dayNumber}`);
+    await tx
+      .update(tripDays)
+      .set({
+        dayNumber: sql`CASE ${tripDays.id} ${sql.join(caseParts, sql` `)} END`,
+      })
+      .where(inArray(tripDays.id, ids));
   }
 }
 
 function generateDateRange(startDate: string, endDate: string): string[] {
-  const start = new Date(`${startDate}T00:00:00`);
-  const end = new Date(`${endDate}T00:00:00`);
+  // Use UTC to avoid timezone-dependent date shifts
+  const start = new Date(`${startDate}T00:00:00Z`);
+  const end = new Date(`${endDate}T00:00:00Z`);
   const dates: string[] = [];
   for (
     let d = new Date(start);
     d <= end && dates.length < MAX_TRIP_DAYS;
-    d.setDate(d.getDate() + 1)
+    d.setUTCDate(d.getUTCDate() + 1)
   ) {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const dayOfMonth = String(d.getDate()).padStart(2, "0");
+    const year = d.getUTCFullYear();
+    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
+    const dayOfMonth = String(d.getUTCDate()).padStart(2, "0");
     dates.push(`${year}-${month}-${dayOfMonth}`);
   }
   return dates;

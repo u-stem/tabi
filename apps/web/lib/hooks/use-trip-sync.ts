@@ -1,5 +1,7 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { MSG } from "../messages";
 import { supabase } from "../supabase";
 
 export type PresenceUser = {
@@ -70,6 +72,7 @@ export function useTripSync(
         setIsConnected(status === "SUBSCRIBED");
         if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
           console.error(`[Realtime] Channel subscription failed: ${status}`);
+          toast.error(MSG.REALTIME_CONNECTION_FAILED);
         }
       });
 

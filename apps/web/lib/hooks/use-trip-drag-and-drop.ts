@@ -241,6 +241,8 @@ export function useTripDragAndDrop({
       } catch {
         // unassign succeeded but reorder failed — refetch to sync
         toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
+        onDone();
+        return;
       }
       onDone();
     } else if (sourceType === "candidate" && isOverTimeline) {
@@ -332,6 +334,8 @@ export function useTripDragAndDrop({
       } catch {
         // assign succeeded but reorder failed — refetch to sync
         toast.success(MSG.CANDIDATE_ASSIGNED);
+        onDone();
+        return;
       }
       onDone();
     } else if (sourceType === "candidate" && isOverCandidates) {

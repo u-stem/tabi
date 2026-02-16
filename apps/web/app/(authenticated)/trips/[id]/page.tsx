@@ -70,6 +70,7 @@ import { SelectionProvider } from "@/lib/hooks/selection-context";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useDayMemo } from "@/lib/hooks/use-day-memo";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
 import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
@@ -79,7 +80,6 @@ import { CATEGORY_ICONS } from "@/lib/icons";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
-import { useDelayedLoading } from "@/lib/use-delayed-loading";
 import { cn } from "@/lib/utils";
 
 const dndAnnouncements: Announcements = {
@@ -239,8 +239,12 @@ export default function TripDetailPage() {
 
   // Auto-transition: planned → active (first spot starts), active → completed (all spots done)
   const autoTransitionTriggered = useRef(false);
+  const autoTransitionRetryCount = useRef(0);
+  const MAX_AUTO_TRANSITION_RETRIES = 3;
+
   useEffect(() => {
     autoTransitionTriggered.current = false;
+    autoTransitionRetryCount.current = 0;
   }, [trip?.status]);
 
   useEffect(() => {
@@ -300,7 +304,10 @@ export default function TripDetailPage() {
           onMutate();
         })
         .catch(() => {
-          autoTransitionTriggered.current = false;
+          autoTransitionRetryCount.current += 1;
+          if (autoTransitionRetryCount.current < MAX_AUTO_TRANSITION_RETRIES) {
+            autoTransitionTriggered.current = false;
+          }
         });
     }
   }, [trip, now, tripId, onMutate]);
@@ -310,7 +317,7 @@ export default function TripDetailPage() {
   const dndCandidates = useMemo(() => trip?.candidates ?? [], [trip?.candidates]);
   const dndCrossDayEntries = useMemo(
     () => (currentDay && trip ? getCrossDayEntries(trip.days, currentDay.dayNumber) : undefined),
-    [currentDay, trip],
+    [currentDay?.dayNumber, trip?.days],
   );
 
   const dnd = useTripDragAndDrop({

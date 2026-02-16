@@ -1,108 +1,16 @@
 import { createTripSchema, MAX_TRIPS_PER_USER, updateTripSchema } from "@sugara/shared";
-import { and, asc, count, eq, inArray, ne, sql } from "drizzle-orm";
+import { and, count, eq, inArray, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, schedules, tripDays, tripMembers, trips } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
-import { DEFAULT_PATTERN_LABEL, ERROR_MSG, MAX_TRIP_DAYS } from "../lib/constants";
+import { ERROR_MSG } from "../lib/constants";
+import { buildScheduleCloneValues } from "../lib/schedule-clone";
+import { createInitialTripDays, syncTripDays } from "../lib/trip-days";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
-
-type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
-type TxOrDb = typeof db | Transaction;
-
-async function syncTripDays(
-  tx: TxOrDb,
-  tripId: string,
-  effectiveStart: string,
-  effectiveEnd: string,
-) {
-  const newDates = generateDateRange(effectiveStart, effectiveEnd);
-
-  const existingDays = await tx
-    .select()
-    .from(tripDays)
-    .where(eq(tripDays.tripId, tripId))
-    .orderBy(asc(tripDays.date));
-
-  const existingDateSet = new Set(existingDays.map((d: { date: string }) => d.date));
-  const newDateSet = new Set(newDates);
-
-  // Delete days outside new range
-  const idsToDelete = existingDays
-    .filter((d: { date: string }) => !newDateSet.has(d.date))
-    .map((d: { id: string }) => d.id);
-  if (idsToDelete.length > 0) {
-    await tx.delete(tripDays).where(inArray(tripDays.id, idsToDelete));
-  }
-
-  // Insert new days with default patterns
-  const datesToInsert = newDates.filter((d) => !existingDateSet.has(d));
-  if (datesToInsert.length > 0) {
-    const newDays = await tx
-      .insert(tripDays)
-      .values(
-        datesToInsert.map((date) => ({
-          tripId,
-          date,
-          dayNumber: 0,
-        })),
-      )
-      .returning({ id: tripDays.id });
-
-    await tx.insert(dayPatterns).values(
-      newDays.map((day: { id: string }) => ({
-        tripDayId: day.id,
-        label: DEFAULT_PATTERN_LABEL,
-        isDefault: true,
-        sortOrder: 0,
-      })),
-    );
-  }
-
-  // Re-number all days sequentially (bulk update)
-  const allDays = await tx
-    .select({ id: tripDays.id, dayNumber: tripDays.dayNumber })
-    .from(tripDays)
-    .where(eq(tripDays.tripId, tripId))
-    .orderBy(asc(tripDays.date));
-
-  const updates = allDays
-    .map((day, i) => ({ id: day.id, dayNumber: i + 1 }))
-    .filter((u, i) => allDays[i].dayNumber !== u.dayNumber);
-
-  if (updates.length > 0) {
-    const ids = updates.map((u) => u.id);
-    // Use SQL CASE expression for single-query bulk update
-    const caseParts = updates.map((u) => sql`WHEN ${u.id} THEN ${u.dayNumber}`);
-    await tx
-      .update(tripDays)
-      .set({
-        dayNumber: sql`CASE ${tripDays.id} ${sql.join(caseParts, sql` `)} END`,
-      })
-      .where(inArray(tripDays.id, ids));
-  }
-}
-
-function generateDateRange(startDate: string, endDate: string): string[] {
-  // Use UTC to avoid timezone-dependent date shifts
-  const start = new Date(`${startDate}T00:00:00Z`);
-  const end = new Date(`${endDate}T00:00:00Z`);
-  const dates: string[] = [];
-  for (
-    let d = new Date(start);
-    d <= end && dates.length < MAX_TRIP_DAYS;
-    d.setUTCDate(d.getUTCDate() + 1)
-  ) {
-    const year = d.getUTCFullYear();
-    const month = String(d.getUTCMonth() + 1).padStart(2, "0");
-    const dayOfMonth = String(d.getUTCDate()).padStart(2, "0");
-    dates.push(`${year}-${month}-${dayOfMonth}`);
-  }
-  return dates;
-}
 
 const tripRoutes = new Hono<AppEnv>();
 tripRoutes.use("*", requireAuth);
@@ -187,30 +95,7 @@ tripRoutes.post("/", async (c) => {
       })
       .returning();
 
-    // Auto-create trip days based on date range
-    const dates = generateDateRange(startDate, endDate);
-    if (dates.length > 0) {
-      const insertedDays = await tx
-        .insert(tripDays)
-        .values(
-          dates.map((date, i) => ({
-            tripId: created.id,
-            date,
-            dayNumber: i + 1,
-          })),
-        )
-        .returning({ id: tripDays.id });
-
-      // Create default pattern for each day
-      await tx.insert(dayPatterns).values(
-        insertedDays.map((day) => ({
-          tripDayId: day.id,
-          label: DEFAULT_PATTERN_LABEL,
-          isDefault: true,
-          sortOrder: 0,
-        })),
-      );
-    }
+    await createInitialTripDays(tx, created.id, startDate, endDate);
 
     // Add owner as trip member
     await tx.insert(tripMembers).values({
@@ -450,19 +335,7 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
             pattern.schedules.map((schedule) => ({
               tripId: created.id,
               dayPatternId: newPattern.id,
-              name: schedule.name,
-              category: schedule.category,
-              address: schedule.address,
-              startTime: schedule.startTime,
-              endTime: schedule.endTime,
-              sortOrder: schedule.sortOrder,
-              memo: schedule.memo,
-              urls: schedule.urls,
-              departurePlace: schedule.departurePlace,
-              arrivalPlace: schedule.arrivalPlace,
-              transportMethod: schedule.transportMethod,
-              color: schedule.color,
-              endDayOffset: schedule.endDayOffset,
+              ...buildScheduleCloneValues(schedule),
             })),
           );
         }

@@ -7,7 +7,6 @@ import {
   MAX_MEMBERS_PER_TRIP,
   MAX_PATTERNS_PER_DAY,
   MAX_SCHEDULES_PER_TRIP,
-  PATTERN_LABEL_MAX_LENGTH,
 } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -23,7 +22,6 @@ import {
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { toast } from "sonner";
 import { ActivityLog } from "@/components/activity-log";
 import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
@@ -32,32 +30,13 @@ import { hashColor, PresenceAvatars } from "@/components/presence-avatars";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import { TripActions } from "@/components/trip-actions";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -65,9 +44,10 @@ import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { getCrossDayEntries } from "@/lib/cross-day";
-import { formatDateRange, getDayCount, getTimeStatus, toDateString } from "@/lib/format";
+import { formatDateRange, getDayCount } from "@/lib/format";
 import { SelectionProvider } from "@/lib/hooks/selection-context";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
+import { useAutoStatusTransition } from "@/lib/hooks/use-auto-status-transition";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useDayMemo } from "@/lib/hooks/use-day-memo";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
@@ -81,6 +61,13 @@ import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
+import {
+  AddPatternDialog,
+  BatchDeleteDialog,
+  DeletePatternDialog,
+  MobileCandidateDialog,
+  RenamePatternDialog,
+} from "./_components/trip-dialogs";
 
 const dndAnnouncements: Announcements = {
   onDragStart({ active }) {
@@ -237,80 +224,7 @@ export default function TripDetailPage() {
     }
   }, [currentDay?.id, currentPattern?.id, updatePresence]);
 
-  // Auto-transition: planned → active (first spot starts), active → completed (all spots done)
-  const autoTransitionTriggered = useRef(false);
-  const autoTransitionRetryCount = useRef(0);
-  const MAX_AUTO_TRANSITION_RETRIES = 3;
-
-  useEffect(() => {
-    autoTransitionTriggered.current = false;
-    autoTransitionRetryCount.current = 0;
-  }, [trip?.status]);
-
-  useEffect(() => {
-    if (!trip || autoTransitionTriggered.current) return;
-    // Only owner/editor can change status; skip for viewer to avoid infinite retry
-    if (trip.role === "viewer") return;
-
-    const todayStr = toDateString(new Date());
-
-    let nextStatus: string | null = null;
-    let message = "";
-
-    if (trip.status === "planned") {
-      let shouldActivate = false;
-      if (todayStr > trip.startDate) {
-        shouldActivate = true;
-      } else if (todayStr === trip.startDate) {
-        const todaySchedules = trip.days
-          .filter((d) => d.date === todayStr)
-          .flatMap((d) => d.patterns.flatMap((p) => p.schedules));
-        shouldActivate = todaySchedules.some(
-          (spot) => getTimeStatus(now, spot.startTime, spot.endTime) !== "future",
-        );
-      }
-      if (shouldActivate) {
-        nextStatus = "active";
-        message = MSG.TRIP_AUTO_IN_PROGRESS;
-      }
-    } else if (trip.status === "active") {
-      let allDone = false;
-      if (todayStr > trip.endDate) {
-        allDone = true;
-      } else if (todayStr === trip.endDate) {
-        const todaySchedules = trip.days
-          .filter((d) => d.date === todayStr)
-          .flatMap((d) => d.patterns.flatMap((p) => p.schedules));
-        if (todaySchedules.length > 0) {
-          allDone = todaySchedules.every(
-            (spot) => getTimeStatus(now, spot.startTime, spot.endTime) === "past",
-          );
-        }
-      }
-      if (allDone) {
-        nextStatus = "completed";
-        message = MSG.TRIP_AUTO_COMPLETED;
-      }
-    }
-
-    if (nextStatus) {
-      autoTransitionTriggered.current = true;
-      api(`/api/trips/${tripId}`, {
-        method: "PATCH",
-        body: JSON.stringify({ status: nextStatus }),
-      })
-        .then(() => {
-          toast.success(message);
-          onMutate();
-        })
-        .catch(() => {
-          autoTransitionRetryCount.current += 1;
-          if (autoTransitionRetryCount.current < MAX_AUTO_TRANSITION_RETRIES) {
-            autoTransitionTriggered.current = false;
-          }
-        });
-    }
-  }, [trip, now, tripId, onMutate]);
+  useAutoStatusTransition({ trip, tripId, now, onMutate });
 
   // Stable references to avoid infinite re-render when values are null
   const dndSchedules = useMemo(() => currentPattern?.schedules ?? [], [currentPattern?.schedules]);
@@ -810,178 +724,25 @@ export default function TripDetailPage() {
           </DndContext>
         )}
 
-        {/* Add pattern dialog */}
-        <Dialog open={patternOps.add.open} onOpenChange={patternOps.add.setOpen}>
-          <DialogContent className="sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle>パターン追加</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={patternOps.add.submit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="pattern-label">ラベル</Label>
-                <Input
-                  id="pattern-label"
-                  value={patternOps.add.label}
-                  onChange={(e) => patternOps.add.setLabel(e.target.value)}
-                  placeholder="例: 雨の日プラン"
-                  maxLength={PATTERN_LABEL_MAX_LENGTH}
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  disabled={patternOps.add.loading || !patternOps.add.label.trim()}
-                >
-                  <Plus className="h-4 w-4" />
-                  {patternOps.add.loading ? "追加中..." : "追加"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-
-        {/* Mobile candidate / activity dialog */}
-        <Dialog open={candidateOpen} onOpenChange={setCandidateOpen}>
-          <DialogContent className="flex max-h-[80vh] flex-col overflow-hidden sm:max-w-sm">
-            <DialogTitle className="sr-only">候補・履歴</DialogTitle>
-            <div className="flex shrink-0 select-none border-b" role="tablist">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={rightPanelTab === "candidates"}
-                onClick={() => setRightPanelTab("candidates")}
-                className={cn(
-                  "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-                  rightPanelTab === "candidates"
-                    ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                候補
-                {dnd.localCandidates.length > 0 && (
-                  <span className="ml-1 rounded-full bg-muted px-1.5 text-xs">
-                    {dnd.localCandidates.length}
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={rightPanelTab === "activity"}
-                onClick={() => setRightPanelTab("activity")}
-                className={cn(
-                  "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-                  rightPanelTab === "activity"
-                    ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                履歴
-              </button>
-            </div>
-            <div className="min-h-0 overflow-y-auto">
-              {rightPanelTab === "candidates" ? (
-                currentDay &&
-                currentPattern && (
-                  <CandidatePanel
-                    tripId={tripId}
-                    candidates={dnd.localCandidates}
-                    currentDayId={currentDay.id}
-                    currentPatternId={currentPattern.id}
-                    onRefresh={onMutate}
-                    disabled={!online || !canEdit}
-                    draggable={false}
-                    scheduleLimitReached={scheduleLimitReached}
-                    scheduleLimitMessage={scheduleLimitMessage}
-                    maxEndDayOffset={Math.max(0, trip.days.length - 1)}
-                  />
-                )
-              ) : (
-                <div className="p-4">
-                  <ActivityLog tripId={tripId} />
-                </div>
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Rename pattern dialog */}
-        <Dialog open={patternOps.rename.target !== null} onOpenChange={patternOps.rename.setOpen}>
-          <DialogContent className="sm:max-w-sm">
-            <DialogHeader>
-              <DialogTitle>パターン名変更</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={patternOps.rename.submit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="rename-label">ラベル</Label>
-                <Input
-                  id="rename-label"
-                  value={patternOps.rename.label}
-                  onChange={(e) => patternOps.rename.setLabel(e.target.value)}
-                  maxLength={PATTERN_LABEL_MAX_LENGTH}
-                />
-              </div>
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  disabled={patternOps.rename.loading || !patternOps.rename.label.trim()}
-                >
-                  <Check className="h-4 w-4" />
-                  {patternOps.rename.loading ? "変更中..." : "変更"}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-        {/* Batch delete confirmation dialog */}
-        <AlertDialog open={selection.batchDeleteOpen} onOpenChange={selection.setBatchDeleteOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{selection.selectedIds.size}件を削除しますか？</AlertDialogTitle>
-              <AlertDialogDescription>
-                選択した{selection.selectedIds.size}件を削除します。この操作は取り消せません。
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>キャンセル</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={selection.batchDelete}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                disabled={selection.batchLoading}
-              >
-                <Trash2 className="h-4 w-4" />
-                削除する
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-        {/* Pattern delete confirmation dialog */}
-        <AlertDialog
-          open={patternOps.deleteTarget !== null}
-          onOpenChange={(v) => !v && patternOps.setDeleteTarget(null)}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>パターンを削除しますか？</AlertDialogTitle>
-              <AlertDialogDescription>
-                「{patternOps.deleteTarget?.label}
-                」とその中のすべての予定を削除します。この操作は取り消せません。
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>キャンセル</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => {
-                  if (patternOps.deleteTarget) patternOps.handleDelete(patternOps.deleteTarget.id);
-                  patternOps.setDeleteTarget(null);
-                }}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              >
-                削除する
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        <AddPatternDialog patternOps={patternOps} />
+        <MobileCandidateDialog
+          open={candidateOpen}
+          onOpenChange={setCandidateOpen}
+          rightPanelTab={rightPanelTab}
+          setRightPanelTab={setRightPanelTab}
+          tripId={tripId}
+          candidates={dnd.localCandidates}
+          currentDay={currentDay}
+          currentPatternId={currentPattern?.id ?? null}
+          onRefresh={onMutate}
+          disabled={!online || !canEdit}
+          scheduleLimitReached={scheduleLimitReached}
+          scheduleLimitMessage={scheduleLimitMessage}
+          maxEndDayOffset={Math.max(0, trip.days.length - 1)}
+        />
+        <RenamePatternDialog patternOps={patternOps} />
+        <BatchDeleteDialog selection={selection} />
+        <DeletePatternDialog patternOps={patternOps} />
       </div>
     </SelectionProvider>
   );

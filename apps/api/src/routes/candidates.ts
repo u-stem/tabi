@@ -7,13 +7,15 @@ import {
   reorderSchedulesSchema,
   updateScheduleSchema,
 } from "@sugara/shared";
-import { and, count, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
+import { buildScheduleCloneValues } from "../lib/schedule-clone";
+import { getScheduleCount } from "../lib/schedule-count";
 import { getNextSortOrder } from "../lib/sort-order";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
@@ -42,11 +44,8 @@ candidateRoutes.post("/:tripId/candidates", requireTripAccess("editor"), async (
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const [scheduleCount] = await db
-    .select({ count: count() })
-    .from(schedules)
-    .where(eq(schedules.tripId, tripId));
-  if (scheduleCount.count >= MAX_SCHEDULES_PER_TRIP) {
+  const scheduleCount = await getScheduleCount(db, tripId);
+  if (scheduleCount >= MAX_SCHEDULES_PER_TRIP) {
     return c.json({ error: ERROR_MSG.LIMIT_SCHEDULES }, 409);
   }
 
@@ -187,11 +186,8 @@ candidateRoutes.post(
       return c.json({ error: parsed.error.flatten() }, 400);
     }
 
-    const [scheduleCount] = await db
-      .select({ count: count() })
-      .from(schedules)
-      .where(eq(schedules.tripId, tripId));
-    if (scheduleCount.count + parsed.data.scheduleIds.length > MAX_SCHEDULES_PER_TRIP) {
+    const scheduleCount = await getScheduleCount(db, tripId);
+    if (scheduleCount + parsed.data.scheduleIds.length > MAX_SCHEDULES_PER_TRIP) {
       return c.json({ error: ERROR_MSG.LIMIT_SCHEDULES }, 409);
     }
 
@@ -226,18 +222,7 @@ candidateRoutes.post(
       .values(
         ordered.map((schedule) => ({
           tripId,
-          name: schedule.name,
-          category: schedule.category,
-          address: schedule.address,
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
-          memo: schedule.memo,
-          urls: schedule.urls,
-          departurePlace: schedule.departurePlace,
-          arrivalPlace: schedule.arrivalPlace,
-          transportMethod: schedule.transportMethod,
-          color: schedule.color,
-          sortOrder: nextOrder++,
+          ...buildScheduleCloneValues(schedule, { sortOrder: nextOrder++ }),
         })),
       )
       .returning();

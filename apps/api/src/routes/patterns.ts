@@ -10,6 +10,7 @@ import { dayPatterns, schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { canEdit, verifyDayAccess } from "../lib/permissions";
+import { buildScheduleCloneValues } from "../lib/schedule-clone";
 import { getNextSortOrder } from "../lib/sort-order";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -221,19 +222,7 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
         source.schedules.map((schedule) => ({
           tripId,
           dayPatternId: newPattern.id,
-          name: schedule.name,
-          category: schedule.category,
-          address: schedule.address,
-          startTime: schedule.startTime,
-          endTime: schedule.endTime,
-          sortOrder: schedule.sortOrder,
-          memo: schedule.memo,
-          urls: schedule.urls,
-          departurePlace: schedule.departurePlace,
-          arrivalPlace: schedule.arrivalPlace,
-          transportMethod: schedule.transportMethod,
-          color: schedule.color,
-          endDayOffset: schedule.endDayOffset,
+          ...buildScheduleCloneValues(schedule),
         })),
       );
     }

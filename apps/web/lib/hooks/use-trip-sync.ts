@@ -136,11 +136,19 @@ export function useTripSync(
       }
     }
 
+    function handleOnline() {
+      retryCount.current = 0;
+      connect();
+      onSyncRef.current();
+    }
+
     connect();
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("online", handleOnline);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("online", handleOnline);
       if (syncTimer.current) {
         clearTimeout(syncTimer.current);
         syncTimer.current = null;

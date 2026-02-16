@@ -1,4 +1,4 @@
-import { act, renderHook } from "@testing-library/react";
+import { act, cleanup, renderHook } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useTripSync } from "../hooks/use-trip-sync";
 
@@ -58,6 +58,7 @@ describe("useTripSync retry on TIMED_OUT / CHANNEL_ERROR", () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -198,6 +199,7 @@ describe("useTripSync visibility change", () => {
   });
 
   afterEach(() => {
+    cleanup();
     vi.useRealTimers();
     vi.restoreAllMocks();
   });
@@ -248,5 +250,42 @@ describe("useTripSync visibility change", () => {
     const countBefore = mockChannels.length;
     await act(async () => vi.advanceTimersByTime(2000));
     expect(mockChannels).toHaveLength(countBefore);
+  });
+});
+
+describe("useTripSync network recovery", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, "random").mockReturnValue(0.5);
+    mockChannels = [];
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it("resets retry count and reconnects on online event after retries exhausted", async () => {
+    renderHook(() => useTripSync("trip-1", user, onSync));
+
+    // Exhaust all retries
+    const delays = [750, 1500, 3000, 6000, 7500];
+    for (let i = 0; i < delays.length; i++) {
+      act(() => mockChannels[i]._emitStatus("TIMED_OUT"));
+      await act(async () => vi.advanceTimersByTime(delays[i]));
+    }
+    act(() => mockChannels[5]._emitStatus("TIMED_OUT"));
+    const countAfterExhaust = mockChannels.length;
+
+    // Network comes back
+    act(() => window.dispatchEvent(new Event("online")));
+    expect(mockChannels).toHaveLength(countAfterExhaust + 1);
+
+    // Should be able to retry again from count 0
+    act(() => mockChannels[mockChannels.length - 1]._emitStatus("TIMED_OUT"));
+    await act(async () => vi.advanceTimersByTime(750));
+    expect(mockChannels).toHaveLength(countAfterExhaust + 2);
   });
 });

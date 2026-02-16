@@ -226,7 +226,16 @@ function PrintTableRow({
           {roleLabel && <span className="ml-1 text-muted-foreground">({roleLabel})</span>}
           <span className="ml-1 text-muted-foreground">{CATEGORY_LABELS[schedule.category]}</span>
         </div>
-        {routeStr && <div className="truncate print:whitespace-normal print:overflow-visible text-muted-foreground">{routeStr}</div>}
+        {routeStr && (
+          <div className="truncate print:whitespace-normal print:overflow-visible text-muted-foreground">
+            {routeStr}
+          </div>
+        )}
+        {schedule.address && (
+          <div className="truncate print:whitespace-normal print:overflow-visible text-muted-foreground">
+            {schedule.address}
+          </div>
+        )}
       </td>
       <td className="py-1 align-top text-muted-foreground">{schedule.memo || ""}</td>
     </tr>

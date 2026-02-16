@@ -12,7 +12,7 @@ import {
   SCHEDULE_URL_MAX_LENGTH,
 } from "@sugara/shared";
 import { Minus, Plus } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { TimeInput } from "@/components/time-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,21 +85,22 @@ export function ScheduleFormFields({
   const displayUrls = urls.length > 0 ? urls : [""];
 
   // Stable keys for the dynamic URL list to avoid index-based keys.
-  // Key counter and key array are managed via state so they only change through event handlers.
+  // useRef for key counter avoids stale closures; useState for the key array triggers re-render.
+  const nextKeyRef = useRef(displayUrls.length);
   const [urlKeys, setUrlKeys] = useState<number[]>(() => displayUrls.map((_, i) => i));
-  const [nextKey, setNextKey] = useState(displayUrls.length);
+  const prevLengthRef = useRef(displayUrls.length);
 
   // Sync keys when displayUrls length changes from parent (e.g. dialog reset)
-  if (urlKeys.length !== displayUrls.length) {
-    const synced = Array.from({ length: displayUrls.length }, (_, i) => i);
-    setUrlKeys(synced);
-    setNextKey(displayUrls.length);
+  if (prevLengthRef.current !== displayUrls.length) {
+    prevLengthRef.current = displayUrls.length;
+    nextKeyRef.current = displayUrls.length;
+    setUrlKeys(Array.from({ length: displayUrls.length }, (_, i) => i));
   }
 
   const addUrlKey = useCallback(() => {
-    setUrlKeys((prev) => [...prev, nextKey]);
-    setNextKey((k) => k + 1);
-  }, [nextKey]);
+    const key = nextKeyRef.current++;
+    setUrlKeys((prev) => [...prev, key]);
+  }, []);
 
   const removeUrlKey = useCallback((index: number) => {
     setUrlKeys((prev) => prev.filter((_, i) => i !== index));

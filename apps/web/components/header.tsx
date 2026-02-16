@@ -3,11 +3,16 @@
 import type { FriendRequestResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Download, Keyboard, LogOut, MessageSquare, Settings } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { FeedbackDialog } from "@/components/feedback-dialog";
+
+const FeedbackDialog = dynamic(() =>
+  import("@/components/feedback-dialog").then((mod) => mod.FeedbackDialog),
+);
+
 import { getSeasonalBg, Logo } from "@/components/logo";
 import { OfflineBanner } from "@/components/offline-banner";
 import { ThemeToggle } from "@/components/theme-toggle";

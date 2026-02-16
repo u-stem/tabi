@@ -79,35 +79,30 @@ friendRoutes.post("/requests", async (c) => {
     return c.json({ error: ERROR_MSG.CANNOT_FRIEND_SELF }, 400);
   }
 
-  // Check friend limit
-  const [friendCount] = await db
-    .select({ count: count() })
-    .from(friends)
-    .where(
-      and(
-        eq(friends.status, "accepted"),
-        or(eq(friends.requesterId, user.id), eq(friends.addresseeId, user.id)),
+  const [[friendCount], targetUser, existing] = await Promise.all([
+    db
+      .select({ count: count() })
+      .from(friends)
+      .where(
+        and(
+          eq(friends.status, "accepted"),
+          or(eq(friends.requesterId, user.id), eq(friends.addresseeId, user.id)),
+        ),
       ),
-    );
+    db.query.users.findFirst({ where: eq(users.id, addresseeId) }),
+    db.query.friends.findFirst({
+      where: or(
+        and(eq(friends.requesterId, user.id), eq(friends.addresseeId, addresseeId)),
+        and(eq(friends.requesterId, addresseeId), eq(friends.addresseeId, user.id)),
+      ),
+    }),
+  ]);
   if (friendCount.count >= MAX_FRIENDS_PER_USER) {
     return c.json({ error: ERROR_MSG.LIMIT_FRIENDS }, 409);
   }
-
-  // Check addressee exists
-  const targetUser = await db.query.users.findFirst({
-    where: eq(users.id, addresseeId),
-  });
   if (!targetUser) {
     return c.json({ error: ERROR_MSG.USER_NOT_FOUND }, 404);
   }
-
-  // Check for existing record in either direction
-  const existing = await db.query.friends.findFirst({
-    where: or(
-      and(eq(friends.requesterId, user.id), eq(friends.addresseeId, addresseeId)),
-      and(eq(friends.requesterId, addresseeId), eq(friends.addresseeId, user.id)),
-    ),
-  });
   if (existing) {
     return c.json({ error: ERROR_MSG.ALREADY_FRIENDS }, 409);
   }

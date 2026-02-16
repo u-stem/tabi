@@ -41,17 +41,13 @@ memberRoutes.post("/:tripId/members", requireTripAccess("owner"), async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const [memberCount] = await db
-    .select({ count: count() })
-    .from(tripMembers)
-    .where(eq(tripMembers.tripId, tripId));
+  const [[memberCount], targetUser] = await Promise.all([
+    db.select({ count: count() }).from(tripMembers).where(eq(tripMembers.tripId, tripId)),
+    db.query.users.findFirst({ where: eq(users.id, parsed.data.userId) }),
+  ]);
   if (memberCount.count >= MAX_MEMBERS_PER_TRIP) {
     return c.json({ error: ERROR_MSG.LIMIT_MEMBERS }, 409);
   }
-
-  const targetUser = await db.query.users.findFirst({
-    where: eq(users.id, parsed.data.userId),
-  });
   if (!targetUser) {
     return c.json({ error: ERROR_MSG.USER_NOT_FOUND }, 404);
   }

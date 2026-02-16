@@ -87,21 +87,22 @@ candidateRoutes.post("/:tripId/candidates/batch-assign", requireTripAccess("edit
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const candidates = await db.query.schedules.findMany({
-    where: and(
-      inArray(schedules.id, parsed.data.scheduleIds),
-      eq(schedules.tripId, tripId),
-      isNull(schedules.dayPatternId),
-    ),
-  });
+  const [candidates, pattern] = await Promise.all([
+    db.query.schedules.findMany({
+      where: and(
+        inArray(schedules.id, parsed.data.scheduleIds),
+        eq(schedules.tripId, tripId),
+        isNull(schedules.dayPatternId),
+      ),
+    }),
+    db.query.dayPatterns.findFirst({
+      where: eq(dayPatterns.id, parsed.data.dayPatternId),
+      with: { tripDay: true },
+    }),
+  ]);
   if (candidates.length !== parsed.data.scheduleIds.length) {
     return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
   }
-
-  const pattern = await db.query.dayPatterns.findFirst({
-    where: eq(dayPatterns.id, parsed.data.dayPatternId),
-    with: { tripDay: true },
-  });
   if (!pattern || pattern.tripDay.tripId !== tripId) {
     return c.json({ error: ERROR_MSG.PATTERN_NOT_FOUND }, 404);
   }

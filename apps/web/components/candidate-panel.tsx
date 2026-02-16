@@ -39,7 +39,10 @@ const AddCandidateDialog = dynamic(() =>
   import("@/components/add-candidate-dialog").then((mod) => mod.AddCandidateDialog),
 );
 
-import { EditCandidateDialog } from "@/components/edit-candidate-dialog";
+const EditCandidateDialog = dynamic(() =>
+  import("@/components/edit-candidate-dialog").then((mod) => mod.EditCandidateDialog),
+);
+
 import {
   AlertDialog,
   AlertDialogAction,

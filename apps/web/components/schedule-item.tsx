@@ -21,6 +21,7 @@ import {
   Trash2,
   Undo2,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import type { CSSProperties } from "react";
 import { memo, useState } from "react";
 import {
@@ -47,9 +48,14 @@ import { formatTime, formatTimeRange, isSafeUrl } from "@/lib/format";
 import { CATEGORY_ICONS, TRANSPORT_ICONS } from "@/lib/icons";
 import { buildTransportUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
-import { BatchShiftDialog } from "./batch-shift-dialog";
 import { DragHandle } from "./drag-handle";
-import { EditScheduleDialog } from "./edit-schedule-dialog";
+
+const EditScheduleDialog = dynamic(() =>
+  import("./edit-schedule-dialog").then((mod) => mod.EditScheduleDialog),
+);
+const BatchShiftDialog = dynamic(() =>
+  import("./batch-shift-dialog").then((mod) => mod.BatchShiftDialog),
+);
 
 type ScheduleItemProps = {
   id: string;

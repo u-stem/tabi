@@ -17,7 +17,10 @@ import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { MemberDialog } from "@/components/member-dialog";
+
+const MemberDialog = dynamic(() =>
+  import("@/components/member-dialog").then((mod) => mod.MemberDialog),
+);
 
 const ShareDialog = dynamic(() =>
   import("@/components/share-dialog").then((mod) => mod.ShareDialog),

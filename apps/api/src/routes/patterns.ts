@@ -183,28 +183,20 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
-  const source = await db.query.dayPatterns.findFirst({
-    where: and(eq(dayPatterns.id, patternId), eq(dayPatterns.tripDayId, dayId)),
-    with: { schedules: true },
-  });
+  const [source, [patternCount], nextOrder] = await Promise.all([
+    db.query.dayPatterns.findFirst({
+      where: and(eq(dayPatterns.id, patternId), eq(dayPatterns.tripDayId, dayId)),
+      with: { schedules: true },
+    }),
+    db.select({ count: count() }).from(dayPatterns).where(eq(dayPatterns.tripDayId, dayId)),
+    getNextSortOrder(db, dayPatterns.sortOrder, dayPatterns, eq(dayPatterns.tripDayId, dayId)),
+  ]);
   if (!source) {
     return c.json({ error: ERROR_MSG.PATTERN_NOT_FOUND }, 404);
   }
-
-  const [patternCount] = await db
-    .select({ count: count() })
-    .from(dayPatterns)
-    .where(eq(dayPatterns.tripDayId, dayId));
   if (patternCount.count >= MAX_PATTERNS_PER_DAY) {
     return c.json({ error: ERROR_MSG.LIMIT_PATTERNS }, 409);
   }
-
-  const nextOrder = await getNextSortOrder(
-    db,
-    dayPatterns.sortOrder,
-    dayPatterns,
-    eq(dayPatterns.tripDayId, dayId),
-  );
 
   const result = await db.transaction(async (tx) => {
     const [newPattern] = await tx

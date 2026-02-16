@@ -221,12 +221,12 @@ function PrintTableRow({
     >
       <td className="whitespace-nowrap py-1 pr-2 align-top tabular-nums">{timeStr}</td>
       <td className="overflow-hidden py-1 pr-2 align-top">
-        <div className="truncate">
+        <div className="truncate print:whitespace-normal print:overflow-visible">
           <span>{schedule.name}</span>
           {roleLabel && <span className="ml-1 text-muted-foreground">({roleLabel})</span>}
           <span className="ml-1 text-muted-foreground">{CATEGORY_LABELS[schedule.category]}</span>
         </div>
-        {routeStr && <div className="truncate text-muted-foreground">{routeStr}</div>}
+        {routeStr && <div className="truncate print:whitespace-normal print:overflow-visible text-muted-foreground">{routeStr}</div>}
       </td>
       <td className="py-1 align-top text-muted-foreground">{schedule.memo || ""}</td>
     </tr>

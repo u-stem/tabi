@@ -790,7 +790,7 @@ function TransportConnector({
                 ) : (
                   <span>{crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}</span>
                 )}
-                {methodLabel && <span>({methodLabel})</span>}
+                {methodLabel && <span className="shrink-0">({methodLabel})</span>}
               </span>
             )}
             {urls.filter(isSafeUrl).map((u) => (

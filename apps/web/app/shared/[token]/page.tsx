@@ -401,7 +401,7 @@ function ScheduleCard({
                     {crossDayDisplay && schedule.arrivalPlace ? `→ ${routeStr}` : routeStr}
                   </span>
                 )}
-                {transportLabel && <span>({transportLabel})</span>}
+                {transportLabel && <span className="shrink-0">({transportLabel})</span>}
               </span>
             )}
             {schedule.address && (

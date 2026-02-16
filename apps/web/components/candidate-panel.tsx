@@ -201,7 +201,7 @@ function CandidateCard({
                   ) : (
                     <span className="truncate">{routeStr}</span>
                   )}
-                  {transportLabel && <span>({transportLabel})</span>}
+                  {transportLabel && <span className="shrink-0">({transportLabel})</span>}
                 </span>
               );
             })()}

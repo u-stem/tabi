@@ -1,4 +1,3 @@
-import Image from "next/image";
 import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
 import { cn } from "@/lib/utils";
 
@@ -51,13 +50,7 @@ export function PresenceAvatars({ users, isConnected }: PresenceAvatarsProps) {
           className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full"
         >
           {user.image ? (
-            <Image
-              loader={({ src }) => src}
-              src={user.image}
-              alt={user.name}
-              width={28}
-              height={28}
-            />
+            <img src={user.image} alt={user.name} width={28} height={28} />
           ) : (
             <span
               className={cn(

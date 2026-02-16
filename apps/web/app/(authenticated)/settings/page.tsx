@@ -2,7 +2,6 @@
 
 import { buildDiceBearUrl, DICEBEAR_STYLES, type DiceBearStyle } from "@sugara/shared";
 import { Check, Copy, ExternalLink, RefreshCw } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -492,8 +491,7 @@ function AvatarSection({ name, currentImage }: { name: string; currentImage: str
                     : "border-transparent hover:border-border"
                 }`}
               >
-                <Image
-                  loader={({ src }) => src}
+                <img
                   src={url}
                   alt={`${STYLE_LABELS[style]} avatar ${seed}`}
                   width={48}

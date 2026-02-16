@@ -278,11 +278,19 @@ export function MemberDialog({
                                 key={friend.friendId}
                                 className="flex items-center justify-between gap-2 rounded-md border p-2"
                               >
-                                <p
-                                  className={`truncate text-sm ${isMember ? "text-muted-foreground" : "font-medium"}`}
-                                >
-                                  {friend.name}
-                                </p>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <UserAvatar
+                                    name={friend.name}
+                                    image={friend.image}
+                                    className="h-6 w-6 shrink-0"
+                                    fallbackClassName="text-xs"
+                                  />
+                                  <p
+                                    className={`truncate text-sm ${isMember ? "text-muted-foreground" : "font-medium"}`}
+                                  >
+                                    {friend.name}
+                                  </p>
+                                </div>
                                 {isMember ? (
                                   <span className="shrink-0 select-none text-xs text-muted-foreground">
                                     追加済み

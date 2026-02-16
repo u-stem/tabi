@@ -19,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
@@ -140,7 +141,15 @@ function RequestsSection({
       <CardContent className="space-y-3">
         {requests.map((req) => (
           <div key={req.id} className="flex items-center justify-between gap-2">
-            <span className="text-sm truncate">{req.name}</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <UserAvatar
+                name={req.name}
+                image={req.image}
+                className="h-6 w-6 shrink-0"
+                fallbackClassName="text-xs"
+              />
+              <span className="text-sm truncate">{req.name}</span>
+            </div>
             <div className="flex gap-2 shrink-0">
               <Button
                 size="sm"
@@ -201,7 +210,15 @@ function FriendListSection({
             <div className="space-y-3">
               {friends.map((friend) => (
                 <div key={friend.friendId} className="flex items-center justify-between gap-2">
-                  <span className="text-sm truncate">{friend.name}</span>
+                  <div className="flex items-center gap-2 min-w-0">
+                    <UserAvatar
+                      name={friend.name}
+                      image={friend.image}
+                      className="h-6 w-6 shrink-0"
+                      fallbackClassName="text-xs"
+                    />
+                    <span className="text-sm truncate">{friend.name}</span>
+                  </div>
                   <Button
                     size="sm"
                     variant="outline"

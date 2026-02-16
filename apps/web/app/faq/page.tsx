@@ -72,7 +72,7 @@ export default function FaqPage() {
         </Accordion>
       </main>
 
-      <footer className="container flex h-14 items-center justify-center gap-4 text-sm text-muted-foreground">
+      <footer className="container flex flex-wrap items-center justify-center gap-x-4 gap-y-1 py-4 text-sm text-muted-foreground">
         <Link href="/news" className="underline underline-offset-4 hover:text-foreground">
           お知らせ
         </Link>

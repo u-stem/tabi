@@ -12,12 +12,17 @@ import {
   Trash2,
   Users,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { MemberDialog } from "@/components/member-dialog";
-import { ShareDialog } from "@/components/share-dialog";
+
+const ShareDialog = dynamic(() =>
+  import("@/components/share-dialog").then((mod) => mod.ShareDialog),
+);
+
 import {
   AlertDialog,
   AlertDialogAction,

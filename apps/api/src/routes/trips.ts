@@ -1,5 +1,5 @@
 import { createTripSchema, MAX_TRIPS_PER_USER, updateTripSchema } from "@sugara/shared";
-import { and, count, eq, inArray, ne } from "drizzle-orm";
+import { and, count, desc, eq, getTableColumns, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { dayPatterns, schedules, tripDays, tripMembers, trips } from "../db/schema";
@@ -27,38 +27,20 @@ tripRoutes.get("/", async (c) => {
         ? ne(tripMembers.role, "owner")
         : undefined;
 
-  const memberships = await db.query.tripMembers.findMany({
-    where: and(eq(tripMembers.userId, user.id), roleFilter),
-    with: { trip: true },
-  });
+  const tripColumns = getTableColumns(trips);
 
-  if (memberships.length === 0) return c.json([]);
-
-  const tripIds = memberships.map((m) => m.trip.id);
-
-  const scheduleCounts = await db
+  const result = await db
     .select({
-      tripId: schedules.tripId,
-      count: count(),
+      ...tripColumns,
+      role: tripMembers.role,
+      totalSchedules: count(schedules.id),
     })
-    .from(schedules)
-    .where(inArray(schedules.tripId, tripIds))
-    .groupBy(schedules.tripId);
-
-  const countMap = new Map(scheduleCounts.map((r) => [r.tripId, r.count]));
-
-  const result = memberships.map(({ role, trip }) => ({
-    ...trip,
-    role,
-    totalSchedules: countMap.get(trip.id) ?? 0,
-  }));
-
-  // Sort by updatedAt descending
-  result.sort((a, b) => {
-    const dateA = a.updatedAt instanceof Date ? a.updatedAt.getTime() : 0;
-    const dateB = b.updatedAt instanceof Date ? b.updatedAt.getTime() : 0;
-    return dateB - dateA;
-  });
+    .from(tripMembers)
+    .innerJoin(trips, eq(tripMembers.tripId, trips.id))
+    .leftJoin(schedules, eq(trips.id, schedules.tripId))
+    .where(and(eq(tripMembers.userId, user.id), roleFilter))
+    .groupBy(trips.id, tripMembers.role)
+    .orderBy(desc(trips.updatedAt));
 
   return c.json(result);
 });

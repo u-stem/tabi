@@ -22,7 +22,7 @@ import {
   Undo2,
 } from "lucide-react";
 import type { CSSProperties } from "react";
-import { useState } from "react";
+import { memo, useState } from "react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -102,7 +102,7 @@ type SortableProps = {
   isDragging: boolean;
 };
 
-export function ScheduleItem(props: ScheduleItemProps) {
+export const ScheduleItem = memo(function ScheduleItem(props: ScheduleItemProps) {
   const { id, category, disabled, selectable, crossDayDisplay } = props;
   // Cross-day entries use a prefixed ID so they don't collide with same-day
   // schedule IDs in SortableContext. They register as drop targets but can't
@@ -131,7 +131,7 @@ export function ScheduleItem(props: ScheduleItemProps) {
     return <TransportConnector {...props} sortable={sortable} />;
   }
   return <PlaceCard {...props} sortable={sortable} />;
-}
+});
 
 function ScheduleMenu({
   name,

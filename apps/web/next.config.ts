@@ -51,6 +51,9 @@ if (process.env.NODE_ENV === "production") {
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@sugara/api", "@sugara/shared"],
+  experimental: {
+    optimizePackageImports: ["lucide-react", "date-fns"],
+  },
   headers: async () => [
     {
       source: "/(.*)",

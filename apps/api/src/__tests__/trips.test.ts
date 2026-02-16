@@ -72,16 +72,24 @@ describe("Trip routes", () => {
       role: "owner",
     });
     mockDbQuery.schedules.findMany.mockResolvedValue([]);
-    // Default: select queries (trip count, schedule count, member count, candidate query)
+    // Default: select queries (trip count, trip list, member count, candidate query)
     const mockWhere = vi.fn().mockImplementation(() => {
       const result = Promise.resolve([{ count: 0 }]);
-      // Also support chaining .groupBy() for schedule count queries
       (result as unknown as Record<string, unknown>).groupBy = vi.fn().mockResolvedValue([]);
       return result;
     });
     mockDbSelect.mockReturnValue({
       from: vi.fn().mockReturnValue({
         where: mockWhere,
+        innerJoin: vi.fn().mockReturnValue({
+          leftJoin: vi.fn().mockReturnValue({
+            where: vi.fn().mockReturnValue({
+              groupBy: vi.fn().mockReturnValue({
+                orderBy: vi.fn().mockResolvedValue([]),
+              }),
+            }),
+          }),
+        }),
         leftJoin: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             groupBy: vi.fn().mockReturnValue({
@@ -229,22 +237,25 @@ describe("Trip routes", () => {
 
   describe("GET /api/trips", () => {
     it("returns trips with totalSchedules", async () => {
-      mockDbQuery.tripMembers.findMany.mockResolvedValue([
-        {
-          tripId: "trip-1",
-          userId: fakeUser.id,
-          role: "owner",
-          trip: {
-            id: "trip-1",
-            title: "Tokyo Trip",
-            updatedAt: new Date("2025-07-01"),
-          },
-        },
-      ]);
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({
-          where: vi.fn().mockReturnValue({
-            groupBy: vi.fn().mockResolvedValue([{ tripId: "trip-1", count: 2 }]),
+          where: vi.fn().mockResolvedValue([{ count: 0 }]),
+          innerJoin: vi.fn().mockReturnValue({
+            leftJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                groupBy: vi.fn().mockReturnValue({
+                  orderBy: vi.fn().mockResolvedValue([
+                    {
+                      id: "trip-1",
+                      title: "Tokyo Trip",
+                      role: "owner",
+                      totalSchedules: 2,
+                      updatedAt: new Date("2025-07-01"),
+                    },
+                  ]),
+                }),
+              }),
+            }),
           }),
         }),
       });
@@ -259,28 +270,33 @@ describe("Trip routes", () => {
     });
 
     it("returns all trips by default (no scope filter)", async () => {
-      mockDbQuery.tripMembers.findMany.mockResolvedValue([
-        {
-          tripId: "trip-1",
-          userId: fakeUser.id,
-          role: "owner",
-          trip: {
-            id: "trip-1",
-            title: "My Trip",
-            updatedAt: new Date("2025-07-01"),
-          },
-        },
-        {
-          tripId: "trip-2",
-          userId: fakeUser.id,
-          role: "editor",
-          trip: {
-            id: "trip-2",
-            title: "Shared Trip",
-            updatedAt: new Date("2025-07-02"),
-          },
-        },
-      ]);
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: 0 }]),
+          innerJoin: vi.fn().mockReturnValue({
+            leftJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                groupBy: vi.fn().mockReturnValue({
+                  orderBy: vi.fn().mockResolvedValue([
+                    {
+                      id: "trip-1",
+                      title: "My Trip",
+                      role: "owner",
+                      updatedAt: new Date("2025-07-01"),
+                    },
+                    {
+                      id: "trip-2",
+                      title: "Shared Trip",
+                      role: "editor",
+                      updatedAt: new Date("2025-07-02"),
+                    },
+                  ]),
+                }),
+              }),
+            }),
+          }),
+        }),
+      });
 
       const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips");
@@ -291,18 +307,27 @@ describe("Trip routes", () => {
     });
 
     it("returns only owned trips when scope=owned", async () => {
-      mockDbQuery.tripMembers.findMany.mockResolvedValue([
-        {
-          tripId: "trip-1",
-          userId: fakeUser.id,
-          role: "owner",
-          trip: {
-            id: "trip-1",
-            title: "My Trip",
-            updatedAt: new Date("2025-07-01"),
-          },
-        },
-      ]);
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: 0 }]),
+          innerJoin: vi.fn().mockReturnValue({
+            leftJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                groupBy: vi.fn().mockReturnValue({
+                  orderBy: vi.fn().mockResolvedValue([
+                    {
+                      id: "trip-1",
+                      title: "My Trip",
+                      role: "owner",
+                      updatedAt: new Date("2025-07-01"),
+                    },
+                  ]),
+                }),
+              }),
+            }),
+          }),
+        }),
+      });
 
       const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips?scope=owned");
@@ -314,18 +339,27 @@ describe("Trip routes", () => {
     });
 
     it("returns only shared trips when scope=shared", async () => {
-      mockDbQuery.tripMembers.findMany.mockResolvedValue([
-        {
-          tripId: "trip-2",
-          userId: fakeUser.id,
-          role: "editor",
-          trip: {
-            id: "trip-2",
-            title: "Shared Trip",
-            updatedAt: new Date("2025-07-02"),
-          },
-        },
-      ]);
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: 0 }]),
+          innerJoin: vi.fn().mockReturnValue({
+            leftJoin: vi.fn().mockReturnValue({
+              where: vi.fn().mockReturnValue({
+                groupBy: vi.fn().mockReturnValue({
+                  orderBy: vi.fn().mockResolvedValue([
+                    {
+                      id: "trip-2",
+                      title: "Shared Trip",
+                      role: "editor",
+                      updatedAt: new Date("2025-07-02"),
+                    },
+                  ]),
+                }),
+              }),
+            }),
+          }),
+        }),
+      });
 
       const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips?scope=shared");

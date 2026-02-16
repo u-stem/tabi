@@ -2,6 +2,7 @@ import { relations, sql } from "drizzle-orm";
 import {
   boolean,
   date,
+  index,
   integer,
   pgEnum,
   pgTable,
@@ -131,7 +132,10 @@ export const tripMembers = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     role: tripMemberRoleEnum("role").notNull(),
   },
-  (table) => [primaryKey({ columns: [table.tripId, table.userId] })],
+  (table) => [
+    primaryKey({ columns: [table.tripId, table.userId] }),
+    index("trip_members_user_id_idx").on(table.userId),
+  ],
 ).enableRLS();
 
 export const tripDays = pgTable(
@@ -148,41 +152,52 @@ export const tripDays = pgTable(
   (table) => [uniqueIndex("trip_days_trip_date_unique").on(table.tripId, table.date)],
 ).enableRLS();
 
-export const dayPatterns = pgTable("day_patterns", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tripDayId: uuid("trip_day_id")
-    .notNull()
-    .references(() => tripDays.id, { onDelete: "cascade" }),
-  label: varchar("label", { length: 50 }).notNull(),
-  isDefault: boolean("is_default").notNull().default(false),
-  sortOrder: integer("sort_order").notNull().default(0),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-}).enableRLS();
+export const dayPatterns = pgTable(
+  "day_patterns",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tripDayId: uuid("trip_day_id")
+      .notNull()
+      .references(() => tripDays.id, { onDelete: "cascade" }),
+    label: varchar("label", { length: 50 }).notNull(),
+    isDefault: boolean("is_default").notNull().default(false),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [index("day_patterns_trip_day_id_idx").on(table.tripDayId)],
+).enableRLS();
 
-export const schedules = pgTable("schedules", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tripId: uuid("trip_id")
-    .notNull()
-    .references(() => trips.id, { onDelete: "cascade" }),
-  dayPatternId: uuid("day_pattern_id").references(() => dayPatterns.id, {
-    onDelete: "cascade",
-  }),
-  name: varchar("name", { length: 200 }).notNull(),
-  category: scheduleCategoryEnum("category").notNull(),
-  address: varchar("address", { length: 500 }),
-  startTime: time("start_time"),
-  endTime: time("end_time"),
-  sortOrder: integer("sort_order").notNull().default(0),
-  memo: text("memo"),
-  urls: text("urls").array().notNull().default([]),
-  departurePlace: varchar("departure_place", { length: 200 }),
-  arrivalPlace: varchar("arrival_place", { length: 200 }),
-  transportMethod: transportMethodEnum("transport_method"),
-  color: scheduleColorEnum("color").notNull().default("blue"),
-  endDayOffset: integer("end_day_offset"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}).enableRLS();
+export const schedules = pgTable(
+  "schedules",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tripId: uuid("trip_id")
+      .notNull()
+      .references(() => trips.id, { onDelete: "cascade" }),
+    dayPatternId: uuid("day_pattern_id").references(() => dayPatterns.id, {
+      onDelete: "cascade",
+    }),
+    name: varchar("name", { length: 200 }).notNull(),
+    category: scheduleCategoryEnum("category").notNull(),
+    address: varchar("address", { length: 500 }),
+    startTime: time("start_time"),
+    endTime: time("end_time"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    memo: text("memo"),
+    urls: text("urls").array().notNull().default([]),
+    departurePlace: varchar("departure_place", { length: 200 }),
+    arrivalPlace: varchar("arrival_place", { length: 200 }),
+    transportMethod: transportMethodEnum("transport_method"),
+    color: scheduleColorEnum("color").notNull().default("blue"),
+    endDayOffset: integer("end_day_offset"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("schedules_trip_id_idx").on(table.tripId),
+    index("schedules_day_pattern_id_idx").on(table.dayPatternId),
+  ],
+).enableRLS();
 
 export const reactionTypeEnum = pgEnum("reaction_type", ["like", "hmm"]);
 
@@ -201,20 +216,24 @@ export const scheduleReactions = pgTable(
   (table) => [primaryKey({ columns: [table.scheduleId, table.userId] })],
 ).enableRLS();
 
-export const activityLogs = pgTable("activity_logs", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  tripId: uuid("trip_id")
-    .notNull()
-    .references(() => trips.id, { onDelete: "cascade" }),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  action: varchar("action", { length: 50 }).notNull(),
-  entityType: varchar("entity_type", { length: 50 }).notNull(),
-  entityName: varchar("entity_name", { length: 200 }),
-  detail: varchar("detail", { length: 200 }),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-}).enableRLS();
+export const activityLogs = pgTable(
+  "activity_logs",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tripId: uuid("trip_id")
+      .notNull()
+      .references(() => trips.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    action: varchar("action", { length: 50 }).notNull(),
+    entityType: varchar("entity_type", { length: 50 }).notNull(),
+    entityName: varchar("entity_name", { length: 200 }),
+    detail: varchar("detail", { length: 200 }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [index("activity_logs_trip_id_created_at_idx").on(table.tripId, table.createdAt)],
+).enableRLS();
 
 export const friends = pgTable(
   "friends",
@@ -235,6 +254,8 @@ export const friends = pgTable(
       sql`least(${table.requesterId}, ${table.addresseeId})`,
       sql`greatest(${table.requesterId}, ${table.addresseeId})`,
     ),
+    index("friends_requester_id_idx").on(table.requesterId),
+    index("friends_addressee_id_idx").on(table.addresseeId),
   ],
 ).enableRLS();
 

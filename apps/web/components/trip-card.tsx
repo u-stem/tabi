@@ -3,6 +3,7 @@
 import type { TripListItem } from "@sugara/shared";
 import { ROLE_LABELS, STATUS_LABELS } from "@sugara/shared";
 import Link from "next/link";
+import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
@@ -16,7 +17,7 @@ type TripCardProps = TripListItem & {
   onSelect?: (id: string) => void;
 };
 
-export function TripCard({
+export const TripCard = memo(function TripCard({
   id,
   title,
   destination,
@@ -91,4 +92,4 @@ export function TripCard({
       </Card>
     </Link>
   );
-}
+});

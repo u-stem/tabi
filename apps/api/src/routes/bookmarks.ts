@@ -3,13 +3,15 @@ import {
   createBookmarkSchema,
   MAX_BOOKMARKS_PER_LIST,
   reorderBookmarksSchema,
+  saveFromSchedulesSchema,
   updateBookmarkSchema,
 } from "@sugara/shared";
 import { and, count, eq, inArray, max } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { bookmarkLists, bookmarks } from "../db/schema";
+import { bookmarkLists, bookmarks, schedules } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
+import { checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -69,12 +71,71 @@ bookmarkRoutes.post("/:listId/bookmarks", async (c) => {
       listId,
       name: parsed.data.name,
       memo: parsed.data.memo ?? null,
-      url: parsed.data.url ?? null,
+      urls: parsed.data.urls,
       sortOrder: bmCount,
     })
     .returning();
 
   return c.json(created, 201);
+});
+
+// Save schedules as bookmarks
+bookmarkRoutes.post("/:listId/bookmarks/from-schedules", async (c) => {
+  const user = c.get("user");
+  const listId = c.req.param("listId");
+
+  const list = await verifyListOwnership(listId, user.id);
+  if (!list) return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
+
+  const body = await c.req.json();
+  const parsed = saveFromSchedulesSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  // Verify user has access to the trip (viewer or above)
+  const role = await checkTripAccess(parsed.data.tripId, user.id);
+  if (!role) {
+    return c.json({ error: ERROR_MSG.SCHEDULE_TRIP_MISMATCH }, 404);
+  }
+
+  // Verify all schedules belong to the trip
+  const found = await db.query.schedules.findMany({
+    where: and(
+      inArray(schedules.id, parsed.data.scheduleIds),
+      eq(schedules.tripId, parsed.data.tripId),
+    ),
+  });
+  if (found.length !== parsed.data.scheduleIds.length) {
+    return c.json({ error: ERROR_MSG.SCHEDULE_TRIP_MISMATCH }, 404);
+  }
+
+  const [{ count: bmCount }] = await db
+    .select({ count: count() })
+    .from(bookmarks)
+    .where(eq(bookmarks.listId, listId));
+
+  if (bmCount + found.length > MAX_BOOKMARKS_PER_LIST) {
+    return c.json({ error: ERROR_MSG.LIMIT_BOOKMARKS }, 409);
+  }
+
+  const [{ maxOrder }] = await db
+    .select({ maxOrder: max(bookmarks.sortOrder) })
+    .from(bookmarks)
+    .where(eq(bookmarks.listId, listId));
+  let nextOrder = (maxOrder ?? -1) + 1;
+
+  await db.insert(bookmarks).values(
+    found.map((s) => ({
+      listId,
+      name: s.name,
+      memo: s.memo,
+      urls: s.urls,
+      sortOrder: nextOrder++,
+    })),
+  );
+
+  return c.json({ ok: true, count: found.length }, 201);
 });
 
 // Reorder bookmarks
@@ -230,7 +291,7 @@ bookmarkRoutes.post("/:listId/bookmarks/batch-duplicate", async (c) => {
       listId,
       name: bm.name,
       memo: bm.memo,
-      url: bm.url,
+      urls: bm.urls,
       sortOrder: nextOrder++,
     })),
   );

@@ -1,6 +1,22 @@
 "use client";
 
 import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   BOOKMARK_LIST_NAME_MAX_LENGTH,
   BOOKMARK_MEMO_MAX_LENGTH,
   BOOKMARK_NAME_MAX_LENGTH,
@@ -9,6 +25,7 @@ import {
   type BookmarkListVisibility,
   type BookmarkResponse,
   MAX_BOOKMARKS_PER_LIST,
+  MAX_URLS_PER_BOOKMARK,
 } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,6 +33,7 @@ import {
   CheckSquare,
   Copy,
   ExternalLink,
+  Minus,
   MoreHorizontal,
   Pencil,
   Plus,
@@ -25,9 +43,10 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import type { CSSProperties } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-
+import { DragHandle } from "@/components/drag-handle";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -97,8 +116,14 @@ export default function BookmarkListDetailPage() {
   const [editListVisibility, setEditListVisibility] = useState<BookmarkListVisibility>("private");
   const [bookmarkName, setBookmarkName] = useState("");
   const [bookmarkMemo, setBookmarkMemo] = useState("");
-  const [bookmarkUrl, setBookmarkUrl] = useState("");
+  const [bookmarkUrls, setBookmarkUrls] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [localBookmarks, setLocalBookmarks] = useState<BookmarkResponse[]>([]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+  );
 
   const {
     data: lists = [],
@@ -119,6 +144,15 @@ export default function BookmarkListDetailPage() {
   });
 
   const showSkeleton = useDelayedLoading(listsLoading);
+
+  useEffect(() => {
+    setLocalBookmarks((prev) => {
+      if (prev.length === bookmarks.length && prev.every((b, i) => b === bookmarks[i])) {
+        return prev;
+      }
+      return bookmarks;
+    });
+  }, [bookmarks]);
 
   useEffect(() => {
     document.title = list ? `${list.name} - sugara` : "ブックマーク - sugara";
@@ -181,7 +215,7 @@ export default function BookmarkListDetailPage() {
         body: JSON.stringify({
           name: trimmed,
           memo: bookmarkMemo.trim() || undefined,
-          url: bookmarkUrl.trim() || undefined,
+          urls: bookmarkUrls.filter((u) => u.trim()),
         }),
       });
       toast.success(MSG.BOOKMARK_ADDED);
@@ -208,7 +242,7 @@ export default function BookmarkListDetailPage() {
         body: JSON.stringify({
           name: trimmed,
           memo: bookmarkMemo.trim() || null,
-          url: bookmarkUrl.trim() || null,
+          urls: bookmarkUrls.filter((u) => u.trim()),
         }),
       });
       toast.success(MSG.BOOKMARK_UPDATED);
@@ -240,19 +274,44 @@ export default function BookmarkListDetailPage() {
   function resetBookmarkForm() {
     setBookmarkName("");
     setBookmarkMemo("");
-    setBookmarkUrl("");
+    setBookmarkUrls([]);
   }
 
   function openEditBookmark(bm: BookmarkResponse) {
     setBookmarkName(bm.name);
     setBookmarkMemo(bm.memo ?? "");
-    setBookmarkUrl(bm.url ?? "");
+    setBookmarkUrls(bm.urls ?? []);
     setEditingBookmark(bm);
   }
 
   function openAddBookmark() {
     resetBookmarkForm();
     setAddBookmarkOpen(true);
+  }
+
+  // -- Drag and drop --
+
+  async function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const oldIndex = localBookmarks.findIndex((bm) => bm.id === active.id);
+    const newIndex = localBookmarks.findIndex((bm) => bm.id === over.id);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const reordered = arrayMove(localBookmarks, oldIndex, newIndex);
+    const snapshot = localBookmarks;
+    setLocalBookmarks(reordered);
+
+    try {
+      await api(`/api/bookmark-lists/${listId}/bookmarks/reorder`, {
+        method: "PATCH",
+        body: JSON.stringify({ orderedIds: reordered.map((bm) => bm.id) }),
+      });
+    } catch {
+      setLocalBookmarks(snapshot);
+      toast.error(MSG.BOOKMARK_REORDER_FAILED);
+    }
   }
 
   // -- Selection mode --
@@ -267,7 +326,7 @@ export default function BookmarkListDetailPage() {
   }
 
   function selectAll() {
-    setSelectedIds(new Set(bookmarks.map((bm) => bm.id)));
+    setSelectedIds(new Set(localBookmarks.map((bm) => bm.id)));
   }
 
   function deselectAll() {
@@ -379,6 +438,29 @@ export default function BookmarkListDetailPage() {
                 ? "フレンド限定"
                 : "非公開"}
           </Badge>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="ml-auto h-8 w-8" disabled={!online}>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => {
+                  setEditListName(list.name);
+                  setEditListVisibility(list.visibility);
+                  setEditingList(true);
+                }}
+              >
+                <Pencil className="h-4 w-4" />
+                編集
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => setDeletingList(true)}>
+                <Trash2 className="h-4 w-4" />
+                削除
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <p className="text-sm text-muted-foreground">{list.bookmarkCount}件のブックマーク</p>
         {selectionMode ? (
@@ -399,89 +481,65 @@ export default function BookmarkListDetailPage() {
               </Button>
             </div>
             <div className="flex items-center gap-1.5 ml-auto">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
+              <Tooltip>
+                <TooltipTrigger asChild>
                   <Button
                     variant="outline"
                     size="sm"
+                    onClick={handleBatchDuplicate}
                     disabled={selectedIds.size === 0 || batchLoading}
                   >
-                    <MoreHorizontal className="h-4 w-4" />
+                    <Copy className="h-4 w-4" />
+                    <span className="hidden sm:inline">複製</span>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={handleBatchDuplicate}>
-                    <Copy className="mr-2 h-3 w-3" />
-                    複製
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive"
+                </TooltipTrigger>
+                <TooltipContent className="sm:hidden">複製</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    size="sm"
                     onClick={() => setBatchDeleteOpen(true)}
+                    disabled={selectedIds.size === 0 || batchLoading}
                   >
-                    <Trash2 className="mr-2 h-3 w-3" />
-                    削除
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <Trash2 className="h-4 w-4" />
+                    <span className="hidden sm:inline">削除</span>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="sm:hidden">削除</TooltipContent>
+              </Tooltip>
               <Button variant="outline" size="sm" onClick={exitSelection}>
                 キャンセル
               </Button>
             </div>
           </div>
         ) : (
-          <div className="mt-3 flex flex-wrap items-center gap-1.5">
-            <div className="flex items-center gap-1.5 ml-auto">
-              {bookmarks.length > 0 && online && (
-                <Button variant="outline" size="sm" onClick={() => setSelectionMode(true)}>
-                  <CheckSquare className="h-4 w-4" />
-                  <span className="hidden sm:inline">選択</span>
-                </Button>
-              )}
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={openAddBookmark}
-                      disabled={!online || bookmarks.length >= MAX_BOOKMARKS_PER_LIST}
-                    >
-                      <Plus className="h-4 w-4" />
-                      追加
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                {bookmarks.length >= MAX_BOOKMARKS_PER_LIST && (
-                  <TooltipContent>{MSG.LIMIT_BOOKMARKS}</TooltipContent>
-                )}
-              </Tooltip>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" className="h-8 w-8" disabled={!online}>
-                    <MoreHorizontal className="h-4 w-4" />
+          <div className="mt-3 flex items-center gap-1.5 justify-end">
+            {bookmarks.length > 0 && online && (
+              <Button variant="outline" size="sm" onClick={() => setSelectionMode(true)}>
+                <CheckSquare className="h-4 w-4" />
+                <span className="hidden sm:inline">選択</span>
+              </Button>
+            )}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={openAddBookmark}
+                    disabled={!online || bookmarks.length >= MAX_BOOKMARKS_PER_LIST}
+                  >
+                    <Plus className="h-4 w-4" />
+                    追加
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => {
-                      setEditListName(list.name);
-                      setEditListVisibility(list.visibility);
-                      setEditingList(true);
-                    }}
-                  >
-                    <Pencil className="h-4 w-4" />
-                    編集
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={() => setDeletingList(true)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    削除
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
+                </span>
+              </TooltipTrigger>
+              {bookmarks.length >= MAX_BOOKMARKS_PER_LIST && (
+                <TooltipContent>{MSG.LIMIT_BOOKMARKS}</TooltipContent>
+              )}
+            </Tooltip>
           </div>
         )}
       </div>
@@ -494,95 +552,51 @@ export default function BookmarkListDetailPage() {
               <Skeleton key={i} className="h-16 w-full rounded-lg" />
             ))}
           </div>
-        ) : bookmarks.length === 0 ? (
+        ) : localBookmarks.length === 0 ? (
           <p className="mt-8 text-center text-muted-foreground">
             まだブックマークがありません。追加からブックマークを登録してみましょう
           </p>
-        ) : (
+        ) : selectionMode ? (
           <div className="space-y-3">
-            {bookmarks.map((bm) =>
-              selectionMode ? (
-                <button
-                  key={bm.id}
-                  type="button"
-                  onClick={() => toggleSelect(bm.id)}
-                  className={cn(
-                    "flex w-full items-start gap-3 rounded-lg border bg-card px-3 py-2 text-left shadow-sm",
-                    selectedIds.has(bm.id) && SELECTED_RING,
-                  )}
-                >
-                  <div className="flex shrink-0 items-center pt-0.5">
-                    <SelectionIndicator checked={selectedIds.has(bm.id)} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <span className="break-words font-medium text-sm">{bm.name}</span>
-                    {bm.url && (
-                      <p className="mt-1 flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400">
-                        <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                        <span className="truncate">{bm.url.replace(/^https?:\/\//, "")}</span>
-                      </p>
-                    )}
-                    {bm.memo && (
-                      <div className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
-                        <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
-                        <p className="whitespace-pre-line">{bm.memo}</p>
-                      </div>
-                    )}
-                  </div>
-                </button>
-              ) : (
-                <div
-                  key={bm.id}
-                  className="flex items-start gap-3 rounded-lg border bg-card px-3 py-2 shadow-sm"
-                >
-                  <div className="min-w-0 flex-1">
-                    <span className="break-words font-medium text-sm">{bm.name}</span>
-                    {bm.url && (
-                      <a
-                        href={bm.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="mt-1 flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
-                      >
-                        <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                        <span className="truncate">{bm.url.replace(/^https?:\/\//, "")}</span>
-                      </a>
-                    )}
-                    {bm.memo && (
-                      <div className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
-                        <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
-                        <p className="whitespace-pre-line">{bm.memo}</p>
-                      </div>
-                    )}
-                  </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button
-                        type="button"
-                        className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        aria-label={`${bm.name}のメニュー`}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => openEditBookmark(bm)}>
-                        <Pencil className="mr-2 h-3 w-3" />
-                        編集
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => setDeletingBookmark(bm)}
-                      >
-                        <Trash2 className="mr-2 h-3 w-3" />
-                        削除
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+            {localBookmarks.map((bm) => (
+              <button
+                key={bm.id}
+                type="button"
+                onClick={() => toggleSelect(bm.id)}
+                className={cn(
+                  "flex w-full items-start gap-3 rounded-lg border bg-card px-3 py-2 text-left shadow-sm",
+                  selectedIds.has(bm.id) && SELECTED_RING,
+                )}
+              >
+                <div className="flex shrink-0 items-center pt-0.5">
+                  <SelectionIndicator checked={selectedIds.has(bm.id)} />
                 </div>
-              ),
-            )}
+                <BookmarkItemContent bm={bm} />
+              </button>
+            ))}
           </div>
+        ) : (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext
+              items={localBookmarks.map((bm) => bm.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {localBookmarks.map((bm) => (
+                  <SortableBookmarkItem
+                    key={bm.id}
+                    bm={bm}
+                    onEdit={openEditBookmark}
+                    onDelete={setDeletingBookmark}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         )}
       </div>
 
@@ -604,7 +618,9 @@ export default function BookmarkListDetailPage() {
                   maxLength={BOOKMARK_LIST_NAME_MAX_LENGTH}
                   required
                 />
-                <p className="text-right text-xs text-muted-foreground">{editListName.length}/{BOOKMARK_LIST_NAME_MAX_LENGTH}</p>
+                <p className="text-right text-xs text-muted-foreground">
+                  {editListName.length}/{BOOKMARK_LIST_NAME_MAX_LENGTH}
+                </p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-list-visibility">公開設定</Label>
@@ -654,10 +670,10 @@ export default function BookmarkListDetailPage() {
             <BookmarkFormFields
               name={bookmarkName}
               memo={bookmarkMemo}
-              url={bookmarkUrl}
+              urls={bookmarkUrls}
               onNameChange={setBookmarkName}
               onMemoChange={setBookmarkMemo}
-              onUrlChange={setBookmarkUrl}
+              onUrlsChange={setBookmarkUrls}
             />
             <DialogFooter>
               <Button
@@ -697,10 +713,10 @@ export default function BookmarkListDetailPage() {
             <BookmarkFormFields
               name={bookmarkName}
               memo={bookmarkMemo}
-              url={bookmarkUrl}
+              urls={bookmarkUrls}
               onNameChange={setBookmarkName}
               onMemoChange={setBookmarkMemo}
-              onUrlChange={setBookmarkUrl}
+              onUrlsChange={setBookmarkUrls}
             />
             <DialogFooter>
               <Button
@@ -792,21 +808,137 @@ export default function BookmarkListDetailPage() {
   );
 }
 
+function BookmarkItemContent({ bm, asLink }: { bm: BookmarkResponse; asLink?: boolean }) {
+  const urls = bm.urls ?? [];
+  return (
+    <div className="min-w-0 flex-1">
+      <span className="break-words font-medium text-sm">{bm.name}</span>
+      {urls.length > 0 &&
+        urls.map((url) =>
+          asLink ? (
+            <a
+              key={url}
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-1 flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+            >
+              <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+              <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
+            </a>
+          ) : (
+            <p
+              key={url}
+              className="mt-1 flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400"
+            >
+              <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+              <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
+            </p>
+          ),
+        )}
+      {bm.memo && (
+        <div className="mt-1 flex items-start gap-1.5 text-xs text-muted-foreground">
+          <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
+          <p className="whitespace-pre-line">{bm.memo}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SortableBookmarkItem({
+  bm,
+  onEdit,
+  onDelete,
+}: {
+  bm: BookmarkResponse;
+  onEdit: (bm: BookmarkResponse) => void;
+  onDelete: (bm: BookmarkResponse) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: bm.id,
+  });
+
+  const style: CSSProperties = {
+    transform: CSS.Translate.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-start gap-2 rounded-lg border bg-card px-3 py-2 shadow-sm",
+        isDragging && "opacity-50",
+      )}
+    >
+      <div className="flex shrink-0 items-center pt-0.5">
+        <DragHandle attributes={attributes} listeners={listeners} />
+      </div>
+      <BookmarkItemContent bm={bm} asLink />
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            aria-label={`${bm.name}のメニュー`}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onEdit(bm)}>
+            <Pencil className="mr-2 h-3 w-3" />
+            編集
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-destructive" onClick={() => onDelete(bm)}>
+            <Trash2 className="mr-2 h-3 w-3" />
+            削除
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
 function BookmarkFormFields({
   name,
   memo,
-  url,
+  urls,
   onNameChange,
   onMemoChange,
-  onUrlChange,
+  onUrlsChange,
 }: {
   name: string;
   memo: string;
-  url: string;
+  urls: string[];
   onNameChange: (v: string) => void;
   onMemoChange: (v: string) => void;
-  onUrlChange: (v: string) => void;
+  onUrlsChange: (v: string[]) => void;
 }) {
+  const displayUrls = urls.length > 0 ? urls : [""];
+
+  // Stable keys for the dynamic URL list to avoid index-based keys
+  const nextKeyRef = useRef(displayUrls.length);
+  const [urlKeys, setUrlKeys] = useState<number[]>(() => displayUrls.map((_, i) => i));
+  const prevLengthRef = useRef(displayUrls.length);
+
+  if (prevLengthRef.current !== displayUrls.length) {
+    prevLengthRef.current = displayUrls.length;
+    nextKeyRef.current = displayUrls.length;
+    setUrlKeys(Array.from({ length: displayUrls.length }, (_, i) => i));
+  }
+
+  const addUrlKey = useCallback(() => {
+    const key = nextKeyRef.current++;
+    setUrlKeys((prev) => [...prev, key]);
+  }, []);
+
+  const removeUrlKey = useCallback((index: number) => {
+    setUrlKeys((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
   return (
     <div className="space-y-4 py-2">
       <div className="space-y-2">
@@ -820,7 +952,9 @@ function BookmarkFormFields({
           required
           autoFocus
         />
-        <p className="text-right text-xs text-muted-foreground">{name.length}/{BOOKMARK_NAME_MAX_LENGTH}</p>
+        <p className="text-right text-xs text-muted-foreground">
+          {name.length}/{BOOKMARK_NAME_MAX_LENGTH}
+        </p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="bookmark-memo">メモ</Label>
@@ -832,18 +966,54 @@ function BookmarkFormFields({
           rows={3}
           maxLength={BOOKMARK_MEMO_MAX_LENGTH}
         />
-        <p className="text-right text-xs text-muted-foreground">{memo.length}/{BOOKMARK_MEMO_MAX_LENGTH}</p>
+        <p className="text-right text-xs text-muted-foreground">
+          {memo.length}/{BOOKMARK_MEMO_MAX_LENGTH}
+        </p>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="bookmark-url">URL</Label>
-        <Input
-          id="bookmark-url"
-          type="url"
-          value={url}
-          onChange={(e) => onUrlChange(e.target.value)}
-          placeholder="https://..."
-          maxLength={BOOKMARK_URL_MAX_LENGTH}
-        />
+        <Label>URL</Label>
+        {displayUrls.map((url, index) => (
+          <div key={urlKeys[index]} className="flex items-center gap-1">
+            <Input
+              type="url"
+              value={url}
+              onChange={(e) => {
+                const next = [...displayUrls];
+                next[index] = e.target.value;
+                onUrlsChange(next);
+              }}
+              placeholder="https://..."
+              maxLength={BOOKMARK_URL_MAX_LENGTH}
+            />
+            {index > 0 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0"
+                onClick={() => {
+                  removeUrlKey(index);
+                  onUrlsChange(displayUrls.filter((_, i) => i !== index));
+                }}
+                aria-label="URL を削除"
+              >
+                <Minus className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        ))}
+        {displayUrls.length < MAX_URLS_PER_BOOKMARK && (
+          <button
+            type="button"
+            className="text-xs text-muted-foreground hover:text-foreground"
+            onClick={() => {
+              addUrlKey();
+              onUrlsChange([...displayUrls, ""]);
+            }}
+          >
+            <Plus className="inline h-3 w-3" /> URL を追加
+          </button>
+        )}
       </div>
     </div>
   );

@@ -8,9 +8,9 @@ import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
-import { UserAvatar } from "@/components/user-avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { isSafeUrl } from "@/lib/format";
@@ -121,9 +121,7 @@ function BookmarkListCard({ list, userId }: { list: BookmarkListResponse; userId
                               className="mt-0.5 flex w-fit max-w-full items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
                             >
                               <ExternalLink className="h-3 w-3 shrink-0" />
-                              <span className="truncate">
-                                {url.replace(/^https?:\/\//, "")}
-                              </span>
+                              <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
                             </a>
                           ),
                       )}
@@ -139,10 +137,7 @@ function BookmarkListCard({ list, userId }: { list: BookmarkListResponse; userId
   );
 }
 
-function ProfileContent({
-  profile,
-  userId,
-}: { profile: PublicProfileResponse; userId: string }) {
+function ProfileContent({ profile, userId }: { profile: PublicProfileResponse; userId: string }) {
   return (
     <>
       <div className="mb-8 flex items-center gap-4">

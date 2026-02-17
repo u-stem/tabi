@@ -184,6 +184,10 @@ export const MSG = {
   BOOKMARK_DELETE_FAILED: "ブックマークの削除に失敗しました",
   BOOKMARK_REORDER_FAILED: "並び替えに失敗しました",
   PROFILE_FETCH_FAILED: "プロフィールの取得に失敗しました",
+  BOOKMARK_SAVED_TO_CANDIDATES: (n: number) => `${n}件を候補に追加しました`,
+  BOOKMARK_SAVE_TO_CANDIDATES_FAILED: "候補への追加に失敗しました",
+  SCHEDULE_SAVED_TO_BOOKMARKS: (n: number) => `${n}件をブックマークに保存しました`,
+  SCHEDULE_SAVE_TO_BOOKMARKS_FAILED: "ブックマークへの保存に失敗しました",
 
   // Limits
   LIMIT_BOOKMARK_LISTS: `リストは最大${MAX_BOOKMARK_LISTS_PER_USER}件まで作成できます`,

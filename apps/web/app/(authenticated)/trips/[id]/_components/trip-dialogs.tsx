@@ -4,6 +4,7 @@ import type { CandidateResponse, TripResponse } from "@sugara/shared";
 import { PATTERN_LABEL_MAX_LENGTH } from "@sugara/shared";
 import { Check, Plus, Trash2 } from "lucide-react";
 import { ActivityLog } from "@/components/activity-log";
+import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
 import {
   AlertDialog,
@@ -171,11 +172,12 @@ export function MobileCandidateDialog({
   scheduleLimitReached,
   scheduleLimitMessage,
   maxEndDayOffset,
+  onSaveToBookmark,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  rightPanelTab: "candidates" | "activity";
-  setRightPanelTab: (tab: "candidates" | "activity") => void;
+  rightPanelTab: "candidates" | "activity" | "bookmarks";
+  setRightPanelTab: (tab: "candidates" | "activity" | "bookmarks") => void;
   tripId: string;
   candidates: CandidateResponse[];
   currentDay: TripResponse["days"][number] | null;
@@ -185,11 +187,12 @@ export function MobileCandidateDialog({
   scheduleLimitReached: boolean;
   scheduleLimitMessage: string;
   maxEndDayOffset: number;
+  onSaveToBookmark?: (scheduleIds: string[]) => void;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[80vh] flex-col overflow-hidden sm:max-w-sm">
-        <DialogTitle className="sr-only">候補・履歴</DialogTitle>
+        <DialogTitle className="sr-only">候補・ブックマーク・履歴</DialogTitle>
         <div className="flex shrink-0 select-none border-b" role="tablist">
           <button
             type="button"
@@ -207,6 +210,20 @@ export function MobileCandidateDialog({
             {candidates.length > 0 && (
               <span className="ml-1 rounded-full bg-muted px-1.5 text-xs">{candidates.length}</span>
             )}
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={rightPanelTab === "bookmarks"}
+            onClick={() => setRightPanelTab("bookmarks")}
+            className={cn(
+              "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
+              rightPanelTab === "bookmarks"
+                ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            ブックマーク
           </button>
           <button
             type="button"
@@ -238,8 +255,13 @@ export function MobileCandidateDialog({
                 scheduleLimitReached={scheduleLimitReached}
                 scheduleLimitMessage={scheduleLimitMessage}
                 maxEndDayOffset={maxEndDayOffset}
+                onSaveToBookmark={onSaveToBookmark}
               />
             )
+          ) : rightPanelTab === "bookmarks" ? (
+            <div className="p-4">
+              <BookmarkPanel tripId={tripId} disabled={disabled} onCandidateAdded={onRefresh} />
+            </div>
           ) : (
             <div className="p-4">
               <ActivityLog tripId={tripId} />

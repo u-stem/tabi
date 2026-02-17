@@ -166,7 +166,7 @@ bookmarkListRoutes.post("/:listId/duplicate", async (c) => {
           listId: newList.id,
           name: bm.name,
           memo: bm.memo,
-          url: bm.url,
+          urls: bm.urls,
           sortOrder: i,
         })),
       );

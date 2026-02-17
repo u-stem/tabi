@@ -23,7 +23,10 @@ import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { toast } from "sonner";
 import { ActivityLog } from "@/components/activity-log";
+import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dialog";
+import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
 
@@ -45,7 +48,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { api } from "@/lib/api";
+import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { getCrossDayEntries } from "@/lib/cross-day";
@@ -116,7 +119,11 @@ export default function TripDetailPage() {
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [candidateOpen, setCandidateOpen] = useState(false);
-  const [rightPanelTab, setRightPanelTab] = useState<"candidates" | "activity">("candidates");
+  const [rightPanelTab, setRightPanelTab] = useState<"candidates" | "activity" | "bookmarks">(
+    "candidates",
+  );
+  const [saveToBookmarkIds, setSaveToBookmarkIds] = useState<string[]>([]);
+  const [bookmarkPickerOpen, setBookmarkPickerOpen] = useState(false);
   const timelinePanelRef = useRef<HTMLDivElement>(null);
 
   // Keyboard shortcuts
@@ -209,6 +216,27 @@ export default function TripDetailPage() {
     broadcastChange();
     await queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId) });
   }, [invalidateTrip, broadcastChange, queryClient, tripId]);
+
+  const handleSaveToBookmark = useCallback((scheduleIds: string[]) => {
+    setSaveToBookmarkIds(scheduleIds);
+    setBookmarkPickerOpen(true);
+  }, []);
+
+  const handleBookmarkListSelected = useCallback(
+    async (listId: string) => {
+      try {
+        await api(`/api/bookmark-lists/${listId}/bookmarks/from-schedules`, {
+          method: "POST",
+          body: JSON.stringify({ tripId, scheduleIds: saveToBookmarkIds }),
+        });
+        toast.success(MSG.SCHEDULE_SAVED_TO_BOOKMARKS(saveToBookmarkIds.length));
+        queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all });
+      } catch (err) {
+        toast.error(getApiErrorMessage(err, MSG.SCHEDULE_SAVE_TO_BOOKMARKS_FAILED));
+      }
+    },
+    [tripId, saveToBookmarkIds, queryClient],
+  );
 
   useEffect(() => {
     if (trip) {
@@ -543,6 +571,7 @@ export default function TripDetailPage() {
                     overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
                     scheduleLimitReached={scheduleLimitReached}
                     scheduleLimitMessage={scheduleLimitMessage}
+                    onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
                     headerContent={
                       <div className="mb-3 flex flex-wrap select-none items-center gap-1.5">
                         {currentDay.patterns.map((pattern, index) => {
@@ -674,6 +703,20 @@ export default function TripDetailPage() {
                   <button
                     type="button"
                     role="tab"
+                    aria-selected={rightPanelTab === "bookmarks"}
+                    onClick={() => setRightPanelTab("bookmarks")}
+                    className={cn(
+                      "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
+                      rightPanelTab === "bookmarks"
+                        ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    ブックマーク
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
                     aria-selected={rightPanelTab === "activity"}
                     onClick={() => setRightPanelTab("activity")}
                     className={cn(
@@ -702,6 +745,13 @@ export default function TripDetailPage() {
                       scheduleLimitMessage={scheduleLimitMessage}
                       overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
                       maxEndDayOffset={Math.max(0, trip.days.length - 1)}
+                      onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                    />
+                  ) : rightPanelTab === "bookmarks" ? (
+                    <BookmarkPanel
+                      tripId={tripId}
+                      disabled={!online || !canEdit}
+                      onCandidateAdded={onMutate}
                     />
                   ) : (
                     <ActivityLog tripId={tripId} />
@@ -747,10 +797,16 @@ export default function TripDetailPage() {
           scheduleLimitReached={scheduleLimitReached}
           scheduleLimitMessage={scheduleLimitMessage}
           maxEndDayOffset={Math.max(0, trip.days.length - 1)}
+          onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
         />
         <RenamePatternDialog patternOps={patternOps} />
         <BatchDeleteDialog selection={selection} />
         <DeletePatternDialog patternOps={patternOps} />
+        <BookmarkListPickerDialog
+          open={bookmarkPickerOpen}
+          onOpenChange={setBookmarkPickerOpen}
+          onSelect={handleBookmarkListSelected}
+        />
       </div>
     </SelectionProvider>
   );

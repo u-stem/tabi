@@ -16,6 +16,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowUpDown,
+  Bookmark,
   CheckCheck,
   CheckSquare,
   Clock,
@@ -87,6 +88,7 @@ type CandidatePanelProps = {
   onAddDialogOpenChange?: (open: boolean) => void;
   overCandidateId?: string | null;
   maxEndDayOffset?: number;
+  onSaveToBookmark?: (scheduleIds: string[]) => void;
 };
 
 function CandidateCard({
@@ -96,6 +98,7 @@ function CandidateCard({
   onAssign,
   onReact,
   onRemoveReaction,
+  onSaveToBookmark,
   disabled,
   selectable,
   selected,
@@ -108,6 +111,7 @@ function CandidateCard({
   onAssign: () => void;
   onReact?: (type: "like" | "hmm") => void;
   onRemoveReaction?: () => void;
+  onSaveToBookmark?: () => void;
   disabled?: boolean;
   selectable?: boolean;
   selected?: boolean;
@@ -309,6 +313,12 @@ function CandidateCard({
                 <ArrowLeft className="mr-2 h-3 w-3" />
                 予定に追加
               </DropdownMenuItem>
+              {onSaveToBookmark && (
+                <DropdownMenuItem onClick={onSaveToBookmark}>
+                  <Bookmark className="mr-2 h-3 w-3" />
+                  ブックマークに保存
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
                 <Trash2 className="mr-2 h-3 w-3" />
                 削除
@@ -355,6 +365,7 @@ export function CandidatePanel({
   onAddDialogOpenChange: controlledOnAddOpenChange,
   overCandidateId,
   maxEndDayOffset = 0,
+  onSaveToBookmark,
 }: CandidatePanelProps) {
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
@@ -502,6 +513,12 @@ export function CandidatePanel({
                 <Copy className="mr-2 h-3 w-3" />
                 複製
               </DropdownMenuItem>
+              {onSaveToBookmark && (
+                <DropdownMenuItem onClick={() => onSaveToBookmark(Array.from(selectedIds ?? []))}>
+                  <Bookmark className="mr-2 h-3 w-3" />
+                  ブックマークに保存
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 className="text-destructive"
                 onClick={() => sel.setBatchDeleteOpen(true)}
@@ -601,6 +618,9 @@ export function CandidatePanel({
                             onAssign={() => handleAssign(spot.id)}
                             onReact={(type) => handleReact(spot.id, type)}
                             onRemoveReaction={() => handleRemoveReaction(spot.id)}
+                            onSaveToBookmark={
+                              onSaveToBookmark ? () => onSaveToBookmark([spot.id]) : undefined
+                            }
                             disabled={disabled}
                             draggable={!selectionMode}
                             selectable={selectionMode}
@@ -632,6 +652,7 @@ export function CandidatePanel({
               onAssign={() => handleAssign(spot.id)}
               onReact={(type) => handleReact(spot.id, type)}
               onRemoveReaction={() => handleRemoveReaction(spot.id)}
+              onSaveToBookmark={onSaveToBookmark ? () => onSaveToBookmark([spot.id]) : undefined}
               disabled={disabled}
               selectable={selectionMode}
               selected={selectedIds?.has(spot.id)}

@@ -11,6 +11,7 @@ import type {
 } from "@sugara/shared";
 import { shiftTime, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import {
+  Bookmark,
   Clock,
   ExternalLink,
   MapPin,
@@ -96,6 +97,7 @@ type ScheduleItemProps = {
   siblingSchedules?: ScheduleResponse[];
   /** ISO date string (YYYY-MM-DD) for transit search links */
   date?: string;
+  onSaveToBookmark?: () => void;
 };
 
 type UseSortableReturn = ReturnType<typeof useSortable>;
@@ -145,12 +147,14 @@ function ScheduleMenu({
   onEdit,
   onDelete,
   onUnassign,
+  onSaveToBookmark,
 }: {
   name: string;
   disabled?: boolean;
   onEdit: () => void;
   onDelete: () => void;
   onUnassign?: () => void;
+  onSaveToBookmark?: () => void;
 }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
@@ -176,6 +180,12 @@ function ScheduleMenu({
             <DropdownMenuItem onClick={onUnassign}>
               <Undo2 className="mr-2 h-3 w-3" />
               候補に戻す
+            </DropdownMenuItem>
+          )}
+          {onSaveToBookmark && (
+            <DropdownMenuItem onClick={onSaveToBookmark}>
+              <Bookmark className="mr-2 h-3 w-3" />
+              ブックマークに保存
             </DropdownMenuItem>
           )}
           <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
@@ -572,6 +582,7 @@ function PlaceCard({
   crossDaySourceDayNumber,
   crossDayPosition,
   siblingSchedules,
+  onSaveToBookmark,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
@@ -664,6 +675,7 @@ function PlaceCard({
               onEdit={() => setEditOpen(true)}
               onDelete={onDelete}
               onUnassign={onUnassign}
+              onSaveToBookmark={onSaveToBookmark}
             />
           )}
         </div>
@@ -734,6 +746,7 @@ function TransportConnector({
   crossDayPosition,
   siblingSchedules,
   date,
+  onSaveToBookmark,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
@@ -862,6 +875,7 @@ function TransportConnector({
               onEdit={() => setEditOpen(true)}
               onDelete={onDelete}
               onUnassign={onUnassign}
+              onSaveToBookmark={onSaveToBookmark}
             />
           )}
         </div>

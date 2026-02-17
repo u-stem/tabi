@@ -1,6 +1,7 @@
 import {
   assignCandidateSchema,
   batchAssignCandidatesSchema,
+  batchBookmarkIdsSchema,
   batchDeleteSchedulesSchema,
   createCandidateSchema,
   MAX_SCHEDULES_PER_TRIP,
@@ -10,7 +11,7 @@ import {
 import { and, eq, inArray, isNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { dayPatterns, schedules } from "../db/schema";
+import { bookmarks, dayPatterns, schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
@@ -237,6 +238,70 @@ candidateRoutes.post(
     });
 
     return c.json(duplicated, 201);
+  },
+);
+
+// Create candidates from bookmarks
+candidateRoutes.post(
+  "/:tripId/candidates/from-bookmarks",
+  requireTripAccess("editor"),
+  async (c) => {
+    const user = c.get("user");
+    const tripId = c.req.param("tripId");
+
+    const body = await c.req.json();
+    const parsed = batchBookmarkIdsSchema.safeParse(body);
+    if (!parsed.success) {
+      return c.json({ error: parsed.error.flatten() }, 400);
+    }
+
+    // Verify all bookmarks belong to the user (via their bookmark lists)
+    const found = await db.query.bookmarks.findMany({
+      where: inArray(bookmarks.id, parsed.data.bookmarkIds),
+      with: { list: { columns: { userId: true } } },
+    });
+    const owned = found.filter((bm) => bm.list.userId === user.id);
+    if (owned.length !== parsed.data.bookmarkIds.length) {
+      return c.json({ error: ERROR_MSG.BOOKMARK_OWNER_MISMATCH }, 404);
+    }
+
+    const scheduleCount = await getScheduleCount(db, tripId);
+    if (scheduleCount + owned.length > MAX_SCHEDULES_PER_TRIP) {
+      return c.json({ error: ERROR_MSG.LIMIT_SCHEDULES }, 409);
+    }
+
+    let nextOrder = await getNextSortOrder(
+      db,
+      schedules.sortOrder,
+      schedules,
+      and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
+    );
+
+    const created = await db
+      .insert(schedules)
+      .values(
+        owned.map((bm) => ({
+          tripId,
+          dayPatternId: null,
+          name: bm.name,
+          memo: bm.memo,
+          urls: bm.urls,
+          category: "sightseeing" as const,
+          color: "blue" as const,
+          sortOrder: nextOrder++,
+        })),
+      )
+      .returning();
+
+    logActivity({
+      tripId,
+      userId: user.id,
+      action: "created",
+      entityType: "candidate",
+      detail: `${created.length}件（ブックマークから）`,
+    });
+
+    return c.json(created, 201);
   },
 );
 

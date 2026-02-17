@@ -1,6 +1,10 @@
 "use client";
 
-import { BOOKMARK_LIST_NAME_MAX_LENGTH, type BookmarkListResponse, type BookmarkListVisibility } from "@sugara/shared";
+import {
+  BOOKMARK_LIST_NAME_MAX_LENGTH,
+  type BookmarkListResponse,
+  type BookmarkListVisibility,
+} from "@sugara/shared";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -87,7 +91,9 @@ export function CreateBookmarkListDialog({
                 required
                 autoFocus
               />
-              <p className="text-right text-xs text-muted-foreground">{name.length}/{BOOKMARK_LIST_NAME_MAX_LENGTH}</p>
+              <p className="text-right text-xs text-muted-foreground">
+                {name.length}/{BOOKMARK_LIST_NAME_MAX_LENGTH}
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="new-list-visibility">公開設定</Label>

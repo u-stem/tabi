@@ -290,7 +290,7 @@ export const bookmarks = pgTable(
       .references(() => bookmarkLists.id, { onDelete: "cascade" }),
     name: varchar("name", { length: 200 }).notNull(),
     memo: text("memo"),
-    url: varchar("url", { length: 2000 }),
+    urls: text("urls").array().notNull().default([]),
     sortOrder: integer("sort_order").notNull().default(0),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),

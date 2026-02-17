@@ -123,7 +123,7 @@ export type BookmarkResponse = {
   id: string;
   name: string;
   memo?: string | null;
-  url?: string | null;
+  urls: string[];
   sortOrder: number;
   createdAt: string;
   updatedAt: string;

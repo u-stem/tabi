@@ -6,6 +6,7 @@ import type { CrossDayEntry, ScheduleResponse, TripResponse } from "@sugara/shar
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
+  Bookmark,
   CheckCheck,
   CheckSquare,
   Copy,
@@ -70,6 +71,7 @@ type DayTimelineProps = {
   addScheduleOpen?: boolean;
   onAddScheduleOpenChange?: (open: boolean) => void;
   overScheduleId?: string | null;
+  onSaveToBookmark?: (scheduleIds: string[]) => void;
 };
 
 export function DayTimeline({
@@ -89,6 +91,7 @@ export function DayTimeline({
   addScheduleOpen,
   onAddScheduleOpenChange,
   overScheduleId,
+  onSaveToBookmark,
 }: DayTimelineProps) {
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
@@ -225,6 +228,12 @@ export function DayTimeline({
                   <Copy className="mr-2 h-3 w-3" />
                   複製
                 </DropdownMenuItem>
+                {onSaveToBookmark && (
+                  <DropdownMenuItem onClick={() => onSaveToBookmark(Array.from(selectedIds ?? []))}>
+                    <Bookmark className="mr-2 h-3 w-3" />
+                    ブックマークに保存
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem
                   className="text-destructive"
                   onClick={() => sel.setBatchDeleteOpen(true)}
@@ -393,6 +402,9 @@ export function DayTimeline({
                 selected={opts?.selectable ? selectedIds?.has(schedule.id) : undefined}
                 onSelect={opts?.selectable ? sel.toggle : undefined}
                 siblingSchedules={schedulesAfter}
+                onSaveToBookmark={
+                  onSaveToBookmark ? () => onSaveToBookmark([schedule.id]) : undefined
+                }
               />
             </div>
           );

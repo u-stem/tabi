@@ -21,6 +21,9 @@ const {
     dayPatterns: {
       findFirst: vi.fn(),
     },
+    bookmarks: {
+      findMany: vi.fn(),
+    },
   },
   mockDbInsert: vi.fn(),
   mockDbUpdate: vi.fn(),
@@ -685,6 +688,114 @@ describe("Candidate routes", () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ scheduleIds: [id1, id2] }),
+      });
+
+      expect(res.status).toBe(409);
+    });
+  });
+
+  describe("POST /api/trips/:tripId/candidates/from-bookmarks", () => {
+    const bm1 = "00000000-0000-0000-0000-000000000031";
+    const bm2 = "00000000-0000-0000-0000-000000000032";
+
+    it("creates candidates from bookmarks with 201", async () => {
+      mockDbQuery.bookmarks.findMany.mockResolvedValue([
+        {
+          id: bm1,
+          name: "Cafe A",
+          memo: "good",
+          urls: ["https://a.com"],
+          listId: "list-1",
+          list: { userId: fakeUser.id },
+        },
+        {
+          id: bm2,
+          name: "Cafe B",
+          memo: null,
+          urls: [],
+          listId: "list-1",
+          list: { userId: fakeUser.id },
+        },
+      ]);
+      mockDbSelect
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([{ count: 0 }]),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([{ max: -1 }]),
+          }),
+        });
+      const created = [
+        { id: "new-1", name: "Cafe A", tripId, sortOrder: 0 },
+        { id: "new-2", name: "Cafe B", tripId, sortOrder: 1 },
+      ];
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue(created),
+        }),
+      });
+
+      const app = createTestApp(candidateRoutes, "/api/trips");
+      const res = await app.request(`/api/trips/${tripId}/candidates/from-bookmarks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookmarkIds: [bm1, bm2] }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(body).toHaveLength(2);
+    });
+
+    it("returns 400 with empty bookmarkIds", async () => {
+      const app = createTestApp(candidateRoutes, "/api/trips");
+      const res = await app.request(`/api/trips/${tripId}/candidates/from-bookmarks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookmarkIds: [] }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 404 when bookmarks not found", async () => {
+      mockDbQuery.bookmarks.findMany.mockResolvedValue([]);
+
+      const app = createTestApp(candidateRoutes, "/api/trips");
+      const res = await app.request(`/api/trips/${tripId}/candidates/from-bookmarks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookmarkIds: [bm1] }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 409 when schedule limit exceeded", async () => {
+      mockDbQuery.bookmarks.findMany.mockResolvedValue([
+        {
+          id: bm1,
+          name: "Cafe A",
+          memo: null,
+          urls: [],
+          listId: "list-1",
+          list: { userId: fakeUser.id },
+        },
+      ]);
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: MAX_SCHEDULES_PER_TRIP }]),
+        }),
+      });
+
+      const app = createTestApp(candidateRoutes, "/api/trips");
+      const res = await app.request(`/api/trips/${tripId}/candidates/from-bookmarks`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ bookmarkIds: [bm1] }),
       });
 
       expect(res.status).toBe(409);

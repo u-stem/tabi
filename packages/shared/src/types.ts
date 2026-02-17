@@ -1,3 +1,4 @@
+import type { BookmarkListVisibility } from "./schemas/bookmark";
 import type { MemberRole } from "./schemas/member";
 import type { ReactionType, ScheduleCategory, ScheduleColor } from "./schemas/schedule";
 import type { TripStatus } from "./schemas/trip";
@@ -106,4 +107,35 @@ export type FriendRequestResponse = {
   name: string;
   image?: string | null;
   createdAt: string;
+};
+
+export type BookmarkListResponse = {
+  id: string;
+  name: string;
+  visibility: BookmarkListVisibility;
+  sortOrder: number;
+  bookmarkCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BookmarkResponse = {
+  id: string;
+  name: string;
+  memo?: string | null;
+  url?: string | null;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type BookmarkListDetailResponse = BookmarkListResponse & {
+  bookmarks: BookmarkResponse[];
+};
+
+export type PublicProfileResponse = {
+  id: string;
+  name: string;
+  image?: string | null;
+  bookmarkLists: BookmarkListResponse[];
 };

@@ -2,6 +2,7 @@
 
 import type { FriendRequestResponse, FriendResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -151,6 +152,9 @@ function RequestsSection({
               <span className="text-sm truncate">{req.name}</span>
             </div>
             <div className="flex gap-2 shrink-0">
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/users/${req.requesterId}`}>プロフィール</Link>
+              </Button>
               <Button
                 size="sm"
                 disabled={loadingId === req.id}
@@ -219,14 +223,19 @@ function FriendListSection({
                     />
                     <span className="text-sm truncate">{friend.name}</span>
                   </div>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={loadingId === friend.friendId}
-                    onClick={() => setRemovingFriend(friend)}
-                  >
-                    解除
-                  </Button>
+                  <div className="flex gap-2 shrink-0">
+                    <Button size="sm" variant="outline" asChild>
+                      <Link href={`/users/${friend.userId}`}>プロフィール</Link>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={loadingId === friend.friendId}
+                      onClick={() => setRemovingFriend(friend)}
+                    >
+                      解除
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>

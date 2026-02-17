@@ -414,6 +414,89 @@ const SAMPLE_CANDIDATES = [
   },
 ];
 
+const SAMPLE_BOOKMARK_LISTS = [
+  {
+    name: "京都グルメ",
+    visibility: "private" as const,
+    bookmarks: [
+      {
+        name: "出町ふたば",
+        memo: "名代豆餅が有名。行列必須だが並ぶ価値あり",
+        url: "https://tabelog.com/kyoto/A2601/A260302/26001520/",
+      },
+      {
+        name: "中村藤吉本店",
+        memo: "宇治抹茶スイーツの老舗",
+        url: "https://www.tokichi.jp/",
+      },
+      {
+        name: "% Arabica 京都 東山",
+        url: "https://arabica.coffee/",
+      },
+      {
+        name: "錦市場 食べ歩き",
+        memo: "箸巻き・たこたまご・漬物がおすすめ",
+      },
+      {
+        name: "湯豆腐 嵯峨野",
+        memo: "嵐山の湯豆腐コース 4,000円",
+        url: "https://www.yudofu-sagano.com/",
+      },
+      {
+        name: "イノダコーヒ 本店",
+        memo: "レトロな喫茶店。京の朝食セットが人気",
+        url: "https://www.inoda-coffee.co.jp/",
+      },
+      {
+        name: "ぎおん徳屋",
+        memo: "本わらびもちが絶品",
+      },
+    ],
+  },
+  {
+    name: "行きたい場所",
+    visibility: "friends_only" as const,
+    bookmarks: [
+      {
+        name: "チームラボ ボーダレス 麻布台",
+        url: "https://www.teamlab.art/jp/e/borderless-azabudai/",
+      },
+      {
+        name: "根津美術館",
+        memo: "庭園も見どころ。国宝「燕子花図屏風」は春の特別展示",
+        url: "https://www.nezu-muse.or.jp/",
+      },
+      {
+        name: "鎌倉 報国寺",
+        memo: "竹の庭で抹茶",
+        url: "https://houkokuji.or.jp/",
+      },
+      {
+        name: "直島",
+        memo: "ベネッセアートサイト。フェリーで渡る",
+      },
+      {
+        name: "屋久島 縄文杉トレッキング",
+        memo: "往復10時間。体力に自信がある時に",
+      },
+    ],
+  },
+  {
+    name: "旅行持ち物リスト",
+    visibility: "public" as const,
+    bookmarks: [
+      { name: "パスポート" },
+      { name: "充電器・モバイルバッテリー" },
+      { name: "常備薬" },
+      {
+        name: "海外旅行保険",
+        url: "https://www.sompo-japan.co.jp/kinsurance/leisure/off/",
+      },
+      { name: "変換プラグ", memo: "渡航先のコンセント形状を事前確認" },
+    ],
+  },
+];
+
 type ApiResponse = Record<string, unknown>;
 
 async function apiFetch<T = ApiResponse>(path: string, options: RequestInit = {}): Promise<T> {
@@ -551,6 +634,25 @@ async function main() {
       headers: { cookie: ownerCookies },
     });
     console.log("  Done");
+  }
+
+  // 7. Create bookmark lists with bookmarks
+  console.log(`\nCreating ${SAMPLE_BOOKMARK_LISTS.length} bookmark lists...`);
+  for (const listData of SAMPLE_BOOKMARK_LISTS) {
+    const { bookmarks: bms, ...listBody } = listData;
+    const list = await apiFetch<{ id: string }>("/api/bookmark-lists", {
+      method: "POST",
+      body: JSON.stringify(listBody),
+      headers: { cookie: ownerCookies },
+    });
+    console.log(`  リスト: ${listData.name} (${bms.length}件)`);
+    for (const bm of bms) {
+      await apiFetch(`/api/bookmark-lists/${list.id}/bookmarks`, {
+        method: "POST",
+        body: JSON.stringify(bm),
+        headers: { cookie: ownerCookies },
+      });
+    }
   }
 
   console.log("\n--- Seed complete ---");

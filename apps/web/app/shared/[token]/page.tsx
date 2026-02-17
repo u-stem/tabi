@@ -204,7 +204,7 @@ export default function SharedTripPage() {
       <div className="container max-w-3xl py-8">
         <div className="mb-8">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-bold sm:text-2xl">{trip.title}</h1>
+            <h1 className="break-words text-xl font-bold sm:text-2xl">{trip.title}</h1>
             <Badge variant="outline" className={STATUS_COLORS[trip.status]}>
               {STATUS_LABELS[trip.status]}
             </Badge>
@@ -374,7 +374,7 @@ function ScheduleCard({
               </>
             )}
           </span>
-          <span className="text-sm font-medium">{schedule.name}</span>
+          <span className="break-words text-sm font-medium">{schedule.name}</span>
           {roleLabel && (
             <span className="rounded-sm bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">
               {roleLabel}

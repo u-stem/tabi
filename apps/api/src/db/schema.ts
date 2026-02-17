@@ -29,6 +29,12 @@ export const transportMethodEnum = pgEnum("transport_method", [
 
 export const friendStatusEnum = pgEnum("friend_status", ["pending", "accepted"]);
 
+export const bookmarkListVisibilityEnum = pgEnum("bookmark_list_visibility", [
+  "private",
+  "friends_only",
+  "public",
+]);
+
 export const scheduleCategoryEnum = pgEnum("schedule_category", [
   "sightseeing",
   "restaurant",
@@ -259,6 +265,39 @@ export const friends = pgTable(
   ],
 ).enableRLS();
 
+export const bookmarkLists = pgTable(
+  "bookmark_lists",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 50 }).notNull(),
+    visibility: bookmarkListVisibilityEnum("visibility").notNull().default("private"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [index("bookmark_lists_user_sort_idx").on(table.userId, table.sortOrder)],
+).enableRLS();
+
+export const bookmarks = pgTable(
+  "bookmarks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    listId: uuid("list_id")
+      .notNull()
+      .references(() => bookmarkLists.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 200 }).notNull(),
+    memo: text("memo"),
+    url: varchar("url", { length: 2000 }),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [index("bookmarks_list_sort_idx").on(table.listId, table.sortOrder)],
+).enableRLS();
+
 // --- Relations ---
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -266,6 +305,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   tripMembers: many(tripMembers),
   sentFriendRequests: many(friends, { relationName: "friendRequester" }),
   receivedFriendRequests: many(friends, { relationName: "friendAddressee" }),
+  bookmarkLists: many(bookmarkLists),
 }));
 
 export const tripsRelations = relations(trips, ({ one, many }) => ({
@@ -324,4 +364,13 @@ export const friendsRelations = relations(friends, ({ one }) => ({
     references: [users.id],
     relationName: "friendAddressee",
   }),
+}));
+
+export const bookmarkListsRelations = relations(bookmarkLists, ({ one, many }) => ({
+  user: one(users, { fields: [bookmarkLists.userId], references: [users.id] }),
+  bookmarks: many(bookmarks),
+}));
+
+export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
+  list: one(bookmarkLists, { fields: [bookmarks.listId], references: [bookmarkLists.id] }),
 }));

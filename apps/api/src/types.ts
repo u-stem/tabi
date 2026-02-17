@@ -11,3 +11,11 @@ export type AppEnv = {
     tripRole: import("@sugara/shared").MemberRole;
   };
 };
+
+// For routes using optionalAuth where user may not be present
+export type OptionalAuthEnv = {
+  Variables: {
+    user?: AuthUser;
+    session?: unknown;
+  };
+};

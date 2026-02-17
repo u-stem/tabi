@@ -1,0 +1,239 @@
+"use client";
+
+import type { BookmarkListResponse, BookmarkResponse, PublicProfileResponse } from "@sugara/shared";
+import { useQuery } from "@tanstack/react-query";
+import { Bookmark, ChevronRight, ExternalLink, List } from "lucide-react";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+
+import { Logo } from "@/components/logo";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ApiError, api } from "@/lib/api";
+import { isSafeUrl } from "@/lib/format";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { queryKeys } from "@/lib/query-keys";
+
+type BookmarkListDetail = BookmarkListResponse & {
+  bookmarks: BookmarkResponse[];
+};
+
+function ProfileHeader() {
+  return (
+    <header className="border-b">
+      <div className="container flex h-14 items-center">
+        <Logo />
+        <span className="ml-2 text-sm text-muted-foreground">公開プロフィール</span>
+      </div>
+    </header>
+  );
+}
+
+function ProfileSkeleton() {
+  return (
+    <div className="min-h-screen">
+      <ProfileHeader />
+      <div className="container max-w-2xl py-8">
+        <div className="mb-8 flex items-center gap-4">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <Skeleton className="h-6 w-32" />
+        </div>
+        <div className="space-y-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-16 w-full rounded-lg" />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BookmarkListCard({ list, userId }: { list: BookmarkListResponse; userId: string }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const {
+    data: detail,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: queryKeys.profile.bookmarkList(userId, list.id),
+    queryFn: () => api<BookmarkListDetail>(`/api/users/${userId}/bookmark-lists/${list.id}`),
+    // Only fetch when expanded
+    enabled: expanded,
+  });
+
+  return (
+    <Card>
+      <CardHeader
+        className="cursor-pointer select-none transition-colors hover:bg-accent/50"
+        onClick={() => setExpanded((prev) => !prev)}
+      >
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex min-w-0 items-center gap-2 text-base">
+            <ChevronRight
+              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}`}
+            />
+            <span className="truncate">{list.name}</span>
+          </CardTitle>
+          <Badge variant="secondary">{list.bookmarkCount}</Badge>
+        </div>
+      </CardHeader>
+
+      {expanded && (
+        <CardContent className="pt-0">
+          {isLoading && (
+            <div className="space-y-2">
+              {[1, 2].map((i) => (
+                <Skeleton key={i} className="h-10 w-full" />
+              ))}
+            </div>
+          )}
+
+          {error && (
+            <p className="text-sm text-destructive">ブックマークの読み込みに失敗しました</p>
+          )}
+
+          {detail && detail.bookmarks.length === 0 && (
+            <p className="text-sm text-muted-foreground">ブックマークがありません</p>
+          )}
+
+          {detail && detail.bookmarks.length > 0 && (
+            <ul className="divide-y">
+              {detail.bookmarks.map((bookmark) => (
+                <li key={bookmark.id} className="py-2">
+                  <div className="flex items-start gap-2">
+                    <Bookmark className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium">{bookmark.name}</p>
+                      {bookmark.memo && (
+                        <p className="mt-0.5 whitespace-pre-line text-xs text-muted-foreground">
+                          {bookmark.memo}
+                        </p>
+                      )}
+                      {bookmark.url && isSafeUrl(bookmark.url) && (
+                        <a
+                          href={bookmark.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-0.5 flex w-fit max-w-full items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                        >
+                          <ExternalLink className="h-3 w-3 shrink-0" />
+                          <span className="truncate">
+                            {bookmark.url.replace(/^https?:\/\//, "")}
+                          </span>
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
+export default function PublicProfilePage() {
+  const params = useParams();
+  const userId = params.userId as string;
+
+  const {
+    data: profile,
+    isLoading,
+    error: queryError,
+  } = useQuery({
+    queryKey: queryKeys.profile.bookmarkLists(userId),
+    queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
+  });
+
+  const showSkeleton = useDelayedLoading(isLoading);
+
+  // Set document title when profile is loaded
+  useEffect(() => {
+    if (profile) {
+      document.title = `${profile.name} のブックマーク - sugara`;
+    }
+  }, [profile]);
+
+  if (showSkeleton) {
+    return <ProfileSkeleton />;
+  }
+
+  // Avoid flashing error during the skeleton delay
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <ProfileHeader />
+      </div>
+    );
+  }
+
+  const error =
+    queryError instanceof ApiError && queryError.status === 404
+      ? "ユーザーが見つかりません"
+      : queryError
+        ? "プロフィールの読み込みに失敗しました"
+        : null;
+
+  if (error) {
+    return (
+      <div className="min-h-screen">
+        <ProfileHeader />
+        <div className="container flex max-w-2xl flex-col items-center py-16 text-center">
+          <List className="mb-4 h-12 w-12 text-muted-foreground" />
+          <p className="text-lg font-medium text-destructive">{error}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="min-h-screen">
+        <ProfileHeader />
+        <div className="container flex max-w-2xl flex-col items-center py-16 text-center">
+          <p className="text-lg font-medium text-destructive">ユーザーが見つかりません</p>
+        </div>
+      </div>
+    );
+  }
+
+  const avatarUrl = profile.image || `https://api.dicebear.com/9.x/thumbs/svg?seed=${profile.id}`;
+
+  return (
+    <div className="min-h-screen">
+      <ProfileHeader />
+      <div className="container max-w-2xl py-8">
+        <div className="mb-8 flex items-center gap-4">
+          <img
+            src={avatarUrl}
+            alt={profile.name}
+            className="aspect-square shrink-0 rounded-full w-16 h-16"
+          />
+          <h1 className="min-w-0 truncate text-xl font-bold">{profile.name}</h1>
+        </div>
+
+        <div>
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+            <Bookmark className="h-5 w-5 text-muted-foreground" />
+            ブックマークリスト
+          </h2>
+          {profile.bookmarkLists.length === 0 ? (
+            <div className="flex flex-col items-center py-12 text-center">
+              <p className="text-muted-foreground">リストがありません</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {profile.bookmarkLists.map((list) => (
+                <BookmarkListCard key={list.id} list={list} userId={userId} />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

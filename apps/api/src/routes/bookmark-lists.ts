@@ -1,0 +1,198 @@
+import {
+  createBookmarkListSchema,
+  MAX_BOOKMARK_LISTS_PER_USER,
+  reorderBookmarkListsSchema,
+  updateBookmarkListSchema,
+} from "@sugara/shared";
+import { count, eq } from "drizzle-orm";
+import { Hono } from "hono";
+import { db } from "../db/index";
+import { bookmarkLists, bookmarks } from "../db/schema";
+import { ERROR_MSG } from "../lib/constants";
+import { requireAuth } from "../middleware/auth";
+import type { AppEnv } from "../types";
+
+const bookmarkListRoutes = new Hono<AppEnv>();
+bookmarkListRoutes.use("*", requireAuth);
+
+// List own bookmark lists
+bookmarkListRoutes.get("/", async (c) => {
+  const user = c.get("user");
+
+  const lists = await db.query.bookmarkLists.findMany({
+    where: eq(bookmarkLists.userId, user.id),
+    orderBy: bookmarkLists.sortOrder,
+    with: { bookmarks: { columns: { id: true } } },
+  });
+
+  return c.json(
+    lists.map((l) => ({
+      id: l.id,
+      name: l.name,
+      visibility: l.visibility,
+      sortOrder: l.sortOrder,
+      bookmarkCount: l.bookmarks.length,
+      createdAt: l.createdAt,
+      updatedAt: l.updatedAt,
+    })),
+  );
+});
+
+// Create bookmark list
+bookmarkListRoutes.post("/", async (c) => {
+  const user = c.get("user");
+
+  const body = await c.req.json();
+  const parsed = createBookmarkListSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const [{ count: listCount }] = await db
+    .select({ count: count() })
+    .from(bookmarkLists)
+    .where(eq(bookmarkLists.userId, user.id));
+
+  if (listCount >= MAX_BOOKMARK_LISTS_PER_USER) {
+    return c.json({ error: ERROR_MSG.LIMIT_BOOKMARK_LISTS }, 409);
+  }
+
+  const [created] = await db
+    .insert(bookmarkLists)
+    .values({
+      userId: user.id,
+      name: parsed.data.name,
+      visibility: parsed.data.visibility,
+      sortOrder: listCount,
+    })
+    .returning();
+
+  return c.json(created, 201);
+});
+
+// Reorder bookmark lists
+bookmarkListRoutes.patch("/reorder", async (c) => {
+  const user = c.get("user");
+
+  const body = await c.req.json();
+  const parsed = reorderBookmarkListsSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const lists = await db.query.bookmarkLists.findMany({
+    where: eq(bookmarkLists.userId, user.id),
+    columns: { id: true },
+  });
+  const ownIds = new Set(lists.map((l) => l.id));
+  const allOwned = parsed.data.orderedIds.every((id) => ownIds.has(id));
+  if (!allOwned) {
+    return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 400);
+  }
+
+  await Promise.all(
+    parsed.data.orderedIds.map((id, i) =>
+      db.update(bookmarkLists).set({ sortOrder: i }).where(eq(bookmarkLists.id, id)),
+    ),
+  );
+
+  return c.json({ ok: true });
+});
+
+// Update bookmark list
+bookmarkListRoutes.patch("/:listId", async (c) => {
+  const user = c.get("user");
+  const listId = c.req.param("listId");
+
+  const body = await c.req.json();
+  const parsed = updateBookmarkListSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const existing = await db.query.bookmarkLists.findFirst({
+    where: eq(bookmarkLists.id, listId),
+  });
+  if (!existing || existing.userId !== user.id) {
+    return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
+  }
+
+  const [updated] = await db
+    .update(bookmarkLists)
+    .set({ ...parsed.data, updatedAt: new Date() })
+    .where(eq(bookmarkLists.id, listId))
+    .returning();
+
+  return c.json(updated);
+});
+
+// Duplicate bookmark list with bookmarks
+bookmarkListRoutes.post("/:listId/duplicate", async (c) => {
+  const user = c.get("user");
+  const listId = c.req.param("listId");
+
+  const [{ count: listCount }] = await db
+    .select({ count: count() })
+    .from(bookmarkLists)
+    .where(eq(bookmarkLists.userId, user.id));
+
+  if (listCount >= MAX_BOOKMARK_LISTS_PER_USER) {
+    return c.json({ error: ERROR_MSG.LIMIT_BOOKMARK_LISTS }, 409);
+  }
+
+  const source = await db.query.bookmarkLists.findFirst({
+    where: eq(bookmarkLists.id, listId),
+    with: { bookmarks: { orderBy: (b, { asc }) => [asc(b.sortOrder)] } },
+  });
+
+  if (!source || source.userId !== user.id) {
+    return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
+  }
+
+  const created = await db.transaction(async (tx) => {
+    const [newList] = await tx
+      .insert(bookmarkLists)
+      .values({
+        userId: user.id,
+        name: `${source.name} (copy)`,
+        visibility: source.visibility,
+        sortOrder: listCount,
+      })
+      .returning();
+
+    if (source.bookmarks.length > 0) {
+      await tx.insert(bookmarks).values(
+        source.bookmarks.map((bm, i) => ({
+          listId: newList.id,
+          name: bm.name,
+          memo: bm.memo,
+          url: bm.url,
+          sortOrder: i,
+        })),
+      );
+    }
+
+    return newList;
+  });
+
+  return c.json(created, 201);
+});
+
+// Delete bookmark list (cascades bookmarks)
+bookmarkListRoutes.delete("/:listId", async (c) => {
+  const user = c.get("user");
+  const listId = c.req.param("listId");
+
+  const existing = await db.query.bookmarkLists.findFirst({
+    where: eq(bookmarkLists.id, listId),
+  });
+  if (!existing || existing.userId !== user.id) {
+    return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
+  }
+
+  await db.delete(bookmarkLists).where(eq(bookmarkLists.id, listId));
+
+  return c.json({ ok: true });
+});
+
+export { bookmarkListRoutes };

@@ -38,4 +38,8 @@ export const ERROR_MSG = {
   ACCOUNT_NOT_FOUND: "Account not found",
   UNAUTHORIZED: "Unauthorized",
   TOO_MANY_REQUESTS: "Too many requests",
+  BOOKMARK_LIST_NOT_FOUND: "Bookmark list not found",
+  BOOKMARK_NOT_FOUND: "Bookmark not found",
+  LIMIT_BOOKMARK_LISTS: "Bookmark list limit reached",
+  LIMIT_BOOKMARKS: "Bookmark limit reached",
 } as const;

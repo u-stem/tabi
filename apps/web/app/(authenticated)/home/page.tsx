@@ -25,7 +25,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
 
-type TripTab = "owned" | "shared";
+type HomeTab = "owned" | "shared";
 
 export default function HomePage() {
   const queryClient = useQueryClient();
@@ -58,12 +58,12 @@ export default function HomePage() {
     document.title = "ホーム - sugara";
   }, []);
 
-  const [tab, setTab] = useState<TripTab>("owned");
+  const [tab, setTab] = useState<HomeTab>("owned");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("updatedAt");
 
-  const [createOpen, setCreateOpen] = useState(false);
+  const [createTripOpen, setCreateTripOpen] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
@@ -77,7 +77,7 @@ export default function HomePage() {
         group: "全般",
         items: [
           { key: "/", description: "検索にフォーカス" },
-          { key: "n", description: "新規旅行を作成" },
+          { key: "n", description: "新規作成" },
         ],
       },
     ],
@@ -88,7 +88,7 @@ export default function HomePage() {
 
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
   useHotkeys("/", () => searchInputRef.current?.focus(), { useKey: true, preventDefault: true });
-  useHotkeys("n", () => setCreateOpen(true), { preventDefault: true });
+  useHotkeys("n", () => setCreateTripOpen(true), { preventDefault: true });
 
   const invalidateTrips = async () => {
     await Promise.all([
@@ -126,7 +126,7 @@ export default function HomePage() {
     return result;
   }, [baseTrips, search, statusFilter, sortKey]);
 
-  function handleTabChange(newTab: TripTab) {
+  function handleTabChange(newTab: HomeTab) {
     if (newTab === tab) return;
     setTab(newTab);
     setSearch("");
@@ -296,6 +296,7 @@ export default function HomePage() {
               </button>
             ))}
           </div>
+
           <div className="mt-4">
             <TripToolbar
               searchInputRef={searchInputRef}
@@ -324,7 +325,7 @@ export default function HomePage() {
                         <Button
                           size="sm"
                           disabled={!online || ownedTrips.length >= MAX_TRIPS_PER_USER}
-                          onClick={() => setCreateOpen(true)}
+                          onClick={() => setCreateTripOpen(true)}
                         >
                           <Plus className="h-4 w-4" />
                           新規作成
@@ -359,8 +360,8 @@ export default function HomePage() {
         </>
       )}
       <CreateTripDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
+        open={createTripOpen}
+        onOpenChange={setCreateTripOpen}
         onCreated={invalidateTrips}
       />
     </>

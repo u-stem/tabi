@@ -12,6 +12,16 @@ export const queryKeys = {
     list: () => [...queryKeys.friends.all, "list"] as const,
     requests: () => [...queryKeys.friends.all, "requests"] as const,
   },
+  bookmarks: {
+    all: ["bookmarks"] as const,
+    lists: () => [...queryKeys.bookmarks.all, "lists"] as const,
+    list: (listId: string) => [...queryKeys.bookmarks.all, "list", listId] as const,
+  },
+  profile: {
+    bookmarkLists: (userId: string) => ["profile", userId, "bookmark-lists"] as const,
+    bookmarkList: (userId: string, listId: string) =>
+      ["profile", userId, "bookmark-lists", listId] as const,
+  },
   shared: {
     trip: (token: string) => ["shared", token] as const,
   },

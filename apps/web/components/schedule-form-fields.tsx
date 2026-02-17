@@ -81,6 +81,13 @@ export function ScheduleFormFields({
   defaultValues,
   idPrefix = "",
 }: ScheduleFormFieldsProps) {
+  // Controlled state for text fields (Dialog unmounts on close, so these re-init correctly)
+  const [name, setName] = useState(defaultValues?.name ?? "");
+  const [address, setAddress] = useState(defaultValues?.address ?? "");
+  const [departurePlace, setDeparturePlace] = useState(defaultValues?.departurePlace ?? "");
+  const [arrivalPlace, setArrivalPlace] = useState(defaultValues?.arrivalPlace ?? "");
+  const [memo, setMemo] = useState(defaultValues?.memo ?? "");
+
   // Always show at least one URL input
   const displayUrls = urls.length > 0 ? urls : [""];
 
@@ -115,11 +122,15 @@ export function ScheduleFormFields({
         <Input
           id={`${idPrefix}name`}
           name="name"
-          defaultValue={defaultValues?.name}
+          value={name}
+          onChange={(e) => setName(e.target.value)}
           placeholder="金閣寺"
           required
           maxLength={SCHEDULE_NAME_MAX_LENGTH}
         />
+        <p className="text-right text-xs text-muted-foreground">
+          {name.length}/{SCHEDULE_NAME_MAX_LENGTH}
+        </p>
       </div>
       <div className="space-y-2">
         <Label>カテゴリ</Label>
@@ -166,10 +177,14 @@ export function ScheduleFormFields({
           <Input
             id={`${idPrefix}address`}
             name="address"
-            defaultValue={defaultValues?.address}
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
             placeholder="京都市北区金閣寺町1"
             maxLength={SCHEDULE_ADDRESS_MAX_LENGTH}
           />
+          <p className="text-right text-xs text-muted-foreground">
+            {address.length}/{SCHEDULE_ADDRESS_MAX_LENGTH}
+          </p>
         </div>
       )}
       {category === "transport" && (
@@ -179,20 +194,28 @@ export function ScheduleFormFields({
             <Input
               id={`${idPrefix}departurePlace`}
               name="departurePlace"
-              defaultValue={defaultValues?.departurePlace}
+              value={departurePlace}
+              onChange={(e) => setDeparturePlace(e.target.value)}
               placeholder="東京駅"
               maxLength={SCHEDULE_PLACE_MAX_LENGTH}
             />
+            <p className="text-right text-xs text-muted-foreground">
+              {departurePlace.length}/{SCHEDULE_PLACE_MAX_LENGTH}
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor={`${idPrefix}arrivalPlace`}>到着地</Label>
             <Input
               id={`${idPrefix}arrivalPlace`}
               name="arrivalPlace"
-              defaultValue={defaultValues?.arrivalPlace}
+              value={arrivalPlace}
+              onChange={(e) => setArrivalPlace(e.target.value)}
               placeholder="新大阪駅"
               maxLength={SCHEDULE_PLACE_MAX_LENGTH}
             />
+            <p className="text-right text-xs text-muted-foreground">
+              {arrivalPlace.length}/{SCHEDULE_PLACE_MAX_LENGTH}
+            </p>
           </div>
           <div className="space-y-2">
             <Label>交通手段</Label>
@@ -296,9 +319,13 @@ export function ScheduleFormFields({
           id={`${idPrefix}memo`}
           name="memo"
           rows={3}
-          defaultValue={defaultValues?.memo}
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
           maxLength={SCHEDULE_MEMO_MAX_LENGTH}
         />
+        <p className="text-right text-xs text-muted-foreground">
+          {memo.length}/{SCHEDULE_MEMO_MAX_LENGTH}
+        </p>
       </div>
     </>
   );

@@ -1,4 +1,6 @@
 import {
+  MAX_BOOKMARK_LISTS_PER_USER,
+  MAX_BOOKMARKS_PER_LIST,
   MAX_FRIENDS_PER_USER,
   MAX_MEMBERS_PER_TRIP,
   MAX_PATTERNS_PER_DAY,
@@ -162,7 +164,30 @@ export const MSG = {
   TIME_TRANSPORT_DEPARTURE_REQUIRED: "出発時間を入力してください",
   TIME_TRANSPORT_ARRIVAL_AFTER: "到着時間は出発時間より後にしてください",
 
+  // Bookmark
+  BOOKMARK_LIST_FETCH_FAILED: "ブックマークリストの取得に失敗しました",
+  BOOKMARK_LIST_CREATED: "リストを作成しました",
+  BOOKMARK_LIST_CREATE_FAILED: "リストの作成に失敗しました",
+  BOOKMARK_LIST_UPDATED: "リストを更新しました",
+  BOOKMARK_LIST_UPDATE_FAILED: "リストの更新に失敗しました",
+  BOOKMARK_LIST_DELETED: "リストを削除しました",
+  BOOKMARK_LIST_DELETE_FAILED: "リストの削除に失敗しました",
+  BOOKMARK_LIST_BULK_DELETED: (n: number) => `${n}件のリストを削除しました`,
+  BOOKMARK_LIST_BULK_DELETE_FAILED: (n: number) => `${n}件の削除に失敗しました`,
+  BOOKMARK_LIST_BULK_DUPLICATED: (n: number) => `${n}件のリストを複製しました`,
+  BOOKMARK_LIST_BULK_DUPLICATE_FAILED: (n: number) => `${n}件の複製に失敗しました`,
+  BOOKMARK_ADDED: "ブックマークを追加しました",
+  BOOKMARK_ADD_FAILED: "ブックマークの追加に失敗しました",
+  BOOKMARK_UPDATED: "ブックマークを更新しました",
+  BOOKMARK_UPDATE_FAILED: "ブックマークの更新に失敗しました",
+  BOOKMARK_DELETED: "ブックマークを削除しました",
+  BOOKMARK_DELETE_FAILED: "ブックマークの削除に失敗しました",
+  BOOKMARK_REORDER_FAILED: "並び替えに失敗しました",
+  PROFILE_FETCH_FAILED: "プロフィールの取得に失敗しました",
+
   // Limits
+  LIMIT_BOOKMARK_LISTS: `リストは最大${MAX_BOOKMARK_LISTS_PER_USER}件まで作成できます`,
+  LIMIT_BOOKMARKS: `ブックマークは1リストあたり最大${MAX_BOOKMARKS_PER_LIST}件まで追加できます`,
   LIMIT_TRIPS: `旅行は最大${MAX_TRIPS_PER_USER}件まで作成できます`,
   LIMIT_SCHEDULES: `予定と候補は1旅行あたり合計${MAX_SCHEDULES_PER_TRIP}件まで追加できます`,
   LIMIT_PATTERNS: `パターンは各日程に最大${MAX_PATTERNS_PER_DAY}件まで追加できます`,

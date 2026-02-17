@@ -3,3 +3,10 @@ export const MAX_SCHEDULES_PER_TRIP = 300;
 export const MAX_PATTERNS_PER_DAY = 3;
 export const MAX_MEMBERS_PER_TRIP = 20;
 export const MAX_FRIENDS_PER_USER = 100;
+export const MAX_BOOKMARK_LISTS_PER_USER = 5;
+export const MAX_BOOKMARKS_PER_LIST = 20;
+
+export const BOOKMARK_LIST_NAME_MAX_LENGTH = 50;
+export const BOOKMARK_NAME_MAX_LENGTH = 200;
+export const BOOKMARK_MEMO_MAX_LENGTH = 2000;
+export const BOOKMARK_URL_MAX_LENGTH = 2000;

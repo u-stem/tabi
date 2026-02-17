@@ -2,7 +2,7 @@
 
 import type { FriendRequestResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
-import { Download, Keyboard, LogOut, MessageSquare, Settings } from "lucide-react";
+import { Download, Keyboard, LogOut, MessageSquare, Settings, User } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -118,8 +118,14 @@ export function Header() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>{session.user.name}</DropdownMenuLabel>
+                  <DropdownMenuLabel className="truncate">{session.user.name}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href={`/users/${session.user.id}`} target="_blank">
+                      <User className="h-4 w-4" />
+                      プロフィール
+                    </Link>
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/settings">
                       <Settings className="h-4 w-4" />
@@ -167,7 +173,7 @@ export function Header() {
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <SheetContent side="right">
                   <SheetHeader>
-                    <SheetTitle>{session.user.name}</SheetTitle>
+                    <SheetTitle className="truncate">{session.user.name}</SheetTitle>
                     <SheetDescription>
                       {session.user.displayUsername
                         ? `@${session.user.displayUsername}`
@@ -177,6 +183,15 @@ export function Header() {
                     </SheetDescription>
                   </SheetHeader>
                   <nav className="mt-6 flex flex-col gap-1" aria-label="モバイルメニュー">
+                    <Link
+                      href={`/users/${session.user.id}`}
+                      target="_blank"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <User className="h-4 w-4" />
+                      プロフィール
+                    </Link>
                     <Link
                       href="/settings"
                       onClick={() => setMobileMenuOpen(false)}

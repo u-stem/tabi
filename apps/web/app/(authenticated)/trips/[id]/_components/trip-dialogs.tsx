@@ -49,6 +49,9 @@ export function AddPatternDialog({ patternOps }: { patternOps: PatternOps }) {
               placeholder="例: 雨の日プラン"
               maxLength={PATTERN_LABEL_MAX_LENGTH}
             />
+            <p className="text-right text-xs text-muted-foreground">
+              {patternOps.add.label.length}/{PATTERN_LABEL_MAX_LENGTH}
+            </p>
           </div>
           <DialogFooter>
             <Button type="submit" disabled={patternOps.add.loading || !patternOps.add.label.trim()}>
@@ -78,6 +81,9 @@ export function RenamePatternDialog({ patternOps }: { patternOps: PatternOps }) 
               onChange={(e) => patternOps.rename.setLabel(e.target.value)}
               maxLength={PATTERN_LABEL_MAX_LENGTH}
             />
+            <p className="text-right text-xs text-muted-foreground">
+              {patternOps.rename.label.length}/{PATTERN_LABEL_MAX_LENGTH}
+            </p>
           </div>
           <DialogFooter>
             <Button

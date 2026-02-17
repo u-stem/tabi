@@ -29,6 +29,13 @@
       "when": 1771231729478,
       "tag": "0003_luxuriant_speed_demon",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1771296199675,
+      "tag": "0004_clever_vapor",
+      "breakpoints": true
     }
   ]
 }

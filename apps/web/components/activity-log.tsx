@@ -218,7 +218,7 @@ export function ActivityLog({ tripId }: ActivityLogProps) {
               <Icon className="h-3 w-3" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm leading-6">
+              <p className="break-words text-sm leading-6">
                 <span className="font-medium">{log.userName}</span>
                 <span className="ml-1 text-muted-foreground">
                   {parts.before}

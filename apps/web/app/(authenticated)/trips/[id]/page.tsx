@@ -366,7 +366,7 @@ export default function TripDetailPage() {
       <div className="mt-4">
         <div className="mb-6">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold">{trip.title}</h1>
+            <h1 className="min-w-0 truncate text-2xl font-bold">{trip.title}</h1>
             <PresenceAvatars users={otherPresence} isConnected={isConnected} />
           </div>
           <p className="text-muted-foreground">
@@ -551,7 +551,7 @@ export default function TripDetailPage() {
                             <div
                               key={pattern.id}
                               className={cn(
-                                "flex shrink-0 items-center rounded-full border transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-1",
+                                "flex max-w-48 items-center rounded-full border transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-1",
                                 isActive
                                   ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
                                   : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
@@ -566,7 +566,7 @@ export default function TripDetailPage() {
                                   }))
                                 }
                                 className={cn(
-                                  "py-1.5 text-xs font-medium focus:outline-none",
+                                  "truncate py-1.5 text-xs font-medium focus:outline-none",
                                   canEdit ? "pl-3 pr-0.5" : "px-3",
                                 )}
                               >

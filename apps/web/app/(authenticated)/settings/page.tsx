@@ -170,6 +170,9 @@ function ProfileSection({ defaultName }: { defaultName: string }) {
               minLength={1}
               maxLength={PROFILE_NAME_MAX_LENGTH}
             />
+            <p className="text-right text-xs text-muted-foreground">
+              {name.length}/{PROFILE_NAME_MAX_LENGTH}
+            </p>
           </div>
           {error && (
             <div

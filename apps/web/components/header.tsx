@@ -121,7 +121,7 @@ export function Header() {
                   <DropdownMenuLabel className="truncate">{session.user.name}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
-                    <Link href={`/users/${session.user.id}`} target="_blank">
+                    <Link href={`/users/${session.user.id}`}>
                       <User className="h-4 w-4" />
                       プロフィール
                     </Link>
@@ -185,7 +185,6 @@ export function Header() {
                   <nav className="mt-6 flex flex-col gap-1" aria-label="モバイルメニュー">
                     <Link
                       href={`/users/${session.user.id}`}
-                      target="_blank"
                       onClick={() => setMobileMenuOpen(false)}
                       className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >

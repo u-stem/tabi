@@ -8,9 +8,11 @@ import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
+import { UserAvatar } from "@/components/user-avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
+import { useSession } from "@/lib/auth-client";
 import { isSafeUrl } from "@/lib/format";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
@@ -30,20 +32,17 @@ function ProfileHeader() {
   );
 }
 
-function ProfileSkeleton() {
+function ProfileSkeletonContent() {
   return (
-    <div className="min-h-screen">
-      <ProfileHeader />
-      <div className="container max-w-2xl py-8">
-        <div className="mb-8 flex items-center gap-4">
-          <Skeleton className="h-16 w-16 rounded-full" />
-          <Skeleton className="h-6 w-32" />
-        </div>
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-16 w-full rounded-lg" />
-          ))}
-        </div>
+    <div className="mx-auto max-w-2xl">
+      <div className="mb-8 flex items-center gap-4">
+        <Skeleton className="h-16 w-16 rounded-full" />
+        <Skeleton className="h-6 w-32" />
+      </div>
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-16 w-full rounded-lg" />
+        ))}
       </div>
     </div>
   );
@@ -111,18 +110,22 @@ function BookmarkListCard({ list, userId }: { list: BookmarkListResponse; userId
                           {bookmark.memo}
                         </p>
                       )}
-                      {bookmark.url && isSafeUrl(bookmark.url) && (
-                        <a
-                          href={bookmark.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-0.5 flex w-fit max-w-full items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
-                        >
-                          <ExternalLink className="h-3 w-3 shrink-0" />
-                          <span className="truncate">
-                            {bookmark.url.replace(/^https?:\/\//, "")}
-                          </span>
-                        </a>
+                      {(bookmark.urls ?? []).map(
+                        (url) =>
+                          isSafeUrl(url) && (
+                            <a
+                              key={url}
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-0.5 flex w-fit max-w-full items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                            >
+                              <ExternalLink className="h-3 w-3 shrink-0" />
+                              <span className="truncate">
+                                {url.replace(/^https?:\/\//, "")}
+                              </span>
+                            </a>
+                          ),
                       )}
                     </div>
                   </div>
@@ -136,9 +139,57 @@ function BookmarkListCard({ list, userId }: { list: BookmarkListResponse; userId
   );
 }
 
+function ProfileContent({
+  profile,
+  userId,
+}: { profile: PublicProfileResponse; userId: string }) {
+  return (
+    <>
+      <div className="mb-8 flex items-center gap-4">
+        <UserAvatar
+          name={profile.name}
+          image={profile.image}
+          className="h-16 w-16"
+          fallbackClassName="text-2xl"
+        />
+        <h1 className="min-w-0 truncate text-xl font-bold">{profile.name}</h1>
+      </div>
+
+      <div>
+        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+          <Bookmark className="h-5 w-5 text-muted-foreground" />
+          ブックマークリスト
+        </h2>
+        {profile.bookmarkLists.length === 0 ? (
+          <div className="flex flex-col items-center py-12 text-center">
+            <p className="text-muted-foreground">リストがありません</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {profile.bookmarkLists.map((list) => (
+              <BookmarkListCard key={list.id} list={list} userId={userId} />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+function ErrorMessage({ message }: { message: string }) {
+  return (
+    <div className="flex flex-col items-center py-16 text-center">
+      <List className="mb-4 h-12 w-12 text-muted-foreground" />
+      <p className="text-lg font-medium text-destructive">{message}</p>
+    </div>
+  );
+}
+
 export default function PublicProfilePage() {
   const params = useParams();
   const userId = params.userId as string;
+  const { data: session, isPending: isSessionPending } = useSession();
+  const isAuthenticated = !isSessionPending && !!session;
 
   const {
     data: profile,
@@ -154,22 +205,9 @@ export default function PublicProfilePage() {
   // Set document title when profile is loaded
   useEffect(() => {
     if (profile) {
-      document.title = `${profile.name} のブックマーク - sugara`;
+      document.title = `${profile.name} のプロフィール - sugara`;
     }
   }, [profile]);
-
-  if (showSkeleton) {
-    return <ProfileSkeleton />;
-  }
-
-  // Avoid flashing error during the skeleton delay
-  if (isLoading) {
-    return (
-      <div className="min-h-screen">
-        <ProfileHeader />
-      </div>
-    );
-  }
 
   const error =
     queryError instanceof ApiError && queryError.status === 404
@@ -178,13 +216,61 @@ export default function PublicProfilePage() {
         ? "プロフィールの読み込みに失敗しました"
         : null;
 
+  // Authenticated: layout provides Header + BottomNav + container
+  if (isAuthenticated) {
+    if (showSkeleton) {
+      return <ProfileSkeletonContent />;
+    }
+    if (isLoading) {
+      return null;
+    }
+    if (error) {
+      return (
+        <div className="mx-auto max-w-2xl">
+          <ErrorMessage message={error} />
+        </div>
+      );
+    }
+    if (!profile) {
+      return (
+        <div className="mx-auto max-w-2xl">
+          <ErrorMessage message="ユーザーが見つかりません" />
+        </div>
+      );
+    }
+    return (
+      <div className="mx-auto max-w-2xl">
+        <ProfileContent profile={profile} userId={userId} />
+      </div>
+    );
+  }
+
+  // Public: page handles full layout with ProfileHeader
+  if (showSkeleton) {
+    return (
+      <div className="min-h-screen">
+        <ProfileHeader />
+        <div className="container max-w-2xl py-8">
+          <ProfileSkeletonContent />
+        </div>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen">
+        <ProfileHeader />
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="min-h-screen">
         <ProfileHeader />
-        <div className="container flex max-w-2xl flex-col items-center py-16 text-center">
-          <List className="mb-4 h-12 w-12 text-muted-foreground" />
-          <p className="text-lg font-medium text-destructive">{error}</p>
+        <div className="container max-w-2xl">
+          <ErrorMessage message={error} />
         </div>
       </div>
     );
@@ -194,45 +280,18 @@ export default function PublicProfilePage() {
     return (
       <div className="min-h-screen">
         <ProfileHeader />
-        <div className="container flex max-w-2xl flex-col items-center py-16 text-center">
-          <p className="text-lg font-medium text-destructive">ユーザーが見つかりません</p>
+        <div className="container max-w-2xl">
+          <ErrorMessage message="ユーザーが見つかりません" />
         </div>
       </div>
     );
   }
 
-  const avatarUrl = profile.image || `https://api.dicebear.com/9.x/thumbs/svg?seed=${profile.id}`;
-
   return (
     <div className="min-h-screen">
       <ProfileHeader />
       <div className="container max-w-2xl py-8">
-        <div className="mb-8 flex items-center gap-4">
-          <img
-            src={avatarUrl}
-            alt={profile.name}
-            className="aspect-square shrink-0 rounded-full w-16 h-16"
-          />
-          <h1 className="min-w-0 truncate text-xl font-bold">{profile.name}</h1>
-        </div>
-
-        <div>
-          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-            <Bookmark className="h-5 w-5 text-muted-foreground" />
-            ブックマークリスト
-          </h2>
-          {profile.bookmarkLists.length === 0 ? (
-            <div className="flex flex-col items-center py-12 text-center">
-              <p className="text-muted-foreground">リストがありません</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {profile.bookmarkLists.map((list) => (
-                <BookmarkListCard key={list.id} list={list} userId={userId} />
-              ))}
-            </div>
-          )}
-        </div>
+        <ProfileContent profile={profile} userId={userId} />
       </div>
     </div>
   );

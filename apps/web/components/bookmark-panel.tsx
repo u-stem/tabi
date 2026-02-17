@@ -3,7 +3,6 @@
 import type { BookmarkListResponse, BookmarkResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCheck, CheckSquare, ExternalLink, Plus, StickyNote, X } from "lucide-react";
-import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -114,12 +113,6 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
     return (
       <div className="py-8 text-center">
         <p className="text-sm text-muted-foreground">ブックマークリストがありません</p>
-        <Link
-          href="/bookmarks"
-          className="mt-2 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"
-        >
-          ブックマークページで作成
-        </Link>
       </div>
     );
   }

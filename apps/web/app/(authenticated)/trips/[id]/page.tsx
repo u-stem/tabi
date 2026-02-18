@@ -2,7 +2,7 @@
 
 import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
 import type { TripResponse } from "@sugara/shared";
-import { canEdit as canEditRole, MAX_SCHEDULES_PER_TRIP } from "@sugara/shared";
+import { canEdit as canEditRole, isOwner as isOwnerRole, MAX_SCHEDULES_PER_TRIP } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
@@ -39,10 +39,12 @@ import { CATEGORY_ICONS } from "@/lib/icons";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
+import { TAB_ACTIVE, TAB_INACTIVE } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 import { DayMemoEditor } from "./_components/day-memo-editor";
 import { DayTabs } from "./_components/day-tabs";
 import { PatternTabs } from "./_components/pattern-tabs";
+import { PollTab } from "./_components/poll-tab";
 import { RightPanel } from "./_components/right-panel";
 import {
   AddPatternDialog,
@@ -52,6 +54,8 @@ import {
   RenamePatternDialog,
 } from "./_components/trip-dialogs";
 import { TripHeader } from "./_components/trip-header";
+
+type LeftPanelTab = "schedule" | "poll";
 
 const dndAnnouncements: Announcements = {
   onDragStart({ active }) {
@@ -92,6 +96,7 @@ export default function TripDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [addScheduleOpen, setAddScheduleOpen] = useState(false);
   const [addCandidateOpen, setAddCandidateOpen] = useState(false);
+  const [leftTab, setLeftTab] = useState<LeftPanelTab>("schedule");
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [candidateOpen, setCandidateOpen] = useState(false);
@@ -237,6 +242,13 @@ export default function TripDetailPage() {
   }, [currentDay?.id, currentPattern?.id, updatePresence]);
 
   useAutoStatusTransition({ trip, tripId, now, onMutate });
+
+  // Set initial leftTab based on trip status
+  useEffect(() => {
+    if (trip?.status === "scheduling" && trip.poll) {
+      setLeftTab("poll");
+    }
+  }, [trip?.status, trip?.poll]);
 
   // Stable references to avoid infinite re-render when values are null
   const dndSchedules = useMemo(() => currentPattern?.schedules ?? [], [currentPattern?.schedules]);
@@ -389,7 +401,44 @@ export default function TripDetailPage() {
           onOpenChange={setEditOpen}
           onUpdate={onMutate}
         />
-        {currentDay && currentPattern && (
+        {/* Left panel tab switcher (only shown when poll exists) */}
+        {trip.poll && (
+          <div className="flex gap-1 border-b">
+            {trip.status !== "scheduling" && (
+              <button
+                type="button"
+                onClick={() => setLeftTab("schedule")}
+                className={cn(
+                  "relative px-4 py-2 text-sm font-medium transition-colors",
+                  leftTab === "schedule" ? TAB_ACTIVE : TAB_INACTIVE,
+                )}
+              >
+                スケジュール
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setLeftTab("poll")}
+              className={cn(
+                "relative px-4 py-2 text-sm font-medium transition-colors",
+                leftTab === "poll" ? TAB_ACTIVE : TAB_INACTIVE,
+              )}
+            >
+              日程調整
+            </button>
+          </div>
+        )}
+
+        {leftTab === "poll" && trip.poll ? (
+          <div className="rounded-lg border bg-card">
+            <PollTab
+              pollId={trip.poll.id}
+              tripId={tripId}
+              isOwner={isOwnerRole(trip.role)}
+              onConfirmed={() => setLeftTab("schedule")}
+            />
+          </div>
+        ) : currentDay && currentPattern ? (
           <DndContext
             sensors={dnd.sensors}
             collisionDetection={dnd.collisionDetection}
@@ -498,16 +547,14 @@ export default function TripDetailPage() {
                 })()}
             </DragOverlay>
           </DndContext>
-        )}
-
-        {trip.status === "scheduling" && (
+        ) : trip.status === "scheduling" ? (
           <div className="flex flex-col items-center justify-center rounded-lg border bg-card py-16 text-center">
             <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {MSG.SCHEDULING_STATUS_DESCRIPTION}
             </p>
           </div>
-        )}
+        ) : null}
 
         <AddPatternDialog patternOps={patternOps} />
         <MobileCandidateDialog

@@ -27,15 +27,18 @@ vi.mock("../lib/auth", () => ({
   },
 }));
 
-vi.mock("../db/index", () => ({
-  db: {
+vi.mock("../db/index", () => {
+  const tx = {
     query: mockDbQuery,
     insert: (...args: unknown[]) => mockDbInsert(...args),
     update: (...args: unknown[]) => mockDbUpdate(...args),
     delete: (...args: unknown[]) => mockDbDelete(...args),
     select: (...args: unknown[]) => mockDbSelect(...args),
-  },
-}));
+  };
+  return {
+    db: { ...tx, transaction: (fn: (t: typeof tx) => unknown) => fn(tx) },
+  };
+});
 
 vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),

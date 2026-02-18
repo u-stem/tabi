@@ -1,36 +1,28 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const {
-  mockGetSession,
-  mockDbQuery,
-  mockDbInsert,
-  mockDbUpdate,
-  mockDbDelete,
-  mockDbSelect,
-  mockDbTransaction,
-} = vi.hoisted(() => ({
-  mockGetSession: vi.fn(),
-  mockDbQuery: {
-    schedules: {
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
+const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbSelect } =
+  vi.hoisted(() => ({
+    mockGetSession: vi.fn(),
+    mockDbQuery: {
+      schedules: {
+        findMany: vi.fn(),
+        findFirst: vi.fn(),
+      },
+      tripMembers: {
+        findFirst: vi.fn(),
+      },
+      dayPatterns: {
+        findFirst: vi.fn(),
+      },
+      bookmarks: {
+        findMany: vi.fn(),
+      },
     },
-    tripMembers: {
-      findFirst: vi.fn(),
-    },
-    dayPatterns: {
-      findFirst: vi.fn(),
-    },
-    bookmarks: {
-      findMany: vi.fn(),
-    },
-  },
-  mockDbInsert: vi.fn(),
-  mockDbUpdate: vi.fn(),
-  mockDbDelete: vi.fn(),
-  mockDbSelect: vi.fn(),
-  mockDbTransaction: vi.fn(),
-}));
+    mockDbInsert: vi.fn(),
+    mockDbUpdate: vi.fn(),
+    mockDbDelete: vi.fn(),
+    mockDbSelect: vi.fn(),
+  }));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -40,16 +32,18 @@ vi.mock("../lib/auth", () => ({
   },
 }));
 
-vi.mock("../db/index", () => ({
-  db: {
+vi.mock("../db/index", () => {
+  const tx = {
     query: mockDbQuery,
     insert: (...args: unknown[]) => mockDbInsert(...args),
-    update: (...args: unknown[]) => mockDbUpdate(...args),
     delete: (...args: unknown[]) => mockDbDelete(...args),
+    update: (...args: unknown[]) => mockDbUpdate(...args),
     select: (...args: unknown[]) => mockDbSelect(...args),
-    transaction: (...args: unknown[]) => mockDbTransaction(...args),
-  },
-}));
+  };
+  return {
+    db: { ...tx, transaction: (fn: (t: typeof tx) => unknown) => fn(tx) },
+  };
+});
 
 vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
@@ -414,14 +408,10 @@ describe("Candidate routes", () => {
         { id: id1, tripId, dayPatternId: null },
         { id: id2, tripId, dayPatternId: null },
       ]);
-      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-        await fn({
-          update: vi.fn().mockReturnValue({
-            set: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue(undefined),
-            }),
-          }),
-        });
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
       });
 
       const app = createTestApp(candidateRoutes, "/api/trips");
@@ -463,19 +453,15 @@ describe("Candidate routes", () => {
         id: patternId,
         tripDay: { id: dayId, tripId },
       });
-      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-        await fn({
-          select: vi.fn().mockReturnValue({
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue([{ max: 0 }]),
-            }),
-          }),
-          update: vi.fn().mockReturnValue({
-            set: vi.fn().mockReturnValue({
-              where: vi.fn().mockResolvedValue(undefined),
-            }),
-          }),
-        });
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ max: 0 }]),
+        }),
+      });
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
       });
 
       const app = createTestApp(candidateRoutes, "/api/trips");

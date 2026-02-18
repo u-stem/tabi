@@ -25,6 +25,10 @@ import type { AppEnv } from "../types";
 const scheduleRoutes = new Hono<AppEnv>();
 scheduleRoutes.use("*", requireAuth);
 
+// Pattern-level routes (/:tripId/days/:dayId/patterns/:patternId/...) use verifyPatternAccess
+// to verify the full trip -> day -> pattern hierarchy. Trip-level routes (/:tripId/schedules/...)
+// use requireTripAccess middleware since they only need trip membership verification.
+
 // List schedules for a pattern
 scheduleRoutes.get("/:tripId/days/:dayId/patterns/:patternId/schedules", async (c) => {
   const user = c.get("user");
@@ -63,28 +67,35 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules", async 
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const scheduleCount = await getScheduleCount(db, tripId);
-  if (scheduleCount >= MAX_SCHEDULES_PER_TRIP) {
+  const schedule = await db.transaction(async (tx) => {
+    const scheduleCount = await getScheduleCount(tx, tripId);
+    if (scheduleCount >= MAX_SCHEDULES_PER_TRIP) {
+      return null;
+    }
+
+    const nextOrder = await getNextSortOrder(
+      tx,
+      schedules.sortOrder,
+      schedules,
+      eq(schedules.dayPatternId, patternId),
+    );
+
+    const [result] = await tx
+      .insert(schedules)
+      .values({
+        tripId,
+        dayPatternId: patternId,
+        ...parsed.data,
+        sortOrder: nextOrder,
+      })
+      .returning();
+
+    return result;
+  });
+
+  if (!schedule) {
     return c.json({ error: ERROR_MSG.LIMIT_SCHEDULES }, 409);
   }
-
-  // Get next sort order
-  const nextOrder = await getNextSortOrder(
-    db,
-    schedules.sortOrder,
-    schedules,
-    eq(schedules.dayPatternId, patternId),
-  );
-
-  const [schedule] = await db
-    .insert(schedules)
-    .values({
-      tripId,
-      dayPatternId: patternId,
-      ...parsed.data,
-      sortOrder: nextOrder,
-    })
-    .returning();
 
   logActivity({
     tripId,

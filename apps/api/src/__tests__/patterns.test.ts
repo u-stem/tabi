@@ -1,34 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestApp, TEST_USER } from "./test-helpers";
 
-const {
-  mockGetSession,
-  mockDbQuery,
-  mockDbInsert,
-  mockDbUpdate,
-  mockDbDelete,
-  mockDbTransaction,
-  mockDbSelect,
-} = vi.hoisted(() => ({
-  mockGetSession: vi.fn(),
-  mockDbQuery: {
-    tripDays: {
-      findFirst: vi.fn(),
+const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbSelect } =
+  vi.hoisted(() => ({
+    mockGetSession: vi.fn(),
+    mockDbQuery: {
+      tripDays: {
+        findFirst: vi.fn(),
+      },
+      dayPatterns: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+      },
+      tripMembers: {
+        findFirst: vi.fn(),
+      },
     },
-    dayPatterns: {
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-    },
-    tripMembers: {
-      findFirst: vi.fn(),
-    },
-  },
-  mockDbInsert: vi.fn(),
-  mockDbUpdate: vi.fn(),
-  mockDbDelete: vi.fn(),
-  mockDbTransaction: vi.fn(),
-  mockDbSelect: vi.fn(),
-}));
+    mockDbInsert: vi.fn(),
+    mockDbUpdate: vi.fn(),
+    mockDbDelete: vi.fn(),
+    mockDbSelect: vi.fn(),
+  }));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -38,16 +30,18 @@ vi.mock("../lib/auth", () => ({
   },
 }));
 
-vi.mock("../db/index", () => ({
-  db: {
+vi.mock("../db/index", () => {
+  const tx = {
     query: mockDbQuery,
     insert: (...args: unknown[]) => mockDbInsert(...args),
-    update: (...args: unknown[]) => mockDbUpdate(...args),
     delete: (...args: unknown[]) => mockDbDelete(...args),
-    transaction: (...args: unknown[]) => mockDbTransaction(...args),
+    update: (...args: unknown[]) => mockDbUpdate(...args),
     select: (...args: unknown[]) => mockDbSelect(...args),
-  },
-}));
+  };
+  return {
+    db: { ...tx, transaction: (fn: (t: typeof tx) => unknown) => fn(tx) },
+  };
+});
 
 vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
@@ -325,15 +319,10 @@ describe("Pattern routes", () => {
         isDefault: false,
         sortOrder: 1,
       };
-      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-        const tx = {
-          insert: vi.fn().mockReturnValue({
-            values: vi.fn().mockReturnValue({
-              returning: vi.fn().mockResolvedValue([duplicated]),
-            }),
-          }),
-        };
-        return fn(tx);
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([duplicated]),
+        }),
       });
 
       const app = createTestApp(patternRoutes, "/api/trips");

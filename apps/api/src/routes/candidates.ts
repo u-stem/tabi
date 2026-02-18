@@ -45,26 +45,34 @@ candidateRoutes.post("/:tripId/candidates", requireTripAccess("editor"), async (
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const scheduleCount = await getScheduleCount(db, tripId);
-  if (scheduleCount >= MAX_SCHEDULES_PER_TRIP) {
+  const schedule = await db.transaction(async (tx) => {
+    const scheduleCount = await getScheduleCount(tx, tripId);
+    if (scheduleCount >= MAX_SCHEDULES_PER_TRIP) {
+      return null;
+    }
+
+    const nextOrder = await getNextSortOrder(
+      tx,
+      schedules.sortOrder,
+      schedules,
+      and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
+    );
+
+    const [result] = await tx
+      .insert(schedules)
+      .values({
+        tripId,
+        ...parsed.data,
+        sortOrder: nextOrder,
+      })
+      .returning();
+
+    return result;
+  });
+
+  if (!schedule) {
     return c.json({ error: ERROR_MSG.LIMIT_SCHEDULES }, 409);
   }
-
-  const nextOrder = await getNextSortOrder(
-    db,
-    schedules.sortOrder,
-    schedules,
-    and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
-  );
-
-  const [schedule] = await db
-    .insert(schedules)
-    .values({
-      tripId,
-      ...parsed.data,
-      sortOrder: nextOrder,
-    })
-    .returning();
 
   logActivity({
     tripId,

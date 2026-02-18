@@ -48,24 +48,32 @@ bookmarkListRoutes.post("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const [{ count: listCount }] = await db
-    .select({ count: count() })
-    .from(bookmarkLists)
-    .where(eq(bookmarkLists.userId, user.id));
+  const created = await db.transaction(async (tx) => {
+    const [{ count: listCount }] = await tx
+      .select({ count: count() })
+      .from(bookmarkLists)
+      .where(eq(bookmarkLists.userId, user.id));
 
-  if (listCount >= MAX_BOOKMARK_LISTS_PER_USER) {
+    if (listCount >= MAX_BOOKMARK_LISTS_PER_USER) {
+      return null;
+    }
+
+    const [result] = await tx
+      .insert(bookmarkLists)
+      .values({
+        userId: user.id,
+        name: parsed.data.name,
+        visibility: parsed.data.visibility,
+        sortOrder: listCount,
+      })
+      .returning();
+
+    return result;
+  });
+
+  if (!created) {
     return c.json({ error: ERROR_MSG.LIMIT_BOOKMARK_LISTS }, 409);
   }
-
-  const [created] = await db
-    .insert(bookmarkLists)
-    .values({
-      userId: user.id,
-      name: parsed.data.name,
-      visibility: parsed.data.visibility,
-      sortOrder: listCount,
-    })
-    .returning();
 
   return c.json(created, 201);
 });
@@ -131,15 +139,6 @@ bookmarkListRoutes.post("/:listId/duplicate", async (c) => {
   const user = c.get("user");
   const listId = c.req.param("listId");
 
-  const [{ count: listCount }] = await db
-    .select({ count: count() })
-    .from(bookmarkLists)
-    .where(eq(bookmarkLists.userId, user.id));
-
-  if (listCount >= MAX_BOOKMARK_LISTS_PER_USER) {
-    return c.json({ error: ERROR_MSG.LIMIT_BOOKMARK_LISTS }, 409);
-  }
-
   const source = await db.query.bookmarkLists.findFirst({
     where: eq(bookmarkLists.id, listId),
     with: { bookmarks: { orderBy: (b, { asc }) => [asc(b.sortOrder)] } },
@@ -150,6 +149,15 @@ bookmarkListRoutes.post("/:listId/duplicate", async (c) => {
   }
 
   const created = await db.transaction(async (tx) => {
+    const [{ count: listCount }] = await tx
+      .select({ count: count() })
+      .from(bookmarkLists)
+      .where(eq(bookmarkLists.userId, user.id));
+
+    if (listCount >= MAX_BOOKMARK_LISTS_PER_USER) {
+      return null;
+    }
+
     const [newList] = await tx
       .insert(bookmarkLists)
       .values({
@@ -174,6 +182,10 @@ bookmarkListRoutes.post("/:listId/duplicate", async (c) => {
 
     return newList;
   });
+
+  if (!created) {
+    return c.json({ error: ERROR_MSG.LIMIT_BOOKMARK_LISTS }, 409);
+  }
 
   return c.json(created, 201);
 });

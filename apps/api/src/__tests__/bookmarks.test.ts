@@ -20,15 +20,18 @@ vi.mock("../lib/auth", () => ({
   auth: { api: { getSession: (...args: unknown[]) => mockGetSession(...args) } },
 }));
 
-vi.mock("../db/index", () => ({
-  db: {
+vi.mock("../db/index", () => {
+  const tx = {
     query: mockDbQuery,
     insert: (...args: unknown[]) => mockDbInsert(...args),
     delete: (...args: unknown[]) => mockDbDelete(...args),
     update: (...args: unknown[]) => mockDbUpdate(...args),
     select: (...args: unknown[]) => mockDbSelect(...args),
-  },
-}));
+  };
+  return {
+    db: { ...tx, transaction: (fn: (t: typeof tx) => unknown) => fn(tx) },
+  };
+});
 
 import { MAX_BOOKMARKS_PER_LIST } from "@sugara/shared";
 import { bookmarkRoutes } from "../routes/bookmarks";

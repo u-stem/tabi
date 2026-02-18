@@ -56,25 +56,33 @@ bookmarkRoutes.post("/:listId/bookmarks", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const [{ count: bmCount }] = await db
-    .select({ count: count() })
-    .from(bookmarks)
-    .where(eq(bookmarks.listId, listId));
+  const created = await db.transaction(async (tx) => {
+    const [{ count: bmCount }] = await tx
+      .select({ count: count() })
+      .from(bookmarks)
+      .where(eq(bookmarks.listId, listId));
 
-  if (bmCount >= MAX_BOOKMARKS_PER_LIST) {
+    if (bmCount >= MAX_BOOKMARKS_PER_LIST) {
+      return null;
+    }
+
+    const [result] = await tx
+      .insert(bookmarks)
+      .values({
+        listId,
+        name: parsed.data.name,
+        memo: parsed.data.memo ?? null,
+        urls: parsed.data.urls,
+        sortOrder: bmCount,
+      })
+      .returning();
+
+    return result;
+  });
+
+  if (!created) {
     return c.json({ error: ERROR_MSG.LIMIT_BOOKMARKS }, 409);
   }
-
-  const [created] = await db
-    .insert(bookmarks)
-    .values({
-      listId,
-      name: parsed.data.name,
-      memo: parsed.data.memo ?? null,
-      urls: parsed.data.urls,
-      sortOrder: bmCount,
-    })
-    .returning();
 
   return c.json(created, 201);
 });

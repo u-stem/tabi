@@ -55,17 +55,17 @@ tripRoutes.post("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const [tripCount] = await db
-    .select({ count: count() })
-    .from(trips)
-    .where(eq(trips.ownerId, user.id));
-  if (tripCount.count >= MAX_TRIPS_PER_USER) {
-    return c.json({ error: ERROR_MSG.LIMIT_TRIPS }, 409);
-  }
-
   const { title, destination, startDate, endDate } = parsed.data;
 
   const trip = await db.transaction(async (tx) => {
+    const [tripCount] = await tx
+      .select({ count: count() })
+      .from(trips)
+      .where(eq(trips.ownerId, user.id));
+    if (tripCount.count >= MAX_TRIPS_PER_USER) {
+      return null;
+    }
+
     const [created] = await tx
       .insert(trips)
       .values({
@@ -88,6 +88,10 @@ tripRoutes.post("/", async (c) => {
 
     return created;
   });
+
+  if (!trip) {
+    return c.json({ error: ERROR_MSG.LIMIT_TRIPS }, 409);
+  }
 
   logActivity({
     tripId: trip.id,
@@ -244,14 +248,6 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
   const user = c.get("user");
   const tripId = c.req.param("id");
 
-  const [tripCount] = await db
-    .select({ count: count() })
-    .from(trips)
-    .where(eq(trips.ownerId, user.id));
-  if (tripCount.count >= MAX_TRIPS_PER_USER) {
-    return c.json({ error: ERROR_MSG.LIMIT_TRIPS }, 409);
-  }
-
   const source = await db.query.trips.findFirst({
     where: eq(trips.id, tripId),
     with: {
@@ -275,6 +271,14 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
   }
 
   const newTrip = await db.transaction(async (tx) => {
+    const [tripCount] = await tx
+      .select({ count: count() })
+      .from(trips)
+      .where(eq(trips.ownerId, user.id));
+    if (tripCount.count >= MAX_TRIPS_PER_USER) {
+      return null;
+    }
+
     const [created] = await tx
       .insert(trips)
       .values({
@@ -328,6 +332,10 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
 
     return created;
   });
+
+  if (!newTrip) {
+    return c.json({ error: ERROR_MSG.LIMIT_TRIPS }, 409);
+  }
 
   logActivity({
     tripId: newTrip.id,

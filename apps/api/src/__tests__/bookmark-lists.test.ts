@@ -1,28 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestApp } from "./test-helpers";
 
-const {
-  mockGetSession,
-  mockDbQuery,
-  mockDbInsert,
-  mockDbDelete,
-  mockDbUpdate,
-  mockDbSelect,
-  mockDbTransaction,
-} = vi.hoisted(() => ({
-  mockGetSession: vi.fn(),
-  mockDbQuery: {
-    bookmarkLists: {
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
+const { mockGetSession, mockDbQuery, mockDbInsert, mockDbDelete, mockDbUpdate, mockDbSelect } =
+  vi.hoisted(() => ({
+    mockGetSession: vi.fn(),
+    mockDbQuery: {
+      bookmarkLists: {
+        findMany: vi.fn(),
+        findFirst: vi.fn(),
+      },
     },
-  },
-  mockDbInsert: vi.fn(),
-  mockDbDelete: vi.fn(),
-  mockDbUpdate: vi.fn(),
-  mockDbSelect: vi.fn(),
-  mockDbTransaction: vi.fn(),
-}));
+    mockDbInsert: vi.fn(),
+    mockDbDelete: vi.fn(),
+    mockDbUpdate: vi.fn(),
+    mockDbSelect: vi.fn(),
+  }));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -32,16 +24,18 @@ vi.mock("../lib/auth", () => ({
   },
 }));
 
-vi.mock("../db/index", () => ({
-  db: {
+vi.mock("../db/index", () => {
+  const tx = {
     query: mockDbQuery,
     insert: (...args: unknown[]) => mockDbInsert(...args),
     delete: (...args: unknown[]) => mockDbDelete(...args),
     update: (...args: unknown[]) => mockDbUpdate(...args),
     select: (...args: unknown[]) => mockDbSelect(...args),
-    transaction: (...args: unknown[]) => mockDbTransaction(...args),
-  },
-}));
+  };
+  return {
+    db: { ...tx, transaction: (fn: (t: typeof tx) => unknown) => fn(tx) },
+  };
+});
 
 import { MAX_BOOKMARK_LISTS_PER_USER } from "@sugara/shared";
 import { bookmarkListRoutes } from "../routes/bookmark-lists";
@@ -245,15 +239,16 @@ describe("Bookmark list routes", () => {
         visibility: "private",
         sortOrder: 0,
       };
-      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-        const tx = {
-          insert: vi.fn().mockReturnValue({
-            values: vi.fn().mockReturnValue({
-              returning: vi.fn().mockResolvedValue([newList]),
-            }),
-          }),
-        };
-        return fn(tx);
+      // Transaction uses global mocks: first select (count) then insert
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: 0 }]),
+        }),
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([newList]),
+        }),
       });
 
       const app = createTestApp(bookmarkListRoutes, "/api/bookmark-lists");

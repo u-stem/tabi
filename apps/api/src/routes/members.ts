@@ -42,29 +42,42 @@ memberRoutes.post("/:tripId/members", requireTripAccess("owner"), async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const [[memberCount], targetUser] = await Promise.all([
-    db.select({ count: count() }).from(tripMembers).where(eq(tripMembers.tripId, tripId)),
-    db.query.users.findFirst({ where: eq(users.id, parsed.data.userId) }),
-  ]);
-  if (memberCount.count >= MAX_MEMBERS_PER_TRIP) {
-    return c.json({ error: ERROR_MSG.LIMIT_MEMBERS }, 409);
-  }
+  const targetUser = await db.query.users.findFirst({
+    where: eq(users.id, parsed.data.userId),
+  });
   if (!targetUser) {
     return c.json({ error: ERROR_MSG.USER_NOT_FOUND }, 404);
   }
 
-  const existing = await db.query.tripMembers.findFirst({
-    where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, targetUser.id)),
+  const result = await db.transaction(async (tx) => {
+    const [[{ count: memberCount }], existing] = await Promise.all([
+      tx.select({ count: count() }).from(tripMembers).where(eq(tripMembers.tripId, tripId)),
+      tx.query.tripMembers.findFirst({
+        where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, targetUser.id)),
+      }),
+    ]);
+    if (memberCount >= MAX_MEMBERS_PER_TRIP) {
+      return "limit" as const;
+    }
+    if (existing) {
+      return "duplicate" as const;
+    }
+
+    await tx.insert(tripMembers).values({
+      tripId,
+      userId: targetUser.id,
+      role: parsed.data.role,
+    });
+
+    return "ok" as const;
   });
-  if (existing) {
+
+  if (result === "limit") {
+    return c.json({ error: ERROR_MSG.LIMIT_MEMBERS }, 409);
+  }
+  if (result === "duplicate") {
     return c.json({ error: ERROR_MSG.ALREADY_MEMBER }, 409);
   }
-
-  await db.insert(tripMembers).values({
-    tripId,
-    userId: targetUser.id,
-    role: parsed.data.role,
-  });
 
   logActivity({
     tripId,

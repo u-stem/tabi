@@ -1,35 +1,27 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestApp, TEST_USER } from "./test-helpers";
 
-const {
-  mockGetSession,
-  mockDbQuery,
-  mockDbInsert,
-  mockDbUpdate,
-  mockDbDelete,
-  mockDbTransaction,
-  mockDbSelect,
-} = vi.hoisted(() => ({
-  mockGetSession: vi.fn(),
-  mockDbQuery: {
-    trips: {
-      findMany: vi.fn(),
-      findFirst: vi.fn(),
+const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbSelect } =
+  vi.hoisted(() => ({
+    mockGetSession: vi.fn(),
+    mockDbQuery: {
+      trips: {
+        findMany: vi.fn(),
+        findFirst: vi.fn(),
+      },
+      tripMembers: {
+        findFirst: vi.fn(),
+        findMany: vi.fn(),
+      },
+      schedules: {
+        findMany: vi.fn(),
+      },
     },
-    tripMembers: {
-      findFirst: vi.fn(),
-      findMany: vi.fn(),
-    },
-    schedules: {
-      findMany: vi.fn(),
-    },
-  },
-  mockDbInsert: vi.fn(),
-  mockDbUpdate: vi.fn(),
-  mockDbDelete: vi.fn(),
-  mockDbTransaction: vi.fn(),
-  mockDbSelect: vi.fn(),
-}));
+    mockDbInsert: vi.fn(),
+    mockDbUpdate: vi.fn(),
+    mockDbDelete: vi.fn(),
+    mockDbSelect: vi.fn(),
+  }));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -39,16 +31,18 @@ vi.mock("../lib/auth", () => ({
   },
 }));
 
-vi.mock("../db/index", () => ({
-  db: {
+vi.mock("../db/index", () => {
+  const tx = {
     query: mockDbQuery,
     insert: (...args: unknown[]) => mockDbInsert(...args),
     update: (...args: unknown[]) => mockDbUpdate(...args),
     delete: (...args: unknown[]) => mockDbDelete(...args),
-    transaction: (...args: unknown[]) => mockDbTransaction(...args),
     select: (...args: unknown[]) => mockDbSelect(...args),
-  },
-}));
+  };
+  return {
+    db: { ...tx, transaction: (fn: (t: typeof tx) => unknown) => fn(tx) },
+  };
+});
 
 vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
@@ -113,38 +107,25 @@ describe("Trip routes", () => {
         status: "draft",
       };
 
-      // db.transaction wraps insert calls
-      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-        let insertCallCount = 0;
-        const tx = {
-          insert: vi.fn().mockImplementation(() => {
-            insertCallCount++;
-            // First insert: trips (returning trip), second: tripDays (returning ids), third: dayPatterns, fourth: tripMembers
-            if (insertCallCount === 1) {
-              return {
-                values: vi.fn().mockReturnValue({
-                  returning: vi.fn().mockResolvedValue([createdTrip]),
-                }),
-              };
-            }
-            if (insertCallCount === 2) {
-              return {
-                values: vi.fn().mockReturnValue({
-                  returning: vi
-                    .fn()
-                    .mockResolvedValue([{ id: "day-1" }, { id: "day-2" }, { id: "day-3" }]),
-                }),
-              };
-            }
-            return {
-              values: vi.fn().mockReturnValue({
-                returning: vi.fn().mockResolvedValue([]),
-              }),
-            };
+      // Sequential inserts: trips -> tripDays -> dayPatterns -> tripMembers
+      mockDbInsert
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([createdTrip]),
           }),
-        };
-        return fn(tx);
-      });
+        })
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi
+              .fn()
+              .mockResolvedValue([{ id: "day-1" }, { id: "day-2" }, { id: "day-3" }]),
+          }),
+        })
+        .mockReturnValue({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([]),
+          }),
+        });
 
       const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips", {
@@ -231,7 +212,6 @@ describe("Trip routes", () => {
       });
 
       expect(res.status).toBe(409);
-      expect(mockDbTransaction).not.toHaveBeenCalled();
     });
   });
 
@@ -614,35 +594,30 @@ describe("Trip routes", () => {
         startDate: "2025-07-02",
         endDate: "2025-07-05",
       };
-      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-        const tx = {
-          delete: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue(undefined),
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ id: "new-day-1" }]),
+        }),
+      });
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
           }),
-          insert: vi.fn().mockReturnValue({
-            values: vi.fn().mockReturnValue({
-              returning: vi.fn().mockResolvedValue([{ id: "new-day-1" }]),
-            }),
+        }),
+      });
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValue([
+              { id: "day-2", date: "2025-07-02", dayNumber: 1 },
+              { id: "day-3", date: "2025-07-03", dayNumber: 2 },
+            ]),
           }),
-          update: vi.fn().mockReturnValue({
-            set: vi.fn().mockReturnValue({
-              where: vi.fn().mockReturnValue({
-                returning: vi.fn().mockResolvedValue([updated]),
-              }),
-            }),
-          }),
-          select: vi.fn().mockReturnValue({
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockReturnValue({
-                orderBy: vi.fn().mockResolvedValue([
-                  { id: "day-2", date: "2025-07-02", dayNumber: 1 },
-                  { id: "day-3", date: "2025-07-03", dayNumber: 2 },
-                ]),
-              }),
-            }),
-          }),
-        };
-        return fn(tx);
+        }),
       });
 
       const app = createTestApp(tripRoutes, "/api/trips");
@@ -653,7 +628,6 @@ describe("Trip routes", () => {
       });
 
       expect(res.status).toBe(200);
-      expect(mockDbTransaction).toHaveBeenCalledOnce();
     });
 
     it("returns 400 when startDate is after endDate", async () => {
@@ -680,35 +654,30 @@ describe("Trip routes", () => {
         startDate: "2025-07-02",
         endDate: "2025-07-03",
       };
-      mockDbTransaction.mockImplementation(async (fn: (tx: unknown) => Promise<unknown>) => {
-        const tx = {
-          delete: vi.fn().mockReturnValue({
-            where: vi.fn().mockResolvedValue(undefined),
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ id: "new-day-1" }]),
+        }),
+      });
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
           }),
-          insert: vi.fn().mockReturnValue({
-            values: vi.fn().mockReturnValue({
-              returning: vi.fn().mockResolvedValue([{ id: "new-day-1" }]),
-            }),
+        }),
+      });
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValue([
+              { id: "day-2", date: "2025-07-02", dayNumber: 1 },
+              { id: "day-3", date: "2025-07-03", dayNumber: 2 },
+            ]),
           }),
-          update: vi.fn().mockReturnValue({
-            set: vi.fn().mockReturnValue({
-              where: vi.fn().mockReturnValue({
-                returning: vi.fn().mockResolvedValue([updated]),
-              }),
-            }),
-          }),
-          select: vi.fn().mockReturnValue({
-            from: vi.fn().mockReturnValue({
-              where: vi.fn().mockReturnValue({
-                orderBy: vi.fn().mockResolvedValue([
-                  { id: "day-2", date: "2025-07-02", dayNumber: 1 },
-                  { id: "day-3", date: "2025-07-03", dayNumber: 2 },
-                ]),
-              }),
-            }),
-          }),
-        };
-        return fn(tx);
+        }),
       });
 
       const app = createTestApp(tripRoutes, "/api/trips");
@@ -719,7 +688,6 @@ describe("Trip routes", () => {
       });
 
       expect(res.status).toBe(200);
-      expect(mockDbTransaction).toHaveBeenCalledOnce();
     });
   });
 

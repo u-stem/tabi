@@ -57,23 +57,31 @@ groupRoutes.post("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const [{ count: groupCount }] = await db
-    .select({ count: count() })
-    .from(groups)
-    .where(eq(groups.ownerId, user.id));
-  if (groupCount >= MAX_GROUPS_PER_USER) {
+  const created = await db.transaction(async (tx) => {
+    const [{ count: groupCount }] = await tx
+      .select({ count: count() })
+      .from(groups)
+      .where(eq(groups.ownerId, user.id));
+    if (groupCount >= MAX_GROUPS_PER_USER) {
+      return null;
+    }
+
+    const [result] = await tx
+      .insert(groups)
+      .values({ ownerId: user.id, name: parsed.data.name })
+      .returning({
+        id: groups.id,
+        name: groups.name,
+        createdAt: groups.createdAt,
+        updatedAt: groups.updatedAt,
+      });
+
+    return result;
+  });
+
+  if (!created) {
     return c.json({ error: ERROR_MSG.LIMIT_GROUPS }, 409);
   }
-
-  const [created] = await db
-    .insert(groups)
-    .values({ ownerId: user.id, name: parsed.data.name })
-    .returning({
-      id: groups.id,
-      name: groups.name,
-      createdAt: groups.createdAt,
-      updatedAt: groups.updatedAt,
-    });
 
   return c.json({ ...created, memberCount: 0 }, 201);
 });
@@ -175,24 +183,35 @@ groupRoutes.post("/:groupId/members", async (c) => {
     return c.json({ error: ERROR_MSG.USER_NOT_FOUND }, 404);
   }
 
-  const [{ count: memberCount }] = await db
-    .select({ count: count() })
-    .from(groupMembers)
-    .where(eq(groupMembers.groupId, groupId));
-  if (memberCount >= MAX_MEMBERS_PER_GROUP) {
+  const result = await db.transaction(async (tx) => {
+    const [{ count: memberCount }] = await tx
+      .select({ count: count() })
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, groupId));
+    if (memberCount >= MAX_MEMBERS_PER_GROUP) {
+      return "limit" as const;
+    }
+
+    try {
+      await tx.insert(groupMembers).values({
+        groupId,
+        userId: parsed.data.userId,
+      });
+    } catch (e) {
+      if (e instanceof Error && "code" in e && e.code === PG_UNIQUE_VIOLATION) {
+        return "duplicate" as const;
+      }
+      throw e;
+    }
+
+    return "ok" as const;
+  });
+
+  if (result === "limit") {
     return c.json({ error: ERROR_MSG.LIMIT_GROUP_MEMBERS }, 409);
   }
-
-  try {
-    await db.insert(groupMembers).values({
-      groupId,
-      userId: parsed.data.userId,
-    });
-  } catch (e) {
-    if (e instanceof Error && "code" in e && e.code === PG_UNIQUE_VIOLATION) {
-      return c.json({ error: ERROR_MSG.ALREADY_GROUP_MEMBER }, 409);
-    }
-    throw e;
+  if (result === "duplicate") {
+    return c.json({ error: ERROR_MSG.ALREADY_GROUP_MEMBER }, 409);
   }
 
   return c.json({ ok: true }, 201);

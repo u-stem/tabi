@@ -13,7 +13,6 @@
 - **バリデーション**: Zod (共有スキーマ)
 - **リンター/フォーマッター**: Biome
 - **Git フック**: lefthook (pre-commit / commit-msg / pre-push)
-- **地図**: Leaflet + react-leaflet
 - **デプロイ**: Vercel
 
 ## セットアップ

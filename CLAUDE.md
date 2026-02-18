@@ -54,7 +54,6 @@ bun run --filter @sugara/shared check-types
 - リンター/フォーマッター: Biome (ルートに biome.json、各パッケージから turbo 経由で実行)
 - テスト: Vitest
 - Git フック: lefthook (pre-commit: check + check-types, commit-msg: Conventional Commits, pre-push: test)
-- 地図: Leaflet + react-leaflet
 - デプロイ: Vercel
 
 ## 主要パターン

@@ -1,6 +1,7 @@
 import { relations, sql } from "drizzle-orm";
 import {
   boolean,
+  check,
   date,
   index,
   integer,
@@ -65,8 +66,8 @@ export const users = pgTable("users", {
   image: varchar("image", { length: 500 }),
   username: varchar("username", { length: 30 }).unique(),
   displayUsername: varchar("display_username", { length: 30 }),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }).enableRLS();
 
 export const sessions = pgTable("sessions", {
@@ -75,11 +76,11 @@ export const sessions = pgTable("sessions", {
     .notNull()
     .references(() => users.id, { onDelete: "cascade" }),
   token: varchar("token", { length: 255 }).notNull().unique(),
-  expiresAt: timestamp("expires_at").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   ipAddress: varchar("ip_address", { length: 45 }),
   userAgent: text("user_agent"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }).enableRLS();
 
 export const accounts = pgTable("accounts", {
@@ -92,40 +93,44 @@ export const accounts = pgTable("accounts", {
   accessToken: text("access_token"),
   refreshToken: text("refresh_token"),
   idToken: text("id_token"),
-  expiresAt: timestamp("expires_at"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
   accessTokenExpiresAt: timestamp("access_token_expires_at"),
   refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
   scope: varchar("scope", { length: 500 }),
   password: text("password"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }).enableRLS();
 
 export const verifications = pgTable("verifications", {
   id: uuid("id").primaryKey().defaultRandom(),
   identifier: varchar("identifier", { length: 255 }).notNull(),
   value: text("value").notNull(),
-  expiresAt: timestamp("expires_at").notNull(),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }).enableRLS();
 
-export const trips = pgTable("trips", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  ownerId: uuid("owner_id")
-    .notNull()
-    .references(() => users.id, { onDelete: "cascade" }),
-  title: varchar("title", { length: 100 }).notNull(),
-  destination: varchar("destination", { length: 100 }).notNull(),
-  startDate: date("start_date").notNull(),
-  endDate: date("end_date").notNull(),
-  status: tripStatusEnum("status").notNull().default("draft"),
-  coverImageUrl: varchar("cover_image_url", { length: 500 }),
-  shareToken: varchar("share_token", { length: 64 }).unique(),
-  shareTokenExpiresAt: timestamp("share_token_expires_at"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at").notNull().defaultNow(),
-}).enableRLS();
+export const trips = pgTable(
+  "trips",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 100 }).notNull(),
+    destination: varchar("destination", { length: 100 }).notNull(),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date").notNull(),
+    status: tripStatusEnum("status").notNull().default("draft"),
+    coverImageUrl: varchar("cover_image_url", { length: 500 }),
+    shareToken: varchar("share_token", { length: 64 }).unique(),
+    shareTokenExpiresAt: timestamp("share_token_expires_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [check("trips_date_range_check", sql`${table.endDate} >= ${table.startDate}`)],
+).enableRLS();
 
 export const tripMembers = pgTable(
   "trip_members",
@@ -168,7 +173,7 @@ export const dayPatterns = pgTable(
     label: varchar("label", { length: 50 }).notNull(),
     isDefault: boolean("is_default").notNull().default(false),
     sortOrder: integer("sort_order").notNull().default(0),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("day_patterns_trip_day_id_idx").on(table.tripDayId)],
 ).enableRLS();
@@ -196,8 +201,8 @@ export const schedules = pgTable(
     transportMethod: transportMethodEnum("transport_method"),
     color: scheduleColorEnum("color").notNull().default("blue"),
     endDayOffset: integer("end_day_offset"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("schedules_trip_id_idx").on(table.tripId),
@@ -217,7 +222,7 @@ export const scheduleReactions = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     type: reactionTypeEnum("type").notNull(),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [primaryKey({ columns: [table.scheduleId, table.userId] })],
 ).enableRLS();
@@ -236,7 +241,7 @@ export const activityLogs = pgTable(
     entityType: varchar("entity_type", { length: 50 }).notNull(),
     entityName: varchar("entity_name", { length: 200 }),
     detail: varchar("detail", { length: 200 }),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("activity_logs_trip_id_created_at_idx").on(table.tripId, table.createdAt)],
 ).enableRLS();
@@ -252,14 +257,15 @@ export const friends = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     status: friendStatusEnum("status").notNull().default("pending"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     uniqueIndex("friends_pair_unique").on(
       sql`least(${table.requesterId}, ${table.addresseeId})`,
       sql`greatest(${table.requesterId}, ${table.addresseeId})`,
     ),
+    check("friends_no_self_ref", sql`${table.requesterId} != ${table.addresseeId}`),
     index("friends_requester_id_idx").on(table.requesterId),
     index("friends_addressee_id_idx").on(table.addresseeId),
   ],
@@ -275,8 +281,8 @@ export const bookmarkLists = pgTable(
     name: varchar("name", { length: 50 }).notNull(),
     visibility: bookmarkListVisibilityEnum("visibility").notNull().default("private"),
     sortOrder: integer("sort_order").notNull().default(0),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("bookmark_lists_user_sort_idx").on(table.userId, table.sortOrder)],
 ).enableRLS();
@@ -292,8 +298,8 @@ export const bookmarks = pgTable(
     memo: text("memo"),
     urls: text("urls").array().notNull().default([]),
     sortOrder: integer("sort_order").notNull().default(0),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("bookmarks_list_sort_idx").on(table.listId, table.sortOrder)],
 ).enableRLS();
@@ -306,8 +312,8 @@ export const groups = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     name: varchar("name", { length: 50 }).notNull(),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [index("groups_owner_id_idx").on(table.ownerId)],
 ).enableRLS();
@@ -321,7 +327,7 @@ export const groupMembers = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
-    addedAt: timestamp("added_at").notNull().defaultNow(),
+    addedAt: timestamp("added_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     primaryKey({ columns: [table.groupId, table.userId] }),

@@ -209,6 +209,7 @@ export function useTripDragAndDrop({
         next.splice(insertIdx, 0, newCandidate);
         return next;
       });
+      toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
 
       try {
         await api(`/api/trips/${tripId}/schedules/${active.id}/unassign`, {
@@ -237,10 +238,8 @@ export function useTripDragAndDrop({
             body: JSON.stringify({ scheduleIds }),
           });
         }
-        toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
       } catch {
         // unassign succeeded but reorder failed — refetch to sync
-        toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
         onDone();
         return;
       }
@@ -299,6 +298,7 @@ export function useTripDragAndDrop({
         next.splice(insertIdx, 0, newSchedule);
         return next;
       });
+      toast.success(MSG.CANDIDATE_ASSIGNED);
 
       try {
         await api(`/api/trips/${tripId}/candidates/${active.id}/assign`, {
@@ -330,10 +330,8 @@ export function useTripDragAndDrop({
             },
           );
         }
-        toast.success(MSG.CANDIDATE_ASSIGNED);
       } catch {
         // assign succeeded but reorder failed — refetch to sync
-        toast.success(MSG.CANDIDATE_ASSIGNED);
         onDone();
         return;
       }

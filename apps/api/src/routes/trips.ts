@@ -4,13 +4,14 @@ import {
   MAX_TRIPS_PER_USER,
   updateTripSchema,
 } from "@sugara/shared";
-import { and, count, desc, eq, getTableColumns, ne } from "drizzle-orm";
+import { and, count, countDistinct, desc, eq, getTableColumns, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import {
   dayPatterns,
   schedulePollOptions,
   schedulePollParticipants,
+  schedulePollResponses,
   schedulePolls,
   schedules,
   tripDays,
@@ -239,12 +240,46 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
   const scheduleCount =
     trip.days.flatMap((d) => d.patterns).flatMap((p) => p.schedules).length + candidates.length;
 
+  // Fetch linked poll summary
+  const linkedPoll = await db.query.schedulePolls.findFirst({
+    where: eq(schedulePolls.tripId, tripId),
+    columns: { id: true, status: true },
+  });
+
+  let poll: { id: string; status: string; participantCount: number; respondedCount: number } | null =
+    null;
+
+  if (linkedPoll) {
+    const [[{ count: participantCount }], [{ count: respondedCount }]] = await Promise.all([
+      db
+        .select({ count: count() })
+        .from(schedulePollParticipants)
+        .where(eq(schedulePollParticipants.pollId, linkedPoll.id)),
+      db
+        .select({ count: countDistinct(schedulePollResponses.participantId) })
+        .from(schedulePollResponses)
+        .innerJoin(
+          schedulePollOptions,
+          eq(schedulePollResponses.optionId, schedulePollOptions.id),
+        )
+        .where(eq(schedulePollOptions.pollId, linkedPoll.id)),
+    ]);
+
+    poll = {
+      id: linkedPoll.id,
+      status: linkedPoll.status,
+      participantCount,
+      respondedCount,
+    };
+  }
+
   return c.json({
     ...trip,
     role,
     candidates,
     scheduleCount,
     memberCount,
+    poll,
   });
 });
 

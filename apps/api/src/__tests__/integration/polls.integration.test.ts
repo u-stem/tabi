@@ -690,7 +690,6 @@ describe("Poll confirm with existing trip", () => {
 
   afterAll(async () => {
     await cleanupTables();
-    await teardownTestDb();
   });
 
   it("updates existing trip dates and status on confirm", async () => {
@@ -774,5 +773,62 @@ describe("Poll confirm with existing trip", () => {
     });
     expect(members).toHaveLength(2);
     expect(members.find((m) => m.userId === other.id)?.role).toBe("editor");
+  });
+});
+
+describe("Trip detail with poll data", () => {
+  const app = createApp();
+  let owner: { id: string; name: string; email: string };
+
+  beforeEach(async () => {
+    await cleanupTables();
+    owner = await createTestUser({ name: "Owner", email: "owner@test.com" });
+    mockGetSession.mockImplementation(() => ({
+      user: owner,
+      session: { id: "test-session" },
+    }));
+  });
+
+  afterAll(async () => {
+    await cleanupTables();
+    await teardownTestDb();
+  });
+
+  it("includes poll summary when trip has a linked poll", async () => {
+    const createRes = await app.request(
+      "/api/trips",
+      json({
+        title: "Poll Detail Trip",
+        destination: "Hokkaido",
+        pollOptions: [{ startDate: "2026-12-01", endDate: "2026-12-03" }],
+      }),
+    );
+    const trip = await createRes.json();
+
+    const detailRes = await app.request(`/api/trips/${trip.id}`);
+    const detail = await detailRes.json();
+
+    expect(detail.poll).toBeTruthy();
+    expect(detail.poll.status).toBe("open");
+    expect(detail.poll.participantCount).toBe(1);
+    expect(detail.poll.respondedCount).toBe(0);
+  });
+
+  it("has poll: null when no linked poll", async () => {
+    const createRes = await app.request(
+      "/api/trips",
+      json({
+        title: "No Poll Trip",
+        destination: "Nagoya",
+        startDate: "2026-07-01",
+        endDate: "2026-07-03",
+      }),
+    );
+    const trip = await createRes.json();
+
+    const detailRes = await app.request(`/api/trips/${trip.id}`);
+    const detail = await detailRes.json();
+
+    expect(detail.poll).toBeNull();
   });
 });

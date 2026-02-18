@@ -92,7 +92,7 @@ export function useBookmarkOperations({
       urls: bookmarkUrls.filter((u) => u.trim()),
     };
 
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<BookmarkResponse[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(
@@ -122,7 +122,7 @@ export function useBookmarkOperations({
     if (!deletingBookmark) return;
     const bookmarkId = deletingBookmark.id;
 
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<BookmarkResponse[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(

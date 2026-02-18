@@ -108,7 +108,7 @@ export function EditCandidateDialog({
 
     const { expectedUpdatedAt: _, ...updateFields } = data;
 
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(

@@ -95,7 +95,7 @@ export function TripActions({
   async function handleStatusChange(newStatus: string) {
     if (newStatus === status) return;
 
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(cacheKey, { ...prev, status: newStatus });

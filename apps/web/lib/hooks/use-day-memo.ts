@@ -36,7 +36,7 @@ export function useDayMemo({ tripId, currentDayId, onDone }: UseDayMemoArgs) {
     const dayId = currentDayId;
     const newMemo = text.trim() || null;
 
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(cacheKey, {

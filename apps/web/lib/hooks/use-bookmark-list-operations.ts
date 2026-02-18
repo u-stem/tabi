@@ -35,7 +35,7 @@ export function useBookmarkListOperations({
     const trimmed = editListName.trim();
     if (!trimmed) return;
 
-    await queryClient.cancelQueries({ queryKey: listsCacheKey });
+    queryClient.cancelQueries({ queryKey: listsCacheKey });
     const prev = queryClient.getQueryData<BookmarkListResponse[]>(listsCacheKey);
     if (prev) {
       queryClient.setQueryData(
@@ -61,7 +61,7 @@ export function useBookmarkListOperations({
   }
 
   async function handleDelete() {
-    await queryClient.cancelQueries({ queryKey: listsCacheKey });
+    queryClient.cancelQueries({ queryKey: listsCacheKey });
     const prev = queryClient.getQueryData<BookmarkListResponse[]>(listsCacheKey);
     if (prev) {
       queryClient.setQueryData(

@@ -388,7 +388,7 @@ export function CandidatePanel({
   }, [candidates, sortBy]);
 
   async function handleAssign(spotId: string) {
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(
@@ -411,7 +411,7 @@ export function CandidatePanel({
   }
 
   async function handleDelete(spotId: string) {
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(cacheKey, removeCandidate(prev, spotId));

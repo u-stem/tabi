@@ -120,7 +120,7 @@ export function DayTimeline({
     const pId = overridePatternId ?? patternId;
 
     // Cancel in-flight refetches to prevent them from overwriting the optimistic update
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(cacheKey, removeScheduleFromPattern(prev, dId, pId, scheduleId));
@@ -140,7 +140,7 @@ export function DayTimeline({
   }
 
   async function handleUnassign(scheduleId: string) {
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(

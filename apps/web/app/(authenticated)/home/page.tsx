@@ -183,7 +183,7 @@ export default function HomePage() {
 
     // Optimistic: remove selected trips from cache
     const ownedCacheKey = queryKeys.trips.owned();
-    await queryClient.cancelQueries({ queryKey: ownedCacheKey });
+    queryClient.cancelQueries({ queryKey: ownedCacheKey });
     const prev = queryClient.getQueryData<TripListItem[]>(ownedCacheKey);
     if (prev) {
       queryClient.setQueryData(

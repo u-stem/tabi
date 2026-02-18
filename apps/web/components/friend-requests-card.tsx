@@ -31,7 +31,7 @@ export function FriendRequestsCard({ requests }: { requests?: FriendRequestRespo
   async function handleAccept(id: string) {
     setLoadingId(id);
     const cacheKey = queryKeys.friends.requests();
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<FriendRequestResponse[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(
@@ -58,7 +58,7 @@ export function FriendRequestsCard({ requests }: { requests?: FriendRequestRespo
   async function handleReject(id: string) {
     setLoadingId(id);
     const cacheKey = queryKeys.friends.requests();
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<FriendRequestResponse[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(

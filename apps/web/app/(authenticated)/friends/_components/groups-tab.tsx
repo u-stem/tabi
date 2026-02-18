@@ -57,7 +57,7 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
     if (!trimmed) return;
 
     const cacheKey = queryKeys.groups.list();
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<GroupResponse[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(
@@ -85,7 +85,7 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
     const groupId = deleteGroup.id;
 
     const cacheKey = queryKeys.groups.list();
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<GroupResponse[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(

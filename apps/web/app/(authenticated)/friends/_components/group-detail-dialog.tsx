@@ -104,7 +104,7 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
     const memberId = removingMember.userId;
 
     const cacheKey = queryKeys.groups.members(groupId);
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<GroupMemberResponse[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(

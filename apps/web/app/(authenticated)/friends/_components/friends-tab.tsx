@@ -52,7 +52,7 @@ function FriendListSection({
   async function handleRemove(friendId: string) {
     setLoadingId(friendId);
     const cacheKey = queryKeys.friends.list();
-    await queryClient.cancelQueries({ queryKey: cacheKey });
+    queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<FriendResponse[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(

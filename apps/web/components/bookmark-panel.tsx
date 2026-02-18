@@ -3,7 +3,7 @@
 import type { BookmarkListResponse, BookmarkResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCheck, CheckSquare, ExternalLink, Plus, StickyNote, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -57,9 +57,11 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
   });
 
   // Auto-select first list
-  if (!selectedListId && lists.length > 0) {
-    setSelectedListId(lists[0].id);
-  }
+  useEffect(() => {
+    if (!selectedListId && lists.length > 0) {
+      setSelectedListId(lists[0].id);
+    }
+  }, [selectedListId, lists]);
 
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {

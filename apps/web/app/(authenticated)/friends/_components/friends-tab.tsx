@@ -1,7 +1,7 @@
 "use client";
 
 import type { FriendResponse } from "@sugara/shared";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -20,44 +20,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 export { SendRequestSection };
 
-export function FriendsTab() {
+export function FriendsTab({ friends }: { friends: FriendResponse[] }) {
   const queryClient = useQueryClient();
-
-  const { data: friends = [], isLoading } = useQuery({
-    queryKey: queryKeys.friends.list(),
-    queryFn: () => api<FriendResponse[]>("/api/friends"),
-  });
-
-  const showSkeleton = useDelayedLoading(isLoading);
-
-  if (isLoading && !showSkeleton) return <div />;
-
-  if (showSkeleton) {
-    return (
-      <Card>
-        <CardHeader>
-          <Skeleton className="h-6 w-28" />
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center justify-between gap-2">
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-8 w-14" />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    );
-  }
 
   return (
     <FriendListSection

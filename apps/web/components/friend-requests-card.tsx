@@ -12,14 +12,17 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
-export function FriendRequestsCard() {
+export function FriendRequestsCard({ requests }: { requests?: FriendRequestResponse[] }) {
   const queryClient = useQueryClient();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  const { data: requests = [] } = useQuery({
+  const { data: fetched = [] } = useQuery({
     queryKey: queryKeys.friends.requests(),
     queryFn: () => api<FriendRequestResponse[]>("/api/friends/requests"),
+    enabled: requests === undefined,
   });
+
+  const resolved = requests ?? fetched;
 
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
@@ -54,7 +57,7 @@ export function FriendRequestsCard() {
     }
   }
 
-  if (requests.length === 0) return null;
+  if (resolved.length === 0) return null;
 
   return (
     <Card>
@@ -62,7 +65,7 @@ export function FriendRequestsCard() {
         <CardTitle>フレンドリクエスト</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        {requests.map((req) => (
+        {resolved.map((req) => (
           <div key={req.id} className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2 min-w-0">
               <UserAvatar

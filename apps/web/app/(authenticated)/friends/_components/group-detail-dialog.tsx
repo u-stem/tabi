@@ -59,12 +59,13 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
     enabled: group !== null,
   });
 
-  const { data: friends = [] } = useQuery({
+  const { data: friends = [], isLoading: friendsLoading } = useQuery({
     queryKey: queryKeys.friends.list(),
     queryFn: () => api<FriendResponse[]>("/api/friends"),
     enabled: group !== null,
   });
 
+  const dataLoading = membersLoading || friendsLoading;
   const memberUserIds = new Set(members.map((m) => m.userId));
   const addable = friends.filter((f) => !memberUserIds.has(f.userId));
 
@@ -191,7 +192,7 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
 
           <div className="flex min-h-0 flex-col gap-4">
             {/* Member list */}
-            {membersLoading ? (
+            {dataLoading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
                   <div

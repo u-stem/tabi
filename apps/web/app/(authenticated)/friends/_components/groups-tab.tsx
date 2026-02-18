@@ -2,7 +2,7 @@
 
 import type { GroupResponse } from "@sugara/shared";
 import { GROUP_NAME_MAX_LENGTH } from "@sugara/shared";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -34,15 +34,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { CreateGroupDialog } from "./create-group-dialog";
 import { GroupMembersDialog } from "./group-detail-dialog";
 
-export function GroupsTab() {
+export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
   const [membersGroupId, setMembersGroupId] = useState<string | null>(null);
@@ -51,12 +49,6 @@ export function GroupsTab() {
   const [submitting, setSubmitting] = useState(false);
   const [deleteGroup, setDeleteGroup] = useState<GroupResponse | null>(null);
 
-  const { data: groups = [], isLoading } = useQuery({
-    queryKey: queryKeys.groups.list(),
-    queryFn: () => api<GroupResponse[]>("/api/groups"),
-  });
-
-  const showSkeleton = useDelayedLoading(isLoading);
   const membersGroup = groups.find((g) => g.id === membersGroupId) ?? null;
 
   async function handleRename(e: React.FormEvent) {
@@ -91,30 +83,6 @@ export function GroupsTab() {
     } catch (err) {
       toast.error(getApiErrorMessage(err, MSG.GROUP_DELETE_FAILED));
     }
-  }
-
-  if (isLoading && !showSkeleton) return <div />;
-
-  if (showSkeleton) {
-    return (
-      <Card>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <Skeleton className="h-6 w-24" />
-          <Skeleton className="h-8 w-24 rounded-md" />
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-4 w-8" />
-              </div>
-              <Skeleton className="h-8 w-8 rounded-md" />
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-    );
   }
 
   return (

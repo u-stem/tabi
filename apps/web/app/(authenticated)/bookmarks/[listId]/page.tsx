@@ -77,7 +77,8 @@ export default function BookmarkListDetailPage() {
     enabled: listId !== undefined,
   });
 
-  const showSkeleton = useDelayedLoading(listsLoading);
+  const isLoading = listsLoading || bookmarksLoading;
+  const showSkeleton = useDelayedLoading(isLoading);
 
   useEffect(() => {
     setLocalBookmarks((prev) => {
@@ -148,7 +149,7 @@ export default function BookmarkListDetailPage() {
 
   // -- Loading --
 
-  if (listsLoading && !showSkeleton) return <div />;
+  if (isLoading && !showSkeleton) return <div />;
 
   if (showSkeleton) {
     return (
@@ -196,13 +197,7 @@ export default function BookmarkListDetailPage() {
 
       {/* Bookmark list */}
       <div>
-        {bookmarksLoading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-16 w-full rounded-lg" />
-            ))}
-          </div>
-        ) : localBookmarks.length === 0 ? (
+        {localBookmarks.length === 0 ? (
           <p className="mt-8 text-center text-muted-foreground">
             まだブックマークがありません。追加からブックマークを登録してみましょう
           </p>

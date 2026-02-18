@@ -8,7 +8,6 @@ import {
   MAX_OPTIONS_PER_POLL,
   MAX_PARTICIPANTS_PER_POLL,
   MAX_PATTERNS_PER_DAY,
-  MAX_POLLS_PER_USER,
   MAX_SCHEDULES_PER_TRIP,
   MAX_TRIPS_PER_USER,
 } from "@sugara/shared";
@@ -210,16 +209,8 @@ export const MSG = {
   SCHEDULE_SAVE_TO_BOOKMARKS_FAILED: "ブックマークへの保存に失敗しました",
 
   // Poll
-  POLL_CREATED: "日程調整を作成しました",
-  POLL_CREATE_FAILED: "日程調整の作成に失敗しました",
-  POLL_UPDATED: "日程調整を更新しました",
-  POLL_UPDATE_FAILED: "日程調整の更新に失敗しました",
-  POLL_DELETED: "日程調整を削除しました",
-  POLL_DELETE_FAILED: "日程調整の削除に失敗しました",
-  POLL_CONFIRMED: "日程を確定し、旅行を作成しました",
+  POLL_CONFIRMED: "日程を確定しました",
   POLL_CONFIRM_FAILED: "日程の確定に失敗しました",
-  POLL_CLOSED: "日程調整を終了しました",
-  POLL_CLOSE_FAILED: "日程調整の終了に失敗しました",
   POLL_OPTION_ADDED: "候補日を追加しました",
   POLL_OPTION_ADD_FAILED: "候補日の追加に失敗しました",
   POLL_OPTION_DELETED: "候補日を削除しました",
@@ -228,17 +219,12 @@ export const MSG = {
   POLL_PARTICIPANT_ADD_FAILED: "参加者の追加に失敗しました",
   POLL_PARTICIPANT_REMOVED: "参加者を削除しました",
   POLL_PARTICIPANT_REMOVE_FAILED: "参加者の削除に失敗しました",
-  POLL_RESPONSE_SUBMITTED: "回答を送信しました",
   POLL_RESPONSE_SUBMIT_FAILED: "回答の送信に失敗しました",
   POLL_SHARE_LINK_COPIED: "共有リンクをコピーしました",
   POLL_SHARE_LINK_FAILED: "共有リンクの生成に失敗しました",
   POLL_GUEST_RESPONSE_SUBMITTED: "回答を送信しました",
   POLL_GUEST_RESPONSE_FAILED: "回答の送信に失敗しました",
-  POLL_BULK_DELETED: (n: number) => `${n}件の日程調整を削除しました`,
-  POLL_BULK_DELETE_FAILED: (n: number) => `${n}件の削除に失敗しました`,
   POLL_CANDIDATE_REQUIRED: "候補日を1つ以上選択してください",
-  POLL_FETCH_FAILED: "日程調整の取得に失敗しました",
-  POLL_NOT_FOUND: "日程調整が見つかりません",
   POLL_SHARED_NOT_FOUND: "この共有リンクは無効か、有効期限が切れています",
 
   // Scheduling status
@@ -255,7 +241,6 @@ export const MSG = {
   LIMIT_FRIENDS: `フレンドは最大${MAX_FRIENDS_PER_USER}人まで登録できます`,
   LIMIT_GROUPS: `グループは最大${MAX_GROUPS_PER_USER}件まで作成できます`,
   LIMIT_GROUP_MEMBERS: `グループメンバーは最大${MAX_MEMBERS_PER_GROUP}人まで追加できます`,
-  LIMIT_POLLS: `日程調整は最大${MAX_POLLS_PER_USER}件まで作成できます`,
   LIMIT_POLL_OPTIONS: `候補日は最大${MAX_OPTIONS_PER_POLL}件まで追加できます`,
   LIMIT_POLL_PARTICIPANTS: `参加者は最大${MAX_PARTICIPANTS_PER_POLL}人まで追加できます`,
 

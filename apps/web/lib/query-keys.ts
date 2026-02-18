@@ -29,7 +29,6 @@ export const queryKeys = {
   },
   polls: {
     all: ["polls"] as const,
-    list: () => [...queryKeys.polls.all, "list"] as const,
     detail: (pollId: string) => [...queryKeys.polls.all, pollId] as const,
     shared: (token: string) => [...queryKeys.polls.all, "shared", token] as const,
   },

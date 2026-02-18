@@ -27,6 +27,8 @@ export const updateTripSchema = z
   })
   .refine(
     (data) => {
+      // Only validates when both dates are provided in the same request.
+      // Single-date updates are validated against existing DB values in the route handler.
       if (data.startDate && data.endDate) return data.endDate >= data.startDate;
       return true;
     },

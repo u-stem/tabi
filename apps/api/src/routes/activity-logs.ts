@@ -17,6 +17,9 @@ activityLogRoutes.get("/:tripId/activity-logs", requireTripAccess(), async (c) =
   const limitParam = Number(c.req.query("limit") || String(MAX_LOGS_PER_TRIP));
   const limit = Math.min(Math.max(1, limitParam), MAX_LOGS_PER_TRIP);
   const cursor = c.req.query("cursor");
+  if (cursor && Number.isNaN(Date.parse(cursor))) {
+    return c.json({ error: "Invalid cursor" }, 400);
+  }
 
   const whereConditions = cursor
     ? and(eq(activityLogs.tripId, tripId), lt(activityLogs.createdAt, new Date(cursor)))

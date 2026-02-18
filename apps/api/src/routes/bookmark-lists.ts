@@ -98,11 +98,13 @@ bookmarkListRoutes.patch("/reorder", async (c) => {
     return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 400);
   }
 
-  await Promise.all(
-    parsed.data.orderedIds.map((id, i) =>
-      db.update(bookmarkLists).set({ sortOrder: i }).where(eq(bookmarkLists.id, id)),
-    ),
-  );
+  await db.transaction(async (tx) => {
+    await Promise.all(
+      parsed.data.orderedIds.map((id, i) =>
+        tx.update(bookmarkLists).set({ sortOrder: i }).where(eq(bookmarkLists.id, id)),
+      ),
+    );
+  });
 
   return c.json({ ok: true });
 });

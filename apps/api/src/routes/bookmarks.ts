@@ -118,32 +118,40 @@ bookmarkRoutes.post("/:listId/bookmarks/from-schedules", async (c) => {
     return c.json({ error: ERROR_MSG.SCHEDULE_TRIP_MISMATCH }, 404);
   }
 
-  const [{ count: bmCount }] = await db
-    .select({ count: count() })
-    .from(bookmarks)
-    .where(eq(bookmarks.listId, listId));
+  const result = await db.transaction(async (tx) => {
+    const [{ count: bmCount }] = await tx
+      .select({ count: count() })
+      .from(bookmarks)
+      .where(eq(bookmarks.listId, listId));
 
-  if (bmCount + found.length > MAX_BOOKMARKS_PER_LIST) {
+    if (bmCount + found.length > MAX_BOOKMARKS_PER_LIST) {
+      return null;
+    }
+
+    const [{ maxOrder }] = await tx
+      .select({ maxOrder: max(bookmarks.sortOrder) })
+      .from(bookmarks)
+      .where(eq(bookmarks.listId, listId));
+    let nextOrder = (maxOrder ?? -1) + 1;
+
+    await tx.insert(bookmarks).values(
+      found.map((s) => ({
+        listId,
+        name: s.name,
+        memo: s.memo,
+        urls: s.urls,
+        sortOrder: nextOrder++,
+      })),
+    );
+
+    return { count: found.length };
+  });
+
+  if (!result) {
     return c.json({ error: ERROR_MSG.LIMIT_BOOKMARKS }, 409);
   }
 
-  const [{ maxOrder }] = await db
-    .select({ maxOrder: max(bookmarks.sortOrder) })
-    .from(bookmarks)
-    .where(eq(bookmarks.listId, listId));
-  let nextOrder = (maxOrder ?? -1) + 1;
-
-  await db.insert(bookmarks).values(
-    found.map((s) => ({
-      listId,
-      name: s.name,
-      memo: s.memo,
-      urls: s.urls,
-      sortOrder: nextOrder++,
-    })),
-  );
-
-  return c.json({ ok: true, count: found.length }, 201);
+  return c.json({ ok: true, count: result.count }, 201);
 });
 
 // Reorder bookmarks
@@ -170,11 +178,13 @@ bookmarkRoutes.patch("/:listId/bookmarks/reorder", async (c) => {
     return c.json({ error: ERROR_MSG.BOOKMARK_NOT_FOUND }, 400);
   }
 
-  await Promise.all(
-    parsed.data.orderedIds.map((id, i) =>
-      db.update(bookmarks).set({ sortOrder: i }).where(eq(bookmarks.id, id)),
-    ),
-  );
+  await db.transaction(async (tx) => {
+    await Promise.all(
+      parsed.data.orderedIds.map((id, i) =>
+        tx.update(bookmarks).set({ sortOrder: i }).where(eq(bookmarks.id, id)),
+      ),
+    );
+  });
 
   return c.json({ ok: true });
 });
@@ -279,30 +289,38 @@ bookmarkRoutes.post("/:listId/bookmarks/batch-duplicate", async (c) => {
     return c.json({ error: ERROR_MSG.BOOKMARK_NOT_FOUND }, 404);
   }
 
-  const [{ count: bmCount }] = await db
-    .select({ count: count() })
-    .from(bookmarks)
-    .where(eq(bookmarks.listId, listId));
+  const result = await db.transaction(async (tx) => {
+    const [{ count: bmCount }] = await tx
+      .select({ count: count() })
+      .from(bookmarks)
+      .where(eq(bookmarks.listId, listId));
 
-  if (bmCount + found.length > MAX_BOOKMARKS_PER_LIST) {
+    if (bmCount + found.length > MAX_BOOKMARKS_PER_LIST) {
+      return null;
+    }
+
+    const [{ maxOrder }] = await tx
+      .select({ maxOrder: max(bookmarks.sortOrder) })
+      .from(bookmarks)
+      .where(eq(bookmarks.listId, listId));
+    let nextOrder = (maxOrder ?? -1) + 1;
+
+    await tx.insert(bookmarks).values(
+      found.map((bm) => ({
+        listId,
+        name: bm.name,
+        memo: bm.memo,
+        urls: bm.urls,
+        sortOrder: nextOrder++,
+      })),
+    );
+
+    return true;
+  });
+
+  if (!result) {
     return c.json({ error: ERROR_MSG.LIMIT_BOOKMARKS }, 409);
   }
-
-  const [{ maxOrder }] = await db
-    .select({ maxOrder: max(bookmarks.sortOrder) })
-    .from(bookmarks)
-    .where(eq(bookmarks.listId, listId));
-  let nextOrder = (maxOrder ?? -1) + 1;
-
-  await db.insert(bookmarks).values(
-    found.map((bm) => ({
-      listId,
-      name: bm.name,
-      memo: bm.memo,
-      urls: bm.urls,
-      sortOrder: nextOrder++,
-    })),
-  );
 
   return c.json({ ok: true }, 201);
 });

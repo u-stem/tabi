@@ -241,6 +241,10 @@ export const MSG = {
   POLL_NOT_FOUND: "日程調整が見つかりません",
   POLL_SHARED_NOT_FOUND: "この共有リンクは無効か、有効期限が切れています",
 
+  // Scheduling status
+  SCHEDULING_STATUS_TITLE: "日程調整中",
+  SCHEDULING_STATUS_DESCRIPTION: "日程が確定するとスケジュールを作成できます",
+
   // Limits
   LIMIT_BOOKMARK_LISTS: `リストは最大${MAX_BOOKMARK_LISTS_PER_USER}件まで作成できます`,
   LIMIT_BOOKMARKS: `ブックマークは1リストあたり最大${MAX_BOOKMARKS_PER_LIST}件まで追加できます`,

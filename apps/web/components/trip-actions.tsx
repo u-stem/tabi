@@ -67,7 +67,10 @@ type TripActionsProps = {
   memberLimitReached?: boolean;
 };
 
-const statuses = Object.entries(STATUS_LABELS) as [TripStatus, string][];
+// "scheduling" is system-managed and should not appear in the manual status dropdown
+const statuses = (Object.entries(STATUS_LABELS) as [TripStatus, string][]).filter(
+  ([value]) => value !== "scheduling",
+);
 
 export function TripActions({
   tripId,
@@ -176,7 +179,7 @@ export function TripActions({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {canEditRole ? (
+      {canEditRole && status !== "scheduling" ? (
         <Select value={status} onValueChange={handleStatusChange} disabled={disabled}>
           <SelectTrigger className="h-8 w-[130px] text-xs" aria-label="ステータス変更">
             <SelectValue />

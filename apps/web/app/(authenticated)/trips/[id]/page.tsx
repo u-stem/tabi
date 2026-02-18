@@ -500,6 +500,15 @@ export default function TripDetailPage() {
           </DndContext>
         )}
 
+        {trip.status === "scheduling" && (
+          <div className="flex flex-col items-center justify-center rounded-lg border bg-card py-16 text-center">
+            <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {MSG.SCHEDULING_STATUS_DESCRIPTION}
+            </p>
+          </div>
+        )}
+
         <AddPatternDialog patternOps={patternOps} />
         <MobileCandidateDialog
           open={candidateOpen}

@@ -24,7 +24,10 @@ feedbackRoutes.post("/feedback", requireAuth, async (c) => {
     return c.json({ error: ERROR_MSG.GITHUB_NOT_CONFIGURED }, 500);
   }
 
-  const title = body.length > TITLE_MAX_LENGTH ? `${body.slice(0, TITLE_MAX_LENGTH)}...` : body;
+  // Sanitize to prevent @mention spam and markdown injection
+  const sanitized = body.replace(/@/g, "@ ").replace(/\[([^\]]*)\]\(javascript:/gi, "[$1](");
+  const title =
+    sanitized.length > TITLE_MAX_LENGTH ? `${sanitized.slice(0, TITLE_MAX_LENGTH)}...` : sanitized;
 
   const res = await fetch(`https://api.github.com/repos/${repo}/issues`, {
     method: "POST",
@@ -35,7 +38,7 @@ feedbackRoutes.post("/feedback", requireAuth, async (c) => {
     },
     body: JSON.stringify({
       title,
-      body,
+      body: sanitized,
       labels: ["feedback"],
     }),
   });

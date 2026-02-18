@@ -222,10 +222,10 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
             <>
               <div className="space-y-2">
                 <Label>
-                  候補日 <span className="text-destructive">*</span>
+                  日程案 <span className="text-destructive">*</span>
                 </Label>
                 <p className="text-xs text-muted-foreground">
-                  カレンダーで日付範囲を選択し「候補に追加」で追加
+                  カレンダーで日付範囲を選択し「日程案に追加」で追加
                 </p>
                 <div className="flex flex-col items-center">
                   <CalendarNav
@@ -256,14 +256,14 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
                     disabled={!pendingRange?.from}
                   >
                     <Plus className="h-4 w-4" />
-                    候補に追加
+                    日程案に追加
                   </Button>
                 </div>
 
                 {candidates.length > 0 && (
                   <div className="space-y-1">
                     <p className="text-xs font-medium text-muted-foreground">
-                      追加済みの候補 ({candidates.length}件)
+                      追加済みの日程案 ({candidates.length}件)
                     </p>
                     <div className="divide-y rounded-md border">
                       {candidates.map((opt, i) => (

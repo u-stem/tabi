@@ -211,10 +211,10 @@ export const MSG = {
   // Poll
   POLL_CONFIRMED: "日程を確定しました",
   POLL_CONFIRM_FAILED: "日程の確定に失敗しました",
-  POLL_OPTION_ADDED: "候補日を追加しました",
-  POLL_OPTION_ADD_FAILED: "候補日の追加に失敗しました",
-  POLL_OPTION_DELETED: "候補日を削除しました",
-  POLL_OPTION_DELETE_FAILED: "候補日の削除に失敗しました",
+  POLL_OPTION_ADDED: "日程案を追加しました",
+  POLL_OPTION_ADD_FAILED: "日程案の追加に失敗しました",
+  POLL_OPTION_DELETED: "日程案を削除しました",
+  POLL_OPTION_DELETE_FAILED: "日程案の削除に失敗しました",
   POLL_PARTICIPANT_ADDED: "参加者を追加しました",
   POLL_PARTICIPANT_ADD_FAILED: "参加者の追加に失敗しました",
   POLL_PARTICIPANT_REMOVED: "参加者を削除しました",
@@ -224,7 +224,7 @@ export const MSG = {
   POLL_SHARE_LINK_FAILED: "共有リンクの生成に失敗しました",
   POLL_GUEST_RESPONSE_SUBMITTED: "回答を送信しました",
   POLL_GUEST_RESPONSE_FAILED: "回答の送信に失敗しました",
-  POLL_CANDIDATE_REQUIRED: "候補日を1つ以上選択してください",
+  POLL_CANDIDATE_REQUIRED: "日程案を1つ以上選択してください",
   POLL_SHARED_NOT_FOUND: "この共有リンクは無効か、有効期限が切れています",
 
   // Scheduling status
@@ -241,7 +241,7 @@ export const MSG = {
   LIMIT_FRIENDS: `フレンドは最大${MAX_FRIENDS_PER_USER}人まで登録できます`,
   LIMIT_GROUPS: `グループは最大${MAX_GROUPS_PER_USER}件まで作成できます`,
   LIMIT_GROUP_MEMBERS: `グループメンバーは最大${MAX_MEMBERS_PER_GROUP}人まで追加できます`,
-  LIMIT_POLL_OPTIONS: `候補日は最大${MAX_OPTIONS_PER_POLL}件まで追加できます`,
+  LIMIT_POLL_OPTIONS: `日程案は最大${MAX_OPTIONS_PER_POLL}件まで追加できます`,
   LIMIT_POLL_PARTICIPANTS: `参加者は最大${MAX_PARTICIPANTS_PER_POLL}人まで追加できます`,
 
   // Export

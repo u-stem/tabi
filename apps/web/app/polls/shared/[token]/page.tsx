@@ -245,7 +245,7 @@ export default function SharedPollPage() {
           </div>
 
           <div className="space-y-2">
-            <p className="text-sm text-muted-foreground">各候補日をタップして回答してください</p>
+            <p className="text-sm text-muted-foreground">各日程案をタップして回答してください</p>
             <div className="space-y-2">
               {poll.options.map((opt) => {
                 const response = responses.get(opt.id);

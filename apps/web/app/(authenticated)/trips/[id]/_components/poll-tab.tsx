@@ -250,22 +250,23 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
         </Badge>
         <div className="flex items-center gap-1">
           {isOwner && isOpen && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setParticipantDialogOpen(true)}
-            >
-              <Users className="h-4 w-4" />
-              参加者
-            </Button>
+            <>
+              <Button variant="ghost" size="sm" onClick={() => setShowAddOption(true)}>
+                <Plus className="h-4 w-4" />
+                日程案追加
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowConfirmSelect(true)}>
+                <Check className="h-4 w-4" />
+                確定
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setParticipantDialogOpen(true)}>
+                <Users className="h-4 w-4" />
+                参加者
+              </Button>
+            </>
           )}
           {isOwner && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleShare()}
-              disabled={sharing}
-            >
+            <Button variant="ghost" size="sm" onClick={() => handleShare()} disabled={sharing}>
               <LinkIcon className="h-4 w-4" />
               {sharing ? "生成中..." : "共有"}
             </Button>
@@ -296,21 +297,7 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
 
       {/* Response cards */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">回答状況</h3>
-          {isOwner && isOpen && (
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={() => setShowAddOption(true)}>
-                <Plus className="h-4 w-4" />
-                候補追加
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowConfirmSelect(true)}>
-                <Check className="h-4 w-4" />
-                確定
-              </Button>
-            </div>
-          )}
-        </div>
+        <h3 className="text-sm font-semibold">回答状況</h3>
         <div className="divide-y rounded-lg border">
           {poll.options.map((opt) => {
             const isConfirmedOption = opt.id === poll.confirmedOptionId;
@@ -429,7 +416,7 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
       >
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
-            <DialogTitle>候補日を追加</DialogTitle>
+            <DialogTitle>日程案を追加</DialogTitle>
             <DialogDescription>カレンダーで日付範囲を選択してください</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col items-center">
@@ -480,7 +467,7 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
         <DialogContent>
           <DialogHeader>
             <DialogTitle>日程を確定</DialogTitle>
-            <DialogDescription>確定する候補日を選択してください</DialogDescription>
+            <DialogDescription>確定する日程案を選択してください</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
             {poll.options.map((opt) => {
@@ -547,9 +534,9 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>候補日を削除</AlertDialogTitle>
+            <AlertDialogTitle>日程案を削除</AlertDialogTitle>
             <AlertDialogDescription>
-              この候補日を削除しますか？回答も全て削除されます。
+              この日程案を削除しますか？回答も全て削除されます。
               {deleteOptionId && (
                 <span className="mt-1 block font-medium">
                   {formatRange(poll.options.find((o) => o.id === deleteOptionId)!)}

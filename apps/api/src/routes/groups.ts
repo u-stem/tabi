@@ -1,11 +1,12 @@
 import {
   addGroupMemberSchema,
+  addGroupMembersBulkSchema,
   createGroupSchema,
   MAX_GROUPS_PER_USER,
   MAX_MEMBERS_PER_GROUP,
   updateGroupSchema,
 } from "@sugara/shared";
-import { and, asc, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { groupMembers, groups, users } from "../db/schema";
@@ -195,6 +196,61 @@ groupRoutes.post("/:groupId/members", async (c) => {
   }
 
   return c.json({ ok: true }, 201);
+});
+
+// Bulk add members to group
+groupRoutes.post("/:groupId/members/bulk", async (c) => {
+  const user = c.get("user");
+  const groupId = c.req.param("groupId");
+
+  const group = await verifyGroupOwnership(groupId, user.id);
+  if (!group) {
+    return c.json({ error: ERROR_MSG.GROUP_NOT_FOUND }, 404);
+  }
+
+  const body = await c.req.json();
+  const parsed = addGroupMembersBulkSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const { userIds } = parsed.data;
+
+  const [{ count: currentCount }] = await db
+    .select({ count: count() })
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, groupId));
+
+  const remainingSlots = MAX_MEMBERS_PER_GROUP - currentCount;
+  if (remainingSlots <= 0) {
+    return c.json({ error: ERROR_MSG.LIMIT_GROUP_MEMBERS }, 409);
+  }
+
+  const existingMembers = await db
+    .select({ userId: groupMembers.userId })
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, groupId));
+  const existingMemberIds = new Set(existingMembers.map((m) => m.userId));
+
+  const newUserIds = userIds.filter((id) => !existingMemberIds.has(id));
+
+  let validUserIds = new Set<string>();
+  if (newUserIds.length > 0) {
+    const existingUsers = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(inArray(users.id, newUserIds));
+    validUserIds = new Set(existingUsers.map((u) => u.id));
+  }
+
+  const toAdd = newUserIds.filter((id) => validUserIds.has(id)).slice(0, remainingSlots);
+
+  if (toAdd.length > 0) {
+    await db.insert(groupMembers).values(toAdd.map((uid) => ({ groupId, userId: uid })));
+  }
+
+  const failed = userIds.length - toAdd.length;
+  return c.json({ added: toAdd.length, failed }, 201);
 });
 
 // Remove member from group

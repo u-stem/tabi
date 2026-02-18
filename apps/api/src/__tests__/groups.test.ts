@@ -420,6 +420,142 @@ describe("Group routes", () => {
     });
   });
 
+  // --- POST /api/groups/:groupId/members/bulk ---
+  describe("POST /api/groups/:groupId/members/bulk", () => {
+    const user3 = "00000000-0000-0000-0000-000000000003";
+    const user4 = "00000000-0000-0000-0000-000000000004";
+
+    function setupBulkMocks({
+      currentCount = 0,
+      existingMemberIds = [] as string[],
+      validUserIds = [] as string[],
+    }) {
+      // 1st select: member count
+      mockDbSelect.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: currentCount }]),
+        }),
+      });
+      // 2nd select: existing members
+      mockDbSelect.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(existingMemberIds.map((id) => ({ userId: id }))),
+        }),
+      });
+      // 3rd select: valid users
+      mockDbSelect.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(validUserIds.map((id) => ({ id }))),
+        }),
+      });
+    }
+
+    it("returns 201 and adds multiple members", async () => {
+      mockDbQuery.groups.findFirst.mockResolvedValue({
+        id: groupId,
+        ownerId: userId,
+        name: "Family",
+      });
+      setupBulkMocks({
+        currentCount: 0,
+        existingMemberIds: [],
+        validUserIds: [otherUserId, user3],
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const app = createTestApp(groupRoutes, "/api/groups");
+      const res = await app.request(`/api/groups/${groupId}/members/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds: [otherUserId, user3] }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(body.added).toBe(2);
+      expect(body.failed).toBe(0);
+    });
+
+    it("skips already-members and non-existent users", async () => {
+      mockDbQuery.groups.findFirst.mockResolvedValue({
+        id: groupId,
+        ownerId: userId,
+        name: "Family",
+      });
+      setupBulkMocks({
+        currentCount: 1,
+        existingMemberIds: [otherUserId],
+        validUserIds: [user3],
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const app = createTestApp(groupRoutes, "/api/groups");
+      const res = await app.request(`/api/groups/${groupId}/members/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        // otherUserId: already member, user3: valid, user4: non-existent
+        body: JSON.stringify({ userIds: [otherUserId, user3, user4] }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(body.added).toBe(1);
+      expect(body.failed).toBe(2);
+    });
+
+    it("returns 404 when group not owned", async () => {
+      mockDbQuery.groups.findFirst.mockResolvedValue(undefined);
+
+      const app = createTestApp(groupRoutes, "/api/groups");
+      const res = await app.request(`/api/groups/${groupId}/members/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds: [otherUserId] }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 400 with empty array", async () => {
+      mockDbQuery.groups.findFirst.mockResolvedValue({
+        id: groupId,
+        ownerId: userId,
+        name: "Family",
+      });
+
+      const app = createTestApp(groupRoutes, "/api/groups");
+      const res = await app.request(`/api/groups/${groupId}/members/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds: [] }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 409 when member limit already reached", async () => {
+      mockDbQuery.groups.findFirst.mockResolvedValue({
+        id: groupId,
+        ownerId: userId,
+        name: "Family",
+      });
+      setupCountQuery(MAX_MEMBERS_PER_GROUP);
+
+      const app = createTestApp(groupRoutes, "/api/groups");
+      const res = await app.request(`/api/groups/${groupId}/members/bulk`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userIds: [otherUserId] }),
+      });
+
+      expect(res.status).toBe(409);
+    });
+  });
+
   // --- DELETE /api/groups/:groupId/members/:userId ---
   describe("DELETE /api/groups/:groupId/members/:userId", () => {
     it("returns 200 on successful removal", async () => {

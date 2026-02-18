@@ -148,6 +148,11 @@ export type GroupMemberResponse = {
   addedAt: string;
 };
 
+export type BulkAddMembersResponse = {
+  added: number;
+  failed: number;
+};
+
 export type PublicProfileResponse = {
   id: string;
   name: string;

@@ -1,8 +1,13 @@
 "use client";
 
-import type { FriendResponse, GroupMemberResponse, GroupResponse } from "@sugara/shared";
+import type {
+  BulkAddMembersResponse,
+  FriendResponse,
+  GroupMemberResponse,
+  GroupResponse,
+} from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { UserPlus } from "lucide-react";
+import { CheckCheck, SquareMousePointer, UserPlus, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -16,6 +21,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -42,6 +48,8 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
   const [adding, setAdding] = useState(false);
   const [userId, setUserId] = useState("");
   const [removingMember, setRemovingMember] = useState<GroupMemberResponse | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   const groupId = group?.id ?? "";
 
@@ -58,11 +66,37 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
   });
 
   const memberUserIds = new Set(members.map((m) => m.userId));
+  const addable = friends.filter((f) => !memberUserIds.has(f.userId));
 
   const invalidateAll = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.groups.members(groupId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.groups.list() });
   };
+
+  function exitSelectionMode() {
+    setSelectionMode(false);
+    setSelectedIds(new Set());
+  }
+
+  function toggleSelected(uid: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) {
+        next.delete(uid);
+      } else {
+        next.add(uid);
+      }
+      return next;
+    });
+  }
+
+  function selectAll() {
+    setSelectedIds(new Set(addable.map((f) => f.userId)));
+  }
+
+  function deselectAll() {
+    setSelectedIds(new Set());
+  }
 
   async function handleRemoveMember() {
     if (!removingMember) return;
@@ -92,6 +126,28 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
     }
   }
 
+  async function handleBulkAdd() {
+    if (selectedIds.size === 0) return;
+    setAdding(true);
+    try {
+      const result = await api<BulkAddMembersResponse>(`/api/groups/${groupId}/members/bulk`, {
+        method: "POST",
+        body: JSON.stringify({ userIds: [...selectedIds] }),
+      });
+      if (result.failed === 0) {
+        toast.success(MSG.GROUP_BULK_ADDED(result.added));
+      } else {
+        toast.warning(MSG.GROUP_BULK_ADD_PARTIAL(result.added, result.failed));
+      }
+      exitSelectionMode();
+      invalidateAll();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, MSG.GROUP_MEMBER_ADD_FAILED));
+    } finally {
+      setAdding(false);
+    }
+  }
+
   async function handleAddById(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = userId.trim();
@@ -113,6 +169,8 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
     }
   }
 
+  const selectedCount = selectedIds.size;
+
   return (
     <>
       <Dialog
@@ -121,6 +179,7 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
           if (!v) {
             onOpenChange(false);
             setUserId("");
+            exitSelectionMode();
           }
         }}
       >
@@ -135,7 +194,16 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
             {membersLoading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-10 w-full rounded-md" />
+                  <div
+                    key={i}
+                    className="flex items-center justify-between gap-2 rounded-md border p-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-6 w-6 rounded-full" />
+                      <Skeleton className="h-4 w-20" />
+                    </div>
+                    <Skeleton className="h-4 w-8" />
+                  </div>
                 ))}
               </div>
             ) : members.length === 0 ? (
@@ -174,7 +242,7 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
             {/* Add member section */}
             <div className="space-y-3 border-t pt-3">
               <Label className="text-sm font-medium">メンバーを追加</Label>
-              <Tabs defaultValue="friends">
+              <Tabs defaultValue="friends" onValueChange={() => exitSelectionMode()}>
                 <TabsList className="w-full">
                   <TabsTrigger value="friends" className="flex-1">
                     フレンドから
@@ -185,51 +253,114 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
                 </TabsList>
 
                 <TabsContent value="friends">
-                  {(() => {
-                    const addable = friends.filter((f) => !memberUserIds.has(f.userId));
-                    if (friends.length === 0) {
-                      return (
-                        <p className="py-4 text-center text-sm text-muted-foreground">
-                          フレンドがいません
-                        </p>
-                      );
-                    }
-                    if (addable.length === 0) {
-                      return (
-                        <p className="py-4 text-center text-sm text-muted-foreground">
-                          全員追加済みです
-                        </p>
-                      );
-                    }
-                    return (
+                  {friends.length === 0 ? (
+                    <p className="py-4 text-center text-sm text-muted-foreground">
+                      フレンドがいません
+                    </p>
+                  ) : addable.length === 0 ? (
+                    <p className="py-4 text-center text-sm text-muted-foreground">
+                      全員追加済みです
+                    </p>
+                  ) : (
+                    <div className="space-y-2">
+                      {/* Selection mode toolbar */}
+                      {selectionMode ? (
+                        <div className="flex items-center gap-1.5">
+                          <Button variant="outline" size="sm" onClick={selectAll}>
+                            <CheckCheck className="h-4 w-4" />
+                            全選択
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={deselectAll}
+                            disabled={selectedCount === 0}
+                          >
+                            <X className="h-4 w-4" />
+                            選択解除
+                          </Button>
+                          <div className="flex items-center gap-1.5 ml-auto">
+                            <Button
+                              size="sm"
+                              disabled={selectedCount === 0 || adding}
+                              onClick={handleBulkAdd}
+                            >
+                              <UserPlus className="h-4 w-4" />
+                              {adding
+                                ? "追加中..."
+                                : selectedCount === 0
+                                  ? "追加"
+                                  : `${selectedCount}人を追加`}
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={exitSelectionMode}>
+                              キャンセル
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setSelectionMode(true)}
+                          >
+                            <SquareMousePointer className="h-4 w-4" />
+                            選択
+                          </Button>
+                        </div>
+                      )}
+
+                      {/* Friend list */}
                       <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "25vh" }}>
                         {addable.map((friend) => (
                           <div
                             key={friend.friendId}
                             className="flex items-center justify-between gap-2 rounded-md border p-2"
                           >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <UserAvatar
-                                name={friend.name}
-                                image={friend.image}
-                                className="h-6 w-6 shrink-0"
-                                fallbackClassName="text-xs"
-                              />
-                              <p className="truncate text-sm font-medium">{friend.name}</p>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              disabled={adding}
-                              onClick={() => handleAddFriend(friend.userId)}
-                            >
-                              追加
-                            </Button>
+                            {selectionMode ? (
+                              <label
+                                htmlFor={`group-sel-${friend.userId}`}
+                                className="flex flex-1 cursor-pointer items-center gap-2 min-w-0"
+                              >
+                                <Checkbox
+                                  id={`group-sel-${friend.userId}`}
+                                  checked={selectedIds.has(friend.userId)}
+                                  onCheckedChange={() => toggleSelected(friend.userId)}
+                                />
+                                <UserAvatar
+                                  name={friend.name}
+                                  image={friend.image}
+                                  className="h-6 w-6 shrink-0"
+                                  fallbackClassName="text-xs"
+                                />
+                                <p className="truncate text-sm font-medium">{friend.name}</p>
+                              </label>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-2 min-w-0">
+                                  <UserAvatar
+                                    name={friend.name}
+                                    image={friend.image}
+                                    className="h-6 w-6 shrink-0"
+                                    fallbackClassName="text-xs"
+                                  />
+                                  <p className="truncate text-sm font-medium">{friend.name}</p>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={adding}
+                                  onClick={() => handleAddFriend(friend.userId)}
+                                >
+                                  追加
+                                </Button>
+                              </>
+                            )}
                           </div>
                         ))}
                       </div>
-                    );
-                  })()}
+                    </div>
+                  )}
                 </TabsContent>
 
                 <TabsContent value="userId">

@@ -44,4 +44,9 @@ export const ERROR_MSG = {
   LIMIT_BOOKMARKS: "Bookmark limit reached",
   BOOKMARK_OWNER_MISMATCH: "Some bookmarks do not belong to user",
   SCHEDULE_TRIP_MISMATCH: "Some schedules do not belong to trip",
+  GROUP_NOT_FOUND: "Group not found",
+  LIMIT_GROUPS: "Group limit reached",
+  LIMIT_GROUP_MEMBERS: "Group member limit reached",
+  ALREADY_GROUP_MEMBER: "Already a group member",
+  GROUP_MEMBER_NOT_FOUND: "Group member not found",
 } as const;

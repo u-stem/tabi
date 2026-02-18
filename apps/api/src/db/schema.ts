@@ -298,6 +298,37 @@ export const bookmarks = pgTable(
   (table) => [index("bookmarks_list_sort_idx").on(table.listId, table.sortOrder)],
 ).enableRLS();
 
+export const groups = pgTable(
+  "groups",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 50 }).notNull(),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [index("groups_owner_id_idx").on(table.ownerId)],
+).enableRLS();
+
+export const groupMembers = pgTable(
+  "group_members",
+  {
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    addedAt: timestamp("added_at").notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.groupId, table.userId] }),
+    index("group_members_user_id_idx").on(table.userId),
+  ],
+).enableRLS();
+
 // --- Relations ---
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -306,6 +337,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   sentFriendRequests: many(friends, { relationName: "friendRequester" }),
   receivedFriendRequests: many(friends, { relationName: "friendAddressee" }),
   bookmarkLists: many(bookmarkLists),
+  ownedGroups: many(groups),
+  groupMemberships: many(groupMembers),
 }));
 
 export const tripsRelations = relations(trips, ({ one, many }) => ({
@@ -364,6 +397,16 @@ export const friendsRelations = relations(friends, ({ one }) => ({
     references: [users.id],
     relationName: "friendAddressee",
   }),
+}));
+
+export const groupsRelations = relations(groups, ({ one, many }) => ({
+  owner: one(users, { fields: [groups.ownerId], references: [users.id] }),
+  members: many(groupMembers),
+}));
+
+export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
+  group: one(groups, { fields: [groupMembers.groupId], references: [groups.id] }),
+  user: one(users, { fields: [groupMembers.userId], references: [users.id] }),
 }));
 
 export const bookmarkListsRelations = relations(bookmarkLists, ({ one, many }) => ({

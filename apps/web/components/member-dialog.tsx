@@ -1,6 +1,11 @@
 "use client";
 
-import type { FriendResponse, MemberResponse } from "@sugara/shared";
+import type {
+  FriendResponse,
+  GroupMemberResponse,
+  GroupResponse,
+  MemberResponse,
+} from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserPlus } from "lucide-react";
 import { useState } from "react";
@@ -62,6 +67,8 @@ export function MemberDialog({
   const [adding, setAdding] = useState(false);
   const [sendFriendRequest, setSendFriendRequest] = useState(true);
   const [removeMember, setRemoveMember] = useState<MemberResponse | null>(null);
+  const [groupRole, setGroupRole] = useState("editor");
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   const { data: members = [], isLoading: loading } = useQuery({
     queryKey: queryKeys.trips.members(tripId),
@@ -73,6 +80,18 @@ export function MemberDialog({
     queryKey: queryKeys.friends.list(),
     queryFn: () => api<FriendResponse[]>("/api/friends"),
     enabled: open,
+  });
+
+  const { data: groups = [] } = useQuery({
+    queryKey: queryKeys.groups.list(),
+    queryFn: () => api<GroupResponse[]>("/api/groups"),
+    enabled: open,
+  });
+
+  const { data: groupMembers = [] } = useQuery({
+    queryKey: queryKeys.groups.members(selectedGroupId ?? ""),
+    queryFn: () => api<GroupMemberResponse[]>(`/api/groups/${selectedGroupId}/members`),
+    enabled: open && selectedGroupId !== null,
   });
 
   const invalidateMembers = () =>
@@ -121,6 +140,32 @@ export function MemberDialog({
     }
   }
 
+  async function handleAddGroupMembers() {
+    const toAdd = groupMembers.filter((m) => !memberUserIds.has(m.userId));
+    if (toAdd.length === 0) return;
+
+    setAdding(true);
+    const results = await Promise.allSettled(
+      toAdd.map((m) =>
+        api(`/api/trips/${tripId}/members`, {
+          method: "POST",
+          body: JSON.stringify({ userId: m.userId, role: groupRole }),
+        }),
+      ),
+    );
+    const added = results.filter((r) => r.status === "fulfilled").length;
+    const failed = results.filter((r) => r.status === "rejected").length;
+    if (failed === 0) {
+      toast.success(MSG.GROUP_BULK_ADDED(added));
+    } else if (added > 0) {
+      toast.warning(MSG.GROUP_BULK_ADD_PARTIAL(added, failed));
+    } else {
+      toast.error(MSG.MEMBER_ADD_FAILED);
+    }
+    invalidateMembers();
+    setAdding(false);
+  }
+
   async function handleRoleChange(userId: string, newRole: string) {
     try {
       await api(`/api/trips/${tripId}/members/${userId}`, {
@@ -157,6 +202,8 @@ export function MemberDialog({
           setUserId("");
           setRole("editor");
           setFriendRole("editor");
+          setGroupRole("editor");
+          setSelectedGroupId(null);
         }
       }}
     >
@@ -246,34 +293,47 @@ export function MemberDialog({
                     <TabsTrigger value="friends" className="flex-1">
                       フレンドから
                     </TabsTrigger>
+                    <TabsTrigger value="groups" className="flex-1">
+                      グループから
+                    </TabsTrigger>
                     <TabsTrigger value="userId" className="flex-1">
-                      ユーザーIDで追加
+                      IDで追加
                     </TabsTrigger>
                   </TabsList>
 
                   <TabsContent value="friends">
-                    {friends.length === 0 ? (
-                      <p className="py-4 text-center text-sm text-muted-foreground">
-                        フレンドがいません
-                      </p>
-                    ) : (
-                      <div className="space-y-2">
-                        <div className="flex select-none items-center justify-end gap-2 py-1">
-                          <span className="text-xs text-muted-foreground">ロール:</span>
-                          <Select value={friendRole} onValueChange={setFriendRole}>
-                            <SelectTrigger className="h-7 w-[100px] text-xs">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="editor">編集者</SelectItem>
-                              <SelectItem value="viewer">閲覧者</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "30vh" }}>
-                          {friends.map((friend) => {
-                            const isMember = memberUserIds.has(friend.userId);
-                            return (
+                    {(() => {
+                      const addable = friends.filter((f) => !memberUserIds.has(f.userId));
+                      if (friends.length === 0) {
+                        return (
+                          <p className="py-4 text-center text-sm text-muted-foreground">
+                            フレンドがいません
+                          </p>
+                        );
+                      }
+                      if (addable.length === 0) {
+                        return (
+                          <p className="py-4 text-center text-sm text-muted-foreground">
+                            全員追加済みです
+                          </p>
+                        );
+                      }
+                      return (
+                        <div className="space-y-2">
+                          <div className="flex select-none items-center justify-end gap-2 py-1">
+                            <span className="text-xs text-muted-foreground">ロール:</span>
+                            <Select value={friendRole} onValueChange={setFriendRole}>
+                              <SelectTrigger className="h-7 w-[100px] text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="editor">編集者</SelectItem>
+                                <SelectItem value="viewer">閲覧者</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "30vh" }}>
+                            {addable.map((friend) => (
                               <div
                                 key={friend.friendId}
                                 className="flex items-center justify-between gap-2 rounded-md border p-2"
@@ -285,30 +345,101 @@ export function MemberDialog({
                                     className="h-6 w-6 shrink-0"
                                     fallbackClassName="text-xs"
                                   />
-                                  <p
-                                    className={`truncate text-sm ${isMember ? "text-muted-foreground" : "font-medium"}`}
-                                  >
-                                    {friend.name}
-                                  </p>
+                                  <p className="truncate text-sm font-medium">{friend.name}</p>
                                 </div>
-                                {isMember ? (
-                                  <span className="shrink-0 select-none text-xs text-muted-foreground">
-                                    追加済み
-                                  </span>
-                                ) : (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    disabled={adding}
-                                    onClick={() => handleAddFriend(friend.userId)}
-                                  >
-                                    追加
-                                  </Button>
-                                )}
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={adding}
+                                  onClick={() => handleAddFriend(friend.userId)}
+                                >
+                                  追加
+                                </Button>
                               </div>
-                            );
-                          })}
+                            ))}
+                          </div>
                         </div>
+                      );
+                    })()}
+                  </TabsContent>
+
+                  <TabsContent value="groups">
+                    {groups.length === 0 ? (
+                      <p className="py-4 text-center text-sm text-muted-foreground">
+                        グループがありません
+                      </p>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex select-none items-center justify-between gap-2 py-1">
+                          <Select value={selectedGroupId ?? ""} onValueChange={setSelectedGroupId}>
+                            <SelectTrigger className="h-7 flex-1 text-xs">
+                              <SelectValue placeholder="グループを選択" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {groups.map((g) => (
+                                <SelectItem key={g.id} value={g.id}>
+                                  {g.name} ({g.memberCount})
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <span className="text-xs text-muted-foreground">ロール:</span>
+                          <Select value={groupRole} onValueChange={setGroupRole}>
+                            <SelectTrigger className="h-7 w-[100px] text-xs">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="editor">編集者</SelectItem>
+                              <SelectItem value="viewer">閲覧者</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {selectedGroupId &&
+                          (() => {
+                            const addable = groupMembers.filter(
+                              (gm) => !memberUserIds.has(gm.userId),
+                            );
+                            if (addable.length === 0) {
+                              return (
+                                <p className="py-4 text-center text-sm text-muted-foreground">
+                                  全員追加済みです
+                                </p>
+                              );
+                            }
+                            return (
+                              <>
+                                <div
+                                  className="space-y-2 overflow-y-auto"
+                                  style={{ maxHeight: "25vh" }}
+                                >
+                                  {addable.map((gm) => (
+                                    <div
+                                      key={gm.userId}
+                                      className="flex items-center justify-between gap-2 rounded-md border p-2"
+                                    >
+                                      <div className="flex items-center gap-2 min-w-0">
+                                        <UserAvatar
+                                          name={gm.name}
+                                          image={gm.image}
+                                          className="h-6 w-6 shrink-0"
+                                          fallbackClassName="text-xs"
+                                        />
+                                        <p className="truncate text-sm font-medium">{gm.name}</p>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                                <Button
+                                  size="sm"
+                                  className="w-full"
+                                  disabled={adding}
+                                  onClick={handleAddGroupMembers}
+                                >
+                                  {adding ? "追加中..." : "全員追加"}
+                                </Button>
+                              </>
+                            );
+                          })()}
                       </div>
                     )}
                   </TabsContent>

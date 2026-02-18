@@ -1,0 +1,233 @@
+"use client";
+
+import type { GroupResponse } from "@sugara/shared";
+import { GROUP_NAME_MAX_LENGTH } from "@sugara/shared";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { MoreHorizontal, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
+import { api, getApiErrorMessage } from "@/lib/api";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
+import { CreateGroupDialog } from "./create-group-dialog";
+import { GroupMembersDialog } from "./group-detail-dialog";
+
+export function GroupsTab() {
+  const queryClient = useQueryClient();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [membersGroupId, setMembersGroupId] = useState<string | null>(null);
+  const [editGroup, setEditGroup] = useState<GroupResponse | null>(null);
+  const [editName, setEditName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [deleteGroup, setDeleteGroup] = useState<GroupResponse | null>(null);
+
+  const { data: groups = [], isLoading } = useQuery({
+    queryKey: queryKeys.groups.list(),
+    queryFn: () => api<GroupResponse[]>("/api/groups"),
+  });
+
+  const showSkeleton = useDelayedLoading(isLoading);
+  const membersGroup = groups.find((g) => g.id === membersGroupId) ?? null;
+
+  async function handleRename(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editGroup) return;
+    const trimmed = editName.trim();
+    if (!trimmed) return;
+
+    setSubmitting(true);
+    try {
+      await api(`/api/groups/${editGroup.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ name: trimmed }),
+      });
+      toast.success(MSG.GROUP_UPDATED);
+      setEditGroup(null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.groups.list() });
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, MSG.GROUP_UPDATE_FAILED));
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDelete() {
+    if (!deleteGroup) return;
+    try {
+      await api(`/api/groups/${deleteGroup.id}`, { method: "DELETE" });
+      toast.success(MSG.GROUP_DELETED);
+      setDeleteGroup(null);
+      queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, MSG.GROUP_DELETE_FAILED));
+    }
+  }
+
+  if (isLoading && !showSkeleton) return <div />;
+
+  if (showSkeleton) {
+    return (
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-16 w-full rounded-lg" />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="flex-row items-center justify-between space-y-0">
+          <CardTitle>グループ</CardTitle>
+          <Button size="sm" onClick={() => setCreateOpen(true)}>
+            <Plus className="mr-1 h-4 w-4" />
+            新規作成
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {groups.length === 0 ? (
+            <p className="text-sm text-muted-foreground">グループがありません</p>
+          ) : (
+            <div className="max-h-80 space-y-3 overflow-y-auto">
+              {groups.map((group) => (
+                <div key={group.id} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm truncate">{group.name}</span>
+                    <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                      <Users className="h-3.5 w-3.5" />
+                      {group.memberCount}
+                    </span>
+                  </div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => setMembersGroupId(group.id)}>
+                        <UserPlus className="h-4 w-4" />
+                        メンバー追加
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => {
+                          setEditName(group.name);
+                          setEditGroup(group);
+                        }}
+                      >
+                        <Pencil className="h-4 w-4" />
+                        編集
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => setDeleteGroup(group)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        削除
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <CreateGroupDialog
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        onCreated={setMembersGroupId}
+      />
+
+      <GroupMembersDialog group={membersGroup} onOpenChange={() => setMembersGroupId(null)} />
+
+      {/* Edit name dialog */}
+      <Dialog open={editGroup !== null} onOpenChange={(v) => !v && setEditGroup(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>グループを編集</DialogTitle>
+            <DialogDescription>グループ名を変更します。</DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleRename}>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="edit-group-name">グループ名</Label>
+                <Input
+                  id="edit-group-name"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  maxLength={GROUP_NAME_MAX_LENGTH}
+                  required
+                />
+                <p className="text-right text-xs text-muted-foreground">
+                  {editName.length}/{GROUP_NAME_MAX_LENGTH}
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={() => setEditGroup(null)}>
+                キャンセル
+              </Button>
+              <Button type="submit" disabled={submitting || !editName.trim()}>
+                {submitting ? "保存中..." : "保存"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation */}
+      <AlertDialog open={deleteGroup !== null} onOpenChange={(v) => !v && setDeleteGroup(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>グループを削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              「{deleteGroup?.name}」を削除します。この操作は取り消せません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              削除する
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

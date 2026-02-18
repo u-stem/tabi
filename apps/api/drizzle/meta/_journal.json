@@ -43,6 +43,13 @@
       "when": 1771382400000,
       "tag": "0005_bookmark_urls",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1771459200000,
+      "tag": "0006_groups",
+      "breakpoints": true
     }
   ]
 }

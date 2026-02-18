@@ -1,7 +1,7 @@
-import { Bookmark, Home, UserPlus } from "lucide-react";
+import { Bookmark, Home, Users } from "lucide-react";
 
 export const NAV_LINKS = [
   { href: "/home", label: "ホーム", icon: Home },
   { href: "/bookmarks", label: "ブックマーク", icon: Bookmark },
-  { href: "/friends", label: "フレンド", icon: UserPlus },
+  { href: "/friends", label: "フレンド", icon: Users },
 ] as const;

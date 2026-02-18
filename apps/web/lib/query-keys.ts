@@ -12,6 +12,11 @@ export const queryKeys = {
     list: () => [...queryKeys.friends.all, "list"] as const,
     requests: () => [...queryKeys.friends.all, "requests"] as const,
   },
+  groups: {
+    all: ["groups"] as const,
+    list: () => [...queryKeys.groups.all, "list"] as const,
+    members: (groupId: string) => [...queryKeys.groups.all, groupId, "members"] as const,
+  },
   bookmarks: {
     all: ["bookmarks"] as const,
     lists: () => [...queryKeys.bookmarks.all, "lists"] as const,

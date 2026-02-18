@@ -3,6 +3,9 @@ export const MAX_SCHEDULES_PER_TRIP = 300;
 export const MAX_PATTERNS_PER_DAY = 3;
 export const MAX_MEMBERS_PER_TRIP = 20;
 export const MAX_FRIENDS_PER_USER = 100;
+export const MAX_GROUPS_PER_USER = 10;
+export const MAX_MEMBERS_PER_GROUP = MAX_MEMBERS_PER_TRIP;
+export const GROUP_NAME_MAX_LENGTH = 50;
 export const MAX_BOOKMARK_LISTS_PER_USER = 5;
 export const MAX_BOOKMARKS_PER_LIST = 20;
 

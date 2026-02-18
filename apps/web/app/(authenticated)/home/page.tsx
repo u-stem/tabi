@@ -8,7 +8,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 
 import { toast } from "sonner";
 import { CreateTripDialog } from "@/components/create-trip-dialog";
-
+import { FriendRequestsCard } from "@/components/friend-requests-card";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import { TripCard } from "@/components/trip-card";
 import type { SortKey, StatusFilter } from "@/components/trip-toolbar";
@@ -234,6 +234,7 @@ export default function HomePage() {
 
   return (
     <>
+      <FriendRequestsCard />
       {showSkeleton ? (
         <>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">

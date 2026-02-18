@@ -2,6 +2,8 @@ import {
   MAX_BOOKMARK_LISTS_PER_USER,
   MAX_BOOKMARKS_PER_LIST,
   MAX_FRIENDS_PER_USER,
+  MAX_GROUPS_PER_USER,
+  MAX_MEMBERS_PER_GROUP,
   MAX_MEMBERS_PER_TRIP,
   MAX_PATTERNS_PER_DAY,
   MAX_SCHEDULES_PER_TRIP,
@@ -113,6 +115,21 @@ export const MSG = {
   FRIEND_LIST_FAILED: "フレンド一覧の取得に失敗しました",
   FRIEND_REQUESTS_FAILED: "フレンド申請一覧の取得に失敗しました",
 
+  // Group
+  GROUP_CREATED: "グループを作成しました",
+  GROUP_CREATE_FAILED: "グループの作成に失敗しました",
+  GROUP_UPDATED: "グループ名を変更しました",
+  GROUP_UPDATE_FAILED: "グループ名の変更に失敗しました",
+  GROUP_DELETED: "グループを削除しました",
+  GROUP_DELETE_FAILED: "グループの削除に失敗しました",
+  GROUP_MEMBER_ADDED: "メンバーを追加しました",
+  GROUP_MEMBER_ADD_FAILED: "メンバーの追加に失敗しました",
+  GROUP_MEMBER_REMOVED: "メンバーを削除しました",
+  GROUP_MEMBER_REMOVE_FAILED: "メンバーの削除に失敗しました",
+  GROUP_BULK_ADDED: (n: number) => `${n}人をメンバーに追加しました`,
+  GROUP_BULK_ADD_PARTIAL: (added: number, failed: number) =>
+    `${added}人を追加しました（${failed}人は失敗）`,
+
   // Reaction
   REACTION_FAILED: "リアクションに失敗しました",
   REACTION_REMOVE_FAILED: "リアクションの取り消しに失敗しました",
@@ -197,6 +214,8 @@ export const MSG = {
   LIMIT_PATTERNS: `パターンは各日程に最大${MAX_PATTERNS_PER_DAY}件まで追加できます`,
   LIMIT_MEMBERS: `メンバーは1旅行あたり最大${MAX_MEMBERS_PER_TRIP}名まで招待できます`,
   LIMIT_FRIENDS: `フレンドは最大${MAX_FRIENDS_PER_USER}人まで登録できます`,
+  LIMIT_GROUPS: `グループは最大${MAX_GROUPS_PER_USER}件まで作成できます`,
+  LIMIT_GROUP_MEMBERS: `グループメンバーは最大${MAX_MEMBERS_PER_GROUP}人まで追加できます`,
 
   // Export
   EXPORT_SUCCESS: "エクスポートしました",

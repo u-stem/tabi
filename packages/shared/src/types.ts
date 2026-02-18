@@ -133,6 +133,21 @@ export type BookmarkListDetailResponse = BookmarkListResponse & {
   bookmarks: BookmarkResponse[];
 };
 
+export type GroupResponse = {
+  id: string;
+  name: string;
+  memberCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type GroupMemberResponse = {
+  userId: string;
+  name: string;
+  image?: string | null;
+  addedAt: string;
+};
+
 export type PublicProfileResponse = {
   id: string;
   name: string;

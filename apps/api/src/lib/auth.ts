@@ -6,10 +6,12 @@ import { db } from "../db/index";
 import * as schema from "../db/schema";
 import { env } from "./env";
 
+const isProduction = process.env.NODE_ENV === "production";
+
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_BASE_URL,
   rateLimit: {
-    enabled: true,
+    enabled: isProduction,
     window: 60,
     max: 30,
     storage: "memory",

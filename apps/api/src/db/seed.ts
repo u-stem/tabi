@@ -636,7 +636,95 @@ async function main() {
     console.log("  Done");
   }
 
-  // 7. Create bookmark lists with bookmarks
+  // 7. Create friend relationships (dev <-> alice, dev <-> bob)
+  console.log("\nCreating friend relationships...");
+  const aliceData = userMap.get("alice");
+  const bobData = userMap.get("bob");
+
+  if (aliceData) {
+    // dev -> alice: send request, then alice accepts
+    const req1 = await apiFetch<{ id: string }>("/api/friends/requests", {
+      method: "POST",
+      body: JSON.stringify({ addresseeId: aliceData.userId }),
+      headers: { cookie: ownerCookies },
+    });
+    await apiFetch(`/api/friends/requests/${req1.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "accepted" }),
+      headers: { cookie: aliceData.cookies },
+    });
+    console.log("  dev <-> alice: friends");
+  }
+
+  if (bobData) {
+    // dev -> bob: send request, then bob accepts
+    const req2 = await apiFetch<{ id: string }>("/api/friends/requests", {
+      method: "POST",
+      body: JSON.stringify({ addresseeId: bobData.userId }),
+      headers: { cookie: ownerCookies },
+    });
+    await apiFetch(`/api/friends/requests/${req2.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "accepted" }),
+      headers: { cookie: bobData.cookies },
+    });
+    console.log("  dev <-> bob: friends");
+  }
+
+  if (aliceData && bobData) {
+    // alice -> bob: send request, then bob accepts
+    const req3 = await apiFetch<{ id: string }>("/api/friends/requests", {
+      method: "POST",
+      body: JSON.stringify({ addresseeId: bobData.userId }),
+      headers: { cookie: aliceData.cookies },
+    });
+    await apiFetch(`/api/friends/requests/${req3.id}`, {
+      method: "PATCH",
+      body: JSON.stringify({ status: "accepted" }),
+      headers: { cookie: bobData.cookies },
+    });
+    console.log("  alice <-> bob: friends");
+  }
+
+  // 8. Create groups with members
+  console.log("\nCreating groups...");
+
+  const group1 = await apiFetch<{ id: string }>("/api/groups", {
+    method: "POST",
+    body: JSON.stringify({ name: "京都メンバー" }),
+    headers: { cookie: ownerCookies },
+  });
+  if (aliceData) {
+    await apiFetch(`/api/groups/${group1.id}/members`, {
+      method: "POST",
+      body: JSON.stringify({ userId: aliceData.userId }),
+      headers: { cookie: ownerCookies },
+    });
+  }
+  if (bobData) {
+    await apiFetch(`/api/groups/${group1.id}/members`, {
+      method: "POST",
+      body: JSON.stringify({ userId: bobData.userId }),
+      headers: { cookie: ownerCookies },
+    });
+  }
+  console.log("  京都メンバー (dev所有, alice + bob)");
+
+  const group2 = await apiFetch<{ id: string }>("/api/groups", {
+    method: "POST",
+    body: JSON.stringify({ name: "家族" }),
+    headers: { cookie: ownerCookies },
+  });
+  if (aliceData) {
+    await apiFetch(`/api/groups/${group2.id}/members`, {
+      method: "POST",
+      body: JSON.stringify({ userId: aliceData.userId }),
+      headers: { cookie: ownerCookies },
+    });
+  }
+  console.log("  家族 (dev所有, alice)");
+
+  // 9. Create bookmark lists with bookmarks
   console.log(`\nCreating ${SAMPLE_BOOKMARK_LISTS.length} bookmark lists...`);
   for (const listData of SAMPLE_BOOKMARK_LISTS) {
     const { bookmarks: bms, ...listBody } = listData;

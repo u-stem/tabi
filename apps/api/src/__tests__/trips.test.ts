@@ -16,6 +16,9 @@ const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, m
       schedules: {
         findMany: vi.fn(),
       },
+      schedulePolls: {
+        findFirst: vi.fn(),
+      },
     },
     mockDbInsert: vi.fn(),
     mockDbUpdate: vi.fn(),
@@ -66,6 +69,7 @@ describe("Trip routes", () => {
       role: "owner",
     });
     mockDbQuery.schedules.findMany.mockResolvedValue([]);
+    mockDbQuery.schedulePolls.findFirst.mockResolvedValue(undefined);
     // Default: select queries (trip count, trip list, member count, candidate query)
     const mockWhere = vi.fn().mockImplementation(() => {
       const result = Promise.resolve([{ count: 0 }]);

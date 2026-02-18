@@ -17,6 +17,9 @@
       "style": {
         "noNonNullAssertion": "off"
       },
+      "performance": {
+        "noImgElement": "off"
+      },
       "suspicious": {
         "noExplicitAny": "warn"
       }

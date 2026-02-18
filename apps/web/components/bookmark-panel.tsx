@@ -192,38 +192,36 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
       ) : bookmarks.length === 0 ? (
         <p className="py-4 text-center text-sm text-muted-foreground">ブックマークがありません</p>
       ) : (
-        <>
-          <div className="space-y-2">
-            {bookmarks.map((bm) => {
-              const urls = bm.urls ?? [];
+        <div className="space-y-2">
+          {bookmarks.map((bm) => {
+            const urls = bm.urls ?? [];
 
-              if (selectionMode) {
-                return (
-                  <button
-                    key={bm.id}
-                    type="button"
-                    onClick={() => toggleSelect(bm.id)}
-                    className={cn(
-                      "flex w-full items-start gap-2 rounded-md border p-2 text-left transition-colors cursor-pointer hover:bg-accent/50",
-                      selectedIds.has(bm.id) && "ring-2 ring-ring",
-                    )}
-                  >
-                    <div className="flex shrink-0 items-center pt-0.5">
-                      <SelectionIndicator checked={selectedIds.has(bm.id)} />
-                    </div>
-                    <BookmarkContent name={bm.name} urls={urls} memo={bm.memo} selectable />
-                  </button>
-                );
-              }
-
+            if (selectionMode) {
               return (
-                <div key={bm.id} className="rounded-md border p-2">
-                  <BookmarkContent name={bm.name} urls={urls} memo={bm.memo} />
-                </div>
+                <button
+                  key={bm.id}
+                  type="button"
+                  onClick={() => toggleSelect(bm.id)}
+                  className={cn(
+                    "flex w-full items-start gap-2 rounded-md border p-2 text-left transition-colors cursor-pointer hover:bg-accent/50",
+                    selectedIds.has(bm.id) && "ring-2 ring-ring",
+                  )}
+                >
+                  <div className="flex shrink-0 items-center pt-0.5">
+                    <SelectionIndicator checked={selectedIds.has(bm.id)} />
+                  </div>
+                  <BookmarkContent name={bm.name} urls={urls} memo={bm.memo} selectable />
+                </button>
               );
-            })}
-          </div>
-        </>
+            }
+
+            return (
+              <div key={bm.id} className="rounded-md border p-2">
+                <BookmarkContent name={bm.name} urls={urls} memo={bm.memo} />
+              </div>
+            );
+          })}
+        </div>
       )}
       <AlertDialog
         open={confirmIds.length > 0}

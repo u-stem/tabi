@@ -221,9 +221,21 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
           ) : (
             <>
               <div className="space-y-2">
-                <Label>
-                  日程案 <span className="text-destructive">*</span>
-                </Label>
+                <div className="flex items-center justify-between">
+                  <Label>
+                    日程案 <span className="text-destructive">*</span>
+                  </Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleAddCandidate}
+                    disabled={!pendingRange?.from}
+                  >
+                    <Plus className="h-4 w-4" />
+                    日程案に追加
+                  </Button>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   カレンダーで日付範囲を選択し「日程案に追加」で追加
                 </p>
@@ -246,18 +258,6 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
                     startMonth={new Date(START_YEAR, 0)}
                     endMonth={new Date(END_YEAR, 11)}
                   />
-                </div>
-                <div className="flex justify-center">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleAddCandidate}
-                    disabled={!pendingRange?.from}
-                  >
-                    <Plus className="h-4 w-4" />
-                    日程案に追加
-                  </Button>
                 </div>
 
                 {candidates.length > 0 && (

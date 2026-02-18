@@ -4,8 +4,7 @@ import type { PollDetailResponse, PollOptionResponse, PollResponseValue } from "
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format, isValid, parse } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Check, Link as LinkIcon, Plus, Trash2, Users } from "lucide-react";
-import dynamic from "next/dynamic";
+import { Check, Plus, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -31,17 +30,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { copyToClipboard } from "@/lib/clipboard";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
-
-const PollParticipantDialog = dynamic(() =>
-  import("@/components/poll-participant-dialog").then((mod) => mod.PollParticipantDialog),
-);
-
-const ShareDialog = dynamic(() =>
-  import("@/components/share-dialog").then((mod) => mod.ShareDialog),
-);
 
 function formatDateLabel(dateStr: string): string {
   const d = parse(dateStr, "yyyy-MM-dd", new Date());
@@ -58,7 +48,7 @@ const STATUS_CONFIG = {
   open: {
     label: "日程調整中",
     className:
-      "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400 border-green-200 dark:border-green-800",
+      "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 border-orange-300 dark:border-orange-700",
   },
   confirmed: {
     label: "確定済み",
@@ -117,10 +107,6 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
   const [showConfirmSelect, setShowConfirmSelect] = useState(false);
   const [confirmOptionId, setConfirmOptionId] = useState<string | null>(null);
   const [deleteOptionId, setDeleteOptionId] = useState<string | null>(null);
-  const [participantDialogOpen, setParticipantDialogOpen] = useState(false);
-  const [sharing, setSharing] = useState(false);
-  const [shareUrl, setShareUrl] = useState<string | null>(null);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
 
   const invalidate = useCallback(
     () => queryClient.invalidateQueries({ queryKey: queryKeys.polls.detail(pollId) }),
@@ -177,29 +163,6 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
     onError: (err) => toast.error(getApiErrorMessage(err, MSG.POLL_CONFIRM_FAILED)),
   });
 
-  async function handleShare() {
-    setSharing(true);
-    try {
-      const data = await api<{ shareToken: string }>(`/api/polls/${pollId}/share`, {
-        method: "POST",
-        body: JSON.stringify({}),
-      });
-      const url = `${window.location.origin}/polls/shared/${data.shareToken}`;
-      setShareUrl(url);
-      setShareDialogOpen(true);
-      try {
-        await copyToClipboard(url);
-        toast.success(MSG.POLL_SHARE_LINK_COPIED);
-      } catch {
-        // Clipboard may not be available
-      }
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, MSG.POLL_SHARE_LINK_FAILED));
-    } finally {
-      setSharing(false);
-    }
-  }
-
   function handleSetResponse(optionId: string, value: PollResponseValue) {
     if (!poll?.myParticipantId || poll.status !== "open") return;
 
@@ -248,30 +211,18 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
         <Badge variant="outline" className={status.className}>
           {status.label}
         </Badge>
-        <div className="flex items-center gap-1">
-          {isOwner && isOpen && (
-            <>
-              <Button variant="ghost" size="sm" onClick={() => setShowAddOption(true)}>
-                <Plus className="h-4 w-4" />
-                日程案追加
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowConfirmSelect(true)}>
-                <Check className="h-4 w-4" />
-                確定
-              </Button>
-              <Button variant="ghost" size="sm" onClick={() => setParticipantDialogOpen(true)}>
-                <Users className="h-4 w-4" />
-                参加者
-              </Button>
-            </>
-          )}
-          {isOwner && (
-            <Button variant="ghost" size="sm" onClick={() => handleShare()} disabled={sharing}>
-              <LinkIcon className="h-4 w-4" />
-              {sharing ? "生成中..." : "共有"}
+        {isOwner && isOpen && (
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" onClick={() => setShowAddOption(true)}>
+              <Plus className="h-4 w-4" />
+              日程案追加
             </Button>
-          )}
-        </div>
+            <Button variant="ghost" size="sm" onClick={() => setShowConfirmSelect(true)}>
+              <Check className="h-4 w-4" />
+              確定
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Note & deadline */}
@@ -381,30 +332,6 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
           })}
         </div>
       </div>
-
-      {/* Participant dialog */}
-      <PollParticipantDialog
-        pollId={pollId}
-        participants={poll.participants.map((p) => ({
-          id: p.id,
-          userId: p.userId,
-          name: p.name,
-        }))}
-        isOwner={poll.isOwner}
-        open={participantDialogOpen}
-        onOpenChange={setParticipantDialogOpen}
-        onMutate={invalidate}
-      />
-
-      {/* Share dialog */}
-      {shareUrl && (
-        <ShareDialog
-          open={shareDialogOpen}
-          onOpenChange={setShareDialogOpen}
-          shareUrl={shareUrl}
-          expiresAt={null}
-        />
-      )}
 
       {/* Add option dialog */}
       <Dialog

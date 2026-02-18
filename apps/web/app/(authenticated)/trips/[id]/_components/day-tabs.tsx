@@ -6,20 +6,37 @@ import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
 import { TAB_ACTIVE, TAB_INACTIVE } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
+/** selectedDay: -1 = poll tab, 0+ = day index */
 export function DayTabs({
   days,
   selectedDay,
   onSelectDay,
   otherPresence,
+  hasPoll,
 }: {
   days: TripResponse["days"];
   selectedDay: number;
   onSelectDay: (index: number) => void;
   otherPresence: PresenceUser[];
+  hasPoll?: boolean;
 }) {
   return (
     <div className="flex shrink-0 select-none border-b" role="tablist" aria-label="日程タブ">
       <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto px-4">
+        {hasPoll && (
+          <button
+            type="button"
+            role="tab"
+            aria-selected={selectedDay === -1}
+            onClick={() => onSelectDay(-1)}
+            className={cn(
+              "shrink-0 px-4 py-2 text-sm font-medium transition-colors",
+              selectedDay === -1 ? TAB_ACTIVE : TAB_INACTIVE,
+            )}
+          >
+            日程調整
+          </button>
+        )}
         {days.map((day, index) => (
           <button
             key={day.id}

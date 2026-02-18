@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { httpUrlSchema } from "./url";
 
 export const scheduleCategorySchema = z.enum([
   "sightseeing",
@@ -55,14 +56,7 @@ export const MAX_URLS_PER_SCHEDULE = 5;
 export const SCHEDULE_PLACE_MAX_LENGTH = 200;
 export const MAX_END_DAY_OFFSET = 30;
 
-const singleUrlSchema = z
-  .string()
-  .url()
-  .max(SCHEDULE_URL_MAX_LENGTH)
-  .refine((v) => {
-    const { protocol } = new URL(v);
-    return protocol === "http:" || protocol === "https:";
-  }, "Only http and https URLs are allowed");
+const singleUrlSchema = httpUrlSchema(SCHEDULE_URL_MAX_LENGTH);
 
 const urlsSchema = z
   .array(singleUrlSchema)
@@ -88,8 +82,10 @@ export const updateScheduleSchema = createScheduleSchema.partial().extend({
   expectedUpdatedAt: z.string().datetime().optional(),
 });
 
+import { MAX_SCHEDULES_PER_TRIP } from "../limits";
+
 export const reorderSchedulesSchema = z.object({
-  scheduleIds: z.array(z.string().uuid()),
+  scheduleIds: z.array(z.string().uuid()).max(MAX_SCHEDULES_PER_TRIP),
 });
 
 export const createCandidateSchema = createScheduleSchema;

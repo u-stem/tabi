@@ -4,8 +4,11 @@ import {
   BOOKMARK_MEMO_MAX_LENGTH,
   BOOKMARK_NAME_MAX_LENGTH,
   BOOKMARK_URL_MAX_LENGTH,
+  MAX_BOOKMARK_LISTS_PER_USER,
+  MAX_BOOKMARKS_PER_LIST,
   MAX_URLS_PER_BOOKMARK,
 } from "../limits";
+import { httpUrlSchema } from "./url";
 
 export const bookmarkListVisibilitySchema = z.enum(["private", "friends_only", "public"]);
 export type BookmarkListVisibility = z.infer<typeof bookmarkListVisibilitySchema>;
@@ -21,17 +24,10 @@ export const updateBookmarkListSchema = z.object({
 });
 
 export const reorderBookmarkListsSchema = z.object({
-  orderedIds: z.array(z.string().uuid()),
+  orderedIds: z.array(z.string().uuid()).max(MAX_BOOKMARK_LISTS_PER_USER),
 });
 
-const singleBookmarkUrlSchema = z
-  .string()
-  .url()
-  .max(BOOKMARK_URL_MAX_LENGTH)
-  .refine((v) => {
-    const { protocol } = new URL(v);
-    return protocol === "http:" || protocol === "https:";
-  }, "Only http and https URLs are allowed");
+const singleBookmarkUrlSchema = httpUrlSchema(BOOKMARK_URL_MAX_LENGTH);
 
 const bookmarkUrlsSchema = z
   .array(singleBookmarkUrlSchema)
@@ -52,7 +48,7 @@ export const updateBookmarkSchema = z.object({
 });
 
 export const reorderBookmarksSchema = z.object({
-  orderedIds: z.array(z.string().uuid()),
+  orderedIds: z.array(z.string().uuid()).max(MAX_BOOKMARKS_PER_LIST),
 });
 
 export const batchBookmarkIdsSchema = z.object({

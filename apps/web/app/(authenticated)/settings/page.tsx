@@ -435,8 +435,7 @@ function AvatarSection({ name, currentImage }: { name: string; currentImage: str
   async function handleReset() {
     setLoading(true);
     try {
-      // Better Auth treats undefined as "skip" — null clears the field
-      const result = await authClient.updateUser({ image: null as unknown as string });
+      const result = await authClient.updateUser({ image: null });
       if (result.error) {
         toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
         return;

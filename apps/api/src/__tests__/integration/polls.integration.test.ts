@@ -24,6 +24,7 @@ import {
   schedulePolls,
   tripDays,
   tripMembers,
+  trips,
 } from "../../db/schema";
 import { pollShareRoutes } from "../../routes/poll-share";
 import { pollRoutes } from "../../routes/polls";
@@ -581,7 +582,6 @@ describe("Trip creation with poll mode", () => {
 
   afterAll(async () => {
     await cleanupTables();
-    await teardownTestDb();
   });
 
   it("creates a trip with scheduling status when pollOptions provided", async () => {
@@ -672,5 +672,107 @@ describe("Trip creation with poll mode", () => {
       where: eq(tripDays.tripId, trip.id),
     });
     expect(days.length).toBeGreaterThan(0);
+  });
+});
+
+describe("Poll confirm with existing trip", () => {
+  const app = createApp();
+  let owner: { id: string; name: string; email: string };
+
+  beforeEach(async () => {
+    await cleanupTables();
+    owner = await createTestUser({ name: "Owner", email: "owner@test.com" });
+    mockGetSession.mockImplementation(() => ({
+      user: owner,
+      session: { id: "test-session" },
+    }));
+  });
+
+  afterAll(async () => {
+    await cleanupTables();
+    await teardownTestDb();
+  });
+
+  it("updates existing trip dates and status on confirm", async () => {
+    const createRes = await app.request(
+      "/api/trips",
+      json({
+        title: "Confirm Trip",
+        destination: "Osaka",
+        pollOptions: [
+          { startDate: "2026-08-01", endDate: "2026-08-03" },
+          { startDate: "2026-09-10", endDate: "2026-09-12" },
+        ],
+      }),
+    );
+    const trip = await createRes.json();
+    expect(trip.status).toBe("scheduling");
+
+    const db = getTestDb();
+    const poll = await db.query.schedulePolls.findFirst({
+      where: eq(schedulePolls.tripId, trip.id),
+      with: { options: true },
+    });
+
+    // Confirm with second option
+    const confirmRes = await app.request(
+      `/api/polls/${poll!.id}/confirm`,
+      json({ optionId: poll!.options[1].id }),
+    );
+    expect(confirmRes.status).toBe(200);
+
+    // Verify trip was updated (not a new trip created)
+    const updatedTrip = await db.query.trips.findFirst({
+      where: eq(trips.id, trip.id),
+    });
+    expect(updatedTrip!.status).toBe("draft");
+    expect(updatedTrip!.startDate).toBe("2026-09-10");
+    expect(updatedTrip!.endDate).toBe("2026-09-12");
+
+    // Verify trip_days were created
+    const days = await db.query.tripDays.findMany({
+      where: eq(tripDays.tripId, trip.id),
+    });
+    expect(days).toHaveLength(3);
+  });
+
+  it("adds poll participants as trip members on confirm", async () => {
+    const other = await createTestUser({ name: "Participant", email: "part@test.com" });
+
+    const createRes = await app.request(
+      "/api/trips",
+      json({
+        title: "Member Trip",
+        destination: "Tokyo",
+        pollOptions: [{ startDate: "2026-11-01", endDate: "2026-11-02" }],
+      }),
+    );
+    const trip = await createRes.json();
+
+    const db = getTestDb();
+    const poll = await db.query.schedulePolls.findFirst({
+      where: eq(schedulePolls.tripId, trip.id),
+      with: { options: true },
+    });
+
+    // Add participant to poll
+    await db.insert(schedulePollParticipants).values({
+      pollId: poll!.id,
+      userId: other.id,
+    });
+
+    // Confirm
+    const confirmRes = await app.request(
+      `/api/polls/${poll!.id}/confirm`,
+      json({ optionId: poll!.options[0].id }),
+    );
+    expect(confirmRes.status).toBe(200);
+
+    // Verify members
+    const members = await db.query.tripMembers.findMany({
+      where: eq(tripMembers.tripId, trip.id),
+    });
+    expect(members).toHaveLength(2);
+    expect(members.find((m) => m.userId === other.id)?.role).toBe("editor");
   });
 });

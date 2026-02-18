@@ -553,32 +553,72 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
   if (!option) return c.json({ error: ERROR_MSG.POLL_OPTION_NOT_FOUND }, 404);
 
   const result = await db.transaction(async (tx) => {
-    const [trip] = await tx
-      .insert(trips)
-      .values({
-        ownerId: user.id,
-        title: poll.title,
-        destination: poll.destination,
-        startDate: option.startDate,
-        endDate: option.endDate,
-      })
-      .returning();
+    let tripId = poll.tripId;
 
-    await createInitialTripDays(tx, trip.id, option.startDate, option.endDate);
+    if (tripId) {
+      // Trip already exists (created with poll mode) - update it
+      await tx
+        .update(trips)
+        .set({
+          startDate: option.startDate,
+          endDate: option.endDate,
+          status: "draft",
+          updatedAt: new Date(),
+        })
+        .where(eq(trips.id, tripId));
 
-    const participants = await tx.query.schedulePollParticipants.findMany({
-      where: eq(schedulePollParticipants.pollId, pollId),
-    });
+      await createInitialTripDays(tx, tripId, option.startDate, option.endDate);
 
-    const registeredParticipants = participants.filter((p) => p.userId !== null);
-    if (registeredParticipants.length > 0) {
-      await tx.insert(tripMembers).values(
-        registeredParticipants.map((p) => ({
-          tripId: trip.id,
-          userId: p.userId!,
-          role: p.userId === user.id ? ("owner" as const) : ("editor" as const),
-        })),
+      // Add poll participants who aren't already trip members
+      const participants = await tx.query.schedulePollParticipants.findMany({
+        where: eq(schedulePollParticipants.pollId, pollId),
+      });
+      const existingMembers = await tx.query.tripMembers.findMany({
+        where: eq(tripMembers.tripId, tripId),
+      });
+      const existingUserIds = new Set(existingMembers.map((m) => m.userId));
+
+      const newMembers = participants.filter(
+        (p) => p.userId !== null && !existingUserIds.has(p.userId),
       );
+      if (newMembers.length > 0) {
+        await tx.insert(tripMembers).values(
+          newMembers.map((p) => ({
+            tripId: tripId!,
+            userId: p.userId!,
+            role: "editor" as const,
+          })),
+        );
+      }
+    } else {
+      // Legacy: standalone poll (no linked trip) - create trip
+      const [trip] = await tx
+        .insert(trips)
+        .values({
+          ownerId: user.id,
+          title: poll.title,
+          destination: poll.destination,
+          startDate: option.startDate,
+          endDate: option.endDate,
+        })
+        .returning();
+
+      tripId = trip.id;
+      await createInitialTripDays(tx, trip.id, option.startDate, option.endDate);
+
+      const participants = await tx.query.schedulePollParticipants.findMany({
+        where: eq(schedulePollParticipants.pollId, pollId),
+      });
+      const registeredParticipants = participants.filter((p) => p.userId !== null);
+      if (registeredParticipants.length > 0) {
+        await tx.insert(tripMembers).values(
+          registeredParticipants.map((p) => ({
+            tripId: trip.id,
+            userId: p.userId!,
+            role: p.userId === user.id ? ("owner" as const) : ("editor" as const),
+          })),
+        );
+      }
     }
 
     const [updatedPoll] = await tx
@@ -586,7 +626,7 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
       .set({
         status: "confirmed",
         confirmedOptionId: option.id,
-        tripId: trip.id,
+        tripId,
         updatedAt: new Date(),
       })
       .where(eq(schedulePolls.id, pollId))

@@ -429,14 +429,16 @@ export function MemberDialog({
                                     </div>
                                   ))}
                                 </div>
-                                <Button
-                                  size="sm"
-                                  className="w-full"
-                                  disabled={adding}
-                                  onClick={handleAddGroupMembers}
-                                >
-                                  {adding ? "追加中..." : "全員追加"}
-                                </Button>
+                                <div className="flex justify-end">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    disabled={adding}
+                                    onClick={handleAddGroupMembers}
+                                  >
+                                    {adding ? "追加中..." : "全員追加"}
+                                  </Button>
+                                </div>
                               </>
                             );
                           })()}

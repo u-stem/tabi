@@ -12,7 +12,7 @@ test.describe("Patterns", () => {
     await page.getByRole("button", { name: "追加" }).click();
 
     await expect(page.getByText("パターンを追加しました")).toBeVisible();
-    await expect(page.getByRole("button", { name: "雨の日プラン" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "雨の日プラン", exact: true })).toBeVisible();
   });
 
   test("renames a pattern", async ({ authenticatedPage: page }) => {
@@ -28,7 +28,7 @@ test.describe("Patterns", () => {
     await expect(page.getByText("パターンを追加しました")).toBeVisible();
 
     // Open pattern dropdown menu via the MoreHorizontal button
-    await page.getByRole("button", { name: "晴れの日プラン" }).click();
+    await page.getByRole("button", { name: "晴れの日プラン", exact: true }).click();
     await page.getByRole("button", { name: "晴れの日プランのメニュー" }).click();
     await page.getByRole("menuitem", { name: "名前変更" }).click();
 
@@ -38,7 +38,7 @@ test.describe("Patterns", () => {
 
     await expect(page.getByText("名前を変更しました")).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "曇りの日プラン" }),
+      page.getByRole("button", { name: "曇りの日プラン", exact: true }),
     ).toBeVisible();
   });
 
@@ -55,7 +55,7 @@ test.describe("Patterns", () => {
     await expect(page.getByText("パターンを追加しました")).toBeVisible();
 
     // Open pattern dropdown menu
-    await page.getByRole("button", { name: "削除対象プラン" }).click();
+    await page.getByRole("button", { name: "削除対象プラン", exact: true }).click();
     await page.getByRole("button", { name: "削除対象プランのメニュー" }).click();
     await page.getByRole("menuitem", { name: "削除" }).click();
 
@@ -64,9 +64,9 @@ test.describe("Patterns", () => {
 
     await expect(page.getByText("パターンを削除しました")).toBeVisible();
     await expect(
-      page.getByRole("button", { name: "削除対象プラン" }),
+      page.getByRole("button", { name: "削除対象プラン", exact: true }),
     ).not.toBeVisible();
     // Default pattern should still be visible
-    await expect(page.getByRole("button", { name: "デフォルト" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "デフォルト", exact: true })).toBeVisible();
   });
 });

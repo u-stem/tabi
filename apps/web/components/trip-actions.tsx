@@ -51,6 +51,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api } from "@/lib/api";
+import { copyToClipboard } from "@/lib/clipboard";
 import { formatDateFromISO } from "@/lib/format";
 import { MSG } from "@/lib/messages";
 
@@ -122,9 +123,16 @@ export function TripActions({
       const result = await api<ShareResponse>(`/api/trips/${tripId}/share`, {
         method: "POST",
       });
+      const url = `${window.location.origin}/shared/${result.shareToken}`;
       setShareExpiresAt(result.shareTokenExpiresAt);
-      setShareUrl(`${window.location.origin}/shared/${result.shareToken}`);
+      setShareUrl(url);
       setShareDialogOpen(true);
+      try {
+        await copyToClipboard(url);
+        toast.success(MSG.SHARE_LINK_COPIED);
+      } catch {
+        // Clipboard may not be available
+      }
     } catch {
       toast.error(MSG.SHARE_LINK_FAILED);
     } finally {
@@ -138,9 +146,15 @@ export function TripActions({
       const result = await api<ShareResponse>(`/api/trips/${tripId}/share`, {
         method: "PUT",
       });
+      const url = `${window.location.origin}/shared/${result.shareToken}`;
       setShareExpiresAt(result.shareTokenExpiresAt);
-      setShareUrl(`${window.location.origin}/shared/${result.shareToken}`);
-      toast.success(MSG.SHARE_LINK_REGENERATED);
+      setShareUrl(url);
+      try {
+        await copyToClipboard(url);
+        toast.success(MSG.SHARE_LINK_REGENERATED);
+      } catch {
+        toast.success(MSG.SHARE_LINK_REGENERATED_NO_COPY);
+      }
     } catch {
       toast.error(MSG.SHARE_LINK_REGENERATE_FAILED);
     } finally {

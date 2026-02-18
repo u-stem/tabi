@@ -26,7 +26,7 @@ test.describe("Friends", () => {
 
     // User B sees the request and accepts it
     await pageB.goto("/friends");
-    await expect(pageB.getByText("受信リクエスト")).toBeVisible();
+    await expect(pageB.getByText("フレンドリクエスト")).toBeVisible();
     await expect(pageB.getByText("E2E User")).toBeVisible();
     await pageB.getByRole("button", { name: "承認" }).click();
     await expect(pageB.getByText("フレンド申請を承認しました")).toBeVisible();
@@ -73,13 +73,13 @@ test.describe("Friends", () => {
 
     // User A rejects the request
     await page.goto("/friends");
-    await expect(page.getByText("受信リクエスト")).toBeVisible();
+    await expect(page.getByText("フレンドリクエスト")).toBeVisible();
     await expect(page.getByText("Friend C")).toBeVisible();
     await page.getByRole("button", { name: "拒否" }).click();
     await expect(page.getByText("フレンド申請を拒否しました")).toBeVisible();
 
     // Request section disappears
-    await expect(page.getByText("受信リクエスト")).not.toBeVisible();
+    await expect(page.getByText("フレンドリクエスト")).not.toBeVisible();
 
     await contextC.close();
   });

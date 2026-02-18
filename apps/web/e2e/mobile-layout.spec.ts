@@ -1,13 +1,14 @@
 import { expect, test } from "./fixtures/auth";
 
 test.describe("Mobile layout", () => {
-  test("BottomNav is visible with 2 nav links", async ({ authenticatedPage: page }) => {
+  test("BottomNav is visible with 3 nav links", async ({ authenticatedPage: page }) => {
     const bottomNav = page.locator("nav[aria-label='ボトムナビゲーション']");
     await expect(bottomNav).toBeVisible();
 
     const links = bottomNav.getByRole("link");
-    await expect(links).toHaveCount(2);
+    await expect(links).toHaveCount(3);
     await expect(bottomNav.getByRole("link", { name: "ホーム" })).toBeVisible();
+    await expect(bottomNav.getByRole("link", { name: "ブックマーク" })).toBeVisible();
     await expect(bottomNav.getByRole("link", { name: "フレンド" })).toBeVisible();
   });
 

@@ -27,8 +27,8 @@ test.describe("Members", () => {
 
     // Open member dialog and add the member by user ID
     await page.getByRole("button", { name: "メンバー" }).click();
-    await page.getByRole("tab", { name: "ユーザーIDで追加" }).click();
-    await page.getByPlaceholder("ユーザーID").fill(memberId!);
+    await page.getByRole("tab", { name: "IDで追加" }).click();
+    await page.locator("#member-user-id").fill(memberId!);
     await page.getByRole("button", { name: "追加" }).click();
     await expect(page.getByText("メンバーを追加しました")).toBeVisible();
 
@@ -64,8 +64,8 @@ test.describe("Members", () => {
     });
 
     await page.getByRole("button", { name: "メンバー" }).click();
-    await page.getByRole("tab", { name: "ユーザーIDで追加" }).click();
-    await page.getByPlaceholder("ユーザーID").fill(memberId!);
+    await page.getByRole("tab", { name: "IDで追加" }).click();
+    await page.locator("#member-user-id").fill(memberId!);
     await page.getByRole("button", { name: "追加" }).click();
     await expect(page.getByText("メンバーを追加しました")).toBeVisible();
     await expect(page.getByText("Remove User")).toBeVisible();

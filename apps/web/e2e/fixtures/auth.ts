@@ -66,7 +66,8 @@ export async function createGroupViaUI(
   await page.locator("#group-name").fill(name);
   await page.getByRole("button", { name: "作成" }).click();
   await expect(page.getByText("グループを作成しました")).toBeVisible();
-  // Close the auto-opened members dialog
+  // Members dialog auto-opens after group creation; wait for it before dismissing
+  await expect(page.getByText(/人のメンバー/)).toBeVisible({ timeout: 5000 });
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).not.toBeVisible();
 }

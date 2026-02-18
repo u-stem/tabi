@@ -10,7 +10,7 @@ test.describe("Candidates", () => {
     await page.getByRole("button", { name: "候補を追加" }).click();
     await page.locator("#candidate-name").fill("鶴岡八幡宮");
     await page.locator("#candidate-memo").fill("駅から徒歩10分");
-    await page.getByRole("button", { name: "追加" }).click();
+    await page.getByRole("button", { name: "追加", exact: true }).click();
 
     await expect(page.getByText("候補を追加しました")).toBeVisible();
     await expect(page.getByText("鶴岡八幡宮")).toBeVisible();
@@ -25,7 +25,7 @@ test.describe("Candidates", () => {
     // Add a candidate first
     await page.getByRole("button", { name: "候補を追加" }).click();
     await page.locator("#candidate-name").fill("長谷寺");
-    await page.getByRole("button", { name: "追加" }).click();
+    await page.getByRole("button", { name: "追加", exact: true }).click();
     await expect(page.getByText("候補を追加しました")).toBeVisible();
 
     // Edit the candidate
@@ -49,7 +49,7 @@ test.describe("Candidates", () => {
     // Add a candidate first
     await page.getByRole("button", { name: "候補を追加" }).click();
     await page.locator("#candidate-name").fill("報国寺");
-    await page.getByRole("button", { name: "追加" }).click();
+    await page.getByRole("button", { name: "追加", exact: true }).click();
     await expect(page.getByText("候補を追加しました")).toBeVisible();
 
     // Delete the candidate
@@ -72,7 +72,7 @@ test.describe("Candidates", () => {
     // Add a candidate
     await page.getByRole("button", { name: "候補を追加" }).click();
     await page.locator("#candidate-name").fill("江ノ島");
-    await page.getByRole("button", { name: "追加" }).click();
+    await page.getByRole("button", { name: "追加", exact: true }).click();
     await expect(page.getByText("候補を追加しました")).toBeVisible();
 
     // Assign to timeline via menu

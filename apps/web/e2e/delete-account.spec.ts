@@ -105,8 +105,8 @@ test.describe("Delete Account", () => {
       destination: "Tokyo",
     });
     await pageA.getByRole("button", { name: "メンバー" }).click();
-    await pageA.getByRole("tab", { name: "ユーザーIDで追加" }).click();
-    await pageA.getByPlaceholder("ユーザーID").fill(userBId!);
+    await pageA.getByRole("tab", { name: "IDで追加" }).click();
+    await pageA.locator("#member-user-id").fill(userBId!);
     await pageA.getByRole("button", { name: "追加" }).click();
     await expect(pageA.getByText("メンバーを追加しました")).toBeVisible();
     // Close member dialog
@@ -119,8 +119,8 @@ test.describe("Delete Account", () => {
       destination: "Osaka",
     });
     await pageB.getByRole("button", { name: "メンバー" }).click();
-    await pageB.getByRole("tab", { name: "ユーザーIDで追加" }).click();
-    await pageB.getByPlaceholder("ユーザーID").fill(userAId!);
+    await pageB.getByRole("tab", { name: "IDで追加" }).click();
+    await pageB.locator("#member-user-id").fill(userAId!);
     await pageB.getByRole("button", { name: "追加" }).click();
     await expect(pageB.getByText("メンバーを追加しました")).toBeVisible();
 

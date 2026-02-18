@@ -42,7 +42,7 @@ test.describe("Schedules", () => {
     await dialog.getByLabel("住所").fill("京都市東山区清水1丁目");
 
     // URL
-    await dialog.getByLabel("URL").fill("https://www.kiyomizudera.or.jp/");
+    await dialog.locator("input[type=url]").first().fill("https://www.kiyomizudera.or.jp/");
 
     // Memo
     await dialog.getByLabel("メモ").fill("朝早めに行くのがおすすめ");

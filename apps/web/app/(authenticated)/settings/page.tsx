@@ -555,6 +555,12 @@ function DeleteAccountSection({ username }: { username: string }) {
         body: JSON.stringify({ password }),
       });
       toast.success(MSG.ACCOUNT_DELETED);
+      // Clear session cookie before redirect to prevent cookieCache from keeping the user logged in
+      try {
+        await authClient.signOut();
+      } catch {
+        // Session may already be invalidated by CASCADE delete
+      }
       window.location.href = "/auth/login";
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {

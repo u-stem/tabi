@@ -51,6 +51,10 @@ test.describe("Shared Trip", () => {
     await firstResponse;
     await expect(page.getByText("共有リンクをコピーしました")).toBeVisible();
 
+    // Close the share dialog before clicking regenerate
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+
     // Regenerate share link
     const secondResponse = page.waitForResponse(
       (res) => res.url().includes("/api/trips/") && res.url().endsWith("/share") && res.ok(),
@@ -85,15 +89,15 @@ test.describe("Shared Trip", () => {
 
     // Add member by user ID
     await page.getByRole("button", { name: "メンバー" }).click();
-    await page.getByRole("tab", { name: "ユーザーIDで追加" }).click();
-    await page.getByPlaceholder("ユーザーID").fill(memberId!);
+    await page.getByRole("tab", { name: "IDで追加" }).click();
+    await page.locator("#member-user-id").fill(memberId!);
     await page.getByRole("button", { name: "追加" }).click();
     await expect(page.getByText("メンバーを追加しました")).toBeVisible();
 
     // Member navigates to home and switches to shared tab
     await memberPage.goto("/home");
     await expect(memberPage).toHaveURL(/\/home/, { timeout: 10000 });
-    await memberPage.getByRole("button", { name: "共有旅行" }).click();
+    await memberPage.getByRole("button", { name: "共有された旅行" }).click();
     await expect(memberPage.getByText("Shared List Trip")).toBeVisible({
       timeout: 10000,
     });

@@ -12,7 +12,7 @@ test.describe("Settings", () => {
 
   test("updates display name", async ({ authenticatedPage: page }) => {
     await page.goto("/settings");
-    await expect(page.getByText("プロフィール")).toBeVisible();
+    await expect(page.getByText("プロフィール", { exact: true })).toBeVisible();
 
     const nameInput = page.getByLabel("表示名");
     await nameInput.fill("Updated Name");

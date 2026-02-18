@@ -1,6 +1,6 @@
 import { type Page, test as base, expect } from "@playwright/test";
 
-export const BASE_URL = "http://localhost:3000";
+export const BASE_URL = process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000";
 
 const DEFAULT_PASSWORD = "TestPassword123!";
 
@@ -41,6 +41,32 @@ export const test = base.extend<AuthFixtures>({
 });
 
 export { expect } from "@playwright/test";
+
+export async function createBookmarkListViaUI(
+  page: Page,
+  name: string,
+): Promise<void> {
+  await page.goto("/bookmarks");
+  await page.getByRole("button", { name: "新規作成" }).click();
+  await page.locator("#new-list-name").fill(name);
+  await page.getByRole("button", { name: "作成" }).click();
+  await expect(page.getByText("リストを作成しました")).toBeVisible();
+}
+
+export async function createGroupViaUI(
+  page: Page,
+  name: string,
+): Promise<void> {
+  await page.goto("/friends");
+  await page
+    .locator("div")
+    .filter({ hasText: /^グループ/ })
+    .getByRole("button", { name: "新規作成" })
+    .click();
+  await page.locator("#group-name").fill(name);
+  await page.getByRole("button", { name: "作成" }).click();
+  await expect(page.getByText("グループを作成しました")).toBeVisible();
+}
 
 export async function createTripViaUI(
   page: Page,

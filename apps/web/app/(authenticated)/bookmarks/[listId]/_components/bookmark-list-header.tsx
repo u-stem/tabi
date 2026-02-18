@@ -67,7 +67,13 @@ export function BookmarkListHeader({
         </Badge>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="ml-auto h-8 w-8" disabled={!online}>
+            <Button
+              variant="outline"
+              size="icon"
+              className="ml-auto h-8 w-8"
+              disabled={!online}
+              aria-label="リストメニュー"
+            >
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>

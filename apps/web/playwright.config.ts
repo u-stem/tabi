@@ -5,7 +5,7 @@ export default defineConfig({
   fullyParallel: false,
   retries: 0,
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: process.env.PLAYWRIGHT_BASE_URL || "http://localhost:3000",
     trace: "on-first-retry",
   },
   projects: [
@@ -20,9 +20,11 @@ export default defineConfig({
       testMatch: "e2e/mobile-*.spec.ts",
     },
   ],
-  webServer: {
-    command: "bun run dev",
-    url: "http://localhost:3000",
-    reuseExistingServer: true,
-  },
+  webServer: process.env.CI
+    ? undefined
+    : {
+        command: "bun run dev",
+        url: "http://localhost:3000",
+        reuseExistingServer: true,
+      },
 });

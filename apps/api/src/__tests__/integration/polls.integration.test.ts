@@ -791,7 +791,6 @@ describe("Trip detail with poll data", () => {
 
   afterAll(async () => {
     await cleanupTables();
-    await teardownTestDb();
   });
 
   it("includes poll summary when trip has a linked poll", async () => {
@@ -830,5 +829,87 @@ describe("Trip detail with poll data", () => {
     const detail = await detailRes.json();
 
     expect(detail.poll).toBeNull();
+  });
+});
+
+// --- Delete poll cascades to scheduling trip ---
+
+describe("Delete poll cascade", () => {
+  const app = createApp();
+  let owner: { id: string; name: string; email: string };
+
+  beforeEach(async () => {
+    await cleanupTables();
+    owner = await createTestUser({ name: "Owner", email: "owner@test.com" });
+    mockGetSession.mockImplementation(() => ({
+      user: owner,
+      session: { id: "test-session" },
+    }));
+  });
+
+  afterAll(async () => {
+    await cleanupTables();
+    await teardownTestDb();
+  });
+
+  it("deletes scheduling trip when poll is deleted", async () => {
+    const createRes = await app.request(
+      "/api/trips",
+      json({
+        title: "Delete Cascade",
+        destination: "Tokyo",
+        pollOptions: [{ startDate: "2026-08-01", endDate: "2026-08-02" }],
+      }),
+    );
+    const trip = await createRes.json();
+    expect(trip.status).toBe("scheduling");
+
+    const db = getTestDb();
+    const poll = await db.query.schedulePolls.findFirst({
+      where: eq(schedulePolls.tripId, trip.id),
+    });
+
+    const deleteRes = await app.request(`/api/polls/${poll!.id}`, { method: "DELETE" });
+    expect(deleteRes.status).toBe(200);
+
+    const deletedTrip = await db.query.trips.findFirst({
+      where: eq(trips.id, trip.id),
+    });
+    expect(deletedTrip).toBeUndefined();
+  });
+
+  it("does NOT delete trip when poll is deleted after confirmation", async () => {
+    const createRes = await app.request(
+      "/api/trips",
+      json({
+        title: "Confirmed Trip",
+        destination: "Osaka",
+        pollOptions: [{ startDate: "2026-09-01", endDate: "2026-09-02" }],
+      }),
+    );
+    const trip = await createRes.json();
+
+    const db = getTestDb();
+    const poll = await db.query.schedulePolls.findFirst({
+      where: eq(schedulePolls.tripId, trip.id),
+      with: { options: true },
+    });
+
+    // Confirm the poll first
+    await app.request(
+      `/api/polls/${poll!.id}/confirm`,
+      json({ optionId: poll!.options[0].id }),
+    );
+
+    // Now delete the poll
+    const deleteRes = await app.request(`/api/polls/${poll!.id}`, { method: "DELETE" });
+    expect(deleteRes.status).toBe(200);
+
+    // Trip should still exist (now in draft status)
+    const existingTrip = await db.query.trips.findFirst({
+      where: eq(trips.id, trip.id),
+    });
+    expect(existingTrip).toBeTruthy();
+    expect(existingTrip!.status).toBe("draft");
   });
 });

@@ -306,7 +306,20 @@ pollRoutes.delete("/:pollId", async (c) => {
     return c.json({ error: ERROR_MSG.POLL_NOT_FOUND }, 404);
   }
 
-  await db.delete(schedulePolls).where(eq(schedulePolls.id, pollId));
+  await db.transaction(async (tx) => {
+    // Cascade delete trip if it's still in scheduling status
+    if (poll.tripId) {
+      const trip = await tx.query.trips.findFirst({
+        where: eq(trips.id, poll.tripId),
+        columns: { id: true, status: true },
+      });
+      if (trip?.status === "scheduling") {
+        await tx.delete(trips).where(eq(trips.id, trip.id));
+      }
+    }
+    await tx.delete(schedulePolls).where(eq(schedulePolls.id, pollId));
+  });
+
   return c.json({ ok: true });
 });
 

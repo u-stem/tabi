@@ -43,9 +43,7 @@ export function TripHeader({
           <>
             {`${trip.destination} / `}
             {formatDateRange(trip.startDate, trip.endDate)}
-            <span className="ml-2 text-sm">
-              ({getDayCount(trip.startDate, trip.endDate)}日間)
-            </span>
+            <span className="ml-2 text-sm">({getDayCount(trip.startDate, trip.endDate)}日間)</span>
           </>
         ) : (
           trip.destination

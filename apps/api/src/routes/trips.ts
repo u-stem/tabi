@@ -73,7 +73,6 @@ tripRoutes.post("/", async (c) => {
     }
 
     const { title, destination, pollOptions, pollNote } = parsed.data;
-    const firstOption = pollOptions[0];
 
     const trip = await db.transaction(async (tx) => {
       const [tripCount] = await tx

@@ -83,9 +83,7 @@ export default function TripPrintPage() {
           {trip.startDate && trip.endDate && (
             <>
               {formatDateRange(trip.startDate, trip.endDate)}
-              <span className="ml-1">
-                ({getDayCount(trip.startDate, trip.endDate)}日間)
-              </span>
+              <span className="ml-1">({getDayCount(trip.startDate, trip.endDate)}日間)</span>
             </>
           )}
         </p>

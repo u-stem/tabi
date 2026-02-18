@@ -178,26 +178,35 @@ export default function HomePage() {
 
   async function handleDeleteSelected() {
     const ids = [...selectedIds];
-    setDeleting(true);
+    const count = ids.length;
+    const idSet = new Set(ids);
 
+    // Optimistic: remove selected trips from cache
+    const ownedCacheKey = queryKeys.trips.owned();
+    await queryClient.cancelQueries({ queryKey: ownedCacheKey });
+    const prev = queryClient.getQueryData<TripListItem[]>(ownedCacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        ownedCacheKey,
+        prev.filter((t) => !idSet.has(t.id)),
+      );
+    }
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+
+    setDeleting(true);
     const results = await Promise.allSettled(
       ids.map((id) => api(`/api/trips/${id}`, { method: "DELETE" })),
     );
     const failed = results.filter((r) => r.status === "rejected").length;
-    const succeeded = results.filter((r) => r.status === "fulfilled").length;
-
-    if (succeeded > 0) {
-      await invalidateTrips();
-    }
 
     if (failed > 0) {
+      if (prev) queryClient.setQueryData(ownedCacheKey, prev);
       toast.error(MSG.TRIP_BULK_DELETE_FAILED(failed));
     } else {
-      toast.success(MSG.TRIP_BULK_DELETED(succeeded));
+      toast.success(MSG.TRIP_BULK_DELETED(count));
     }
-
-    setSelectedIds(new Set());
-    setSelectionMode(false);
+    await invalidateTrips();
     setDeleting(false);
   }
 

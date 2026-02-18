@@ -70,7 +70,7 @@ import { useSelection } from "@/lib/hooks/selection-context";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
-import { moveCandidateToSchedule, removeCandidate, toScheduleResponse } from "@/lib/trip-cache";
+import { moveCandidateToSchedule, removeCandidate } from "@/lib/trip-cache";
 import { cn } from "@/lib/utils";
 import { DndInsertIndicator } from "./dnd-insert-indicator";
 import { DragHandle } from "./drag-handle";
@@ -388,47 +388,40 @@ export function CandidatePanel({
   }, [candidates, sortBy]);
 
   async function handleAssign(spotId: string) {
-    try {
-      const result = await api<Record<string, unknown>>(
-        `/api/trips/${tripId}/candidates/${spotId}/assign`,
-        {
-          method: "POST",
-          body: JSON.stringify({ dayPatternId: currentPatternId }),
-        },
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        moveCandidateToSchedule(prev, spotId, currentDayId, currentPatternId),
       );
-      const prev = queryClient.getQueryData<TripResponse>(cacheKey);
-      if (prev) {
-        queryClient.setQueryData(
-          cacheKey,
-          moveCandidateToSchedule(
-            prev,
-            spotId,
-            currentDayId,
-            currentPatternId,
-            toScheduleResponse(result),
-          ),
-        );
-      }
-      toast.success(MSG.CANDIDATE_ASSIGNED);
+    }
+    toast.success(MSG.CANDIDATE_ASSIGNED);
+
+    try {
+      await api(`/api/trips/${tripId}/candidates/${spotId}/assign`, {
+        method: "POST",
+        body: JSON.stringify({ dayPatternId: currentPatternId }),
+      });
       onRefresh();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.CANDIDATE_ASSIGN_FAILED);
     }
   }
 
   async function handleDelete(spotId: string) {
-    // Cancel in-flight refetches to prevent them from overwriting the optimistic update
     await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(cacheKey, removeCandidate(prev, spotId));
     }
+    toast.success(MSG.CANDIDATE_DELETED);
 
     try {
       await api(`/api/trips/${tripId}/candidates/${spotId}`, {
         method: "DELETE",
       });
-      toast.success(MSG.CANDIDATE_DELETED);
       onRefresh();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);

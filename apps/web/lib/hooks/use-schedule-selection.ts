@@ -1,7 +1,16 @@
+import type { TripResponse } from "@sugara/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
+import {
+  moveCandidateToSchedule,
+  moveScheduleToCandidate,
+  removeCandidate,
+  removeScheduleFromPattern,
+} from "@/lib/trip-cache";
 
 type SelectionTarget = "timeline" | "candidates";
 
@@ -22,6 +31,9 @@ export function useScheduleSelection({
   candidateIds,
   onDone,
 }: UseScheduleSelectionArgs) {
+  const queryClient = useQueryClient();
+  const cacheKey = queryKeys.trips.detail(tripId);
+
   const [selectionTarget, setSelectionTarget] = useState<SelectionTarget | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchLoading, setBatchLoading] = useState(false);
@@ -75,20 +87,34 @@ export function useScheduleSelection({
   }, [selectionTarget, timelineScheduleIds, candidateIds]);
 
   async function batchAssign() {
-    if (!currentPatternId || selectedIds.size === 0) return;
+    if (!currentPatternId || !currentDayId || selectedIds.size === 0) return;
     setBatchLoading(true);
+    const count = selectedIds.size;
+    const ids = [...selectedIds];
+
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    if (prev) {
+      let next = prev;
+      for (const id of ids) {
+        next = moveCandidateToSchedule(next, id, currentDayId, currentPatternId);
+      }
+      queryClient.setQueryData(cacheKey, next);
+    }
+    toast.success(MSG.BATCH_ASSIGNED(count));
+    exit();
+
     try {
       await api(`/api/trips/${tripId}/candidates/batch-assign`, {
         method: "POST",
         body: JSON.stringify({
-          scheduleIds: [...selectedIds],
+          scheduleIds: ids,
           dayPatternId: currentPatternId,
         }),
       });
-      toast.success(MSG.BATCH_ASSIGNED(selectedIds.size));
-      exit();
       onDone();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.BATCH_ASSIGN_FAILED);
     } finally {
       setBatchLoading(false);
@@ -96,17 +122,31 @@ export function useScheduleSelection({
   }
 
   async function batchUnassign() {
-    if (selectedIds.size === 0) return;
+    if (!currentDayId || !currentPatternId || selectedIds.size === 0) return;
     setBatchLoading(true);
+    const count = selectedIds.size;
+    const ids = [...selectedIds];
+
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    if (prev) {
+      let next = prev;
+      for (const id of ids) {
+        next = moveScheduleToCandidate(next, currentDayId, currentPatternId, id);
+      }
+      queryClient.setQueryData(cacheKey, next);
+    }
+    toast.success(MSG.BATCH_UNASSIGNED(count));
+    exit();
+
     try {
       await api(`/api/trips/${tripId}/schedules/batch-unassign`, {
         method: "POST",
-        body: JSON.stringify({ scheduleIds: [...selectedIds] }),
+        body: JSON.stringify({ scheduleIds: ids }),
       });
-      toast.success(MSG.BATCH_UNASSIGNED(selectedIds.size));
-      exit();
       onDone();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.BATCH_UNASSIGN_FAILED);
     } finally {
       setBatchLoading(false);
@@ -116,25 +156,46 @@ export function useScheduleSelection({
   async function batchDelete() {
     if (selectedIds.size === 0) return;
     setBatchLoading(true);
+    const count = selectedIds.size;
+    const ids = [...selectedIds];
+    const target = selectionTarget;
+
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    if (prev) {
+      let next = prev;
+      if (target === "candidates") {
+        for (const id of ids) {
+          next = removeCandidate(next, id);
+        }
+      } else if (target === "timeline" && currentDayId && currentPatternId) {
+        for (const id of ids) {
+          next = removeScheduleFromPattern(next, currentDayId, currentPatternId, id);
+        }
+      }
+      queryClient.setQueryData(cacheKey, next);
+    }
+    toast.success(MSG.BATCH_DELETED(count));
+    exit();
+
     try {
-      if (selectionTarget === "candidates") {
+      if (target === "candidates") {
         await api(`/api/trips/${tripId}/candidates/batch-delete`, {
           method: "POST",
-          body: JSON.stringify({ scheduleIds: [...selectedIds] }),
+          body: JSON.stringify({ scheduleIds: ids }),
         });
-      } else if (selectionTarget === "timeline" && currentDayId && currentPatternId) {
+      } else if (target === "timeline" && currentDayId && currentPatternId) {
         await api(
           `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/batch-delete`,
           {
             method: "POST",
-            body: JSON.stringify({ scheduleIds: [...selectedIds] }),
+            body: JSON.stringify({ scheduleIds: ids }),
           },
         );
       }
-      toast.success(MSG.BATCH_DELETED(selectedIds.size));
-      exit();
       onDone();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.BATCH_DELETE_FAILED);
     } finally {
       setBatchLoading(false);

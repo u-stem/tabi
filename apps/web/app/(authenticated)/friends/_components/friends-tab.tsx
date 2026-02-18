@@ -45,16 +45,28 @@ function FriendListSection({
   friends: FriendResponse[];
   onRemoved: () => void;
 }) {
+  const queryClient = useQueryClient();
   const [removingFriend, setRemovingFriend] = useState<FriendResponse | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
   async function handleRemove(friendId: string) {
     setLoadingId(friendId);
+    const cacheKey = queryKeys.friends.list();
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<FriendResponse[]>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        prev.filter((f) => f.friendId !== friendId),
+      );
+    }
+    toast.success(MSG.FRIEND_REMOVED);
+
     try {
       await api(`/api/friends/${friendId}`, { method: "DELETE" });
-      toast.success(MSG.FRIEND_REMOVED);
       onRemoved();
     } catch (err) {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.FRIEND_REMOVE_FAILED));
     } finally {
       setLoadingId(null);

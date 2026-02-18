@@ -1,7 +1,10 @@
+import type { BookmarkResponse } from "@sugara/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 
 type UseBookmarkSelectionArgs = {
   listId: string;
@@ -16,6 +19,9 @@ export function useBookmarkSelection({
   invalidateBookmarks,
   invalidateLists,
 }: UseBookmarkSelectionArgs) {
+  const queryClient = useQueryClient();
+  const cacheKey = queryKeys.bookmarks.list(listId);
+
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchLoading, setBatchLoading] = useState(false);
@@ -51,16 +57,29 @@ export function useBookmarkSelection({
     const ids = [...selectedIds];
     if (ids.length === 0) return;
     setBatchLoading(true);
+    const count = ids.length;
+    const idSet = new Set(ids);
+
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<BookmarkResponse[]>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        prev.filter((b) => !idSet.has(b.id)),
+      );
+    }
+    toast.success(MSG.BATCH_DELETED(count));
+    exit();
+
     try {
       await api(`/api/bookmark-lists/${listId}/bookmarks/batch-delete`, {
         method: "POST",
         body: JSON.stringify({ bookmarkIds: ids }),
       });
-      toast.success(MSG.BATCH_DELETED(ids.length));
-      exit();
       invalidateBookmarks();
       invalidateLists();
     } catch (err) {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.BATCH_DELETE_FAILED));
     } finally {
       setBatchLoading(false);

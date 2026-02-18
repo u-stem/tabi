@@ -1,8 +1,10 @@
 import type { BookmarkResponse } from "@sugara/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 
 type UseBookmarkOperationsArgs = {
   listId: string;
@@ -19,6 +21,9 @@ export function useBookmarkOperations({
   invalidateBookmarks,
   invalidateLists,
 }: UseBookmarkOperationsArgs) {
+  const queryClient = useQueryClient();
+  const cacheKey = queryKeys.bookmarks.list(listId);
+
   const [addBookmarkOpen, setAddBookmarkOpen] = useState(false);
   const [editingBookmark, setEditingBookmark] = useState<BookmarkResponse | null>(null);
   const [deletingBookmark, setDeletingBookmark] = useState<BookmarkResponse | null>(null);
@@ -80,21 +85,33 @@ export function useBookmarkOperations({
     if (!editingBookmark) return;
     const trimmed = bookmarkName.trim();
     if (!trimmed) return;
-    setSubmitting(true);
+
+    const updatedFields = {
+      name: trimmed,
+      memo: bookmarkMemo.trim() || null,
+      urls: bookmarkUrls.filter((u) => u.trim()),
+    };
+
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<BookmarkResponse[]>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        prev.map((b) => (b.id !== editingBookmark.id ? b : { ...b, ...updatedFields })),
+      );
+    }
+    toast.success(MSG.BOOKMARK_UPDATED);
+    resetForm();
+    setEditingBookmark(null);
+
     try {
       await api(`/api/bookmark-lists/${listId}/bookmarks/${editingBookmark.id}`, {
         method: "PATCH",
-        body: JSON.stringify({
-          name: trimmed,
-          memo: bookmarkMemo.trim() || null,
-          urls: bookmarkUrls.filter((u) => u.trim()),
-        }),
+        body: JSON.stringify(updatedFields),
       });
-      toast.success(MSG.BOOKMARK_UPDATED);
-      resetForm();
-      setEditingBookmark(null);
       invalidateBookmarks();
     } catch (err) {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.BOOKMARK_UPDATE_FAILED));
     } finally {
       setSubmitting(false);
@@ -103,15 +120,27 @@ export function useBookmarkOperations({
 
   async function handleDelete() {
     if (!deletingBookmark) return;
+    const bookmarkId = deletingBookmark.id;
+
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<BookmarkResponse[]>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        prev.filter((b) => b.id !== bookmarkId),
+      );
+    }
+    toast.success(MSG.BOOKMARK_DELETED);
+    setDeletingBookmark(null);
+
     try {
-      await api(`/api/bookmark-lists/${listId}/bookmarks/${deletingBookmark.id}`, {
+      await api(`/api/bookmark-lists/${listId}/bookmarks/${bookmarkId}`, {
         method: "DELETE",
       });
-      toast.success(MSG.BOOKMARK_DELETED);
-      setDeletingBookmark(null);
       invalidateBookmarks();
       invalidateLists();
     } catch (err) {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.BOOKMARK_DELETE_FAILED));
     }
   }

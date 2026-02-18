@@ -101,12 +101,25 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
 
   async function handleRemoveMember() {
     if (!removingMember) return;
+    const memberId = removingMember.userId;
+
+    const cacheKey = queryKeys.groups.members(groupId);
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<GroupMemberResponse[]>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        prev.filter((m) => m.userId !== memberId),
+      );
+    }
+    toast.success(MSG.GROUP_MEMBER_REMOVED);
+    setRemovingMember(null);
+
     try {
-      await api(`/api/groups/${groupId}/members/${removingMember.userId}`, { method: "DELETE" });
-      toast.success(MSG.GROUP_MEMBER_REMOVED);
-      setRemovingMember(null);
+      await api(`/api/groups/${groupId}/members/${memberId}`, { method: "DELETE" });
       invalidateAll();
     } catch (err) {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.GROUP_MEMBER_REMOVE_FAILED));
     }
   }

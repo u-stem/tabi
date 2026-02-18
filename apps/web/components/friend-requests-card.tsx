@@ -30,14 +30,25 @@ export function FriendRequestsCard({ requests }: { requests?: FriendRequestRespo
 
   async function handleAccept(id: string) {
     setLoadingId(id);
+    const cacheKey = queryKeys.friends.requests();
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<FriendRequestResponse[]>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        prev.filter((r) => r.id !== id),
+      );
+    }
+    toast.success(MSG.FRIEND_REQUEST_ACCEPTED);
+
     try {
       await api(`/api/friends/requests/${id}`, {
         method: "PATCH",
         body: JSON.stringify({ status: "accepted" }),
       });
-      toast.success(MSG.FRIEND_REQUEST_ACCEPTED);
       invalidate();
     } catch (err) {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.FRIEND_REQUEST_ACCEPT_FAILED));
     } finally {
       setLoadingId(null);
@@ -46,11 +57,22 @@ export function FriendRequestsCard({ requests }: { requests?: FriendRequestRespo
 
   async function handleReject(id: string) {
     setLoadingId(id);
+    const cacheKey = queryKeys.friends.requests();
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<FriendRequestResponse[]>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        prev.filter((r) => r.id !== id),
+      );
+    }
+    toast.success(MSG.FRIEND_REQUEST_REJECTED);
+
     try {
       await api(`/api/friends/requests/${id}`, { method: "DELETE" });
-      toast.success(MSG.FRIEND_REQUEST_REJECTED);
       invalidate();
     } catch (err) {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.FRIEND_REQUEST_REJECT_FAILED));
     } finally {
       setLoadingId(null);

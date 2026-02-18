@@ -22,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ApiError, api, getApiErrorMessage } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -114,44 +114,50 @@ export function EditScheduleDialog({
       expectedUpdatedAt: schedule.updatedAt,
     };
 
+    const { expectedUpdatedAt: _, ...updateFields } = data;
+
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        updateScheduleInPattern(
+          prev,
+          dayId,
+          patternId,
+          schedule.id,
+          toScheduleResponse({ ...schedule, ...updateFields }),
+        ),
+      );
+    }
+    onOpenChange(false);
+    toast.success(MSG.SCHEDULE_UPDATED);
+
     try {
-      const result = await api<Record<string, unknown>>(
+      await api(
         `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${schedule.id}`,
         {
           method: "PATCH",
           body: JSON.stringify(data),
         },
       );
-      const prev = queryClient.getQueryData<TripResponse>(cacheKey);
-      if (prev) {
-        queryClient.setQueryData(
-          cacheKey,
-          updateScheduleInPattern(prev, dayId, patternId, schedule.id, toScheduleResponse(result)),
-        );
-      }
+      onUpdate();
+
       const timeDelta = computeTimeDelta(schedule, {
         startTime: startTime || undefined,
         endTime: endTime || undefined,
         endDayOffset: endDayOffset > 0 ? endDayOffset : null,
       });
-
-      onOpenChange(false);
-      toast.success(MSG.SCHEDULE_UPDATED);
-      onUpdate();
-
       if (timeDelta && onShiftProposal) {
         onShiftProposal(timeDelta);
       }
     } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setError(MSG.CONFLICT);
-        onUpdate();
-      } else if (err instanceof ApiError && err.status === 404) {
-        toast.error(MSG.CONFLICT_DELETED);
-        onOpenChange(false);
+      if (prev) queryClient.setQueryData(cacheKey, prev);
+      if (err instanceof ApiError && (err.status === 409 || err.status === 404)) {
+        toast.error(err.status === 409 ? MSG.CONFLICT : MSG.CONFLICT_DELETED);
         onUpdate();
       } else {
-        setError(getApiErrorMessage(err, MSG.SCHEDULE_UPDATE_FAILED));
+        toast.error(MSG.SCHEDULE_UPDATE_FAILED);
       }
     } finally {
       setLoading(false);

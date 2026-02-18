@@ -166,27 +166,49 @@ export function MemberDialog({
     setAdding(false);
   }
 
-  async function handleRoleChange(userId: string, newRole: string) {
+  async function handleRoleChange(memberId: string, newRole: string) {
+    const cacheKey = queryKeys.trips.members(tripId);
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<MemberResponse[]>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        prev.map((m) => (m.userId !== memberId ? m : { ...m, role: newRole })),
+      );
+    }
+    toast.success(MSG.MEMBER_ROLE_CHANGED);
+
     try {
-      await api(`/api/trips/${tripId}/members/${userId}`, {
+      await api(`/api/trips/${tripId}/members/${memberId}`, {
         method: "PATCH",
         body: JSON.stringify({ role: newRole }),
       });
-      toast.success(MSG.MEMBER_ROLE_CHANGED);
       invalidateMembers();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.MEMBER_ROLE_CHANGE_FAILED);
     }
   }
 
-  async function handleRemove(userId: string) {
+  async function handleRemove(memberId: string) {
+    const cacheKey = queryKeys.trips.members(tripId);
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<MemberResponse[]>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        prev.filter((m) => m.userId !== memberId),
+      );
+    }
+    toast.success(MSG.MEMBER_REMOVED);
+
     try {
-      await api(`/api/trips/${tripId}/members/${userId}`, {
+      await api(`/api/trips/${tripId}/members/${memberId}`, {
         method: "DELETE",
       });
-      toast.success(MSG.MEMBER_REMOVED);
       invalidateMembers();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.MEMBER_REMOVE_FAILED);
     }
   }

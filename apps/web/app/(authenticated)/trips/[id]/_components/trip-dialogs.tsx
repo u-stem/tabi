@@ -102,12 +102,9 @@ export function RenamePatternDialog({ patternOps }: { patternOps: PatternOps }) 
                 キャンセル
               </Button>
             </DialogClose>
-            <Button
-              type="submit"
-              disabled={patternOps.rename.loading || !patternOps.rename.label.trim()}
-            >
+            <Button type="submit" disabled={!patternOps.rename.label.trim()}>
               <Check className="h-4 w-4" />
-              {patternOps.rename.loading ? "変更中..." : "変更"}
+              変更
             </Button>
           </DialogFooter>
         </form>

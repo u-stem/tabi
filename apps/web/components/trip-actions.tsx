@@ -1,7 +1,8 @@
 "use client";
 
-import type { MemberRole, TripStatus } from "@sugara/shared";
+import type { MemberRole, TripResponse, TripStatus } from "@sugara/shared";
 import { canEdit, isOwner, STATUS_LABELS } from "@sugara/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   FileDown,
   Link,
@@ -54,6 +55,7 @@ import { api } from "@/lib/api";
 import { copyToClipboard } from "@/lib/clipboard";
 import { formatDateFromISO } from "@/lib/format";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 
 type TripActionsProps = {
   tripId: string;
@@ -78,6 +80,8 @@ export function TripActions({
 }: TripActionsProps) {
   const isOwnerRole = isOwner(role);
   const canEditRole = canEdit(role);
+  const queryClient = useQueryClient();
+  const cacheKey = queryKeys.trips.detail(tripId);
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -90,14 +94,22 @@ export function TripActions({
 
   async function handleStatusChange(newStatus: string) {
     if (newStatus === status) return;
+
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(cacheKey, { ...prev, status: newStatus });
+    }
+    toast.success(MSG.TRIP_STATUS_CHANGED);
+    onStatusChange?.();
+
     try {
       await api(`/api/trips/${tripId}`, {
         method: "PATCH",
         body: JSON.stringify({ status: newStatus }),
       });
-      toast.success(MSG.TRIP_STATUS_CHANGED);
-      onStatusChange?.();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.TRIP_STATUS_CHANGE_FAILED);
     }
   }

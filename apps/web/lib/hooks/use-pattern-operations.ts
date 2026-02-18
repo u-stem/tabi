@@ -1,8 +1,10 @@
-import type { DayPatternResponse } from "@sugara/shared";
+import type { DayPatternResponse, TripResponse } from "@sugara/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 
 type UsePatternOperationsArgs = {
   tripId: string;
@@ -17,13 +19,15 @@ export function usePatternOperations({
   onDone,
   onPatternDeleted,
 }: UsePatternOperationsArgs) {
+  const queryClient = useQueryClient();
+  const cacheKey = queryKeys.trips.detail(tripId);
+
   const [addOpen, setAddOpen] = useState(false);
   const [addLabel, setAddLabel] = useState("");
   const [addLoading, setAddLoading] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<DayPatternResponse | null>(null);
   const [renameTarget, setRenameTarget] = useState<DayPatternResponse | null>(null);
   const [renameLabel, setRenameLabel] = useState("");
-  const [renameLoading, setRenameLoading] = useState(false);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -60,14 +64,28 @@ export function usePatternOperations({
 
   async function handleDelete(patternId: string) {
     if (!currentDayId) return;
+    const dayId = currentDayId;
+
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(cacheKey, {
+        ...prev,
+        days: prev.days.map((d) =>
+          d.id !== dayId ? d : { ...d, patterns: d.patterns.filter((p) => p.id !== patternId) },
+        ),
+      });
+    }
+    toast.success(MSG.PATTERN_DELETED);
+    onPatternDeleted(dayId);
+
     try {
-      await api(`/api/trips/${tripId}/days/${currentDayId}/patterns/${patternId}`, {
+      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}`, {
         method: "DELETE",
       });
-      toast.success(MSG.PATTERN_DELETED);
-      onPatternDeleted(currentDayId);
       onDone();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.PATTERN_DELETE_FAILED);
     }
   }
@@ -75,20 +93,40 @@ export function usePatternOperations({
   async function handleRename(e: React.FormEvent) {
     e.preventDefault();
     if (!currentDayId || !renameTarget || !renameLabel.trim()) return;
-    setRenameLoading(true);
-    try {
-      await api(`/api/trips/${tripId}/days/${currentDayId}/patterns/${renameTarget.id}`, {
-        method: "PATCH",
-        body: JSON.stringify({ label: renameLabel.trim() }),
+    const dayId = currentDayId;
+    const patternId = renameTarget.id;
+    const newLabel = renameLabel.trim();
+
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(cacheKey, {
+        ...prev,
+        days: prev.days.map((d) =>
+          d.id !== dayId
+            ? d
+            : {
+                ...d,
+                patterns: d.patterns.map((p) =>
+                  p.id !== patternId ? p : { ...p, label: newLabel },
+                ),
+              },
+        ),
       });
-      toast.success(MSG.PATTERN_RENAMED);
-      setRenameTarget(null);
-      setRenameLabel("");
+    }
+    toast.success(MSG.PATTERN_RENAMED);
+    setRenameTarget(null);
+    setRenameLabel("");
+
+    try {
+      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}`, {
+        method: "PATCH",
+        body: JSON.stringify({ label: newLabel }),
+      });
       onDone();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.PATTERN_RENAME_FAILED);
-    } finally {
-      setRenameLoading(false);
     }
   }
 
@@ -119,7 +157,6 @@ export function usePatternOperations({
       },
       label: renameLabel,
       setLabel: setRenameLabel,
-      loading: renameLoading,
       submit: handleRename,
       start: startRename,
     },

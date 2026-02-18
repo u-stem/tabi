@@ -42,11 +42,7 @@ import type { TimelineItem } from "@/lib/merge-timeline";
 import { buildMergedTimeline, timelineSortableIds } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
-import {
-  moveScheduleToCandidate,
-  removeScheduleFromPattern,
-  toScheduleResponse,
-} from "@/lib/trip-cache";
+import { moveScheduleToCandidate, removeScheduleFromPattern } from "@/lib/trip-cache";
 import { cn } from "@/lib/utils";
 import { DndInsertIndicator } from "./dnd-insert-indicator";
 
@@ -130,11 +126,12 @@ export function DayTimeline({
       queryClient.setQueryData(cacheKey, removeScheduleFromPattern(prev, dId, pId, scheduleId));
     }
 
+    toast.success(MSG.SCHEDULE_DELETED);
+
     try {
       await api(`/api/trips/${tripId}/days/${dId}/patterns/${pId}/schedules/${scheduleId}`, {
         method: "DELETE",
       });
-      toast.success(MSG.SCHEDULE_DELETED);
       onRefresh();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
@@ -143,21 +140,23 @@ export function DayTimeline({
   }
 
   async function handleUnassign(scheduleId: string) {
-    try {
-      const result = await api<Record<string, unknown>>(
-        `/api/trips/${tripId}/schedules/${scheduleId}/unassign`,
-        { method: "POST" },
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        moveScheduleToCandidate(prev, dayId, patternId, scheduleId),
       );
-      const prev = queryClient.getQueryData<TripResponse>(cacheKey);
-      if (prev) {
-        queryClient.setQueryData(
-          cacheKey,
-          moveScheduleToCandidate(prev, dayId, patternId, scheduleId, toScheduleResponse(result)),
-        );
-      }
-      toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
+    }
+    toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
+
+    try {
+      await api(`/api/trips/${tripId}/schedules/${scheduleId}/unassign`, {
+        method: "POST",
+      });
       onRefresh();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.SCHEDULE_MOVE_FAILED);
     }
   }

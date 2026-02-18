@@ -82,8 +82,8 @@ export function EditListDialog({ listOps }: { listOps: ListOps }) {
             <Button type="button" variant="outline" onClick={() => listOps.setEditingList(false)}>
               キャンセル
             </Button>
-            <Button type="submit" disabled={listOps.submitting || !listOps.editListName.trim()}>
-              {listOps.submitting ? "保存中..." : "保存"}
+            <Button type="submit" disabled={!listOps.editListName.trim()}>
+              保存
             </Button>
           </DialogFooter>
         </form>

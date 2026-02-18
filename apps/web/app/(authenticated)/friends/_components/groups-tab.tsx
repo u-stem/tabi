@@ -46,7 +46,6 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
   const [membersGroupId, setMembersGroupId] = useState<string | null>(null);
   const [editGroup, setEditGroup] = useState<GroupResponse | null>(null);
   const [editName, setEditName] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const [deleteGroup, setDeleteGroup] = useState<GroupResponse | null>(null);
 
   const membersGroup = groups.find((g) => g.id === membersGroupId) ?? null;
@@ -57,30 +56,51 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
     const trimmed = editName.trim();
     if (!trimmed) return;
 
-    setSubmitting(true);
+    const cacheKey = queryKeys.groups.list();
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<GroupResponse[]>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        prev.map((g) => (g.id !== editGroup.id ? g : { ...g, name: trimmed })),
+      );
+    }
+    toast.success(MSG.GROUP_UPDATED);
+    setEditGroup(null);
+
     try {
       await api(`/api/groups/${editGroup.id}`, {
         method: "PATCH",
         body: JSON.stringify({ name: trimmed }),
       });
-      toast.success(MSG.GROUP_UPDATED);
-      setEditGroup(null);
       queryClient.invalidateQueries({ queryKey: queryKeys.groups.list() });
     } catch (err) {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.GROUP_UPDATE_FAILED));
-    } finally {
-      setSubmitting(false);
     }
   }
 
   async function handleDelete() {
     if (!deleteGroup) return;
+    const groupId = deleteGroup.id;
+
+    const cacheKey = queryKeys.groups.list();
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<GroupResponse[]>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        prev.filter((g) => g.id !== groupId),
+      );
+    }
+    toast.success(MSG.GROUP_DELETED);
+    setDeleteGroup(null);
+
     try {
-      await api(`/api/groups/${deleteGroup.id}`, { method: "DELETE" });
-      toast.success(MSG.GROUP_DELETED);
-      setDeleteGroup(null);
+      await api(`/api/groups/${groupId}`, { method: "DELETE" });
       queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
     } catch (err) {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.GROUP_DELETE_FAILED));
     }
   }
@@ -185,8 +205,8 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
               <Button type="button" variant="outline" onClick={() => setEditGroup(null)}>
                 キャンセル
               </Button>
-              <Button type="submit" disabled={submitting || !editName.trim()}>
-                {submitting ? "保存中..." : "保存"}
+              <Button type="submit" disabled={!editName.trim()}>
+                保存
               </Button>
             </DialogFooter>
           </form>

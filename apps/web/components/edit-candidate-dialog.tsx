@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ApiError, api, getApiErrorMessage } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -106,35 +106,32 @@ export function EditCandidateDialog({
       expectedUpdatedAt: schedule.updatedAt,
     };
 
-    try {
-      const result = await api<Record<string, unknown>>(
-        `/api/trips/${tripId}/candidates/${schedule.id}`,
-        {
-          method: "PATCH",
-          body: JSON.stringify(data),
-        },
+    const { expectedUpdatedAt: _, ...updateFields } = data;
+
+    await queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        updateCandidate(prev, schedule.id, toCandidateResponse({ ...schedule, ...updateFields })),
       );
-      const prev = queryClient.getQueryData<TripResponse>(cacheKey);
-      if (prev) {
-        queryClient.setQueryData(
-          cacheKey,
-          updateCandidate(prev, schedule.id, toCandidateResponse(result)),
-        );
-      }
-      onOpenChange(false);
-      toast.success(MSG.CANDIDATE_UPDATED);
+    }
+    onOpenChange(false);
+    toast.success(MSG.CANDIDATE_UPDATED);
+
+    try {
+      await api(`/api/trips/${tripId}/candidates/${schedule.id}`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      });
       onUpdate();
     } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        toast.error(MSG.CONFLICT);
-        onOpenChange(false);
-        onUpdate();
-      } else if (err instanceof ApiError && err.status === 404) {
-        toast.error(MSG.CONFLICT_DELETED);
-        onOpenChange(false);
+      if (prev) queryClient.setQueryData(cacheKey, prev);
+      if (err instanceof ApiError && (err.status === 409 || err.status === 404)) {
+        toast.error(err.status === 409 ? MSG.CONFLICT : MSG.CONFLICT_DELETED);
         onUpdate();
       } else {
-        setError(getApiErrorMessage(err, MSG.CANDIDATE_UPDATE_FAILED));
+        toast.error(MSG.CANDIDATE_UPDATE_FAILED);
       }
     } finally {
       setLoading(false);

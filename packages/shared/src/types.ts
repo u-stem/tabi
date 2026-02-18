@@ -55,8 +55,8 @@ export type TripResponse = {
   id: string;
   title: string;
   destination: string;
-  startDate: string;
-  endDate: string;
+  startDate: string | null;
+  endDate: string | null;
   status: TripStatus;
   role: MemberRole;
   days: DayResponse[];
@@ -70,8 +70,8 @@ export type TripListItem = {
   id: string;
   title: string;
   destination: string;
-  startDate: string;
-  endDate: string;
+  startDate: string | null;
+  endDate: string | null;
   status: TripStatus;
   role: MemberRole;
   totalSchedules: number;

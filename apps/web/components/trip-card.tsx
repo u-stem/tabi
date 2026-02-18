@@ -30,7 +30,8 @@ export const TripCard = memo(function TripCard({
   selected = false,
   onSelect,
 }: TripCardProps) {
-  const dayCount = getDayCount(startDate, endDate);
+  const hasDates = startDate && endDate;
+  const dayCount = hasDates ? getDayCount(startDate, endDate) : null;
   const showRole = role !== "owner";
 
   const inner = (
@@ -56,7 +57,7 @@ export const TripCard = memo(function TripCard({
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">
-          {formatDateRange(startDate, endDate)} ({dayCount}日間)
+          {hasDates ? `${formatDateRange(startDate, endDate)} (${dayCount}日間)` : "日程未定"}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
           {totalSchedules > 0 ? `${totalSchedules}件の予定` : "予定なし"}

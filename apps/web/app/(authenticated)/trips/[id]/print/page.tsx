@@ -68,8 +68,6 @@ export default function TripPrintPage() {
     );
   }
 
-  const dayCount = getDayCount(trip.startDate, trip.endDate);
-
   return (
     <div className="mx-auto max-w-3xl px-6 py-8 print:max-w-none print:px-0 print:py-0">
       <header className="mb-6 print:mb-4">
@@ -82,8 +80,14 @@ export default function TripPrintPage() {
         </div>
         <p className="mt-1 text-sm text-muted-foreground">
           <span className="mr-3">{trip.destination}</span>
-          {formatDateRange(trip.startDate, trip.endDate)}
-          <span className="ml-1">({dayCount}日間)</span>
+          {trip.startDate && trip.endDate && (
+            <>
+              {formatDateRange(trip.startDate, trip.endDate)}
+              <span className="ml-1">
+                ({getDayCount(trip.startDate, trip.endDate)}日間)
+              </span>
+            </>
+          )}
         </p>
       </header>
 

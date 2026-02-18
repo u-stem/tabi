@@ -32,8 +32,6 @@ export function TripHeader({
   onEditOpen: () => void;
   onCandidateOpen: () => void;
 }) {
-  const dayCount = getDayCount(trip.startDate, trip.endDate);
-
   return (
     <div className="mb-6">
       <div className="flex items-center gap-3">
@@ -41,9 +39,17 @@ export function TripHeader({
         <PresenceAvatars users={otherPresence} isConnected={isConnected} />
       </div>
       <p className="text-muted-foreground">
-        {`${trip.destination} / `}
-        {formatDateRange(trip.startDate, trip.endDate)}
-        <span className="ml-2 text-sm">({dayCount}日間)</span>
+        {trip.startDate && trip.endDate ? (
+          <>
+            {`${trip.destination} / `}
+            {formatDateRange(trip.startDate, trip.endDate)}
+            <span className="ml-2 text-sm">
+              ({getDayCount(trip.startDate, trip.endDate)}日間)
+            </span>
+          </>
+        ) : (
+          trip.destination
+        )}
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <TripActions

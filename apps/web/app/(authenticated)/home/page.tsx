@@ -119,9 +119,11 @@ export default function HomePage() {
     }
 
     if (sortKey === "startDate") {
-      result = [...result].sort((a, b) =>
-        a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0,
-      );
+      result = [...result].sort((a, b) => {
+        const aDate = a.startDate ?? "";
+        const bDate = b.startDate ?? "";
+        return aDate < bDate ? 1 : aDate > bDate ? -1 : 0;
+      });
     }
 
     return result;

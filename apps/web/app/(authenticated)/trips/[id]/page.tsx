@@ -395,8 +395,8 @@ export default function TripDetailPage() {
           tripId={tripId}
           title={trip.title}
           destination={trip.destination}
-          startDate={trip.startDate}
-          endDate={trip.endDate}
+          startDate={trip.startDate ?? ""}
+          endDate={trip.endDate ?? ""}
           open={editOpen}
           onOpenChange={setEditOpen}
           onUpdate={onMutate}

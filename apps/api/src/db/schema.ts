@@ -129,8 +129,8 @@ export const trips = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     title: varchar("title", { length: 100 }).notNull(),
     destination: varchar("destination", { length: 100 }).notNull(),
-    startDate: date("start_date").notNull(),
-    endDate: date("end_date").notNull(),
+    startDate: date("start_date"),
+    endDate: date("end_date"),
     status: tripStatusEnum("status").notNull().default("draft"),
     coverImageUrl: varchar("cover_image_url", { length: 500 }),
     shareToken: varchar("share_token", { length: 64 }).unique(),
@@ -138,7 +138,12 @@ export const trips = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [check("trips_date_range_check", sql`${table.endDate} >= ${table.startDate}`)],
+  (table) => [
+    check(
+      "trips_date_range_check",
+      sql`${table.startDate} IS NULL OR ${table.endDate} >= ${table.startDate}`,
+    ),
+  ],
 ).enableRLS();
 
 export const tripMembers = pgTable(

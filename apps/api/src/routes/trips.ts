@@ -90,8 +90,6 @@ tripRoutes.post("/", async (c) => {
           ownerId: user.id,
           title,
           destination,
-          startDate: firstOption.startDate,
-          endDate: firstOption.endDate,
           status: "scheduling",
         })
         .returning();
@@ -333,7 +331,7 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
   const effectiveEnd = newEnd ?? currentTrip.endDate;
 
   // Validate cross-field constraint when only one date is sent
-  if (effectiveEnd < effectiveStart) {
+  if (effectiveStart && effectiveEnd && effectiveEnd < effectiveStart) {
     return c.json(
       {
         error: {
@@ -346,14 +344,16 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
   }
 
   const updated = await db.transaction(async (tx) => {
-    await syncTripDays(tx, tripId, effectiveStart, effectiveEnd);
+    if (effectiveStart && effectiveEnd) {
+      await syncTripDays(tx, tripId, effectiveStart, effectiveEnd);
+    }
 
     const [result] = await tx
       .update(trips)
       .set({
         ...otherFields,
-        startDate: effectiveStart,
-        endDate: effectiveEnd,
+        ...(effectiveStart != null && { startDate: effectiveStart }),
+        ...(effectiveEnd != null && { endDate: effectiveEnd }),
         updatedAt: new Date(),
       })
       .where(eq(trips.id, tripId))

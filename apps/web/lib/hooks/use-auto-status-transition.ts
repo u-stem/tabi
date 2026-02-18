@@ -42,7 +42,7 @@ export function useAutoStatusTransition({
     let nextStatus: string | null = null;
     let message = "";
 
-    if (trip.status === "planned") {
+    if (trip.status === "planned" && trip.startDate) {
       let shouldActivate = false;
       if (todayStr > trip.startDate) {
         shouldActivate = true;
@@ -58,7 +58,7 @@ export function useAutoStatusTransition({
         nextStatus = "active";
         message = MSG.TRIP_AUTO_IN_PROGRESS;
       }
-    } else if (trip.status === "active") {
+    } else if (trip.status === "active" && trip.endDate) {
       let allDone = false;
       if (todayStr > trip.endDate) {
         allDone = true;

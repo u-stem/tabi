@@ -1,8 +1,22 @@
-import { createTripSchema, MAX_TRIPS_PER_USER, updateTripSchema } from "@sugara/shared";
+import {
+  createTripSchema,
+  createTripWithPollSchema,
+  MAX_TRIPS_PER_USER,
+  updateTripSchema,
+} from "@sugara/shared";
 import { and, count, desc, eq, getTableColumns, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { dayPatterns, schedules, tripDays, tripMembers, trips } from "../db/schema";
+import {
+  dayPatterns,
+  schedulePollOptions,
+  schedulePollParticipants,
+  schedulePolls,
+  schedules,
+  tripDays,
+  tripMembers,
+  trips,
+} from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
@@ -45,10 +59,94 @@ tripRoutes.get("/", async (c) => {
   return c.json(result);
 });
 
-// Create a trip
+// Create a trip (direct dates or poll mode)
 tripRoutes.post("/", async (c) => {
   const user = c.get("user");
   const body = await c.req.json();
+  const isPollMode = "pollOptions" in body;
+
+  if (isPollMode) {
+    const parsed = createTripWithPollSchema.safeParse(body);
+    if (!parsed.success) {
+      return c.json({ error: parsed.error.flatten() }, 400);
+    }
+
+    const { title, destination, pollOptions, pollNote } = parsed.data;
+    const firstOption = pollOptions[0];
+
+    const trip = await db.transaction(async (tx) => {
+      const [tripCount] = await tx
+        .select({ count: count() })
+        .from(trips)
+        .where(eq(trips.ownerId, user.id));
+      if (tripCount.count >= MAX_TRIPS_PER_USER) {
+        return null;
+      }
+
+      const [created] = await tx
+        .insert(trips)
+        .values({
+          ownerId: user.id,
+          title,
+          destination,
+          startDate: firstOption.startDate,
+          endDate: firstOption.endDate,
+          status: "scheduling",
+        })
+        .returning();
+
+      // No trip_days for scheduling status
+
+      await tx.insert(tripMembers).values({
+        tripId: created.id,
+        userId: user.id,
+        role: "owner" as const,
+      });
+
+      const [poll] = await tx
+        .insert(schedulePolls)
+        .values({
+          ownerId: user.id,
+          tripId: created.id,
+          title,
+          destination,
+          note: pollNote ?? null,
+        })
+        .returning();
+
+      await tx.insert(schedulePollOptions).values(
+        pollOptions.map((opt, i) => ({
+          pollId: poll.id,
+          startDate: opt.startDate,
+          endDate: opt.endDate,
+          sortOrder: i,
+        })),
+      );
+
+      await tx.insert(schedulePollParticipants).values({
+        pollId: poll.id,
+        userId: user.id,
+      });
+
+      return created;
+    });
+
+    if (!trip) {
+      return c.json({ error: ERROR_MSG.LIMIT_TRIPS }, 409);
+    }
+
+    logActivity({
+      tripId: trip.id,
+      userId: user.id,
+      action: "created",
+      entityType: "trip",
+      entityName: trip.title,
+    });
+
+    return c.json(trip, 201);
+  }
+
+  // Direct date mode
   const parsed = createTripSchema.safeParse(body);
 
   if (!parsed.success) {

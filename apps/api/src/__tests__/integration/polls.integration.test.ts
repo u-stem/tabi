@@ -27,10 +27,12 @@ import {
 } from "../../db/schema";
 import { pollShareRoutes } from "../../routes/poll-share";
 import { pollRoutes } from "../../routes/polls";
+import { tripRoutes } from "../../routes/trips";
 import { cleanupTables, createTestUser, getTestDb, teardownTestDb } from "./setup";
 
 function createApp() {
   const app = new Hono();
+  app.route("/api/trips", tripRoutes);
   app.route("/api/polls", pollRoutes);
   app.route("/", pollShareRoutes);
   return app;
@@ -84,7 +86,6 @@ describe("Polls Integration", () => {
 
   afterAll(async () => {
     await cleanupTables();
-    await teardownTestDb();
   });
 
   // --- CRUD ---
@@ -562,5 +563,114 @@ describe("Polls Integration", () => {
       json({ optionId: created.options[1].id }),
     );
     expect(res.status).toBe(400);
+  });
+});
+
+describe("Trip creation with poll mode", () => {
+  const app = createApp();
+  let owner: { id: string; name: string; email: string };
+
+  beforeEach(async () => {
+    await cleanupTables();
+    owner = await createTestUser({ name: "Owner", email: "owner@test.com" });
+    mockGetSession.mockImplementation(() => ({
+      user: owner,
+      session: { id: "test-session" },
+    }));
+  });
+
+  afterAll(async () => {
+    await cleanupTables();
+    await teardownTestDb();
+  });
+
+  it("creates a trip with scheduling status when pollOptions provided", async () => {
+    const res = await app.request(
+      "/api/trips",
+      json({
+        title: "Summer Trip",
+        destination: "Okinawa",
+        pollOptions: [
+          { startDate: "2026-08-01", endDate: "2026-08-03" },
+          { startDate: "2026-08-08", endDate: "2026-08-10" },
+        ],
+      }),
+    );
+
+    expect(res.status).toBe(201);
+    const trip = await res.json();
+    expect(trip.status).toBe("scheduling");
+    expect(trip.startDate).toBe("2026-08-01");
+    expect(trip.endDate).toBe("2026-08-03");
+  });
+
+  it("does not create trip_days when status is scheduling", async () => {
+    const res = await app.request(
+      "/api/trips",
+      json({
+        title: "No Days Trip",
+        destination: "Tokyo",
+        pollOptions: [{ startDate: "2026-09-01", endDate: "2026-09-02" }],
+      }),
+    );
+    const trip = await res.json();
+
+    const db = getTestDb();
+    const days = await db.query.tripDays.findMany({
+      where: eq(tripDays.tripId, trip.id),
+    });
+    expect(days).toHaveLength(0);
+  });
+
+  it("creates a linked poll with owner as participant", async () => {
+    const res = await app.request(
+      "/api/trips",
+      json({
+        title: "Poll Trip",
+        destination: "Kyoto",
+        pollOptions: [
+          { startDate: "2026-10-01", endDate: "2026-10-03" },
+          { startDate: "2026-10-15", endDate: "2026-10-17" },
+        ],
+        pollNote: "Let's decide dates!",
+      }),
+    );
+    const trip = await res.json();
+
+    const db = getTestDb();
+    const poll = await db.query.schedulePolls.findFirst({
+      where: eq(schedulePolls.tripId, trip.id),
+      with: { options: true, participants: true },
+    });
+
+    expect(poll).toBeTruthy();
+    expect(poll!.status).toBe("open");
+    expect(poll!.title).toBe("Poll Trip");
+    expect(poll!.note).toBe("Let's decide dates!");
+    expect(poll!.options).toHaveLength(2);
+    expect(poll!.participants).toHaveLength(1);
+    expect(poll!.participants[0].userId).toBe(owner.id);
+  });
+
+  it("still creates a normal draft trip with startDate/endDate", async () => {
+    const res = await app.request(
+      "/api/trips",
+      json({
+        title: "Direct Trip",
+        destination: "Nara",
+        startDate: "2026-07-01",
+        endDate: "2026-07-03",
+      }),
+    );
+
+    expect(res.status).toBe(201);
+    const trip = await res.json();
+    expect(trip.status).toBe("draft");
+
+    const db = getTestDb();
+    const days = await db.query.tripDays.findMany({
+      where: eq(tripDays.tripId, trip.id),
+    });
+    expect(days.length).toBeGreaterThan(0);
   });
 });

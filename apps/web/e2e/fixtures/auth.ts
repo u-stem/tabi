@@ -66,6 +66,9 @@ export async function createGroupViaUI(
   await page.locator("#group-name").fill(name);
   await page.getByRole("button", { name: "作成" }).click();
   await expect(page.getByText("グループを作成しました")).toBeVisible();
+  // Close the auto-opened members dialog
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).not.toBeVisible();
 }
 
 export async function createTripViaUI(

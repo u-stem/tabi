@@ -20,7 +20,7 @@ test.describe("Bookmarks", () => {
 
     await page.getByRole("button", { name: "追加" }).click();
     await page.locator("#bookmark-name").fill("Test Bookmark");
-    await page.getByRole("dialog").getByRole("button", { name: "追加" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "追加", exact: true }).click();
 
     await expect(page.getByText("ブックマークを追加しました")).toBeVisible();
     await expect(page.getByText("Test Bookmark")).toBeVisible();
@@ -34,7 +34,7 @@ test.describe("Bookmarks", () => {
     // Add a bookmark first
     await page.getByRole("button", { name: "追加" }).click();
     await page.locator("#bookmark-name").fill("Original Name");
-    await page.getByRole("dialog").getByRole("button", { name: "追加" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "追加", exact: true }).click();
     await expect(page.getByText("ブックマークを追加しました")).toBeVisible();
 
     // Edit via menu
@@ -57,7 +57,7 @@ test.describe("Bookmarks", () => {
     // Add a bookmark first
     await page.getByRole("button", { name: "追加" }).click();
     await page.locator("#bookmark-name").fill("To Be Deleted");
-    await page.getByRole("dialog").getByRole("button", { name: "追加" }).click();
+    await page.getByRole("dialog").getByRole("button", { name: "追加", exact: true }).click();
     await expect(page.getByText("ブックマークを追加しました")).toBeVisible();
 
     // Delete via menu

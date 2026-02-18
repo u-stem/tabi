@@ -3,7 +3,7 @@ import { createGroupViaUI, expect, test } from "./fixtures/auth";
 test.describe("Groups", () => {
   test("creates a group", async ({ authenticatedPage: page }) => {
     await createGroupViaUI(page, "E2E Test Group");
-    await expect(page.getByText("E2E Test Group")).toBeVisible();
+    await expect(page.getByText("E2E Test Group", { exact: true })).toBeVisible();
   });
 
   test("renames a group", async ({ authenticatedPage: page }) => {

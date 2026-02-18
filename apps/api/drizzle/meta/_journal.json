@@ -50,6 +50,13 @@
       "when": 1771459200000,
       "tag": "0006_groups",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1771891200000,
+      "tag": "0007_timestamp_to_timestamptz",
+      "breakpoints": true
     }
   ]
 }

@@ -2,21 +2,10 @@
 
 import { format, isValid, parse } from "date-fns";
 import { ja } from "date-fns/locale";
-import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
-import { Button } from "@/components/ui/button";
+import { CalendarNav, END_YEAR, START_YEAR } from "@/components/calendar-nav";
 import { Calendar } from "@/components/ui/calendar";
-
-const START_YEAR = 2024;
-const END_YEAR = 2030;
-
-const yearOptions = Array.from({ length: END_YEAR - START_YEAR + 1 }, (_, i) => START_YEAR + i);
-
-const monthOptions = Array.from({ length: 12 }, (_, i) => ({
-  value: i,
-  label: `${i + 1}月`,
-}));
 
 type DateRangePickerProps = {
   startDate: string;
@@ -54,79 +43,17 @@ export function DateRangePicker({
     onChangeEnd(range.to ? toDateString(range.to) : "");
   }
 
-  function handlePrevMonth() {
-    setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1));
-  }
-
-  function handleNextMonth() {
-    setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1));
-  }
-
   return (
     <div className="flex flex-col items-center">
-      <div className="flex items-center gap-2 pt-3">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="h-7 w-7"
-          onClick={handlePrevMonth}
-          aria-label="前の月"
-        >
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <select
-          id="date-picker-year"
-          value={month.getFullYear()}
-          onChange={(e) => setMonth(new Date(Number(e.target.value), month.getMonth()))}
-          className="rounded-md border border-input bg-background px-2 py-1 text-sm"
-          aria-label="年"
-        >
-          {yearOptions.map((y) => (
-            <option key={y} value={y}>
-              {y}年
-            </option>
-          ))}
-        </select>
-        <select
-          id="date-picker-month"
-          value={month.getMonth()}
-          onChange={(e) => setMonth(new Date(month.getFullYear(), Number(e.target.value)))}
-          className="rounded-md border border-input bg-background px-2 py-1 text-sm"
-          aria-label="月"
-        >
-          {monthOptions.map((m) => (
-            <option key={m.value} value={m.value}>
-              {m.label}
-            </option>
-          ))}
-        </select>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="h-7 w-7"
-          onClick={handleNextMonth}
-          aria-label="次の月"
-        >
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-        {(startDate || endDate) && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs text-muted-foreground"
-            onClick={() => {
-              onChangeStart("");
-              onChangeEnd("");
-            }}
-          >
-            <X className="mr-1 h-3 w-3" />
-            リセット
-          </Button>
-        )}
-      </div>
+      <CalendarNav
+        month={month}
+        onMonthChange={setMonth}
+        showReset={!!(startDate || endDate)}
+        onReset={() => {
+          onChangeStart("");
+          onChangeEnd("");
+        }}
+      />
       <Calendar
         mode="range"
         selected={selected}

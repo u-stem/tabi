@@ -32,13 +32,16 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  function resetAll() {
+    setError(null);
+    setLoading(false);
+    setStartDate("");
+    setEndDate("");
+  }
+
   function handleOpenChange(isOpen: boolean) {
     onOpenChange(isOpen);
-    if (!isOpen) {
-      setError(null);
-      setStartDate("");
-      setEndDate("");
-    }
+    if (!isOpen) resetAll();
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

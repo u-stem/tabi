@@ -6,6 +6,7 @@ export * from "./feedback";
 export * from "./friend";
 export * from "./group";
 export * from "./member";
+export * from "./poll";
 export * from "./schedule";
 export * from "./trip";
 export * from "./trip-day";

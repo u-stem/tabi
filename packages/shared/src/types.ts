@@ -1,5 +1,6 @@
 import type { BookmarkListVisibility } from "./schemas/bookmark";
 import type { MemberRole } from "./schemas/member";
+import type { PollResponseValue, PollStatus } from "./schemas/poll";
 import type { ReactionType, ScheduleCategory, ScheduleColor } from "./schemas/schedule";
 import type { TripStatus } from "./schemas/trip";
 
@@ -66,6 +67,7 @@ export type TripListItem = {
   status: TripStatus;
   role: MemberRole;
   totalSchedules: number;
+  updatedAt: string;
 };
 
 export type CrossDayEntry = {
@@ -159,3 +161,50 @@ export type PublicProfileResponse = {
   image?: string | null;
   bookmarkLists: BookmarkListResponse[];
 };
+
+export type PollOptionResponse = {
+  id: string;
+  startDate: string;
+  endDate: string;
+  sortOrder: number;
+};
+
+export type PollParticipantResponse = {
+  id: string;
+  userId: string | null;
+  name: string;
+  image?: string | null;
+  responses: { optionId: string; response: PollResponseValue }[];
+};
+
+export type PollListItem = {
+  id: string;
+  title: string;
+  destination: string;
+  status: PollStatus;
+  deadline: string | null;
+  participantCount: number;
+  respondedCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PollDetailResponse = {
+  id: string;
+  ownerId: string;
+  title: string;
+  destination: string;
+  note: string | null;
+  status: PollStatus;
+  deadline: string | null;
+  confirmedOptionId: string | null;
+  tripId: string | null;
+  options: PollOptionResponse[];
+  participants: PollParticipantResponse[];
+  isOwner: boolean;
+  myParticipantId: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type SharedPollResponse = Omit<PollDetailResponse, "isOwner" | "myParticipantId">;

@@ -56,6 +56,9 @@ export const scheduleColorEnum = pgEnum("schedule_color", [
   "gray",
 ]);
 
+export const pollStatusEnum = pgEnum("poll_status", ["open", "confirmed", "closed"]);
+export const pollResponseEnum = pgEnum("poll_response", ["ok", "maybe", "ng"]);
+
 // --- Tables ---
 
 export const users = pgTable("users", {
@@ -335,6 +338,76 @@ export const groupMembers = pgTable(
   ],
 ).enableRLS();
 
+export const schedulePolls = pgTable(
+  "schedule_polls",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ownerId: uuid("owner_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 100 }).notNull(),
+    destination: varchar("destination", { length: 100 }).notNull(),
+    note: text("note"),
+    status: pollStatusEnum("status").notNull().default("open"),
+    deadline: timestamp("deadline", { withTimezone: true }),
+    shareToken: varchar("share_token", { length: 64 }).unique(),
+    confirmedOptionId: uuid("confirmed_option_id"),
+    tripId: uuid("trip_id").references(() => trips.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("schedule_polls_owner_id_idx").on(table.ownerId)],
+).enableRLS();
+
+export const schedulePollOptions = pgTable(
+  "schedule_poll_options",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    pollId: uuid("poll_id")
+      .notNull()
+      .references(() => schedulePolls.id, { onDelete: "cascade" }),
+    startDate: date("start_date").notNull(),
+    endDate: date("end_date").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (table) => [
+    index("schedule_poll_options_poll_id_idx").on(table.pollId),
+    check("poll_options_date_range_check", sql`${table.endDate} >= ${table.startDate}`),
+  ],
+).enableRLS();
+
+export const schedulePollParticipants = pgTable(
+  "schedule_poll_participants",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    pollId: uuid("poll_id")
+      .notNull()
+      .references(() => schedulePolls.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+    guestName: varchar("guest_name", { length: 50 }),
+  },
+  (table) => [
+    index("schedule_poll_participants_poll_id_idx").on(table.pollId),
+    uniqueIndex("schedule_poll_participants_poll_user_unique")
+      .on(table.pollId, table.userId)
+      .where(sql`${table.userId} IS NOT NULL`),
+  ],
+).enableRLS();
+
+export const schedulePollResponses = pgTable(
+  "schedule_poll_responses",
+  {
+    participantId: uuid("participant_id")
+      .notNull()
+      .references(() => schedulePollParticipants.id, { onDelete: "cascade" }),
+    optionId: uuid("option_id")
+      .notNull()
+      .references(() => schedulePollOptions.id, { onDelete: "cascade" }),
+    response: pollResponseEnum("response").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.participantId, table.optionId] })],
+).enableRLS();
+
 // --- Relations ---
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -345,6 +418,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   bookmarkLists: many(bookmarkLists),
   ownedGroups: many(groups),
   groupMemberships: many(groupMembers),
+  schedulePolls: many(schedulePolls),
+  schedulePollParticipations: many(schedulePollParticipants),
 }));
 
 export const tripsRelations = relations(trips, ({ one, many }) => ({
@@ -422,4 +497,42 @@ export const bookmarkListsRelations = relations(bookmarkLists, ({ one, many }) =
 
 export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
   list: one(bookmarkLists, { fields: [bookmarks.listId], references: [bookmarkLists.id] }),
+}));
+
+export const schedulePollsRelations = relations(schedulePolls, ({ one, many }) => ({
+  owner: one(users, { fields: [schedulePolls.ownerId], references: [users.id] }),
+  trip: one(trips, { fields: [schedulePolls.tripId], references: [trips.id] }),
+  options: many(schedulePollOptions),
+  participants: many(schedulePollParticipants),
+}));
+
+export const schedulePollOptionsRelations = relations(schedulePollOptions, ({ one, many }) => ({
+  poll: one(schedulePolls, {
+    fields: [schedulePollOptions.pollId],
+    references: [schedulePolls.id],
+  }),
+  responses: many(schedulePollResponses),
+}));
+
+export const schedulePollParticipantsRelations = relations(
+  schedulePollParticipants,
+  ({ one, many }) => ({
+    poll: one(schedulePolls, {
+      fields: [schedulePollParticipants.pollId],
+      references: [schedulePolls.id],
+    }),
+    user: one(users, { fields: [schedulePollParticipants.userId], references: [users.id] }),
+    responses: many(schedulePollResponses),
+  }),
+);
+
+export const schedulePollResponsesRelations = relations(schedulePollResponses, ({ one }) => ({
+  participant: one(schedulePollParticipants, {
+    fields: [schedulePollResponses.participantId],
+    references: [schedulePollParticipants.id],
+  }),
+  option: one(schedulePollOptions, {
+    fields: [schedulePollResponses.optionId],
+    references: [schedulePollOptions.id],
+  }),
 }));

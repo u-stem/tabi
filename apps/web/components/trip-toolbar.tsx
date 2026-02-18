@@ -47,6 +47,10 @@ type TripToolbarProps = {
   disabled: boolean;
   newTripSlot?: React.ReactNode;
   searchInputRef?: React.RefObject<HTMLInputElement | null>;
+  hideDuplicate?: boolean;
+  hideStatusFilter?: boolean;
+  hideSortKey?: boolean;
+  deleteLabel?: string;
 };
 
 const statusFilters: { value: StatusFilter; label: string }[] = [
@@ -82,6 +86,10 @@ export function TripToolbar({
   disabled,
   newTripSlot,
   searchInputRef,
+  hideDuplicate,
+  hideStatusFilter,
+  hideSortKey,
+  deleteLabel = "旅行",
 }: TripToolbarProps) {
   if (selectionMode) {
     return (
@@ -107,15 +115,17 @@ export function TripToolbar({
           </Button>
         </div>
         <div className="flex items-center gap-2 ml-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onDuplicateSelected}
-            disabled={selectedCount === 0 || deleting || duplicating}
-          >
-            <Copy className="h-4 w-4" />
-            <span className="hidden sm:inline">{duplicating ? "複製中..." : "複製"}</span>
-          </Button>
+          {!hideDuplicate && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onDuplicateSelected}
+              disabled={selectedCount === 0 || deleting || duplicating}
+            >
+              <Copy className="h-4 w-4" />
+              <span className="hidden sm:inline">{duplicating ? "複製中..." : "複製"}</span>
+            </Button>
+          )}
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
@@ -129,9 +139,11 @@ export function TripToolbar({
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>{selectedCount}件の旅行を削除しますか？</AlertDialogTitle>
+                <AlertDialogTitle>
+                  {selectedCount}件の{deleteLabel}を削除しますか？
+                </AlertDialogTitle>
                 <AlertDialogDescription>
-                  選択した旅行とすべての予定が削除されます。この操作は取り消せません。
+                  選択した{deleteLabel}が削除されます。この操作は取り消せません。
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
@@ -169,32 +181,41 @@ export function TripToolbar({
         onChange={(e) => onSearchChange(e.target.value)}
         className="h-8 w-full sm:w-40"
       />
-      <div className="flex items-center gap-2">
-        <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>
-          <SelectTrigger className="h-8 w-[100px] text-xs" aria-label="ステータスで絞り込み">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {statusFilters.map((f) => (
-              <SelectItem key={f.value} value={f.value}>
-                {f.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
-          <SelectTrigger className="h-8 w-20 text-xs" aria-label="並び替え">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {sortOptions.map((s) => (
-              <SelectItem key={s.value} value={s.value}>
-                {s.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      {(!hideStatusFilter || !hideSortKey) && (
+        <div className="flex items-center gap-2">
+          {!hideStatusFilter && (
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}
+            >
+              <SelectTrigger className="h-8 w-[100px] text-xs" aria-label="ステータスで絞り込み">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusFilters.map((f) => (
+                  <SelectItem key={f.value} value={f.value}>
+                    {f.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {!hideSortKey && (
+            <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
+              <SelectTrigger className="h-8 w-20 text-xs" aria-label="並び替え">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sortOptions.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+        </div>
+      )}
       <div className="flex items-center gap-2 ml-auto">
         {onSelectionModeChange && (
           <Button

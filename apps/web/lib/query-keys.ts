@@ -27,6 +27,12 @@ export const queryKeys = {
     bookmarkList: (userId: string, listId: string) =>
       ["profile", userId, "bookmark-lists", listId] as const,
   },
+  polls: {
+    all: ["polls"] as const,
+    list: () => [...queryKeys.polls.all, "list"] as const,
+    detail: (pollId: string) => [...queryKeys.polls.all, pollId] as const,
+    shared: (token: string) => [...queryKeys.polls.all, "shared", token] as const,
+  },
   shared: {
     trip: (token: string) => ["shared", token] as const,
   },

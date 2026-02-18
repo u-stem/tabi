@@ -1,14 +1,21 @@
 "use client";
 
-import { MAX_TRIPS_PER_USER, type TripListItem } from "@sugara/shared";
+import {
+  MAX_POLLS_PER_USER,
+  MAX_TRIPS_PER_USER,
+  type PollListItem,
+  type TripListItem,
+} from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 import { toast } from "sonner";
+import { CreatePollDialog } from "@/components/create-poll-dialog";
 import { CreateTripDialog } from "@/components/create-trip-dialog";
 import { FriendRequestsCard } from "@/components/friend-requests-card";
+import { PollCard } from "@/components/poll-card";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import { TripCard } from "@/components/trip-card";
 import type { SortKey, StatusFilter } from "@/components/trip-toolbar";
@@ -27,7 +34,7 @@ import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-conte
 import { TAB_ACTIVE, TAB_INACTIVE } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
-type HomeTab = "owned" | "shared";
+type HomeTab = "owned" | "shared" | "polls";
 
 export default function HomePage() {
   const queryClient = useQueryClient();
@@ -53,8 +60,18 @@ export default function HomePage() {
   });
   useAuthRedirect(sharedError);
 
-  const isLoading = ownedLoading || sharedLoading;
-  const error = ownedError || sharedError;
+  const {
+    data: polls = [],
+    isLoading: pollsLoading,
+    error: pollsError,
+  } = useQuery({
+    queryKey: queryKeys.polls.list(),
+    queryFn: () => api<PollListItem[]>("/api/polls"),
+  });
+  useAuthRedirect(pollsError);
+
+  const isLoading = ownedLoading || sharedLoading || pollsLoading;
+  const error = ownedError || sharedError || pollsError;
 
   useEffect(() => {
     document.title = pageTitle("ホーム");
@@ -66,6 +83,7 @@ export default function HomePage() {
   const [sortKey, setSortKey] = useState<SortKey>("updatedAt");
 
   const [createTripOpen, setCreateTripOpen] = useState(false);
+  const [createPollOpen, setCreatePollOpen] = useState(false);
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
@@ -90,12 +108,20 @@ export default function HomePage() {
 
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
   useHotkeys("/", () => searchInputRef.current?.focus(), { useKey: true, preventDefault: true });
-  useHotkeys("n", () => setCreateTripOpen(true), { preventDefault: true });
+  useHotkeys(
+    "n",
+    () => {
+      if (tab === "polls") setCreatePollOpen(true);
+      else setCreateTripOpen(true);
+    },
+    { preventDefault: true },
+  );
 
-  const invalidateTrips = async () => {
+  const invalidateAll = async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: queryKeys.trips.owned() }),
       queryClient.invalidateQueries({ queryKey: queryKeys.trips.shared() }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.polls.list() }),
     ]);
   };
 
@@ -123,10 +149,23 @@ export default function HomePage() {
         a.startDate < b.startDate ? 1 : a.startDate > b.startDate ? -1 : 0,
       );
     }
-    // "updatedAt" preserves API order (already sorted by updatedAt desc)
 
     return result;
   }, [baseTrips, search, statusFilter, sortKey]);
+
+  const filteredPolls = useMemo(() => {
+    if (tab !== "polls") return [];
+    let result = polls;
+
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (p) => p.title.toLowerCase().includes(q) || p.destination.toLowerCase().includes(q),
+      );
+    }
+
+    return result;
+  }, [tab, polls, search]);
 
   function handleTabChange(newTab: HomeTab) {
     if (newTab === tab) return;
@@ -138,16 +177,19 @@ export default function HomePage() {
     setSelectedIds(new Set());
   }
 
-  // Prune selectedIds to only include visible trips when filters change
+  // Prune selectedIds to only include visible items when filters change
   useEffect(() => {
     if (!selectionMode) return;
-    const visibleIds = new Set(filteredTrips.map((t) => t.id));
+    const visibleIds =
+      tab === "polls"
+        ? new Set(filteredPolls.map((p) => p.id))
+        : new Set(filteredTrips.map((t) => t.id));
     setSelectedIds((prev) => {
       const pruned = new Set([...prev].filter((id) => visibleIds.has(id)));
       if (pruned.size === prev.size) return prev;
       return pruned;
     });
-  }, [filteredTrips, selectionMode]);
+  }, [filteredTrips, filteredPolls, selectionMode, tab]);
 
   function handleSelectionModeChange(mode: boolean) {
     setSelectionMode(mode);
@@ -169,25 +211,28 @@ export default function HomePage() {
   }
 
   function handleSelectAll() {
-    setSelectedIds(new Set(filteredTrips.map((t) => t.id)));
+    if (tab === "polls") {
+      setSelectedIds(new Set(filteredPolls.map((p) => p.id)));
+    } else {
+      setSelectedIds(new Set(filteredTrips.map((t) => t.id)));
+    }
   }
 
   function handleDeselectAll() {
     setSelectedIds(new Set());
   }
 
-  async function handleDeleteSelected() {
+  async function handleDeleteSelectedTrips() {
     const ids = [...selectedIds];
     const count = ids.length;
     const idSet = new Set(ids);
 
-    // Optimistic: remove selected trips from cache
-    const ownedCacheKey = queryKeys.trips.owned();
-    queryClient.cancelQueries({ queryKey: ownedCacheKey });
-    const prev = queryClient.getQueryData<TripListItem[]>(ownedCacheKey);
+    const cacheKey = queryKeys.trips.owned();
+    queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<TripListItem[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(
-        ownedCacheKey,
+        cacheKey,
         prev.filter((t) => !idSet.has(t.id)),
       );
     }
@@ -201,12 +246,45 @@ export default function HomePage() {
     const failed = results.filter((r) => r.status === "rejected").length;
 
     if (failed > 0) {
-      if (prev) queryClient.setQueryData(ownedCacheKey, prev);
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.TRIP_BULK_DELETE_FAILED(failed));
     } else {
       toast.success(MSG.TRIP_BULK_DELETED(count));
     }
-    await invalidateTrips();
+    await invalidateAll();
+    setDeleting(false);
+  }
+
+  async function handleDeleteSelectedPolls() {
+    const ids = [...selectedIds];
+    const count = ids.length;
+    const idSet = new Set(ids);
+
+    const cacheKey = queryKeys.polls.list();
+    queryClient.cancelQueries({ queryKey: cacheKey });
+    const prev = queryClient.getQueryData<PollListItem[]>(cacheKey);
+    if (prev) {
+      queryClient.setQueryData(
+        cacheKey,
+        prev.filter((p) => !idSet.has(p.id)),
+      );
+    }
+    setSelectedIds(new Set());
+    setSelectionMode(false);
+
+    setDeleting(true);
+    const results = await Promise.allSettled(
+      ids.map((id) => api(`/api/polls/${id}`, { method: "DELETE" })),
+    );
+    const failed = results.filter((r) => r.status === "rejected").length;
+
+    if (failed > 0) {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
+      toast.error(MSG.POLL_BULK_DELETE_FAILED(failed));
+    } else {
+      toast.success(MSG.POLL_BULK_DELETED(count));
+    }
+    await invalidateAll();
     setDeleting(false);
   }
 
@@ -221,7 +299,7 @@ export default function HomePage() {
     const succeeded = results.filter((r) => r.status === "fulfilled").length;
 
     if (succeeded > 0) {
-      await invalidateTrips();
+      await invalidateAll();
     }
 
     if (failed > 0) {
@@ -235,13 +313,44 @@ export default function HomePage() {
     setDuplicating(false);
   }
 
-  const emptyMessage =
-    tab === "shared"
-      ? "共有された旅行はありません"
-      : "まだ旅行がありません。新規作成から旅行プランを作成してみましょう";
-
   // Avoid flashing empty state during the 200ms skeleton delay
   if (isLoading && !showSkeleton) return <div />;
+
+  const newTripButton = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span>
+          <Button size="sm" disabled={!online} onClick={() => setCreateTripOpen(true)}>
+            <Plus className="h-4 w-4" />
+            旅行を作成
+          </Button>
+        </span>
+      </TooltipTrigger>
+      {ownedTrips.length >= MAX_TRIPS_PER_USER && (
+        <TooltipContent>{MSG.LIMIT_TRIPS}</TooltipContent>
+      )}
+    </Tooltip>
+  );
+
+  const newPollButton = (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span>
+          <Button size="sm" disabled={!online} onClick={() => setCreatePollOpen(true)}>
+            <Plus className="h-4 w-4" />
+            日程調整を作成
+          </Button>
+        </span>
+      </TooltipTrigger>
+      {polls.length >= MAX_POLLS_PER_USER && <TooltipContent>{MSG.LIMIT_POLLS}</TooltipContent>}
+    </Tooltip>
+  );
+
+  const tabs = [
+    { value: "owned", label: "自分の旅行" },
+    { value: "shared", label: "共有された旅行" },
+    { value: "polls", label: "日程調整" },
+  ] as const;
 
   return (
     <>
@@ -280,19 +389,14 @@ export default function HomePage() {
       ) : error ? (
         <div className="mt-8 text-center">
           <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => invalidateTrips()}>
+          <Button variant="outline" size="sm" className="mt-4" onClick={() => invalidateAll()}>
             再試行
           </Button>
         </div>
       ) : (
         <>
           <div className="mt-4 flex gap-1 border-b">
-            {(
-              [
-                { value: "owned", label: "自分の旅行" },
-                { value: "shared", label: "共有された旅行" },
-              ] as const
-            ).map(({ value, label }) => (
+            {tabs.map(({ value, label }) => (
               <button
                 key={value}
                 type="button"
@@ -307,72 +411,120 @@ export default function HomePage() {
             ))}
           </div>
 
-          <div className="mt-4">
-            <TripToolbar
-              searchInputRef={searchInputRef}
-              search={search}
-              onSearchChange={setSearch}
-              statusFilter={statusFilter}
-              onStatusFilterChange={setStatusFilter}
-              sortKey={sortKey}
-              onSortKeyChange={setSortKey}
-              selectionMode={selectionMode}
-              onSelectionModeChange={tab !== "shared" ? handleSelectionModeChange : undefined}
-              selectedCount={selectedIds.size}
-              totalCount={filteredTrips.length}
-              onSelectAll={handleSelectAll}
-              onDeselectAll={handleDeselectAll}
-              onDeleteSelected={handleDeleteSelected}
-              onDuplicateSelected={handleDuplicateSelected}
-              deleting={deleting}
-              duplicating={duplicating}
-              disabled={!online}
-              newTripSlot={
-                tab !== "shared" ? (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <Button
-                          size="sm"
-                          disabled={!online || ownedTrips.length >= MAX_TRIPS_PER_USER}
-                          onClick={() => setCreateTripOpen(true)}
-                        >
-                          <Plus className="h-4 w-4" />
-                          新規作成
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    {ownedTrips.length >= MAX_TRIPS_PER_USER && (
-                      <TooltipContent>{MSG.LIMIT_TRIPS}</TooltipContent>
-                    )}
-                  </Tooltip>
-                ) : undefined
-              }
-            />
-          </div>
-          {baseTrips.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">{emptyMessage}</p>
-          ) : filteredTrips.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">条件に一致する旅行がありません</p>
-          ) : (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredTrips.map((trip) => (
-                <TripCard
-                  key={trip.id}
-                  {...trip}
-                  selectable={selectionMode && tab !== "shared"}
-                  selected={selectedIds.has(trip.id)}
-                  onSelect={handleSelect}
+          {tab === "polls" ? (
+            // --- Polls tab ---
+            <>
+              <div className="mt-4">
+                <TripToolbar
+                  searchInputRef={searchInputRef}
+                  search={search}
+                  onSearchChange={setSearch}
+                  statusFilter={statusFilter}
+                  onStatusFilterChange={setStatusFilter}
+                  sortKey={sortKey}
+                  onSortKeyChange={setSortKey}
+                  selectionMode={selectionMode}
+                  onSelectionModeChange={handleSelectionModeChange}
+                  selectedCount={selectedIds.size}
+                  totalCount={filteredPolls.length}
+                  onSelectAll={handleSelectAll}
+                  onDeselectAll={handleDeselectAll}
+                  onDeleteSelected={handleDeleteSelectedPolls}
+                  onDuplicateSelected={() => {}}
+                  deleting={deleting}
+                  duplicating={false}
+                  disabled={!online}
+                  newTripSlot={newPollButton}
+                  hideDuplicate
+                  hideStatusFilter
+                  hideSortKey
+                  deleteLabel="日程調整"
                 />
-              ))}
-            </div>
+              </div>
+              {polls.length === 0 ? (
+                <p className="mt-8 text-center text-muted-foreground">
+                  まだ日程調整がありません。日程調整を作成して参加者と日程を決めましょう
+                </p>
+              ) : filteredPolls.length === 0 ? (
+                <p className="mt-8 text-center text-muted-foreground">
+                  条件に一致する日程調整がありません
+                </p>
+              ) : (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredPolls.map((poll) => (
+                    <PollCard
+                      key={poll.id}
+                      {...poll}
+                      selectable={selectionMode}
+                      selected={selectedIds.has(poll.id)}
+                      onSelect={handleSelect}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            // --- Trip tabs (owned / shared) ---
+            <>
+              <div className="mt-4">
+                <TripToolbar
+                  searchInputRef={searchInputRef}
+                  search={search}
+                  onSearchChange={setSearch}
+                  statusFilter={statusFilter}
+                  onStatusFilterChange={setStatusFilter}
+                  sortKey={sortKey}
+                  onSortKeyChange={setSortKey}
+                  selectionMode={selectionMode}
+                  onSelectionModeChange={tab !== "shared" ? handleSelectionModeChange : undefined}
+                  selectedCount={selectedIds.size}
+                  totalCount={filteredTrips.length}
+                  onSelectAll={handleSelectAll}
+                  onDeselectAll={handleDeselectAll}
+                  onDeleteSelected={handleDeleteSelectedTrips}
+                  onDuplicateSelected={handleDuplicateSelected}
+                  deleting={deleting}
+                  duplicating={duplicating}
+                  disabled={!online}
+                  newTripSlot={tab !== "shared" ? newTripButton : undefined}
+                />
+              </div>
+              {baseTrips.length === 0 ? (
+                <p className="mt-8 text-center text-muted-foreground">
+                  {tab === "shared"
+                    ? "共有された旅行はありません"
+                    : "まだ旅行がありません。旅行を作成してプランを立てましょう"}
+                </p>
+              ) : filteredTrips.length === 0 ? (
+                <p className="mt-8 text-center text-muted-foreground">
+                  条件に一致する旅行がありません
+                </p>
+              ) : (
+                <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {filteredTrips.map((trip) => (
+                    <TripCard
+                      key={trip.id}
+                      {...trip}
+                      selectable={selectionMode && tab === "owned"}
+                      selected={selectedIds.has(trip.id)}
+                      onSelect={handleSelect}
+                    />
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </>
       )}
       <CreateTripDialog
         open={createTripOpen}
         onOpenChange={setCreateTripOpen}
-        onCreated={invalidateTrips}
+        onCreated={invalidateAll}
+      />
+      <CreatePollDialog
+        open={createPollOpen}
+        onOpenChange={setCreatePollOpen}
+        onCreated={invalidateAll}
       />
     </>
   );

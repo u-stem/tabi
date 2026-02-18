@@ -173,23 +173,23 @@ function ScheduleMenu({
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onEdit}>
-            <Pencil className="mr-2 h-3 w-3" />
+            <Pencil />
             編集
           </DropdownMenuItem>
           {onUnassign && (
             <DropdownMenuItem onClick={onUnassign}>
-              <Undo2 className="mr-2 h-3 w-3" />
+              <Undo2 />
               候補に戻す
             </DropdownMenuItem>
           )}
           {onSaveToBookmark && (
             <DropdownMenuItem onClick={onSaveToBookmark}>
-              <Bookmark className="mr-2 h-3 w-3" />
+              <Bookmark />
               ブックマークに保存
             </DropdownMenuItem>
           )}
           <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
-            <Trash2 className="mr-2 h-3 w-3" />
+            <Trash2 />
             削除
           </DropdownMenuItem>
         </DropdownMenuContent>

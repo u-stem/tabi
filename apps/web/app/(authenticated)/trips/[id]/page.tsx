@@ -2,57 +2,27 @@
 
 import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
 import type { TripResponse } from "@sugara/shared";
-import {
-  DAY_MEMO_MAX_LENGTH,
-  MAX_MEMBERS_PER_TRIP,
-  MAX_PATTERNS_PER_DAY,
-  MAX_SCHEDULES_PER_TRIP,
-} from "@sugara/shared";
+import { MAX_SCHEDULES_PER_TRIP } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  Check,
-  Copy,
-  List,
-  MessageSquare,
-  MoreHorizontal,
-  Pencil,
-  Plus,
-  Trash2,
-} from "lucide-react";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
-import { ActivityLog } from "@/components/activity-log";
 import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dialog";
-import { BookmarkPanel } from "@/components/bookmark-panel";
-import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
 
 const EditTripDialog = dynamic(() =>
   import("@/components/edit-trip-dialog").then((mod) => mod.EditTripDialog),
 );
 
-import { hashColor, PresenceAvatars } from "@/components/presence-avatars";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
-import { TripActions } from "@/components/trip-actions";
-import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Textarea } from "@/components/ui/textarea";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { getCrossDayEntries } from "@/lib/cross-day";
-import { formatDateRange, getDayCount } from "@/lib/format";
 import { SelectionProvider } from "@/lib/hooks/selection-context";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useAutoStatusTransition } from "@/lib/hooks/use-auto-status-transition";
@@ -69,6 +39,10 @@ import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
+import { DayMemoEditor } from "./_components/day-memo-editor";
+import { DayTabs } from "./_components/day-tabs";
+import { PatternTabs } from "./_components/pattern-tabs";
+import { RightPanel } from "./_components/right-panel";
 import {
   AddPatternDialog,
   BatchDeleteDialog,
@@ -76,6 +50,7 @@ import {
   MobileCandidateDialog,
   RenamePatternDialog,
 } from "./_components/trip-dialogs";
+import { TripHeader } from "./_components/trip-header";
 
 const dndAnnouncements: Announcements = {
   onDragStart({ active }) {
@@ -383,7 +358,6 @@ export default function TripDetailPage() {
 
   const canEdit = trip.role === "owner" || trip.role === "editor";
   canEditRef.current = canEdit;
-  const dayCount = getDayCount(trip.startDate, trip.endDate);
 
   const scheduleLimitReached = trip.scheduleCount >= MAX_SCHEDULES_PER_TRIP;
   const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
@@ -392,42 +366,18 @@ export default function TripDetailPage() {
   return (
     <SelectionProvider value={selectionValue}>
       <div className="mt-4">
-        <div className="mb-6">
-          <div className="flex items-center gap-3">
-            <h1 className="min-w-0 truncate text-2xl font-bold">{trip.title}</h1>
-            <PresenceAvatars users={otherPresence} isConnected={isConnected} />
-          </div>
-          <p className="text-muted-foreground">
-            {`${trip.destination} / `}
-            {formatDateRange(trip.startDate, trip.endDate)}
-            <span className="ml-2 text-sm">({dayCount}日間)</span>
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <TripActions
-              tripId={tripId}
-              status={trip.status}
-              role={trip.role}
-              onStatusChange={onMutate}
-              onEdit={canEdit ? () => setEditOpen(true) : undefined}
-              disabled={!online}
-              memberLimitReached={trip.memberCount >= MAX_MEMBERS_PER_TRIP}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setCandidateOpen(true)}
-              className="ml-auto lg:hidden"
-            >
-              <List className="h-4 w-4" />
-              <span>候補</span>
-              {dnd.localCandidates.length > 0 && (
-                <span className="rounded-full bg-muted px-1.5 text-xs">
-                  {dnd.localCandidates.length}
-                </span>
-              )}
-            </Button>
-          </div>
-        </div>
+        <TripHeader
+          trip={trip}
+          tripId={tripId}
+          otherPresence={otherPresence}
+          isConnected={isConnected}
+          candidateCount={dnd.localCandidates.length}
+          online={online}
+          canEdit={canEdit}
+          onMutate={onMutate}
+          onEditOpen={() => setEditOpen(true)}
+          onCandidateOpen={() => setCandidateOpen(true)}
+        />
         <EditTripDialog
           tripId={tripId}
           title={trip.title}
@@ -450,109 +400,25 @@ export default function TripDetailPage() {
             <div className="flex items-start gap-4">
               {/* Timeline */}
               <div className="flex min-w-0 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
-                <div
-                  className="flex shrink-0 select-none border-b"
-                  role="tablist"
-                  aria-label="日程タブ"
-                >
-                  <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto px-4">
-                    {trip.days.map((day, index) => (
-                      <button
-                        key={day.id}
-                        type="button"
-                        role="tab"
-                        aria-selected={selectedDay === index}
-                        aria-controls={`day-panel-${day.id}`}
-                        onClick={() => setSelectedDay(index)}
-                        className={cn(
-                          "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-                          selectedDay === index
-                            ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-                            : "text-muted-foreground hover:text-foreground",
-                        )}
-                      >
-                        {day.dayNumber}日目
-                        {otherPresence
-                          .filter((u) => u.dayId === day.id)
-                          .slice(0, 3)
-                          .map((u, i) => (
-                            <span
-                              key={u.userId}
-                              className={cn(
-                                "absolute top-1 h-1.5 w-1.5 rounded-full",
-                                hashColor(u.userId),
-                              )}
-                              style={{ right: `${4 + i * 6}px` }}
-                            />
-                          ))}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                <DayTabs
+                  days={trip.days}
+                  selectedDay={selectedDay}
+                  onSelectDay={setSelectedDay}
+                  otherPresence={otherPresence}
+                />
                 <div
                   ref={timelinePanelRef}
                   id={`day-panel-${currentDay.id}`}
                   role="tabpanel"
                   className="min-h-0 overflow-y-auto p-4"
                 >
-                  {/* Day memo */}
-                  <div className="mb-3">
-                    {memo.editingDayId === currentDay.id ? (
-                      <div className="space-y-2">
-                        <Textarea
-                          value={memo.text}
-                          onChange={(e) => memo.setText(e.target.value)}
-                          placeholder="メモを入力..."
-                          maxLength={DAY_MEMO_MAX_LENGTH}
-                          rows={3}
-                          className="resize-none text-sm"
-                          autoFocus
-                        />
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">
-                            {memo.text.length}/{DAY_MEMO_MAX_LENGTH}
-                          </span>
-                          <div className="flex gap-1.5">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={memo.cancelEdit}
-                              disabled={memo.saving}
-                            >
-                              キャンセル
-                            </Button>
-                            <Button size="sm" onClick={memo.save} disabled={memo.saving}>
-                              <Check className="h-3.5 w-3.5" />
-                              {memo.saving ? "保存中..." : "保存"}
-                            </Button>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() =>
-                          canEdit && online
-                            ? memo.startEdit(currentDay.id, currentDay.memo)
-                            : undefined
-                        }
-                        className={cn(
-                          "flex w-full select-none items-start gap-2 rounded-md border border-dashed px-3 py-2 text-left text-sm transition-colors",
-                          canEdit && online
-                            ? "cursor-pointer hover:border-border hover:bg-muted/50"
-                            : "cursor-default",
-                          currentDay.memo
-                            ? "border-border text-foreground"
-                            : "border-muted-foreground/20 text-muted-foreground",
-                        )}
-                      >
-                        <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                        <span className="whitespace-pre-wrap">
-                          {currentDay.memo || "メモを追加"}
-                        </span>
-                      </button>
-                    )}
-                  </div>
+                  <DayMemoEditor
+                    memo={memo}
+                    currentDayId={currentDay.id}
+                    currentDayMemo={currentDay.memo}
+                    canEdit={canEdit}
+                    online={online}
+                  />
 
                   <DayTimeline
                     key={currentPattern.id}
@@ -573,191 +439,42 @@ export default function TripDetailPage() {
                     scheduleLimitMessage={scheduleLimitMessage}
                     onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
                     headerContent={
-                      <div className="mb-3 flex flex-wrap select-none items-center gap-1.5">
-                        {currentDay.patterns.map((pattern, index) => {
-                          const isActive = currentPatternIndex === index;
-                          return (
-                            <div
-                              key={pattern.id}
-                              className={cn(
-                                "flex max-w-48 items-center rounded-full border transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-1",
-                                isActive
-                                  ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
-                                  : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
-                              )}
-                            >
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setSelectedPattern((prev) => ({
-                                    ...prev,
-                                    [currentDay.id]: index,
-                                  }))
-                                }
-                                className={cn(
-                                  "truncate py-1.5 text-xs font-medium focus:outline-none",
-                                  canEdit ? "pl-3 pr-0.5" : "px-3",
-                                )}
-                              >
-                                {pattern.label}
-                              </button>
-                              {canEdit && (
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <button
-                                      type="button"
-                                      className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none sm:h-6 sm:w-6"
-                                      aria-label={`${pattern.label}のメニュー`}
-                                    >
-                                      <MoreHorizontal className="h-4 w-4" />
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="start">
-                                    <DropdownMenuItem
-                                      onClick={() => patternOps.rename.start(pattern)}
-                                    >
-                                      <Pencil className="mr-2 h-4 w-4" />
-                                      名前変更
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => patternOps.handleDuplicate(pattern.id)}
-                                      disabled={currentDay.patterns.length >= MAX_PATTERNS_PER_DAY}
-                                    >
-                                      <Copy className="mr-2 h-4 w-4" />
-                                      複製
-                                    </DropdownMenuItem>
-                                    {!pattern.isDefault && (
-                                      <DropdownMenuItem
-                                        className="text-destructive"
-                                        onClick={() => patternOps.setDeleteTarget(pattern)}
-                                      >
-                                        <Trash2 className="mr-2 h-4 w-4" />
-                                        削除
-                                      </DropdownMenuItem>
-                                    )}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              )}
-                            </div>
-                          );
-                        })}
-                        {canEdit &&
-                          online &&
-                          (currentDay.patterns.length >= MAX_PATTERNS_PER_DAY ? (
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <span>
-                                  <button
-                                    type="button"
-                                    disabled
-                                    className="shrink-0 cursor-not-allowed rounded-full border border-dashed border-muted-foreground/20 px-3 py-1.5 text-xs text-muted-foreground/50"
-                                  >
-                                    <Plus className="inline h-3 w-3" /> パターン追加
-                                  </button>
-                                </span>
-                              </TooltipTrigger>
-                              <TooltipContent>{MSG.LIMIT_PATTERNS}</TooltipContent>
-                            </Tooltip>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => patternOps.add.setOpen(true)}
-                              className="shrink-0 rounded-full border border-dashed border-muted-foreground/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
-                            >
-                              <Plus className="inline h-3 w-3" /> パターン追加
-                            </button>
-                          ))}
-                      </div>
+                      <PatternTabs
+                        patterns={currentDay.patterns}
+                        currentDayId={currentDay.id}
+                        currentPatternIndex={currentPatternIndex}
+                        canEdit={canEdit}
+                        online={online}
+                        patternOps={patternOps}
+                        onSelectPattern={(dayId, index) =>
+                          setSelectedPattern((prev) => ({ ...prev, [dayId]: index }))
+                        }
+                      />
                     }
                   />
                   <ScrollToTop containerRef={timelinePanelRef} />
                 </div>
               </div>
 
-              {/* Candidates / Activity */}
-              <div className="hidden max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] lg:flex min-w-0 flex-[2] flex-col rounded-lg border border-dashed bg-card self-start sticky top-4">
-                <div
-                  className="flex shrink-0 select-none border-b"
-                  role="tablist"
-                  aria-label="候補・履歴タブ"
-                >
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={rightPanelTab === "candidates"}
-                    onClick={() => setRightPanelTab("candidates")}
-                    className={cn(
-                      "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-                      rightPanelTab === "candidates"
-                        ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    候補
-                    {dnd.localCandidates.length > 0 && (
-                      <span className="ml-1 rounded-full bg-muted px-1.5 text-xs">
-                        {dnd.localCandidates.length}
-                      </span>
-                    )}
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={rightPanelTab === "bookmarks"}
-                    onClick={() => setRightPanelTab("bookmarks")}
-                    className={cn(
-                      "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-                      rightPanelTab === "bookmarks"
-                        ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    ブックマーク
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={rightPanelTab === "activity"}
-                    onClick={() => setRightPanelTab("activity")}
-                    className={cn(
-                      "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-                      rightPanelTab === "activity"
-                        ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-                        : "text-muted-foreground hover:text-foreground",
-                    )}
-                  >
-                    履歴
-                  </button>
-                </div>
-                <div className="min-h-0 overflow-y-auto p-4">
-                  {rightPanelTab === "candidates" ? (
-                    <CandidatePanel
-                      tripId={tripId}
-                      candidates={dnd.localCandidates}
-                      currentDayId={currentDay.id}
-                      currentPatternId={currentPattern.id}
-                      onRefresh={onMutate}
-                      disabled={!online || !canEdit}
-                      draggable={canEdit && online}
-                      addDialogOpen={addCandidateOpen}
-                      onAddDialogOpenChange={setAddCandidateOpen}
-                      scheduleLimitReached={scheduleLimitReached}
-                      scheduleLimitMessage={scheduleLimitMessage}
-                      overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
-                      maxEndDayOffset={Math.max(0, trip.days.length - 1)}
-                      onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
-                    />
-                  ) : rightPanelTab === "bookmarks" ? (
-                    <BookmarkPanel
-                      tripId={tripId}
-                      disabled={!online || !canEdit}
-                      onCandidateAdded={onMutate}
-                    />
-                  ) : (
-                    <ActivityLog tripId={tripId} />
-                  )}
-                </div>
-              </div>
+              <RightPanel
+                tripId={tripId}
+                rightPanelTab={rightPanelTab}
+                setRightPanelTab={setRightPanelTab}
+                candidates={dnd.localCandidates}
+                currentDayId={currentDay.id}
+                currentPatternId={currentPattern.id}
+                onRefresh={onMutate}
+                disabled={!online || !canEdit}
+                canEdit={canEdit}
+                online={online}
+                addCandidateOpen={addCandidateOpen}
+                onAddCandidateOpenChange={setAddCandidateOpen}
+                scheduleLimitReached={scheduleLimitReached}
+                scheduleLimitMessage={scheduleLimitMessage}
+                overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
+                maxEndDayOffset={Math.max(0, trip.days.length - 1)}
+                onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+              />
             </div>
             <DragOverlay>
               {dnd.activeDragItem &&

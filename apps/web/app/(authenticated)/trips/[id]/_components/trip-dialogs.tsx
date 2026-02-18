@@ -19,7 +19,9 @@ import {
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -28,7 +30,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
 import type { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
-import { cn } from "@/lib/utils";
+import type { RightPanelTab } from "./right-panel-tabs";
+import { RightPanelTabs } from "./right-panel-tabs";
 
 type PatternOps = ReturnType<typeof usePatternOperations>;
 type Selection = ReturnType<typeof useScheduleSelection>;
@@ -39,6 +42,7 @@ export function AddPatternDialog({ patternOps }: { patternOps: PatternOps }) {
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>パターン追加</DialogTitle>
+          <DialogDescription>日程のパターンを追加します。</DialogDescription>
         </DialogHeader>
         <form onSubmit={patternOps.add.submit} className="space-y-4">
           <div className="space-y-2">
@@ -55,6 +59,11 @@ export function AddPatternDialog({ patternOps }: { patternOps: PatternOps }) {
             </p>
           </div>
           <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                キャンセル
+              </Button>
+            </DialogClose>
             <Button type="submit" disabled={patternOps.add.loading || !patternOps.add.label.trim()}>
               <Plus className="h-4 w-4" />
               {patternOps.add.loading ? "追加中..." : "追加"}
@@ -72,6 +81,7 @@ export function RenamePatternDialog({ patternOps }: { patternOps: PatternOps }) 
       <DialogContent className="sm:max-w-sm">
         <DialogHeader>
           <DialogTitle>パターン名変更</DialogTitle>
+          <DialogDescription>パターンのラベルを変更します。</DialogDescription>
         </DialogHeader>
         <form onSubmit={patternOps.rename.submit} className="space-y-4">
           <div className="space-y-2">
@@ -87,6 +97,11 @@ export function RenamePatternDialog({ patternOps }: { patternOps: PatternOps }) 
             </p>
           </div>
           <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="outline">
+                キャンセル
+              </Button>
+            </DialogClose>
             <Button
               type="submit"
               disabled={patternOps.rename.loading || !patternOps.rename.label.trim()}
@@ -176,8 +191,8 @@ export function MobileCandidateDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  rightPanelTab: "candidates" | "activity" | "bookmarks";
-  setRightPanelTab: (tab: "candidates" | "activity" | "bookmarks") => void;
+  rightPanelTab: RightPanelTab;
+  setRightPanelTab: (tab: RightPanelTab) => void;
   tripId: string;
   candidates: CandidateResponse[];
   currentDay: TripResponse["days"][number] | null;
@@ -193,53 +208,11 @@ export function MobileCandidateDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex max-h-[80vh] flex-col overflow-hidden sm:max-w-sm">
         <DialogTitle className="sr-only">候補・ブックマーク・履歴</DialogTitle>
-        <div className="flex shrink-0 select-none border-b" role="tablist">
-          <button
-            type="button"
-            role="tab"
-            aria-selected={rightPanelTab === "candidates"}
-            onClick={() => setRightPanelTab("candidates")}
-            className={cn(
-              "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-              rightPanelTab === "candidates"
-                ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            候補
-            {candidates.length > 0 && (
-              <span className="ml-1 rounded-full bg-muted px-1.5 text-xs">{candidates.length}</span>
-            )}
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={rightPanelTab === "bookmarks"}
-            onClick={() => setRightPanelTab("bookmarks")}
-            className={cn(
-              "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-              rightPanelTab === "bookmarks"
-                ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            ブックマーク
-          </button>
-          <button
-            type="button"
-            role="tab"
-            aria-selected={rightPanelTab === "activity"}
-            onClick={() => setRightPanelTab("activity")}
-            className={cn(
-              "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-              rightPanelTab === "activity"
-                ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            履歴
-          </button>
-        </div>
+        <RightPanelTabs
+          current={rightPanelTab}
+          onChange={setRightPanelTab}
+          candidateCount={candidates.length}
+        />
         <div className="min-h-0 overflow-y-auto">
           {rightPanelTab === "candidates" ? (
             currentDay &&

@@ -225,12 +225,12 @@ export function DayTimeline({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={sel.batchDuplicateSchedules}>
-                  <Copy className="mr-2 h-3 w-3" />
+                  <Copy />
                   複製
                 </DropdownMenuItem>
                 {onSaveToBookmark && (
                   <DropdownMenuItem onClick={() => onSaveToBookmark(Array.from(selectedIds ?? []))}>
-                    <Bookmark className="mr-2 h-3 w-3" />
+                    <Bookmark />
                     ブックマークに保存
                   </DropdownMenuItem>
                 )}
@@ -238,7 +238,7 @@ export function DayTimeline({
                   className="text-destructive"
                   onClick={() => sel.setBatchDeleteOpen(true)}
                 >
-                  <Trash2 className="mr-2 h-3 w-3" />
+                  <Trash2 />
                   削除
                 </DropdownMenuItem>
               </DropdownMenuContent>

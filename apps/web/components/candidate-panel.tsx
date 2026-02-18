@@ -306,21 +306,21 @@ function CandidateCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onEdit}>
-                <Pencil className="mr-2 h-3 w-3" />
+                <Pencil />
                 編集
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onAssign}>
-                <ArrowLeft className="mr-2 h-3 w-3" />
+                <ArrowLeft />
                 予定に追加
               </DropdownMenuItem>
               {onSaveToBookmark && (
                 <DropdownMenuItem onClick={onSaveToBookmark}>
-                  <Bookmark className="mr-2 h-3 w-3" />
+                  <Bookmark />
                   ブックマークに保存
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
-                <Trash2 className="mr-2 h-3 w-3" />
+                <Trash2 />
                 削除
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -510,12 +510,12 @@ export function CandidatePanel({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={sel.batchDuplicateCandidates}>
-                <Copy className="mr-2 h-3 w-3" />
+                <Copy />
                 複製
               </DropdownMenuItem>
               {onSaveToBookmark && (
                 <DropdownMenuItem onClick={() => onSaveToBookmark(Array.from(selectedIds ?? []))}>
-                  <Bookmark className="mr-2 h-3 w-3" />
+                  <Bookmark />
                   ブックマークに保存
                 </DropdownMenuItem>
               )}
@@ -523,7 +523,7 @@ export function CandidatePanel({
                 className="text-destructive"
                 onClick={() => sel.setBatchDeleteOpen(true)}
               >
-                <Trash2 className="mr-2 h-3 w-3" />
+                <Trash2 />
                 削除
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -595,7 +595,7 @@ export function CandidatePanel({
                   isOverCandidates && "border-blue-400 bg-blue-50 dark:bg-blue-950/30",
                 )}
               >
-                <p className="text-xs text-muted-foreground">候補がありません</p>
+                <p className="text-sm text-muted-foreground">候補がありません</p>
               </div>
             ) : (
               <div className="space-y-1.5">
@@ -639,7 +639,7 @@ export function CandidatePanel({
         </div>
       ) : sortedCandidates.length === 0 ? (
         <div className="flex min-h-24 items-center justify-center rounded-md border border-dashed text-center">
-          <p className="text-xs text-muted-foreground">候補がありません</p>
+          <p className="text-sm text-muted-foreground">候補がありません</p>
         </div>
       ) : (
         <div className="space-y-1.5">

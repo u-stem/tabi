@@ -218,32 +218,32 @@ export function TripActions({
         <DropdownMenuContent align="end">
           {/* Mobile-only items (hidden on sm+) */}
           <DropdownMenuItem className="sm:hidden" onClick={() => setMemberOpen(true)}>
-            <Users className="mr-2 h-4 w-4" />
+            <Users />
             メンバー
           </DropdownMenuItem>
           {isOwnerRole && (
             <DropdownMenuItem className="sm:hidden" onClick={handleShare} disabled={sharing}>
-              <Link className="mr-2 h-4 w-4" />
+              <Link />
               {sharing ? "生成中..." : "共有リンク"}
             </DropdownMenuItem>
           )}
           {canEditRole && (
             <DropdownMenuItem asChild>
               <NextLink href={`/trips/${tripId}/print`} target="_blank">
-                <Printer className="mr-2 h-4 w-4" />
+                <Printer />
                 印刷 / PDF
               </NextLink>
             </DropdownMenuItem>
           )}
           <DropdownMenuItem asChild>
             <NextLink href={`/trips/${tripId}/export`} target="_blank">
-              <FileDown className="mr-2 h-4 w-4" />
+              <FileDown />
               エクスポート
             </NextLink>
           </DropdownMenuItem>
           {onEdit && (
             <DropdownMenuItem onClick={onEdit}>
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil />
               編集
             </DropdownMenuItem>
           )}
@@ -253,7 +253,7 @@ export function TripActions({
               disabled={deleting}
               onClick={() => setDeleteOpen(true)}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
+              <Trash2 />
               {deleting ? "削除中..." : "削除"}
             </DropdownMenuItem>
           )}

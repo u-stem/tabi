@@ -8,10 +8,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogDestructiveAction,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -231,12 +231,9 @@ export function GroupsTab() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogDestructiveAction onClick={handleDelete}>
               削除する
-            </AlertDialogAction>
+            </AlertDialogDestructiveAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

@@ -1,5 +1,6 @@
 "use client";
 
+import { TAB_ACTIVE, TAB_INACTIVE } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
 export type RightPanelTab = "candidates" | "activity" | "bookmarks";
@@ -22,9 +23,7 @@ export function RightPanelTabs({
         onClick={() => onChange("candidates")}
         className={cn(
           "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-          current === "candidates"
-            ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-            : "text-muted-foreground hover:text-foreground",
+          current === "candidates" ? TAB_ACTIVE : TAB_INACTIVE,
         )}
       >
         候補
@@ -39,9 +38,7 @@ export function RightPanelTabs({
         onClick={() => onChange("bookmarks")}
         className={cn(
           "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-          current === "bookmarks"
-            ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-            : "text-muted-foreground hover:text-foreground",
+          current === "bookmarks" ? TAB_ACTIVE : TAB_INACTIVE,
         )}
       >
         ブックマーク
@@ -53,9 +50,7 @@ export function RightPanelTabs({
         onClick={() => onChange("activity")}
         className={cn(
           "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-          current === "activity"
-            ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-            : "text-muted-foreground hover:text-foreground",
+          current === "activity" ? TAB_ACTIVE : TAB_INACTIVE,
         )}
       >
         履歴

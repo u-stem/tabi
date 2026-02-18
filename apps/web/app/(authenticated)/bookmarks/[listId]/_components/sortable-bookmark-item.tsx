@@ -3,15 +3,17 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { BookmarkResponse } from "@sugara/shared";
-import { ExternalLink, MoreHorizontal, Pencil, StickyNote, Trash2 } from "lucide-react";
+import { ExternalLink, Pencil, StickyNote, Trash2 } from "lucide-react";
 import type { CSSProperties } from "react";
 import { DragHandle } from "@/components/drag-handle";
+import { ItemMenuButton } from "@/components/item-menu-button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { stripProtocol } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export function BookmarkItemContent({ bm, asLink }: { bm: BookmarkResponse; asLink?: boolean }) {
@@ -30,7 +32,7 @@ export function BookmarkItemContent({ bm, asLink }: { bm: BookmarkResponse; asLi
               className="mt-1 flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
             >
               <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-              <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
+              <span className="truncate">{stripProtocol(url)}</span>
             </a>
           ) : (
             <p
@@ -38,7 +40,7 @@ export function BookmarkItemContent({ bm, asLink }: { bm: BookmarkResponse; asLi
               className="mt-1 flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400"
             >
               <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-              <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
+              <span className="truncate">{stripProtocol(url)}</span>
             </p>
           ),
         )}
@@ -85,13 +87,7 @@ export function SortableBookmarkItem({
       <BookmarkItemContent bm={bm} asLink />
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            aria-label={`${bm.name}のメニュー`}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
+          <ItemMenuButton ariaLabel={`${bm.name}のメニュー`} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => onEdit(bm)}>

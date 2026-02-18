@@ -1,6 +1,8 @@
+import { MAX_LOGS_PER_TRIP } from "@sugara/shared";
+
+export { MAX_LOGS_PER_TRIP };
 export const DEFAULT_PATTERN_LABEL = "デフォルト";
 export const MAX_TRIP_DAYS = 365;
-export const MAX_LOGS_PER_TRIP = 50;
 
 export const PG_UNIQUE_VIOLATION = "23505";
 

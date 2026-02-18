@@ -17,12 +17,14 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
+import { pageTitle } from "@/lib/constants";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
+import { TAB_ACTIVE, TAB_INACTIVE } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
 type HomeTab = "owned" | "shared";
@@ -55,7 +57,7 @@ export default function HomePage() {
   const error = ownedError || sharedError;
 
   useEffect(() => {
-    document.title = "ホーム - sugara";
+    document.title = pageTitle("ホーム");
   }, []);
 
   const [tab, setTab] = useState<HomeTab>("owned");
@@ -288,9 +290,7 @@ export default function HomePage() {
                 onClick={() => handleTabChange(value)}
                 className={cn(
                   "relative px-4 py-2 text-sm font-medium transition-colors",
-                  tab === value
-                    ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-                    : "text-muted-foreground hover:text-foreground",
+                  tab === value ? TAB_ACTIVE : TAB_INACTIVE,
                 )}
               >
                 {label}

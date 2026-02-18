@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
+import { DROP_ZONE_ACTIVE } from "@/lib/colors";
 import {
   compareByStartTime,
   formatDate,
@@ -47,6 +48,7 @@ import {
   toScheduleResponse,
 } from "@/lib/trip-cache";
 import { cn } from "@/lib/utils";
+import { DndInsertIndicator } from "./dnd-insert-indicator";
 
 const AddScheduleDialog = dynamic(() =>
   import("./add-schedule-dialog").then((mod) => mod.AddScheduleDialog),
@@ -312,7 +314,7 @@ export function DayTimeline({
               ref={selectionMode ? undefined : setDroppableRef}
               className={cn(
                 "rounded-md border border-dashed p-6 text-center transition-colors",
-                isOverTimeline && "border-blue-400 bg-blue-50 dark:bg-blue-950/30",
+                isOverTimeline && DROP_ZONE_ACTIVE,
               )}
             >
               <p className="text-sm text-muted-foreground">まだ予定がありません</p>
@@ -320,12 +322,7 @@ export function DayTimeline({
           );
         }
 
-        const insertIndicator = (
-          <div className="flex items-center gap-2 py-1" aria-hidden="true">
-            <div className="h-2 w-2 rounded-full bg-blue-500" />
-            <div className="h-0.5 flex-1 bg-blue-500" />
-          </div>
-        );
+        const insertIndicator = <DndInsertIndicator />;
 
         function renderItem(item: TimelineItem, i: number, opts?: { selectable?: boolean }) {
           const isFirst = i === 0;

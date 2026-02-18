@@ -116,6 +116,10 @@ export function validateTimeRange(
   return null;
 }
 
+export function stripProtocol(url: string): string {
+  return url.replace(/^https?:\/\//, "");
+}
+
 /** Defense-in-depth: only allow http/https URLs in href attributes */
 export function isSafeUrl(url: string): boolean {
   try {

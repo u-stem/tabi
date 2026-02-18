@@ -8,10 +8,10 @@ import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogDestructiveAction,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -132,15 +132,14 @@ export function DeletePatternDialog({ patternOps }: { patternOps: PatternOps }) 
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>キャンセル</AlertDialogCancel>
-          <AlertDialogAction
+          <AlertDialogDestructiveAction
             onClick={() => {
               if (patternOps.deleteTarget) patternOps.handleDelete(patternOps.deleteTarget.id);
               patternOps.setDeleteTarget(null);
             }}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
             削除する
-          </AlertDialogAction>
+          </AlertDialogDestructiveAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -159,14 +158,13 @@ export function BatchDeleteDialog({ selection }: { selection: Selection }) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>キャンセル</AlertDialogCancel>
-          <AlertDialogAction
+          <AlertDialogDestructiveAction
             onClick={selection.batchDelete}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             disabled={selection.batchLoading}
           >
             <Trash2 className="h-4 w-4" />
             削除する
-          </AlertDialogAction>
+          </AlertDialogDestructiveAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

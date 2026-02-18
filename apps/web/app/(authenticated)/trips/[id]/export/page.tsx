@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
+import { pageTitle } from "@/lib/constants";
 import {
   buildCandidateRows,
   buildDefaultFileName,
@@ -65,7 +66,7 @@ export default function TripExportPage() {
 
   useEffect(() => {
     if (trip) {
-      document.title = `${trip.title}（エクスポート） - sugara`;
+      document.title = pageTitle(`${trip.title}（エクスポート）`);
     }
   }, [trip?.title]);
 

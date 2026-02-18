@@ -9,6 +9,8 @@ export const GROUP_NAME_MAX_LENGTH = 50;
 export const MAX_BOOKMARK_LISTS_PER_USER = 5;
 export const MAX_BOOKMARKS_PER_LIST = 20;
 
+export const MAX_LOGS_PER_TRIP = 50;
+
 export const BOOKMARK_LIST_NAME_MAX_LENGTH = 50;
 export const BOOKMARK_NAME_MAX_LENGTH = 200;
 export const BOOKMARK_MEMO_MAX_LENGTH = 2000;

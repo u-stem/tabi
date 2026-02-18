@@ -15,7 +15,6 @@ import {
   Clock,
   ExternalLink,
   MapPin,
-  MoreHorizontal,
   Pencil,
   Route,
   StickyNote,
@@ -27,10 +26,10 @@ import type { CSSProperties } from "react";
 import { memo, useState } from "react";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogDestructiveAction,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -45,11 +44,12 @@ import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
 import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
 import type { TimeStatus } from "@/lib/format";
-import { formatTime, formatTimeRange, isSafeUrl } from "@/lib/format";
+import { formatTime, formatTimeRange, isSafeUrl, stripProtocol } from "@/lib/format";
 import { CATEGORY_ICONS, TRANSPORT_ICONS } from "@/lib/icons";
-import { buildTransportUrl } from "@/lib/transport-link";
+import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
 import { DragHandle } from "./drag-handle";
+import { ItemMenuButton } from "./item-menu-button";
 
 const EditScheduleDialog = dynamic(() =>
   import("./edit-schedule-dialog").then((mod) => mod.EditScheduleDialog),
@@ -162,14 +162,7 @@ function ScheduleMenu({
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
-            type="button"
-            className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
-            aria-label={`${name}のメニュー`}
-            disabled={disabled}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </button>
+          <ItemMenuButton ariaLabel={`${name}のメニュー`} disabled={disabled} />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={onEdit}>
@@ -204,13 +197,10 @@ function ScheduleMenu({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={onDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogDestructiveAction onClick={onDelete}>
               <Trash2 className="h-4 w-4" />
               削除する
-            </AlertDialogAction>
+            </AlertDialogDestructiveAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -498,7 +488,7 @@ function ScheduleLinks({ urls, memo }: { urls: string[]; memo?: string | null })
           className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
         >
           <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-          <span className="truncate">{u.replace(/^https?:\/\//, "")}</span>
+          <span className="truncate">{stripProtocol(u)}</span>
         </a>
       ))}
       {memo && (
@@ -655,7 +645,7 @@ function PlaceCard({
               <div className={cn("mt-1 space-y-1 pl-6", selectable && "pointer-events-none")}>
                 {address && (
                   <a
-                    href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`}
+                    href={buildMapsSearchUrl(address)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"

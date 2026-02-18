@@ -5,10 +5,10 @@ import { STATUS_LABELS } from "@sugara/shared";
 import { CheckCheck, Copy, SquareMousePointer, Trash2, X } from "lucide-react";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogDestructiveAction,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -136,13 +136,10 @@ export function TripToolbar({
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={onDeleteSelected}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
+                <AlertDialogDestructiveAction onClick={onDeleteSelected}>
                   <Trash2 className="h-4 w-4" />
                   削除する
-                </AlertDialogAction>
+                </AlertDialogDestructiveAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

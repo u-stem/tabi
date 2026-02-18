@@ -46,10 +46,10 @@ const EditCandidateDialog = dynamic(() =>
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogDestructiveAction,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -64,15 +64,17 @@ import {
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
-import { SELECTED_RING } from "@/lib/colors";
-import { formatTimeRange, isSafeUrl } from "@/lib/format";
+import { DROP_ZONE_ACTIVE, SELECTED_RING } from "@/lib/colors";
+import { formatTimeRange, isSafeUrl, stripProtocol } from "@/lib/format";
 import { useSelection } from "@/lib/hooks/selection-context";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
-import { buildTransportUrl } from "@/lib/transport-link";
+import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
 import { moveCandidateToSchedule, removeCandidate, toScheduleResponse } from "@/lib/trip-cache";
 import { cn } from "@/lib/utils";
+import { DndInsertIndicator } from "./dnd-insert-indicator";
 import { DragHandle } from "./drag-handle";
+import { ItemMenuButton } from "./item-menu-button";
 
 type CandidatePanelProps = {
   tripId: string;
@@ -182,7 +184,7 @@ function CandidateCard({
           )}
           {spot.address && (
             <a
-              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(spot.address)}`}
+              href={buildMapsSearchUrl(spot.address)}
               target="_blank"
               rel="noopener noreferrer"
               className={cn(
@@ -249,7 +251,7 @@ function CandidateCard({
               onClick={(e) => e.stopPropagation()}
             >
               <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-              <span className="truncate">{u.replace(/^https?:\/\//, "")}</span>
+              <span className="truncate">{stripProtocol(u)}</span>
             </a>
           ))}
           {spot.memo && (
@@ -296,13 +298,7 @@ function CandidateCard({
         {!disabled && !selectable && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="shrink-0 rounded p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                aria-label={`${spot.name}のメニュー`}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </button>
+              <ItemMenuButton ariaLabel={`${spot.name}のメニュー`} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onEdit}>
@@ -337,13 +333,10 @@ function CandidateCard({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={onDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogDestructiveAction onClick={onDelete}>
               <Trash2 className="h-4 w-4" />
               削除する
-            </AlertDialogAction>
+            </AlertDialogDestructiveAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -592,7 +585,7 @@ export function CandidatePanel({
               <div
                 className={cn(
                   "flex min-h-24 items-center justify-center rounded-md border border-dashed text-center transition-colors",
-                  isOverCandidates && "border-blue-400 bg-blue-50 dark:bg-blue-950/30",
+                  isOverCandidates && DROP_ZONE_ACTIVE,
                 )}
               >
                 <p className="text-sm text-muted-foreground">候補がありません</p>
@@ -600,12 +593,7 @@ export function CandidatePanel({
             ) : (
               <div className="space-y-1.5">
                 {(() => {
-                  const insertIndicator = (
-                    <div className="flex items-center gap-2 py-1" aria-hidden="true">
-                      <div className="h-2 w-2 rounded-full bg-blue-500" />
-                      <div className="h-0.5 flex-1 bg-blue-500" />
-                    </div>
-                  );
+                  const insertIndicator = <DndInsertIndicator />;
                   return (
                     <>
                       {sortedCandidates.map((spot) => (

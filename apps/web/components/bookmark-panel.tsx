@@ -26,7 +26,7 @@ import {
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { isSafeUrl } from "@/lib/format";
+import { isSafeUrl, stripProtocol } from "@/lib/format";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
@@ -279,7 +279,7 @@ function BookmarkContent({
             onClick={(e) => e.stopPropagation()}
           >
             <ExternalLink className="h-3 w-3 shrink-0" />
-            <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
+            <span className="truncate">{stripProtocol(url)}</span>
           </a>
         ))}
       {memo && (

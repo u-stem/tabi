@@ -103,6 +103,18 @@ const AlertDialogCancel = React.forwardRef<
 ));
 AlertDialogCancel.displayName = AlertDialogPrimitive.Cancel.displayName;
 
+const AlertDialogDestructiveAction = React.forwardRef<
+  React.ComponentRef<typeof AlertDialogPrimitive.Action>,
+  React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Action>
+>(({ className, ...props }, ref) => (
+  <AlertDialogPrimitive.Action
+    ref={ref}
+    className={cn(buttonVariants({ variant: "destructive" }), className)}
+    {...props}
+  />
+));
+AlertDialogDestructiveAction.displayName = "AlertDialogDestructiveAction";
+
 export {
   AlertDialog,
   AlertDialogPortal,
@@ -114,5 +126,6 @@ export {
   AlertDialogTitle,
   AlertDialogDescription,
   AlertDialogAction,
+  AlertDialogDestructiveAction,
   AlertDialogCancel,
 };

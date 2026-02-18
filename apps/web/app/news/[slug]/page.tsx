@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import Markdown from "react-markdown";
 import { Logo } from "@/components/logo";
+import { pageTitle } from "@/lib/constants";
 import { getAllNews, getNewsBySlug } from "@/lib/news";
 
 type Props = {
@@ -17,8 +18,8 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = await getNewsBySlug(slug);
-  if (!article) return { title: "お知らせ - sugara" };
-  return { title: `${article.title} - sugara` };
+  if (!article) return { title: pageTitle("お知らせ") };
+  return { title: pageTitle(article.title) };
 }
 
 export default async function NewsArticlePage({ params }: Props) {

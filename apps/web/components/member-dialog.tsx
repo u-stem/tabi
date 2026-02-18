@@ -12,10 +12,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogDestructiveAction,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -505,15 +505,14 @@ export function MemberDialog({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction
+            <AlertDialogDestructiveAction
               onClick={() => {
                 if (removeMember) handleRemove(removeMember.userId);
                 setRemoveMember(null);
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               削除する
-            </AlertDialogAction>
+            </AlertDialogDestructiveAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

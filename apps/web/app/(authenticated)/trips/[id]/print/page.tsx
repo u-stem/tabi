@@ -15,6 +15,7 @@ import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { pageTitle } from "@/lib/constants";
 import { getCrossDayEntries } from "@/lib/cross-day";
 import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
 import { formatDate, formatDateRange, getDayCount } from "@/lib/format";
@@ -41,7 +42,7 @@ export default function TripPrintPage() {
 
   useEffect(() => {
     if (trip) {
-      document.title = `${trip.title}（印刷） - sugara`;
+      document.title = pageTitle(`${trip.title}（印刷）`);
     }
   }, [trip?.title]);
 

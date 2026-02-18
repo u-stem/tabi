@@ -7,7 +7,7 @@ import { ArrowRightLeft, Copy, Loader2, Pencil, Plus, Trash2 } from "lucide-reac
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
-import { ACTIVITY_LOG_PAGE_SIZE } from "@/lib/constants";
+import { MAX_LOGS_PER_TRIP } from "@/lib/constants";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -155,7 +155,7 @@ export function ActivityLog({ tripId }: ActivityLogProps) {
     useInfiniteQuery({
       queryKey: queryKeys.trips.activityLogs(tripId),
       queryFn: ({ pageParam }) => {
-        const params: Record<string, string> = { limit: String(ACTIVITY_LOG_PAGE_SIZE) };
+        const params: Record<string, string> = { limit: String(MAX_LOGS_PER_TRIP) };
         if (pageParam) params.cursor = pageParam;
         return api<LogsResponse>(`/api/trips/${tripId}/activity-logs`, { params });
       },

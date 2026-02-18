@@ -12,10 +12,10 @@ import { CreateBookmarkListDialog } from "@/components/create-bookmark-list-dial
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogDestructiveAction,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -32,6 +32,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
+import { pageTitle } from "@/lib/constants";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
@@ -63,7 +64,7 @@ export default function BookmarksPage() {
   useAuthRedirect(error);
 
   useEffect(() => {
-    document.title = "ブックマーク - sugara";
+    document.title = pageTitle("ブックマーク");
   }, []);
 
   const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
@@ -286,13 +287,10 @@ export default function BookmarksPage() {
                       </AlertDialogHeader>
                       <AlertDialogFooter>
                         <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={handleDeleteSelected}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
+                        <AlertDialogDestructiveAction onClick={handleDeleteSelected}>
                           <Trash2 className="h-4 w-4" />
                           削除する
-                        </AlertDialogAction>
+                        </AlertDialogDestructiveAction>
                       </AlertDialogFooter>
                     </AlertDialogContent>
                   </AlertDialog>

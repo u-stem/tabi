@@ -1,6 +1,13 @@
+export { MAX_LOGS_PER_TRIP } from "@sugara/shared";
+
+export const SITE_NAME = "sugara";
+
+export function pageTitle(title: string): string {
+  return `${title} - ${SITE_NAME}`;
+}
+
 export const MIN_PASSWORD_LENGTH = 8;
 export const PROFILE_NAME_MAX_LENGTH = 50;
-export const ACTIVITY_LOG_PAGE_SIZE = 50;
 
 const PASSWORD_RULES = [
   { test: (p: string) => p.length >= MIN_PASSWORD_LENGTH, label: `${MIN_PASSWORD_LENGTH}文字以上` },

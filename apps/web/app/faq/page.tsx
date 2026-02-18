@@ -7,9 +7,10 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { pageTitle } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "よくある質問 - sugara",
+  title: pageTitle("よくある質問"),
 };
 
 const faqItems = [

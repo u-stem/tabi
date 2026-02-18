@@ -3,10 +3,10 @@
 import { BOOKMARK_LIST_NAME_MAX_LENGTH, type BookmarkListVisibility } from "@sugara/shared";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogDestructiveAction,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -200,12 +200,9 @@ export function DeleteListDialog({ listOps, listName }: { listOps: ListOps; list
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>キャンセル</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={listOps.handleDelete}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
+          <AlertDialogDestructiveAction onClick={listOps.handleDelete}>
             削除する
-          </AlertDialogAction>
+          </AlertDialogDestructiveAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -227,12 +224,9 @@ export function DeleteBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>キャンセル</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={bmOps.handleDelete}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
+          <AlertDialogDestructiveAction onClick={bmOps.handleDelete}>
             削除する
-          </AlertDialogAction>
+          </AlertDialogDestructiveAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
@@ -256,13 +250,9 @@ export function BatchDeleteDialog({ sel }: { sel: Selection }) {
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel>キャンセル</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={sel.handleBatchDelete}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            disabled={sel.batchLoading}
-          >
+          <AlertDialogDestructiveAction onClick={sel.handleBatchDelete} disabled={sel.batchLoading}>
             {sel.batchLoading ? "削除中..." : "削除する"}
-          </AlertDialogAction>
+          </AlertDialogDestructiveAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

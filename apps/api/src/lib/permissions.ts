@@ -1,21 +1,16 @@
 import type { MemberRole } from "@sugara/shared";
+import { canEdit, isOwner } from "@sugara/shared";
 import { and, eq } from "drizzle-orm";
 import { db } from "../db/index";
 import { dayPatterns, tripDays, tripMembers } from "../db/schema";
+
+export { canEdit, isOwner };
 
 export async function checkTripAccess(tripId: string, userId: string): Promise<MemberRole | null> {
   const member = await db.query.tripMembers.findFirst({
     where: and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, userId)),
   });
   return (member?.role as MemberRole) ?? null;
-}
-
-export function canEdit(role: MemberRole | null): boolean {
-  return role === "owner" || role === "editor";
-}
-
-export function isOwner(role: MemberRole | null): boolean {
-  return role === "owner";
 }
 
 export async function verifyDayAccess(

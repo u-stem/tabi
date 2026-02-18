@@ -22,7 +22,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ApiError, api } from "@/lib/api";
+import { ApiError, api, getApiErrorMessage } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -151,7 +151,7 @@ export function EditScheduleDialog({
         onOpenChange(false);
         onUpdate();
       } else {
-        setError(err instanceof Error ? err.message : MSG.SCHEDULE_UPDATE_FAILED);
+        setError(getApiErrorMessage(err, MSG.SCHEDULE_UPDATE_FAILED));
       }
     } finally {
       setLoading(false);

@@ -3,6 +3,7 @@
 import type { TripResponse } from "@sugara/shared";
 import { hashColor } from "@/components/presence-avatars";
 import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
+import { TAB_ACTIVE, TAB_INACTIVE } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
 export function DayTabs({
@@ -29,9 +30,7 @@ export function DayTabs({
             onClick={() => onSelectDay(index)}
             className={cn(
               "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
-              selectedDay === index
-                ? "text-blue-600 dark:text-blue-400 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-600 dark:after:bg-blue-400"
-                : "text-muted-foreground hover:text-foreground",
+              selectedDay === index ? TAB_ACTIVE : TAB_INACTIVE,
             )}
           >
             {day.dayNumber}日目

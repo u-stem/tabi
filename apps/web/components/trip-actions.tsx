@@ -1,7 +1,7 @@
 "use client";
 
 import type { MemberRole, TripStatus } from "@sugara/shared";
-import { STATUS_LABELS } from "@sugara/shared";
+import { canEdit, isOwner, STATUS_LABELS } from "@sugara/shared";
 import {
   FileDown,
   Link,
@@ -28,10 +28,10 @@ const ShareDialog = dynamic(() =>
 
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogDestructiveAction,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -75,8 +75,8 @@ export function TripActions({
   disabled,
   memberLimitReached,
 }: TripActionsProps) {
-  const isOwnerRole = role === "owner";
-  const canEditRole = role === "owner" || role === "editor";
+  const isOwnerRole = isOwner(role);
+  const canEditRole = canEdit(role);
   const router = useRouter();
   const [deleting, setDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -284,13 +284,10 @@ export function TripActions({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDelete}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
+            <AlertDialogDestructiveAction onClick={handleDelete}>
               <Trash2 className="h-4 w-4" />
               削除する
-            </AlertDialogAction>
+            </AlertDialogDestructiveAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

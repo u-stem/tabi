@@ -20,7 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ApiError, api } from "@/lib/api";
+import { ApiError, api, getApiErrorMessage } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -134,7 +134,7 @@ export function EditCandidateDialog({
         onOpenChange(false);
         onUpdate();
       } else {
-        setError(err instanceof Error ? err.message : MSG.CANDIDATE_UPDATE_FAILED);
+        setError(getApiErrorMessage(err, MSG.CANDIDATE_UPDATE_FAILED));
       }
     } finally {
       setLoading(false);

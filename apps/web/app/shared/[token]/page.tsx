@@ -28,6 +28,7 @@ import {
   formatDateRange,
   getDayCount,
   isSafeUrl,
+  stripProtocol,
 } from "@/lib/format";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { CATEGORY_ICONS } from "@/lib/icons";
@@ -35,7 +36,7 @@ import { buildMergedTimeline } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
-import { buildTransportUrl } from "@/lib/transport-link";
+import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
 
 type SharedTripResponse = {
@@ -406,7 +407,7 @@ function ScheduleCard({
             )}
             {schedule.address && (
               <a
-                href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(schedule.address)}`}
+                href={buildMapsSearchUrl(schedule.address)}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex w-fit max-w-full items-center gap-1.5 text-blue-600 hover:underline dark:text-blue-400"
@@ -424,7 +425,7 @@ function ScheduleCard({
                 className="flex w-fit max-w-full items-center gap-1.5 text-blue-600 hover:underline dark:text-blue-400"
               >
                 <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <span className="truncate">{u.replace(/^https?:\/\//, "")}</span>
+                <span className="truncate">{stripProtocol(u)}</span>
               </a>
             ))}
             {schedule.memo && (

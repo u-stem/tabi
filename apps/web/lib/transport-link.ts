@@ -6,8 +6,13 @@ type TransportLinkParams = {
   time?: string | null;
 };
 
+const GOOGLE_MAPS_SEARCH_URL = "https://www.google.com/maps/search/";
 const YAHOO_TRANSIT_URL = "https://transit.yahoo.co.jp/search/result";
 const GOOGLE_MAPS_DIR_URL = "https://www.google.com/maps/dir/";
+
+export function buildMapsSearchUrl(address: string): string {
+  return `${GOOGLE_MAPS_SEARCH_URL}?api=1&query=${encodeURIComponent(address)}`;
+}
 
 const GOOGLE_MAPS_METHODS = new Set(["walk", "car", "taxi"]);
 

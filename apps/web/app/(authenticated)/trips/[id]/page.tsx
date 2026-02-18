@@ -2,7 +2,7 @@
 
 import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
 import type { TripResponse } from "@sugara/shared";
-import { MAX_SCHEDULES_PER_TRIP } from "@sugara/shared";
+import { canEdit as canEditRole, MAX_SCHEDULES_PER_TRIP } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
+import { pageTitle } from "@/lib/constants";
 import { getCrossDayEntries } from "@/lib/cross-day";
 import { SelectionProvider } from "@/lib/hooks/selection-context";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
@@ -215,7 +216,7 @@ export default function TripDetailPage() {
 
   useEffect(() => {
     if (trip) {
-      document.title = `${trip.title} - sugara`;
+      document.title = pageTitle(trip.title);
     }
   }, [trip?.title]);
 
@@ -356,7 +357,7 @@ export default function TripDetailPage() {
     return <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>;
   }
 
-  const canEdit = trip.role === "owner" || trip.role === "editor";
+  const canEdit = canEditRole(trip.role);
   canEditRef.current = canEdit;
 
   const scheduleLimitReached = trip.scheduleCount >= MAX_SCHEDULES_PER_TRIP;

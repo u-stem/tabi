@@ -8,10 +8,10 @@ import { useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
+  AlertDialogDestructiveAction,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
@@ -22,7 +22,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
-import { api } from "@/lib/api";
+import { api, getApiErrorMessage } from "@/lib/api";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -84,7 +84,7 @@ function FriendListSection({
       toast.success(MSG.FRIEND_REMOVED);
       onRemoved();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : MSG.FRIEND_REMOVE_FAILED);
+      toast.error(getApiErrorMessage(err, MSG.FRIEND_REMOVE_FAILED));
     } finally {
       setLoadingId(null);
     }
@@ -145,15 +145,14 @@ function FriendListSection({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction
+            <AlertDialogDestructiveAction
               onClick={() => {
                 if (removingFriend) handleRemove(removingFriend.friendId);
                 setRemovingFriend(null);
               }}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               解除する
-            </AlertDialogAction>
+            </AlertDialogDestructiveAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -181,7 +180,7 @@ function SendRequestSection() {
       setAddresseeId("");
       queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : MSG.FRIEND_REQUEST_SEND_FAILED);
+      toast.error(getApiErrorMessage(err, MSG.FRIEND_REQUEST_SEND_FAILED));
     } finally {
       setLoading(false);
     }

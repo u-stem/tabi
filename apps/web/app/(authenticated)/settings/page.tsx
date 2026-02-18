@@ -35,6 +35,7 @@ import {
   getPasswordRequirementsText,
   MIN_PASSWORD_LENGTH,
   PROFILE_NAME_MAX_LENGTH,
+  pageTitle,
   validatePassword,
 } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
@@ -43,7 +44,7 @@ export default function SettingsPage() {
   const { data: session } = useSession();
 
   useEffect(() => {
-    document.title = "設定 - sugara";
+    document.title = pageTitle("設定");
   }, []);
 
   const user = session?.user;

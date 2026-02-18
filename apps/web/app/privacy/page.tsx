@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { pageTitle } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "プライバシーポリシー - sugara",
+  title: pageTitle("プライバシーポリシー"),
 };
 
 export default function PrivacyPage() {

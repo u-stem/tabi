@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserAvatar } from "@/components/user-avatar";
-import { api } from "@/lib/api";
+import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -35,7 +35,7 @@ export function FriendRequestsCard() {
       toast.success(MSG.FRIEND_REQUEST_ACCEPTED);
       invalidate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : MSG.FRIEND_REQUEST_ACCEPT_FAILED);
+      toast.error(getApiErrorMessage(err, MSG.FRIEND_REQUEST_ACCEPT_FAILED));
     } finally {
       setLoadingId(null);
     }
@@ -48,7 +48,7 @@ export function FriendRequestsCard() {
       toast.success(MSG.FRIEND_REQUEST_REJECTED);
       invalidate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : MSG.FRIEND_REQUEST_REJECT_FAILED);
+      toast.error(getApiErrorMessage(err, MSG.FRIEND_REQUEST_REJECT_FAILED));
     } finally {
       setLoadingId(null);
     }

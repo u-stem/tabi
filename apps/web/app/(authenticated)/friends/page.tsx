@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect } from "react";
+import { pageTitle } from "@/lib/constants";
 import { FriendsTab, SendRequestSection } from "./_components/friends-tab";
 import { GroupsTab } from "./_components/groups-tab";
 
 export default function FriendsPage() {
   useEffect(() => {
-    document.title = "フレンド - sugara";
+    document.title = pageTitle("フレンド");
   }, []);
 
   return (

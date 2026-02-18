@@ -13,7 +13,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
-import { isSafeUrl } from "@/lib/format";
+import { pageTitle } from "@/lib/constants";
+import { isSafeUrl, stripProtocol } from "@/lib/format";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -121,7 +122,7 @@ function BookmarkListCard({ list, userId }: { list: BookmarkListResponse; userId
                               className="mt-0.5 flex w-fit max-w-full items-center gap-1 text-xs text-blue-600 hover:underline dark:text-blue-400"
                             >
                               <ExternalLink className="h-3 w-3 shrink-0" />
-                              <span className="truncate">{url.replace(/^https?:\/\//, "")}</span>
+                              <span className="truncate">{stripProtocol(url)}</span>
                             </a>
                           ),
                       )}
@@ -200,7 +201,7 @@ export default function PublicProfilePage() {
   // Set document title when profile is loaded
   useEffect(() => {
     if (profile) {
-      document.title = `${profile.name} のプロフィール - sugara`;
+      document.title = pageTitle(`${profile.name} のプロフィール`);
     }
   }, [profile]);
 

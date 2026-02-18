@@ -25,6 +25,7 @@ import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { SELECTED_RING } from "@/lib/colors";
+import { pageTitle } from "@/lib/constants";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useBookmarkListOperations } from "@/lib/hooks/use-bookmark-list-operations";
 import { useBookmarkOperations } from "@/lib/hooks/use-bookmark-operations";
@@ -88,7 +89,7 @@ export default function BookmarkListDetailPage() {
   }, [bookmarks]);
 
   useEffect(() => {
-    document.title = list ? `${list.name} - sugara` : "ブックマーク - sugara";
+    document.title = pageTitle(list ? list.name : "ブックマーク");
   }, [list]);
 
   const invalidateLists = () =>

@@ -1,10 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { pageTitle } from "@/lib/constants";
 import { getAllNews } from "@/lib/news";
 
 export const metadata: Metadata = {
-  title: "お知らせ - sugara",
+  title: pageTitle("お知らせ"),
 };
 
 export default async function NewsPage() {

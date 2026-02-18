@@ -246,8 +246,12 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
     columns: { id: true, status: true },
   });
 
-  let poll: { id: string; status: string; participantCount: number; respondedCount: number } | null =
-    null;
+  let poll: {
+    id: string;
+    status: string;
+    participantCount: number;
+    respondedCount: number;
+  } | null = null;
 
   if (linkedPoll) {
     const [[{ count: participantCount }], [{ count: respondedCount }]] = await Promise.all([
@@ -258,10 +262,7 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
       db
         .select({ count: countDistinct(schedulePollResponses.participantId) })
         .from(schedulePollResponses)
-        .innerJoin(
-          schedulePollOptions,
-          eq(schedulePollResponses.optionId, schedulePollOptions.id),
-        )
+        .innerJoin(schedulePollOptions, eq(schedulePollResponses.optionId, schedulePollOptions.id))
         .where(eq(schedulePollOptions.pollId, linkedPoll.id)),
     ]);
 

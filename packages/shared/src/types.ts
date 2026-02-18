@@ -44,6 +44,13 @@ export type DayResponse = {
   patterns: DayPatternResponse[];
 };
 
+export type TripPollSummary = {
+  id: string;
+  status: PollStatus;
+  participantCount: number;
+  respondedCount: number;
+};
+
 export type TripResponse = {
   id: string;
   title: string;
@@ -56,6 +63,7 @@ export type TripResponse = {
   candidates: CandidateResponse[];
   scheduleCount: number;
   memberCount: number;
+  poll: TripPollSummary | null;
 };
 
 export type TripListItem = {

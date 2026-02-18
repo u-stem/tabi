@@ -16,7 +16,13 @@ import {
   varchar,
 } from "drizzle-orm/pg-core";
 
-export const tripStatusEnum = pgEnum("trip_status", ["draft", "planned", "active", "completed"]);
+export const tripStatusEnum = pgEnum("trip_status", [
+  "scheduling",
+  "draft",
+  "planned",
+  "active",
+  "completed",
+]);
 export const tripMemberRoleEnum = pgEnum("trip_member_role", ["owner", "editor", "viewer"]);
 export const transportMethodEnum = pgEnum("transport_method", [
   "train",

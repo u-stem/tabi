@@ -24,6 +24,7 @@ export const TRANSPORT_METHOD_LABELS: Record<TransportMethod, string> = {
 };
 
 export const STATUS_LABELS: Record<TripStatus, string> = {
+  scheduling: "日程調整中",
   draft: "下書き",
   planned: "計画済み",
   active: "進行中",

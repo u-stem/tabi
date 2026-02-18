@@ -49,6 +49,7 @@ const tripFixture: TripResponse = {
   candidates: [],
   scheduleCount: 2,
   memberCount: 1,
+  poll: null,
   days: [
     {
       id: "day-1",

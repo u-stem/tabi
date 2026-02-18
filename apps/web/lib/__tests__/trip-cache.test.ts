@@ -76,6 +76,7 @@ function makeTrip(overrides: Partial<TripResponse> = {}): TripResponse {
     candidates: [],
     scheduleCount: 0,
     memberCount: 1,
+    poll: null,
     ...overrides,
   };
 }

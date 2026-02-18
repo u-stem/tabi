@@ -1,9 +1,11 @@
 import { z } from "zod";
+import { MAX_OPTIONS_PER_POLL } from "../limits";
+import { POLL_NOTE_MAX_LENGTH } from "./poll";
 
 export const TRIP_TITLE_MAX_LENGTH = 100;
 export const TRIP_DESTINATION_MAX_LENGTH = 100;
 
-export const tripStatusSchema = z.enum(["draft", "planned", "active", "completed"]);
+export const tripStatusSchema = z.enum(["scheduling", "draft", "planned", "active", "completed"]);
 export type TripStatus = z.infer<typeof tripStatusSchema>;
 
 export const createTripSchema = z
@@ -17,6 +19,27 @@ export const createTripSchema = z
     message: "End date must be on or after start date",
     path: ["endDate"],
   });
+// Used when creating a trip with schedule poll mode
+export const createTripWithPollSchema = z.object({
+  title: z.string().min(1).max(TRIP_TITLE_MAX_LENGTH),
+  destination: z.string().min(1).max(TRIP_DESTINATION_MAX_LENGTH),
+  pollOptions: z
+    .array(
+      z
+        .object({
+          startDate: z.string().date(),
+          endDate: z.string().date(),
+        })
+        .refine((d) => d.endDate >= d.startDate, {
+          message: "End date must be on or after start date",
+          path: ["endDate"],
+        }),
+    )
+    .min(1)
+    .max(MAX_OPTIONS_PER_POLL),
+  pollNote: z.string().max(POLL_NOTE_MAX_LENGTH).optional(),
+});
+
 export const updateTripSchema = z
   .object({
     title: z.string().min(1).max(TRIP_TITLE_MAX_LENGTH).optional(),

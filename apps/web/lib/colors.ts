@@ -4,6 +4,8 @@ export const SELECTED_RING = "border-ring ring-2 ring-ring";
 export const DROP_ZONE_ACTIVE = "border-blue-400 bg-blue-50 dark:bg-blue-950/30";
 
 export const STATUS_COLORS: Record<TripStatus, string> = {
+  scheduling:
+    "bg-orange-100 text-orange-800 border-orange-300 dark:bg-orange-900 dark:text-orange-200 dark:border-orange-700",
   draft:
     "bg-gray-200 text-gray-800 border-gray-300 dark:bg-gray-700 dark:text-gray-200 dark:border-gray-600",
   planned:

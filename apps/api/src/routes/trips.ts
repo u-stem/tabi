@@ -427,39 +427,85 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
         destination: source.destination,
         startDate: source.startDate,
         endDate: source.endDate,
-        status: "draft",
+        status: source.status === "scheduling" ? "scheduling" : "draft",
       })
       .returning();
 
-    for (const day of source.days) {
-      const [newDay] = await tx
-        .insert(tripDays)
-        .values({
-          tripId: created.id,
-          date: day.date,
-          dayNumber: day.dayNumber,
-        })
-        .returning({ id: tripDays.id });
+    if (source.status === "scheduling") {
+      const sourcePoll = await tx.query.schedulePolls.findFirst({
+        where: eq(schedulePolls.tripId, source.id),
+        with: {
+          options: { orderBy: (o, { asc }) => [asc(o.sortOrder)] },
+          participants: true,
+        },
+      });
 
-      for (const pattern of day.patterns) {
-        const [newPattern] = await tx
-          .insert(dayPatterns)
+      if (!sourcePoll) {
+        console.warn(`Scheduling trip ${source.id} has no poll, skipping poll copy`);
+      } else {
+        const [newPoll] = await tx
+          .insert(schedulePolls)
           .values({
-            tripDayId: newDay.id,
-            label: pattern.label,
-            isDefault: pattern.isDefault,
-            sortOrder: pattern.sortOrder,
+            ownerId: user.id,
+            tripId: created.id,
+            title: sourcePoll.title,
+            destination: sourcePoll.destination,
+            note: sourcePoll.note,
+            deadline: sourcePoll.deadline,
           })
-          .returning({ id: dayPatterns.id });
+          .returning();
 
-        if (pattern.schedules.length > 0) {
-          await tx.insert(schedules).values(
-            pattern.schedules.map((schedule) => ({
-              tripId: created.id,
-              dayPatternId: newPattern.id,
-              ...buildScheduleCloneValues(schedule),
+        if (sourcePoll.options.length > 0) {
+          await tx.insert(schedulePollOptions).values(
+            sourcePoll.options.map((opt) => ({
+              pollId: newPoll.id,
+              startDate: opt.startDate,
+              endDate: opt.endDate,
+              sortOrder: opt.sortOrder,
             })),
           );
+        }
+
+        if (sourcePoll.participants.length > 0) {
+          await tx.insert(schedulePollParticipants).values(
+            sourcePoll.participants.map((p) => ({
+              pollId: newPoll.id,
+              userId: p.userId,
+            })),
+          );
+        }
+      }
+    } else {
+      for (const day of source.days) {
+        const [newDay] = await tx
+          .insert(tripDays)
+          .values({
+            tripId: created.id,
+            date: day.date,
+            dayNumber: day.dayNumber,
+          })
+          .returning({ id: tripDays.id });
+
+        for (const pattern of day.patterns) {
+          const [newPattern] = await tx
+            .insert(dayPatterns)
+            .values({
+              tripDayId: newDay.id,
+              label: pattern.label,
+              isDefault: pattern.isDefault,
+              sortOrder: pattern.sortOrder,
+            })
+            .returning({ id: dayPatterns.id });
+
+          if (pattern.schedules.length > 0) {
+            await tx.insert(schedules).values(
+              pattern.schedules.map((schedule) => ({
+                tripId: created.id,
+                dayPatternId: newPattern.id,
+                ...buildScheduleCloneValues(schedule),
+              })),
+            );
+          }
         }
       }
     }

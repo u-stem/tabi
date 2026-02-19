@@ -710,6 +710,101 @@ describe("Trip routes", () => {
 
       expect(res.status).toBe(409);
     });
+
+    it("copies poll data when duplicating a scheduling trip", async () => {
+      const sourcePoll = {
+        id: "poll-1",
+        ownerId: "other-user",
+        tripId: "trip-1",
+        title: "Schedule Poll",
+        destination: "Osaka",
+        note: "test note",
+        deadline: new Date("2026-03-01"),
+        status: "open",
+        shareToken: "abc123",
+        shareTokenExpiresAt: null,
+        confirmedOptionId: null,
+        options: [
+          {
+            id: "opt-1",
+            pollId: "poll-1",
+            startDate: "2026-04-01",
+            endDate: "2026-04-03",
+            sortOrder: 0,
+          },
+          {
+            id: "opt-2",
+            pollId: "poll-1",
+            startDate: "2026-04-10",
+            endDate: "2026-04-12",
+            sortOrder: 1,
+          },
+        ],
+        participants: [
+          { id: "part-1", pollId: "poll-1", userId: fakeUser.id },
+          { id: "part-2", pollId: "poll-1", userId: "other-user" },
+        ],
+      };
+
+      mockDbQuery.trips.findFirst.mockResolvedValue({
+        id: "trip-1",
+        ownerId: "other-user",
+        title: "Scheduling Trip",
+        destination: "Osaka",
+        startDate: null,
+        endDate: null,
+        status: "scheduling",
+        days: [],
+      });
+
+      mockDbQuery.schedulePolls.findFirst.mockResolvedValue(sourcePoll);
+
+      const createdTrip = {
+        id: "new-trip",
+        ownerId: fakeUser.id,
+        title: "Scheduling Trip (copy)",
+        destination: "Osaka",
+        startDate: null,
+        endDate: null,
+        status: "scheduling",
+      };
+
+      // Sequential inserts: trip -> poll -> options -> participants -> tripMembers
+      mockDbInsert
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([createdTrip]),
+          }),
+        })
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([{ id: "new-poll" }]),
+          }),
+        })
+        .mockReturnValueOnce({
+          values: vi.fn().mockResolvedValue(undefined),
+        })
+        .mockReturnValueOnce({
+          values: vi.fn().mockResolvedValue(undefined),
+        })
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([]),
+          }),
+        });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips/trip-1/duplicate", {
+        method: "POST",
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(201);
+      expect(body.status).toBe("scheduling");
+      expect(body.title).toBe("Scheduling Trip (copy)");
+      // Verify poll data was queried and copied
+      expect(mockDbQuery.schedulePolls.findFirst).toHaveBeenCalled();
+    });
   });
 
   describe("DELETE /api/trips/:id", () => {

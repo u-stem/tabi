@@ -2,7 +2,7 @@
 
 import type { BookmarkListResponse, BookmarkResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCheck, CheckSquare, ExternalLink, Plus, StickyNote, X } from "lucide-react";
+import { CheckCheck, ExternalLink, Plus, SquareMousePointer, StickyNote, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import {
@@ -178,7 +178,7 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
               className="shrink-0"
               onClick={() => setSelectionMode(true)}
             >
-              <CheckSquare className="h-4 w-4" />
+              <SquareMousePointer className="h-4 w-4" />
               選択
             </Button>
           )}

@@ -8,7 +8,17 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Check, Circle, MessageSquare, Plus, Trash2, Triangle, X } from "lucide-react";
+import {
+  Check,
+  CheckCheck,
+  Circle,
+  MessageSquare,
+  Plus,
+  SquareMousePointer,
+  Trash2,
+  Triangle,
+  X,
+} from "lucide-react";
 import { useCallback, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -27,6 +37,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -93,6 +104,9 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
   const [showConfirmSelect, setShowConfirmSelect] = useState(false);
   const [confirmOptionId, setConfirmOptionId] = useState<string | null>(null);
   const [deleteOptionId, setDeleteOptionId] = useState<string | null>(null);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedOptionIds, setSelectedOptionIds] = useState<Set<string>>(new Set());
+  const [confirmDeleteSelected, setConfirmDeleteSelected] = useState(false);
 
   const invalidate = useCallback(
     () => queryClient.invalidateQueries({ queryKey: queryKeys.polls.detail(pollId) }),
@@ -125,7 +139,12 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
       setShowAddOption(false);
       setPendingRange(undefined);
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, MSG.POLL_OPTION_ADD_FAILED)),
+    onError: (err) =>
+      toast.error(
+        getApiErrorMessage(err, MSG.POLL_OPTION_ADD_FAILED, {
+          conflict: MSG.POLL_OPTION_DUPLICATE,
+        }),
+      ),
   });
 
   const deleteOptionMutation = useMutation({
@@ -137,6 +156,22 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
       onMutate();
     },
     onError: (err) => toast.error(getApiErrorMessage(err, MSG.POLL_OPTION_DELETE_FAILED)),
+  });
+
+  const deleteSelectedMutation = useMutation({
+    mutationFn: (ids: string[]) =>
+      Promise.all(ids.map((id) => api(`/api/polls/${pollId}/options/${id}`, { method: "DELETE" }))),
+    onSuccess: () => {
+      toast.success(MSG.POLL_OPTION_DELETED);
+      invalidate();
+      onMutate();
+      setSelectionMode(false);
+      setSelectedOptionIds(new Set());
+    },
+    onError: (err) => {
+      invalidate();
+      toast.error(getApiErrorMessage(err, MSG.POLL_OPTION_DELETE_FAILED));
+    },
   });
 
   const confirmMutation = useMutation({
@@ -175,6 +210,15 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
       .filter((r): r is { optionId: string; response: PollResponseValue } => r !== null);
 
     submitResponsesMutation.mutate(newResponses);
+  }
+
+  function toggleOptionSelect(id: string) {
+    setSelectedOptionIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }
 
   function handleAddOption() {
@@ -261,24 +305,86 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
       {/* Response cards */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold">回答状況</h3>
-          {isOwner && isOpen && (
-            <div className="flex gap-1">
-              <Button variant="ghost" size="sm" onClick={() => setShowAddOption(true)}>
-                <Plus className="h-4 w-4" />
-                日程案追加
+          {isOwner && isOpen && selectionMode ? (
+            <div className="flex w-full items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  if (!poll) return;
+                  setSelectedOptionIds(new Set(poll.options.map((o) => o.id)));
+                }}
+                disabled={deleteSelectedMutation.isPending}
+              >
+                <CheckCheck className="h-4 w-4" />
+                全選択
               </Button>
-              <Button variant="ghost" size="sm" onClick={() => setShowConfirmSelect(true)}>
-                <Check className="h-4 w-4" />
-                確定
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedOptionIds(new Set())}
+                disabled={deleteSelectedMutation.isPending}
+              >
+                <X className="h-4 w-4" />
+                選択解除
               </Button>
+              <div className="ml-auto flex items-center gap-2">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => setConfirmDeleteSelected(true)}
+                  disabled={selectedOptionIds.size === 0 || deleteSelectedMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  {deleteSelectedMutation.isPending ? "削除中..." : "削除"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setSelectionMode(false);
+                    setSelectedOptionIds(new Set());
+                  }}
+                  disabled={deleteSelectedMutation.isPending}
+                >
+                  キャンセル
+                </Button>
+              </div>
             </div>
+          ) : (
+            <>
+              <h3 className="text-sm font-semibold">回答状況</h3>
+              {isOwner && isOpen && (
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setSelectionMode(true)}>
+                    <SquareMousePointer className="h-4 w-4" />
+                    選択
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => setShowAddOption(true)}>
+                    <Plus className="h-4 w-4" />
+                    日程案追加
+                  </Button>
+                  <Button size="sm" onClick={() => setShowConfirmSelect(true)}>
+                    <Check className="h-4 w-4" />
+                    確定
+                  </Button>
+                </div>
+              )}
+            </>
           )}
         </div>
         <div
           className="grid divide-y rounded-lg border"
           style={{
-            gridTemplateColumns: `auto ${poll.myParticipantId ? "auto" : ""} 1fr ${isOwner && isOpen ? "auto" : ""}`,
+            gridTemplateColumns: [
+              selectionMode ? "auto" : null,
+              "auto",
+              poll.myParticipantId && !selectionMode ? "auto" : null,
+              "1fr",
+              isOwner && isOpen && !selectionMode ? "auto" : null,
+            ]
+              .filter(Boolean)
+              .join(" "),
           }}
         >
           {poll.options.map((opt) => {
@@ -301,6 +407,13 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
                   isConfirmedOption && "bg-blue-50/50 dark:bg-blue-900/10",
                 )}
               >
+                {selectionMode && (
+                  <Checkbox
+                    checked={selectedOptionIds.has(opt.id)}
+                    onCheckedChange={() => toggleOptionSelect(opt.id)}
+                  />
+                )}
+
                 <div className="flex items-center gap-1 whitespace-nowrap">
                   <span className="text-sm tabular-nums font-medium">
                     {formatDateRangeShort(opt.startDate, opt.endDate)}
@@ -315,7 +428,7 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
                   )}
                 </div>
 
-                {poll.myParticipantId && (
+                {!selectionMode && poll.myParticipantId && (
                   <div className="flex gap-1">
                     {(["ok", "maybe", "ng"] as const).map((value) => {
                       const config = RESPONSE_STYLES[value];
@@ -356,7 +469,7 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
                   })}
                 </div>
 
-                {isOwner && isOpen && (
+                {!selectionMode && isOwner && isOpen && (
                   <Button
                     variant="ghost"
                     size="icon"
@@ -538,6 +651,33 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
               onClick={() => {
                 if (deleteOptionId) deleteOptionMutation.mutate(deleteOptionId);
                 setDeleteOptionId(null);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+              削除する
+            </AlertDialogDestructiveAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete selected options dialog */}
+      <AlertDialog
+        open={confirmDeleteSelected}
+        onOpenChange={(open) => !open && setConfirmDeleteSelected(false)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{selectedOptionIds.size}件の日程案を削除しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              選択した日程案と回答が削除されます。この操作は取り消せません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogDestructiveAction
+              onClick={() => {
+                deleteSelectedMutation.mutate([...selectedOptionIds]);
+                setConfirmDeleteSelected(false);
               }}
             >
               <Trash2 className="h-4 w-4" />

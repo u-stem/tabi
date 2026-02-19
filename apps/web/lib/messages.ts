@@ -218,6 +218,7 @@ export const MSG = {
   POLL_CONFIRM_FAILED: "日程の確定に失敗しました",
   POLL_OPTION_ADDED: "日程案を追加しました",
   POLL_OPTION_ADD_FAILED: "日程案の追加に失敗しました",
+  POLL_OPTION_DUPLICATE: "同じ日程の案がすでに存在します",
   POLL_OPTION_DELETED: "日程案を削除しました",
   POLL_OPTION_DELETE_FAILED: "日程案の削除に失敗しました",
   POLL_PARTICIPANT_ADDED: "参加者を追加しました",

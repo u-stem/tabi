@@ -188,7 +188,7 @@ export function TripToolbar({
               value={statusFilter}
               onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}
             >
-              <SelectTrigger className="h-8 w-[100px] text-xs" aria-label="ステータスで絞り込み">
+              <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

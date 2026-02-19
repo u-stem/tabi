@@ -357,6 +357,20 @@ pollRoutes.post("/:pollId/options", async (c) => {
     return c.json({ error: ERROR_MSG.LIMIT_POLL_OPTIONS }, 409);
   }
 
+  const [duplicate] = await db
+    .select({ id: schedulePollOptions.id })
+    .from(schedulePollOptions)
+    .where(
+      and(
+        eq(schedulePollOptions.pollId, pollId),
+        eq(schedulePollOptions.startDate, parsed.data.startDate),
+        eq(schedulePollOptions.endDate, parsed.data.endDate),
+      ),
+    );
+  if (duplicate) {
+    return c.json({ error: ERROR_MSG.POLL_OPTION_DUPLICATE }, 409);
+  }
+
   const [option] = await db
     .insert(schedulePollOptions)
     .values({

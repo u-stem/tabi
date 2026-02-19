@@ -4,6 +4,7 @@ import type { CandidateResponse } from "@sugara/shared";
 import { ActivityLog } from "@/components/activity-log";
 import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
+import { ExpensePanel } from "@/components/expense-panel";
 import { type RightPanelTab, RightPanelTabs } from "./right-panel-tabs";
 
 export type { RightPanelTab };
@@ -82,6 +83,8 @@ export function RightPanel({
           )
         ) : rightPanelTab === "bookmarks" ? (
           <BookmarkPanel tripId={tripId} disabled={disabled} onCandidateAdded={onRefresh} />
+        ) : rightPanelTab === "expenses" ? (
+          <ExpensePanel tripId={tripId} canEdit={canEdit} />
         ) : (
           <ActivityLog tripId={tripId} />
         )}

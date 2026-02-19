@@ -32,6 +32,10 @@ export const queryKeys = {
     detail: (pollId: string) => [...queryKeys.polls.all, pollId] as const,
     shared: (token: string) => [...queryKeys.polls.all, "shared", token] as const,
   },
+  expenses: {
+    all: ["expenses"] as const,
+    list: (tripId: string) => ["expenses", tripId] as const,
+  },
   shared: {
     trip: (token: string) => ["shared", token] as const,
   },

@@ -3,7 +3,7 @@
 import { TAB_ACTIVE, TAB_INACTIVE } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
-export type RightPanelTab = "candidates" | "activity" | "bookmarks";
+export type RightPanelTab = "candidates" | "activity" | "bookmarks" | "expenses";
 
 export function RightPanelTabs({
   current,
@@ -42,6 +42,18 @@ export function RightPanelTabs({
         )}
       >
         ブックマーク
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={current === "expenses"}
+        onClick={() => onChange("expenses")}
+        className={cn(
+          "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
+          current === "expenses" ? TAB_ACTIVE : TAB_INACTIVE,
+        )}
+      >
+        費用
       </button>
       <button
         type="button"

@@ -106,9 +106,9 @@ export default function TripDetailPage() {
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [candidateOpen, setCandidateOpen] = useState(false);
-  const [rightPanelTab, setRightPanelTab] = useState<"candidates" | "activity" | "bookmarks">(
-    "candidates",
-  );
+  const [rightPanelTab, setRightPanelTab] = useState<
+    "candidates" | "activity" | "bookmarks" | "expenses"
+  >("candidates");
   const [saveToBookmarkIds, setSaveToBookmarkIds] = useState<string[]>([]);
   const [bookmarkPickerOpen, setBookmarkPickerOpen] = useState(false);
   const timelinePanelRef = useRef<HTMLDivElement>(null);
@@ -558,6 +558,7 @@ export default function TripDetailPage() {
           scheduleLimitMessage={scheduleLimitMessage}
           maxEndDayOffset={Math.max(0, trip.days.length - 1)}
           onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+          canEdit={canEdit}
         />
         <RenamePatternDialog patternOps={patternOps} />
         <BatchDeleteDialog selection={selection} />

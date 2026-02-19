@@ -6,6 +6,7 @@ import { Check, Plus, Trash2 } from "lucide-react";
 import { ActivityLog } from "@/components/activity-log";
 import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
+import { ExpensePanel } from "@/components/expense-panel";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -183,6 +184,7 @@ export function MobileCandidateDialog({
   scheduleLimitMessage,
   maxEndDayOffset,
   onSaveToBookmark,
+  canEdit,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -198,6 +200,7 @@ export function MobileCandidateDialog({
   scheduleLimitMessage: string;
   maxEndDayOffset: number;
   onSaveToBookmark?: (scheduleIds: string[]) => void;
+  canEdit: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -232,6 +235,10 @@ export function MobileCandidateDialog({
           ) : rightPanelTab === "bookmarks" ? (
             <div className="p-4">
               <BookmarkPanel tripId={tripId} disabled={disabled} onCandidateAdded={onRefresh} />
+            </div>
+          ) : rightPanelTab === "expenses" ? (
+            <div className="p-4">
+              <ExpensePanel tripId={tripId} canEdit={canEdit} />
             </div>
           ) : (
             <div className="p-4">

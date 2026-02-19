@@ -104,10 +104,10 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
           method: "POST",
           body: JSON.stringify(body),
         });
+        router.push(`/trips/${trip.id}`);
         onOpenChange(false);
         toast.success(MSG.TRIP_CREATED);
         onCreated();
-        router.push(`/trips/${trip.id}`);
       } catch (err) {
         setError(getApiErrorMessage(err, MSG.TRIP_CREATE_FAILED));
       } finally {
@@ -133,10 +133,10 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
             endDate: ed,
           }),
         });
+        router.push(`/trips/${trip.id}`);
         onOpenChange(false);
         toast.success(MSG.TRIP_CREATED);
         onCreated();
-        router.push(`/trips/${trip.id}`);
       } catch (err) {
         setError(getApiErrorMessage(err, MSG.TRIP_CREATE_FAILED));
       } finally {

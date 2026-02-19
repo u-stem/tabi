@@ -202,6 +202,8 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
       toast.success(MSG.POLL_CONFIRMED);
       invalidate();
       await onMutate();
+      // Trip status changes from "scheduling" to "draft", so invalidate the home list
+      await queryClient.invalidateQueries({ queryKey: queryKeys.trips.all });
       onConfirmed?.();
     },
     onError: (err) => toast.error(getApiErrorMessage(err, MSG.POLL_CONFIRM_FAILED)),

@@ -1,6 +1,8 @@
 import { app } from "@sugara/api";
 import { handle } from "hono/vercel";
 
+export const preferredRegion = "hnd1";
+
 const handler = handle(app);
 
 export const GET = handler;

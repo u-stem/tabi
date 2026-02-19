@@ -52,7 +52,23 @@ if (process.env.NODE_ENV === "production") {
 const nextConfig: NextConfig = {
   transpilePackages: ["@sugara/api", "@sugara/shared"],
   experimental: {
-    optimizePackageImports: ["lucide-react", "date-fns"],
+    optimizePackageImports: [
+      "lucide-react",
+      "date-fns",
+      "@radix-ui/react-alert-dialog",
+      "@radix-ui/react-avatar",
+      "@radix-ui/react-checkbox",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-dropdown-menu",
+      "@radix-ui/react-label",
+      "@radix-ui/react-popover",
+      "@radix-ui/react-select",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-tooltip",
+      "@tanstack/react-query",
+      "@supabase/supabase-js",
+      "react-day-picker",
+    ],
   },
   headers: async () => [
     {

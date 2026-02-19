@@ -84,7 +84,7 @@ type PollTabProps = {
   pollId: string;
   isOwner: boolean;
   canEdit: boolean;
-  onMutate: () => void;
+  onMutate: () => void | Promise<void>;
   onConfirmed?: () => void;
 };
 
@@ -198,10 +198,10 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
         method: "POST",
         body: JSON.stringify({ optionId }),
       }),
-    onSuccess: () => {
+    onSuccess: async () => {
       toast.success(MSG.POLL_CONFIRMED);
       invalidate();
-      onMutate();
+      await onMutate();
       onConfirmed?.();
     },
     onError: (err) => toast.error(getApiErrorMessage(err, MSG.POLL_CONFIRM_FAILED)),

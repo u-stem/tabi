@@ -3,7 +3,7 @@
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Plus, X } from "lucide-react";
-import { useRouter } from "next/navigation";
+
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -36,7 +36,6 @@ type CreateTripDialogProps = {
 };
 
 export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDialogProps) {
-  const router = useRouter();
   const [dateMode, setDateMode] = useState<DateMode>("direct");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -100,11 +99,10 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
       if (destination) body.destination = destination;
 
       try {
-        const trip = await api<{ id: string }>("/api/trips", {
+        await api("/api/trips", {
           method: "POST",
           body: JSON.stringify(body),
         });
-        router.push(`/trips/${trip.id}`);
         onOpenChange(false);
         toast.success(MSG.TRIP_CREATED);
         onCreated();
@@ -124,7 +122,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
 
       setLoading(true);
       try {
-        const trip = await api<{ id: string }>("/api/trips", {
+        await api<{ id: string }>("/api/trips", {
           method: "POST",
           body: JSON.stringify({
             title,
@@ -133,7 +131,6 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
             endDate: ed,
           }),
         });
-        router.push(`/trips/${trip.id}`);
         onOpenChange(false);
         toast.success(MSG.TRIP_CREATED);
         onCreated();

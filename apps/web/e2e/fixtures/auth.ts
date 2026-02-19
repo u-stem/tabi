@@ -89,6 +89,10 @@ export async function createTripViaUI(
   await firstGrid.getByRole("gridcell", { name: /12/ }).first().click();
 
   await page.getByRole("button", { name: "作成" }).click();
+  await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5000 });
+
+  // Trip creation no longer navigates to detail; click the trip card to navigate
+  await page.getByRole("link", { name: new RegExp(options.title) }).first().click();
   await expect(page).toHaveURL(/\/trips\/[a-f0-9-]+/, { timeout: 10000 });
 
   return page.url();

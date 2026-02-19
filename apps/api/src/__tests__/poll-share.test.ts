@@ -78,9 +78,7 @@ describe("Poll share routes", () => {
           where: vi.fn().mockReturnValue({
             returning: vi
               .fn()
-              .mockResolvedValue([
-                { shareToken: "new-token", shareTokenExpiresAt: newExpiresAt },
-              ]),
+              .mockResolvedValue([{ shareToken: "new-token", shareTokenExpiresAt: newExpiresAt }]),
           }),
         }),
       });

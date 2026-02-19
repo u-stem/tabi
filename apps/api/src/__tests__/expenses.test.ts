@@ -79,14 +79,6 @@ function mockCountQuery(count: number) {
   });
 }
 
-function mockInsertReturning(value: unknown) {
-  mockDbInsert.mockReturnValue({
-    values: vi.fn().mockReturnValue({
-      returning: vi.fn().mockResolvedValueOnce([value]),
-    }),
-  });
-}
-
 describe("Expense routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();

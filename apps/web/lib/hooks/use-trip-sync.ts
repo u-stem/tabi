@@ -1,7 +1,6 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
-import { MSG } from "../messages";
 import { supabase } from "../supabase";
 
 export type PresenceUser = {
@@ -14,9 +13,6 @@ export type PresenceUser = {
 
 const SYNC_DEBOUNCE_MS = 300;
 const SYNC_JITTER_MS = 200;
-const RETRY_MAX = 5;
-const RETRY_BASE_MS = 1000;
-const RETRY_MAX_MS = 10_000;
 
 export function useTripSync(
   tripId: string,
@@ -32,8 +28,6 @@ export function useTripSync(
   const [isConnected, setIsConnected] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const retryCount = useRef(0);
   const onSyncRef = useRef(onSync);
   onSyncRef.current = onSync;
   const userRef = useRef(user);
@@ -53,7 +47,6 @@ export function useTripSync(
 
   useEffect(() => {
     function connect() {
-      // Cleanup existing channel and pending retry to prevent duplicates
       disconnect();
       const channel = supabase.channel(`trip:${tripId}`);
 
@@ -84,7 +77,6 @@ export function useTripSync(
         .subscribe((status) => {
           setIsConnected(status === "SUBSCRIBED");
           if (status === "SUBSCRIBED") {
-            retryCount.current = 0;
             toast.dismiss("realtime-error");
             const u = userRef.current;
             const lp = lastPresenceRef.current;
@@ -92,23 +84,14 @@ export function useTripSync(
               channel.track({ userId: u.id, name: u.name, image: u.image, ...lp });
             }
           }
+          // SDK's rejoinTimer handles TIMED_OUT / CHANNEL_ERROR automatically
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
-            if (retryCount.current < RETRY_MAX) {
-              console.debug(
-                `[Realtime] Retry ${retryCount.current + 1}/${RETRY_MAX} after ${status}`,
-              );
-              const base = Math.min(RETRY_MAX_MS, RETRY_BASE_MS * 2 ** retryCount.current);
-              // Equal Jitter: delay = base * [0.5, 1.0)
-              const delay = base * (0.5 + Math.random() * 0.5);
-              retryCount.current += 1;
-              retryTimer.current = setTimeout(() => {
-                retryTimer.current = null;
-                connect();
-              }, delay);
-            } else {
-              console.error(`[Realtime] All retries exhausted after ${status}`);
-              toast.error(MSG.REALTIME_CONNECTION_FAILED, { id: "realtime-error" });
-            }
+            console.debug(`[Realtime] ${status} — SDK will auto-rejoin`);
+          }
+          // CLOSED means SDK removed the channel; manual recovery needed
+          if (status === "CLOSED" && channelRef.current === channel) {
+            console.warn("[Realtime] Channel closed, recreating");
+            connect();
           }
         });
 
@@ -116,30 +99,24 @@ export function useTripSync(
     }
 
     function disconnect() {
-      if (retryTimer.current) {
-        clearTimeout(retryTimer.current);
-        retryTimer.current = null;
-      }
       const channel = channelRef.current;
+      // Clear ref before removeChannel to prevent re-entrant CLOSED handling
+      channelRef.current = null;
       if (channel) {
         supabase.removeChannel(channel);
       }
-      channelRef.current = null;
       setIsConnected(false);
     }
 
+    // worker: true keeps heartbeat alive in background tabs,
+    // so we only refetch data on visibility restore (events may have been missed)
     function handleVisibilityChange() {
-      if (document.hidden) {
-        disconnect();
-      } else {
-        retryCount.current = 0;
-        connect();
+      if (document.visibilityState === "visible") {
         onSyncRef.current();
       }
     }
 
     function handleOnline() {
-      retryCount.current = 0;
       connect();
       onSyncRef.current();
     }

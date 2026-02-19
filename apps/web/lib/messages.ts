@@ -171,10 +171,6 @@ export const MSG = {
   ACTIVITY_LOG_FETCH_FAILED: "履歴の取得に失敗しました",
   ACTIVITY_LOG_EMPTY: "まだ履歴がありません",
 
-  // Realtime
-  REALTIME_CONNECTION_FAILED:
-    "リアルタイム同期に接続できませんでした。ページを再読み込みしてください。",
-
   // Conflict
   CONFLICT: "他のユーザーが先に更新しました。画面を更新してください。",
   CONFLICT_STALE: "他のユーザーが変更を行いました。最新のデータを読み込みます。",

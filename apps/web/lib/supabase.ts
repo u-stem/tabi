@@ -7,4 +7,8 @@ if (!supabaseAnonKey && process.env.NODE_ENV === "production") {
   throw new Error("Missing required environment variable: NEXT_PUBLIC_SUPABASE_ANON_KEY");
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey || "");
+export const supabase = createClient(supabaseUrl, supabaseAnonKey || "", {
+  realtime: {
+    worker: true,
+  },
+});

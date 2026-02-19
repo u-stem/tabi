@@ -128,7 +128,7 @@ export const trips = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     title: varchar("title", { length: 100 }).notNull(),
-    destination: varchar("destination", { length: 100 }).notNull(),
+    destination: varchar("destination", { length: 100 }),
     startDate: date("start_date"),
     endDate: date("end_date"),
     status: tripStatusEnum("status").notNull().default("draft"),
@@ -357,11 +357,12 @@ export const schedulePolls = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: "cascade" }),
     title: varchar("title", { length: 100 }).notNull(),
-    destination: varchar("destination", { length: 100 }).notNull(),
+    destination: varchar("destination", { length: 100 }),
     note: text("note"),
     status: pollStatusEnum("status").notNull().default("open"),
     deadline: timestamp("deadline", { withTimezone: true }),
     shareToken: varchar("share_token", { length: 64 }).unique(),
+    shareTokenExpiresAt: timestamp("share_token_expires_at", { withTimezone: true }),
     confirmedOptionId: uuid("confirmed_option_id"),
     tripId: uuid("trip_id").references(() => trips.id, { onDelete: "set null" }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -394,14 +395,13 @@ export const schedulePollParticipants = pgTable(
     pollId: uuid("poll_id")
       .notNull()
       .references(() => schedulePolls.id, { onDelete: "cascade" }),
-    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
-    guestName: varchar("guest_name", { length: 50 }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
   },
   (table) => [
     index("schedule_poll_participants_poll_id_idx").on(table.pollId),
-    uniqueIndex("schedule_poll_participants_poll_user_unique")
-      .on(table.pollId, table.userId)
-      .where(sql`${table.userId} IS NOT NULL`),
+    uniqueIndex("schedule_poll_participants_poll_user_unique").on(table.pollId, table.userId),
   ],
 ).enableRLS();
 

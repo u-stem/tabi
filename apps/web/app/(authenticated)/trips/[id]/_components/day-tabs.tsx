@@ -30,11 +30,21 @@ export function DayTabs({
             aria-selected={selectedDay === -1}
             onClick={() => onSelectDay(-1)}
             className={cn(
-              "shrink-0 px-4 py-2 text-sm font-medium transition-colors",
+              "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
               selectedDay === -1 ? TAB_ACTIVE : TAB_INACTIVE,
             )}
           >
             日程調整
+            {otherPresence
+              .filter((u) => u.dayId === "poll")
+              .slice(0, 3)
+              .map((u, i) => (
+                <span
+                  key={u.userId}
+                  className={cn("absolute top-1 h-1.5 w-1.5 rounded-full", hashColor(u.userId))}
+                  style={{ right: `${4 + i * 6}px` }}
+                />
+              ))}
           </button>
         )}
         {days.map((day, index) => (

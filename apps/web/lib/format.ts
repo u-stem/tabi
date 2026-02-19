@@ -1,4 +1,6 @@
 import type { ScheduleCategory } from "@sugara/shared";
+import { format, isValid, parse } from "date-fns";
+import { ja } from "date-fns/locale";
 import { MSG } from "@/lib/messages";
 
 export function toDateString(date: Date): string {
@@ -118,6 +120,19 @@ export function validateTimeRange(
 
 export function stripProtocol(url: string): string {
   return url.replace(/^https?:\/\//, "");
+}
+
+/** Format "yyyy-MM-dd" to "M/d (E)" with Japanese locale */
+export function formatDateWithDay(dateStr: string): string {
+  const d = parse(dateStr, "yyyy-MM-dd", new Date());
+  if (!isValid(d)) return dateStr;
+  return format(d, "M/d (E)", { locale: ja });
+}
+
+/** Format a date range like "2/7 (土) - 2/8 (日)" or single date "2/7 (土)" */
+export function formatDateRangeShort(startDate: string, endDate: string): string {
+  if (startDate === endDate) return formatDateWithDay(startDate);
+  return `${formatDateWithDay(startDate)} - ${formatDateWithDay(endDate)}`;
 }
 
 /** Defense-in-depth: only allow http/https URLs in href attributes */

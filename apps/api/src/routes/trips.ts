@@ -72,7 +72,7 @@ tripRoutes.post("/", async (c) => {
       return c.json({ error: parsed.error.flatten() }, 400);
     }
 
-    const { title, destination, pollOptions, pollNote } = parsed.data;
+    const { title, destination = null, pollOptions } = parsed.data;
 
     const trip = await db.transaction(async (tx) => {
       const [tripCount] = await tx
@@ -108,7 +108,7 @@ tripRoutes.post("/", async (c) => {
           tripId: created.id,
           title,
           destination,
-          note: pollNote ?? null,
+          note: null,
         })
         .returning();
 
@@ -141,6 +141,13 @@ tripRoutes.post("/", async (c) => {
       entityName: trip.title,
     });
 
+    logActivity({
+      tripId: trip.id,
+      userId: user.id,
+      action: "created",
+      entityType: "poll",
+    });
+
     return c.json(trip, 201);
   }
 
@@ -151,7 +158,7 @@ tripRoutes.post("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const { title, destination, startDate, endDate } = parsed.data;
+  const { title, destination = null, startDate, endDate } = parsed.data;
 
   const trip = await db.transaction(async (tx) => {
     const [tripCount] = await tx

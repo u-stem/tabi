@@ -9,7 +9,7 @@ import {
   submitPollResponsesSchema,
   updatePollSchema,
 } from "@sugara/shared";
-import { and, count, desc, eq, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import {
@@ -21,8 +21,9 @@ import {
   trips,
   users,
 } from "../db/schema";
+import { formatShortDateRange, logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
-import { findPollAsOwner, findPollAsParticipant } from "../lib/poll-access";
+import { findPollAsEditor, findPollAsOwner, findPollAsParticipant } from "../lib/poll-access";
 import { createInitialTripDays } from "../lib/trip-days";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -78,7 +79,7 @@ pollRoutes.get("/", async (c) => {
       count: count(),
     })
     .from(schedulePollParticipants)
-    .where(sql`${schedulePollParticipants.pollId} IN ${allPollIds}`)
+    .where(inArray(schedulePollParticipants.pollId, allPollIds))
     .groupBy(schedulePollParticipants.pollId);
 
   const respondedCounts = await db
@@ -91,7 +92,7 @@ pollRoutes.get("/", async (c) => {
       schedulePollResponses,
       eq(schedulePollParticipants.id, schedulePollResponses.participantId),
     )
-    .where(sql`${schedulePollParticipants.pollId} IN ${allPollIds}`)
+    .where(inArray(schedulePollParticipants.pollId, allPollIds))
     .groupBy(schedulePollParticipants.pollId);
 
   const participantMap = new Map(participantCounts.map((r) => [r.pollId, r.count]));
@@ -123,7 +124,7 @@ pollRoutes.post("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const { title, destination, note, deadline, options } = parsed.data;
+  const { title, destination = null, note, deadline, options } = parsed.data;
 
   const result = await db.transaction(async (tx) => {
     const [pollCount] = await tx
@@ -241,8 +242,8 @@ pollRoutes.get("/:pollId", async (c) => {
     participants: participants.map((p) => ({
       id: p.id,
       userId: p.userId,
-      name: p.user?.name ?? p.guestName ?? "Guest",
-      image: p.user?.image ?? null,
+      name: p.user!.name,
+      image: p.user!.image,
       responses: p.responses.map((r) => ({
         optionId: r.optionId,
         response: r.response,
@@ -255,7 +256,7 @@ pollRoutes.get("/:pollId", async (c) => {
   });
 });
 
-// Update poll (owner only, open only)
+// Update poll (owner: all fields, editor: note only, open only)
 pollRoutes.patch("/:pollId", async (c) => {
   const user = c.get("user");
   const pollId = c.req.param("pollId");
@@ -266,20 +267,23 @@ pollRoutes.patch("/:pollId", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const poll = await findPollAsOwner(pollId, user.id);
-  if (!poll) {
+  const result = await findPollAsEditor(pollId, user.id);
+  if (!result) {
     return c.json({ error: ERROR_MSG.POLL_NOT_FOUND }, 404);
   }
-  if (poll.status !== "open") {
+  if (result.poll.status !== "open") {
     return c.json({ error: ERROR_MSG.POLL_NOT_OPEN }, 400);
   }
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
-  if (parsed.data.title !== undefined) updates.title = parsed.data.title;
-  if (parsed.data.destination !== undefined) updates.destination = parsed.data.destination;
   if (parsed.data.note !== undefined) updates.note = parsed.data.note;
-  if (parsed.data.deadline !== undefined) {
-    updates.deadline = parsed.data.deadline ? new Date(parsed.data.deadline) : null;
+  // Owner-only fields
+  if (result.isOwner) {
+    if (parsed.data.title !== undefined) updates.title = parsed.data.title;
+    if (parsed.data.destination !== undefined) updates.destination = parsed.data.destination;
+    if (parsed.data.deadline !== undefined) {
+      updates.deadline = parsed.data.deadline ? new Date(parsed.data.deadline) : null;
+    }
   }
 
   const [updated] = await db
@@ -289,8 +293,15 @@ pollRoutes.patch("/:pollId", async (c) => {
     .returning();
 
   return c.json({
-    ...updated,
+    id: updated.id,
+    ownerId: updated.ownerId,
+    title: updated.title,
+    destination: updated.destination,
+    note: updated.note,
+    status: updated.status,
     deadline: updated.deadline?.toISOString() ?? null,
+    confirmedOptionId: updated.confirmedOptionId,
+    tripId: updated.tripId,
     createdAt: updated.createdAt.toISOString(),
     updatedAt: updated.updatedAt.toISOString(),
   });
@@ -358,6 +369,16 @@ pollRoutes.post("/:pollId/options", async (c) => {
 
   await db.update(schedulePolls).set({ updatedAt: new Date() }).where(eq(schedulePolls.id, pollId));
 
+  if (poll.tripId) {
+    logActivity({
+      tripId: poll.tripId,
+      userId: user.id,
+      action: "option_added",
+      entityType: "poll",
+      entityName: formatShortDateRange(option.startDate, option.endDate),
+    });
+  }
+
   return c.json(
     {
       id: option.id,
@@ -386,6 +407,16 @@ pollRoutes.delete("/:pollId/options/:optionId", async (c) => {
   if (deleted.length === 0) return c.json({ error: ERROR_MSG.POLL_OPTION_NOT_FOUND }, 404);
 
   await db.update(schedulePolls).set({ updatedAt: new Date() }).where(eq(schedulePolls.id, pollId));
+
+  if (poll.tripId) {
+    logActivity({
+      tripId: poll.tripId,
+      userId: user.id,
+      action: "option_deleted",
+      entityType: "poll",
+      entityName: formatShortDateRange(deleted[0].startDate, deleted[0].endDate),
+    });
+  }
 
   return c.json({ ok: true });
 });
@@ -453,16 +484,18 @@ pollRoutes.delete("/:pollId/participants/:participantId", async (c) => {
   const poll = await findPollAsOwner(pollId, user.id);
   if (!poll) return c.json({ error: ERROR_MSG.POLL_NOT_FOUND }, 404);
 
-  const deleted = await db
-    .delete(schedulePollParticipants)
-    .where(
-      and(
-        eq(schedulePollParticipants.id, participantId),
-        eq(schedulePollParticipants.pollId, pollId),
-      ),
-    )
-    .returning();
-  if (deleted.length === 0) return c.json({ error: ERROR_MSG.POLL_PARTICIPANT_NOT_FOUND }, 404);
+  const target = await db.query.schedulePollParticipants.findFirst({
+    where: and(
+      eq(schedulePollParticipants.id, participantId),
+      eq(schedulePollParticipants.pollId, pollId),
+    ),
+  });
+  if (!target) return c.json({ error: ERROR_MSG.POLL_PARTICIPANT_NOT_FOUND }, 404);
+  if (target.userId === user.id) {
+    return c.json({ error: ERROR_MSG.POLL_CANNOT_REMOVE_OWNER }, 400);
+  }
+
+  await db.delete(schedulePollParticipants).where(eq(schedulePollParticipants.id, participantId));
 
   await db.update(schedulePolls).set({ updatedAt: new Date() }).where(eq(schedulePolls.id, pollId));
 
@@ -493,6 +526,17 @@ pollRoutes.put("/:pollId/responses", async (c) => {
   });
   if (!participant) return c.json({ error: ERROR_MSG.POLL_PARTICIPANT_NOT_FOUND }, 404);
 
+  // Validate all optionIds belong to this poll
+  if (parsed.data.responses.length > 0) {
+    const validOptionIds = await db.query.schedulePollOptions.findMany({
+      where: eq(schedulePollOptions.pollId, pollId),
+      columns: { id: true },
+    });
+    const validIds = new Set(validOptionIds.map((o) => o.id));
+    const invalid = parsed.data.responses.some((r) => !validIds.has(r.optionId));
+    if (invalid) return c.json({ error: ERROR_MSG.POLL_INVALID_OPTION }, 400);
+  }
+
   await db.transaction(async (tx) => {
     await tx
       .delete(schedulePollResponses)
@@ -514,7 +558,17 @@ pollRoutes.put("/:pollId/responses", async (c) => {
   return c.json({ ok: true });
 });
 
-// Generate share token (owner only)
+const SHARE_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+
+function generateShareToken() {
+  return crypto.randomUUID().replace(/-/g, "");
+}
+
+function shareExpiresAt() {
+  return new Date(Date.now() + SHARE_LINK_TTL_MS);
+}
+
+// Generate or get share link (owner only)
 pollRoutes.post("/:pollId/share", async (c) => {
   const user = c.get("user");
   const pollId = c.req.param("pollId");
@@ -522,26 +576,82 @@ pollRoutes.post("/:pollId/share", async (c) => {
   const poll = await findPollAsOwner(pollId, user.id);
   if (!poll) return c.json({ error: ERROR_MSG.POLL_NOT_FOUND }, 404);
 
-  if (poll.shareToken) {
-    return c.json({ shareToken: poll.shareToken });
+  const isExpired =
+    poll.shareToken && (!poll.shareTokenExpiresAt || poll.shareTokenExpiresAt < new Date());
+
+  if (poll.shareToken && !isExpired) {
+    return c.json({
+      shareToken: poll.shareToken,
+      shareTokenExpiresAt: poll.shareTokenExpiresAt!.toISOString(),
+    });
   }
 
-  const token = crypto.randomUUID().replace(/-/g, "");
+  // Generate new token (or replace expired / legacy one)
+  const expiresAt = shareExpiresAt();
+  const whereCondition = isExpired
+    ? eq(schedulePolls.id, pollId)
+    : and(eq(schedulePolls.id, pollId), isNull(schedulePolls.shareToken));
   const [updated] = await db
     .update(schedulePolls)
-    .set({ shareToken: token, updatedAt: new Date() })
-    .where(and(eq(schedulePolls.id, pollId), sql`${schedulePolls.shareToken} IS NULL`))
-    .returning({ shareToken: schedulePolls.shareToken });
+    .set({
+      shareToken: generateShareToken(),
+      shareTokenExpiresAt: expiresAt,
+      updatedAt: new Date(),
+    })
+    .where(whereCondition)
+    .returning({
+      shareToken: schedulePolls.shareToken,
+      shareTokenExpiresAt: schedulePolls.shareTokenExpiresAt,
+    });
 
   if (!updated) {
     const refreshed = await db.query.schedulePolls.findFirst({
       where: eq(schedulePolls.id, pollId),
-      columns: { shareToken: true },
+      columns: { shareToken: true, shareTokenExpiresAt: true },
     });
-    return c.json({ shareToken: refreshed?.shareToken });
+    if (!refreshed?.shareToken) {
+      return c.json({ error: ERROR_MSG.POLL_NOT_FOUND }, 404);
+    }
+    return c.json({
+      shareToken: refreshed.shareToken,
+      shareTokenExpiresAt: refreshed.shareTokenExpiresAt?.toISOString() ?? null,
+    });
   }
 
-  return c.json({ shareToken: updated.shareToken });
+  return c.json({
+    shareToken: updated.shareToken,
+    shareTokenExpiresAt: updated.shareTokenExpiresAt?.toISOString() ?? null,
+  });
+});
+
+// Regenerate share link (owner only)
+pollRoutes.put("/:pollId/share", async (c) => {
+  const user = c.get("user");
+  const pollId = c.req.param("pollId");
+
+  const poll = await findPollAsOwner(pollId, user.id);
+  if (!poll) return c.json({ error: ERROR_MSG.POLL_NOT_FOUND }, 404);
+
+  const expiresAt = shareExpiresAt();
+  const [updated] = await db
+    .update(schedulePolls)
+    .set({
+      shareToken: generateShareToken(),
+      shareTokenExpiresAt: expiresAt,
+      updatedAt: new Date(),
+    })
+    .where(eq(schedulePolls.id, pollId))
+    .returning({
+      shareToken: schedulePolls.shareToken,
+      shareTokenExpiresAt: schedulePolls.shareTokenExpiresAt,
+    });
+
+  if (!updated) return c.json({ error: ERROR_MSG.POLL_NOT_FOUND }, 404);
+
+  return c.json({
+    shareToken: updated.shareToken,
+    shareTokenExpiresAt: updated.shareTokenExpiresAt?.toISOString() ?? null,
+  });
 });
 
 // Confirm poll and create trip (owner only)
@@ -591,14 +701,12 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
       });
       const existingUserIds = new Set(existingMembers.map((m) => m.userId));
 
-      const newMembers = participants.filter(
-        (p) => p.userId !== null && !existingUserIds.has(p.userId),
-      );
+      const newMembers = participants.filter((p) => !existingUserIds.has(p.userId));
       if (newMembers.length > 0) {
         await tx.insert(tripMembers).values(
           newMembers.map((p) => ({
             tripId: tripId!,
-            userId: p.userId!,
+            userId: p.userId,
             role: "editor" as const,
           })),
         );
@@ -622,15 +730,17 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
       const participants = await tx.query.schedulePollParticipants.findMany({
         where: eq(schedulePollParticipants.pollId, pollId),
       });
-      const registeredParticipants = participants.filter((p) => p.userId !== null);
-      if (registeredParticipants.length > 0) {
-        await tx.insert(tripMembers).values(
-          registeredParticipants.map((p) => ({
-            tripId: trip.id,
-            userId: p.userId!,
-            role: p.userId === user.id ? ("owner" as const) : ("editor" as const),
-          })),
-        );
+      if (participants.length > 0) {
+        await tx
+          .insert(tripMembers)
+          .values(
+            participants.map((p) => ({
+              tripId: trip.id,
+              userId: p.userId,
+              role: p.userId === user.id ? ("owner" as const) : ("editor" as const),
+            })),
+          )
+          .onConflictDoNothing();
       }
     }
 
@@ -648,9 +758,26 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
     return updatedPoll;
   });
 
+  if (result.tripId) {
+    logActivity({
+      tripId: result.tripId,
+      userId: user.id,
+      action: "confirmed",
+      entityType: "poll",
+      entityName: formatShortDateRange(option.startDate, option.endDate),
+    });
+  }
+
   return c.json({
-    ...result,
+    id: result.id,
+    ownerId: result.ownerId,
+    title: result.title,
+    destination: result.destination,
+    note: result.note,
+    status: result.status,
     deadline: result.deadline?.toISOString() ?? null,
+    confirmedOptionId: result.confirmedOptionId,
+    tripId: result.tripId,
     createdAt: result.createdAt.toISOString(),
     updatedAt: result.updatedAt.toISOString(),
   });

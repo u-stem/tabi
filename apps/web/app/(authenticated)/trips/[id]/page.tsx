@@ -173,10 +173,13 @@ export default function TripDetailPage() {
   // Stable ref for canEdit to avoid re-registering hotkeys on every trip change
   const canEditRef = useRef(false);
 
-  const invalidateTrip = useCallback(
-    () => queryClient.invalidateQueries({ queryKey: queryKeys.trips.detail(tripId) }),
-    [queryClient, tripId],
-  );
+  const pollId = trip?.poll?.id;
+  const invalidateTrip = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: queryKeys.trips.detail(tripId) });
+    if (pollId) {
+      await queryClient.invalidateQueries({ queryKey: queryKeys.polls.detail(pollId) });
+    }
+  }, [queryClient, tripId, pollId]);
 
   const syncUser = useMemo(
     () =>
@@ -238,8 +241,10 @@ export default function TripDetailPage() {
   useEffect(() => {
     if (currentDay) {
       updatePresence(currentDay.id, currentPattern?.id ?? null);
+    } else if (selectedDay === -1) {
+      updatePresence("poll", null);
     }
-  }, [currentDay?.id, currentPattern?.id, updatePresence]);
+  }, [currentDay?.id, currentPattern?.id, selectedDay, updatePresence]);
 
   useAutoStatusTransition({ trip, tripId, now, onMutate });
 
@@ -248,7 +253,7 @@ export default function TripDetailPage() {
     if (trip?.status === "scheduling" && trip.poll) {
       setSelectedDay(-1);
     }
-  }, [trip?.status, trip?.poll]);
+  }, [trip?.status, trip?.poll?.id]);
 
   // Stable references to avoid infinite re-render when values are null
   const dndSchedules = useMemo(() => currentPattern?.schedules ?? [], [currentPattern?.schedules]);
@@ -395,8 +400,8 @@ export default function TripDetailPage() {
           tripId={tripId}
           title={trip.title}
           destination={trip.destination}
-          startDate={trip.startDate ?? ""}
-          endDate={trip.endDate ?? ""}
+          startDate={trip.startDate}
+          endDate={trip.endDate}
           open={editOpen}
           onOpenChange={setEditOpen}
           onUpdate={onMutate}
@@ -423,8 +428,9 @@ export default function TripDetailPage() {
                 <div className="min-h-0 overflow-y-auto">
                   <PollTab
                     pollId={trip.poll.id}
-                    tripId={tripId}
                     isOwner={isOwnerRole(trip.role)}
+                    canEdit={canEdit}
+                    onMutate={onMutate}
                     onConfirmed={() => setSelectedDay(0)}
                   />
                 </div>
@@ -487,28 +493,27 @@ export default function TripDetailPage() {
               )}
             </div>
 
-            {/* Right panel - only when days exist */}
-            {currentDay && currentPattern && (
-              <RightPanel
-                tripId={tripId}
-                rightPanelTab={rightPanelTab}
-                setRightPanelTab={setRightPanelTab}
-                candidates={dnd.localCandidates}
-                currentDayId={currentDay.id}
-                currentPatternId={currentPattern.id}
-                onRefresh={onMutate}
-                disabled={!online || !canEdit}
-                canEdit={canEdit}
-                online={online}
-                addCandidateOpen={addCandidateOpen}
-                onAddCandidateOpenChange={setAddCandidateOpen}
-                scheduleLimitReached={scheduleLimitReached}
-                scheduleLimitMessage={scheduleLimitMessage}
-                overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
-                maxEndDayOffset={Math.max(0, trip.days.length - 1)}
-                onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
-              />
-            )}
+            {/* Right panel */}
+            <RightPanel
+              tripId={tripId}
+              rightPanelTab={rightPanelTab}
+              setRightPanelTab={setRightPanelTab}
+              candidates={dnd.localCandidates}
+              currentDayId={currentDay?.id ?? null}
+              currentPatternId={currentPattern?.id ?? null}
+              onRefresh={onMutate}
+              disabled={!online || !canEdit}
+              canEdit={canEdit}
+              online={online}
+              addCandidateOpen={addCandidateOpen}
+              onAddCandidateOpenChange={setAddCandidateOpen}
+              scheduleLimitReached={scheduleLimitReached}
+              scheduleLimitMessage={scheduleLimitMessage}
+              overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
+              hasDays={trip.days.length > 0}
+              maxEndDayOffset={Math.max(0, trip.days.length - 1)}
+              onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+            />
           </div>
           <DragOverlay>
             {dnd.activeDragItem &&

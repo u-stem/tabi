@@ -1,16 +1,21 @@
 "use client";
 
-import type { PollDetailResponse, PollOptionResponse, PollResponseValue } from "@sugara/shared";
+import {
+  POLL_NOTE_MAX_LENGTH,
+  type PollDetailResponse,
+  type PollResponseValue,
+} from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { format, isValid, parse } from "date-fns";
+import { format } from "date-fns";
 import { ja } from "date-fns/locale";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, Circle, MessageSquare, Plus, Trash2, Triangle, X } from "lucide-react";
 import { useCallback, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
 import { CalendarNav, END_YEAR, START_YEAR } from "@/components/calendar-nav";
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -29,57 +34,35 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { formatDateRangeShort } from "@/lib/format";
+import { usePollMemo } from "@/lib/hooks/use-poll-memo";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
+import { cn } from "@/lib/utils";
 
-function formatDateLabel(dateStr: string): string {
-  const d = parse(dateStr, "yyyy-MM-dd", new Date());
-  if (!isValid(d)) return dateStr;
-  return format(d, "M/d (E)", { locale: ja });
-}
-
-function formatRange(opt: PollOptionResponse): string {
-  if (opt.startDate === opt.endDate) return formatDateLabel(opt.startDate);
-  return `${formatDateLabel(opt.startDate)} - ${formatDateLabel(opt.endDate)}`;
-}
-
-const STATUS_CONFIG = {
-  open: {
-    label: "日程調整中",
-    className:
-      "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200 border-orange-300 dark:border-orange-700",
-  },
-  confirmed: {
-    label: "確定済み",
-    className:
-      "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 border-blue-200 dark:border-blue-800",
-  },
-  closed: {
-    label: "終了",
-    className:
-      "bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400 border-gray-200 dark:border-gray-800",
-  },
+const RESPONSE_ICON_COMPONENTS = {
+  ok: Circle,
+  maybe: Triangle,
+  ng: X,
 } as const;
 
-const RESPONSE_CONFIG: Record<
+const RESPONSE_STYLES: Record<
   PollResponseValue,
-  { symbol: string; activeClassName: string; countClassName: string }
+  { activeClassName: string; countClassName: string }
 > = {
   ok: {
-    symbol: "\u25CB",
     activeClassName:
       "border-green-400 bg-green-100 text-green-700 dark:border-green-700 dark:bg-green-900/30 dark:text-green-400",
     countClassName: "text-green-600 dark:text-green-400",
   },
   maybe: {
-    symbol: "\u25B3",
     activeClassName:
       "border-yellow-400 bg-yellow-100 text-yellow-700 dark:border-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
     countClassName: "text-yellow-600 dark:text-yellow-400",
   },
   ng: {
-    symbol: "\u00D7",
     activeClassName:
       "border-red-400 bg-red-100 text-red-700 dark:border-red-700 dark:bg-red-900/30 dark:text-red-400",
     countClassName: "text-red-600 dark:text-red-400",
@@ -88,18 +71,21 @@ const RESPONSE_CONFIG: Record<
 
 type PollTabProps = {
   pollId: string;
-  tripId: string;
   isOwner: boolean;
+  canEdit: boolean;
+  onMutate: () => void;
   onConfirmed?: () => void;
 };
 
-export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) {
+export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: PollTabProps) {
   const queryClient = useQueryClient();
 
   const { data: poll, isLoading } = useQuery({
     queryKey: queryKeys.polls.detail(pollId),
     queryFn: () => api<PollDetailResponse>(`/api/polls/${pollId}`),
   });
+
+  const memo = usePollMemo({ pollId, onDone: onMutate });
 
   const [showAddOption, setShowAddOption] = useState(false);
   const [pendingRange, setPendingRange] = useState<DateRange | undefined>();
@@ -119,7 +105,10 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
         method: "PUT",
         body: JSON.stringify({ responses }),
       }),
-    onSuccess: () => invalidate(),
+    onSuccess: () => {
+      invalidate();
+      onMutate();
+    },
     onError: (err) => toast.error(getApiErrorMessage(err, MSG.POLL_RESPONSE_SUBMIT_FAILED)),
   });
 
@@ -132,6 +121,7 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
     onSuccess: () => {
       toast.success(MSG.POLL_OPTION_ADDED);
       invalidate();
+      onMutate();
       setShowAddOption(false);
       setPendingRange(undefined);
     },
@@ -144,6 +134,7 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
     onSuccess: () => {
       toast.success(MSG.POLL_OPTION_DELETED);
       invalidate();
+      onMutate();
     },
     onError: (err) => toast.error(getApiErrorMessage(err, MSG.POLL_OPTION_DELETE_FAILED)),
   });
@@ -157,7 +148,7 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
     onSuccess: () => {
       toast.success(MSG.POLL_CONFIRMED);
       invalidate();
-      queryClient.invalidateQueries({ queryKey: queryKeys.trips.detail(tripId) });
+      onMutate();
       onConfirmed?.();
     },
     onError: (err) => toast.error(getApiErrorMessage(err, MSG.POLL_CONFIRM_FAILED)),
@@ -202,54 +193,94 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
   }
 
   const isOpen = poll.status === "open";
-  const status = STATUS_CONFIG[poll.status];
 
   return (
     <div className="space-y-4 p-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <Badge variant="outline" className={status.className}>
-          {status.label}
-        </Badge>
-        {isOwner && isOpen && (
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="sm" onClick={() => setShowAddOption(true)}>
-              <Plus className="h-4 w-4" />
-              日程案追加
-            </Button>
-            <Button variant="ghost" size="sm" onClick={() => setShowConfirmSelect(true)}>
-              <Check className="h-4 w-4" />
-              確定
-            </Button>
-          </div>
-        )}
-      </div>
-
-      {/* Note & deadline */}
-      {(poll.note || poll.deadline) && (
-        <div className="space-y-1 rounded-md border p-3">
-          {poll.note && <p className="text-sm whitespace-pre-wrap">{poll.note}</p>}
-          {poll.deadline && (
-            <p className="text-xs text-muted-foreground">
-              回答期限: {format(new Date(poll.deadline), "yyyy/MM/dd HH:mm", { locale: ja })}
-            </p>
+      {/* Note */}
+      {(canEdit && isOpen) || poll.note ? (
+        <div>
+          {memo.editing ? (
+            <div className="space-y-2">
+              <Textarea
+                value={memo.text}
+                onChange={(e) => memo.setText(e.target.value)}
+                placeholder="メモを入力..."
+                maxLength={POLL_NOTE_MAX_LENGTH}
+                rows={3}
+                className="resize-none text-sm"
+                autoFocus
+              />
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-muted-foreground">
+                  {memo.text.length}/{POLL_NOTE_MAX_LENGTH}
+                </span>
+                <div className="flex gap-1.5">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={memo.cancelEdit}
+                    disabled={memo.saving}
+                  >
+                    キャンセル
+                  </Button>
+                  <Button size="sm" onClick={memo.save} disabled={memo.saving}>
+                    <Check className="h-3.5 w-3.5" />
+                    {memo.saving ? "保存中..." : "保存"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => (canEdit && isOpen ? memo.startEdit(poll.note) : undefined)}
+              className={cn(
+                "flex w-full select-none items-start gap-2 rounded-md border border-dashed px-3 py-2 text-left text-sm transition-colors",
+                canEdit && isOpen
+                  ? "cursor-pointer hover:border-border hover:bg-muted/50"
+                  : "cursor-default",
+                poll.note
+                  ? "border-border text-foreground"
+                  : "border-muted-foreground/20 text-muted-foreground",
+              )}
+            >
+              <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+              <span className="whitespace-pre-wrap">{poll.note || "メモを追加"}</span>
+            </button>
           )}
         </div>
-      )}
+      ) : null}
 
-      {/* Confirmed result banner */}
-      {poll.status === "confirmed" && poll.confirmedOptionId && (
-        <div className="rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-900/20">
-          <p className="text-sm font-medium">
-            確定日程: {formatRange(poll.options.find((o) => o.id === poll.confirmedOptionId)!)}
-          </p>
-        </div>
+      {/* Deadline */}
+      {poll.deadline && (
+        <p className="text-xs text-muted-foreground">
+          回答期限: {format(new Date(poll.deadline), "yyyy/MM/dd HH:mm", { locale: ja })}
+        </p>
       )}
 
       {/* Response cards */}
       <div className="space-y-2">
-        <h3 className="text-sm font-semibold">回答状況</h3>
-        <div className="divide-y rounded-lg border">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">回答状況</h3>
+          {isOwner && isOpen && (
+            <div className="flex gap-1">
+              <Button variant="ghost" size="sm" onClick={() => setShowAddOption(true)}>
+                <Plus className="h-4 w-4" />
+                日程案追加
+              </Button>
+              <Button variant="ghost" size="sm" onClick={() => setShowConfirmSelect(true)}>
+                <Check className="h-4 w-4" />
+                確定
+              </Button>
+            </div>
+          )}
+        </div>
+        <div
+          className="grid divide-y rounded-lg border"
+          style={{
+            gridTemplateColumns: `auto ${poll.myParticipantId ? "auto" : ""} 1fr ${isOwner && isOpen ? "auto" : ""}`,
+          }}
+        >
           {poll.options.map((opt) => {
             const isConfirmedOption = opt.id === poll.confirmedOptionId;
             const myParticipant = poll.participants.find((p) => p.id === poll.myParticipantId);
@@ -265,12 +296,15 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
             return (
               <div
                 key={opt.id}
-                className={`flex items-center gap-2 px-3 py-2 ${
-                  isConfirmedOption ? "bg-blue-50/50 dark:bg-blue-900/10" : ""
-                }`}
+                className={cn(
+                  "col-span-full grid grid-cols-subgrid items-center gap-2 px-3 py-2",
+                  isConfirmedOption && "bg-blue-50/50 dark:bg-blue-900/10",
+                )}
               >
-                <div className="flex shrink-0 items-center gap-1">
-                  <span className="text-sm font-medium">{formatRange(opt)}</span>
+                <div className="flex items-center gap-1 whitespace-nowrap">
+                  <span className="text-sm tabular-nums font-medium">
+                    {formatDateRangeShort(opt.startDate, opt.endDate)}
+                  </span>
                   {isConfirmedOption && (
                     <Badge
                       variant="outline"
@@ -284,13 +318,14 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
                 {poll.myParticipantId && (
                   <div className="flex gap-1">
                     {(["ok", "maybe", "ng"] as const).map((value) => {
-                      const config = RESPONSE_CONFIG[value];
+                      const config = RESPONSE_STYLES[value];
+                      const Icon = RESPONSE_ICON_COMPONENTS[value];
                       const isActive = myResponse?.response === value;
                       return (
                         <button
                           key={value}
                           type="button"
-                          className={`flex h-7 w-8 items-center justify-center rounded border text-sm font-medium transition-colors ${
+                          className={`flex h-7 w-9 items-center justify-center rounded border transition-colors ${
                             isActive
                               ? config.activeClassName
                               : "border-muted-foreground/20 text-muted-foreground hover:bg-accent"
@@ -298,23 +333,27 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
                           onClick={() => handleSetResponse(opt.id, value)}
                           disabled={!isOpen || submitResponsesMutation.isPending}
                         >
-                          {config.symbol}
+                          <Icon className="h-3.5 w-3.5" />
                         </button>
                       );
                     })}
                   </div>
                 )}
 
-                <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
-                  {counts.map(
-                    ({ value, count }) =>
-                      count > 0 && (
-                        <span key={value} className={RESPONSE_CONFIG[value].countClassName}>
-                          {RESPONSE_CONFIG[value].symbol}
-                          {count}
-                        </span>
-                      ),
-                  )}
+                <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
+                  {counts.map(({ value, count }) => {
+                    if (count === 0) return null;
+                    const Icon = RESPONSE_ICON_COMPONENTS[value];
+                    return (
+                      <span
+                        key={value}
+                        className={`inline-flex items-center gap-0.5 ${RESPONSE_STYLES[value].countClassName}`}
+                      >
+                        <Icon className="h-3 w-3" />
+                        {count}
+                      </span>
+                    );
+                  })}
                 </div>
 
                 {isOwner && isOpen && (
@@ -398,9 +437,12 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
           </DialogHeader>
           <div className="space-y-2">
             {poll.options.map((opt) => {
-              const okCount = poll.participants.filter((p) =>
-                p.responses.some((r) => r.optionId === opt.id && r.response === "ok"),
-              ).length;
+              const counts = (["ok", "maybe", "ng"] as const).map((value) => ({
+                value,
+                count: poll.participants.filter((p) =>
+                  p.responses.some((r) => r.optionId === opt.id && r.response === value),
+                ).length,
+              }));
               return (
                 <button
                   key={opt.id}
@@ -411,10 +453,24 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
                     setConfirmOptionId(opt.id);
                   }}
                 >
-                  <span className="font-medium">{formatRange(opt)}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {RESPONSE_CONFIG.ok.symbol} {okCount}/{poll.participants.length}
+                  <span className="font-medium">
+                    {formatDateRangeShort(opt.startDate, opt.endDate)}
                   </span>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    {counts.map(({ value, count }) => {
+                      if (count === 0) return null;
+                      const Icon = RESPONSE_ICON_COMPONENTS[value];
+                      return (
+                        <span
+                          key={value}
+                          className={`inline-flex items-center gap-0.5 ${RESPONSE_STYLES[value].countClassName}`}
+                        >
+                          <Icon className="h-3 w-3" />
+                          {count}
+                        </span>
+                      );
+                    })}
+                  </div>
                 </button>
               );
             })}
@@ -432,24 +488,26 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
             <AlertDialogTitle>日程を確定</AlertDialogTitle>
             <AlertDialogDescription>
               この日程で確定しますか？旅行の日程が更新されます。
-              {confirmOptionId && (
-                <span className="mt-1 block font-medium">
-                  {formatRange(poll.options.find((o) => o.id === confirmOptionId)!)}
-                </span>
-              )}
+              {(() => {
+                const opt = poll.options.find((o) => o.id === confirmOptionId);
+                return opt ? (
+                  <span className="mt-1 block font-medium">
+                    {formatDateRangeShort(opt.startDate, opt.endDate)}
+                  </span>
+                ) : null;
+              })()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogDestructiveAction
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
+            <AlertDialogAction
               onClick={() => {
                 if (confirmOptionId) confirmMutation.mutate(confirmOptionId);
                 setConfirmOptionId(null);
               }}
             >
               確定する
-            </AlertDialogDestructiveAction>
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -464,11 +522,14 @@ export function PollTab({ pollId, tripId, isOwner, onConfirmed }: PollTabProps) 
             <AlertDialogTitle>日程案を削除</AlertDialogTitle>
             <AlertDialogDescription>
               この日程案を削除しますか？回答も全て削除されます。
-              {deleteOptionId && (
-                <span className="mt-1 block font-medium">
-                  {formatRange(poll.options.find((o) => o.id === deleteOptionId)!)}
-                </span>
-              )}
+              {(() => {
+                const opt = poll.options.find((o) => o.id === deleteOptionId);
+                return opt ? (
+                  <span className="mt-1 block font-medium">
+                    {formatDateRangeShort(opt.startDate, opt.endDate)}
+                  </span>
+                ) : null;
+              })()}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

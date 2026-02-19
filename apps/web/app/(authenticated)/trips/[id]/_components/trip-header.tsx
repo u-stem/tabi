@@ -41,7 +41,7 @@ export function TripHeader({
       <p className="text-muted-foreground">
         {trip.startDate && trip.endDate ? (
           <>
-            {`${trip.destination} / `}
+            {trip.destination ? `${trip.destination} / ` : null}
             {formatDateRange(trip.startDate, trip.endDate)}
             <span className="ml-2 text-sm">({getDayCount(trip.startDate, trip.endDate)}日間)</span>
           </>
@@ -54,6 +54,7 @@ export function TripHeader({
           tripId={tripId}
           status={trip.status}
           role={trip.role}
+          pollId={trip.poll?.id}
           onStatusChange={onMutate}
           onEdit={canEdit ? onEditOpen : undefined}
           disabled={!online}

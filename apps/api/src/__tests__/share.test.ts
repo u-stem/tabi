@@ -105,6 +105,35 @@ describe("Share routes", () => {
       expect(body.shareTokenExpiresAt).toBe(expiresAt.toISOString());
     });
 
+    it("generates new token for legacy token without expiry", async () => {
+      const generatedToken = "abc123newtoken";
+      const expiresAt = new Date("2026-03-01T00:00:00.000Z");
+      mockDbQuery.trips.findFirst.mockResolvedValue({
+        shareToken: "legacy-token",
+        shareTokenExpiresAt: null,
+      });
+
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi
+              .fn()
+              .mockResolvedValue([{ shareToken: generatedToken, shareTokenExpiresAt: expiresAt }]),
+          }),
+        }),
+      });
+
+      const app = createTestApp(shareRoutes, "/");
+      const res = await app.request("/api/trips/trip-1/share", {
+        method: "POST",
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.shareToken).toBe(generatedToken);
+      expect(body.shareTokenExpiresAt).toBe(expiresAt.toISOString());
+    });
+
     it("generates a new shareToken with expiresAt when not set", async () => {
       const generatedToken = "abc123generated";
       const expiresAt = new Date("2026-03-01T00:00:00.000Z");

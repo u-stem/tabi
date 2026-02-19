@@ -1,7 +1,6 @@
 "use client";
 
-import { POLL_NOTE_MAX_LENGTH } from "@sugara/shared";
-import { format, isValid, parse } from "date-fns";
+import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -22,24 +21,13 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { formatDateRangeShort } from "@/lib/format";
 import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 type DateMode = "direct" | "poll";
 type CandidateOption = { startDate: string; endDate: string };
-
-function formatDateLabel(dateStr: string): string {
-  const d = parse(dateStr, "yyyy-MM-dd", new Date());
-  if (!isValid(d)) return dateStr;
-  return format(d, "M/d (E)", { locale: ja });
-}
-
-function formatRange(opt: CandidateOption): string {
-  if (opt.startDate === opt.endDate) return formatDateLabel(opt.startDate);
-  return `${formatDateLabel(opt.startDate)} - ${formatDateLabel(opt.endDate)}`;
-}
 
 type CreateTripDialogProps = {
   open: boolean;
@@ -60,7 +48,6 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
   // Poll mode state
   const [candidates, setCandidates] = useState<CandidateOption[]>([]);
   const [pendingRange, setPendingRange] = useState<DateRange | undefined>();
-  const [pollNote, setPollNote] = useState("");
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
 
   function resetAll() {
@@ -71,7 +58,6 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
     setEndDate("");
     setCandidates([]);
     setPendingRange(undefined);
-    setPollNote("");
     setCalendarMonth(new Date());
   }
 
@@ -98,7 +84,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
 
     const formData = new FormData(e.currentTarget);
     const title = formData.get("title") as string;
-    const destination = formData.get("destination") as string;
+    const destination = (formData.get("destination") as string) || undefined;
 
     if (dateMode === "poll") {
       if (candidates.length === 0) {
@@ -109,10 +95,9 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
       setLoading(true);
       const body: Record<string, unknown> = {
         title,
-        destination,
         pollOptions: candidates,
       };
-      if (pollNote) body.pollNote = pollNote;
+      if (destination) body.destination = destination;
 
       try {
         const trip = await api<{ id: string }>("/api/trips", {
@@ -141,7 +126,12 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
       try {
         const trip = await api<{ id: string }>("/api/trips", {
           method: "POST",
-          body: JSON.stringify({ title, destination, startDate: sd, endDate: ed }),
+          body: JSON.stringify({
+            title,
+            ...(destination && { destination }),
+            startDate: sd,
+            endDate: ed,
+          }),
         });
         onOpenChange(false);
         toast.success(MSG.TRIP_CREATED);
@@ -157,69 +147,67 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>新しい旅行を作成</DialogTitle>
           <DialogDescription>旅行の基本情報を入力してください</DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="create-title">
-              旅行タイトル <span className="text-destructive">*</span>
-            </Label>
-            <Input id="create-title" name="title" placeholder="京都3日間の旅" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="create-destination">
-              目的地 <span className="text-destructive">*</span>
-            </Label>
-            <Input id="create-destination" name="destination" placeholder="京都" required />
-          </div>
-
-          {/* Mode toggle */}
-          <div className="flex gap-2 rounded-lg border p-1">
-            <button
-              type="button"
-              className={cn(
-                "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                dateMode === "direct"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              onClick={() => setDateMode("direct")}
-            >
-              日程を決定する
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                dateMode === "poll"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-              onClick={() => setDateMode("poll")}
-            >
-              日程を調整する
-            </button>
-          </div>
-
-          {dateMode === "direct" ? (
+        <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-4">
+          <div className="space-y-4 overflow-y-auto pr-1">
             <div className="space-y-2">
-              <Label>
-                旅行期間 <span className="text-destructive">*</span>
+              <Label htmlFor="create-title">
+                旅行タイトル <span className="text-destructive">*</span>
               </Label>
-              <DateRangePicker
-                startDate={startDate}
-                endDate={endDate}
-                onChangeStart={setStartDate}
-                onChangeEnd={setEndDate}
-              />
-              <input type="hidden" name="startDate" value={startDate} />
-              <input type="hidden" name="endDate" value={endDate} />
+              <Input id="create-title" name="title" placeholder="京都3日間の旅" required />
             </div>
-          ) : (
-            <>
+            <div className="space-y-2">
+              <Label htmlFor="create-destination">目的地</Label>
+              <Input id="create-destination" name="destination" placeholder="京都" />
+            </div>
+
+            {/* Mode toggle */}
+            <div className="flex gap-2 rounded-lg border p-1">
+              <button
+                type="button"
+                className={cn(
+                  "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  dateMode === "direct"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                onClick={() => setDateMode("direct")}
+              >
+                日程を決定する
+              </button>
+              <button
+                type="button"
+                className={cn(
+                  "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
+                  dateMode === "poll"
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                onClick={() => setDateMode("poll")}
+              >
+                日程を調整する
+              </button>
+            </div>
+
+            {dateMode === "direct" ? (
+              <div className="space-y-2">
+                <Label>
+                  旅行期間 <span className="text-destructive">*</span>
+                </Label>
+                <DateRangePicker
+                  startDate={startDate}
+                  endDate={endDate}
+                  onChangeStart={setStartDate}
+                  onChangeEnd={setEndDate}
+                />
+                <input type="hidden" name="startDate" value={startDate} />
+                <input type="hidden" name="endDate" value={endDate} />
+              </div>
+            ) : (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>
@@ -271,7 +259,9 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
                           key={`${opt.startDate}-${opt.endDate}`}
                           className="flex items-center justify-between px-3 py-1.5"
                         >
-                          <span className="text-sm">{formatRange(opt)}</span>
+                          <span className="text-sm">
+                            {formatDateRangeShort(opt.startDate, opt.endDate)}
+                          </span>
                           <Button
                             type="button"
                             variant="ghost"
@@ -287,26 +277,15 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
                   </div>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="poll-note">メモ</Label>
-                <Textarea
-                  id="poll-note"
-                  value={pollNote}
-                  onChange={(e) => setPollNote(e.target.value)}
-                  placeholder="参加者への連絡事項など"
-                  maxLength={POLL_NOTE_MAX_LENGTH}
-                  rows={2}
-                />
-              </div>
-            </>
-          )}
+            )}
 
-          {error && (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          )}
-          <DialogFooter>
+            {error && (
+              <p role="alert" className="text-sm text-destructive">
+                {error}
+              </p>
+            )}
+          </div>
+          <DialogFooter className="shrink-0 border-t pt-4">
             <Button type="submit" disabled={loading}>
               <Plus className="h-4 w-4" />
               {loading ? "作成中..." : "作成"}

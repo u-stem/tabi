@@ -3,7 +3,7 @@
 import { type ActivityLogResponse, type MemberRole, ROLE_LABELS } from "@sugara/shared";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
-import { ArrowRightLeft, Copy, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowRightLeft, Check, Copy, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
@@ -43,6 +43,18 @@ const ACTION_STYLES: Record<string, ActionStyle> = {
   },
   role_changed: {
     icon: Pencil,
+    color: "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400",
+  },
+  option_added: {
+    icon: Plus,
+    color: "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400",
+  },
+  option_deleted: {
+    icon: Trash2,
+    color: "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400",
+  },
+  confirmed: {
+    icon: Check,
     color: "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400",
   },
 };
@@ -86,6 +98,12 @@ const ACTION_TEMPLATES: Record<string, Record<string, string>> = {
   },
   day_memo: {
     updated: "日程メモを更新",
+  },
+  poll: {
+    created: "日程調整を開始",
+    option_added: "日程案{name}を追加",
+    option_deleted: "日程案{name}を削除",
+    confirmed: "日程{name}を確定",
   },
 };
 

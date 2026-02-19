@@ -1,4 +1,16 @@
 import { and, desc, eq, notInArray } from "drizzle-orm";
+
+/** "2025-02-07" → "2/7" */
+export function formatShortDate(iso: string): string {
+  const [, m, d] = iso.split("-");
+  return `${Number(m)}/${Number(d)}`;
+}
+
+export function formatShortDateRange(start: string, end: string): string {
+  if (start === end) return formatShortDate(start);
+  return `${formatShortDate(start)} - ${formatShortDate(end)}`;
+}
+
 import { db } from "../db/index";
 import { activityLogs } from "../db/schema";
 import { MAX_LOGS_PER_TRIP } from "./constants";

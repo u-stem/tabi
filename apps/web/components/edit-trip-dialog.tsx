@@ -21,9 +21,9 @@ import { MSG } from "@/lib/messages";
 type EditTripDialogProps = {
   tripId: string;
   title: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
+  destination: string | null;
+  startDate: string | null;
+  endDate: string | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
@@ -41,13 +41,14 @@ export function EditTripDialog({
 }: EditTripDialogProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [editStartDate, setEditStartDate] = useState(startDate);
-  const [editEndDate, setEditEndDate] = useState(endDate);
+  const hasDates = startDate != null && endDate != null;
+  const [editStartDate, setEditStartDate] = useState(startDate ?? "");
+  const [editEndDate, setEditEndDate] = useState(endDate ?? "");
 
   useEffect(() => {
     if (open) {
-      setEditStartDate(startDate);
-      setEditEndDate(endDate);
+      setEditStartDate(startDate ?? "");
+      setEditEndDate(endDate ?? "");
     }
   }, [open, startDate, endDate]);
 
@@ -67,18 +68,21 @@ export function EditTripDialog({
     const newStartDate = formData.get("startDate") as string;
     const newEndDate = formData.get("endDate") as string;
 
-    if (!newStartDate || !newEndDate) {
+    if (hasDates && (!newStartDate || !newEndDate)) {
       setError(MSG.TRIP_DATE_REQUIRED);
       setLoading(false);
       return;
     }
 
-    const data = {
+    const rawDestination = (formData.get("destination") as string).trim();
+    const data: Record<string, unknown> = {
       title: formData.get("title") as string,
-      destination: formData.get("destination") as string,
-      startDate: newStartDate,
-      endDate: newEndDate,
+      destination: rawDestination || null,
     };
+    if (newStartDate && newEndDate) {
+      data.startDate = newStartDate;
+      data.endDate = newEndDate;
+    }
 
     try {
       await api(`/api/trips/${tripId}`, {
@@ -107,27 +111,38 @@ export function EditTripDialog({
             <Label htmlFor="edit-title">
               タイトル <span className="text-destructive">*</span>
             </Label>
-            <Input id="edit-title" name="title" defaultValue={title} required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="edit-destination">
-              目的地 <span className="text-destructive">*</span>
-            </Label>
-            <Input id="edit-destination" name="destination" defaultValue={destination} required />
-          </div>
-          <div className="space-y-2">
-            <Label>
-              旅行期間 <span className="text-destructive">*</span>
-            </Label>
-            <DateRangePicker
-              startDate={editStartDate}
-              endDate={editEndDate}
-              onChangeStart={setEditStartDate}
-              onChangeEnd={setEditEndDate}
+            <Input
+              id="edit-title"
+              name="title"
+              defaultValue={title}
+              placeholder="京都3日間の旅"
+              required
             />
-            <input type="hidden" name="startDate" value={editStartDate} />
-            <input type="hidden" name="endDate" value={editEndDate} />
           </div>
+          <div className="space-y-2">
+            <Label htmlFor="edit-destination">目的地</Label>
+            <Input
+              id="edit-destination"
+              name="destination"
+              defaultValue={destination ?? ""}
+              placeholder="京都"
+            />
+          </div>
+          {hasDates && (
+            <div className="space-y-2">
+              <Label>
+                旅行期間 <span className="text-destructive">*</span>
+              </Label>
+              <DateRangePicker
+                startDate={editStartDate}
+                endDate={editEndDate}
+                onChangeStart={setEditStartDate}
+                onChangeEnd={setEditEndDate}
+              />
+              <input type="hidden" name="startDate" value={editStartDate} />
+              <input type="hidden" name="endDate" value={editEndDate} />
+            </div>
+          )}
           {error && (
             <p role="alert" className="text-sm text-destructive">
               {error}

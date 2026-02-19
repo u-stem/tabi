@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { formatShortDate, formatShortDateRange } from "../lib/activity-logger";
 
 const mockInsert = vi.fn();
 const mockSelect = vi.fn();
@@ -25,6 +26,26 @@ function setupSelectMock(ids: { id: string }[]) {
     }),
   });
 }
+
+describe("formatShortDate", () => {
+  it("strips leading zeros from month and day", () => {
+    expect(formatShortDate("2025-02-07")).toBe("2/7");
+  });
+
+  it("handles double-digit month and day", () => {
+    expect(formatShortDate("2025-12-25")).toBe("12/25");
+  });
+});
+
+describe("formatShortDateRange", () => {
+  it("returns single date when start equals end", () => {
+    expect(formatShortDateRange("2025-02-07", "2025-02-07")).toBe("2/7");
+  });
+
+  it("returns range when start differs from end", () => {
+    expect(formatShortDateRange("2025-02-07", "2025-02-08")).toBe("2/7 - 2/8");
+  });
+});
 
 describe("logActivity", () => {
   beforeEach(() => {

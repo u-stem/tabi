@@ -26,13 +26,14 @@ export function RightPanel({
   overCandidateId,
   maxEndDayOffset,
   onSaveToBookmark,
+  hasDays,
 }: {
   tripId: string;
   rightPanelTab: RightPanelTab;
   setRightPanelTab: (tab: RightPanelTab) => void;
   candidates: CandidateResponse[];
-  currentDayId: string;
-  currentPatternId: string;
+  currentDayId: string | null;
+  currentPatternId: string | null;
   onRefresh: () => Promise<void>;
   disabled: boolean;
   canEdit: boolean;
@@ -44,6 +45,7 @@ export function RightPanel({
   overCandidateId: string | null;
   maxEndDayOffset: number;
   onSaveToBookmark?: (scheduleIds: string[]) => void;
+  hasDays: boolean;
 }) {
   return (
     <div className="hidden max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] lg:flex min-w-0 flex-[2] flex-col rounded-lg border border-dashed bg-card self-start sticky top-4">
@@ -54,22 +56,30 @@ export function RightPanel({
       />
       <div className="min-h-0 overflow-y-auto p-4">
         {rightPanelTab === "candidates" ? (
-          <CandidatePanel
-            tripId={tripId}
-            candidates={candidates}
-            currentDayId={currentDayId}
-            currentPatternId={currentPatternId}
-            onRefresh={onRefresh}
-            disabled={disabled}
-            draggable={canEdit && online}
-            addDialogOpen={addCandidateOpen}
-            onAddDialogOpenChange={onAddCandidateOpenChange}
-            scheduleLimitReached={scheduleLimitReached}
-            scheduleLimitMessage={scheduleLimitMessage}
-            overCandidateId={overCandidateId}
-            maxEndDayOffset={maxEndDayOffset}
-            onSaveToBookmark={onSaveToBookmark}
-          />
+          currentDayId && currentPatternId ? (
+            <CandidatePanel
+              tripId={tripId}
+              candidates={candidates}
+              currentDayId={currentDayId}
+              currentPatternId={currentPatternId}
+              onRefresh={onRefresh}
+              disabled={disabled}
+              draggable={canEdit && online}
+              addDialogOpen={addCandidateOpen}
+              onAddDialogOpenChange={onAddCandidateOpenChange}
+              scheduleLimitReached={scheduleLimitReached}
+              scheduleLimitMessage={scheduleLimitMessage}
+              overCandidateId={overCandidateId}
+              maxEndDayOffset={maxEndDayOffset}
+              onSaveToBookmark={onSaveToBookmark}
+            />
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              {hasDays
+                ? "日タブを選択すると候補を追加できます"
+                : "日程が確定すると候補を追加できます"}
+            </p>
+          )
         ) : rightPanelTab === "bookmarks" ? (
           <BookmarkPanel tripId={tripId} disabled={disabled} onCandidateAdded={onRefresh} />
         ) : (

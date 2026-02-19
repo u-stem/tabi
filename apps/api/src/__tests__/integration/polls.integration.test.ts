@@ -447,36 +447,6 @@ describe("Polls Integration", () => {
     expect(res.status).toBe(404);
   });
 
-  it("submits guest response via shared link", async () => {
-    const createRes = await app.request("/api/polls", json(VALID_POLL));
-    const created = await createRes.json();
-
-    const shareRes = await app.request(`/api/polls/${created.id}/share`, json({}));
-    const { shareToken } = await shareRes.json();
-
-    const res = await app.request(
-      `/api/polls/shared/${shareToken}/responses`,
-      json({
-        guestName: "Guest User",
-        responses: [
-          { optionId: created.options[0].id, response: "ok" },
-          { optionId: created.options[1].id, response: "maybe" },
-        ],
-      }),
-    );
-    expect(res.status).toBe(200);
-
-    const db = getTestDb();
-    const participants = await db.query.schedulePollParticipants.findMany({
-      where: eq(schedulePollParticipants.pollId, created.id),
-    });
-    // Owner + guest
-    expect(participants).toHaveLength(2);
-    const guest = participants.find((p) => p.guestName === "Guest User");
-    expect(guest).toBeTruthy();
-    expect(guest!.userId).toBeNull();
-  });
-
   // --- Confirm ---
 
   it("confirms a poll and creates a trip", async () => {
@@ -515,37 +485,6 @@ describe("Polls Integration", () => {
     expect(ownerMember!.role).toBe("owner");
     const otherMember = members.find((m) => m.userId === other.id);
     expect(otherMember!.role).toBe("editor");
-  });
-
-  it("does not add guest participants to trip on confirm", async () => {
-    const createRes = await app.request("/api/polls", json(VALID_POLL));
-    const created = await createRes.json();
-
-    // Add guest via shared link
-    const shareRes = await app.request(`/api/polls/${created.id}/share`, json({}));
-    const { shareToken } = await shareRes.json();
-    await app.request(
-      `/api/polls/shared/${shareToken}/responses`,
-      json({
-        guestName: "Guest",
-        responses: [{ optionId: created.options[0].id, response: "ok" }],
-      }),
-    );
-
-    const res = await app.request(
-      `/api/polls/${created.id}/confirm`,
-      json({ optionId: created.options[0].id }),
-    );
-    expect(res.status).toBe(200);
-    const result = await res.json();
-
-    const db = getTestDb();
-    const members = await db.query.tripMembers.findMany({
-      where: eq(tripMembers.tripId, result.tripId),
-    });
-    // Only owner, not guest
-    expect(members).toHaveLength(1);
-    expect(members[0].userId).toBe(owner.id);
   });
 
   it("rejects confirm on non-open poll", async () => {
@@ -896,10 +835,7 @@ describe("Delete poll cascade", () => {
     });
 
     // Confirm the poll first
-    await app.request(
-      `/api/polls/${poll!.id}/confirm`,
-      json({ optionId: poll!.options[0].id }),
-    );
+    await app.request(`/api/polls/${poll!.id}/confirm`, json({ optionId: poll!.options[0].id }));
 
     // Now delete the poll
     const deleteRes = await app.request(`/api/polls/${poll!.id}`, { method: "DELETE" });

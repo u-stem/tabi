@@ -61,4 +61,6 @@ export const ERROR_MSG = {
   LIMIT_POLLS: "Poll limit reached",
   LIMIT_POLL_OPTIONS: "Poll option limit reached",
   LIMIT_POLL_PARTICIPANTS: "Poll participant limit reached",
+  POLL_CANNOT_REMOVE_OWNER: "Cannot remove poll owner from participants",
+  POLL_INVALID_OPTION: "Some responses reference options not in this poll",
 } as const;

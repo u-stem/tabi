@@ -35,7 +35,7 @@ export const TripCard = memo(function TripCard({
   const showRole = role !== "owner";
 
   const inner = (
-    <>
+    <div className="flex h-full flex-col">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex min-w-0 items-center gap-2">
@@ -53,9 +53,9 @@ export const TripCard = memo(function TripCard({
             </Badge>
           </div>
         </div>
-        <CardDescription className="truncate">{destination}</CardDescription>
+        {destination && <CardDescription className="truncate">{destination}</CardDescription>}
       </CardHeader>
-      <CardContent>
+      <CardContent className="mt-auto">
         <p className="text-sm text-muted-foreground">
           {hasDates ? `${formatDateRange(startDate, endDate)} (${dayCount}日間)` : "日程未定"}
         </p>
@@ -63,7 +63,7 @@ export const TripCard = memo(function TripCard({
           {totalSchedules > 0 ? `${totalSchedules}件の予定` : "予定なし"}
         </p>
       </CardContent>
-    </>
+    </div>
   );
 
   if (selectable) {
@@ -76,7 +76,7 @@ export const TripCard = memo(function TripCard({
       >
         <Card
           className={cn(
-            "transition-colors hover:bg-accent/50 group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring",
+            "h-full transition-colors hover:bg-accent/50 group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring",
             selected && SELECTED_RING,
           )}
         >
@@ -88,7 +88,7 @@ export const TripCard = memo(function TripCard({
 
   return (
     <Link href={`/trips/${id}`} className="group block focus-visible:outline-none">
-      <Card className="transition-colors hover:bg-accent/50 group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
+      <Card className="h-full transition-colors hover:bg-accent/50 group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
         {inner}
       </Card>
     </Link>

@@ -61,6 +61,7 @@ type TripActionsProps = {
   tripId: string;
   status: TripStatus;
   role: MemberRole;
+  pollId?: string | null;
   onStatusChange?: () => void;
   onEdit?: () => void;
   disabled?: boolean;
@@ -76,6 +77,7 @@ export function TripActions({
   tripId,
   status,
   role,
+  pollId,
   onStatusChange,
   onEdit,
   disabled,
@@ -135,11 +137,20 @@ export function TripActions({
   async function handleShare() {
     setSharing(true);
     try {
-      const result = await api<ShareResponse>(`/api/trips/${tripId}/share`, {
-        method: "POST",
-      });
-      const url = `${window.location.origin}/shared/${result.shareToken}`;
-      setShareExpiresAt(result.shareTokenExpiresAt);
+      let url: string;
+      if (status === "scheduling" && pollId) {
+        const result = await api<ShareResponse>(`/api/polls/${pollId}/share`, {
+          method: "POST",
+        });
+        url = `${window.location.origin}/polls/shared/${result.shareToken}`;
+        setShareExpiresAt(result.shareTokenExpiresAt);
+      } else {
+        const result = await api<ShareResponse>(`/api/trips/${tripId}/share`, {
+          method: "POST",
+        });
+        url = `${window.location.origin}/shared/${result.shareToken}`;
+        setShareExpiresAt(result.shareTokenExpiresAt);
+      }
       setShareUrl(url);
       setShareDialogOpen(true);
       try {
@@ -158,10 +169,15 @@ export function TripActions({
   async function handleRegenerate() {
     setRegenerating(true);
     try {
-      const result = await api<ShareResponse>(`/api/trips/${tripId}/share`, {
-        method: "PUT",
-      });
-      const url = `${window.location.origin}/shared/${result.shareToken}`;
+      let result: ShareResponse;
+      let url: string;
+      if (status === "scheduling" && pollId) {
+        result = await api<ShareResponse>(`/api/polls/${pollId}/share`, { method: "PUT" });
+        url = `${window.location.origin}/polls/shared/${result.shareToken}`;
+      } else {
+        result = await api<ShareResponse>(`/api/trips/${tripId}/share`, { method: "PUT" });
+        url = `${window.location.origin}/shared/${result.shareToken}`;
+      }
       setShareExpiresAt(result.shareTokenExpiresAt);
       setShareUrl(url);
       try {
@@ -219,7 +235,7 @@ export function TripActions({
         </Button>
       )}
       {/* Share expiry + regenerate (all sizes) */}
-      {isOwnerRole && shareExpiresAt && (
+      {isOwnerRole && shareUrl && (
         <div className="flex items-center gap-1">
           <Button
             variant="ghost"
@@ -230,11 +246,13 @@ export function TripActions({
           >
             <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
           </Button>
-          <span className="text-xs text-muted-foreground">
-            {new Date(shareExpiresAt) < new Date()
-              ? "期限切れ"
-              : `${formatDateFromISO(shareExpiresAt)}まで`}
-          </span>
+          {shareExpiresAt && (
+            <span className="text-xs text-muted-foreground">
+              {new Date(shareExpiresAt) < new Date()
+                ? "期限切れ"
+                : `${formatDateFromISO(shareExpiresAt)}まで`}
+            </span>
+          )}
         </div>
       )}
       <DropdownMenu>

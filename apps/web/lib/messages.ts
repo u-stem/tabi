@@ -8,6 +8,7 @@ import {
   MAX_OPTIONS_PER_POLL,
   MAX_PARTICIPANTS_PER_POLL,
   MAX_PATTERNS_PER_DAY,
+  MAX_POLLS_PER_USER,
   MAX_SCHEDULES_PER_TRIP,
   MAX_TRIPS_PER_USER,
 } from "@sugara/shared";
@@ -154,6 +155,10 @@ export const MSG = {
   DAY_MEMO_UPDATED: "メモを更新しました",
   DAY_MEMO_UPDATE_FAILED: "メモの更新に失敗しました",
 
+  // Poll note
+  POLL_NOTE_UPDATED: "メモを更新しました",
+  POLL_NOTE_UPDATE_FAILED: "メモの更新に失敗しました",
+
   // Account
   ACCOUNT_DELETED: "アカウントを削除しました",
   ACCOUNT_DELETE_FAILED: "アカウントの削除に失敗しました",
@@ -222,8 +227,6 @@ export const MSG = {
   POLL_RESPONSE_SUBMIT_FAILED: "回答の送信に失敗しました",
   POLL_SHARE_LINK_COPIED: "共有リンクをコピーしました",
   POLL_SHARE_LINK_FAILED: "共有リンクの生成に失敗しました",
-  POLL_GUEST_RESPONSE_SUBMITTED: "回答を送信しました",
-  POLL_GUEST_RESPONSE_FAILED: "回答の送信に失敗しました",
   POLL_CANDIDATE_REQUIRED: "日程案を1つ以上選択してください",
   POLL_SHARED_NOT_FOUND: "この共有リンクは無効か、有効期限が切れています",
 
@@ -241,6 +244,7 @@ export const MSG = {
   LIMIT_FRIENDS: `フレンドは最大${MAX_FRIENDS_PER_USER}人まで登録できます`,
   LIMIT_GROUPS: `グループは最大${MAX_GROUPS_PER_USER}件まで作成できます`,
   LIMIT_GROUP_MEMBERS: `グループメンバーは最大${MAX_MEMBERS_PER_GROUP}人まで追加できます`,
+  LIMIT_POLLS: `日程調整は最大${MAX_POLLS_PER_USER}件まで作成できます`,
   LIMIT_POLL_OPTIONS: `日程案は最大${MAX_OPTIONS_PER_POLL}件まで追加できます`,
   LIMIT_POLL_PARTICIPANTS: `参加者は最大${MAX_PARTICIPANTS_PER_POLL}人まで追加できます`,
 

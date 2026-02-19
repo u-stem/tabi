@@ -54,7 +54,7 @@ export type TripPollSummary = {
 export type TripResponse = {
   id: string;
   title: string;
-  destination: string;
+  destination: string | null;
   startDate: string | null;
   endDate: string | null;
   status: TripStatus;
@@ -69,7 +69,7 @@ export type TripResponse = {
 export type TripListItem = {
   id: string;
   title: string;
-  destination: string;
+  destination: string | null;
   startDate: string | null;
   endDate: string | null;
   status: TripStatus;
@@ -179,7 +179,7 @@ export type PollOptionResponse = {
 
 export type PollParticipantResponse = {
   id: string;
-  userId: string | null;
+  userId: string;
   name: string;
   image?: string | null;
   responses: { optionId: string; response: PollResponseValue }[];
@@ -188,7 +188,7 @@ export type PollParticipantResponse = {
 export type PollListItem = {
   id: string;
   title: string;
-  destination: string;
+  destination: string | null;
   status: PollStatus;
   deadline: string | null;
   participantCount: number;
@@ -201,7 +201,7 @@ export type PollDetailResponse = {
   id: string;
   ownerId: string;
   title: string;
-  destination: string;
+  destination: string | null;
   note: string | null;
   status: PollStatus;
   deadline: string | null;
@@ -215,4 +215,9 @@ export type PollDetailResponse = {
   updatedAt: string;
 };
 
-export type SharedPollResponse = Omit<PollDetailResponse, "isOwner" | "myParticipantId">;
+export type SharedPollResponse = Omit<
+  PollDetailResponse,
+  "isOwner" | "myParticipantId" | "tripId" | "ownerId"
+> & {
+  shareExpiresAt: string | null;
+};

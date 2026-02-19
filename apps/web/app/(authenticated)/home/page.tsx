@@ -110,7 +110,8 @@ export default function HomePage() {
     if (search) {
       const q = search.toLowerCase();
       result = result.filter(
-        (t) => t.title.toLowerCase().includes(q) || t.destination.toLowerCase().includes(q),
+        (t) =>
+          t.title.toLowerCase().includes(q) || (t.destination?.toLowerCase().includes(q) ?? false),
       );
     }
 

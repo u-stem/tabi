@@ -210,8 +210,7 @@ export function MobileCandidateDialog({
         />
         <div className="min-h-0 overflow-y-auto">
           {rightPanelTab === "candidates" ? (
-            currentDay &&
-            currentPatternId && (
+            currentDay && currentPatternId ? (
               <CandidatePanel
                 tripId={tripId}
                 candidates={candidates}
@@ -225,6 +224,10 @@ export function MobileCandidateDialog({
                 maxEndDayOffset={maxEndDayOffset}
                 onSaveToBookmark={onSaveToBookmark}
               />
+            ) : (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                日タブを選択すると候補を追加できます
+              </p>
             )
           ) : rightPanelTab === "bookmarks" ? (
             <div className="p-4">

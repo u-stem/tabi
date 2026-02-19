@@ -62,6 +62,8 @@ export const scheduleColorEnum = pgEnum("schedule_color", [
   "gray",
 ]);
 
+export const expenseSplitTypeEnum = pgEnum("expense_split_type", ["equal", "custom"]);
+
 export const pollStatusEnum = pgEnum("poll_status", ["open", "confirmed", "closed"]);
 export const pollResponseEnum = pgEnum("poll_response", ["ok", "maybe", "ng"]);
 
@@ -412,6 +414,39 @@ export const schedulePollResponses = pgTable(
   (table) => [primaryKey({ columns: [table.participantId, table.optionId] })],
 ).enableRLS();
 
+export const expenses = pgTable(
+  "expenses",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tripId: uuid("trip_id")
+      .notNull()
+      .references(() => trips.id, { onDelete: "cascade" }),
+    paidByUserId: uuid("paid_by_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    title: varchar("title", { length: 200 }).notNull(),
+    amount: integer("amount").notNull(),
+    splitType: expenseSplitTypeEnum("split_type").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("expenses_trip_id_idx").on(table.tripId)],
+).enableRLS();
+
+export const expenseSplits = pgTable(
+  "expense_splits",
+  {
+    expenseId: uuid("expense_id")
+      .notNull()
+      .references(() => expenses.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    amount: integer("amount").notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.expenseId, table.userId] })],
+).enableRLS();
+
 // --- Relations ---
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -432,6 +467,7 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
   schedules: many(schedules),
   activityLogs: many(activityLogs),
   poll: one(schedulePolls, { fields: [trips.id], references: [schedulePolls.tripId] }),
+  expenses: many(expenses),
 }));
 
 export const tripMembersRelations = relations(tripMembers, ({ one }) => ({
@@ -538,4 +574,15 @@ export const schedulePollResponsesRelations = relations(schedulePollResponses, (
     fields: [schedulePollResponses.optionId],
     references: [schedulePollOptions.id],
   }),
+}));
+
+export const expensesRelations = relations(expenses, ({ one, many }) => ({
+  trip: one(trips, { fields: [expenses.tripId], references: [trips.id] }),
+  paidByUser: one(users, { fields: [expenses.paidByUserId], references: [users.id] }),
+  splits: many(expenseSplits),
+}));
+
+export const expenseSplitsRelations = relations(expenseSplits, ({ one }) => ({
+  expense: one(expenses, { fields: [expenseSplits.expenseId], references: [expenses.id] }),
+  user: one(users, { fields: [expenseSplits.userId], references: [users.id] }),
 }));

@@ -180,66 +180,76 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules/batch-sh
     return c.json({ error: ERROR_MSG.SCHEDULE_NOT_FOUND }, 404);
   }
 
-  let updatedCount = 0;
+  const updates: { id: string; startTime: string | null; endTime: string | null }[] = [];
   let skippedCount = 0;
 
-  await db.transaction(async (tx) => {
-    for (const schedule of targetSchedules) {
-      // Skip hotels spanning multiple days
-      if (schedule.category === "hotel" && schedule.endDayOffset && schedule.endDayOffset > 0) {
-        skippedCount++;
-        continue;
+  for (const schedule of targetSchedules) {
+    // Skip hotels spanning multiple days
+    if (schedule.category === "hotel" && schedule.endDayOffset && schedule.endDayOffset > 0) {
+      skippedCount++;
+      continue;
+    }
+
+    // Skip schedules without any time
+    if (!schedule.startTime && !schedule.endTime) {
+      skippedCount++;
+      continue;
+    }
+
+    let newStartTime = schedule.startTime;
+    let newEndTime = schedule.endTime;
+    let shouldSkip = false;
+
+    if (schedule.startTime) {
+      const shifted = shiftTime(schedule.startTime, deltaMinutes);
+      if (shifted === null) {
+        shouldSkip = true;
+      } else {
+        newStartTime = shifted;
       }
+    }
 
-      // Skip schedules without any time
-      if (!schedule.startTime && !schedule.endTime) {
-        skippedCount++;
-        continue;
-      }
-
-      let newStartTime = schedule.startTime;
-      let newEndTime = schedule.endTime;
-      let shouldSkip = false;
-
-      if (schedule.startTime) {
-        const shifted = shiftTime(schedule.startTime, deltaMinutes);
+    if (!shouldSkip && schedule.endTime) {
+      // Don't shift endTime for cross-day schedules
+      if (schedule.endDayOffset && schedule.endDayOffset > 0) {
+        // Keep endTime as-is
+      } else {
+        const shifted = shiftTime(schedule.endTime, deltaMinutes);
         if (shifted === null) {
           shouldSkip = true;
         } else {
-          newStartTime = shifted;
+          newEndTime = shifted;
         }
       }
-
-      if (!shouldSkip && schedule.endTime) {
-        // Don't shift endTime for cross-day schedules
-        if (schedule.endDayOffset && schedule.endDayOffset > 0) {
-          // Keep endTime as-is
-        } else {
-          const shifted = shiftTime(schedule.endTime, deltaMinutes);
-          if (shifted === null) {
-            shouldSkip = true;
-          } else {
-            newEndTime = shifted;
-          }
-        }
-      }
-
-      if (shouldSkip) {
-        skippedCount++;
-        continue;
-      }
-
-      await tx
-        .update(schedules)
-        .set({
-          startTime: newStartTime,
-          endTime: newEndTime,
-          updatedAt: new Date(),
-        })
-        .where(eq(schedules.id, schedule.id));
-      updatedCount++;
     }
-  });
+
+    if (shouldSkip) {
+      skippedCount++;
+      continue;
+    }
+
+    updates.push({ id: schedule.id, startTime: newStartTime, endTime: newEndTime });
+  }
+
+  const updatedCount = updates.length;
+
+  if (updates.length > 0) {
+    const updateIds = updates.map((u) => u.id);
+    await db
+      .update(schedules)
+      .set({
+        startTime: sql`CASE ${sql.join(
+          updates.map((u) => sql`WHEN ${schedules.id} = ${u.id} THEN ${u.startTime}`),
+          sql` `,
+        )} ELSE ${schedules.startTime} END`,
+        endTime: sql`CASE ${sql.join(
+          updates.map((u) => sql`WHEN ${schedules.id} = ${u.id} THEN ${u.endTime}`),
+          sql` `,
+        )} ELSE ${schedules.endTime} END`,
+        updatedAt: new Date(),
+      })
+      .where(inArray(schedules.id, updateIds));
+  }
 
   if (updatedCount > 0) {
     const direction = deltaMinutes > 0 ? "後ろ" : "前";
@@ -362,14 +372,18 @@ scheduleRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/schedules/reorder
     }
   }
 
-  await db.transaction(async (tx) => {
-    for (let i = 0; i < parsed.data.scheduleIds.length; i++) {
-      await tx
-        .update(schedules)
-        .set({ sortOrder: i })
-        .where(eq(schedules.id, parsed.data.scheduleIds[i]));
-    }
-  });
+  if (parsed.data.scheduleIds.length > 0) {
+    const ids = parsed.data.scheduleIds;
+    await db
+      .update(schedules)
+      .set({
+        sortOrder: sql`CASE ${sql.join(
+          ids.map((id, i) => sql`WHEN ${schedules.id} = ${id} THEN ${i}`),
+          sql` `,
+        )} END`,
+      })
+      .where(inArray(schedules.id, ids));
+  }
 
   return c.json({ ok: true });
 });
@@ -511,17 +525,18 @@ scheduleRoutes.post("/:tripId/schedules/batch-unassign", requireTripAccess("edit
       and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
     );
 
-    let currentOrder = nextOrder;
-    for (const scheduleId of parsed.data.scheduleIds) {
-      await tx
-        .update(schedules)
-        .set({
-          dayPatternId: null,
-          sortOrder: currentOrder++,
-          updatedAt: new Date(),
-        })
-        .where(eq(schedules.id, scheduleId));
-    }
+    const ids = parsed.data.scheduleIds;
+    await tx
+      .update(schedules)
+      .set({
+        dayPatternId: null,
+        sortOrder: sql`CASE ${sql.join(
+          ids.map((id, i) => sql`WHEN ${schedules.id} = ${id} THEN ${nextOrder + i}`),
+          sql` `,
+        )} END`,
+        updatedAt: new Date(),
+      })
+      .where(inArray(schedules.id, ids));
   });
 
   logActivity({

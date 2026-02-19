@@ -119,11 +119,29 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
         method: "PUT",
         body: JSON.stringify({ responses }),
       }),
+    onMutate: async (newResponses) => {
+      const cacheKey = queryKeys.polls.detail(pollId);
+      await queryClient.cancelQueries({ queryKey: cacheKey });
+      const prev = queryClient.getQueryData<PollDetailResponse>(cacheKey);
+      if (prev?.myParticipantId) {
+        queryClient.setQueryData(cacheKey, {
+          ...prev,
+          participants: prev.participants.map((p) =>
+            p.id === prev.myParticipantId ? { ...p, responses: newResponses } : p,
+          ),
+        });
+      }
+      return { prev };
+    },
     onSuccess: () => {
-      invalidate();
       onMutate();
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, MSG.POLL_RESPONSE_SUBMIT_FAILED)),
+    onError: (err, _, context) => {
+      if (context?.prev) {
+        queryClient.setQueryData(queryKeys.polls.detail(pollId), context.prev);
+      }
+      toast.error(getApiErrorMessage(err, MSG.POLL_RESPONSE_SUBMIT_FAILED));
+    },
   });
 
   const addOptionMutation = useMutation({
@@ -304,7 +322,7 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
 
       {/* Response cards */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           {isOwner && isOpen && selectionMode ? (
             <div className="flex w-full items-center gap-2">
               <Button
@@ -317,7 +335,7 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
                 disabled={deleteSelectedMutation.isPending}
               >
                 <CheckCheck className="h-4 w-4" />
-                全選択
+                <span className="hidden sm:inline">全選択</span>
               </Button>
               <Button
                 variant="outline"
@@ -326,7 +344,7 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
                 disabled={deleteSelectedMutation.isPending}
               >
                 <X className="h-4 w-4" />
-                選択解除
+                <span className="hidden sm:inline">選択解除</span>
               </Button>
               <div className="ml-auto flex items-center gap-2">
                 <Button
@@ -336,7 +354,9 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
                   disabled={selectedOptionIds.size === 0 || deleteSelectedMutation.isPending}
                 >
                   <Trash2 className="h-4 w-4" />
-                  {deleteSelectedMutation.isPending ? "削除中..." : "削除"}
+                  <span className="hidden sm:inline">
+                    {deleteSelectedMutation.isPending ? "削除中..." : "削除"}
+                  </span>
                 </Button>
                 <Button
                   variant="outline"
@@ -355,10 +375,10 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
             <>
               <h3 className="text-sm font-semibold">回答状況</h3>
               {isOwner && isOpen && (
-                <div className="flex gap-2">
+                <div className="ml-auto flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => setSelectionMode(true)}>
                     <SquareMousePointer className="h-4 w-4" />
-                    選択
+                    <span className="hidden sm:inline">選択</span>
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => setShowAddOption(true)}>
                     <Plus className="h-4 w-4" />
@@ -374,7 +394,7 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
           )}
         </div>
         <div
-          className="grid divide-y rounded-lg border"
+          className="grid divide-y overflow-x-auto rounded-lg border"
           style={{
             gridTemplateColumns: [
               selectionMode ? "auto" : null,

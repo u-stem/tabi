@@ -563,6 +563,15 @@ async function signupOrLogin(user: DevUser): Promise<{ cookies: string; userId: 
   return { cookies, userId: session.user.id };
 }
 
+async function tryCreate<T>(fn: () => Promise<T>): Promise<T | null> {
+  try {
+    return await fn();
+  } catch (err) {
+    if (err instanceof Error && err.message.includes("409")) return null;
+    throw err;
+  }
+}
+
 async function main() {
   console.log("Seeding database...");
   console.log(`API: ${API_URL}`);
@@ -588,245 +597,257 @@ async function main() {
   const ownerData = userMap.get(DEV_USERS[0].username);
   if (!ownerData) throw new Error(`Data not found for ${DEV_USERS[0].username}`);
   const ownerCookies = ownerData.cookies;
-
-  // 2. Create sample trip
-  console.log(`\nCreating trip: ${SAMPLE_TRIP.title}`);
-  const trip = await apiFetch<{ id: string; days?: { id: string; dayNumber: number }[] }>(
-    "/api/trips",
-    { method: "POST", body: JSON.stringify(SAMPLE_TRIP), headers: { cookie: ownerCookies } },
-  );
-  console.log(`  Trip ID: ${trip.id}`);
-
-  // 3. Fetch trip details to get day IDs and default pattern IDs
-  const tripDetail = await apiFetch<{
-    days: { id: string; dayNumber: number; patterns: { id: string; isDefault: boolean }[] }[];
-  }>(`/api/trips/${trip.id}`, { headers: { cookie: ownerCookies } });
-  const days = tripDetail.days.sort((a, b) => a.dayNumber - b.dayNumber);
-
-  // 4. Create schedules via pattern-scoped URLs
-  console.log(`\nCreating ${SAMPLE_SCHEDULES.length} schedules...`);
-  for (const schedule of SAMPLE_SCHEDULES) {
-    const day = days[schedule.dayIndex];
-    if (!day) continue;
-    const defaultPattern = day.patterns.find((v) => v.isDefault) ?? day.patterns[0];
-    if (!defaultPattern) continue;
-    const { dayIndex: _, ...scheduleData } = schedule;
-    await apiFetch(`/api/trips/${trip.id}/days/${day.id}/patterns/${defaultPattern.id}/schedules`, {
-      method: "POST",
-      body: JSON.stringify(scheduleData),
-      headers: { cookie: ownerCookies },
-    });
-    console.log(`  ${day.dayNumber}日目: ${schedule.name}`);
-  }
-
-  // 5. Create candidates
-  console.log(`\nCreating ${SAMPLE_CANDIDATES.length} candidates...`);
-  for (const candidate of SAMPLE_CANDIDATES) {
-    await apiFetch(`/api/trips/${trip.id}/candidates`, {
-      method: "POST",
-      body: JSON.stringify(candidate),
-      headers: { cookie: ownerCookies },
-    });
-    console.log(`  候補: ${candidate.name}`);
-  }
-
-  // 6. Add other users as trip members
-  const memberRoles = ["editor", "viewer"] as const;
-  for (let i = 1; i < DEV_USERS.length; i++) {
-    const user = DEV_USERS[i];
-    const role = memberRoles[i - 1] ?? "editor";
-    const userData = userMap.get(user.username);
-    if (!userData) continue;
-    console.log(`\nAdding member: ${user.username} (${role})`);
-    await apiFetch(`/api/trips/${trip.id}/members`, {
-      method: "POST",
-      body: JSON.stringify({ userId: userData.userId, role }),
-      headers: { cookie: ownerCookies },
-    });
-    console.log("  Done");
-  }
-
   const aliceData = userMap.get("alice");
   const bobData = userMap.get("bob");
 
-  // 7. Create poll trip (scheduling status)
+  // Fetch existing data to check for duplicates
+  const existingTrips = await apiFetch<{ id: string; title: string }[]>("/api/trips", {
+    headers: { cookie: ownerCookies },
+  });
+  const existingGroups = await apiFetch<{ id: string; name: string }[]>("/api/groups", {
+    headers: { cookie: ownerCookies },
+  });
+  const existingBookmarkLists = await apiFetch<{ id: string; name: string }[]>(
+    "/api/bookmark-lists",
+    { headers: { cookie: ownerCookies } },
+  );
+
+  // 2. Create sample trip (skip if already exists)
+  console.log(`\nCreating trip: ${SAMPLE_TRIP.title}`);
+  const existingKyotoTrip = existingTrips.find((t) => t.title === SAMPLE_TRIP.title);
+  if (existingKyotoTrip) {
+    console.log(`  Already exists (ID: ${existingKyotoTrip.id}), skipping`);
+  } else {
+    const trip = await apiFetch<{ id: string }>("/api/trips", {
+      method: "POST",
+      body: JSON.stringify(SAMPLE_TRIP),
+      headers: { cookie: ownerCookies },
+    });
+    console.log(`  Trip ID: ${trip.id}`);
+
+    // 3. Fetch trip details to get day IDs and default pattern IDs
+    const tripDetail = await apiFetch<{
+      days: { id: string; dayNumber: number; patterns: { id: string; isDefault: boolean }[] }[];
+    }>(`/api/trips/${trip.id}`, { headers: { cookie: ownerCookies } });
+    const days = tripDetail.days.sort((a, b) => a.dayNumber - b.dayNumber);
+
+    // 4. Create schedules
+    console.log(`\nCreating ${SAMPLE_SCHEDULES.length} schedules...`);
+    for (const schedule of SAMPLE_SCHEDULES) {
+      const day = days[schedule.dayIndex];
+      if (!day) continue;
+      const defaultPattern = day.patterns.find((v) => v.isDefault) ?? day.patterns[0];
+      if (!defaultPattern) continue;
+      const { dayIndex: _, ...scheduleData } = schedule;
+      await apiFetch(
+        `/api/trips/${trip.id}/days/${day.id}/patterns/${defaultPattern.id}/schedules`,
+        {
+          method: "POST",
+          body: JSON.stringify(scheduleData),
+          headers: { cookie: ownerCookies },
+        },
+      );
+      console.log(`  ${day.dayNumber}日目: ${schedule.name}`);
+    }
+
+    // 5. Create candidates
+    console.log(`\nCreating ${SAMPLE_CANDIDATES.length} candidates...`);
+    for (const candidate of SAMPLE_CANDIDATES) {
+      await apiFetch(`/api/trips/${trip.id}/candidates`, {
+        method: "POST",
+        body: JSON.stringify(candidate),
+        headers: { cookie: ownerCookies },
+      });
+      console.log(`  候補: ${candidate.name}`);
+    }
+
+    // 6. Add other users as trip members
+    const memberRoles = ["editor", "viewer"] as const;
+    for (let i = 1; i < DEV_USERS.length; i++) {
+      const user = DEV_USERS[i];
+      const role = memberRoles[i - 1] ?? "editor";
+      const userData = userMap.get(user.username);
+      if (!userData) continue;
+      console.log(`\nAdding member: ${user.username} (${role})`);
+      await apiFetch(`/api/trips/${trip.id}/members`, {
+        method: "POST",
+        body: JSON.stringify({ userId: userData.userId, role }),
+        headers: { cookie: ownerCookies },
+      });
+      console.log("  Done");
+    }
+  }
+
+  // 7. Create poll trip (skip if already exists)
   console.log(`\nCreating poll trip: ${SAMPLE_POLL_TRIP.title}`);
-  const pollTrip = await apiFetch<{ id: string }>("/api/trips", {
-    method: "POST",
-    body: JSON.stringify(SAMPLE_POLL_TRIP),
-    headers: { cookie: ownerCookies },
-  });
-  console.log(`  Trip ID: ${pollTrip.id}`);
-
-  const pollTripDetail = await apiFetch<{ poll: { id: string } }>(`/api/trips/${pollTrip.id}`, {
-    headers: { cookie: ownerCookies },
-  });
-  const seedPollId = pollTripDetail.poll.id;
-  console.log(`  Poll ID: ${seedPollId}`);
-
-  // Add alice and bob as poll participants
-  for (const username of ["alice", "bob"] as const) {
-    const userData = userMap.get(username);
-    if (!userData) continue;
-    await apiFetch(`/api/polls/${seedPollId}/participants`, {
+  const existingPollTrip = existingTrips.find((t) => t.title === SAMPLE_POLL_TRIP.title);
+  if (existingPollTrip) {
+    console.log(`  Already exists (ID: ${existingPollTrip.id}), skipping`);
+  } else {
+    const pollTrip = await apiFetch<{ id: string }>("/api/trips", {
       method: "POST",
-      body: JSON.stringify({ userId: userData.userId }),
+      body: JSON.stringify(SAMPLE_POLL_TRIP),
       headers: { cookie: ownerCookies },
     });
-    console.log(`  Participant: ${username}`);
-  }
+    console.log(`  Trip ID: ${pollTrip.id}`);
 
-  // Add alice and bob as trip members (editor)
-  for (const username of ["alice", "bob"] as const) {
-    const userData = userMap.get(username);
-    if (!userData) continue;
-    await apiFetch(`/api/trips/${pollTrip.id}/members`, {
-      method: "POST",
-      body: JSON.stringify({ userId: userData.userId, role: "editor" }),
+    const pollTripDetail = await apiFetch<{ poll: { id: string } }>(`/api/trips/${pollTrip.id}`, {
       headers: { cookie: ownerCookies },
     });
-  }
+    const seedPollId = pollTripDetail.poll.id;
+    console.log(`  Poll ID: ${seedPollId}`);
 
-  // Fetch option IDs
-  const pollDetail = await apiFetch<{
-    options: { id: string; startDate: string }[];
-  }>(`/api/polls/${seedPollId}`, { headers: { cookie: ownerCookies } });
-  const optionsByDate = new Map(pollDetail.options.map((o) => [o.startDate, o.id]));
-  const opt1 = optionsByDate.get("2026-04-10")!;
-  const opt2 = optionsByDate.get("2026-04-17")!;
-  const opt3 = optionsByDate.get("2026-04-24")!;
+    // Add alice and bob as poll participants + trip members
+    for (const username of ["alice", "bob"] as const) {
+      const userData = userMap.get(username);
+      if (!userData) continue;
+      await tryCreate(() =>
+        apiFetch(`/api/polls/${seedPollId}/participants`, {
+          method: "POST",
+          body: JSON.stringify({ userId: userData.userId }),
+          headers: { cookie: ownerCookies },
+        }),
+      );
+      await tryCreate(() =>
+        apiFetch(`/api/trips/${pollTrip.id}/members`, {
+          method: "POST",
+          body: JSON.stringify({ userId: userData.userId, role: "editor" }),
+          headers: { cookie: ownerCookies },
+        }),
+      );
+      console.log(`  Participant + member: ${username}`);
+    }
 
-  // Submit responses for each user
-  type PollResponse = { optionId: string; response: "ok" | "maybe" | "ng" };
+    // Fetch option IDs and submit responses
+    const pollDetail = await apiFetch<{
+      options: { id: string; startDate: string }[];
+    }>(`/api/polls/${seedPollId}`, { headers: { cookie: ownerCookies } });
+    const optionsByDate = new Map(pollDetail.options.map((o) => [o.startDate, o.id]));
+    const opt1 = optionsByDate.get("2026-04-10")!;
+    const opt2 = optionsByDate.get("2026-04-17")!;
+    const opt3 = optionsByDate.get("2026-04-24")!;
 
-  const devResponses: PollResponse[] = [
-    { optionId: opt1, response: "ok" },
-    { optionId: opt2, response: "ok" },
-    { optionId: opt3, response: "maybe" },
-  ];
-  await apiFetch(`/api/polls/${seedPollId}/responses`, {
-    method: "PUT",
-    body: JSON.stringify({ responses: devResponses }),
-    headers: { cookie: ownerCookies },
-  });
-  console.log("  Response: dev");
+    type PollResponse = { optionId: string; response: "ok" | "maybe" | "ng" };
 
-  if (aliceData) {
-    const aliceResponses: PollResponse[] = [
+    const devResponses: PollResponse[] = [
       { optionId: opt1, response: "ok" },
-      { optionId: opt2, response: "maybe" },
-      { optionId: opt3, response: "ng" },
-    ];
-    await apiFetch(`/api/polls/${seedPollId}/responses`, {
-      method: "PUT",
-      body: JSON.stringify({ responses: aliceResponses }),
-      headers: { cookie: aliceData.cookies },
-    });
-    console.log("  Response: alice");
-  }
-
-  if (bobData) {
-    const bobResponses: PollResponse[] = [
-      { optionId: opt1, response: "maybe" },
       { optionId: opt2, response: "ok" },
+      { optionId: opt3, response: "maybe" },
     ];
     await apiFetch(`/api/polls/${seedPollId}/responses`, {
       method: "PUT",
-      body: JSON.stringify({ responses: bobResponses }),
-      headers: { cookie: bobData.cookies },
+      body: JSON.stringify({ responses: devResponses }),
+      headers: { cookie: ownerCookies },
     });
-    console.log("  Response: bob");
+    console.log("  Response: dev");
+
+    if (aliceData) {
+      const aliceResponses: PollResponse[] = [
+        { optionId: opt1, response: "ok" },
+        { optionId: opt2, response: "maybe" },
+        { optionId: opt3, response: "ng" },
+      ];
+      await apiFetch(`/api/polls/${seedPollId}/responses`, {
+        method: "PUT",
+        body: JSON.stringify({ responses: aliceResponses }),
+        headers: { cookie: aliceData.cookies },
+      });
+      console.log("  Response: alice");
+    }
+
+    if (bobData) {
+      const bobResponses: PollResponse[] = [
+        { optionId: opt1, response: "maybe" },
+        { optionId: opt2, response: "ok" },
+      ];
+      await apiFetch(`/api/polls/${seedPollId}/responses`, {
+        method: "PUT",
+        body: JSON.stringify({ responses: bobResponses }),
+        headers: { cookie: bobData.cookies },
+      });
+      console.log("  Response: bob");
+    }
   }
 
-  // 8. Create friend relationships (dev <-> alice, dev <-> bob)
+  // 8. Create friend relationships (skip if already friends)
   console.log("\nCreating friend relationships...");
 
+  async function ensureFriends(
+    requesterCookies: string,
+    accepterCookies: string,
+    accepterId: string,
+    label: string,
+  ) {
+    const req = await tryCreate(() =>
+      apiFetch<{ id: string }>("/api/friends/requests", {
+        method: "POST",
+        body: JSON.stringify({ addresseeId: accepterId }),
+        headers: { cookie: requesterCookies },
+      }),
+    );
+    if (req) {
+      await apiFetch(`/api/friends/requests/${req.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "accepted" }),
+        headers: { cookie: accepterCookies },
+      });
+      console.log(`  ${label}: friends`);
+    } else {
+      console.log(`  ${label}: already friends`);
+    }
+  }
+
   if (aliceData) {
-    // dev -> alice: send request, then alice accepts
-    const req1 = await apiFetch<{ id: string }>("/api/friends/requests", {
-      method: "POST",
-      body: JSON.stringify({ addresseeId: aliceData.userId }),
-      headers: { cookie: ownerCookies },
-    });
-    await apiFetch(`/api/friends/requests/${req1.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status: "accepted" }),
-      headers: { cookie: aliceData.cookies },
-    });
-    console.log("  dev <-> alice: friends");
+    await ensureFriends(ownerCookies, aliceData.cookies, aliceData.userId, "dev <-> alice");
   }
-
   if (bobData) {
-    // dev -> bob: send request, then bob accepts
-    const req2 = await apiFetch<{ id: string }>("/api/friends/requests", {
-      method: "POST",
-      body: JSON.stringify({ addresseeId: bobData.userId }),
-      headers: { cookie: ownerCookies },
-    });
-    await apiFetch(`/api/friends/requests/${req2.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status: "accepted" }),
-      headers: { cookie: bobData.cookies },
-    });
-    console.log("  dev <-> bob: friends");
+    await ensureFriends(ownerCookies, bobData.cookies, bobData.userId, "dev <-> bob");
   }
-
   if (aliceData && bobData) {
-    // alice -> bob: send request, then bob accepts
-    const req3 = await apiFetch<{ id: string }>("/api/friends/requests", {
-      method: "POST",
-      body: JSON.stringify({ addresseeId: bobData.userId }),
-      headers: { cookie: aliceData.cookies },
-    });
-    await apiFetch(`/api/friends/requests/${req3.id}`, {
-      method: "PATCH",
-      body: JSON.stringify({ status: "accepted" }),
-      headers: { cookie: bobData.cookies },
-    });
-    console.log("  alice <-> bob: friends");
+    await ensureFriends(aliceData.cookies, bobData.cookies, bobData.userId, "alice <-> bob");
   }
 
-  // 9. Create groups with members
+  // 9. Create groups with members (skip if already exists)
   console.log("\nCreating groups...");
 
-  const group1 = await apiFetch<{ id: string }>("/api/groups", {
-    method: "POST",
-    body: JSON.stringify({ name: "京都メンバー" }),
-    headers: { cookie: ownerCookies },
-  });
-  if (aliceData) {
-    await apiFetch(`/api/groups/${group1.id}/members`, {
+  async function ensureGroup(name: string, memberUserIds: string[], label: string) {
+    if (existingGroups.some((g) => g.name === name)) {
+      console.log(`  ${label}: already exists`);
+      return;
+    }
+    const group = await apiFetch<{ id: string }>("/api/groups", {
       method: "POST",
-      body: JSON.stringify({ userId: aliceData.userId }),
+      body: JSON.stringify({ name }),
       headers: { cookie: ownerCookies },
     });
+    for (const userId of memberUserIds) {
+      await apiFetch(`/api/groups/${group.id}/members`, {
+        method: "POST",
+        body: JSON.stringify({ userId }),
+        headers: { cookie: ownerCookies },
+      });
+    }
+    console.log(`  ${label}`);
   }
-  if (bobData) {
-    await apiFetch(`/api/groups/${group1.id}/members`, {
-      method: "POST",
-      body: JSON.stringify({ userId: bobData.userId }),
-      headers: { cookie: ownerCookies },
-    });
-  }
-  console.log("  京都メンバー (dev所有, alice + bob)");
 
-  const group2 = await apiFetch<{ id: string }>("/api/groups", {
-    method: "POST",
-    body: JSON.stringify({ name: "家族" }),
-    headers: { cookie: ownerCookies },
-  });
-  if (aliceData) {
-    await apiFetch(`/api/groups/${group2.id}/members`, {
-      method: "POST",
-      body: JSON.stringify({ userId: aliceData.userId }),
-      headers: { cookie: ownerCookies },
-    });
-  }
-  console.log("  家族 (dev所有, alice)");
+  await ensureGroup(
+    "京都メンバー",
+    [aliceData?.userId, bobData?.userId].filter((id): id is string => !!id),
+    "京都メンバー (dev所有, alice + bob)",
+  );
+  await ensureGroup(
+    "家族",
+    [aliceData?.userId].filter((id): id is string => !!id),
+    "家族 (dev所有, alice)",
+  );
 
-  // 10. Create bookmark lists with bookmarks
+  // 10. Create bookmark lists with bookmarks (skip if already exists)
   console.log(`\nCreating ${SAMPLE_BOOKMARK_LISTS.length} bookmark lists...`);
   for (const listData of SAMPLE_BOOKMARK_LISTS) {
+    if (existingBookmarkLists.some((l) => l.name === listData.name)) {
+      console.log(`  リスト: ${listData.name}: already exists`);
+      continue;
+    }
     const { bookmarks: bms, ...listBody } = listData;
     const list = await apiFetch<{ id: string }>("/api/bookmark-lists", {
       method: "POST",
@@ -845,10 +866,10 @@ async function main() {
 
   console.log("\n--- Seed complete ---");
   console.log("\nTest accounts:");
+  const memberRoles = ["owner", "editor", "viewer"] as const;
   for (let i = 0; i < DEV_USERS.length; i++) {
     const user = DEV_USERS[i];
-    const role = i === 0 ? "owner" : (memberRoles[i - 1] ?? "editor");
-    console.log(`  ${user.username} / ${user.password} (${role})`);
+    console.log(`  ${user.username} / ${user.password} (${memberRoles[i]})`);
   }
   console.log("");
 }

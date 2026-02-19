@@ -208,16 +208,18 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
   });
 
   function handleSetResponse(optionId: string, value: PollResponseValue) {
-    if (!poll?.myParticipantId || poll.status !== "open") return;
+    // Read from cache to get the latest data including pending optimistic updates
+    const latest = queryClient.getQueryData<PollDetailResponse>(queryKeys.polls.detail(pollId));
+    if (!latest?.myParticipantId || latest.status !== "open") return;
 
-    const myParticipant = poll.participants.find((p) => p.id === poll.myParticipantId);
+    const myParticipant = latest.participants.find((p) => p.id === latest.myParticipantId);
     if (!myParticipant) return;
 
     const currentResponses = myParticipant.responses;
     const existing = currentResponses.find((r) => r.optionId === optionId);
     const isToggleOff = existing?.response === value;
 
-    const newResponses = poll.options
+    const newResponses = latest.options
       .map((opt) => {
         if (opt.id === optionId) {
           return isToggleOff ? null : { optionId: opt.id, response: value };
@@ -464,7 +466,7 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
                               : "border-muted-foreground/20 text-muted-foreground hover:bg-accent"
                           } ${!isOpen ? "opacity-50" : ""}`}
                           onClick={() => handleSetResponse(opt.id, value)}
-                          disabled={!isOpen || submitResponsesMutation.isPending}
+                          disabled={!isOpen}
                         >
                           <Icon className="h-3.5 w-3.5" />
                         </button>

@@ -378,7 +378,7 @@ scheduleRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/schedules/reorder
       .update(schedules)
       .set({
         sortOrder: sql`CASE ${sql.join(
-          ids.map((id, i) => sql`WHEN ${schedules.id} = ${id} THEN ${i}`),
+          ids.map((id, i) => sql`WHEN ${schedules.id} = ${id} THEN ${i}::integer`),
           sql` `,
         )} END`,
       })
@@ -531,7 +531,7 @@ scheduleRoutes.post("/:tripId/schedules/batch-unassign", requireTripAccess("edit
       .set({
         dayPatternId: null,
         sortOrder: sql`CASE ${sql.join(
-          ids.map((id, i) => sql`WHEN ${schedules.id} = ${id} THEN ${nextOrder + i}`),
+          ids.map((id, i) => sql`WHEN ${schedules.id} = ${id} THEN ${nextOrder + i}::integer`),
           sql` `,
         )} END`,
         updatedAt: new Date(),

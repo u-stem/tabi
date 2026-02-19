@@ -6,6 +6,7 @@ export function createQueryClient() {
     defaultOptions: {
       queries: {
         staleTime: 30 * 1000,
+        refetchOnWindowFocus: false,
         retry: (failureCount, error) => {
           // Never retry on 401 (session expired)
           if (error instanceof ApiError && error.status === 401) return false;

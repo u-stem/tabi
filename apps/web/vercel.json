@@ -1,4 +1,5 @@
 {
   "buildCommand": "next build",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "fluid": true
 }

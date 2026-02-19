@@ -10,7 +10,7 @@ const isLocalhost =
   connectionString.includes("localhost") || connectionString.includes("127.0.0.1");
 const client = postgres(connectionString, {
   ssl: isLocalhost ? false : "require",
-  max: isLocalhost ? 10 : 1,
+  max: isLocalhost ? 10 : 3,
   idle_timeout: 20,
   max_lifetime: 60 * 30,
 });

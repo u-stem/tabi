@@ -4,14 +4,13 @@ import {
   MAX_TRIPS_PER_USER,
   updateTripSchema,
 } from "@sugara/shared";
-import { and, count, countDistinct, desc, eq, getTableColumns, ne } from "drizzle-orm";
+import { and, count, desc, eq, getTableColumns, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import {
   dayPatterns,
   schedulePollOptions,
   schedulePollParticipants,
-  schedulePollResponses,
   schedulePolls,
   schedules,
   tripDays,
@@ -210,7 +209,7 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
   const tripId = c.req.param("id");
   const role = c.get("tripRole");
 
-  const [trip, candidates, [{ count: memberCount }]] = await Promise.all([
+  const [tripWithPoll, candidates, [{ count: memberCount }]] = await Promise.all([
     db.query.trips.findFirst({
       where: eq(trips.id, tripId),
       with: {
@@ -227,53 +226,39 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
             },
           },
         },
+        poll: {
+          columns: { id: true, status: true },
+          with: {
+            participants: {
+              columns: { id: true },
+              with: { responses: { columns: { participantId: true } } },
+            },
+          },
+        },
       },
     }),
     queryCandidatesWithReactions(tripId, user.id),
     db.select({ count: count() }).from(tripMembers).where(eq(tripMembers.tripId, tripId)),
   ]);
 
-  if (!trip) {
+  if (!tripWithPoll) {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
+
+  const { poll: rawPoll, ...trip } = tripWithPoll;
 
   // Derive from already-fetched data instead of an extra DB query
   const scheduleCount =
     trip.days.flatMap((d) => d.patterns).flatMap((p) => p.schedules).length + candidates.length;
 
-  // Fetch linked poll summary
-  const linkedPoll = await db.query.schedulePolls.findFirst({
-    where: eq(schedulePolls.tripId, tripId),
-    columns: { id: true, status: true },
-  });
-
-  let poll: {
-    id: string;
-    status: string;
-    participantCount: number;
-    respondedCount: number;
-  } | null = null;
-
-  if (linkedPoll) {
-    const [[{ count: participantCount }], [{ count: respondedCount }]] = await Promise.all([
-      db
-        .select({ count: count() })
-        .from(schedulePollParticipants)
-        .where(eq(schedulePollParticipants.pollId, linkedPoll.id)),
-      db
-        .select({ count: countDistinct(schedulePollResponses.participantId) })
-        .from(schedulePollResponses)
-        .innerJoin(schedulePollOptions, eq(schedulePollResponses.optionId, schedulePollOptions.id))
-        .where(eq(schedulePollOptions.pollId, linkedPoll.id)),
-    ]);
-
-    poll = {
-      id: linkedPoll.id,
-      status: linkedPoll.status,
-      participantCount,
-      respondedCount,
-    };
-  }
+  const poll = rawPoll
+    ? {
+        id: rawPoll.id,
+        status: rawPoll.status,
+        participantCount: rawPoll.participants.length,
+        respondedCount: rawPoll.participants.filter((p) => p.responses.length > 0).length,
+      }
+    : null;
 
   return c.json({
     ...trip,

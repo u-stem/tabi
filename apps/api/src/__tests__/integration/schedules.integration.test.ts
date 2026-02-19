@@ -382,10 +382,10 @@ describe("Schedules Integration", () => {
       const list = await listRes.json();
       const lunch = list.find((s: { id: string }) => s.id === s1.id);
       const museum = list.find((s: { id: string }) => s.id === s2.id);
-      expect(lunch.startTime).toBe("12:30");
-      expect(lunch.endTime).toBe("13:30");
-      expect(museum.startTime).toBe("14:30");
-      expect(museum.endTime).toBe("16:30");
+      expect(lunch.startTime).toBe("12:30:00");
+      expect(lunch.endTime).toBe("13:30:00");
+      expect(museum.startTime).toBe("14:30:00");
+      expect(museum.endTime).toBe("16:30:00");
     });
 
     it("skips hotel with endDayOffset > 0", async () => {
@@ -576,8 +576,8 @@ describe("Schedules Integration", () => {
       );
       const list = await listRes.json();
       const bus = list.find((s: { id: string }) => s.id === overnight.id);
-      expect(bus.startTime).toBe("21:30");
-      expect(bus.endTime).toBe("06:00");
+      expect(bus.startTime).toBe("21:30:00");
+      expect(bus.endTime).toBe("06:00:00");
     });
   });
 });

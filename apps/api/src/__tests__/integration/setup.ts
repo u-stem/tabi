@@ -12,7 +12,8 @@ let _db: PostgresJsDatabase<typeof schema> | null = null;
 
 export function getTestDb() {
   if (!_db) {
-    _client = postgres(TEST_DB_URL);
+    // Single connection to avoid deadlock on TRUNCATE between pooled connections
+    _client = postgres(TEST_DB_URL, { max: 1 });
     _db = drizzle(_client, { schema });
   }
   return _db;

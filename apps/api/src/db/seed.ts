@@ -414,6 +414,16 @@ const SAMPLE_CANDIDATES = [
   },
 ];
 
+const SAMPLE_POLL_TRIP = {
+  title: "沖縄旅行",
+  destination: "沖縄",
+  pollOptions: [
+    { startDate: "2026-04-10", endDate: "2026-04-12" },
+    { startDate: "2026-04-17", endDate: "2026-04-19" },
+    { startDate: "2026-04-24", endDate: "2026-04-27" },
+  ],
+};
+
 const SAMPLE_BOOKMARK_LISTS = [
   {
     name: "京都グルメ",
@@ -636,10 +646,100 @@ async function main() {
     console.log("  Done");
   }
 
-  // 7. Create friend relationships (dev <-> alice, dev <-> bob)
-  console.log("\nCreating friend relationships...");
   const aliceData = userMap.get("alice");
   const bobData = userMap.get("bob");
+
+  // 7. Create poll trip (scheduling status)
+  console.log(`\nCreating poll trip: ${SAMPLE_POLL_TRIP.title}`);
+  const pollTrip = await apiFetch<{ id: string }>("/api/trips", {
+    method: "POST",
+    body: JSON.stringify(SAMPLE_POLL_TRIP),
+    headers: { cookie: ownerCookies },
+  });
+  console.log(`  Trip ID: ${pollTrip.id}`);
+
+  const pollTripDetail = await apiFetch<{ poll: { id: string } }>(`/api/trips/${pollTrip.id}`, {
+    headers: { cookie: ownerCookies },
+  });
+  const seedPollId = pollTripDetail.poll.id;
+  console.log(`  Poll ID: ${seedPollId}`);
+
+  // Add alice and bob as poll participants
+  for (const username of ["alice", "bob"] as const) {
+    const userData = userMap.get(username);
+    if (!userData) continue;
+    await apiFetch(`/api/polls/${seedPollId}/participants`, {
+      method: "POST",
+      body: JSON.stringify({ userId: userData.userId }),
+      headers: { cookie: ownerCookies },
+    });
+    console.log(`  Participant: ${username}`);
+  }
+
+  // Add alice and bob as trip members (editor)
+  for (const username of ["alice", "bob"] as const) {
+    const userData = userMap.get(username);
+    if (!userData) continue;
+    await apiFetch(`/api/trips/${pollTrip.id}/members`, {
+      method: "POST",
+      body: JSON.stringify({ userId: userData.userId, role: "editor" }),
+      headers: { cookie: ownerCookies },
+    });
+  }
+
+  // Fetch option IDs
+  const pollDetail = await apiFetch<{
+    options: { id: string; startDate: string }[];
+  }>(`/api/polls/${seedPollId}`, { headers: { cookie: ownerCookies } });
+  const optionsByDate = new Map(pollDetail.options.map((o) => [o.startDate, o.id]));
+  const opt1 = optionsByDate.get("2026-04-10")!;
+  const opt2 = optionsByDate.get("2026-04-17")!;
+  const opt3 = optionsByDate.get("2026-04-24")!;
+
+  // Submit responses for each user
+  type PollResponse = { optionId: string; response: "ok" | "maybe" | "ng" };
+
+  const devResponses: PollResponse[] = [
+    { optionId: opt1, response: "ok" },
+    { optionId: opt2, response: "ok" },
+    { optionId: opt3, response: "maybe" },
+  ];
+  await apiFetch(`/api/polls/${seedPollId}/responses`, {
+    method: "PUT",
+    body: JSON.stringify({ responses: devResponses }),
+    headers: { cookie: ownerCookies },
+  });
+  console.log("  Response: dev");
+
+  if (aliceData) {
+    const aliceResponses: PollResponse[] = [
+      { optionId: opt1, response: "ok" },
+      { optionId: opt2, response: "maybe" },
+      { optionId: opt3, response: "ng" },
+    ];
+    await apiFetch(`/api/polls/${seedPollId}/responses`, {
+      method: "PUT",
+      body: JSON.stringify({ responses: aliceResponses }),
+      headers: { cookie: aliceData.cookies },
+    });
+    console.log("  Response: alice");
+  }
+
+  if (bobData) {
+    const bobResponses: PollResponse[] = [
+      { optionId: opt1, response: "maybe" },
+      { optionId: opt2, response: "ok" },
+    ];
+    await apiFetch(`/api/polls/${seedPollId}/responses`, {
+      method: "PUT",
+      body: JSON.stringify({ responses: bobResponses }),
+      headers: { cookie: bobData.cookies },
+    });
+    console.log("  Response: bob");
+  }
+
+  // 8. Create friend relationships (dev <-> alice, dev <-> bob)
+  console.log("\nCreating friend relationships...");
 
   if (aliceData) {
     // dev -> alice: send request, then alice accepts
@@ -686,7 +786,7 @@ async function main() {
     console.log("  alice <-> bob: friends");
   }
 
-  // 8. Create groups with members
+  // 9. Create groups with members
   console.log("\nCreating groups...");
 
   const group1 = await apiFetch<{ id: string }>("/api/groups", {
@@ -724,7 +824,7 @@ async function main() {
   }
   console.log("  家族 (dev所有, alice)");
 
-  // 9. Create bookmark lists with bookmarks
+  // 10. Create bookmark lists with bookmarks
   console.log(`\nCreating ${SAMPLE_BOOKMARK_LISTS.length} bookmark lists...`);
   for (const listData of SAMPLE_BOOKMARK_LISTS) {
     const { bookmarks: bms, ...listBody } = listData;

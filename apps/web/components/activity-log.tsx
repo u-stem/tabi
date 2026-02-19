@@ -99,6 +99,11 @@ const ACTION_TEMPLATES: Record<string, Record<string, string>> = {
   day_memo: {
     updated: "日程メモを更新",
   },
+  expense: {
+    created: "費用{name}を追加",
+    updated: "費用{name}を更新",
+    deleted: "費用{name}を削除",
+  },
   poll: {
     created: "日程調整を開始",
     option_added: "日程案{name}を追加",

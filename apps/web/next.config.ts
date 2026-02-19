@@ -12,7 +12,7 @@ const cspDirectives = [
   "frame-src 'none'",
   "frame-ancestors 'none'",
   "object-src 'none'",
-  "worker-src 'self'",
+  "worker-src 'self' blob:",
   "base-uri 'self'",
   "form-action 'self'",
   "upgrade-insecure-requests",

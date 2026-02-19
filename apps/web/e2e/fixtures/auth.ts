@@ -77,7 +77,7 @@ export async function createTripViaUI(
   options: { title: string; destination: string },
 ): Promise<string> {
   // Open create trip dialog
-  await page.getByRole("button", { name: "新規作成" }).click();
+  await page.getByRole("button", { name: "旅行を作成" }).click();
   await expect(page.getByRole("dialog")).toBeVisible();
 
   await page.locator("#create-title").fill(options.title);

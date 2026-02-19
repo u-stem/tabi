@@ -19,3 +19,5 @@ export const BOOKMARK_NAME_MAX_LENGTH = 200;
 export const BOOKMARK_MEMO_MAX_LENGTH = 2000;
 export const BOOKMARK_URL_MAX_LENGTH = 2000;
 export const MAX_URLS_PER_BOOKMARK = 5;
+
+export const MAX_EXPENSES_PER_TRIP = 200;

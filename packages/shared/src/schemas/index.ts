@@ -10,3 +10,4 @@ export * from "./poll";
 export * from "./schedule";
 export * from "./trip";
 export * from "./trip-day";
+export * from "./expense";

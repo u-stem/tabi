@@ -206,7 +206,7 @@ export type PollDetailResponse = {
   status: PollStatus;
   deadline: string | null;
   confirmedOptionId: string | null;
-  tripId: string | null;
+  tripId: string;
   options: PollOptionResponse[];
   participants: PollParticipantResponse[];
   isOwner: boolean;

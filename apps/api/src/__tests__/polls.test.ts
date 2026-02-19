@@ -53,9 +53,9 @@ describe("Poll routes", () => {
     it("returns 409 when option with same dates already exists", async () => {
       mockFindPollAsOwner.mockResolvedValue({
         id: "poll-1",
-        ownerId: fakeUser.id,
         status: "open",
         tripId: "trip-1",
+        trip: { ownerId: fakeUser.id },
       });
 
       // First select: option count
@@ -89,9 +89,9 @@ describe("Poll routes", () => {
     it("returns 201 when dates are unique", async () => {
       mockFindPollAsOwner.mockResolvedValue({
         id: "poll-1",
-        ownerId: fakeUser.id,
         status: "open",
         tripId: "trip-1",
+        trip: { ownerId: fakeUser.id },
       });
 
       // First select: option count

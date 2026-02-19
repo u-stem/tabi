@@ -58,7 +58,7 @@ export const ERROR_MSG = {
   POLL_ALREADY_PARTICIPANT: "Already a participant",
   POLL_DEADLINE_PASSED: "Poll deadline has passed",
   POLL_SHARED_NOT_FOUND: "Shared poll not found",
-  LIMIT_POLLS: "Poll limit reached",
+
   LIMIT_POLL_OPTIONS: "Poll option limit reached",
   LIMIT_POLL_PARTICIPANTS: "Poll participant limit reached",
   POLL_CANNOT_REMOVE_OWNER: "Cannot remove poll owner from participants",

@@ -104,10 +104,7 @@ tripRoutes.post("/", async (c) => {
       const [poll] = await tx
         .insert(schedulePolls)
         .values({
-          ownerId: user.id,
           tripId: created.id,
-          title,
-          destination,
           note: null,
         })
         .returning();
@@ -446,10 +443,7 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
         const [newPoll] = await tx
           .insert(schedulePolls)
           .values({
-            ownerId: user.id,
             tripId: created.id,
-            title: sourcePoll.title,
-            destination: sourcePoll.destination,
             note: sourcePoll.note,
             deadline: sourcePoll.deadline,
           })

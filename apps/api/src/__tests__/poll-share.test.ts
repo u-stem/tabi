@@ -203,9 +203,7 @@ describe("Poll share routes", () => {
     it("returns poll data for valid token", async () => {
       mockDbQuery.schedulePolls.findFirst.mockResolvedValue({
         id: "poll-1",
-        ownerId: "user-1",
-        title: "Trip Poll",
-        destination: "Kyoto",
+        trip: { title: "Trip Poll", destination: "Kyoto" },
         note: null,
         status: "open",
         deadline: null,
@@ -230,9 +228,7 @@ describe("Poll share routes", () => {
     it("returns 404 for expired token", async () => {
       mockDbQuery.schedulePolls.findFirst.mockResolvedValue({
         id: "poll-1",
-        ownerId: "user-1",
-        title: "Trip Poll",
-        destination: "Kyoto",
+        trip: { title: "Trip Poll", destination: "Kyoto" },
         note: null,
         status: "open",
         deadline: null,
@@ -263,9 +259,7 @@ describe("Poll share routes", () => {
       mockGetSession.mockResolvedValue(null);
       mockDbQuery.schedulePolls.findFirst.mockResolvedValue({
         id: "poll-1",
-        ownerId: "user-1",
-        title: "Trip Poll",
-        destination: null,
+        trip: { title: "Trip Poll", destination: null },
         note: null,
         status: "open",
         deadline: null,

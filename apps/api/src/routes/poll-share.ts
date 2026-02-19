@@ -13,6 +13,7 @@ pollShareRoutes.get("/api/polls/shared/:token", async (c) => {
   const poll = await db.query.schedulePolls.findFirst({
     where: eq(schedulePolls.shareToken, token),
     with: {
+      trip: { columns: { title: true, destination: true } },
       options: { orderBy: (o, { asc }) => [asc(o.sortOrder)] },
       participants: {
         with: {
@@ -31,8 +32,8 @@ pollShareRoutes.get("/api/polls/shared/:token", async (c) => {
 
   return c.json({
     id: poll.id,
-    title: poll.title,
-    destination: poll.destination,
+    title: poll.trip.title,
+    destination: poll.trip.destination,
     note: poll.note,
     status: poll.status,
     deadline: poll.deadline?.toISOString() ?? null,

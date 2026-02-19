@@ -349,27 +349,20 @@ export const groupMembers = pgTable(
   ],
 ).enableRLS();
 
-export const schedulePolls = pgTable(
-  "schedule_polls",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    ownerId: uuid("owner_id")
-      .notNull()
-      .references(() => users.id, { onDelete: "cascade" }),
-    title: varchar("title", { length: 100 }).notNull(),
-    destination: varchar("destination", { length: 100 }),
-    note: text("note"),
-    status: pollStatusEnum("status").notNull().default("open"),
-    deadline: timestamp("deadline", { withTimezone: true }),
-    shareToken: varchar("share_token", { length: 64 }).unique(),
-    shareTokenExpiresAt: timestamp("share_token_expires_at", { withTimezone: true }),
-    confirmedOptionId: uuid("confirmed_option_id"),
-    tripId: uuid("trip_id").references(() => trips.id, { onDelete: "set null" }),
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (table) => [index("schedule_polls_owner_id_idx").on(table.ownerId)],
-).enableRLS();
+export const schedulePolls = pgTable("schedule_polls", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  note: text("note"),
+  status: pollStatusEnum("status").notNull().default("open"),
+  deadline: timestamp("deadline", { withTimezone: true }),
+  shareToken: varchar("share_token", { length: 64 }).unique(),
+  shareTokenExpiresAt: timestamp("share_token_expires_at", { withTimezone: true }),
+  confirmedOptionId: uuid("confirmed_option_id"),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}).enableRLS();
 
 export const schedulePollOptions = pgTable(
   "schedule_poll_options",
@@ -429,7 +422,6 @@ export const usersRelations = relations(users, ({ many }) => ({
   bookmarkLists: many(bookmarkLists),
   ownedGroups: many(groups),
   groupMemberships: many(groupMembers),
-  schedulePolls: many(schedulePolls),
   schedulePollParticipations: many(schedulePollParticipants),
 }));
 
@@ -439,6 +431,7 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
   days: many(tripDays),
   schedules: many(schedules),
   activityLogs: many(activityLogs),
+  poll: one(schedulePolls, { fields: [trips.id], references: [schedulePolls.tripId] }),
 }));
 
 export const tripMembersRelations = relations(tripMembers, ({ one }) => ({
@@ -511,7 +504,6 @@ export const bookmarksRelations = relations(bookmarks, ({ one }) => ({
 }));
 
 export const schedulePollsRelations = relations(schedulePolls, ({ one, many }) => ({
-  owner: one(users, { fields: [schedulePolls.ownerId], references: [users.id] }),
   trip: one(trips, { fields: [schedulePolls.tripId], references: [trips.id] }),
   options: many(schedulePollOptions),
   participants: many(schedulePollParticipants),

@@ -8,7 +8,6 @@ import {
   MAX_OPTIONS_PER_POLL,
   MAX_PARTICIPANTS_PER_POLL,
   MAX_PATTERNS_PER_DAY,
-  MAX_POLLS_PER_USER,
   MAX_SCHEDULES_PER_TRIP,
   MAX_TRIPS_PER_USER,
 } from "@sugara/shared";
@@ -245,7 +244,6 @@ export const MSG = {
   LIMIT_FRIENDS: `フレンドは最大${MAX_FRIENDS_PER_USER}人まで登録できます`,
   LIMIT_GROUPS: `グループは最大${MAX_GROUPS_PER_USER}件まで作成できます`,
   LIMIT_GROUP_MEMBERS: `グループメンバーは最大${MAX_MEMBERS_PER_GROUP}人まで追加できます`,
-  LIMIT_POLLS: `日程調整は最大${MAX_POLLS_PER_USER}件まで作成できます`,
   LIMIT_POLL_OPTIONS: `日程案は最大${MAX_OPTIONS_PER_POLL}件まで追加できます`,
   LIMIT_POLL_PARTICIPANTS: `参加者は最大${MAX_PARTICIPANTS_PER_POLL}人まで追加できます`,
 

@@ -57,6 +57,13 @@
       "when": 1771891200000,
       "tag": "0007_timestamp_to_timestamptz",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1771977600000,
+      "tag": "0008_remove_poll_redundant_columns",
+      "breakpoints": true
     }
   ]
 }

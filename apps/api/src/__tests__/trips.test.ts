@@ -714,10 +714,7 @@ describe("Trip routes", () => {
     it("copies poll data when duplicating a scheduling trip", async () => {
       const sourcePoll = {
         id: "poll-1",
-        ownerId: "other-user",
         tripId: "trip-1",
-        title: "Schedule Poll",
-        destination: "Osaka",
         note: "test note",
         deadline: new Date("2026-03-01"),
         status: "open",

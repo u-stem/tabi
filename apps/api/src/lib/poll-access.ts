@@ -5,14 +5,19 @@ import { db } from "../db/index";
 import { schedulePollParticipants, schedulePolls, tripMembers } from "../db/schema";
 
 export async function findPollAsOwner(pollId: string, userId: string) {
-  return db.query.schedulePolls.findFirst({
-    where: and(eq(schedulePolls.id, pollId), eq(schedulePolls.ownerId, userId)),
+  const poll = await db.query.schedulePolls.findFirst({
+    where: eq(schedulePolls.id, pollId),
+    with: { trip: { columns: { ownerId: true } } },
   });
+  if (!poll) return null;
+  if (poll.trip.ownerId !== userId) return null;
+  return poll;
 }
 
 /**
  * Find poll if user is the owner or a trip member with editor+ role.
  * Returns { poll, isOwner } to allow callers to restrict fields for non-owners.
+ * Uses tripMembers as single source of truth for role-based access.
  */
 export async function findPollAsEditor(pollId: string, userId: string) {
   const poll = await db.query.schedulePolls.findFirst({
@@ -20,18 +25,12 @@ export async function findPollAsEditor(pollId: string, userId: string) {
   });
   if (!poll) return null;
 
-  if (poll.ownerId === userId) return { poll, isOwner: true as const };
+  const member = await db.query.tripMembers.findFirst({
+    where: and(eq(tripMembers.tripId, poll.tripId), eq(tripMembers.userId, userId)),
+  });
+  if (!member || !canEdit(member.role as MemberRole)) return null;
 
-  if (poll.tripId) {
-    const member = await db.query.tripMembers.findFirst({
-      where: and(eq(tripMembers.tripId, poll.tripId), eq(tripMembers.userId, userId)),
-    });
-    if (member && canEdit(member.role as MemberRole)) {
-      return { poll, isOwner: false as const };
-    }
-  }
-
-  return null;
+  return { poll, isOwner: (member.role as MemberRole) === "owner" };
 }
 
 /**
@@ -42,6 +41,7 @@ export async function findPollAsParticipant(pollId: string, userId: string) {
   const poll = await db.query.schedulePolls.findFirst({
     where: eq(schedulePolls.id, pollId),
     with: {
+      trip: { columns: { ownerId: true, title: true, destination: true } },
       participants: {
         where: eq(schedulePollParticipants.userId, userId),
       },
@@ -50,21 +50,19 @@ export async function findPollAsParticipant(pollId: string, userId: string) {
   if (!poll) return null;
 
   // Owner always has access
-  if (poll.ownerId === userId) return poll;
+  if (poll.trip.ownerId === userId) return poll;
 
   // Explicit participant
   if (poll.participants.length > 0) return poll;
 
-  // Check trip membership if poll is linked to a trip
-  if (poll.tripId) {
-    const member = await db.query.tripMembers.findFirst({
-      where: and(eq(tripMembers.tripId, poll.tripId), eq(tripMembers.userId, userId)),
-    });
-    if (member) {
-      // Auto-add as poll participant so they can respond
-      await db.insert(schedulePollParticipants).values({ pollId, userId }).onConflictDoNothing();
-      return poll;
-    }
+  // Check trip membership
+  const member = await db.query.tripMembers.findFirst({
+    where: and(eq(tripMembers.tripId, poll.tripId), eq(tripMembers.userId, userId)),
+  });
+  if (member) {
+    // Auto-add as poll participant so they can respond
+    await db.insert(schedulePollParticipants).values({ pollId, userId }).onConflictDoNothing();
+    return poll;
   }
 
   return null;

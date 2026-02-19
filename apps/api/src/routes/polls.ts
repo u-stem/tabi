@@ -2,10 +2,8 @@ import {
   addPollOptionSchema,
   addPollParticipantSchema,
   confirmPollSchema,
-  createPollSchema,
   MAX_OPTIONS_PER_POLL,
   MAX_PARTICIPANTS_PER_POLL,
-  MAX_POLLS_PER_USER,
   submitPollResponsesSchema,
   updatePollSchema,
 } from "@sugara/shared";
@@ -38,22 +36,23 @@ pollRoutes.get("/", async (c) => {
   const ownedPolls = await db
     .select({
       id: schedulePolls.id,
-      title: schedulePolls.title,
-      destination: schedulePolls.destination,
+      title: trips.title,
+      destination: trips.destination,
       status: schedulePolls.status,
       deadline: schedulePolls.deadline,
       createdAt: schedulePolls.createdAt,
       updatedAt: schedulePolls.updatedAt,
     })
     .from(schedulePolls)
-    .where(eq(schedulePolls.ownerId, user.id))
+    .innerJoin(trips, eq(schedulePolls.tripId, trips.id))
+    .where(eq(trips.ownerId, user.id))
     .orderBy(desc(schedulePolls.updatedAt));
 
   const participatingPolls = await db
     .select({
       id: schedulePolls.id,
-      title: schedulePolls.title,
-      destination: schedulePolls.destination,
+      title: trips.title,
+      destination: trips.destination,
       status: schedulePolls.status,
       deadline: schedulePolls.deadline,
       createdAt: schedulePolls.createdAt,
@@ -61,12 +60,8 @@ pollRoutes.get("/", async (c) => {
     })
     .from(schedulePollParticipants)
     .innerJoin(schedulePolls, eq(schedulePollParticipants.pollId, schedulePolls.id))
-    .where(
-      and(
-        eq(schedulePollParticipants.userId, user.id),
-        sql`${schedulePolls.ownerId} != ${user.id}`,
-      ),
-    )
+    .innerJoin(trips, eq(schedulePolls.tripId, trips.id))
+    .where(and(eq(schedulePollParticipants.userId, user.id), sql`${trips.ownerId} != ${user.id}`))
     .orderBy(desc(schedulePolls.updatedAt));
 
   const allPollIds = [...ownedPolls.map((p) => p.id), ...participatingPolls.map((p) => p.id)];
@@ -114,89 +109,6 @@ pollRoutes.get("/", async (c) => {
   );
 });
 
-// Create poll
-pollRoutes.post("/", async (c) => {
-  const user = c.get("user");
-  const body = await c.req.json();
-  const parsed = createPollSchema.safeParse(body);
-
-  if (!parsed.success) {
-    return c.json({ error: parsed.error.flatten() }, 400);
-  }
-
-  const { title, destination = null, note, deadline, options } = parsed.data;
-
-  const result = await db.transaction(async (tx) => {
-    const [pollCount] = await tx
-      .select({ count: count() })
-      .from(schedulePolls)
-      .where(eq(schedulePolls.ownerId, user.id));
-    if (pollCount.count >= MAX_POLLS_PER_USER) {
-      return null;
-    }
-
-    const [poll] = await tx
-      .insert(schedulePolls)
-      .values({
-        ownerId: user.id,
-        title,
-        destination,
-        note: note ?? null,
-        deadline: deadline ? new Date(deadline) : null,
-      })
-      .returning();
-
-    const insertedOptions = await tx
-      .insert(schedulePollOptions)
-      .values(
-        options.map((opt, i) => ({
-          pollId: poll.id,
-          startDate: opt.startDate,
-          endDate: opt.endDate,
-          sortOrder: i,
-        })),
-      )
-      .returning();
-
-    // Auto-add owner as participant
-    const [ownerParticipant] = await tx
-      .insert(schedulePollParticipants)
-      .values({ pollId: poll.id, userId: user.id })
-      .returning();
-
-    return { poll, options: insertedOptions, ownerParticipant };
-  });
-
-  if (!result) {
-    return c.json({ error: ERROR_MSG.LIMIT_POLLS }, 409);
-  }
-
-  return c.json(
-    {
-      ...result.poll,
-      deadline: result.poll.deadline?.toISOString() ?? null,
-      createdAt: result.poll.createdAt.toISOString(),
-      updatedAt: result.poll.updatedAt.toISOString(),
-      options: result.options.map((o) => ({
-        id: o.id,
-        startDate: o.startDate,
-        endDate: o.endDate,
-        sortOrder: o.sortOrder,
-      })),
-      participants: [
-        {
-          id: result.ownerParticipant.id,
-          userId: user.id,
-          name: user.name,
-          image: null,
-          responses: [],
-        },
-      ],
-    },
-    201,
-  );
-});
-
 // Get poll detail
 pollRoutes.get("/:pollId", async (c) => {
   const user = c.get("user");
@@ -225,9 +137,9 @@ pollRoutes.get("/:pollId", async (c) => {
 
   return c.json({
     id: poll.id,
-    ownerId: poll.ownerId,
-    title: poll.title,
-    destination: poll.destination,
+    ownerId: poll.trip.ownerId,
+    title: poll.trip.title,
+    destination: poll.trip.destination,
     note: poll.note,
     status: poll.status,
     deadline: poll.deadline?.toISOString() ?? null,
@@ -249,14 +161,14 @@ pollRoutes.get("/:pollId", async (c) => {
         response: r.response,
       })),
     })),
-    isOwner: poll.ownerId === user.id,
+    isOwner: poll.trip.ownerId === user.id,
     myParticipantId: myParticipant?.id ?? null,
     createdAt: poll.createdAt.toISOString(),
     updatedAt: poll.updatedAt.toISOString(),
   });
 });
 
-// Update poll (owner: all fields, editor: note only, open only)
+// Update poll (owner: deadline, editor: note only, open only)
 pollRoutes.patch("/:pollId", async (c) => {
   const user = c.get("user");
   const pollId = c.req.param("pollId");
@@ -279,8 +191,6 @@ pollRoutes.patch("/:pollId", async (c) => {
   if (parsed.data.note !== undefined) updates.note = parsed.data.note;
   // Owner-only fields
   if (result.isOwner) {
-    if (parsed.data.title !== undefined) updates.title = parsed.data.title;
-    if (parsed.data.destination !== undefined) updates.destination = parsed.data.destination;
     if (parsed.data.deadline !== undefined) {
       updates.deadline = parsed.data.deadline ? new Date(parsed.data.deadline) : null;
     }
@@ -292,11 +202,17 @@ pollRoutes.patch("/:pollId", async (c) => {
     .where(eq(schedulePolls.id, pollId))
     .returning();
 
+  // Fetch trip data for response
+  const trip = await db.query.trips.findFirst({
+    where: eq(trips.id, updated.tripId),
+    columns: { ownerId: true, title: true, destination: true },
+  });
+
   return c.json({
     id: updated.id,
-    ownerId: updated.ownerId,
-    title: updated.title,
-    destination: updated.destination,
+    ownerId: trip!.ownerId,
+    title: trip!.title,
+    destination: trip!.destination,
     note: updated.note,
     status: updated.status,
     deadline: updated.deadline?.toISOString() ?? null,
@@ -319,14 +235,12 @@ pollRoutes.delete("/:pollId", async (c) => {
 
   await db.transaction(async (tx) => {
     // Cascade delete trip if it's still in scheduling status
-    if (poll.tripId) {
-      const trip = await tx.query.trips.findFirst({
-        where: eq(trips.id, poll.tripId),
-        columns: { id: true, status: true },
-      });
-      if (trip?.status === "scheduling") {
-        await tx.delete(trips).where(eq(trips.id, trip.id));
-      }
+    const trip = await tx.query.trips.findFirst({
+      where: eq(trips.id, poll.tripId),
+      columns: { id: true, status: true },
+    });
+    if (trip?.status === "scheduling") {
+      await tx.delete(trips).where(eq(trips.id, trip.id));
     }
     await tx.delete(schedulePolls).where(eq(schedulePolls.id, pollId));
   });
@@ -383,15 +297,13 @@ pollRoutes.post("/:pollId/options", async (c) => {
 
   await db.update(schedulePolls).set({ updatedAt: new Date() }).where(eq(schedulePolls.id, pollId));
 
-  if (poll.tripId) {
-    logActivity({
-      tripId: poll.tripId,
-      userId: user.id,
-      action: "option_added",
-      entityType: "poll",
-      entityName: formatShortDateRange(option.startDate, option.endDate),
-    });
-  }
+  logActivity({
+    tripId: poll.tripId,
+    userId: user.id,
+    action: "option_added",
+    entityType: "poll",
+    entityName: formatShortDateRange(option.startDate, option.endDate),
+  });
 
   return c.json(
     {
@@ -422,15 +334,13 @@ pollRoutes.delete("/:pollId/options/:optionId", async (c) => {
 
   await db.update(schedulePolls).set({ updatedAt: new Date() }).where(eq(schedulePolls.id, pollId));
 
-  if (poll.tripId) {
-    logActivity({
-      tripId: poll.tripId,
-      userId: user.id,
-      action: "option_deleted",
-      entityType: "poll",
-      entityName: formatShortDateRange(deleted[0].startDate, deleted[0].endDate),
-    });
-  }
+  logActivity({
+    tripId: poll.tripId,
+    userId: user.id,
+    action: "option_deleted",
+    entityType: "poll",
+    entityName: formatShortDateRange(deleted[0].startDate, deleted[0].endDate),
+  });
 
   return c.json({ ok: true });
 });
@@ -532,12 +442,8 @@ pollRoutes.put("/:pollId/responses", async (c) => {
     return c.json({ error: ERROR_MSG.POLL_DEADLINE_PASSED }, 400);
   }
 
-  const participant = await db.query.schedulePollParticipants.findFirst({
-    where: and(
-      eq(schedulePollParticipants.pollId, pollId),
-      eq(schedulePollParticipants.userId, user.id),
-    ),
-  });
+  // findPollAsParticipant already fetches participants filtered by userId
+  const participant = poll.participants[0];
   if (!participant) return c.json({ error: ERROR_MSG.POLL_PARTICIPANT_NOT_FOUND }, 404);
 
   // Validate all optionIds belong to this poll
@@ -668,7 +574,7 @@ pollRoutes.put("/:pollId/share", async (c) => {
   });
 });
 
-// Confirm poll and create trip (owner only)
+// Confirm poll and update trip (owner only)
 pollRoutes.post("/:pollId/confirm", async (c) => {
   const user = c.get("user");
   const pollId = c.req.param("pollId");
@@ -689,73 +595,40 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
   });
   if (!option) return c.json({ error: ERROR_MSG.POLL_OPTION_NOT_FOUND }, 404);
 
+  const tripId = poll.tripId;
+
   const result = await db.transaction(async (tx) => {
-    let tripId = poll.tripId;
+    // Update existing trip with confirmed dates
+    await tx
+      .update(trips)
+      .set({
+        startDate: option.startDate,
+        endDate: option.endDate,
+        status: "draft",
+        updatedAt: new Date(),
+      })
+      .where(eq(trips.id, tripId));
 
-    if (tripId) {
-      // Trip already exists (created with poll mode) - update it
-      await tx
-        .update(trips)
-        .set({
-          startDate: option.startDate,
-          endDate: option.endDate,
-          status: "draft",
-          updatedAt: new Date(),
-        })
-        .where(eq(trips.id, tripId));
+    await createInitialTripDays(tx, tripId, option.startDate, option.endDate);
 
-      await createInitialTripDays(tx, tripId, option.startDate, option.endDate);
+    // Add poll participants who aren't already trip members
+    const participants = await tx.query.schedulePollParticipants.findMany({
+      where: eq(schedulePollParticipants.pollId, pollId),
+    });
+    const existingMembers = await tx.query.tripMembers.findMany({
+      where: eq(tripMembers.tripId, tripId),
+    });
+    const existingUserIds = new Set(existingMembers.map((m) => m.userId));
 
-      // Add poll participants who aren't already trip members
-      const participants = await tx.query.schedulePollParticipants.findMany({
-        where: eq(schedulePollParticipants.pollId, pollId),
-      });
-      const existingMembers = await tx.query.tripMembers.findMany({
-        where: eq(tripMembers.tripId, tripId),
-      });
-      const existingUserIds = new Set(existingMembers.map((m) => m.userId));
-
-      const newMembers = participants.filter((p) => !existingUserIds.has(p.userId));
-      if (newMembers.length > 0) {
-        await tx.insert(tripMembers).values(
-          newMembers.map((p) => ({
-            tripId: tripId!,
-            userId: p.userId,
-            role: "editor" as const,
-          })),
-        );
-      }
-    } else {
-      // Legacy: standalone poll (no linked trip) - create trip
-      const [trip] = await tx
-        .insert(trips)
-        .values({
-          ownerId: user.id,
-          title: poll.title,
-          destination: poll.destination,
-          startDate: option.startDate,
-          endDate: option.endDate,
-        })
-        .returning();
-
-      tripId = trip.id;
-      await createInitialTripDays(tx, trip.id, option.startDate, option.endDate);
-
-      const participants = await tx.query.schedulePollParticipants.findMany({
-        where: eq(schedulePollParticipants.pollId, pollId),
-      });
-      if (participants.length > 0) {
-        await tx
-          .insert(tripMembers)
-          .values(
-            participants.map((p) => ({
-              tripId: trip.id,
-              userId: p.userId,
-              role: p.userId === user.id ? ("owner" as const) : ("editor" as const),
-            })),
-          )
-          .onConflictDoNothing();
-      }
+    const newMembers = participants.filter((p) => !existingUserIds.has(p.userId));
+    if (newMembers.length > 0) {
+      await tx.insert(tripMembers).values(
+        newMembers.map((p) => ({
+          tripId,
+          userId: p.userId,
+          role: "editor" as const,
+        })),
+      );
     }
 
     const [updatedPoll] = await tx
@@ -763,7 +636,6 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
       .set({
         status: "confirmed",
         confirmedOptionId: option.id,
-        tripId,
         updatedAt: new Date(),
       })
       .where(eq(schedulePolls.id, pollId))
@@ -772,21 +644,25 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
     return updatedPoll;
   });
 
-  if (result.tripId) {
-    logActivity({
-      tripId: result.tripId,
-      userId: user.id,
-      action: "confirmed",
-      entityType: "poll",
-      entityName: formatShortDateRange(option.startDate, option.endDate),
-    });
-  }
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "confirmed",
+    entityType: "poll",
+    entityName: formatShortDateRange(option.startDate, option.endDate),
+  });
+
+  // Fetch trip data for response
+  const trip = await db.query.trips.findFirst({
+    where: eq(trips.id, tripId),
+    columns: { ownerId: true, title: true, destination: true },
+  });
 
   return c.json({
     id: result.id,
-    ownerId: result.ownerId,
-    title: result.title,
-    destination: result.destination,
+    ownerId: trip!.ownerId,
+    title: trip!.title,
+    destination: trip!.destination,
     note: result.note,
     status: result.status,
     deadline: result.deadline?.toISOString() ?? null,

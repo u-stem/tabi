@@ -18,11 +18,15 @@ export async function verifyDayAccess(
   dayId: string,
   userId: string,
 ): Promise<MemberRole | null> {
-  const day = await db.query.tripDays.findFirst({
-    where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
-  });
+  const [day, role] = await Promise.all([
+    db.query.tripDays.findFirst({
+      where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
+      columns: { id: true },
+    }),
+    checkTripAccess(tripId, userId),
+  ]);
   if (!day) return null;
-  return checkTripAccess(tripId, userId);
+  return role;
 }
 
 export async function verifyPatternAccess(
@@ -31,13 +35,13 @@ export async function verifyPatternAccess(
   patternId: string,
   userId: string,
 ): Promise<MemberRole | null> {
-  const day = await db.query.tripDays.findFirst({
-    where: and(eq(tripDays.id, dayId), eq(tripDays.tripId, tripId)),
-  });
-  if (!day) return null;
-  const pattern = await db.query.dayPatterns.findFirst({
-    where: and(eq(dayPatterns.id, patternId), eq(dayPatterns.tripDayId, dayId)),
-  });
-  if (!pattern) return null;
-  return checkTripAccess(tripId, userId);
+  const [patternWithDay, role] = await Promise.all([
+    db.query.dayPatterns.findFirst({
+      where: and(eq(dayPatterns.id, patternId), eq(dayPatterns.tripDayId, dayId)),
+      with: { tripDay: { columns: { id: true, tripId: true } } },
+    }),
+    checkTripAccess(tripId, userId),
+  ]);
+  if (!patternWithDay || patternWithDay.tripDay.tripId !== tripId) return null;
+  return role;
 }

@@ -78,6 +78,7 @@ describe("Schedule routes", () => {
     mockDbQuery.dayPatterns.findFirst.mockResolvedValue({
       id: patternId,
       tripDayId: dayId,
+      tripDay: { id: dayId, tripId },
     });
     mockDbQuery.tripMembers.findFirst.mockResolvedValue({
       tripId,
@@ -102,7 +103,11 @@ describe("Schedule routes", () => {
     });
 
     it("returns 404 when day does not belong to trip", async () => {
-      mockDbQuery.tripDays.findFirst.mockResolvedValue(undefined);
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValue({
+        id: patternId,
+        tripDayId: dayId,
+        tripDay: { id: dayId, tripId: "other-trip" },
+      });
 
       const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(basePath);
@@ -244,8 +249,12 @@ describe("Schedule routes", () => {
       expect(res.status).toBe(400);
     });
 
-    it("returns 404 when day does not belong to user", async () => {
-      mockDbQuery.tripDays.findFirst.mockResolvedValue(undefined);
+    it("returns 404 when day does not belong to trip", async () => {
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValue({
+        id: patternId,
+        tripDayId: dayId,
+        tripDay: { id: dayId, tripId: "other-trip" },
+      });
 
       const app = createTestApp(scheduleRoutes, "/api/trips");
       const res = await app.request(basePath, {

@@ -1,7 +1,7 @@
 "use client";
 
 import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
-import type { TripResponse } from "@sugara/shared";
+import type { PollDetailResponse, TripResponse } from "@sugara/shared";
 import {
   canEdit as canEditRole,
   isOwner as isOwnerRole,
@@ -92,7 +92,13 @@ export default function TripDetailPage() {
     queryFn: () => api<TripResponse>(`/api/trips/${tripId}`),
   });
   useAuthRedirect(queryError);
-  const showSkeleton = useDelayedLoading(isLoading);
+  const pollId = trip?.poll?.id;
+  const { isLoading: isPollLoading } = useQuery({
+    queryKey: queryKeys.polls.detail(pollId!),
+    queryFn: () => api<PollDetailResponse>(`/api/polls/${pollId}`),
+    enabled: !!pollId,
+  });
+  const showSkeleton = useDelayedLoading(isLoading || (!!pollId && isPollLoading));
 
   const [editOpen, setEditOpen] = useState(false);
   const [addScheduleOpen, setAddScheduleOpen] = useState(false);
@@ -173,7 +179,6 @@ export default function TripDetailPage() {
   // Stable ref for canEdit to avoid re-registering hotkeys on every trip change
   const canEditRef = useRef(false);
 
-  const pollId = trip?.poll?.id;
   const invalidateTrip = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.trips.detail(tripId) });
     if (pollId) {
@@ -368,7 +373,7 @@ export default function TripDetailPage() {
   }
 
   // Avoid flashing "not found" during the 200ms skeleton delay
-  if (isLoading) return null;
+  if (isLoading || (!!pollId && isPollLoading)) return null;
 
   if (queryError || !trip) {
     return <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>;

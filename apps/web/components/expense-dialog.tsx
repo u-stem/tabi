@@ -29,7 +29,7 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
-type Member = { userId: string; user: { id: string; name: string } };
+type Member = { userId: string; name: string; role: string; image: string | null };
 type MembersResponse = Member[];
 
 type Expense = {
@@ -216,7 +216,7 @@ export function ExpenseDialog({
               <SelectContent>
                 {members.map((m) => (
                   <SelectItem key={m.userId} value={m.userId}>
-                    {m.user.name}
+                    {m.name}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -256,7 +256,7 @@ export function ExpenseDialog({
                     onCheckedChange={() => toggleMember(m.userId)}
                   />
                   <label htmlFor={`member-${m.userId}`} className="flex-1 text-sm cursor-pointer">
-                    {m.user.name}
+                    {m.name}
                   </label>
                   {splitType === "custom" && selectedMembers.has(m.userId) && (
                     <Input

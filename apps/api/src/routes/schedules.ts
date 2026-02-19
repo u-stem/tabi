@@ -14,6 +14,7 @@ import { db } from "../db/index";
 import { schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
+import { hasChanges } from "../lib/has-changes";
 import { canEdit, verifyPatternAccess } from "../lib/permissions";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
 import { getScheduleCount } from "../lib/schedule-count";
@@ -404,6 +405,10 @@ scheduleRoutes.patch(
     }
 
     const { expectedUpdatedAt, ...updateData } = parsed.data;
+
+    if (!hasChanges(existing, updateData)) {
+      return c.json(existing);
+    }
 
     // Atomic optimistic lock: include updatedAt in WHERE clause
     const whereConditions = expectedUpdatedAt

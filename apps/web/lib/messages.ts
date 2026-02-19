@@ -50,6 +50,7 @@ export const MSG = {
   TRIP_AUTO_COMPLETED: "全ての予定が終了しました。ステータスを「完了」に変更しました",
   TRIP_BULK_DELETED: (n: number) => `${n}件の旅行を削除しました`,
   TRIP_BULK_DELETE_FAILED: (n: number) => `${n}件の削除に失敗しました`,
+  TRIP_DAYS_REDUCED: "日数を減らすことはできません",
   TRIP_BULK_DUPLICATED: (n: number) => `${n}件の旅行を複製しました`,
   TRIP_BULK_DUPLICATE_FAILED: (n: number) => `${n}件の複製に失敗しました`,
 

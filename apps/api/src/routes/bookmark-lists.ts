@@ -9,6 +9,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { bookmarkLists, bookmarks } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
+import { hasChanges } from "../lib/has-changes";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -125,6 +126,10 @@ bookmarkListRoutes.patch("/:listId", async (c) => {
   });
   if (!existing || existing.userId !== user.id) {
     return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
+  }
+
+  if (!hasChanges(existing, parsed.data)) {
+    return c.json(existing);
   }
 
   const [updated] = await db

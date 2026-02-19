@@ -9,6 +9,7 @@ import { db } from "../db/index";
 import { dayPatterns, schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
+import { hasChanges } from "../lib/has-changes";
 import { canEdit, verifyDayAccess } from "../lib/permissions";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
 import { getNextSortOrder } from "../lib/sort-order";
@@ -117,6 +118,10 @@ patternRoutes.patch("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
   });
   if (!existing) {
     return c.json({ error: ERROR_MSG.PATTERN_NOT_FOUND }, 404);
+  }
+
+  if (!hasChanges(existing, parsed.data)) {
+    return c.json(existing);
   }
 
   const [updated] = await db

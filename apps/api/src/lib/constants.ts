@@ -64,4 +64,5 @@ export const ERROR_MSG = {
   POLL_CANNOT_REMOVE_OWNER: "Cannot remove poll owner from participants",
   POLL_INVALID_OPTION: "Some responses reference options not in this poll",
   POLL_OPTION_DUPLICATE: "Duplicate poll option",
+  TRIP_DAYS_REDUCED: "Cannot reduce the number of trip days",
 } as const;

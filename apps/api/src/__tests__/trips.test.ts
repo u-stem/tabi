@@ -483,8 +483,19 @@ describe("Trip routes", () => {
   });
 
   describe("PATCH /api/trips/:id", () => {
+    const defaultTrip = {
+      id: "trip-1",
+      ownerId: fakeUser.id,
+      title: "Tokyo Trip",
+      destination: "Tokyo",
+      startDate: "2025-07-01",
+      endDate: "2025-07-03",
+      status: "draft",
+    };
+
     it("returns updated trip on success", async () => {
-      const updated = { id: "trip-1", title: "New Title", ownerId: fakeUser.id };
+      mockDbQuery.trips.findFirst.mockResolvedValue(defaultTrip);
+      const updated = { ...defaultTrip, title: "New Title" };
       mockDbUpdate.mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
@@ -503,6 +514,52 @@ describe("Trip routes", () => {
 
       expect(res.status).toBe(200);
       expect(body.title).toBe("New Title");
+    });
+
+    it("skips update when no fields changed", async () => {
+      mockDbQuery.trips.findFirst.mockResolvedValue(defaultTrip);
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: "Tokyo Trip" }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.title).toBe("Tokyo Trip");
+      expect(mockDbUpdate).not.toHaveBeenCalled();
+    });
+
+    it("skips syncTripDays when dates are unchanged", async () => {
+      mockDbQuery.trips.findFirst.mockResolvedValue(defaultTrip);
+      const updated = { ...defaultTrip, title: "New Title" };
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "New Title",
+          startDate: "2025-07-01",
+          endDate: "2025-07-03",
+        }),
+      });
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.title).toBe("New Title");
+      // syncTripDays calls select+delete+insert; only trips.update should run
+      expect(mockDbDelete).not.toHaveBeenCalled();
+      expect(mockDbInsert).not.toHaveBeenCalled();
     });
 
     it("returns 404 when user is not a member", async () => {
@@ -547,6 +604,7 @@ describe("Trip routes", () => {
     });
 
     it("returns updated trip when changing status", async () => {
+      mockDbQuery.trips.findFirst.mockResolvedValue(defaultTrip);
       const updated = {
         id: "trip-1",
         title: "Tokyo Trip",
@@ -645,7 +703,27 @@ describe("Trip routes", () => {
       expect(res.status).toBe(400);
     });
 
-    it("returns 200 when only startDate is sent", async () => {
+    it("returns 400 when reducing trip days", async () => {
+      const existingTrip = {
+        id: "trip-1",
+        startDate: "2025-07-01",
+        endDate: "2025-07-03",
+      };
+      mockDbQuery.trips.findFirst.mockResolvedValue(existingTrip);
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate: "2025-07-01", endDate: "2025-07-02" }),
+      });
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toBe("Cannot reduce the number of trip days");
+    });
+
+    it("returns 200 when increasing trip days", async () => {
       const existingTrip = {
         id: "trip-1",
         startDate: "2025-07-01",
@@ -655,7 +733,149 @@ describe("Trip routes", () => {
 
       const updated = {
         id: "trip-1",
-        startDate: "2025-07-02",
+        title: "Tokyo Trip",
+        startDate: "2025-07-01",
+        endDate: "2025-07-05",
+      };
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ id: "new-day-1" }]),
+        }),
+      });
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValue([
+              { id: "day-1", date: "2025-07-01", dayNumber: 1 },
+              { id: "day-2", date: "2025-07-02", dayNumber: 2 },
+              { id: "day-3", date: "2025-07-03", dayNumber: 3 },
+            ]),
+          }),
+        }),
+      });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate: "2025-07-01", endDate: "2025-07-05" }),
+      });
+
+      expect(res.status).toBe(200);
+    });
+
+    it("returns 200 when shifting dates with same day count", async () => {
+      const existingTrip = {
+        id: "trip-1",
+        startDate: "2025-07-01",
+        endDate: "2025-07-03",
+      };
+      mockDbQuery.trips.findFirst.mockResolvedValue(existingTrip);
+
+      const updated = {
+        id: "trip-1",
+        title: "Tokyo Trip",
+        startDate: "2025-07-05",
+        endDate: "2025-07-07",
+      };
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ id: "new-day-1" }]),
+        }),
+      });
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            orderBy: vi.fn().mockResolvedValue([
+              { id: "day-5", date: "2025-07-05", dayNumber: 1 },
+              { id: "day-6", date: "2025-07-06", dayNumber: 2 },
+              { id: "day-7", date: "2025-07-07", dayNumber: 3 },
+            ]),
+          }),
+        }),
+      });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate: "2025-07-05", endDate: "2025-07-07" }),
+      });
+
+      expect(res.status).toBe(200);
+    });
+
+    it("returns 400 when only startDate is sent and reduces days", async () => {
+      const existingTrip = {
+        id: "trip-1",
+        startDate: "2025-07-01",
+        endDate: "2025-07-03",
+      };
+      mockDbQuery.trips.findFirst.mockResolvedValue(existingTrip);
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startDate: "2025-07-02" }),
+      });
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toBe("Cannot reduce the number of trip days");
+    });
+
+    it("returns 400 when only endDate is sent and reduces days", async () => {
+      const existingTrip = {
+        id: "trip-1",
+        startDate: "2025-07-01",
+        endDate: "2025-07-05",
+      };
+      mockDbQuery.trips.findFirst.mockResolvedValue(existingTrip);
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips/trip-1", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ endDate: "2025-07-03" }),
+      });
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toBe("Cannot reduce the number of trip days");
+    });
+
+    it("returns 200 when only startDate is sent (not reducing days)", async () => {
+      const existingTrip = {
+        id: "trip-1",
+        startDate: "2025-07-01",
+        endDate: "2025-07-03",
+      };
+      mockDbQuery.trips.findFirst.mockResolvedValue(existingTrip);
+
+      const updated = {
+        id: "trip-1",
+        startDate: "2025-06-30",
         endDate: "2025-07-03",
       };
       mockDbDelete.mockReturnValue({
@@ -677,8 +897,10 @@ describe("Trip routes", () => {
         from: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
             orderBy: vi.fn().mockResolvedValue([
-              { id: "day-2", date: "2025-07-02", dayNumber: 1 },
-              { id: "day-3", date: "2025-07-03", dayNumber: 2 },
+              { id: "day-0", date: "2025-06-30", dayNumber: 1 },
+              { id: "day-1", date: "2025-07-01", dayNumber: 2 },
+              { id: "day-2", date: "2025-07-02", dayNumber: 3 },
+              { id: "day-3", date: "2025-07-03", dayNumber: 4 },
             ]),
           }),
         }),
@@ -688,7 +910,7 @@ describe("Trip routes", () => {
       const res = await app.request("/api/trips/trip-1", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ startDate: "2025-07-02" }),
+        body: JSON.stringify({ startDate: "2025-06-30" }),
       });
 
       expect(res.status).toBe(200);

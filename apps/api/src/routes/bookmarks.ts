@@ -11,6 +11,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { bookmarkLists, bookmarks, schedules } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
+import { hasChanges } from "../lib/has-changes";
 import { checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -209,6 +210,10 @@ bookmarkRoutes.patch("/:listId/bookmarks/:bookmarkId", async (c) => {
   });
   if (!existing) {
     return c.json({ error: ERROR_MSG.BOOKMARK_NOT_FOUND }, 404);
+  }
+
+  if (!hasChanges(existing, parsed.data)) {
+    return c.json(existing);
   }
 
   const [updated] = await db

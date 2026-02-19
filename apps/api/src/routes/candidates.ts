@@ -15,6 +15,7 @@ import { bookmarks, dayPatterns, schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
+import { hasChanges } from "../lib/has-changes";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
 import { getScheduleCount } from "../lib/schedule-count";
 import { getNextSortOrder } from "../lib/sort-order";
@@ -372,6 +373,10 @@ candidateRoutes.patch("/:tripId/candidates/:scheduleId", requireTripAccess("edit
   }
 
   const { expectedUpdatedAt, ...updateData } = parsed.data;
+
+  if (!hasChanges(existing, updateData)) {
+    return c.json(existing);
+  }
 
   // Atomic optimistic lock: include updatedAt in WHERE clause
   const whereConditions = expectedUpdatedAt

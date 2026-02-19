@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { getDayCount } from "@/lib/format";
 import { MSG } from "@/lib/messages";
 
 type EditTripDialogProps = {
@@ -72,6 +73,16 @@ export function EditTripDialog({
       setError(MSG.TRIP_DATE_REQUIRED);
       setLoading(false);
       return;
+    }
+
+    if (hasDates && newStartDate && newEndDate && startDate && endDate) {
+      const oldCount = getDayCount(startDate, endDate);
+      const newCount = getDayCount(newStartDate, newEndDate);
+      if (newCount < oldCount) {
+        setError(MSG.TRIP_DAYS_REDUCED);
+        setLoading(false);
+        return;
+      }
     }
 
     const rawDestination = (formData.get("destination") as string).trim();

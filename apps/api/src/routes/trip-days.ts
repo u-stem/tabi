@@ -5,6 +5,7 @@ import { db } from "../db/index";
 import { tripDays } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
+import { hasChanges } from "../lib/has-changes";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
@@ -29,6 +30,10 @@ tripDayRoutes.patch("/:tripId/days/:dayId", requireTripAccess("editor"), async (
   });
   if (!existing) {
     return c.json({ error: ERROR_MSG.DAY_NOT_FOUND }, 404);
+  }
+
+  if (!hasChanges(existing, parsed.data)) {
+    return c.json(existing);
   }
 
   const [updated] = await db

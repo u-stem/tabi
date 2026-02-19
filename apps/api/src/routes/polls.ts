@@ -21,6 +21,7 @@ import {
 } from "../db/schema";
 import { formatShortDateRange, logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
+import { hasChanges } from "../lib/has-changes";
 import { findPollAsEditor, findPollAsOwner, findPollAsParticipant } from "../lib/poll-access";
 import { createInitialTripDays } from "../lib/trip-days";
 import { requireAuth } from "../middleware/auth";
@@ -28,6 +29,34 @@ import type { AppEnv } from "../types";
 
 const pollRoutes = new Hono<AppEnv>();
 pollRoutes.use("*", requireAuth);
+
+function formatPollResponse(
+  poll: {
+    id: string;
+    tripId: string;
+    note: string | null;
+    status: string;
+    deadline: Date | null;
+    confirmedOptionId: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  },
+  trip: { ownerId: string; title: string | null; destination: string | null },
+) {
+  return {
+    id: poll.id,
+    ownerId: trip.ownerId,
+    title: trip.title,
+    destination: trip.destination,
+    note: poll.note,
+    status: poll.status,
+    deadline: poll.deadline?.toISOString() ?? null,
+    confirmedOptionId: poll.confirmedOptionId,
+    tripId: poll.tripId,
+    createdAt: poll.createdAt.toISOString(),
+    updatedAt: poll.updatedAt.toISOString(),
+  };
+}
 
 // List polls (owned or participant)
 pollRoutes.get("/", async (c) => {
@@ -187,40 +216,34 @@ pollRoutes.patch("/:pollId", async (c) => {
     return c.json({ error: ERROR_MSG.POLL_NOT_OPEN }, 400);
   }
 
-  const updates: Record<string, unknown> = { updatedAt: new Date() };
-  if (parsed.data.note !== undefined) updates.note = parsed.data.note;
-  // Owner-only fields
-  if (result.isOwner) {
-    if (parsed.data.deadline !== undefined) {
-      updates.deadline = parsed.data.deadline ? new Date(parsed.data.deadline) : null;
-    }
+  const fieldUpdates: Record<string, unknown> = {};
+  if (parsed.data.note !== undefined) fieldUpdates.note = parsed.data.note;
+  if (result.isOwner && parsed.data.deadline !== undefined) {
+    fieldUpdates.deadline = parsed.data.deadline ? new Date(parsed.data.deadline) : null;
+  }
+
+  const poll = result.poll;
+
+  if (!hasChanges(poll, fieldUpdates)) {
+    const trip = await db.query.trips.findFirst({
+      where: eq(trips.id, poll.tripId),
+      columns: { ownerId: true, title: true, destination: true },
+    });
+    return c.json(formatPollResponse(poll, trip!));
   }
 
   const [updated] = await db
     .update(schedulePolls)
-    .set(updates)
+    .set({ ...fieldUpdates, updatedAt: new Date() })
     .where(eq(schedulePolls.id, pollId))
     .returning();
 
-  // Fetch trip data for response
   const trip = await db.query.trips.findFirst({
     where: eq(trips.id, updated.tripId),
     columns: { ownerId: true, title: true, destination: true },
   });
 
-  return c.json({
-    id: updated.id,
-    ownerId: trip!.ownerId,
-    title: trip!.title,
-    destination: trip!.destination,
-    note: updated.note,
-    status: updated.status,
-    deadline: updated.deadline?.toISOString() ?? null,
-    confirmedOptionId: updated.confirmedOptionId,
-    tripId: updated.tripId,
-    createdAt: updated.createdAt.toISOString(),
-    updatedAt: updated.updatedAt.toISOString(),
-  });
+  return c.json(formatPollResponse(updated, trip!));
 });
 
 // Delete poll (owner only)
@@ -658,19 +681,7 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
     columns: { ownerId: true, title: true, destination: true },
   });
 
-  return c.json({
-    id: result.id,
-    ownerId: trip!.ownerId,
-    title: trip!.title,
-    destination: trip!.destination,
-    note: result.note,
-    status: result.status,
-    deadline: result.deadline?.toISOString() ?? null,
-    confirmedOptionId: result.confirmedOptionId,
-    tripId: result.tripId,
-    createdAt: result.createdAt.toISOString(),
-    updatedAt: result.updatedAt.toISOString(),
-  });
+  return c.json(formatPollResponse(result, trip!));
 });
 
 export { pollRoutes };

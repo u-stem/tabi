@@ -11,11 +11,19 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { groupMembers, groups, users } from "../db/schema";
 import { ERROR_MSG, PG_UNIQUE_VIOLATION } from "../lib/constants";
+import { hasChanges } from "../lib/has-changes";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
 const groupRoutes = new Hono<AppEnv>();
 groupRoutes.use("*", requireAuth);
+
+const groupReturning = {
+  id: groups.id,
+  name: groups.name,
+  createdAt: groups.createdAt,
+  updatedAt: groups.updatedAt,
+} as const;
 
 async function verifyGroupOwnership(groupId: string, userId: string) {
   const group = await db.query.groups.findFirst({
@@ -69,12 +77,7 @@ groupRoutes.post("/", async (c) => {
     const [result] = await tx
       .insert(groups)
       .values({ ownerId: user.id, name: parsed.data.name })
-      .returning({
-        id: groups.id,
-        name: groups.name,
-        createdAt: groups.createdAt,
-        updatedAt: groups.updatedAt,
-      });
+      .returning(groupReturning);
 
     return result;
   });
@@ -102,16 +105,20 @@ groupRoutes.patch("/:groupId", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
+  if (!hasChanges(group, parsed.data)) {
+    return c.json({
+      id: group.id,
+      name: group.name,
+      createdAt: group.createdAt,
+      updatedAt: group.updatedAt,
+    });
+  }
+
   const [updated] = await db
     .update(groups)
     .set({ name: parsed.data.name, updatedAt: new Date() })
     .where(eq(groups.id, groupId))
-    .returning({
-      id: groups.id,
-      name: groups.name,
-      createdAt: groups.createdAt,
-      updatedAt: groups.updatedAt,
-    });
+    .returning(groupReturning);
 
   return c.json(updated);
 });

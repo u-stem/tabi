@@ -22,7 +22,7 @@ import { logActivity } from "../lib/activity-logger";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
-import { createInitialTripDays, syncTripDays } from "../lib/trip-days";
+import { createInitialTripDays, generateDateRange, syncTripDays } from "../lib/trip-days";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
@@ -297,32 +297,7 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
   }
 
   const { startDate: newStart, endDate: newEnd, ...otherFields } = parsed.data;
-  const hasDates = newStart !== undefined || newEnd !== undefined;
 
-  if (!hasDates) {
-    const [updated] = await db
-      .update(trips)
-      .set({ ...otherFields, updatedAt: new Date() })
-      .where(eq(trips.id, tripId))
-      .returning();
-
-    if (!updated) {
-      return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-    }
-
-    logActivity({
-      tripId,
-      userId: user.id,
-      action: "updated",
-      entityType: "trip",
-      entityName: updated.title,
-      detail: parsed.data.status ? `status: ${parsed.data.status}` : undefined,
-    });
-
-    return c.json(updated);
-  }
-
-  // Fetch current trip to determine full date range
   const currentTrip = await db.query.trips.findFirst({
     where: eq(trips.id, tripId),
   });
@@ -332,38 +307,76 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
 
   const effectiveStart = newStart ?? currentTrip.startDate;
   const effectiveEnd = newEnd ?? currentTrip.endDate;
+  const datesChanged =
+    effectiveStart !== currentTrip.startDate || effectiveEnd !== currentTrip.endDate;
 
-  // Validate cross-field constraint when only one date is sent
-  if (effectiveStart && effectiveEnd && effectiveEnd < effectiveStart) {
-    return c.json(
-      {
-        error: {
-          fieldErrors: { endDate: [ERROR_MSG.DATE_ORDER] },
-          formErrors: [],
+  if (datesChanged) {
+    // Validate cross-field constraint when only one date is sent
+    if (effectiveStart && effectiveEnd && effectiveEnd < effectiveStart) {
+      return c.json(
+        {
+          error: {
+            fieldErrors: { endDate: [ERROR_MSG.DATE_ORDER] },
+            formErrors: [],
+          },
         },
-      },
-      400,
-    );
-  }
-
-  const updated = await db.transaction(async (tx) => {
-    if (effectiveStart && effectiveEnd) {
-      await syncTripDays(tx, tripId, effectiveStart, effectiveEnd);
+        400,
+      );
     }
 
-    const [result] = await tx
+    // Reject date changes that reduce the number of days
+    if (effectiveStart && effectiveEnd && currentTrip.startDate && currentTrip.endDate) {
+      const currentDayCount = generateDateRange(currentTrip.startDate, currentTrip.endDate).length;
+      const newDayCount = generateDateRange(effectiveStart, effectiveEnd).length;
+      if (newDayCount < currentDayCount) {
+        return c.json({ error: ERROR_MSG.TRIP_DAYS_REDUCED }, 400);
+      }
+    }
+  }
+
+  // Build update payload with only changed fields
+  const updatePayload: Record<string, unknown> = {};
+  if (otherFields.title !== undefined && otherFields.title !== currentTrip.title) {
+    updatePayload.title = otherFields.title;
+  }
+  if (
+    otherFields.destination !== undefined &&
+    otherFields.destination !== currentTrip.destination
+  ) {
+    updatePayload.destination = otherFields.destination;
+  }
+  if (otherFields.status !== undefined && otherFields.status !== currentTrip.status) {
+    updatePayload.status = otherFields.status;
+  }
+  if (datesChanged) {
+    if (effectiveStart !== currentTrip.startDate) updatePayload.startDate = effectiveStart;
+    if (effectiveEnd !== currentTrip.endDate) updatePayload.endDate = effectiveEnd;
+  }
+
+  if (Object.keys(updatePayload).length === 0) {
+    return c.json(currentTrip);
+  }
+
+  let updated: typeof currentTrip | undefined;
+
+  if (datesChanged && effectiveStart && effectiveEnd) {
+    updated = await db.transaction(async (tx) => {
+      await syncTripDays(tx, tripId, effectiveStart, effectiveEnd);
+      const [result] = await tx
+        .update(trips)
+        .set({ ...updatePayload, updatedAt: new Date() })
+        .where(eq(trips.id, tripId))
+        .returning();
+      return result;
+    });
+  } else {
+    const [result] = await db
       .update(trips)
-      .set({
-        ...otherFields,
-        ...(effectiveStart != null && { startDate: effectiveStart }),
-        ...(effectiveEnd != null && { endDate: effectiveEnd }),
-        updatedAt: new Date(),
-      })
+      .set({ ...updatePayload, updatedAt: new Date() })
       .where(eq(trips.id, tripId))
       .returning();
-
-    return result;
-  });
+    updated = result;
+  }
 
   if (!updated) {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
@@ -375,6 +388,7 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
     action: "updated",
     entityType: "trip",
     entityName: updated.title,
+    detail: updatePayload.status ? `status: ${updatePayload.status}` : undefined,
   });
 
   return c.json(updated);

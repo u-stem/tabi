@@ -7,7 +7,7 @@ import {
   submitPollResponsesSchema,
   updatePollSchema,
 } from "@sugara/shared";
-import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, count, desc, eq, isNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import {
@@ -62,65 +62,45 @@ function formatPollResponse(
 pollRoutes.get("/", async (c) => {
   const user = c.get("user");
 
-  const ownedPolls = await db
-    .select({
-      id: schedulePolls.id,
-      title: trips.title,
-      destination: trips.destination,
-      status: schedulePolls.status,
-      deadline: schedulePolls.deadline,
-      createdAt: schedulePolls.createdAt,
-      updatedAt: schedulePolls.updatedAt,
-    })
-    .from(schedulePolls)
-    .innerJoin(trips, eq(schedulePolls.tripId, trips.id))
-    .where(eq(trips.ownerId, user.id))
-    .orderBy(desc(schedulePolls.updatedAt));
+  const participantCountSql = sql<number>`(
+    SELECT count(*) FROM schedule_poll_participants
+    WHERE poll_id = ${schedulePolls.id}
+  )`.as("participant_count");
 
-  const participatingPolls = await db
-    .select({
-      id: schedulePolls.id,
-      title: trips.title,
-      destination: trips.destination,
-      status: schedulePolls.status,
-      deadline: schedulePolls.deadline,
-      createdAt: schedulePolls.createdAt,
-      updatedAt: schedulePolls.updatedAt,
-    })
-    .from(schedulePollParticipants)
-    .innerJoin(schedulePolls, eq(schedulePollParticipants.pollId, schedulePolls.id))
-    .innerJoin(trips, eq(schedulePolls.tripId, trips.id))
-    .where(and(eq(schedulePollParticipants.userId, user.id), sql`${trips.ownerId} != ${user.id}`))
-    .orderBy(desc(schedulePolls.updatedAt));
+  // Responses link to options, not directly to polls
+  const respondedCountSql = sql<number>`(
+    SELECT count(DISTINCT spr.participant_id) FROM schedule_poll_responses spr
+    JOIN schedule_poll_options spo ON spr.option_id = spo.id
+    WHERE spo.poll_id = ${schedulePolls.id}
+  )`.as("responded_count");
 
-  const allPollIds = [...ownedPolls.map((p) => p.id), ...participatingPolls.map((p) => p.id)];
+  const pollSelectFields = {
+    id: schedulePolls.id,
+    title: trips.title,
+    destination: trips.destination,
+    status: schedulePolls.status,
+    deadline: schedulePolls.deadline,
+    createdAt: schedulePolls.createdAt,
+    updatedAt: schedulePolls.updatedAt,
+    participantCount: participantCountSql,
+    respondedCount: respondedCountSql,
+  };
 
-  if (allPollIds.length === 0) return c.json([]);
-
-  const participantCounts = await db
-    .select({
-      pollId: schedulePollParticipants.pollId,
-      count: count(),
-    })
-    .from(schedulePollParticipants)
-    .where(inArray(schedulePollParticipants.pollId, allPollIds))
-    .groupBy(schedulePollParticipants.pollId);
-
-  const respondedCounts = await db
-    .select({
-      pollId: schedulePollParticipants.pollId,
-      count: count(sql`DISTINCT ${schedulePollResponses.participantId}`),
-    })
-    .from(schedulePollParticipants)
-    .innerJoin(
-      schedulePollResponses,
-      eq(schedulePollParticipants.id, schedulePollResponses.participantId),
-    )
-    .where(inArray(schedulePollParticipants.pollId, allPollIds))
-    .groupBy(schedulePollParticipants.pollId);
-
-  const participantMap = new Map(participantCounts.map((r) => [r.pollId, r.count]));
-  const respondedMap = new Map(respondedCounts.map((r) => [r.pollId, r.count]));
+  const [ownedPolls, participatingPolls] = await Promise.all([
+    db
+      .select(pollSelectFields)
+      .from(schedulePolls)
+      .innerJoin(trips, eq(schedulePolls.tripId, trips.id))
+      .where(eq(trips.ownerId, user.id))
+      .orderBy(desc(schedulePolls.updatedAt)),
+    db
+      .select(pollSelectFields)
+      .from(schedulePollParticipants)
+      .innerJoin(schedulePolls, eq(schedulePollParticipants.pollId, schedulePolls.id))
+      .innerJoin(trips, eq(schedulePolls.tripId, trips.id))
+      .where(and(eq(schedulePollParticipants.userId, user.id), sql`${trips.ownerId} != ${user.id}`))
+      .orderBy(desc(schedulePolls.updatedAt)),
+  ]);
 
   const allPolls = [...ownedPolls, ...participatingPolls].sort(
     (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
@@ -132,8 +112,8 @@ pollRoutes.get("/", async (c) => {
       deadline: p.deadline?.toISOString() ?? null,
       createdAt: p.createdAt.toISOString(),
       updatedAt: p.updatedAt.toISOString(),
-      participantCount: participantMap.get(p.id) ?? 0,
-      respondedCount: respondedMap.get(p.id) ?? 0,
+      participantCount: Number(p.participantCount),
+      respondedCount: Number(p.respondedCount),
     })),
   );
 });

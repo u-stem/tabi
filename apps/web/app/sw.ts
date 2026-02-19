@@ -14,7 +14,7 @@ declare global {
 declare const self: ServiceWorkerGlobalScope;
 
 const apiCache: RuntimeCaching = {
-  matcher: ({ url }) => url.pathname.startsWith("/api/"),
+  matcher: ({ url, request }) => request.method === "GET" && url.pathname.startsWith("/api/"),
   handler: new NetworkFirst({
     cacheName: "api-cache",
     networkTimeoutSeconds: 5,

@@ -14,7 +14,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dialog";
+import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
+import { ExpensePanel } from "@/components/expense-panel";
+import { type MobileContentTab, MobileContentTabs } from "@/components/mobile-content-tabs";
 
 const EditTripDialog = dynamic(() =>
   import("@/components/edit-trip-dialog").then((mod) => mod.EditTripDialog),
@@ -53,7 +56,6 @@ import {
   AddPatternDialog,
   BatchDeleteDialog,
   DeletePatternDialog,
-  MobileCandidateDialog,
   RenamePatternDialog,
 } from "./_components/trip-dialogs";
 import { TripHeader } from "./_components/trip-header";
@@ -105,7 +107,9 @@ export default function TripDetailPage() {
   const [addCandidateOpen, setAddCandidateOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
-  const [candidateOpen, setCandidateOpen] = useState(false);
+  const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
+  const scrollPositions = useRef<Record<string, number>>({});
+  const mobileContentRef = useRef<HTMLDivElement>(null);
   const [rightPanelTab, setRightPanelTab] = useState<
     "candidates" | "activity" | "bookmarks" | "expenses"
   >("candidates");
@@ -225,6 +229,19 @@ export default function TripDetailPage() {
       }
     },
     [tripId, saveToBookmarkIds, queryClient],
+  );
+
+  const handleMobileTabChange = useCallback(
+    (tab: MobileContentTab) => {
+      if (mobileContentRef.current) {
+        scrollPositions.current[mobileTab] = mobileContentRef.current.scrollTop;
+      }
+      setMobileTab(tab);
+      requestAnimationFrame(() => {
+        mobileContentRef.current?.scrollTo(0, scrollPositions.current[tab] ?? 0);
+      });
+    },
+    [mobileTab],
   );
 
   useEffect(() => {
@@ -394,12 +411,10 @@ export default function TripDetailPage() {
           tripId={tripId}
           otherPresence={otherPresence}
           isConnected={isConnected}
-          candidateCount={dnd.localCandidates.length}
           online={online}
           canEdit={canEdit}
           onMutate={onMutate}
           onEditOpen={() => setEditOpen(true)}
-          onCandidateOpen={() => setCandidateOpen(true)}
         />
         <EditTripDialog
           tripId={tripId}
@@ -419,7 +434,126 @@ export default function TripDetailPage() {
           onDragEnd={dnd.handleDragEnd}
           accessibility={{ announcements: dndAnnouncements }}
         >
-          <div className="flex items-start gap-4">
+          {/* Mobile layout */}
+          <div className="lg:hidden">
+            <MobileContentTabs
+              activeTab={mobileTab}
+              onTabChange={handleMobileTabChange}
+              candidateCount={dnd.localCandidates.length}
+            />
+            <div ref={mobileContentRef} className="min-h-0 overflow-y-auto">
+              {mobileTab === "schedule" && (
+                <div className="flex min-w-0 flex-col rounded-lg border bg-card">
+                  <DayTabs
+                    days={trip.days}
+                    selectedDay={selectedDay}
+                    onSelectDay={setSelectedDay}
+                    otherPresence={otherPresence}
+                    hasPoll={!!trip.poll}
+                  />
+                  {selectedDay === -1 && trip.poll ? (
+                    <div className="min-h-0 overflow-y-auto">
+                      <PollTab
+                        pollId={trip.poll.id}
+                        isOwner={isOwnerRole(trip.role)}
+                        canEdit={canEdit}
+                        onMutate={onMutate}
+                        onConfirmed={() => setSelectedDay(0)}
+                      />
+                    </div>
+                  ) : currentDay && currentPattern ? (
+                    <div
+                      id={`mobile-day-panel-${currentDay.id}`}
+                      role="tabpanel"
+                      className="min-h-0 overflow-y-auto p-4"
+                    >
+                      <DayMemoEditor
+                        memo={memo}
+                        currentDayId={currentDay.id}
+                        currentDayMemo={currentDay.memo}
+                        canEdit={canEdit}
+                        online={online}
+                      />
+                      <DayTimeline
+                        key={currentPattern.id}
+                        tripId={tripId}
+                        dayId={currentDay.id}
+                        patternId={currentPattern.id}
+                        date={currentDay.date}
+                        schedules={dnd.localSchedules}
+                        onRefresh={onMutate}
+                        disabled={!online || !canEdit}
+                        addScheduleOpen={addScheduleOpen}
+                        onAddScheduleOpenChange={setAddScheduleOpen}
+                        maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
+                        totalDays={trip.days.length}
+                        crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
+                        overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
+                        scheduleLimitReached={scheduleLimitReached}
+                        scheduleLimitMessage={scheduleLimitMessage}
+                        onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                        headerContent={
+                          <PatternTabs
+                            patterns={currentDay.patterns}
+                            currentDayId={currentDay.id}
+                            currentPatternIndex={currentPatternIndex}
+                            canEdit={canEdit}
+                            online={online}
+                            patternOps={patternOps}
+                            onSelectPattern={(dayId, index) =>
+                              setSelectedPattern((prev) => ({ ...prev, [dayId]: index }))
+                            }
+                          />
+                        }
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {MSG.SCHEDULING_STATUS_DESCRIPTION}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+              {mobileTab === "candidates" &&
+                (currentDay && currentPattern ? (
+                  <CandidatePanel
+                    tripId={tripId}
+                    candidates={dnd.localCandidates}
+                    currentDayId={currentDay.id}
+                    currentPatternId={currentPattern.id}
+                    onRefresh={onMutate}
+                    disabled={!online || !canEdit}
+                    draggable={false}
+                    scheduleLimitReached={scheduleLimitReached}
+                    scheduleLimitMessage={scheduleLimitMessage}
+                    maxEndDayOffset={Math.max(0, trip.days.length - 1)}
+                    onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                  />
+                ) : (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    {trip.days.length > 0
+                      ? "日タブを選択すると候補を追加できます"
+                      : "日程が確定すると候補を追加できます"}
+                  </p>
+                ))}
+              {mobileTab === "expenses" &&
+                (trip.days.length > 0 ? (
+                  <div className="p-4">
+                    <ExpensePanel tripId={tripId} canEdit={canEdit} />
+                  </div>
+                ) : (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    日程が確定すると費用を記録できます
+                  </p>
+                ))}
+            </div>
+          </div>
+
+          {/* Desktop layout */}
+          <div className="hidden lg:flex items-start gap-4">
             {/* Left panel */}
             <div className="flex min-w-0 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
               <DayTabs
@@ -543,24 +677,6 @@ export default function TripDetailPage() {
         </DndContext>
 
         <AddPatternDialog patternOps={patternOps} />
-        <MobileCandidateDialog
-          open={candidateOpen}
-          onOpenChange={setCandidateOpen}
-          rightPanelTab={rightPanelTab}
-          setRightPanelTab={setRightPanelTab}
-          tripId={tripId}
-          candidates={dnd.localCandidates}
-          currentDay={currentDay}
-          currentPatternId={currentPattern?.id ?? null}
-          onRefresh={onMutate}
-          disabled={!online || !canEdit}
-          scheduleLimitReached={scheduleLimitReached}
-          scheduleLimitMessage={scheduleLimitMessage}
-          maxEndDayOffset={Math.max(0, trip.days.length - 1)}
-          onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
-          canEdit={canEdit}
-          hasDays={trip.days.length > 0}
-        />
         <RenamePatternDialog patternOps={patternOps} />
         <BatchDeleteDialog selection={selection} />
         <DeletePatternDialog patternOps={patternOps} />

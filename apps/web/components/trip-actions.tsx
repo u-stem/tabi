@@ -4,6 +4,8 @@ import type { MemberRole, TripResponse, TripStatus } from "@sugara/shared";
 import { canEdit, isOwner, STATUS_LABELS } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowUpDown,
+  Check,
   FileDown,
   Link,
   MoreHorizontal,
@@ -38,6 +40,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -104,6 +112,7 @@ export function TripActions({
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [statusSheetOpen, setStatusSheetOpen] = useState(false);
 
   async function handleStatusChange(newStatus: string) {
     if (newStatus === status) return;
@@ -202,6 +211,15 @@ export function TripActions({
   }
 
   const sheetActions = [
+    ...(canEditRole && status !== "scheduling"
+      ? [
+          {
+            label: `ステータス: ${STATUS_LABELS[status]}`,
+            icon: <ArrowUpDown className="h-4 w-4" />,
+            onClick: () => setStatusSheetOpen(true),
+          },
+        ]
+      : []),
     {
       label: "メンバー",
       icon: <Users className="h-4 w-4" />,
@@ -413,6 +431,35 @@ export function TripActions({
           expiresAt={shareExpiresAt}
         />
       )}
+      <Drawer open={statusSheetOpen} onOpenChange={setStatusSheetOpen}>
+        <DrawerContent>
+          <DrawerTitle className="sr-only">ステータス変更</DrawerTitle>
+          <DrawerDescription className="sr-only">ステータスを選択してください</DrawerDescription>
+          <div className="flex flex-col gap-2 pb-4 pt-2">
+            {statuses.map(([value, label]) => (
+              <Button
+                key={value}
+                variant={value === status ? "default" : "outline"}
+                className="h-12 w-full text-base"
+                onClick={() => {
+                  handleStatusChange(value);
+                  setStatusSheetOpen(false);
+                }}
+              >
+                {value === status && <Check className="mr-2 h-4 w-4" />}
+                {label}
+              </Button>
+            ))}
+            <Button
+              variant="outline"
+              className="mt-1 h-12 w-full text-base"
+              onClick={() => setStatusSheetOpen(false)}
+            >
+              キャンセル
+            </Button>
+          </div>
+        </DrawerContent>
+      </Drawer>
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

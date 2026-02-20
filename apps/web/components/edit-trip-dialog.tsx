@@ -1,5 +1,6 @@
 "use client";
 
+import { TRIP_DESTINATION_MAX_LENGTH, TRIP_TITLE_MAX_LENGTH } from "@sugara/shared";
 import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -40,6 +41,8 @@ export function EditTripDialog({
   onOpenChange,
   onUpdate,
 }: EditTripDialogProps) {
+  const [editTitle, setEditTitle] = useState(title);
+  const [editDestination, setEditDestination] = useState(destination ?? "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const hasDates = startDate != null && endDate != null;
@@ -48,10 +51,12 @@ export function EditTripDialog({
 
   useEffect(() => {
     if (open) {
+      setEditTitle(title);
+      setEditDestination(destination ?? "");
       setEditStartDate(startDate ?? "");
       setEditEndDate(endDate ?? "");
     }
-  }, [open, startDate, endDate]);
+  }, [open, title, destination, startDate, endDate]);
 
   function handleOpenChange(isOpen: boolean) {
     onOpenChange(isOpen);
@@ -125,19 +130,29 @@ export function EditTripDialog({
             <Input
               id="edit-title"
               name="title"
-              defaultValue={title}
+              value={editTitle}
+              onChange={(e) => setEditTitle(e.target.value)}
               placeholder="京都3日間の旅"
+              maxLength={TRIP_TITLE_MAX_LENGTH}
               required
             />
+            <p className="text-right text-xs text-muted-foreground">
+              {editTitle.length}/{TRIP_TITLE_MAX_LENGTH}
+            </p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="edit-destination">目的地</Label>
             <Input
               id="edit-destination"
               name="destination"
-              defaultValue={destination ?? ""}
+              value={editDestination}
+              onChange={(e) => setEditDestination(e.target.value)}
               placeholder="京都"
+              maxLength={TRIP_DESTINATION_MAX_LENGTH}
             />
+            <p className="text-right text-xs text-muted-foreground">
+              {editDestination.length}/{TRIP_DESTINATION_MAX_LENGTH}
+            </p>
           </div>
           {hasDates && (
             <div className="space-y-2">

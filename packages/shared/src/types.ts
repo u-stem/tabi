@@ -91,6 +91,7 @@ export type MemberResponse = {
   role: MemberRole;
   name: string;
   image?: string | null;
+  hasExpenses?: boolean;
 };
 
 export type ActivityLogResponse = {

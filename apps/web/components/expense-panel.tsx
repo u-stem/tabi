@@ -2,7 +2,8 @@
 
 import type { ExpenseSplitType } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
+import { Collapsible as CollapsiblePrimitive } from "radix-ui";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ExpenseDialog } from "@/components/expense-dialog";
@@ -145,31 +146,66 @@ export function ExpensePanel({ tripId, canEdit }: ExpensePanelProps) {
       )}
 
       {/* Settlement summary */}
-      <div className="rounded-md border bg-muted/50 p-3 space-y-2">
-        <div className="flex items-center justify-between">
-          <span className="text-sm font-medium">合計</span>
+      <CollapsiblePrimitive.Root className="rounded-md border bg-muted/50">
+        <div className="flex items-center justify-between p-3">
+          <span className="text-sm font-medium">合計支出</span>
           <span className="text-sm font-bold">{settlement.totalAmount.toLocaleString()}円</span>
         </div>
         {settlement.transfers.length > 0 && (
-          <div className="space-y-1">
-            <p className="text-xs text-muted-foreground">精算</p>
-            {settlement.transfers.map((t, i) => (
-              <div
-                key={`${t.from.id}-${t.to.id}-${i}`}
-                className="flex items-center gap-1.5 text-sm"
-              >
-                <span>{t.from.name}</span>
-                <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                <span>{t.to.name}</span>
-                <span className="ml-auto font-medium">{t.amount.toLocaleString()}円</span>
+          <>
+            <CollapsiblePrimitive.Trigger className="flex w-full items-center gap-1 border-t px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/80 transition-colors [&[data-state=open]>svg]:rotate-180">
+              <ChevronDown className="h-3 w-3 transition-transform duration-200" />
+              明細を表示
+            </CollapsiblePrimitive.Trigger>
+            <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
+              <div className="space-y-1 border-t px-3 pt-2 pb-3">
+                <p className="text-xs text-muted-foreground">過不足</p>
+                {[...settlement.balances]
+                  .filter((b) => b.net !== 0)
+                  .sort((a, b) => b.net - a.net)
+                  .map((b) => (
+                    <div key={b.userId} className="flex items-center justify-between pl-2 text-sm">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                        {b.name}
+                      </span>
+                      <span
+                        className={
+                          b.net > 0
+                            ? "font-medium text-emerald-600 dark:text-emerald-400"
+                            : "font-medium text-destructive"
+                        }
+                      >
+                        {b.net > 0 ? "+" : ""}
+                        {b.net.toLocaleString()}円
+                      </span>
+                    </div>
+                  ))}
               </div>
-            ))}
-          </div>
+              <div className="space-y-1 border-t px-3 pt-2 pb-3">
+                <p className="text-xs text-muted-foreground">精算</p>
+                {[...settlement.transfers]
+                  .sort((a, b) => b.amount - a.amount)
+                  .map((t, i) => (
+                    <div
+                      key={`${t.from.id}-${t.to.id}-${i}`}
+                      className="flex items-center gap-1.5 pl-2 text-sm"
+                    >
+                      <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                      <span>{t.from.name}</span>
+                      <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                      <span>{t.to.name}</span>
+                      <span className="ml-auto font-medium">{t.amount.toLocaleString()}円</span>
+                    </div>
+                  ))}
+              </div>
+            </CollapsiblePrimitive.Content>
+          </>
         )}
         {settlement.totalAmount === 0 && (
-          <p className="text-xs text-muted-foreground">費用はまだ記録されていません</p>
+          <p className="px-3 pb-3 text-xs text-muted-foreground">費用はまだ記録されていません</p>
         )}
-      </div>
+      </CollapsiblePrimitive.Root>
 
       {/* Expense list */}
       {expenses.length > 0 && (

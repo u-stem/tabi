@@ -1,9 +1,9 @@
 "use client";
 
+import { TRIP_DESTINATION_MAX_LENGTH, TRIP_TITLE_MAX_LENGTH } from "@sugara/shared";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Plus, X } from "lucide-react";
-
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -21,10 +21,10 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { formatDateRangeShort } from "@/lib/format";
 import { MSG } from "@/lib/messages";
-import { cn } from "@/lib/utils";
 
 type DateMode = "direct" | "poll";
 type CandidateOption = { startDate: string; endDate: string };
@@ -37,6 +37,8 @@ type CreateTripDialogProps = {
 
 export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDialogProps) {
   const [dateMode, setDateMode] = useState<DateMode>("direct");
+  const [title, setTitle] = useState("");
+  const [destination, setDestination] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,6 +52,8 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
 
   function resetAll() {
+    setTitle("");
+    setDestination("");
     setDateMode("direct");
     setError(null);
     setLoading(false);
@@ -150,45 +154,50 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
           <DialogDescription>旅行の基本情報を入力してください</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-4">
-          <div className="space-y-4 overflow-y-auto pr-1">
+          <div className="space-y-4 overflow-y-auto px-1">
             <div className="space-y-2">
               <Label htmlFor="create-title">
                 旅行タイトル <span className="text-destructive">*</span>
               </Label>
-              <Input id="create-title" name="title" placeholder="京都3日間の旅" required />
+              <Input
+                id="create-title"
+                name="title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="京都3日間の旅"
+                maxLength={TRIP_TITLE_MAX_LENGTH}
+                required
+              />
+              <p className="text-right text-xs text-muted-foreground">
+                {title.length}/{TRIP_TITLE_MAX_LENGTH}
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="create-destination">目的地</Label>
-              <Input id="create-destination" name="destination" placeholder="京都" />
+              <Input
+                id="create-destination"
+                name="destination"
+                value={destination}
+                onChange={(e) => setDestination(e.target.value)}
+                placeholder="京都"
+                maxLength={TRIP_DESTINATION_MAX_LENGTH}
+              />
+              <p className="text-right text-xs text-muted-foreground">
+                {destination.length}/{TRIP_DESTINATION_MAX_LENGTH}
+              </p>
             </div>
 
             {/* Mode toggle */}
-            <div className="flex gap-2 rounded-lg border p-1">
-              <button
-                type="button"
-                className={cn(
-                  "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                  dateMode === "direct"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                onClick={() => setDateMode("direct")}
-              >
-                日程を決定する
-              </button>
-              <button
-                type="button"
-                className={cn(
-                  "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors",
-                  dateMode === "poll"
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-                onClick={() => setDateMode("poll")}
-              >
-                日程を調整する
-              </button>
-            </div>
+            <Tabs value={dateMode} onValueChange={(v) => setDateMode(v as DateMode)}>
+              <TabsList className="w-full">
+                <TabsTrigger value="direct" className="flex-1">
+                  日程を決定する
+                </TabsTrigger>
+                <TabsTrigger value="poll" className="flex-1">
+                  日程を調整する
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
 
             {dateMode === "direct" ? (
               <div className="space-y-2">

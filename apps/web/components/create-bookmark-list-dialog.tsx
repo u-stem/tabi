@@ -113,9 +113,6 @@ export function CreateBookmarkListDialog({
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => handleOpenChange(false)}>
-              キャンセル
-            </Button>
             <Button type="submit" disabled={submitting || !name.trim()}>
               {submitting ? "作成中..." : "作成"}
             </Button>

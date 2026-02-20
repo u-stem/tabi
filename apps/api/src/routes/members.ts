@@ -1,5 +1,5 @@
 import { addMemberSchema, MAX_MEMBERS_PER_TRIP, updateMemberRoleSchema } from "@sugara/shared";
-import { and, count, eq, or } from "drizzle-orm";
+import { and, count, eq, inArray, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { expenseSplits, expenses, tripMembers, users } from "../db/schema";
@@ -21,12 +21,37 @@ memberRoutes.get("/:tripId/members", requireTripAccess(), async (c) => {
     with: { user: { columns: { id: true, name: true, image: true } } },
   });
 
+  const memberIds = members.map((m) => m.userId);
+
+  // Collect userIds that appear in expenses (as payer or in splits)
+  const expenseUserIds = new Set<string>();
+  if (memberIds.length > 0) {
+    const rows = await db
+      .select({
+        paidByUserId: expenses.paidByUserId,
+        splitUserId: expenseSplits.userId,
+      })
+      .from(expenses)
+      .leftJoin(expenseSplits, eq(expenseSplits.expenseId, expenses.id))
+      .where(
+        and(
+          eq(expenses.tripId, tripId),
+          or(inArray(expenses.paidByUserId, memberIds), inArray(expenseSplits.userId, memberIds)),
+        ),
+      );
+    for (const row of rows) {
+      if (row.paidByUserId) expenseUserIds.add(row.paidByUserId);
+      if (row.splitUserId) expenseUserIds.add(row.splitUserId);
+    }
+  }
+
   return c.json(
     members.map((m) => ({
       userId: m.userId,
       role: m.role,
       name: m.user.name,
       image: m.user.image,
+      hasExpenses: expenseUserIds.has(m.userId),
     })),
   );
 });

@@ -3,13 +3,13 @@
 import type { ExpenseSplitType } from "@sugara/shared";
 import { EXPENSE_TITLE_MAX_LENGTH } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
+import { Check, Plus } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogFooter,
@@ -25,6 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
@@ -192,6 +193,9 @@ export function ExpenseDialog({
               maxLength={EXPENSE_TITLE_MAX_LENGTH}
               required
             />
+            <p className="text-right text-xs text-muted-foreground">
+              {title.length}/{EXPENSE_TITLE_MAX_LENGTH}
+            </p>
           </div>
 
           <div className="space-y-2">
@@ -227,24 +231,16 @@ export function ExpenseDialog({
             <Label asChild>
               <span>分担方法</span>
             </Label>
-            <div className="flex gap-2">
-              <Button
-                type="button"
-                variant={splitType === "equal" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSplitType("equal")}
-              >
-                均等
-              </Button>
-              <Button
-                type="button"
-                variant={splitType === "custom" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setSplitType("custom")}
-              >
-                カスタム
-              </Button>
-            </div>
+            <Tabs value={splitType} onValueChange={(v) => setSplitType(v as ExpenseSplitType)}>
+              <TabsList className="w-full">
+                <TabsTrigger value="equal" className="flex-1">
+                  均等
+                </TabsTrigger>
+                <TabsTrigger value="custom" className="flex-1">
+                  カスタム
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
 
           <div className="space-y-2">
@@ -293,11 +289,6 @@ export function ExpenseDialog({
           </div>
 
           <DialogFooter>
-            <DialogClose asChild>
-              <Button type="button" variant="outline">
-                キャンセル
-              </Button>
-            </DialogClose>
             <Button
               type="submit"
               disabled={
@@ -308,7 +299,21 @@ export function ExpenseDialog({
                 customMismatch
               }
             >
-              {loading ? "保存中..." : isEdit ? "更新" : "追加"}
+              {loading ? (
+                isEdit ? (
+                  "更新中..."
+                ) : (
+                  "追加中..."
+                )
+              ) : isEdit ? (
+                <>
+                  <Check className="h-4 w-4" /> 更新
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" /> 追加
+                </>
+              )}
             </Button>
           </DialogFooter>
         </form>

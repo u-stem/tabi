@@ -40,6 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
@@ -233,6 +234,11 @@ export function MemberDialog({
         <DialogHeader>
           <DialogTitle>メンバー管理</DialogTitle>
           <DialogDescription>旅行メンバーの招待と権限を管理します</DialogDescription>
+          {members.some((m) => m.hasExpenses) && (
+            <p className="text-xs text-muted-foreground">
+              費用が紐づいているメンバーは削除できません
+            </p>
+          )}
         </DialogHeader>
 
         <div className="flex min-h-0 flex-col gap-4">
@@ -285,14 +291,20 @@ export function MemberDialog({
                           <SelectItem value="viewer">閲覧者</SelectItem>
                         </SelectContent>
                       </Select>
-                      <button
-                        type="button"
-                        className="select-none text-xs text-muted-foreground hover:text-destructive"
-                        aria-label={`${member.name}を削除`}
-                        onClick={() => setRemoveMember(member)}
-                      >
-                        削除
-                      </button>
+                      {member.hasExpenses ? (
+                        <span className="cursor-not-allowed select-none text-xs text-muted-foreground/50">
+                          削除
+                        </span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="select-none text-xs text-muted-foreground hover:text-destructive"
+                          aria-label={`${member.name}を削除`}
+                          onClick={() => setRemoveMember(member)}
+                        >
+                          削除
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <span className="shrink-0 select-none text-xs text-muted-foreground">

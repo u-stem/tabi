@@ -2,7 +2,9 @@
 
 import type { TripResponse } from "@sugara/shared";
 import { MAX_PATTERNS_PER_DAY } from "@sugara/shared";
-import { Copy, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { ChevronDown, Copy, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { PatternPickerDrawer } from "@/components/pattern-picker-drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import type { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
 import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
@@ -33,6 +36,44 @@ export function PatternTabs({
   patternOps: PatternOps;
   onSelectPattern: (dayId: string, index: number) => void;
 }) {
+  const isMobile = useIsMobile();
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const currentPattern = patterns[currentPatternIndex];
+
+  if (isMobile) {
+    return (
+      <div className="mb-3 flex select-none items-center gap-1.5">
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
+        >
+          <span className="max-w-32 truncate">{currentPattern?.label}</span>
+          {patterns.length > 1 && <ChevronDown className="h-3 w-3" />}
+        </button>
+        {canEdit && online && patterns.length < MAX_PATTERNS_PER_DAY && (
+          <button
+            type="button"
+            onClick={() => patternOps.add.setOpen(true)}
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
+            aria-label="パターン追加"
+          >
+            <Plus className="h-3 w-3" />
+          </button>
+        )}
+        {patterns.length > 1 && (
+          <PatternPickerDrawer
+            open={pickerOpen}
+            onOpenChange={setPickerOpen}
+            patterns={patterns}
+            currentPatternIndex={currentPatternIndex}
+            onSelect={(index) => onSelectPattern(currentDayId, index)}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="mb-3 flex flex-wrap select-none items-center gap-1.5">
       {patterns.map((pattern, index) => {

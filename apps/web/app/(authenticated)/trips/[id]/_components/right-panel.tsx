@@ -82,9 +82,21 @@ export function RightPanel({
             </p>
           )
         ) : rightPanelTab === "bookmarks" ? (
-          <BookmarkPanel tripId={tripId} disabled={disabled} onCandidateAdded={onRefresh} />
+          hasDays ? (
+            <BookmarkPanel tripId={tripId} disabled={disabled} onCandidateAdded={onRefresh} />
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              日程が確定するとブックマークを利用できます
+            </p>
+          )
         ) : rightPanelTab === "expenses" ? (
-          <ExpensePanel tripId={tripId} canEdit={canEdit} />
+          hasDays ? (
+            <ExpensePanel tripId={tripId} canEdit={canEdit} />
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              日程が確定すると費用を記録できます
+            </p>
+          )
         ) : (
           <ActivityLog tripId={tripId} />
         )}

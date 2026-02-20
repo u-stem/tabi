@@ -559,6 +559,7 @@ export default function TripDetailPage() {
           maxEndDayOffset={Math.max(0, trip.days.length - 1)}
           onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
           canEdit={canEdit}
+          hasDays={trip.days.length > 0}
         />
         <RenamePatternDialog patternOps={patternOps} />
         <BatchDeleteDialog selection={selection} />

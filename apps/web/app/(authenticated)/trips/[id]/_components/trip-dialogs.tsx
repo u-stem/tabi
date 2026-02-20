@@ -185,6 +185,7 @@ export function MobileCandidateDialog({
   maxEndDayOffset,
   onSaveToBookmark,
   canEdit,
+  hasDays,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -201,6 +202,7 @@ export function MobileCandidateDialog({
   maxEndDayOffset: number;
   onSaveToBookmark?: (scheduleIds: string[]) => void;
   canEdit: boolean;
+  hasDays: boolean;
 }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -229,17 +231,31 @@ export function MobileCandidateDialog({
               />
             ) : (
               <p className="py-8 text-center text-sm text-muted-foreground">
-                日タブを選択すると候補を追加できます
+                {hasDays
+                  ? "日タブを選択すると候補を追加できます"
+                  : "日程が確定すると候補を追加できます"}
               </p>
             )
           ) : rightPanelTab === "bookmarks" ? (
-            <div className="p-4">
-              <BookmarkPanel tripId={tripId} disabled={disabled} onCandidateAdded={onRefresh} />
-            </div>
+            hasDays ? (
+              <div className="p-4">
+                <BookmarkPanel tripId={tripId} disabled={disabled} onCandidateAdded={onRefresh} />
+              </div>
+            ) : (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                日程が確定するとブックマークを利用できます
+              </p>
+            )
           ) : rightPanelTab === "expenses" ? (
-            <div className="p-4">
-              <ExpensePanel tripId={tripId} canEdit={canEdit} />
-            </div>
+            hasDays ? (
+              <div className="p-4">
+                <ExpensePanel tripId={tripId} canEdit={canEdit} />
+              </div>
+            ) : (
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                日程が確定すると費用を記録できます
+              </p>
+            )
           ) : (
             <div className="p-4">
               <ActivityLog tripId={tripId} />

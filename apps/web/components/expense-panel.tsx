@@ -134,12 +134,14 @@ export function ExpensePanel({ tripId, canEdit }: ExpensePanelProps) {
 
   return (
     <div className="space-y-4">
-      {/* Add button */}
+      {/* Toolbar */}
       {canEdit && (
-        <Button variant="outline" size="sm" onClick={handleAdd}>
-          <Plus className="h-4 w-4" />
-          費用を追加
-        </Button>
+        <div className="flex justify-end">
+          <Button variant="outline" size="sm" onClick={handleAdd}>
+            <Plus className="h-4 w-4" />
+            費用を追加
+          </Button>
+        </div>
       )}
 
       {/* Settlement summary */}

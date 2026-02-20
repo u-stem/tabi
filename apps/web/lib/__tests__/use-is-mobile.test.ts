@@ -15,7 +15,10 @@ function mockMatchMedia(matches: boolean) {
       if (idx >= 0) listeners.splice(idx, 1);
     }),
   };
-  vi.stubGlobal("matchMedia", vi.fn(() => mql));
+  vi.stubGlobal(
+    "matchMedia",
+    vi.fn(() => mql),
+  );
   return { mql, listeners };
 }
 

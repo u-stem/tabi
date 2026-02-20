@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import type * as React from "react";
 
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 
@@ -37,9 +37,7 @@ function ResponsiveDialog({ children, ...props }: ResponsiveDialogProps) {
   return <Comp {...props}>{children}</Comp>;
 }
 
-function ResponsiveDialogTrigger({
-  ...props
-}: React.ComponentProps<typeof DialogTrigger>) {
+function ResponsiveDialogTrigger({ ...props }: React.ComponentProps<typeof DialogTrigger>) {
   const isMobile = useIsMobile();
   const Comp = isMobile ? DrawerTrigger : DialogTrigger;
   return <Comp {...props} />;
@@ -68,41 +66,31 @@ function ResponsiveDialogContent({
   );
 }
 
-function ResponsiveDialogHeader({
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+function ResponsiveDialogHeader({ ...props }: React.HTMLAttributes<HTMLDivElement>) {
   const isMobile = useIsMobile();
   const Comp = isMobile ? DrawerHeader : DialogHeader;
   return <Comp {...props} />;
 }
 
-function ResponsiveDialogFooter({
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) {
+function ResponsiveDialogFooter({ ...props }: React.HTMLAttributes<HTMLDivElement>) {
   const isMobile = useIsMobile();
   const Comp = isMobile ? DrawerFooter : DialogFooter;
   return <Comp {...props} />;
 }
 
-function ResponsiveDialogTitle({
-  ...props
-}: React.ComponentProps<typeof DialogTitle>) {
+function ResponsiveDialogTitle({ ...props }: React.ComponentProps<typeof DialogTitle>) {
   const isMobile = useIsMobile();
   const Comp = isMobile ? DrawerTitle : DialogTitle;
   return <Comp {...props} />;
 }
 
-function ResponsiveDialogDescription({
-  ...props
-}: React.ComponentProps<typeof DialogDescription>) {
+function ResponsiveDialogDescription({ ...props }: React.ComponentProps<typeof DialogDescription>) {
   const isMobile = useIsMobile();
   const Comp = isMobile ? DrawerDescription : DialogDescription;
   return <Comp {...props} />;
 }
 
-function ResponsiveDialogClose({
-  ...props
-}: React.ComponentProps<typeof DialogClose>) {
+function ResponsiveDialogClose({ ...props }: React.ComponentProps<typeof DialogClose>) {
   const isMobile = useIsMobile();
   const Comp = isMobile ? DrawerClose : DialogClose;
   return <Comp {...props} />;

@@ -34,7 +34,7 @@ export const queryKeys = {
   },
   expenses: {
     all: ["expenses"] as const,
-    list: (tripId: string) => ["expenses", tripId] as const,
+    list: (tripId: string) => [...queryKeys.expenses.all, tripId] as const,
   },
   shared: {
     trip: (token: string) => ["shared", token] as const,

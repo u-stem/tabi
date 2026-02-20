@@ -224,7 +224,9 @@ export function ExpenseDialog({
           </div>
 
           <div className="space-y-2">
-            <Label asChild><span>分担方法</span></Label>
+            <Label asChild>
+              <span>分担方法</span>
+            </Label>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -246,7 +248,9 @@ export function ExpenseDialog({
           </div>
 
           <div className="space-y-2">
-            <Label asChild><span>対象メンバー</span></Label>
+            <Label asChild>
+              <span>対象メンバー</span>
+            </Label>
             <div className="space-y-2">
               {members.map((m) => (
                 <div key={m.userId} className="flex items-center gap-3">

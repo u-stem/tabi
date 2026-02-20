@@ -244,6 +244,19 @@ describe("Expense routes", () => {
       expect(res.status).toBe(400);
     });
 
+    it("returns 400 when splits have duplicate userId", async () => {
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          ...validBody,
+          splits: [{ userId: userId1 }, { userId: userId1 }],
+        }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
     it("returns 400 when custom split total does not match amount", async () => {
       const res = await makeApp().request(`/api/trips/${tripId}/expenses`, {
         method: "POST",
@@ -328,6 +341,86 @@ describe("Expense routes", () => {
       });
 
       expect(res.status).toBe(200);
+    });
+
+    it("updates expense with splits in transaction", async () => {
+      mockDbQuery.expenses.findFirst.mockResolvedValue({
+        id: "exp-1",
+        tripId,
+        title: "Dinner",
+        amount: 1000,
+        splitType: "equal",
+      });
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([
+        { userId: userId1 },
+        { userId: userId2 },
+      ]);
+      const updatedExpense = { id: "exp-1", title: "Dinner", amount: 2000 };
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updatedExpense]),
+          }),
+        }),
+      });
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses/exp-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: 2000,
+          splitType: "equal",
+          splits: [{ userId: userId1 }, { userId: userId2 }],
+        }),
+      });
+
+      expect(res.status).toBe(200);
+    });
+
+    it("returns 400 when paidByUserId is not a member", async () => {
+      mockDbQuery.expenses.findFirst.mockResolvedValue({
+        id: "exp-1",
+        tripId,
+        title: "Dinner",
+        amount: 1000,
+        splitType: "equal",
+      });
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([{ userId: userId2 }]);
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses/exp-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ paidByUserId: userId1 }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 400 when split user is not a member", async () => {
+      mockDbQuery.expenses.findFirst.mockResolvedValue({
+        id: "exp-1",
+        tripId,
+        title: "Dinner",
+        amount: 1000,
+        splitType: "equal",
+      });
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([{ userId: userId1 }]);
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses/exp-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          splits: [{ userId: userId1 }, { userId: userId2 }],
+        }),
+      });
+
+      expect(res.status).toBe(400);
     });
 
     it("returns 404 for non-existent expense", async () => {

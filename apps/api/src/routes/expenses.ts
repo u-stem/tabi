@@ -139,30 +139,49 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
 
   const { splits, ...updateFields } = parsed.data;
 
-  const [updated] = await db
-    .update(expenses)
-    .set({ ...updateFields, updatedAt: new Date() })
-    .where(eq(expenses.id, expenseId))
-    .returning();
+  // Verify member constraints when paidByUserId or splits change
+  if (updateFields.paidByUserId || splits) {
+    const members = await db.query.tripMembers.findMany({
+      where: eq(tripMembers.tripId, tripId),
+    });
+    const memberIds = new Set(members.map((m) => m.userId));
 
-  // Replace splits if provided
-  if (splits) {
-    const finalAmount = updateFields.amount ?? existing.amount;
-    const finalSplitType = updateFields.splitType ?? existing.splitType;
-    const splitAmounts =
-      finalSplitType === "equal"
-        ? calculateEqualSplit(finalAmount, splits.length)
-        : splits.map((s) => s.amount!);
+    if (updateFields.paidByUserId && !memberIds.has(updateFields.paidByUserId)) {
+      return c.json({ error: ERROR_MSG.EXPENSE_PAYER_NOT_MEMBER }, 400);
+    }
 
-    await db.delete(expenseSplits).where(eq(expenseSplits.expenseId, expenseId));
-    await db.insert(expenseSplits).values(
-      splits.map((s, i) => ({
-        expenseId,
-        userId: s.userId,
-        amount: splitAmounts[i],
-      })),
-    );
+    if (splits?.some((s) => !memberIds.has(s.userId))) {
+      return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_USER_NOT_MEMBER }, 400);
+    }
   }
+
+  const updated = await db.transaction(async (tx) => {
+    const [result] = await tx
+      .update(expenses)
+      .set({ ...updateFields, updatedAt: new Date() })
+      .where(eq(expenses.id, expenseId))
+      .returning();
+
+    if (splits) {
+      const finalAmount = updateFields.amount ?? existing.amount;
+      const finalSplitType = updateFields.splitType ?? existing.splitType;
+      const splitAmounts =
+        finalSplitType === "equal"
+          ? calculateEqualSplit(finalAmount, splits.length)
+          : splits.map((s) => s.amount!);
+
+      await tx.delete(expenseSplits).where(eq(expenseSplits.expenseId, expenseId));
+      await tx.insert(expenseSplits).values(
+        splits.map((s, i) => ({
+          expenseId,
+          userId: s.userId,
+          amount: splitAmounts[i],
+        })),
+      );
+    }
+
+    return result;
+  });
 
   const oldAmount = existing.amount;
   const newAmount = updated.amount;

@@ -20,6 +20,13 @@ export const createExpenseSchema = z
   })
   .refine(
     (data) => {
+      const ids = data.splits.map((s) => s.userId);
+      return new Set(ids).size === ids.length;
+    },
+    { message: "Duplicate userId in splits", path: ["splits"] },
+  )
+  .refine(
+    (data) => {
       if (data.splitType === "custom") {
         return data.splits.every((s) => s.amount !== undefined);
       }
@@ -47,6 +54,16 @@ export const updateExpenseSchema = z
     splits: z.array(splitItemSchema).min(1),
   })
   .partial()
+  .refine(
+    (data) => {
+      if (data.splits) {
+        const ids = data.splits.map((s) => s.userId);
+        return new Set(ids).size === ids.length;
+      }
+      return true;
+    },
+    { message: "Duplicate userId in splits", path: ["splits"] },
+  )
   .refine(
     (data) => {
       if (data.splitType === "custom" && data.splits) {

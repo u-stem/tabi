@@ -22,15 +22,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import {
   Select,
   SelectContent,
@@ -217,7 +217,7 @@ export function MemberDialog({
   const memberUserIds = new Set(members.map((m) => m.userId));
 
   return (
-    <Dialog
+    <ResponsiveDialog
       open={open}
       onOpenChange={(isOpen) => {
         onOpenChange(isOpen);
@@ -230,16 +230,18 @@ export function MemberDialog({
         }
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>メンバー管理</DialogTitle>
-          <DialogDescription>旅行メンバーの招待と権限を管理します</DialogDescription>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>メンバー管理</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            旅行メンバーの招待と権限を管理します
+          </ResponsiveDialogDescription>
           {members.some((m) => m.hasExpenses) && (
             <p className="text-xs text-muted-foreground">
               費用が紐づいているメンバーは削除できません
             </p>
           )}
-        </DialogHeader>
+        </ResponsiveDialogHeader>
 
         <div className="flex min-h-0 flex-col gap-4">
           {loading ? (
@@ -530,7 +532,7 @@ export function MemberDialog({
             </div>
           )}
         </div>
-      </DialogContent>
+      </ResponsiveDialogContent>
       <AlertDialog open={removeMember !== null} onOpenChange={(v) => !v && setRemoveMember(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -552,6 +554,6 @@ export function MemberDialog({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </Dialog>
+    </ResponsiveDialog>
   );
 }

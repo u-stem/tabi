@@ -11,16 +11,16 @@ import { CalendarNav, END_YEAR, START_YEAR } from "@/components/calendar-nav";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { formatDateRangeShort } from "@/lib/format";
@@ -147,12 +147,14 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="flex max-h-[90vh] flex-col overflow-hidden sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>新しい旅行を作成</DialogTitle>
-          <DialogDescription>旅行の基本情報を入力してください</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
+      <ResponsiveDialogContent className="flex max-h-[90vh] flex-col overflow-hidden sm:max-w-2xl">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>新しい旅行を作成</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            旅行の基本情報を入力してください
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-4">
           <div className="space-y-4 overflow-y-auto px-1">
             <div className="space-y-2">
@@ -291,14 +293,14 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
               </p>
             )}
           </div>
-          <DialogFooter className="shrink-0 border-t pt-4">
+          <ResponsiveDialogFooter className="shrink-0 border-t pt-4">
             <Button type="submit" disabled={loading}>
               <Plus className="h-4 w-4" />
               {loading ? "作成中..." : "作成"}
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

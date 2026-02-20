@@ -14,13 +14,13 @@ import { toast } from "sonner";
 import { ScheduleFormFields } from "@/components/schedule-form-fields";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { api } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
@@ -104,7 +104,7 @@ export function AddCandidateDialog({
   }
 
   return (
-    <Dialog
+    <ResponsiveDialog
       open={open}
       onOpenChange={(isOpen) => {
         onOpenChange(isOpen);
@@ -121,11 +121,13 @@ export function AddCandidateDialog({
         }
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>候補を追加</DialogTitle>
-          <DialogDescription>気になる場所を候補に追加しましょう</DialogDescription>
-        </DialogHeader>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>候補を追加</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            気になる場所を候補に追加しましょう
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <ScheduleFormFields
             category={category}
@@ -151,14 +153,14 @@ export function AddCandidateDialog({
               {error}
             </p>
           )}
-          <DialogFooter>
+          <ResponsiveDialogFooter>
             <Button type="submit" disabled={loading}>
               <Plus className="h-4 w-4" />
               {loading ? "追加中..." : "追加"}
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

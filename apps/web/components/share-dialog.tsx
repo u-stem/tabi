@@ -6,12 +6,12 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { copyToClipboard } from "@/lib/clipboard";
 import { formatDateFromISO } from "@/lib/format";
 import { MSG } from "@/lib/messages";
@@ -38,12 +38,14 @@ export function ShareDialog({ open, onOpenChange, shareUrl, expiresAt }: ShareDi
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-sm">
-        <DialogHeader>
-          <DialogTitle>共有リンク</DialogTitle>
-          <DialogDescription>URLまたはQRコードで旅行プランを共有できます</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-w-sm">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>共有リンク</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            URLまたはQRコードで旅行プランを共有できます
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
 
         <div className="space-y-4">
           <div className="flex items-center gap-2">
@@ -76,7 +78,7 @@ export function ShareDialog({ open, onOpenChange, shareUrl, expiresAt }: ShareDi
             </p>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

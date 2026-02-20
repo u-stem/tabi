@@ -15,13 +15,13 @@ import { toast } from "sonner";
 import { ScheduleFormFields } from "@/components/schedule-form-fields";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { ApiError, api } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
@@ -165,12 +165,12 @@ export function EditScheduleDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>予定を編集</DialogTitle>
-          <DialogDescription>予定の情報を変更します</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>予定を編集</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>予定の情報を変更します</ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <ScheduleFormFields
             category={category}
@@ -203,14 +203,14 @@ export function EditScheduleDialog({
               {error}
             </p>
           )}
-          <DialogFooter>
+          <ResponsiveDialogFooter>
             <Button type="submit" disabled={loading}>
               <Check className="h-4 w-4" />
               {loading ? "更新中..." : "予定を更新"}
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

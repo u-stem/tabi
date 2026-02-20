@@ -14,14 +14,14 @@ import { toast } from "sonner";
 import { ScheduleFormFields } from "@/components/schedule-form-fields";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/responsive-dialog";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
 import { MSG } from "@/lib/messages";
@@ -120,7 +120,7 @@ export function AddScheduleDialog({
   }
 
   return (
-    <Dialog
+    <ResponsiveDialog
       open={open}
       onOpenChange={(isOpen) => {
         setOpen(isOpen);
@@ -137,17 +137,17 @@ export function AddScheduleDialog({
         }
       }}
     >
-      <DialogTrigger asChild>
+      <ResponsiveDialogTrigger asChild>
         <Button variant="outline" size="sm" disabled={disabled}>
           <Plus className="h-4 w-4" />
           予定を追加
         </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>予定を追加</DialogTitle>
-          <DialogDescription>旅行の日程に予定を追加します</DialogDescription>
-        </DialogHeader>
+      </ResponsiveDialogTrigger>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>予定を追加</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>旅行の日程に予定を追加します</ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <ScheduleFormFields
             category={category}
@@ -172,14 +172,14 @@ export function AddScheduleDialog({
               {error}
             </p>
           )}
-          <DialogFooter>
+          <ResponsiveDialogFooter>
             <Button type="submit" disabled={loading}>
               <Plus className="h-4 w-4" />
               {loading ? "追加中..." : "予定を追加"}
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

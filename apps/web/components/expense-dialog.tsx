@@ -8,16 +8,16 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import {
   Select,
   SelectContent,
@@ -174,14 +174,14 @@ export function ExpenseDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{isEdit ? "費用を編集" : "費用を追加"}</DialogTitle>
-          <DialogDescription>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>{isEdit ? "費用を編集" : "費用を追加"}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
             {isEdit ? "費用の内容を変更します。" : "新しい費用を記録します。"}
-          </DialogDescription>
-        </DialogHeader>
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="expense-title">タイトル</Label>
@@ -288,7 +288,7 @@ export function ExpenseDialog({
             )}
           </div>
 
-          <DialogFooter>
+          <ResponsiveDialogFooter>
             <Button
               type="submit"
               disabled={
@@ -315,9 +315,9 @@ export function ExpenseDialog({
                 </>
               )}
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

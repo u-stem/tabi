@@ -13,17 +13,17 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import type { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
 import type { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
 
@@ -32,12 +32,12 @@ type Selection = ReturnType<typeof useScheduleSelection>;
 
 export function AddPatternDialog({ patternOps }: { patternOps: PatternOps }) {
   return (
-    <Dialog open={patternOps.add.open} onOpenChange={patternOps.add.setOpen}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>パターン追加</DialogTitle>
-          <DialogDescription>日程のパターンを追加します。</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog open={patternOps.add.open} onOpenChange={patternOps.add.setOpen}>
+      <ResponsiveDialogContent className="sm:max-w-sm">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>パターン追加</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>日程のパターンを追加します。</ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <form onSubmit={patternOps.add.submit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="pattern-label">ラベル</Label>
@@ -52,31 +52,34 @@ export function AddPatternDialog({ patternOps }: { patternOps: PatternOps }) {
               {patternOps.add.label.length}/{PATTERN_LABEL_MAX_LENGTH}
             </p>
           </div>
-          <DialogFooter>
-            <DialogClose asChild>
+          <ResponsiveDialogFooter>
+            <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 キャンセル
               </Button>
-            </DialogClose>
+            </ResponsiveDialogClose>
             <Button type="submit" disabled={patternOps.add.loading || !patternOps.add.label.trim()}>
               <Plus className="h-4 w-4" />
               {patternOps.add.loading ? "追加中..." : "追加"}
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
 
 export function RenamePatternDialog({ patternOps }: { patternOps: PatternOps }) {
   return (
-    <Dialog open={patternOps.rename.target !== null} onOpenChange={patternOps.rename.setOpen}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>パターン名変更</DialogTitle>
-          <DialogDescription>パターンのラベルを変更します。</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog
+      open={patternOps.rename.target !== null}
+      onOpenChange={patternOps.rename.setOpen}
+    >
+      <ResponsiveDialogContent className="sm:max-w-sm">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>パターン名変更</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>パターンのラベルを変更します。</ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <form onSubmit={patternOps.rename.submit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="rename-label">ラベル</Label>
@@ -90,20 +93,20 @@ export function RenamePatternDialog({ patternOps }: { patternOps: PatternOps }) 
               {patternOps.rename.label.length}/{PATTERN_LABEL_MAX_LENGTH}
             </p>
           </div>
-          <DialogFooter>
-            <DialogClose asChild>
+          <ResponsiveDialogFooter>
+            <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 キャンセル
               </Button>
-            </DialogClose>
+            </ResponsiveDialogClose>
             <Button type="submit" disabled={!patternOps.rename.label.trim()}>
               <Check className="h-4 w-4" />
               変更
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
 

@@ -9,12 +9,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildCandidateRows,
   buildDefaultFileName,
+  buildExpenseRows,
   buildPreviewRows,
   buildScheduleRows,
   DEFAULT_CSV_OPTIONS,
   DEFAULT_SELECTED_FIELDS,
+  EXPENSE_EXPORT_HEADERS,
   EXPORT_FIELD_LABELS,
   EXPORT_FIELDS,
+  type ExpenseExportData,
   type ExportField,
   type ExportOptions,
   escapeCSVValue,
@@ -385,6 +388,7 @@ describe("exportTripToExcel", () => {
       fields: ["name", "startTime", "endTime"],
       patternMode: "separateSheets",
       includeCandidates: false,
+      includeExpenses: false,
       ...overrides,
     };
   }
@@ -665,6 +669,7 @@ describe("exportTripToCSV", () => {
       fields: ["name", "startTime"],
       patternMode: "patternColumn",
       includeCandidates: false,
+      includeExpenses: false,
     });
 
     expect(mockLink.download).toBe("Tokyo Trip_2025-04-15.csv");
@@ -683,6 +688,7 @@ describe("exportTripToCSV", () => {
       fields: ["name"],
       patternMode: "patternColumn",
       includeCandidates: false,
+      includeExpenses: false,
       fileName: "custom",
     });
 
@@ -719,6 +725,7 @@ describe("exportTripToCSV", () => {
       fields: ["name"],
       patternMode: "patternColumn",
       includeCandidates: true,
+      includeExpenses: false,
     });
 
     // BOM prefix
@@ -750,6 +757,7 @@ describe("exportTripToCSV", () => {
       fields: ["name"],
       patternMode: "patternColumn",
       includeCandidates: false,
+      includeExpenses: false,
       csvOptions: { ...DEFAULT_CSV_OPTIONS, bom: false },
     });
 
@@ -778,6 +786,7 @@ describe("exportTripToCSV", () => {
       fields: ["name", "startTime"],
       patternMode: "patternColumn",
       includeCandidates: false,
+      includeExpenses: false,
       csvOptions: { delimiter: "tab", bom: true, lineEnding: "crlf" },
     });
 
@@ -808,6 +817,7 @@ describe("exportTripToCSV", () => {
       fields: ["name"],
       patternMode: "patternColumn",
       includeCandidates: false,
+      includeExpenses: false,
       csvOptions: { delimiter: "comma", bom: true, lineEnding: "lf" },
     });
 
@@ -847,10 +857,259 @@ describe("exportTripToCSV", () => {
       fields: ["name"],
       patternMode: "patternColumn",
       includeCandidates: true,
+      includeExpenses: false,
       csvOptions: { delimiter: "comma", bom: false, lineEnding: "lf" },
     });
 
     expect(capturedContent).toContain("\n\n--- 候補 ---\n");
     expect(capturedContent).not.toContain("\r\n");
+  });
+});
+
+// --- Expense export ---
+
+function makeExpenseData(overrides: Partial<ExpenseExportData> = {}): ExpenseExportData {
+  return {
+    expenses: [
+      { title: "夕食", amount: 5000, paidByName: "Alice", splitType: "equal" },
+      { title: "タクシー", amount: 3000, paidByName: "Bob", splitType: "custom" },
+    ],
+    settlement: {
+      totalAmount: 8000,
+      balances: [
+        { name: "Alice", net: 1000 },
+        { name: "Bob", net: -1000 },
+      ],
+      transfers: [{ fromName: "Bob", toName: "Alice", amount: 1000 }],
+    },
+    ...overrides,
+  };
+}
+
+describe("buildExpenseRows", () => {
+  it("returns expense rows with correct column values", () => {
+    const data = makeExpenseData();
+    const rows = buildExpenseRows(data);
+
+    expect(rows[0][EXPENSE_EXPORT_HEADERS.title]).toBe("夕食");
+    expect(rows[0][EXPENSE_EXPORT_HEADERS.amount]).toBe(5000);
+    expect(rows[0][EXPENSE_EXPORT_HEADERS.paidBy]).toBe("Alice");
+    expect(rows[0][EXPENSE_EXPORT_HEADERS.splitType]).toBe("均等");
+
+    expect(rows[1][EXPENSE_EXPORT_HEADERS.title]).toBe("タクシー");
+    expect(rows[1][EXPENSE_EXPORT_HEADERS.splitType]).toBe("カスタム");
+  });
+
+  it("includes total row after expenses", () => {
+    const data = makeExpenseData();
+    const rows = buildExpenseRows(data);
+
+    const totalRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "合計");
+    expect(totalRow).toBeDefined();
+    expect(totalRow![EXPENSE_EXPORT_HEADERS.amount]).toBe(8000);
+  });
+
+  it("includes balance section with non-zero balances", () => {
+    const data = makeExpenseData();
+    const rows = buildExpenseRows(data);
+
+    const sectionRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[過不足]");
+    expect(sectionRow).toBeDefined();
+
+    const aliceRow = rows.find(
+      (r) =>
+        r[EXPENSE_EXPORT_HEADERS.title] === "Alice" && rows.indexOf(r) > rows.indexOf(sectionRow!),
+    );
+    expect(aliceRow).toBeDefined();
+    expect(aliceRow![EXPENSE_EXPORT_HEADERS.amount]).toBe(1000);
+  });
+
+  it("includes transfer section", () => {
+    const data = makeExpenseData();
+    const rows = buildExpenseRows(data);
+
+    const sectionRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[精算]");
+    expect(sectionRow).toBeDefined();
+
+    const transferRow = rows.find((r) => String(r[EXPENSE_EXPORT_HEADERS.title]).includes("→"));
+    expect(transferRow).toBeDefined();
+    expect(transferRow![EXPENSE_EXPORT_HEADERS.title]).toBe("Bob → Alice");
+    expect(transferRow![EXPENSE_EXPORT_HEADERS.amount]).toBe(1000);
+  });
+
+  it("sorts balances by net descending", () => {
+    const data = makeExpenseData({
+      settlement: {
+        totalAmount: 9000,
+        balances: [
+          { name: "Charlie", net: -500 },
+          { name: "Alice", net: 2000 },
+          { name: "Bob", net: -1500 },
+        ],
+        transfers: [],
+      },
+    });
+    const rows = buildExpenseRows(data);
+
+    const sectionIdx = rows.findIndex((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[過不足]");
+    const balanceRows = rows
+      .slice(sectionIdx + 1)
+      .filter(
+        (r) =>
+          r[EXPENSE_EXPORT_HEADERS.title] !== "" &&
+          !String(r[EXPENSE_EXPORT_HEADERS.title]).startsWith("["),
+      );
+    expect(balanceRows[0][EXPENSE_EXPORT_HEADERS.title]).toBe("Alice");
+    expect(balanceRows[1][EXPENSE_EXPORT_HEADERS.title]).toBe("Charlie");
+    expect(balanceRows[2][EXPENSE_EXPORT_HEADERS.title]).toBe("Bob");
+  });
+
+  it("skips balance section when all balances are zero", () => {
+    const data = makeExpenseData({
+      settlement: {
+        totalAmount: 4000,
+        balances: [
+          { name: "Alice", net: 0 },
+          { name: "Bob", net: 0 },
+        ],
+        transfers: [],
+      },
+    });
+    const rows = buildExpenseRows(data);
+
+    expect(rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[過不足]")).toBeUndefined();
+  });
+
+  it("skips transfer section when no transfers", () => {
+    const data = makeExpenseData({
+      settlement: {
+        totalAmount: 4000,
+        balances: [{ name: "Alice", net: 0 }],
+        transfers: [],
+      },
+    });
+    const rows = buildExpenseRows(data);
+
+    expect(rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[精算]")).toBeUndefined();
+  });
+});
+
+describe("exportTripToExcel - expenses", () => {
+  beforeEach(() => {
+    mockWriteFile.mockClear();
+    mockBookNew.mockClear();
+    mockJsonToSheet.mockClear();
+    mockBookAppendSheet.mockClear();
+    mockBookNew.mockReturnValue({ SheetNames: [], Sheets: {} });
+    mockJsonToSheet.mockReturnValue({});
+  });
+
+  it("adds expense sheet when includeExpenses is true", async () => {
+    const trip = makeTrip();
+    await exportTripToExcel(trip, {
+      fields: ["name"],
+      patternMode: "separateSheets",
+      includeCandidates: false,
+      includeExpenses: true,
+      expenseData: makeExpenseData(),
+    });
+
+    const sheetNames = mockBookAppendSheet.mock.calls.map((call: unknown[]) => call[2]);
+    expect(sheetNames).toContain("費用");
+  });
+
+  it("does not add expense sheet when includeExpenses is false", async () => {
+    const trip = makeTrip();
+    await exportTripToExcel(trip, {
+      fields: ["name"],
+      patternMode: "separateSheets",
+      includeCandidates: false,
+      includeExpenses: false,
+    });
+
+    const sheetNames = mockBookAppendSheet.mock.calls.map((call: unknown[]) => call[2]);
+    expect(sheetNames).not.toContain("費用");
+  });
+
+  it("does not add expense sheet when expenseData has no expenses", async () => {
+    const trip = makeTrip();
+    await exportTripToExcel(trip, {
+      fields: ["name"],
+      patternMode: "separateSheets",
+      includeCandidates: false,
+      includeExpenses: true,
+      expenseData: makeExpenseData({ expenses: [] }),
+    });
+
+    const sheetNames = mockBookAppendSheet.mock.calls.map((call: unknown[]) => call[2]);
+    expect(sheetNames).not.toContain("費用");
+  });
+});
+
+describe("exportTripToCSV - expenses", () => {
+  beforeEach(() => {
+    vi.stubGlobal("URL", { createObjectURL: vi.fn().mockReturnValue("blob:test") });
+  });
+
+  it("appends expense section when includeExpenses is true", async () => {
+    let capturedContent = "";
+    vi.stubGlobal(
+      "Blob",
+      class {
+        content: string;
+        constructor(parts: string[]) {
+          this.content = parts.join("");
+          capturedContent = this.content;
+        }
+      },
+    );
+
+    const mockClick = vi.fn();
+    const mockLink = { href: "", download: "", click: mockClick };
+    vi.spyOn(document, "createElement").mockReturnValue(mockLink as unknown as HTMLElement);
+
+    const trip = makeTrip();
+    await exportTripToCSV(trip, {
+      fields: ["name"],
+      patternMode: "patternColumn",
+      includeCandidates: false,
+      includeExpenses: true,
+      expenseData: makeExpenseData(),
+      csvOptions: { delimiter: "comma", bom: false, lineEnding: "lf" },
+    });
+
+    expect(capturedContent).toContain("--- 費用 ---");
+    expect(capturedContent).toContain("夕食");
+    expect(capturedContent).toContain("タクシー");
+    expect(capturedContent).toContain("合計");
+  });
+
+  it("does not append expense section when includeExpenses is false", async () => {
+    let capturedContent = "";
+    vi.stubGlobal(
+      "Blob",
+      class {
+        content: string;
+        constructor(parts: string[]) {
+          this.content = parts.join("");
+          capturedContent = this.content;
+        }
+      },
+    );
+
+    const mockClick = vi.fn();
+    const mockLink = { href: "", download: "", click: mockClick };
+    vi.spyOn(document, "createElement").mockReturnValue(mockLink as unknown as HTMLElement);
+
+    const trip = makeTrip();
+    await exportTripToCSV(trip, {
+      fields: ["name"],
+      patternMode: "patternColumn",
+      includeCandidates: false,
+      includeExpenses: false,
+      csvOptions: { delimiter: "comma", bom: false, lineEnding: "lf" },
+    });
+
+    expect(capturedContent).not.toContain("費用");
   });
 });

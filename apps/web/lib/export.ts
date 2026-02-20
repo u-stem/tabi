@@ -71,11 +71,43 @@ export const DEFAULT_CSV_OPTIONS: CSVOptions = {
   lineEnding: "crlf",
 };
 
+export type ExpenseExportItem = {
+  title: string;
+  amount: number;
+  paidByName: string;
+  splitType: string;
+};
+
+export type ExpenseSettlement = {
+  totalAmount: number;
+  balances: { name: string; net: number }[];
+  transfers: { fromName: string; toName: string; amount: number }[];
+};
+
+export type ExpenseExportData = {
+  expenses: ExpenseExportItem[];
+  settlement: ExpenseSettlement;
+};
+
+export const EXPENSE_EXPORT_HEADERS = {
+  title: "タイトル",
+  amount: "金額",
+  paidBy: "支払者",
+  splitType: "分担方法",
+} as const;
+
+const SPLIT_TYPE_LABELS: Record<string, string> = {
+  equal: "均等",
+  custom: "カスタム",
+};
+
 export type ExportOptions = {
   format?: ExportFormat;
   fields: ExportField[];
   patternMode: PatternMode;
   includeCandidates: boolean;
+  includeExpenses: boolean;
+  expenseData?: ExpenseExportData;
   fileName?: string;
   csvOptions?: CSVOptions;
 };
@@ -191,6 +223,67 @@ export function buildPreviewRows(
   return rows;
 }
 
+export function buildExpenseRows(data: ExpenseExportData): Record<string, string | number>[] {
+  const H = EXPENSE_EXPORT_HEADERS;
+  const blank = (): Record<string, string | number> => ({
+    [H.title]: "",
+    [H.amount]: "",
+    [H.paidBy]: "",
+    [H.splitType]: "",
+  });
+
+  const rows: Record<string, string | number>[] = [];
+
+  // Expense list
+  for (const e of data.expenses) {
+    rows.push({
+      [H.title]: e.title,
+      [H.amount]: e.amount,
+      [H.paidBy]: e.paidByName,
+      [H.splitType]: SPLIT_TYPE_LABELS[e.splitType] ?? e.splitType,
+    });
+  }
+
+  // Total
+  rows.push(blank());
+  rows.push({
+    [H.title]: "合計",
+    [H.amount]: data.settlement.totalAmount,
+    [H.paidBy]: "",
+    [H.splitType]: "",
+  });
+
+  // Balances (skip if all zero)
+  const nonZeroBalances = data.settlement.balances
+    .filter((b) => b.net !== 0)
+    .sort((a, b) => b.net - a.net);
+
+  if (nonZeroBalances.length > 0) {
+    rows.push(blank());
+    rows.push({ [H.title]: "[過不足]", [H.amount]: "", [H.paidBy]: "", [H.splitType]: "" });
+    for (const b of nonZeroBalances) {
+      rows.push({ [H.title]: b.name, [H.amount]: b.net, [H.paidBy]: "", [H.splitType]: "" });
+    }
+  }
+
+  // Transfers
+  if (data.settlement.transfers.length > 0) {
+    const sorted = [...data.settlement.transfers].sort((a, b) => b.amount - a.amount);
+    rows.push(blank());
+    rows.push({ [H.title]: "[精算]", [H.amount]: "", [H.paidBy]: "", [H.splitType]: "" });
+    for (const t of sorted) {
+      rows.push({
+        [H.title]: `${t.fromName} → ${t.toName}`,
+        [H.amount]: t.amount,
+        [H.paidBy]: "",
+        [H.splitType]: "",
+      });
+    }
+  }
+
+  return rows;
+}
+
 export async function exportTripToExcel(trip: TripResponse, options: ExportOptions): Promise<void> {
   const XLSX = await import("xlsx");
   const wb = XLSX.utils.book_new();
@@ -231,6 +324,12 @@ export async function exportTripToExcel(trip: TripResponse, options: ExportOptio
     const candidateRows = buildCandidateRows(trip.candidates, fields);
     const ws = XLSX.utils.json_to_sheet(candidateRows);
     XLSX.utils.book_append_sheet(wb, ws, "候補");
+  }
+
+  if (options.includeExpenses && options.expenseData && options.expenseData.expenses.length > 0) {
+    const expenseRows = buildExpenseRows(options.expenseData);
+    const ws = XLSX.utils.json_to_sheet(expenseRows);
+    XLSX.utils.book_append_sheet(wb, ws, "費用");
   }
 
   const name = options.fileName || `${trip.title}_${toDateString(new Date())}`;
@@ -292,12 +391,19 @@ export async function exportTripToCSV(trip: TripResponse, options: ExportOptions
   const rows = trip.days.flatMap((day) => buildScheduleRows(day, day.patterns, fields));
   let csv = rowsToCSV(headers, rows, delimiter, lineEnding);
 
+  const eol = lineEnding === "lf" ? "\n" : "\r\n";
+
   if (options.includeCandidates && trip.candidates.length > 0) {
-    const eol = lineEnding === "lf" ? "\n" : "\r\n";
     const candidateFields = filterCandidateFields(fields);
     const candidateHeaders = candidateFields.map((f) => EXPORT_FIELD_LABELS[f]);
     const candidateRows = buildCandidateRows(trip.candidates, fields);
     csv += `${eol}${eol}--- 候補 ---${eol}${rowsToCSV(candidateHeaders, candidateRows, delimiter, lineEnding)}`;
+  }
+
+  if (options.includeExpenses && options.expenseData && options.expenseData.expenses.length > 0) {
+    const expenseHeaders = Object.values(EXPENSE_EXPORT_HEADERS);
+    const expenseRows = buildExpenseRows(options.expenseData);
+    csv += `${eol}${eol}--- 費用 ---${eol}${rowsToCSV(expenseHeaders, expenseRows, delimiter, lineEnding)}`;
   }
 
   const name = options.fileName || `${trip.title}_${toDateString(new Date())}`;

@@ -1,6 +1,6 @@
 "use client";
 
-import type { TripResponse } from "@sugara/shared";
+import type { ExpenseSplitType, TripResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCheck, Download, X } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -23,12 +23,15 @@ import { pageTitle } from "@/lib/constants";
 import {
   buildCandidateRows,
   buildDefaultFileName,
+  buildExpenseRows,
   buildScheduleRows,
   type CSVDelimiter,
   type CSVLineEnding,
   DEFAULT_CSV_OPTIONS,
+  EXPENSE_EXPORT_HEADERS,
   EXPORT_FIELD_LABELS,
   EXPORT_FIELDS,
+  type ExpenseExportData,
   type ExportField,
   type ExportFormat,
   exportTrip,
@@ -50,6 +53,101 @@ const FORMAT_LABELS: Record<ExportFormat, string> = {
   csv: "CSV (.csv)",
 };
 
+type ExpenseSplit = {
+  userId: string;
+  amount: number;
+  user: { id: string; name: string };
+};
+
+type Expense = {
+  id: string;
+  title: string;
+  amount: number;
+  splitType: ExpenseSplitType;
+  paidByUserId: string;
+  paidByUser: { id: string; name: string };
+  splits: ExpenseSplit[];
+  createdAt: string;
+};
+
+type Transfer = {
+  from: { id: string; name: string };
+  to: { id: string; name: string };
+  amount: number;
+};
+
+type Settlement = {
+  totalAmount: number;
+  balances: { userId: string; name: string; net: number }[];
+  transfers: Transfer[];
+};
+
+type ExpensesResponse = {
+  expenses: Expense[];
+  settlement: Settlement;
+};
+
+function toExpenseExportData(data: ExpensesResponse): ExpenseExportData {
+  return {
+    expenses: data.expenses.map((e) => ({
+      title: e.title,
+      amount: e.amount,
+      paidByName: e.paidByUser.name,
+      splitType: e.splitType,
+    })),
+    settlement: {
+      totalAmount: data.settlement.totalAmount,
+      balances: data.settlement.balances.map((b) => ({
+        name: b.name,
+        net: b.net,
+      })),
+      transfers: data.settlement.transfers.map((t) => ({
+        fromName: t.from.name,
+        toName: t.to.name,
+        amount: t.amount,
+      })),
+    },
+  };
+}
+
+function ExpensePreviewTable({
+  data,
+}: {
+  data: { headers: string[]; rows: Record<string, string | number>[] };
+}) {
+  return (
+    <table className="text-xs">
+      <thead>
+        <tr className="border-b bg-muted/50">
+          {data.headers.map((header) => (
+            <th key={header} className="whitespace-nowrap px-3 py-2 text-left font-medium">
+              {header}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {data.rows.map((row, index) => {
+          const titleHeader = EXPENSE_EXPORT_HEADERS.title;
+          const rowKey = `expense-${row[titleHeader]}-${index}`;
+          return (
+            <tr key={rowKey} className="border-b last:border-b-0">
+              {data.headers.map((header) => (
+                <td
+                  key={header}
+                  className="h-8 max-w-[200px] whitespace-nowrap truncate px-3 py-1.5"
+                >
+                  {row[header] ?? ""}
+                </td>
+              ))}
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
 export default function TripExportPage() {
   const params = useParams();
   const tripId = params.id as string;
@@ -62,6 +160,11 @@ export default function TripExportPage() {
     queryKey: queryKeys.trips.detail(tripId),
     queryFn: () => api<TripResponse>(`/api/trips/${tripId}`),
   });
+  const { data: expensesData } = useQuery({
+    queryKey: queryKeys.expenses.list(tripId),
+    queryFn: () => api<ExpensesResponse>(`/api/trips/${tripId}/expenses`),
+  });
+
   useAuthRedirect(error);
 
   useEffect(() => {
@@ -74,6 +177,7 @@ export default function TripExportPage() {
   const [selectedFields, setSelectedFields] = useState<ExportField[]>([]);
   const [patternMode, setPatternMode] = useState<PatternMode>("separateSheets");
   const [includeCandidates, setIncludeCandidates] = useState(false);
+  const [includeExpenses, setIncludeExpenses] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [fileName, setFileName] = useState("");
   const [delimiter, setDelimiter] = useState<CSVDelimiter>(DEFAULT_CSV_OPTIONS.delimiter);
@@ -174,9 +278,28 @@ export default function TripExportPage() {
     return sheets;
   }, [trip, effectiveFields, effectivePatternMode, includeCandidates]);
 
-  const sheetNames = useMemo(() => [...previewSheets.keys()], [previewSheets]);
+  const expenseExportData = useMemo(
+    () => (expensesData ? toExpenseExportData(expensesData) : null),
+    [expensesData],
+  );
 
-  // CSV: no sheet tabs, show candidates inline
+  const expensePreviewData = useMemo(() => {
+    if (!includeExpenses || !expenseExportData || expenseExportData.expenses.length === 0) {
+      return null;
+    }
+    return {
+      headers: Object.values(EXPENSE_EXPORT_HEADERS),
+      rows: buildExpenseRows(expenseExportData),
+    };
+  }, [includeExpenses, expenseExportData]);
+
+  const sheetNames = useMemo(() => {
+    const names = [...previewSheets.keys()];
+    if (expensePreviewData) names.push("費用");
+    return names;
+  }, [previewSheets, expensePreviewData]);
+
+  // CSV: no sheet tabs, show candidates/expenses inline
   const showSheetTabs = format !== "csv" && sheetNames.length > 1;
 
   useEffect(() => {
@@ -189,8 +312,9 @@ export default function TripExportPage() {
   const activeFields = activeSheetData?.fields ?? [];
   const activeRows = activeSheetData?.rows ?? [];
 
-  // For CSV preview: show candidates inline below the schedule table
+  // For CSV preview: show candidates/expenses inline below the schedule table
   const candidateSheetData = format === "csv" ? previewSheets.get("候補") : undefined;
+  const expenseInlineData = format === "csv" ? expensePreviewData : undefined;
 
   const fileExtension =
     format === "csv" && delimiter === "tab" ? ".tsv" : format === "csv" ? ".csv" : ".xlsx";
@@ -204,6 +328,8 @@ export default function TripExportPage() {
         fields: effectiveFields,
         patternMode: effectivePatternMode,
         includeCandidates,
+        includeExpenses,
+        expenseData: includeExpenses && expenseExportData ? expenseExportData : undefined,
         fileName: fileName.trim() || undefined,
         csvOptions: format === "csv" ? { delimiter, bom, lineEnding } : undefined,
       });
@@ -400,6 +526,20 @@ export default function TripExportPage() {
             </Label>
           </div>
         )}
+
+        {/* Expenses */}
+        {expensesData && expensesData.expenses.length > 0 && (
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="export-include-expenses"
+              checked={includeExpenses}
+              onCheckedChange={(checked) => setIncludeExpenses(checked === true)}
+            />
+            <Label htmlFor="export-include-expenses" className="select-none">
+              費用を含める ({expensesData.expenses.length}件)
+            </Label>
+          </div>
+        )}
       </div>
 
       {/* Preview + Export */}
@@ -445,7 +585,9 @@ export default function TripExportPage() {
             </div>
           )}
           <div className="overflow-x-auto overscroll-x-contain">
-            {activeFields.length > 0 && activeRows.length > 0 ? (
+            {activeSheet === "費用" && expensePreviewData ? (
+              <ExpensePreviewTable data={expensePreviewData} />
+            ) : activeFields.length > 0 && activeRows.length > 0 ? (
               <>
                 <table className="text-xs">
                   <thead>
@@ -527,6 +669,15 @@ export default function TripExportPage() {
                         })}
                       </tbody>
                     </table>
+                  </>
+                )}
+                {/* CSV: show expenses inline */}
+                {expenseInlineData && (
+                  <>
+                    <div className="border-t px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/30">
+                      --- 費用 ---
+                    </div>
+                    <ExpensePreviewTable data={expenseInlineData} />
                   </>
                 )}
               </>

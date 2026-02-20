@@ -7,10 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
   Bookmark,
-  CheckCheck,
   CheckSquare,
-  ChevronDown,
-  ChevronUp,
   Copy,
   MoreHorizontal,
   Plus,
@@ -19,7 +16,7 @@ import {
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -39,10 +36,10 @@ import {
   type TimeStatus,
   toDateString,
 } from "@/lib/format";
-import { haptics } from "@/lib/haptics";
+
 import { useSelection } from "@/lib/hooks/selection-context";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+
 import type { TimelineItem } from "@/lib/merge-timeline";
 import { buildMergedTimeline, timelineSortableIds } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
@@ -110,8 +107,6 @@ export function DayTimeline({
 
   const now = useCurrentTime();
   const isToday = date === toDateString(new Date());
-  const isMobile = useIsMobile();
-  const [reorderMode, setReorderMode] = useState(false);
 
   function getScheduleTimeStatus(schedule: ScheduleResponse): TimeStatus | null {
     if (!isToday) return null;
@@ -188,68 +183,42 @@ export function DayTimeline({
     }
   }
 
-  async function handleMove(scheduleId: string, direction: "up" | "down") {
-    const idx = schedules.findIndex((s) => s.id === scheduleId);
-    if (idx === -1) return;
-    if (direction === "up" && idx === 0) return;
-    if (direction === "down" && idx >= schedules.length - 1) return;
-
-    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
-    const reordered = [...schedules];
-    [reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]];
-    haptics.light();
-    try {
-      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`, {
-        method: "PATCH",
-        body: JSON.stringify({ scheduleIds: reordered.map((s) => s.id) }),
-      });
-      onRefresh();
-    } catch {
-      toast.error(MSG.SCHEDULE_REORDER_FAILED);
-    }
-  }
-
   return (
     <div>
       {selectionMode ? (
-        <div className="mb-3 flex flex-wrap select-none items-center gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <Button variant="outline" size="sm" onClick={sel.selectAll}>
-              <CheckCheck className="h-4 w-4" />
-              <span className="hidden sm:inline">全選択</span>
-            </Button>
+        <div className="mb-2 flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={sel.exit}>
+            <X className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-xs font-medium">{selectedCount}件選択中</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={selectedCount === schedules.length ? sel.deselectAll : sel.selectAll}
+          >
+            {selectedCount === schedules.length ? "全解除" : "全選択"}
+          </Button>
+          <div className="ml-auto flex items-center gap-1">
             <Button
               variant="outline"
               size="sm"
-              onClick={sel.deselectAll}
-              disabled={selectedCount === 0}
+              className="h-7 px-2 text-xs"
+              onClick={sel.batchUnassign}
+              disabled={selectedCount === 0 || sel.batchLoading}
             >
-              <X className="h-4 w-4" />
-              <span className="hidden sm:inline">選択解除</span>
+              <Undo2 className="h-3.5 w-3.5" />
+              候補に戻す
             </Button>
-          </div>
-          <div className="flex items-center gap-1.5 ml-auto">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  size="sm"
-                  onClick={sel.batchUnassign}
-                  disabled={selectedCount === 0 || sel.batchLoading}
-                >
-                  <Undo2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">候補に戻す</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="sm:hidden">候補に戻す</TooltipContent>
-            </Tooltip>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
-                  variant="outline"
-                  size="sm"
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
                   disabled={selectedCount === 0 || sel.batchLoading}
                 >
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -272,34 +241,18 @@ export function DayTimeline({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button variant="outline" size="sm" onClick={sel.exit}>
-              キャンセル
-            </Button>
-          </div>
-        </div>
-      ) : reorderMode ? (
-        <div className="mb-3 flex select-none items-center gap-1.5">
-          <span className="text-sm font-medium">並び替え</span>
-          <div className="flex items-center gap-1.5 ml-auto">
-            <Button variant="outline" size="sm" onClick={handleSortByTime} disabled={isSorted}>
-              <ArrowUpDown className="h-4 w-4" />
-              時刻順
-            </Button>
-            <Button size="sm" onClick={() => setReorderMode(false)}>
-              完了
-            </Button>
           </div>
         </div>
       ) : (
-        <div className="mb-3 flex flex-wrap select-none items-center gap-1.5">
-          <span className="text-sm text-muted-foreground">{formatDate(date)}</span>
-          <div className="flex items-center gap-1.5 ml-auto">
+        <div className="mb-2 flex select-none items-center gap-1.5">
+          <span className="hidden text-sm text-muted-foreground lg:inline">{formatDate(date)}</span>
+          <div className="flex flex-1 items-center gap-1.5 [&>*]:flex-1 lg:ml-auto lg:flex-initial lg:[&>*]:flex-initial">
             {!disabled &&
               (scheduleLimitReached ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span>
-                      <Button variant="outline" size="sm" disabled>
+                      <Button variant="outline" size="sm" className="w-full" disabled>
                         <Plus className="h-4 w-4" />
                         予定を追加
                       </Button>
@@ -322,26 +275,18 @@ export function DayTimeline({
             {!disabled && schedules.length > 0 && sel.canEnter && (
               <Button variant="outline" size="sm" onClick={() => sel.enter("timeline")}>
                 <CheckSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">選択</span>
+                選択
               </Button>
             )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSortByTime}
-                  disabled={disabled || isSorted}
-                >
-                  <ArrowUpDown className="h-4 w-4" />
-                  <span className="hidden sm:inline">時刻順</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="sm:hidden">時刻順に並べ替え</TooltipContent>
-            </Tooltip>
-            {isMobile && !disabled && schedules.length > 1 && (
-              <Button variant="outline" size="sm" onClick={() => setReorderMode(true)}>
-                並び替え
+            {schedules.length > 1 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSortByTime}
+                disabled={disabled || isSorted}
+              >
+                <ArrowUpDown className="h-4 w-4" />
+                時刻順
               </Button>
             )}
           </div>
@@ -369,11 +314,7 @@ export function DayTimeline({
 
         const insertIndicator = <DndInsertIndicator />;
 
-        function renderItem(
-          item: TimelineItem,
-          i: number,
-          opts?: { selectable?: boolean; reorder?: boolean },
-        ) {
+        function renderItem(item: TimelineItem, i: number, opts?: { selectable?: boolean }) {
           const isFirst = i === 0;
           const isLast = i === total - 1;
 
@@ -425,7 +366,6 @@ export function DayTimeline({
 
           const { schedule } = item;
           const schedulesAfter = schedules.filter((s) => s.sortOrder > schedule.sortOrder);
-          const scheduleIdx = opts?.reorder ? schedules.findIndex((s) => s.id === schedule.id) : -1;
           const scheduleEl = (
             <ScheduleItem
               {...schedule}
@@ -456,48 +396,22 @@ export function DayTimeline({
           return (
             <div key={schedule.id}>
               {showInsertIndicator && insertIndicator}
-              {opts?.reorder ? (
-                <div className="flex items-stretch">
-                  <div className="flex flex-col justify-center gap-0.5 pr-1">
-                    <button
-                      type="button"
-                      className="rounded p-1.5 text-muted-foreground hover:bg-accent disabled:opacity-30"
-                      disabled={scheduleIdx === 0}
-                      onClick={() => handleMove(schedule.id, "up")}
-                      aria-label="上に移動"
-                    >
-                      <ChevronUp className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded p-1.5 text-muted-foreground hover:bg-accent disabled:opacity-30"
-                      disabled={scheduleIdx === schedules.length - 1}
-                      onClick={() => handleMove(schedule.id, "down")}
-                      aria-label="下に移動"
-                    >
-                      <ChevronDown className="h-4 w-4" />
-                    </button>
-                  </div>
-                  <div className="min-w-0 flex-1">{scheduleEl}</div>
-                </div>
-              ) : (
-                scheduleEl
-              )}
+              {scheduleEl}
             </div>
           );
         }
 
         return selectionMode ? (
-          <div>{merged.map((item, i) => renderItem(item, i, { selectable: true }))}</div>
-        ) : reorderMode ? (
-          <div>{merged.map((item, i) => renderItem(item, i, { reorder: true }))}</div>
+          <div className="space-y-1.5">
+            {merged.map((item, i) => renderItem(item, i, { selectable: true }))}
+          </div>
         ) : (
           <div ref={setDroppableRef}>
             <SortableContext
               items={timelineSortableIds(merged)}
               strategy={verticalListSortingStrategy}
             >
-              <div>
+              <div className="space-y-1.5">
                 {merged.map((item, i) => renderItem(item, i))}
                 {isOverTimeline && overScheduleId === null && insertIndicator}
               </div>

@@ -328,6 +328,11 @@ export default function TripDetailPage() {
     onDone: onMutate,
   });
 
+  // Only re-run on navigation changes, not when selection ref changes
+  useEffect(() => {
+    selection.exit();
+  }, [selectedDay, mobileTab]);
+
   if (showSkeleton) {
     return (
       <div className="mt-4">
@@ -442,7 +447,7 @@ export default function TripDetailPage() {
               onTabChange={handleMobileTabChange}
               candidateCount={dnd.localCandidates.length}
             />
-            <div ref={mobileContentRef} className="min-h-0 overflow-y-auto">
+            <div ref={mobileContentRef} className="min-h-0 overflow-y-auto pb-20">
               <div key={mobileTab} className="animate-[tab-fade-in_150ms_ease-out]">
                 {mobileTab === "schedule" && (
                   <div className="flex min-w-0 flex-col rounded-lg border bg-card">
@@ -521,19 +526,21 @@ export default function TripDetailPage() {
                 )}
                 {mobileTab === "candidates" &&
                   (currentDay && currentPattern ? (
-                    <CandidatePanel
-                      tripId={tripId}
-                      candidates={dnd.localCandidates}
-                      currentDayId={currentDay.id}
-                      currentPatternId={currentPattern.id}
-                      onRefresh={onMutate}
-                      disabled={!online || !canEdit}
-                      draggable={false}
-                      scheduleLimitReached={scheduleLimitReached}
-                      scheduleLimitMessage={scheduleLimitMessage}
-                      maxEndDayOffset={Math.max(0, trip.days.length - 1)}
-                      onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
-                    />
+                    <div className="p-4">
+                      <CandidatePanel
+                        tripId={tripId}
+                        candidates={dnd.localCandidates}
+                        currentDayId={currentDay.id}
+                        currentPatternId={currentPattern.id}
+                        onRefresh={onMutate}
+                        disabled={!online || !canEdit}
+                        draggable={false}
+                        scheduleLimitReached={scheduleLimitReached}
+                        scheduleLimitMessage={scheduleLimitMessage}
+                        maxEndDayOffset={Math.max(0, trip.days.length - 1)}
+                        onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                      />
+                    </div>
                   ) : (
                     <p className="py-8 text-center text-sm text-muted-foreground">
                       {trip.days.length > 0

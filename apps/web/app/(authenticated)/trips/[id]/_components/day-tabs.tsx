@@ -3,8 +3,12 @@
 import type { TripResponse } from "@sugara/shared";
 import { hashColor } from "@/components/presence-avatars";
 import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
-import { TAB_ACTIVE, TAB_INACTIVE } from "@/lib/styles";
 import { cn } from "@/lib/utils";
+
+const CHIP_BASE =
+  "relative shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors min-h-[44px] lg:min-h-0";
+const CHIP_ACTIVE = "bg-muted text-foreground";
+const CHIP_INACTIVE = "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground";
 
 /** selectedDay: -1 = poll tab, 0+ = day index */
 export function DayTabs({
@@ -21,18 +25,15 @@ export function DayTabs({
   hasPoll?: boolean;
 }) {
   return (
-    <div className="flex shrink-0 select-none border-b" role="tablist" aria-label="日程タブ">
-      <div className="flex min-w-0 flex-1 gap-1 overflow-x-auto px-4">
+    <div className="flex shrink-0 select-none" role="tablist" aria-label="日程タブ">
+      <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-3 py-2">
         {hasPoll && (
           <button
             type="button"
             role="tab"
             aria-selected={selectedDay === -1}
             onClick={() => onSelectDay(-1)}
-            className={cn(
-              "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors min-h-[44px] lg:min-h-0",
-              selectedDay === -1 ? TAB_ACTIVE : TAB_INACTIVE,
-            )}
+            className={cn(CHIP_BASE, selectedDay === -1 ? CHIP_ACTIVE : CHIP_INACTIVE)}
           >
             日程調整
             {otherPresence
@@ -41,7 +42,7 @@ export function DayTabs({
               .map((u, i) => (
                 <span
                   key={u.userId}
-                  className={cn("absolute top-1 h-1.5 w-1.5 rounded-full", hashColor(u.userId))}
+                  className={cn("absolute top-0.5 h-1.5 w-1.5 rounded-full", hashColor(u.userId))}
                   style={{ right: `${4 + i * 6}px` }}
                 />
               ))}
@@ -55,10 +56,7 @@ export function DayTabs({
             aria-selected={selectedDay === index}
             aria-controls={`day-panel-${day.id}`}
             onClick={() => onSelectDay(index)}
-            className={cn(
-              "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors min-h-[44px] lg:min-h-0",
-              selectedDay === index ? TAB_ACTIVE : TAB_INACTIVE,
-            )}
+            className={cn(CHIP_BASE, selectedDay === index ? CHIP_ACTIVE : CHIP_INACTIVE)}
           >
             {day.dayNumber}日目
             {otherPresence
@@ -67,7 +65,7 @@ export function DayTabs({
               .map((u, i) => (
                 <span
                   key={u.userId}
-                  className={cn("absolute top-1 h-1.5 w-1.5 rounded-full", hashColor(u.userId))}
+                  className={cn("absolute top-0.5 h-1.5 w-1.5 rounded-full", hashColor(u.userId))}
                   style={{ right: `${4 + i * 6}px` }}
                 />
               ))}

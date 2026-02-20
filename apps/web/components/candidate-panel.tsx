@@ -17,7 +17,6 @@ import {
   ArrowLeft,
   ArrowUpDown,
   Bookmark,
-  CheckCheck,
   CheckSquare,
   Clock,
   Copy,
@@ -528,101 +527,72 @@ export function CandidatePanel({
   return (
     <div>
       {selectionMode ? (
-        <div className="mb-3 flex items-center gap-1.5">
-          <Button variant="outline" size="sm" onClick={sel.selectAll}>
-            <CheckCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">全選択</span>
+        <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={sel.exit}>
+            <X className="h-3.5 w-3.5" />
           </Button>
+          <span className="text-xs font-medium">{selectedCount}件選択中</span>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            onClick={sel.deselectAll}
-            disabled={selectedCount === 0}
+            className="h-7 px-2 text-xs"
+            onClick={selectedCount === candidates.length ? sel.deselectAll : sel.selectAll}
           >
-            <X className="h-4 w-4" />
-            <span className="hidden sm:inline">選択解除</span>
+            {selectedCount === candidates.length ? "全解除" : "全選択"}
           </Button>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                size="sm"
-                onClick={sel.batchAssign}
-                disabled={selectedCount === 0 || sel.batchLoading}
-              >
-                <ArrowLeft className="h-4 w-4" />
-                <span className="hidden sm:inline">予定に追加</span>
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent className="sm:hidden">予定に追加</TooltipContent>
-          </Tooltip>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={selectedCount === 0 || sel.batchLoading}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={sel.batchDuplicateCandidates}>
-                <Copy />
-                複製
-              </DropdownMenuItem>
-              {onSaveToBookmark && (
-                <DropdownMenuItem onClick={() => onSaveToBookmark(Array.from(selectedIds ?? []))}>
-                  <Bookmark />
-                  ブックマークに保存
+          <div className="ml-auto flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={sel.batchAssign}
+              disabled={selectedCount === 0 || sel.batchLoading}
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              予定に追加
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={selectedCount === 0 || sel.batchLoading}
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={sel.batchDuplicateCandidates}>
+                  <Copy />
+                  複製
                 </DropdownMenuItem>
-              )}
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={() => sel.setBatchDeleteOpen(true)}
-              >
-                <Trash2 />
-                削除
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button variant="outline" size="sm" onClick={sel.exit}>
-            キャンセル
-          </Button>
+                {onSaveToBookmark && (
+                  <DropdownMenuItem onClick={() => onSaveToBookmark(Array.from(selectedIds ?? []))}>
+                    <Bookmark />
+                    ブックマークに保存
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => sel.setBatchDeleteOpen(true)}
+                >
+                  <Trash2 />
+                  削除
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       ) : (
-        <div className="mb-3 flex items-center justify-end gap-1.5">
-          <div className="flex items-center gap-1.5">
-            {candidates.length > 0 && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant={sortBy === "popular" ? "secondary" : "outline"}
-                    size="sm"
-                    onClick={() => setSortBy(sortBy === "popular" ? "order" : "popular")}
-                  >
-                    <ArrowUpDown className="h-4 w-4" />
-                    <span className="hidden sm:inline">
-                      {sortBy === "popular" ? "人気順" : "作成順"}
-                    </span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="sm:hidden">
-                  {sortBy === "popular" ? "人気順" : "作成順"}
-                </TooltipContent>
-              </Tooltip>
-            )}
-            {!disabled && candidates.length > 0 && sel.canEnter && (
-              <Button variant="outline" size="sm" onClick={() => sel.enter("candidates")}>
-                <CheckSquare className="h-4 w-4" />
-                <span className="hidden sm:inline">選択</span>
-              </Button>
-            )}
+        <div className="mb-2 flex items-center gap-1.5">
+          <div className="flex flex-1 items-center gap-1.5 [&>*]:flex-1 lg:flex-initial lg:[&>*]:flex-initial lg:ml-auto">
             {!disabled &&
               (scheduleLimitReached ? (
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <span>
-                      <Button variant="outline" size="sm" disabled>
+                      <Button variant="outline" size="sm" className="w-full" disabled>
                         <Plus className="h-4 w-4" />
                         候補を追加
                       </Button>
@@ -636,6 +606,22 @@ export function CandidatePanel({
                   候補を追加
                 </Button>
               ))}
+            {!disabled && candidates.length > 0 && sel.canEnter && (
+              <Button variant="outline" size="sm" onClick={() => sel.enter("candidates")}>
+                <CheckSquare className="h-4 w-4" />
+                選択
+              </Button>
+            )}
+            {candidates.length > 0 && (
+              <Button
+                variant={sortBy === "popular" ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setSortBy(sortBy === "popular" ? "order" : "popular")}
+              >
+                <ArrowUpDown className="h-4 w-4" />
+                {sortBy === "popular" ? "人気順" : "作成順"}
+              </Button>
+            )}
           </div>
         </div>
       )}

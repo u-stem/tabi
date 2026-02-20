@@ -40,7 +40,7 @@ export function TripHeader({
   } as const;
 
   return (
-    <div className="mb-2 lg:mb-6">
+    <div className="mb-3 lg:mb-6">
       {/* Mobile compact header */}
       <div className="flex h-11 items-center gap-2 lg:hidden">
         <NextLink

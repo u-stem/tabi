@@ -40,14 +40,14 @@ export function PatternPickerDrawer({
             表示するパターンを選択してください
           </DrawerDescription>
         </DrawerHeader>
-        <div className="px-4 pb-4" role="radiogroup">
+        <div className="pb-4" role="radiogroup">
           {patterns.map((pattern, index) => {
             const isActive = currentPatternIndex === index;
             return (
               <label
                 key={pattern.id}
                 className={cn(
-                  "flex cursor-pointer items-center gap-3 rounded-md px-3 py-3 hover:bg-accent",
+                  "flex min-h-[44px] cursor-pointer items-center gap-3 rounded-md px-3 py-3 hover:bg-accent",
                   isActive && "bg-accent",
                 )}
               >

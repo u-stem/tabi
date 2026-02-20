@@ -57,13 +57,13 @@ export function DayPickerDrawer({
             候補を追加する日を選択してください
           </DrawerDescription>
         </DrawerHeader>
-        <div className="px-4 pb-2" role="radiogroup">
+        <div className="pb-4" role="radiogroup">
           {days.map((day) => {
             const dateStr = format(parseISO(day.date), "M/d (E)", { locale: ja });
             return (
               <label
                 key={day.id}
-                className="flex cursor-pointer items-center gap-3 rounded-md px-3 py-3 hover:bg-accent"
+                className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-md px-3 py-3 hover:bg-accent"
               >
                 <input
                   type="radio"
@@ -82,7 +82,7 @@ export function DayPickerDrawer({
           })}
         </div>
         {patterns && patterns.length > 1 && (
-          <div className="border-t px-4 py-3">
+          <div className="border-t py-3">
             <label className="text-xs text-muted-foreground">
               パターン
               <select

@@ -23,7 +23,7 @@ export function MobileContentTabs({
   candidateCount,
 }: MobileContentTabsProps) {
   return (
-    <div className="flex shrink-0 border-b" role="tablist">
+    <div className="flex shrink-0" role="tablist">
       {TABS.map((tab) => (
         <button
           key={tab.id}
@@ -31,7 +31,7 @@ export function MobileContentTabs({
           role="tab"
           aria-selected={activeTab === tab.id}
           className={cn(
-            "relative flex-1 px-2 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
+            "relative flex-1 px-3 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
             activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE,
           )}
           onClick={() => onTabChange(tab.id)}

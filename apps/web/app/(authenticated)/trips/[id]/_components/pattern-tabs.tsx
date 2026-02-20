@@ -4,6 +4,7 @@ import type { TripResponse } from "@sugara/shared";
 import { MAX_PATTERNS_PER_DAY } from "@sugara/shared";
 import { ChevronDown, Copy, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
+import { ActionSheet } from "@/components/action-sheet";
 import { PatternPickerDrawer } from "@/components/pattern-picker-drawer";
 import {
   DropdownMenu,
@@ -38,30 +39,81 @@ export function PatternTabs({
 }) {
   const isMobile = useIsMobile();
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   const currentPattern = patterns[currentPatternIndex];
 
   if (isMobile) {
+    const showPicker = patterns.length > 1;
+
+    const menuActions: {
+      label: string;
+      icon: React.ReactNode;
+      onClick: () => void;
+      variant?: "destructive";
+    }[] = [];
+    if (currentPattern) {
+      menuActions.push({
+        label: "名前変更",
+        icon: <Pencil className="h-4 w-4" />,
+        onClick: () => patternOps.rename.start(currentPattern),
+      });
+      if (patterns.length < MAX_PATTERNS_PER_DAY) {
+        menuActions.push({
+          label: "複製",
+          icon: <Copy className="h-4 w-4" />,
+          onClick: () => patternOps.handleDuplicate(currentPattern.id),
+        });
+      }
+      if (!currentPattern.isDefault) {
+        menuActions.push({
+          label: "削除",
+          icon: <Trash2 className="h-4 w-4" />,
+          onClick: () => patternOps.setDeleteTarget(currentPattern),
+          variant: "destructive",
+        });
+      }
+    }
+
     return (
-      <div className="mb-3 flex select-none items-center gap-1.5">
-        <button
-          type="button"
-          onClick={() => setPickerOpen(true)}
-          className="flex items-center gap-1 rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 transition-colors hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
-        >
-          <span className="max-w-32 truncate">{currentPattern?.label}</span>
-          {patterns.length > 1 && <ChevronDown className="h-3 w-3" />}
-        </button>
+      <div className="mb-2 flex select-none items-center gap-1">
+        {showPicker ? (
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="flex items-center gap-1 rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            <span className="max-w-32 truncate">{currentPattern?.label}</span>
+            <ChevronDown className="h-3 w-3" />
+          </button>
+        ) : (
+          <span className="rounded-full border border-border px-3 py-1.5 text-xs font-medium text-foreground">
+            {currentPattern?.label}
+          </span>
+        )}
+        {canEdit && online && menuActions.length > 0 && (
+          <>
+            <button
+              type="button"
+              onClick={() => setMenuOpen(true)}
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              aria-label={`${currentPattern?.label ?? "パターン"}のメニュー`}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </button>
+            <ActionSheet open={menuOpen} onOpenChange={setMenuOpen} actions={menuActions} />
+          </>
+        )}
         {canEdit && online && patterns.length < MAX_PATTERNS_PER_DAY && (
           <button
             type="button"
             onClick={() => patternOps.add.setOpen(true)}
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
+            className="flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
             aria-label="パターン追加"
           >
-            <Plus className="h-3 w-3" />
+            <Plus className="h-3.5 w-3.5" />
           </button>
         )}
-        {patterns.length > 1 && (
+        {showPicker && (
           <PatternPickerDrawer
             open={pickerOpen}
             onOpenChange={setPickerOpen}
@@ -75,7 +127,7 @@ export function PatternTabs({
   }
 
   return (
-    <div className="mb-3 flex flex-wrap select-none items-center gap-1.5">
+    <div className="mb-2 flex flex-wrap select-none items-center gap-1.5">
       {patterns.map((pattern, index) => {
         const isActive = currentPatternIndex === index;
         return (
@@ -84,7 +136,7 @@ export function PatternTabs({
             className={cn(
               "flex max-w-48 items-center rounded-full border transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-1",
               isActive
-                ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
+                ? "border-border text-foreground hover:bg-muted"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
             )}
           >

@@ -4,6 +4,9 @@ import { Plus } from "lucide-react";
 import { haptics } from "@/lib/haptics";
 import { cn } from "@/lib/utils";
 
+// BottomNav h-12 (48px) + 32px spacing
+const BOTTOM_NAV_CLEARANCE_PX = 80;
+
 interface FabProps {
   onClick: () => void;
   label: string;
@@ -22,7 +25,7 @@ export function Fab({ onClick, label, hidden, className }: FabProps) {
         "fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden",
         className,
       )}
-      style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 64px)" }}
+      style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + ${BOTTOM_NAV_CLEARANCE_PX}px)` }}
       onClick={() => {
         haptics.light();
         onClick();

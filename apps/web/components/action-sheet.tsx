@@ -23,7 +23,7 @@ export function ActionSheet({ open, onOpenChange, actions }: ActionSheetProps) {
       <DrawerContent>
         <DrawerTitle className="sr-only">アクション</DrawerTitle>
         <DrawerDescription className="sr-only">操作を選択してください</DrawerDescription>
-        <div className="flex flex-col gap-2 px-4 pb-4 pt-2">
+        <div className="flex flex-col gap-2 pb-4 pt-2">
           {actions.map((action) => (
             <Button
               key={action.label}
@@ -40,7 +40,7 @@ export function ActionSheet({ open, onOpenChange, actions }: ActionSheetProps) {
           ))}
           <Button
             variant="outline"
-            className="mt-2 h-12 w-full text-base"
+            className="mt-1 h-12 w-full text-base"
             onClick={() => onOpenChange(false)}
           >
             キャンセル

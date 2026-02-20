@@ -245,7 +245,7 @@ export default function HomePage() {
         <span>
           <Button size="sm" disabled={!online} onClick={() => setCreateTripOpen(true)}>
             <Plus className="h-4 w-4" />
-            旅行を作成
+            新規作成
           </Button>
         </span>
       </TooltipTrigger>

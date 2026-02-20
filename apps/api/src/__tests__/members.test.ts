@@ -12,6 +12,9 @@ const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, m
       users: {
         findFirst: vi.fn(),
       },
+      expenses: {
+        findMany: vi.fn(),
+      },
     },
     mockDbInsert: vi.fn(),
     mockDbUpdate: vi.fn(),
@@ -295,6 +298,7 @@ describe("Member routes", () => {
           role: "editor",
           user: { name: "Editor" },
         });
+      mockDbQuery.expenses.findMany.mockResolvedValue([]);
       mockDbDelete.mockReturnValue({
         where: vi.fn().mockResolvedValue(undefined),
       });
@@ -307,6 +311,27 @@ describe("Member routes", () => {
 
       expect(res.status).toBe(200);
       expect(body.ok).toBe(true);
+    });
+
+    it("returns 409 when member has expenses", async () => {
+      mockDbQuery.tripMembers.findFirst
+        .mockResolvedValueOnce({ tripId, userId: fakeUserId, role: "owner" })
+        .mockResolvedValueOnce({
+          tripId,
+          userId: fakeUser2Id,
+          role: "editor",
+          user: { name: "Editor" },
+        });
+      mockDbQuery.expenses.findMany.mockResolvedValue([
+        { paidByUserId: fakeUser2Id, splits: [] },
+      ]);
+
+      const app = createTestApp(memberRoutes, "/api/trips");
+      const res = await app.request(`${basePath}/${fakeUser2Id}`, {
+        method: "DELETE",
+      });
+
+      expect(res.status).toBe(409);
     });
 
     it("returns 400 when trying to remove self", async () => {

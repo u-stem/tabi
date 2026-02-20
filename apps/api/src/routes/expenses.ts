@@ -1,12 +1,8 @@
-import {
-  createExpenseSchema,
-  MAX_EXPENSES_PER_TRIP,
-  updateExpenseSchema,
-} from "@sugara/shared";
+import { createExpenseSchema, MAX_EXPENSES_PER_TRIP, updateExpenseSchema } from "@sugara/shared";
 import { count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { expenses, expenseSplits, tripMembers } from "../db/schema";
+import { expenseSplits, expenses, tripMembers } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { calculateEqualSplit, calculateSettlement } from "../lib/settlement";

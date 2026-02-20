@@ -11,7 +11,7 @@ const shortcuts: ShortcutGroup[] = [
     group: "ナビゲーション",
     items: [
       { key: "/", description: "検索にフォーカス" },
-      { key: "n", description: "新規旅行を作成" },
+      { key: "n", description: "新規作成" },
     ],
   },
 ];
@@ -41,7 +41,7 @@ describe("ShortcutHelpDialog", () => {
     render(<ShortcutHelpDialog open={true} onOpenChange={vi.fn()} shortcuts={shortcuts} />);
     expect(screen.getAllByText("ショートカット一覧").length).toBeGreaterThan(0);
     expect(screen.getAllByText("検索にフォーカス").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("新規旅行を作成").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("新規作成").length).toBeGreaterThan(0);
   });
 
   it("calls onOpenChange when closed via Escape", () => {

@@ -2,7 +2,7 @@ import { addMemberSchema, MAX_MEMBERS_PER_TRIP, updateMemberRoleSchema } from "@
 import { and, count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { tripMembers, users } from "../db/schema";
+import { expenses, tripMembers, users } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { requireAuth } from "../middleware/auth";
@@ -155,6 +155,19 @@ memberRoutes.delete("/:tripId/members/:userId", requireTripAccess("owner"), asyn
   });
   if (!existing) {
     return c.json({ error: ERROR_MSG.MEMBER_NOT_FOUND }, 404);
+  }
+
+  // Block removal if user has expenses (as payer or in splits)
+  const expensesWithUser = await db.query.expenses.findMany({
+    where: and(eq(expenses.tripId, tripId)),
+    with: { splits: true },
+  });
+  const hasExpenses = expensesWithUser.some(
+    (e) =>
+      e.paidByUserId === targetUserId || e.splits.some((s) => s.userId === targetUserId),
+  );
+  if (hasExpenses) {
+    return c.json({ error: ERROR_MSG.MEMBER_HAS_EXPENSES }, 409);
   }
 
   await db

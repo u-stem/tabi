@@ -676,9 +676,108 @@ async function main() {
       });
       console.log("  Done");
     }
+
+    // 7. Create expenses
+    const expenseUsers = {
+      dev: ownerData.userId,
+      alice: aliceData?.userId,
+      bob: bobData?.userId,
+    };
+    const sampleExpenses = [
+      {
+        title: "新幹線 東京→京都",
+        amount: 43560,
+        paidBy: "dev" as const,
+        splitType: "equal" as const,
+        splitWith: ["dev", "alice", "bob"] as const,
+      },
+      {
+        title: "湯豆腐 嵯峨野",
+        amount: 12000,
+        paidBy: "alice" as const,
+        splitType: "equal" as const,
+        splitWith: ["dev", "alice", "bob"] as const,
+      },
+      {
+        title: "京都タワーホテル",
+        amount: 47400,
+        paidBy: "dev" as const,
+        splitType: "equal" as const,
+        splitWith: ["dev", "alice", "bob"] as const,
+      },
+      {
+        title: "錦市場 食べ歩き",
+        amount: 4500,
+        paidBy: "bob" as const,
+        splitType: "equal" as const,
+        splitWith: ["dev", "alice", "bob"] as const,
+      },
+      {
+        title: "タクシー 祇園→京都駅",
+        amount: 1500,
+        paidBy: "alice" as const,
+        splitType: "custom" as const,
+        customSplits: [
+          { user: "dev" as const, amount: 500 },
+          { user: "alice" as const, amount: 500 },
+          { user: "bob" as const, amount: 500 },
+        ],
+      },
+      {
+        title: "ホテルグランヴィア京都",
+        amount: 66000,
+        paidBy: "dev" as const,
+        splitType: "custom" as const,
+        customSplits: [
+          { user: "dev" as const, amount: 22000 },
+          { user: "alice" as const, amount: 22000 },
+          { user: "bob" as const, amount: 22000 },
+        ],
+      },
+      {
+        title: "おめん 銀閣寺本店",
+        amount: 4200,
+        paidBy: "bob" as const,
+        splitType: "equal" as const,
+        splitWith: ["dev", "alice", "bob"] as const,
+      },
+    ];
+
+    console.log(`\nCreating ${sampleExpenses.length} expenses...`);
+    for (const exp of sampleExpenses) {
+      const paidByUserId = expenseUsers[exp.paidBy];
+      if (!paidByUserId) continue;
+      const splits =
+        exp.splitType === "custom" && exp.customSplits
+          ? exp.customSplits
+              .map((s) => {
+                const userId = expenseUsers[s.user];
+                return userId ? { userId, amount: s.amount } : null;
+              })
+              .filter((s): s is { userId: string; amount: number } => s !== null)
+          : (exp.splitWith ?? [])
+              .map((username) => {
+                const userId = expenseUsers[username];
+                return userId ? { userId } : null;
+              })
+              .filter((s): s is { userId: string } => s !== null);
+
+      await apiFetch(`/api/trips/${trip.id}/expenses`, {
+        method: "POST",
+        body: JSON.stringify({
+          title: exp.title,
+          amount: exp.amount,
+          paidByUserId,
+          splitType: exp.splitType,
+          splits,
+        }),
+        headers: { cookie: ownerCookies },
+      });
+      console.log(`  費用: ${exp.title} (${exp.amount.toLocaleString()}円)`);
+    }
   }
 
-  // 7. Create poll trip (skip if already exists)
+  // 8. Create poll trip (skip if already exists)
   console.log(`\nCreating poll trip: ${SAMPLE_POLL_TRIP.title}`);
   const existingPollTrip = existingTrips.find((t) => t.title === SAMPLE_POLL_TRIP.title);
   if (existingPollTrip) {
@@ -769,7 +868,7 @@ async function main() {
     }
   }
 
-  // 8. Create friend relationships (skip if already friends)
+  // 9. Create friend relationships (skip if already friends)
   console.log("\nCreating friend relationships...");
 
   async function ensureFriends(
@@ -807,7 +906,7 @@ async function main() {
     await ensureFriends(aliceData.cookies, bobData.cookies, bobData.userId, "alice <-> bob");
   }
 
-  // 9. Create groups with members (skip if already exists)
+  // 10. Create groups with members (skip if already exists)
   console.log("\nCreating groups...");
 
   async function ensureGroup(name: string, memberUserIds: string[], label: string) {
@@ -841,7 +940,7 @@ async function main() {
     "家族 (dev所有, alice)",
   );
 
-  // 10. Create bookmark lists with bookmarks (skip if already exists)
+  // 11. Create bookmark lists with bookmarks (skip if already exists)
   console.log(`\nCreating ${SAMPLE_BOOKMARK_LISTS.length} bookmark lists...`);
   for (const listData of SAMPLE_BOOKMARK_LISTS) {
     if (existingBookmarkLists.some((l) => l.name === listData.name)) {

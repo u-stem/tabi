@@ -70,4 +70,5 @@ export const ERROR_MSG = {
   EXPENSE_SPLIT_MISMATCH: "Split amounts must equal total amount",
   EXPENSE_PAYER_NOT_MEMBER: "Payer must be a trip member",
   EXPENSE_SPLIT_USER_NOT_MEMBER: "Split users must be trip members",
+  MEMBER_HAS_EXPENSES: "Cannot remove member who has expenses",
 } as const;

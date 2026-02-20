@@ -208,9 +208,9 @@ export function ExpenseDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>支払者</Label>
+            <Label htmlFor="expense-paid-by">支払者</Label>
             <Select value={paidByUserId} onValueChange={setPaidByUserId}>
-              <SelectTrigger>
+              <SelectTrigger id="expense-paid-by">
                 <SelectValue placeholder="選択" />
               </SelectTrigger>
               <SelectContent>
@@ -224,7 +224,7 @@ export function ExpenseDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>分担方法</Label>
+            <Label asChild><span>分担方法</span></Label>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -246,7 +246,7 @@ export function ExpenseDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>対象メンバー</Label>
+            <Label asChild><span>対象メンバー</span></Label>
             <div className="space-y-2">
               {members.map((m) => (
                 <div key={m.userId} className="flex items-center gap-3">
@@ -260,8 +260,10 @@ export function ExpenseDialog({
                   </label>
                   {splitType === "custom" && selectedMembers.has(m.userId) && (
                     <Input
+                      id={`split-${m.userId}`}
                       type="number"
                       className="w-24"
+                      aria-label={`${m.name}の負担額`}
                       value={customAmounts[m.userId] ?? ""}
                       onChange={(e) =>
                         setCustomAmounts((prev) => ({ ...prev, [m.userId]: e.target.value }))

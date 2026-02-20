@@ -30,7 +30,7 @@ export function DayTabs({
             aria-selected={selectedDay === -1}
             onClick={() => onSelectDay(-1)}
             className={cn(
-              "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
+              "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors min-h-[44px] lg:min-h-0",
               selectedDay === -1 ? TAB_ACTIVE : TAB_INACTIVE,
             )}
           >
@@ -56,7 +56,7 @@ export function DayTabs({
             aria-controls={`day-panel-${day.id}`}
             onClick={() => onSelectDay(index)}
             className={cn(
-              "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors",
+              "relative shrink-0 px-4 py-2 text-sm font-medium transition-colors min-h-[44px] lg:min-h-0",
               selectedDay === index ? TAB_ACTIVE : TAB_INACTIVE,
             )}
           >

@@ -9,6 +9,8 @@ import {
   Bookmark,
   CheckCheck,
   CheckSquare,
+  ChevronDown,
+  ChevronUp,
   Copy,
   MoreHorizontal,
   Plus,
@@ -17,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -36,8 +39,10 @@ import {
   type TimeStatus,
   toDateString,
 } from "@/lib/format";
+import { haptics } from "@/lib/haptics";
 import { useSelection } from "@/lib/hooks/selection-context";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import type { TimelineItem } from "@/lib/merge-timeline";
 import { buildMergedTimeline, timelineSortableIds } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
@@ -105,6 +110,8 @@ export function DayTimeline({
 
   const now = useCurrentTime();
   const isToday = date === toDateString(new Date());
+  const isMobile = useIsMobile();
+  const [reorderMode, setReorderMode] = useState(false);
 
   function getScheduleTimeStatus(schedule: ScheduleResponse): TimeStatus | null {
     if (!isToday) return null;
@@ -181,6 +188,27 @@ export function DayTimeline({
     }
   }
 
+  async function handleMove(scheduleId: string, direction: "up" | "down") {
+    const idx = schedules.findIndex((s) => s.id === scheduleId);
+    if (idx === -1) return;
+    if (direction === "up" && idx === 0) return;
+    if (direction === "down" && idx >= schedules.length - 1) return;
+
+    const swapIdx = direction === "up" ? idx - 1 : idx + 1;
+    const reordered = [...schedules];
+    [reordered[idx], reordered[swapIdx]] = [reordered[swapIdx], reordered[idx]];
+    haptics.light();
+    try {
+      await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`, {
+        method: "PATCH",
+        body: JSON.stringify({ scheduleIds: reordered.map((s) => s.id) }),
+      });
+      onRefresh();
+    } catch {
+      toast.error(MSG.SCHEDULE_REORDER_FAILED);
+    }
+  }
+
   return (
     <div>
       {selectionMode ? (
@@ -249,6 +277,19 @@ export function DayTimeline({
             </Button>
           </div>
         </div>
+      ) : reorderMode ? (
+        <div className="mb-3 flex select-none items-center gap-1.5">
+          <span className="text-sm font-medium">並び替え</span>
+          <div className="flex items-center gap-1.5 ml-auto">
+            <Button variant="outline" size="sm" onClick={handleSortByTime} disabled={isSorted}>
+              <ArrowUpDown className="h-4 w-4" />
+              時刻順
+            </Button>
+            <Button size="sm" onClick={() => setReorderMode(false)}>
+              完了
+            </Button>
+          </div>
+        </div>
       ) : (
         <div className="mb-3 flex flex-wrap select-none items-center gap-1.5">
           <span className="text-sm text-muted-foreground">{formatDate(date)}</span>
@@ -298,6 +339,11 @@ export function DayTimeline({
               </TooltipTrigger>
               <TooltipContent className="sm:hidden">時刻順に並べ替え</TooltipContent>
             </Tooltip>
+            {isMobile && !disabled && schedules.length > 1 && (
+              <Button variant="outline" size="sm" onClick={() => setReorderMode(true)}>
+                並び替え
+              </Button>
+            )}
           </div>
         </div>
       )}
@@ -323,7 +369,11 @@ export function DayTimeline({
 
         const insertIndicator = <DndInsertIndicator />;
 
-        function renderItem(item: TimelineItem, i: number, opts?: { selectable?: boolean }) {
+        function renderItem(
+          item: TimelineItem,
+          i: number,
+          opts?: { selectable?: boolean; reorder?: boolean },
+        ) {
           const isFirst = i === 0;
           const isLast = i === total - 1;
 
@@ -375,39 +425,72 @@ export function DayTimeline({
 
           const { schedule } = item;
           const schedulesAfter = schedules.filter((s) => s.sortOrder > schedule.sortOrder);
+          const scheduleIdx = opts?.reorder ? schedules.findIndex((s) => s.id === schedule.id) : -1;
+          const scheduleEl = (
+            <ScheduleItem
+              {...schedule}
+              tripId={tripId}
+              dayId={dayId}
+              patternId={patternId}
+              date={date}
+              isFirst={isFirst}
+              isLast={isLast}
+              onDelete={() => handleDelete(schedule.id)}
+              onUpdate={onRefresh}
+              onUnassign={
+                !disabled && !opts?.selectable ? () => handleUnassign(schedule.id) : undefined
+              }
+              disabled={disabled}
+              timeStatus={getScheduleTimeStatus(schedule)}
+              maxEndDayOffset={maxEndDayOffset}
+              selectable={opts?.selectable}
+              selected={opts?.selectable ? selectedIds?.has(schedule.id) : undefined}
+              onSelect={opts?.selectable ? sel.toggle : undefined}
+              siblingSchedules={schedulesAfter}
+              onSaveToBookmark={
+                onSaveToBookmark ? () => onSaveToBookmark([schedule.id]) : undefined
+              }
+            />
+          );
+
           return (
             <div key={schedule.id}>
               {showInsertIndicator && insertIndicator}
-              <ScheduleItem
-                {...schedule}
-                tripId={tripId}
-                dayId={dayId}
-                patternId={patternId}
-                date={date}
-                isFirst={isFirst}
-                isLast={isLast}
-                onDelete={() => handleDelete(schedule.id)}
-                onUpdate={onRefresh}
-                onUnassign={
-                  !disabled && !opts?.selectable ? () => handleUnassign(schedule.id) : undefined
-                }
-                disabled={disabled}
-                timeStatus={getScheduleTimeStatus(schedule)}
-                maxEndDayOffset={maxEndDayOffset}
-                selectable={opts?.selectable}
-                selected={opts?.selectable ? selectedIds?.has(schedule.id) : undefined}
-                onSelect={opts?.selectable ? sel.toggle : undefined}
-                siblingSchedules={schedulesAfter}
-                onSaveToBookmark={
-                  onSaveToBookmark ? () => onSaveToBookmark([schedule.id]) : undefined
-                }
-              />
+              {opts?.reorder ? (
+                <div className="flex items-stretch">
+                  <div className="flex flex-col justify-center gap-0.5 pr-1">
+                    <button
+                      type="button"
+                      className="rounded p-1.5 text-muted-foreground hover:bg-accent disabled:opacity-30"
+                      disabled={scheduleIdx === 0}
+                      onClick={() => handleMove(schedule.id, "up")}
+                      aria-label="上に移動"
+                    >
+                      <ChevronUp className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      className="rounded p-1.5 text-muted-foreground hover:bg-accent disabled:opacity-30"
+                      disabled={scheduleIdx === schedules.length - 1}
+                      onClick={() => handleMove(schedule.id, "down")}
+                      aria-label="下に移動"
+                    >
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <div className="min-w-0 flex-1">{scheduleEl}</div>
+                </div>
+              ) : (
+                scheduleEl
+              )}
             </div>
           );
         }
 
         return selectionMode ? (
           <div>{merged.map((item, i) => renderItem(item, i, { selectable: true }))}</div>
+        ) : reorderMode ? (
+          <div>{merged.map((item, i) => renderItem(item, i, { reorder: true }))}</div>
         ) : (
           <div ref={setDroppableRef}>
             <SortableContext

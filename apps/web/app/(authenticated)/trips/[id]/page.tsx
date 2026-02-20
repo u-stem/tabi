@@ -17,6 +17,7 @@ import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dial
 import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
 import { ExpensePanel } from "@/components/expense-panel";
+import { Fab } from "@/components/fab";
 import { type MobileContentTab, MobileContentTabs } from "@/components/mobile-content-tabs";
 
 const EditTripDialog = dynamic(() =>
@@ -675,6 +676,21 @@ export default function TripDetailPage() {
               })()}
           </DragOverlay>
         </DndContext>
+
+        <Fab
+          onClick={() => {
+            if (mobileTab === "schedule") setAddScheduleOpen(true);
+            else if (mobileTab === "candidates") setAddCandidateOpen(true);
+          }}
+          label={
+            mobileTab === "schedule"
+              ? "予定を追加"
+              : mobileTab === "candidates"
+                ? "候補を追加"
+                : "費用を追加"
+          }
+          hidden={!canEdit || !online || mobileTab === "expenses"}
+        />
 
         <AddPatternDialog patternOps={patternOps} />
         <RenamePatternDialog patternOps={patternOps} />

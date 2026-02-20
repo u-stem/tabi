@@ -42,6 +42,8 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -66,6 +68,7 @@ type TripActionsProps = {
   onEdit?: () => void;
   disabled?: boolean;
   memberLimitReached?: boolean;
+  compact?: boolean;
 };
 
 // "scheduling" is system-managed and should not appear in the manual status dropdown
@@ -82,6 +85,7 @@ export function TripActions({
   onEdit,
   disabled,
   memberLimitReached,
+  compact,
 }: TripActionsProps) {
   const isOwnerRole = isOwner(role);
   const canEditRole = canEdit(role);
@@ -195,65 +199,69 @@ export function TripActions({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {canEditRole && status !== "scheduling" ? (
-        <Select value={status} onValueChange={handleStatusChange} disabled={disabled}>
-          <SelectTrigger className="h-8 w-[130px] text-xs" aria-label="ステータス変更">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {statuses.map(([value, label]) => (
-              <SelectItem key={value} value={value}>
-                {label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      ) : (
-        <span className="text-xs text-muted-foreground">{STATUS_LABELS[status]}</span>
-      )}
-      {/* Desktop inline buttons (sm+) */}
-      <Button
-        variant="outline"
-        size="sm"
-        className="hidden sm:inline-flex"
-        onClick={() => setMemberOpen(true)}
-        disabled={disabled}
-      >
-        <Users className="h-4 w-4" />
-        メンバー
-      </Button>
-      {isOwnerRole && (
-        <Button
-          variant="outline"
-          size="sm"
-          className="hidden sm:inline-flex"
-          onClick={handleShare}
-          disabled={disabled || sharing}
-        >
-          <Link className="h-4 w-4" />
-          {sharing ? "生成中..." : "共有リンク"}
-        </Button>
-      )}
-      {/* Share expiry + regenerate (all sizes) */}
-      {isOwnerRole && shareUrl && (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleRegenerate}
-            disabled={disabled || regenerating}
-            aria-label="共有リンクを再生成"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
-          </Button>
-          {shareExpiresAt && (
-            <span className="text-xs text-muted-foreground">
-              {new Date(shareExpiresAt) < new Date()
-                ? "期限切れ"
-                : `${formatDateFromISO(shareExpiresAt)}まで`}
-            </span>
+      {!compact && (
+        <>
+          {canEditRole && status !== "scheduling" ? (
+            <Select value={status} onValueChange={handleStatusChange} disabled={disabled}>
+              <SelectTrigger className="h-8 w-[130px] text-xs" aria-label="ステータス変更">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statuses.map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : (
+            <span className="text-xs text-muted-foreground">{STATUS_LABELS[status]}</span>
           )}
-        </div>
+          {/* Desktop inline buttons (sm+) */}
+          <Button
+            variant="outline"
+            size="sm"
+            className="hidden sm:inline-flex"
+            onClick={() => setMemberOpen(true)}
+            disabled={disabled}
+          >
+            <Users className="h-4 w-4" />
+            メンバー
+          </Button>
+          {isOwnerRole && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:inline-flex"
+              onClick={handleShare}
+              disabled={disabled || sharing}
+            >
+              <Link className="h-4 w-4" />
+              {sharing ? "生成中..." : "共有リンク"}
+            </Button>
+          )}
+          {/* Share expiry + regenerate */}
+          {isOwnerRole && shareUrl && (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRegenerate}
+                disabled={disabled || regenerating}
+                aria-label="共有リンクを再生成"
+              >
+                <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
+              </Button>
+              {shareExpiresAt && (
+                <span className="text-xs text-muted-foreground">
+                  {new Date(shareExpiresAt) < new Date()
+                    ? "期限切れ"
+                    : `${formatDateFromISO(shareExpiresAt)}まで`}
+                </span>
+              )}
+            </div>
+          )}
+        </>
       )}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -263,13 +271,27 @@ export function TripActions({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          {/* Mobile-only items (hidden on sm+) */}
-          <DropdownMenuItem className="sm:hidden" onClick={() => setMemberOpen(true)}>
+          {compact && (
+            <>
+              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                {STATUS_LABELS[status]}
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+            </>
+          )}
+          <DropdownMenuItem
+            className={compact ? "" : "sm:hidden"}
+            onClick={() => setMemberOpen(true)}
+          >
             <Users />
             メンバー
           </DropdownMenuItem>
           {isOwnerRole && (
-            <DropdownMenuItem className="sm:hidden" onClick={handleShare} disabled={sharing}>
+            <DropdownMenuItem
+              className={compact ? "" : "sm:hidden"}
+              onClick={handleShare}
+              disabled={sharing}
+            >
               <Link />
               {sharing ? "生成中..." : "共有リンク"}
             </DropdownMenuItem>

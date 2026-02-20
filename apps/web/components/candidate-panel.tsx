@@ -67,14 +67,17 @@ import { api } from "@/lib/api";
 import { DROP_ZONE_ACTIVE, SELECTED_RING } from "@/lib/colors";
 import { formatTimeRange, isSafeUrl, stripProtocol } from "@/lib/format";
 import { useSelection } from "@/lib/hooks/selection-context";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
 import { moveCandidateToSchedule, removeCandidate } from "@/lib/trip-cache";
 import { cn } from "@/lib/utils";
+import { ActionSheet } from "./action-sheet";
 import { DndInsertIndicator } from "./dnd-insert-indicator";
 import { DragHandle } from "./drag-handle";
 import { ItemMenuButton } from "./item-menu-button";
+import { SwipeableCard } from "./swipeable-card";
 
 type CandidatePanelProps = {
   tripId: string;
@@ -120,7 +123,9 @@ function CandidateCard({
   onSelect?: (id: string) => void;
   draggable?: boolean;
 }) {
+  const isMobile = useIsMobile();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: spot.id,
     disabled: !draggable || disabled || selectable,
@@ -136,166 +141,206 @@ function CandidateCard({
   const transportLabel = spot.transportMethod
     ? TRANSPORT_METHOD_LABELS[spot.transportMethod as TransportMethod]
     : null;
+  const canSwipe = isMobile && !disabled && !selectable;
 
-  return (
-    <>
-      <div
-        ref={setNodeRef}
-        style={style}
-        className={cn(
-          "flex items-center gap-2 rounded-md border p-3",
-          isDragging && "opacity-50",
-          selectable &&
-            "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          selectable && selected && SELECTED_RING,
-        )}
-        {...(selectable
-          ? {
-              onClick: () => onSelect?.(spot.id),
-              onKeyDown: (e: React.KeyboardEvent) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  onSelect?.(spot.id);
-                }
-              },
-              role: "button" as const,
-              tabIndex: 0,
-              "aria-pressed": selected,
-            }
-          : {})}
-      >
-        {selectable ? (
-          <SelectionIndicator checked={!!selected} />
-        ) : draggable ? (
-          <DragHandle attributes={attributes} listeners={listeners} />
-        ) : null}
-        <div className="min-w-0 flex-1 space-y-1">
-          <p className="flex items-baseline gap-1.5 text-sm">
-            <span className="truncate font-medium">{spot.name}</span>
-            <span className="shrink-0 text-xs text-muted-foreground">
-              {CATEGORY_LABELS[spot.category as ScheduleCategory]}
-            </span>
-          </p>
-          {timeStr && (
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Clock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-              <span>{timeStr}</span>
-            </div>
-          )}
-          {spot.address && (
-            <a
-              href={buildMapsSearchUrl(spot.address)}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(
-                "flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400",
-                selectable && "pointer-events-none",
-              )}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-              <span className="truncate">{spot.address}</span>
-            </a>
-          )}
-          {spot.category === "transport" &&
-            (spot.departurePlace || spot.arrivalPlace) &&
-            (() => {
-              const routeStr =
-                spot.departurePlace && spot.arrivalPlace
-                  ? `${spot.departurePlace} → ${spot.arrivalPlace}`
-                  : spot.departurePlace || spot.arrivalPlace;
-              const transitUrl =
-                spot.departurePlace && spot.arrivalPlace
-                  ? buildTransportUrl({
-                      from: spot.departurePlace,
-                      to: spot.arrivalPlace,
-                      method: spot.transportMethod,
-                      time: spot.startTime,
-                    })
-                  : null;
-              return (
-                <span
-                  className={cn(
-                    "flex w-fit max-w-full items-center gap-1.5 text-xs text-muted-foreground",
-                    selectable && "pointer-events-none",
-                  )}
-                >
-                  <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                  {transitUrl ? (
-                    <a
-                      href={transitUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="truncate text-blue-600 hover:underline dark:text-blue-400"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {routeStr}
-                    </a>
-                  ) : (
-                    <span className="truncate">{routeStr}</span>
-                  )}
-                  {transportLabel && <span className="shrink-0">({transportLabel})</span>}
-                </span>
-              );
-            })()}
-          {spot.urls.filter(isSafeUrl).map((u) => (
-            <a
-              key={u}
-              href={u}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={cn(
-                "flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400",
-                selectable && "pointer-events-none",
-              )}
-              onClick={(e) => e.stopPropagation()}
-            >
-              <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-              <span className="truncate">{stripProtocol(u)}</span>
-            </a>
-          ))}
-          {spot.memo && (
-            <div className="flex items-start gap-1.5 text-xs text-muted-foreground/70">
-              <StickyNote className="mt-0.5 h-3 w-3 shrink-0" />
-              <p className="whitespace-pre-line">{spot.memo}</p>
-            </div>
-          )}
-        </div>
-        {!disabled && !selectable && onReact && (
-          <div className="flex select-none items-center gap-0.5">
-            <button
-              type="button"
-              onClick={() => (spot.myReaction === "like" ? onRemoveReaction?.() : onReact("like"))}
-              className={cn(
-                "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs transition-colors",
-                spot.myReaction === "like" ? "bg-accent font-medium" : "hover:bg-muted",
-              )}
-              aria-label="いいね"
-              aria-pressed={spot.myReaction === "like"}
-            >
-              <span className="text-base" aria-hidden="true">
-                {"👍"}
-              </span>
-              {spot.likeCount > 0 && <span>{spot.likeCount}</span>}
-            </button>
-            <button
-              type="button"
-              onClick={() => (spot.myReaction === "hmm" ? onRemoveReaction?.() : onReact("hmm"))}
-              className={cn(
-                "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs transition-colors",
-                spot.myReaction === "hmm" ? "bg-accent font-medium" : "hover:bg-muted",
-              )}
-              aria-label="うーん"
-              aria-pressed={spot.myReaction === "hmm"}
-            >
-              <span className="text-base" aria-hidden="true">
-                {"🤔"}
-              </span>
-              {spot.hmmCount > 0 && <span>{spot.hmmCount}</span>}
-            </button>
+  const cardElement = (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-2 rounded-md border p-3",
+        isDragging && "opacity-50",
+        selectable &&
+          "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        selectable && selected && SELECTED_RING,
+      )}
+      {...(selectable
+        ? {
+            onClick: () => onSelect?.(spot.id),
+            onKeyDown: (e: React.KeyboardEvent) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect?.(spot.id);
+              }
+            },
+            role: "button" as const,
+            tabIndex: 0,
+            "aria-pressed": selected,
+          }
+        : {})}
+    >
+      {selectable ? (
+        <SelectionIndicator checked={!!selected} />
+      ) : draggable ? (
+        <DragHandle attributes={attributes} listeners={listeners} />
+      ) : null}
+      <div className="min-w-0 flex-1 space-y-1">
+        <p className="flex items-baseline gap-1.5 text-sm">
+          <span className="truncate font-medium">{spot.name}</span>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {CATEGORY_LABELS[spot.category as ScheduleCategory]}
+          </span>
+        </p>
+        {timeStr && (
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+            <span>{timeStr}</span>
           </div>
         )}
-        {!disabled && !selectable && (
+        {spot.address && (
+          <a
+            href={buildMapsSearchUrl(spot.address)}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400",
+              selectable && "pointer-events-none",
+            )}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+            <span className="truncate">{spot.address}</span>
+          </a>
+        )}
+        {spot.category === "transport" &&
+          (spot.departurePlace || spot.arrivalPlace) &&
+          (() => {
+            const routeStr =
+              spot.departurePlace && spot.arrivalPlace
+                ? `${spot.departurePlace} → ${spot.arrivalPlace}`
+                : spot.departurePlace || spot.arrivalPlace;
+            const transitUrl =
+              spot.departurePlace && spot.arrivalPlace
+                ? buildTransportUrl({
+                    from: spot.departurePlace,
+                    to: spot.arrivalPlace,
+                    method: spot.transportMethod,
+                    time: spot.startTime,
+                  })
+                : null;
+            return (
+              <span
+                className={cn(
+                  "flex w-fit max-w-full items-center gap-1.5 text-xs text-muted-foreground",
+                  selectable && "pointer-events-none",
+                )}
+              >
+                <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                {transitUrl ? (
+                  <a
+                    href={transitUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="truncate text-blue-600 hover:underline dark:text-blue-400"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {routeStr}
+                  </a>
+                ) : (
+                  <span className="truncate">{routeStr}</span>
+                )}
+                {transportLabel && <span className="shrink-0">({transportLabel})</span>}
+              </span>
+            );
+          })()}
+        {spot.urls.filter(isSafeUrl).map((u) => (
+          <a
+            key={u}
+            href={u}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cn(
+              "flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400",
+              selectable && "pointer-events-none",
+            )}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+            <span className="truncate">{stripProtocol(u)}</span>
+          </a>
+        ))}
+        {spot.memo && (
+          <div className="flex items-start gap-1.5 text-xs text-muted-foreground/70">
+            <StickyNote className="mt-0.5 h-3 w-3 shrink-0" />
+            <p className="whitespace-pre-line">{spot.memo}</p>
+          </div>
+        )}
+      </div>
+      {!disabled && !selectable && onReact && (
+        <div className="flex select-none items-center gap-0.5">
+          <button
+            type="button"
+            onClick={() => (spot.myReaction === "like" ? onRemoveReaction?.() : onReact("like"))}
+            className={cn(
+              "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs transition-colors",
+              spot.myReaction === "like" ? "bg-accent font-medium" : "hover:bg-muted",
+            )}
+            aria-label="いいね"
+            aria-pressed={spot.myReaction === "like"}
+          >
+            <span className="text-base" aria-hidden="true">
+              {"👍"}
+            </span>
+            {spot.likeCount > 0 && <span>{spot.likeCount}</span>}
+          </button>
+          <button
+            type="button"
+            onClick={() => (spot.myReaction === "hmm" ? onRemoveReaction?.() : onReact("hmm"))}
+            className={cn(
+              "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs transition-colors",
+              spot.myReaction === "hmm" ? "bg-accent font-medium" : "hover:bg-muted",
+            )}
+            aria-label="うーん"
+            aria-pressed={spot.myReaction === "hmm"}
+          >
+            <span className="text-base" aria-hidden="true">
+              {"🤔"}
+            </span>
+            {spot.hmmCount > 0 && <span>{spot.hmmCount}</span>}
+          </button>
+        </div>
+      )}
+      {!disabled &&
+        !selectable &&
+        (isMobile ? (
+          <>
+            <ItemMenuButton
+              ariaLabel={`${spot.name}のメニュー`}
+              onClick={() => setSheetOpen(true)}
+            />
+            <ActionSheet
+              open={sheetOpen}
+              onOpenChange={setSheetOpen}
+              actions={[
+                {
+                  label: "編集",
+                  icon: <Pencil className="h-4 w-4" />,
+                  onClick: onEdit,
+                },
+                {
+                  label: "予定に追加",
+                  icon: <ArrowLeft className="h-4 w-4" />,
+                  onClick: onAssign,
+                },
+                ...(onSaveToBookmark
+                  ? [
+                      {
+                        label: "ブックマークに保存",
+                        icon: <Bookmark className="h-4 w-4" />,
+                        onClick: onSaveToBookmark,
+                      },
+                    ]
+                  : []),
+                {
+                  label: "削除",
+                  icon: <Trash2 className="h-4 w-4" />,
+                  onClick: () => setDeleteOpen(true),
+                  variant: "destructive" as const,
+                },
+              ]}
+            />
+          </>
+        ) : (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <ItemMenuButton ariaLabel={`${spot.name}のメニュー`} />
@@ -321,8 +366,34 @@ function CandidateCard({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        )}
-      </div>
+        ))}
+    </div>
+  );
+
+  return (
+    <>
+      {canSwipe ? (
+        <SwipeableCard
+          actions={[
+            {
+              label: "予定に追加",
+              icon: <ArrowLeft className="h-4 w-4" />,
+              color: "blue",
+              onClick: onAssign,
+            },
+            {
+              label: "削除",
+              icon: <Trash2 className="h-4 w-4" />,
+              color: "red",
+              onClick: () => setDeleteOpen(true),
+            },
+          ]}
+        >
+          {cardElement}
+        </SwipeableCard>
+      ) : (
+        cardElement
+      )}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

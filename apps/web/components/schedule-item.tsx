@@ -45,11 +45,14 @@ import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
 import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
 import type { TimeStatus } from "@/lib/format";
 import { formatTime, formatTimeRange, isSafeUrl, stripProtocol } from "@/lib/format";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { CATEGORY_ICONS, TRANSPORT_ICONS } from "@/lib/icons";
 import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
+import { ActionSheet } from "./action-sheet";
 import { DragHandle } from "./drag-handle";
 import { ItemMenuButton } from "./item-menu-button";
+import { SwipeableCard } from "./swipeable-card";
 
 const EditScheduleDialog = dynamic(() =>
   import("./edit-schedule-dialog").then((mod) => mod.EditScheduleDialog),
@@ -156,37 +159,72 @@ function ScheduleMenu({
   onUnassign?: () => void;
   onSaveToBookmark?: () => void;
 }) {
+  const isMobile = useIsMobile();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const sheetActions = [
+    { label: "編集", icon: <Pencil className="h-4 w-4" />, onClick: onEdit },
+    ...(onUnassign
+      ? [{ label: "候補に戻す", icon: <Undo2 className="h-4 w-4" />, onClick: onUnassign }]
+      : []),
+    ...(onSaveToBookmark
+      ? [
+          {
+            label: "ブックマークに保存",
+            icon: <Bookmark className="h-4 w-4" />,
+            onClick: onSaveToBookmark,
+          },
+        ]
+      : []),
+    {
+      label: "削除",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: () => setDeleteOpen(true),
+      variant: "destructive" as const,
+    },
+  ];
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <ItemMenuButton ariaLabel={`${name}のメニュー`} disabled={disabled} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={onEdit}>
-            <Pencil />
-            編集
-          </DropdownMenuItem>
-          {onUnassign && (
-            <DropdownMenuItem onClick={onUnassign}>
-              <Undo2 />
-              候補に戻す
+      {isMobile ? (
+        <>
+          <ItemMenuButton
+            ariaLabel={`${name}のメニュー`}
+            disabled={disabled}
+            onClick={() => setSheetOpen(true)}
+          />
+          <ActionSheet open={sheetOpen} onOpenChange={setSheetOpen} actions={sheetActions} />
+        </>
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <ItemMenuButton ariaLabel={`${name}のメニュー`} disabled={disabled} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil />
+              編集
             </DropdownMenuItem>
-          )}
-          {onSaveToBookmark && (
-            <DropdownMenuItem onClick={onSaveToBookmark}>
-              <Bookmark />
-              ブックマークに保存
+            {onUnassign && (
+              <DropdownMenuItem onClick={onUnassign}>
+                <Undo2 />
+                候補に戻す
+              </DropdownMenuItem>
+            )}
+            {onSaveToBookmark && (
+              <DropdownMenuItem onClick={onSaveToBookmark}>
+                <Bookmark />
+                ブックマークに保存
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
+              <Trash2 />
+              削除
             </DropdownMenuItem>
-          )}
-          <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
-            <Trash2 />
-            削除
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -576,6 +614,7 @@ function PlaceCard({
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
+  const isMobile = useIsMobile();
   const CategoryIcon = CATEGORY_ICONS[category];
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
   const isPast = timeStatus === "past";
@@ -585,7 +624,9 @@ function PlaceCard({
   const visibleEndTime = crossDayDisplay || endDayOffset ? null : endTime;
   const timeStr = formatTimeRange(visibleStartTime, visibleEndTime);
 
-  return (
+  const canSwipe = isMobile && !disabled && !crossDayDisplay && !selectable;
+
+  const cardContent = (
     <div
       ref={sortable.nodeRef}
       style={sortable.style}
@@ -699,6 +740,31 @@ function PlaceCard({
       />
     </div>
   );
+
+  if (canSwipe) {
+    return (
+      <SwipeableCard
+        actions={[
+          {
+            label: "編集",
+            icon: <Pencil className="h-4 w-4" />,
+            color: "blue",
+            onClick: () => setEditOpen(true),
+          },
+          {
+            label: "削除",
+            icon: <Trash2 className="h-4 w-4" />,
+            color: "red",
+            onClick: onDelete,
+          },
+        ]}
+      >
+        {cardContent}
+      </SwipeableCard>
+    );
+  }
+
+  return cardContent;
 }
 
 function TransportConnector({
@@ -740,9 +806,11 @@ function TransportConnector({
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
+  const isMobile = useIsMobile();
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
   const isPast = timeStatus === "past";
   const isCurrent = timeStatus === "current";
+  const canSwipe = isMobile && !disabled && !crossDayDisplay && !selectable;
   const TransportIcon = transportMethod
     ? TRANSPORT_ICONS[transportMethod as TransportMethod]
     : CATEGORY_ICONS.transport;
@@ -778,7 +846,7 @@ function TransportConnector({
         })
       : null;
 
-  return (
+  const cardContent = (
     <div
       ref={sortable.nodeRef}
       style={sortable.style}
@@ -899,4 +967,29 @@ function TransportConnector({
       />
     </div>
   );
+
+  if (canSwipe) {
+    return (
+      <SwipeableCard
+        actions={[
+          {
+            label: "編集",
+            icon: <Pencil className="h-4 w-4" />,
+            color: "blue",
+            onClick: () => setEditOpen(true),
+          },
+          {
+            label: "削除",
+            icon: <Trash2 className="h-4 w-4" />,
+            color: "red",
+            onClick: onDelete,
+          },
+        ]}
+      >
+        {cardContent}
+      </SwipeableCard>
+    );
+  }
+
+  return cardContent;
 }

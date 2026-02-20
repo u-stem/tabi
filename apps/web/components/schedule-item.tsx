@@ -626,7 +626,96 @@ function PlaceCard({
 
   const canSwipe = isMobile && !disabled && !crossDayDisplay && !selectable;
 
-  const cardContent = (
+  const swipeActions = canSwipe
+    ? [
+        {
+          label: "編集",
+          icon: <Pencil className="h-4 w-4" />,
+          color: "blue" as const,
+          onClick: () => setEditOpen(true),
+        },
+        {
+          label: "削除",
+          icon: <Trash2 className="h-4 w-4" />,
+          color: "red" as const,
+          onClick: onDelete,
+        },
+      ]
+    : undefined;
+
+  const cardBody = (
+    <div
+      className={cn(
+        "min-w-0 flex-1 rounded-md border p-3",
+        isPast && "opacity-50",
+        crossDayDisplay && "border-dashed bg-muted/30",
+        selectable &&
+          "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        selectable && selected && SELECTED_RING,
+      )}
+      {...cardBodyProps(
+        id,
+        name,
+        category,
+        selectable,
+        selected,
+        onSelect,
+        crossDayDisplay,
+        crossDaySourceDayNumber,
+        crossDayPosition,
+        `${crossDaySourceDayNumber}日目から継続`,
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <LeadingControl
+              selectable={selectable}
+              selected={selected}
+              crossDayDisplay={crossDayDisplay}
+              sortable={sortable}
+            />
+            <span className="min-w-0 truncate text-sm font-medium">{name}</span>
+          </div>
+          <ScheduleTimeLabel
+            crossDayDisplay={crossDayDisplay}
+            crossDayPosition={crossDayPosition}
+            endDayOffset={endDayOffset}
+            category={category}
+            timeStr={timeStr}
+          />
+          {(address || urls.length > 0 || memo) && (
+            <div className={cn("mt-1 space-y-1 pl-6", selectable && "pointer-events-none")}>
+              {address && (
+                <a
+                  href={buildMapsSearchUrl(address)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                  <span className="truncate">{address}</span>
+                </a>
+              )}
+              <ScheduleLinks urls={urls} memo={memo} />
+            </div>
+          )}
+        </div>
+        {!selectable && (
+          <ScheduleMenu
+            name={name}
+            disabled={disabled}
+            onEdit={() => setEditOpen(true)}
+            onDelete={onDelete}
+            onUnassign={onUnassign}
+            onSaveToBookmark={onSaveToBookmark}
+          />
+        )}
+      </div>
+    </div>
+  );
+
+  return (
     <div
       ref={sortable.nodeRef}
       style={sortable.style}
@@ -642,75 +731,13 @@ function PlaceCard({
         colorClasses={colorClasses}
       />
 
-      <div
-        className={cn(
-          "min-w-0 flex-1 rounded-md border p-3",
-          isPast && "opacity-50",
-          crossDayDisplay && "border-dashed bg-muted/30",
-          selectable &&
-            "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          selectable && selected && SELECTED_RING,
-        )}
-        {...cardBodyProps(
-          id,
-          name,
-          category,
-          selectable,
-          selected,
-          onSelect,
-          crossDayDisplay,
-          crossDaySourceDayNumber,
-          crossDayPosition,
-          `${crossDaySourceDayNumber}日目から継続`,
-        )}
-      >
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-2">
-              <LeadingControl
-                selectable={selectable}
-                selected={selected}
-                crossDayDisplay={crossDayDisplay}
-                sortable={sortable}
-              />
-              <span className="min-w-0 truncate text-sm font-medium">{name}</span>
-            </div>
-            <ScheduleTimeLabel
-              crossDayDisplay={crossDayDisplay}
-              crossDayPosition={crossDayPosition}
-              endDayOffset={endDayOffset}
-              category={category}
-              timeStr={timeStr}
-            />
-            {(address || urls.length > 0 || memo) && (
-              <div className={cn("mt-1 space-y-1 pl-6", selectable && "pointer-events-none")}>
-                {address && (
-                  <a
-                    href={buildMapsSearchUrl(address)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
-                  >
-                    <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                    <span className="truncate">{address}</span>
-                  </a>
-                )}
-                <ScheduleLinks urls={urls} memo={memo} />
-              </div>
-            )}
-          </div>
-          {!selectable && (
-            <ScheduleMenu
-              name={name}
-              disabled={disabled}
-              onEdit={() => setEditOpen(true)}
-              onDelete={onDelete}
-              onUnassign={onUnassign}
-              onSaveToBookmark={onSaveToBookmark}
-            />
-          )}
-        </div>
-      </div>
+      {swipeActions ? (
+        <SwipeableCard actions={swipeActions} className="min-w-0 flex-1 self-start">
+          {cardBody}
+        </SwipeableCard>
+      ) : (
+        cardBody
+      )}
 
       <ScheduleItemDialogs
         tripId={tripId}
@@ -740,31 +767,6 @@ function PlaceCard({
       />
     </div>
   );
-
-  if (canSwipe) {
-    return (
-      <SwipeableCard
-        actions={[
-          {
-            label: "編集",
-            icon: <Pencil className="h-4 w-4" />,
-            color: "blue",
-            onClick: () => setEditOpen(true),
-          },
-          {
-            label: "削除",
-            icon: <Trash2 className="h-4 w-4" />,
-            color: "red",
-            onClick: onDelete,
-          },
-        ]}
-      >
-        {cardContent}
-      </SwipeableCard>
-    );
-  }
-
-  return cardContent;
 }
 
 function TransportConnector({
@@ -846,7 +848,103 @@ function TransportConnector({
         })
       : null;
 
-  const cardContent = (
+  const swipeActions = canSwipe
+    ? [
+        {
+          label: "編集",
+          icon: <Pencil className="h-4 w-4" />,
+          color: "blue" as const,
+          onClick: () => setEditOpen(true),
+        },
+        {
+          label: "削除",
+          icon: <Trash2 className="h-4 w-4" />,
+          color: "red" as const,
+          onClick: onDelete,
+        },
+      ]
+    : undefined;
+
+  const cardBody = (
+    <div
+      className={cn(
+        "min-w-0 flex-1 rounded-md border p-3",
+        isPast && "opacity-50",
+        crossDayDisplay && "border-dashed bg-muted/30",
+        selectable &&
+          "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        selectable && selected && SELECTED_RING,
+      )}
+      {...cardBodyProps(
+        id,
+        name,
+        category,
+        selectable,
+        selected,
+        onSelect,
+        crossDayDisplay,
+        crossDaySourceDayNumber,
+        crossDayPosition,
+      )}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 items-center gap-2">
+            <LeadingControl
+              selectable={selectable}
+              selected={selected}
+              crossDayDisplay={crossDayDisplay}
+              sortable={sortable}
+            />
+            <span className="min-w-0 truncate text-sm font-medium">{name}</span>
+          </div>
+          <ScheduleTimeLabel
+            crossDayDisplay={crossDayDisplay}
+            crossDayPosition={crossDayPosition}
+            endDayOffset={endDayOffset}
+            category={category}
+            timeStr={timeStr}
+          />
+          {(routeStr || urls.length > 0 || memo) && (
+            <div className={cn("mt-1 space-y-1 pl-6", selectable && "pointer-events-none")}>
+              {routeStr && (
+                <span className="flex w-fit max-w-full items-center gap-1.5 text-xs text-muted-foreground">
+                  <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                  {transitUrl ? (
+                    <a
+                      href={transitUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline dark:text-blue-400"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}
+                    </a>
+                  ) : (
+                    <span>{crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}</span>
+                  )}
+                  {methodLabel && <span className="shrink-0">({methodLabel})</span>}
+                </span>
+              )}
+              <ScheduleLinks urls={urls} memo={memo} />
+            </div>
+          )}
+        </div>
+        {!selectable && (
+          <ScheduleMenu
+            name={name}
+            disabled={disabled}
+            onEdit={() => setEditOpen(true)}
+            onDelete={onDelete}
+            onUnassign={onUnassign}
+            onSaveToBookmark={onSaveToBookmark}
+          />
+        )}
+      </div>
+    </div>
+  );
+
+  return (
     <div
       ref={sortable.nodeRef}
       style={sortable.style}
@@ -862,82 +960,13 @@ function TransportConnector({
         colorClasses={colorClasses}
       />
 
-      <div
-        className={cn(
-          "min-w-0 flex-1 rounded-md border p-3",
-          isPast && "opacity-50",
-          crossDayDisplay && "border-dashed bg-muted/30",
-          selectable &&
-            "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          selectable && selected && SELECTED_RING,
-        )}
-        {...cardBodyProps(
-          id,
-          name,
-          category,
-          selectable,
-          selected,
-          onSelect,
-          crossDayDisplay,
-          crossDaySourceDayNumber,
-          crossDayPosition,
-        )}
-      >
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <div className="flex min-w-0 items-center gap-2">
-              <LeadingControl
-                selectable={selectable}
-                selected={selected}
-                crossDayDisplay={crossDayDisplay}
-                sortable={sortable}
-              />
-              <span className="min-w-0 truncate text-sm font-medium">{name}</span>
-            </div>
-            <ScheduleTimeLabel
-              crossDayDisplay={crossDayDisplay}
-              crossDayPosition={crossDayPosition}
-              endDayOffset={endDayOffset}
-              category={category}
-              timeStr={timeStr}
-            />
-            {(routeStr || urls.length > 0 || memo) && (
-              <div className={cn("mt-1 space-y-1 pl-6", selectable && "pointer-events-none")}>
-                {routeStr && (
-                  <span className="flex w-fit max-w-full items-center gap-1.5 text-xs text-muted-foreground">
-                    <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                    {transitUrl ? (
-                      <a
-                        href={transitUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:underline dark:text-blue-400"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}
-                      </a>
-                    ) : (
-                      <span>{crossDayDisplay && arrivalPlace ? `→ ${routeStr}` : routeStr}</span>
-                    )}
-                    {methodLabel && <span className="shrink-0">({methodLabel})</span>}
-                  </span>
-                )}
-                <ScheduleLinks urls={urls} memo={memo} />
-              </div>
-            )}
-          </div>
-          {!selectable && (
-            <ScheduleMenu
-              name={name}
-              disabled={disabled}
-              onEdit={() => setEditOpen(true)}
-              onDelete={onDelete}
-              onUnassign={onUnassign}
-              onSaveToBookmark={onSaveToBookmark}
-            />
-          )}
-        </div>
-      </div>
+      {swipeActions ? (
+        <SwipeableCard actions={swipeActions} className="min-w-0 flex-1 self-start">
+          {cardBody}
+        </SwipeableCard>
+      ) : (
+        cardBody
+      )}
 
       <ScheduleItemDialogs
         tripId={tripId}
@@ -967,29 +996,4 @@ function TransportConnector({
       />
     </div>
   );
-
-  if (canSwipe) {
-    return (
-      <SwipeableCard
-        actions={[
-          {
-            label: "編集",
-            icon: <Pencil className="h-4 w-4" />,
-            color: "blue",
-            onClick: () => setEditOpen(true),
-          },
-          {
-            label: "削除",
-            icon: <Trash2 className="h-4 w-4" />,
-            color: "red",
-            onClick: onDelete,
-          },
-        ]}
-      >
-        {cardContent}
-      </SwipeableCard>
-    );
-  }
-
-  return cardContent;
 }

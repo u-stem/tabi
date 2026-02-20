@@ -8,6 +8,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ExpenseDialog } from "@/components/expense-dialog";
 import { ItemMenuButton } from "@/components/item-menu-button";
+import { SwipeableCard } from "@/components/swipeable-card";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -28,6 +29,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { queryKeys } from "@/lib/query-keys";
 
 type ExpenseSplit = {
@@ -70,6 +72,7 @@ type ExpensePanelProps = {
 };
 
 export function ExpensePanel({ tripId, canEdit }: ExpensePanelProps) {
+  const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.expenses.list(tripId),
@@ -211,38 +214,14 @@ export function ExpensePanel({ tripId, canEdit }: ExpensePanelProps) {
       {expenses.length > 0 && (
         <div className="space-y-2">
           {expenses.map((expense) => (
-            <div key={expense.id} className="rounded-md border p-3">
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium truncate">{expense.title}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {expense.paidByUser.name}が支払い
-                    {expense.splitType === "equal" ? " / 均等" : " / カスタム"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                  <span className="text-sm font-bold">{expense.amount.toLocaleString()}円</span>
-                  {canEdit && (
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <ItemMenuButton ariaLabel={`${expense.title}のメニュー`} />
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => handleEdit(expense)}>
-                          <Pencil /> 編集
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => setDeleteTarget(expense)}
-                        >
-                          <Trash2 /> 削除
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  )}
-                </div>
-              </div>
-            </div>
+            <ExpenseItem
+              key={expense.id}
+              expense={expense}
+              canEdit={canEdit}
+              isMobile={isMobile}
+              onEdit={handleEdit}
+              onDelete={setDeleteTarget}
+            />
           ))}
         </div>
       )}
@@ -279,4 +258,77 @@ export function ExpensePanel({ tripId, canEdit }: ExpensePanelProps) {
       </AlertDialog>
     </div>
   );
+}
+
+function ExpenseItem({
+  expense,
+  canEdit,
+  isMobile,
+  onEdit,
+  onDelete,
+}: {
+  expense: Expense;
+  canEdit: boolean;
+  isMobile: boolean;
+  onEdit: (expense: Expense) => void;
+  onDelete: (expense: Expense) => void;
+}) {
+  const canSwipe = isMobile && canEdit;
+
+  const cardElement = (
+    <div className="rounded-md border p-3">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{expense.title}</p>
+          <p className="text-xs text-muted-foreground">
+            {expense.paidByUser.name}が支払い
+            {expense.splitType === "equal" ? " / 均等" : " / カスタム"}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="text-sm font-bold">{expense.amount.toLocaleString()}円</span>
+          {canEdit && !isMobile && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <ItemMenuButton ariaLabel={`${expense.title}のメニュー`} />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => onEdit(expense)}>
+                  <Pencil /> 編集
+                </DropdownMenuItem>
+                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(expense)}>
+                  <Trash2 /> 削除
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  if (canSwipe) {
+    return (
+      <SwipeableCard
+        actions={[
+          {
+            label: "編集",
+            icon: <Pencil className="h-4 w-4" />,
+            color: "blue",
+            onClick: () => onEdit(expense),
+          },
+          {
+            label: "削除",
+            icon: <Trash2 className="h-4 w-4" />,
+            color: "red",
+            onClick: () => onDelete(expense),
+          },
+        ]}
+      >
+        {cardElement}
+      </SwipeableCard>
+    );
+  }
+
+  return cardElement;
 }

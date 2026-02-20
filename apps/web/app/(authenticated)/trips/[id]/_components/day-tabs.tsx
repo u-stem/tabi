@@ -6,7 +6,7 @@ import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
 import { cn } from "@/lib/utils";
 
 const CHIP_BASE =
-  "relative shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors min-h-[44px] lg:min-h-0";
+  "relative shrink-0 flex items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors min-h-[44px] lg:min-h-0";
 const CHIP_ACTIVE = "bg-muted text-foreground";
 const CHIP_INACTIVE = "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground";
 
@@ -26,7 +26,7 @@ export function DayTabs({
 }) {
   return (
     <div className="flex shrink-0 select-none" role="tablist" aria-label="日程タブ">
-      <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-3 py-2">
+      <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-3 pb-0 pt-3">
         {hasPoll && (
           <button
             type="button"

@@ -76,8 +76,16 @@ export function SwipeableCard({ children, actions, disabled, className }: Swipea
   }
 
   return (
-    <div className={cn("relative overflow-hidden", className)}>
-      <div className="absolute inset-y-0 right-0 flex">
+    <div
+      className={cn("relative rounded-md", className)}
+      style={{ clipPath: "inset(0 round var(--radius-md))" }}
+    >
+      <div
+        className={cn(
+          "absolute inset-0 flex items-stretch justify-end",
+          offset === 0 && "invisible",
+        )}
+      >
         {actions.map((action) => (
           <button
             key={action.label}
@@ -99,7 +107,7 @@ export function SwipeableCard({ children, actions, disabled, className }: Swipea
 
       <div
         {...bind()}
-        className="relative bg-background transition-transform duration-150 ease-out"
+        className="relative z-10 bg-background transition-transform duration-150 ease-out"
         style={{
           transform: `translateX(${offset}px)`,
           touchAction: "pan-y",

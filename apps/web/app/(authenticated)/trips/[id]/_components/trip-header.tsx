@@ -2,8 +2,7 @@
 
 import type { TripResponse } from "@sugara/shared";
 import { MAX_MEMBERS_PER_TRIP } from "@sugara/shared";
-import { ArrowLeft } from "lucide-react";
-import NextLink from "next/link";
+
 import { PresenceAvatars } from "@/components/presence-avatars";
 import { TripActions } from "@/components/trip-actions";
 import { formatDateRange, getDayCount } from "@/lib/format";
@@ -43,12 +42,6 @@ export function TripHeader({
     <div className="mb-3 lg:mb-6">
       {/* Mobile compact header */}
       <div className="flex h-11 items-center gap-2 lg:hidden">
-        <NextLink
-          href="/home"
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md hover:bg-accent"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </NextLink>
         <h1 className="min-w-0 flex-1 truncate text-base font-bold">{trip.title}</h1>
         <PresenceAvatars users={otherPresence} isConnected={isConnected} />
         <TripActions {...tripActionsProps} compact />

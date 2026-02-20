@@ -5,13 +5,13 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
 import { MSG } from "@/lib/messages";
@@ -63,12 +63,14 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>フィードバック</DialogTitle>
-          <DialogDescription>バグ報告や改善要望をお聞かせください</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-md">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>フィードバック</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            バグ報告や改善要望をお聞かせください
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit}>
           <Textarea
             value={body}
@@ -92,13 +94,13 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
               {error}
             </div>
           )}
-          <DialogFooter className="mt-4">
+          <ResponsiveDialogFooter className="mt-4">
             <Button type="submit" disabled={loading || !body.trim() || cooldown}>
               {loading ? "送信中..." : "送信"}
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

@@ -22,15 +22,15 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/user-avatar";
@@ -187,7 +187,7 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
 
   return (
     <>
-      <Dialog
+      <ResponsiveDialog
         open={group !== null}
         onOpenChange={(v) => {
           if (!v) {
@@ -197,11 +197,11 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
           }
         }}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{group?.name}</DialogTitle>
-            <DialogDescription>{members.length}人のメンバー</DialogDescription>
-          </DialogHeader>
+        <ResponsiveDialogContent>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>{group?.name}</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>{members.length}人のメンバー</ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
 
           <div className="flex min-h-0 flex-col gap-4">
             {/* Member list */}
@@ -398,8 +398,8 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
               </Tabs>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
 
       {/* Remove member confirmation */}
       <AlertDialog

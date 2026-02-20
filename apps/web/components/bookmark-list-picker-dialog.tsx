@@ -5,12 +5,12 @@ import { useQuery } from "@tanstack/react-query";
 import { Bookmark } from "lucide-react";
 import Link from "next/link";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
@@ -33,12 +33,14 @@ export function BookmarkListPickerDialog({
   });
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-sm">
-        <DialogHeader>
-          <DialogTitle>リストを選択</DialogTitle>
-          <DialogDescription>保存先のブックマークリストを選択してください。</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveDialogContent className="sm:max-w-sm">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>リストを選択</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            保存先のブックマークリストを選択してください。
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <div className="max-h-60 overflow-y-auto">
           {isLoading ? (
             <div className="space-y-2">
@@ -78,7 +80,7 @@ export function BookmarkListPickerDialog({
             </div>
           )}
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

@@ -12,16 +12,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import {
   Select,
   SelectContent,
@@ -40,12 +40,15 @@ type Selection = ReturnType<typeof useBookmarkSelection>;
 
 export function EditListDialog({ listOps }: { listOps: ListOps }) {
   return (
-    <Dialog open={listOps.editingList} onOpenChange={(v) => !v && listOps.setEditingList(false)}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>リストを編集</DialogTitle>
-          <DialogDescription>リストの設定を変更します。</DialogDescription>
-        </DialogHeader>
+    <ResponsiveDialog
+      open={listOps.editingList}
+      onOpenChange={(v) => !v && listOps.setEditingList(false)}
+    >
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>リストを編集</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>リストの設定を変更します。</ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <form onSubmit={listOps.handleUpdate}>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
@@ -78,23 +81,23 @@ export function EditListDialog({ listOps }: { listOps: ListOps }) {
               </Select>
             </div>
           </div>
-          <DialogFooter>
+          <ResponsiveDialogFooter>
             <Button type="button" variant="outline" onClick={() => listOps.setEditingList(false)}>
               キャンセル
             </Button>
             <Button type="submit" disabled={!listOps.editListName.trim()}>
               保存
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
 
 export function AddBookmarkDialog({ bmOps, listName }: { bmOps: BmOps; listName: string }) {
   return (
-    <Dialog
+    <ResponsiveDialog
       open={bmOps.addBookmarkOpen}
       onOpenChange={(v) => {
         if (!v) {
@@ -103,11 +106,13 @@ export function AddBookmarkDialog({ bmOps, listName }: { bmOps: BmOps; listName:
         }
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>ブックマークを追加</DialogTitle>
-          <DialogDescription>「{listName}」にブックマークを追加します。</DialogDescription>
-        </DialogHeader>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>ブックマークを追加</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            「{listName}」にブックマークを追加します。
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <form onSubmit={bmOps.handleAdd}>
           <BookmarkFormFields
             name={bmOps.bookmarkName}
@@ -117,7 +122,7 @@ export function AddBookmarkDialog({ bmOps, listName }: { bmOps: BmOps; listName:
             onMemoChange={bmOps.setBookmarkMemo}
             onUrlsChange={bmOps.setBookmarkUrls}
           />
-          <DialogFooter>
+          <ResponsiveDialogFooter>
             <Button
               type="button"
               variant="outline"
@@ -131,16 +136,16 @@ export function AddBookmarkDialog({ bmOps, listName }: { bmOps: BmOps; listName:
             <Button type="submit" disabled={bmOps.submitting || !bmOps.bookmarkName.trim()}>
               {bmOps.submitting ? "追加中..." : "追加"}
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
 
 export function EditBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
   return (
-    <Dialog
+    <ResponsiveDialog
       open={bmOps.editingBookmark !== null}
       onOpenChange={(v) => {
         if (!v) {
@@ -149,11 +154,13 @@ export function EditBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
         }
       }}
     >
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>ブックマークを編集</DialogTitle>
-          <DialogDescription>ブックマークの内容を変更します。</DialogDescription>
-        </DialogHeader>
+      <ResponsiveDialogContent>
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>ブックマークを編集</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            ブックマークの内容を変更します。
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
         <form onSubmit={bmOps.handleUpdate}>
           <BookmarkFormFields
             name={bmOps.bookmarkName}
@@ -163,7 +170,7 @@ export function EditBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
             onMemoChange={bmOps.setBookmarkMemo}
             onUrlsChange={bmOps.setBookmarkUrls}
           />
-          <DialogFooter>
+          <ResponsiveDialogFooter>
             <Button
               type="button"
               variant="outline"
@@ -177,10 +184,10 @@ export function EditBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
             <Button type="submit" disabled={bmOps.submitting || !bmOps.bookmarkName.trim()}>
               {bmOps.submitting ? "保存中..." : "保存"}
             </Button>
-          </DialogFooter>
+          </ResponsiveDialogFooter>
         </form>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
 

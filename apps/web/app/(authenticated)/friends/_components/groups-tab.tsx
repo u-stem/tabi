@@ -6,6 +6,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ActionSheet } from "@/components/action-sheet";
+import { ItemMenuButton } from "@/components/item-menu-button";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -19,14 +21,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -34,7 +28,16 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { CreateGroupDialog } from "./create-group-dialog";
@@ -42,13 +45,39 @@ import { GroupMembersDialog } from "./group-detail-dialog";
 
 export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const [createOpen, setCreateOpen] = useState(false);
   const [membersGroupId, setMembersGroupId] = useState<string | null>(null);
   const [editGroup, setEditGroup] = useState<GroupResponse | null>(null);
   const [editName, setEditName] = useState("");
   const [deleteGroup, setDeleteGroup] = useState<GroupResponse | null>(null);
+  const [sheetGroup, setSheetGroup] = useState<GroupResponse | null>(null);
 
   const membersGroup = groups.find((g) => g.id === membersGroupId) ?? null;
+
+  const sheetActions = sheetGroup
+    ? [
+        {
+          label: "メンバー追加",
+          icon: <UserPlus className="h-4 w-4" />,
+          onClick: () => setMembersGroupId(sheetGroup.id),
+        },
+        {
+          label: "編集",
+          icon: <Pencil className="h-4 w-4" />,
+          onClick: () => {
+            setEditName(sheetGroup.name);
+            setEditGroup(sheetGroup);
+          },
+        },
+        {
+          label: "削除",
+          icon: <Trash2 className="h-4 w-4" />,
+          onClick: () => setDeleteGroup(sheetGroup),
+          variant: "destructive" as const,
+        },
+      ]
+    : [];
 
   async function handleRename(e: React.FormEvent) {
     e.preventDefault();
@@ -129,40 +158,47 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
                       {group.memberCount}
                     </span>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 shrink-0"
-                        aria-label={`${group.name}のメニュー`}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => setMembersGroupId(group.id)}>
-                        <UserPlus className="h-4 w-4" />
-                        メンバー追加
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          setEditName(group.name);
-                          setEditGroup(group);
-                        }}
-                      >
-                        <Pencil className="h-4 w-4" />
-                        編集
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => setDeleteGroup(group)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        削除
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  {isMobile ? (
+                    <ItemMenuButton
+                      ariaLabel={`${group.name}のメニュー`}
+                      onClick={() => setSheetGroup(group)}
+                    />
+                  ) : (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0"
+                          aria-label={`${group.name}のメニュー`}
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setMembersGroupId(group.id)}>
+                          <UserPlus className="h-4 w-4" />
+                          メンバー追加
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => {
+                            setEditName(group.name);
+                            setEditGroup(group);
+                          }}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          編集
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => setDeleteGroup(group)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          削除
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
                 </div>
               ))}
             </div>
@@ -179,12 +215,12 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
       <GroupMembersDialog group={membersGroup} onOpenChange={() => setMembersGroupId(null)} />
 
       {/* Edit name dialog */}
-      <Dialog open={editGroup !== null} onOpenChange={(v) => !v && setEditGroup(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>グループを編集</DialogTitle>
-            <DialogDescription>グループ名を変更します。</DialogDescription>
-          </DialogHeader>
+      <ResponsiveDialog open={editGroup !== null} onOpenChange={(v) => !v && setEditGroup(null)}>
+        <ResponsiveDialogContent>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>グループを編集</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>グループ名を変更します。</ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
           <form onSubmit={handleRename}>
             <div className="space-y-4 py-2">
               <div className="space-y-2">
@@ -201,17 +237,17 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
                 </p>
               </div>
             </div>
-            <DialogFooter>
+            <ResponsiveDialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditGroup(null)}>
                 キャンセル
               </Button>
               <Button type="submit" disabled={!editName.trim()}>
                 保存
               </Button>
-            </DialogFooter>
+            </ResponsiveDialogFooter>
           </form>
-        </DialogContent>
-      </Dialog>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
 
       {/* Delete confirmation */}
       <AlertDialog open={deleteGroup !== null} onOpenChange={(v) => !v && setDeleteGroup(null)}>
@@ -230,6 +266,12 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <ActionSheet
+        open={sheetGroup !== null}
+        onOpenChange={(open) => !open && setSheetGroup(null)}
+        actions={sheetActions}
+      />
     </div>
   );
 }

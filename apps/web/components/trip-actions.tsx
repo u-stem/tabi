@@ -27,6 +27,7 @@ const ShareDialog = dynamic(() =>
   import("@/components/share-dialog").then((mod) => mod.ShareDialog),
 );
 
+import { ActionSheet } from "@/components/action-sheet";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -56,6 +57,7 @@ import {
 import { api } from "@/lib/api";
 import { copyToClipboard } from "@/lib/clipboard";
 import { formatDateFromISO } from "@/lib/format";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -92,6 +94,7 @@ export function TripActions({
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [deleting, setDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [memberOpen, setMemberOpen] = useState(false);
@@ -100,6 +103,7 @@ export function TripActions({
   const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   async function handleStatusChange(newStatus: string) {
     if (newStatus === status) return;
@@ -197,6 +201,56 @@ export function TripActions({
     }
   }
 
+  const sheetActions = [
+    {
+      label: "メンバー",
+      icon: <Users className="h-4 w-4" />,
+      onClick: () => setMemberOpen(true),
+    },
+    ...(isOwnerRole
+      ? [
+          {
+            label: sharing ? "生成中..." : "共有リンク",
+            icon: <Link className="h-4 w-4" />,
+            onClick: handleShare,
+          },
+        ]
+      : []),
+    ...(canEditRole
+      ? [
+          {
+            label: "印刷 / PDF",
+            icon: <Printer className="h-4 w-4" />,
+            onClick: () => window.open(`/trips/${tripId}/print`, "_blank"),
+          },
+        ]
+      : []),
+    {
+      label: "エクスポート",
+      icon: <FileDown className="h-4 w-4" />,
+      onClick: () => window.open(`/trips/${tripId}/export`, "_blank"),
+    },
+    ...(onEdit
+      ? [
+          {
+            label: "編集",
+            icon: <Pencil className="h-4 w-4" />,
+            onClick: onEdit,
+          },
+        ]
+      : []),
+    ...(isOwnerRole
+      ? [
+          {
+            label: deleting ? "削除中..." : "削除",
+            icon: <Trash2 className="h-4 w-4" />,
+            onClick: () => setDeleteOpen(true),
+            variant: "destructive" as const,
+          },
+        ]
+      : []),
+  ];
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       {!compact && (
@@ -263,71 +317,87 @@ export function TripActions({
           )}
         </>
       )}
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" size="icon" className="h-8 w-8" disabled={disabled}>
+      {isMobile ? (
+        <>
+          <Button
+            variant="outline"
+            size="icon"
+            className="h-8 w-8"
+            disabled={disabled}
+            onClick={() => setSheetOpen(true)}
+          >
             <MoreHorizontal className="h-4 w-4" />
             <span className="sr-only">旅行メニュー</span>
           </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          {compact && (
-            <>
-              <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                {STATUS_LABELS[status]}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-            </>
-          )}
-          <DropdownMenuItem
-            className={compact ? "" : "sm:hidden"}
-            onClick={() => setMemberOpen(true)}
-          >
-            <Users />
-            メンバー
-          </DropdownMenuItem>
-          {isOwnerRole && (
+          <ActionSheet open={sheetOpen} onOpenChange={setSheetOpen} actions={sheetActions} />
+        </>
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="icon" className="h-8 w-8" disabled={disabled}>
+              <MoreHorizontal className="h-4 w-4" />
+              <span className="sr-only">旅行メニュー</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {compact && (
+              <>
+                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                  {STATUS_LABELS[status]}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+              </>
+            )}
             <DropdownMenuItem
               className={compact ? "" : "sm:hidden"}
-              onClick={handleShare}
-              disabled={sharing}
+              onClick={() => setMemberOpen(true)}
             >
-              <Link />
-              {sharing ? "生成中..." : "共有リンク"}
+              <Users />
+              メンバー
             </DropdownMenuItem>
-          )}
-          {canEditRole && (
+            {isOwnerRole && (
+              <DropdownMenuItem
+                className={compact ? "" : "sm:hidden"}
+                onClick={handleShare}
+                disabled={sharing}
+              >
+                <Link />
+                {sharing ? "生成中..." : "共有リンク"}
+              </DropdownMenuItem>
+            )}
+            {canEditRole && (
+              <DropdownMenuItem asChild>
+                <NextLink href={`/trips/${tripId}/print`} target="_blank">
+                  <Printer />
+                  印刷 / PDF
+                </NextLink>
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem asChild>
-              <NextLink href={`/trips/${tripId}/print`} target="_blank">
-                <Printer />
-                印刷 / PDF
+              <NextLink href={`/trips/${tripId}/export`} target="_blank">
+                <FileDown />
+                エクスポート
               </NextLink>
             </DropdownMenuItem>
-          )}
-          <DropdownMenuItem asChild>
-            <NextLink href={`/trips/${tripId}/export`} target="_blank">
-              <FileDown />
-              エクスポート
-            </NextLink>
-          </DropdownMenuItem>
-          {onEdit && (
-            <DropdownMenuItem onClick={onEdit}>
-              <Pencil />
-              編集
-            </DropdownMenuItem>
-          )}
-          {isOwnerRole && (
-            <DropdownMenuItem
-              className="text-destructive"
-              disabled={deleting}
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 />
-              {deleting ? "削除中..." : "削除"}
-            </DropdownMenuItem>
-          )}
-        </DropdownMenuContent>
-      </DropdownMenu>
+            {onEdit && (
+              <DropdownMenuItem onClick={onEdit}>
+                <Pencil />
+                編集
+              </DropdownMenuItem>
+            )}
+            {isOwnerRole && (
+              <DropdownMenuItem
+                className="text-destructive"
+                disabled={deleting}
+                onClick={() => setDeleteOpen(true)}
+              >
+                <Trash2 />
+                {deleting ? "削除中..." : "削除"}
+              </DropdownMenuItem>
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
       <MemberDialog
         tripId={tripId}
         isOwner={isOwnerRole}

@@ -12,6 +12,9 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { useState } from "react";
+import { ActionSheet } from "@/components/action-sheet";
+import { ItemMenuButton } from "@/components/item-menu-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +27,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import type { useBookmarkListOperations } from "@/lib/hooks/use-bookmark-list-operations";
 import type { useBookmarkOperations } from "@/lib/hooks/use-bookmark-operations";
 import type { useBookmarkSelection } from "@/lib/hooks/use-bookmark-selection";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 
 type ListOps = ReturnType<typeof useBookmarkListOperations>;
@@ -45,6 +49,23 @@ export function BookmarkListHeader({
   listOps: ListOps;
   bmOps: BmOps;
 }) {
+  const isMobile = useIsMobile();
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const sheetActions = [
+    {
+      label: "編集",
+      icon: <Pencil className="h-4 w-4" />,
+      onClick: () => listOps.openEdit(list),
+    },
+    {
+      label: "削除",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: () => listOps.setDeletingList(true),
+      variant: "destructive" as const,
+    },
+  ];
+
   return (
     <div className="mb-6">
       <div className="flex flex-wrap items-center gap-2">
@@ -65,32 +86,43 @@ export function BookmarkListHeader({
               ? "フレンド限定"
               : "非公開"}
         </Badge>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="icon"
-              className="ml-auto h-8 w-8"
+        {isMobile ? (
+          <div className="ml-auto">
+            <ItemMenuButton
+              ariaLabel="リストメニュー"
               disabled={!online}
-              aria-label="リストメニュー"
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => listOps.openEdit(list)}>
-              <Pencil className="h-4 w-4" />
-              編集
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className="text-destructive"
-              onClick={() => listOps.setDeletingList(true)}
-            >
-              <Trash2 className="h-4 w-4" />
-              削除
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              onClick={() => setSheetOpen(true)}
+            />
+            <ActionSheet open={sheetOpen} onOpenChange={setSheetOpen} actions={sheetActions} />
+          </div>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="ml-auto h-8 w-8"
+                disabled={!online}
+                aria-label="リストメニュー"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => listOps.openEdit(list)}>
+                <Pencil className="h-4 w-4" />
+                編集
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive"
+                onClick={() => listOps.setDeletingList(true)}
+              >
+                <Trash2 className="h-4 w-4" />
+                削除
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
       <p className="text-sm text-muted-foreground">{list.bookmarkCount}件のブックマーク</p>
       {sel.selectionMode ? (

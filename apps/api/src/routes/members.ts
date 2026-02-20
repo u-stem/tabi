@@ -1,8 +1,8 @@
 import { addMemberSchema, MAX_MEMBERS_PER_TRIP, updateMemberRoleSchema } from "@sugara/shared";
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { expenses, tripMembers, users } from "../db/schema";
+import { expenseSplits, expenses, tripMembers, users } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { requireAuth } from "../middleware/auth";
@@ -158,15 +158,17 @@ memberRoutes.delete("/:tripId/members/:userId", requireTripAccess("owner"), asyn
   }
 
   // Block removal if user has expenses (as payer or in splits)
-  const expensesWithUser = await db.query.expenses.findMany({
-    where: and(eq(expenses.tripId, tripId)),
-    with: { splits: true },
-  });
-  const hasExpenses = expensesWithUser.some(
-    (e) =>
-      e.paidByUserId === targetUserId || e.splits.some((s) => s.userId === targetUserId),
-  );
-  if (hasExpenses) {
+  const [{ count: expenseCount }] = await db
+    .select({ count: count() })
+    .from(expenses)
+    .leftJoin(expenseSplits, eq(expenseSplits.expenseId, expenses.id))
+    .where(
+      and(
+        eq(expenses.tripId, tripId),
+        or(eq(expenses.paidByUserId, targetUserId), eq(expenseSplits.userId, targetUserId)),
+      ),
+    );
+  if (expenseCount > 0) {
     return c.json({ error: ERROR_MSG.MEMBER_HAS_EXPENSES }, 409);
   }
 

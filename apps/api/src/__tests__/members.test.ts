@@ -12,9 +12,6 @@ const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, m
       users: {
         findFirst: vi.fn(),
       },
-      expenses: {
-        findMany: vi.fn(),
-      },
     },
     mockDbInsert: vi.fn(),
     mockDbUpdate: vi.fn(),
@@ -69,10 +66,12 @@ describe("Member routes", () => {
       userId: fakeUserId,
       role: "owner",
     });
-    // Default: count query returns 0 (under limit)
+    // Default: count query returns 0 (under limit / no expenses)
+    const mockWhere = vi.fn().mockResolvedValue([{ count: 0 }]);
     mockDbSelect.mockReturnValue({
       from: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue([{ count: 0 }]),
+        where: mockWhere,
+        leftJoin: vi.fn().mockReturnValue({ where: mockWhere }),
       }),
     });
   });
@@ -298,7 +297,6 @@ describe("Member routes", () => {
           role: "editor",
           user: { name: "Editor" },
         });
-      mockDbQuery.expenses.findMany.mockResolvedValue([]);
       mockDbDelete.mockReturnValue({
         where: vi.fn().mockResolvedValue(undefined),
       });
@@ -322,9 +320,14 @@ describe("Member routes", () => {
           role: "editor",
           user: { name: "Editor" },
         });
-      mockDbQuery.expenses.findMany.mockResolvedValue([
-        { paidByUserId: fakeUser2Id, splits: [] },
-      ]);
+      // Override select mock to return expense count > 0
+      const mockExpenseWhere = vi.fn().mockResolvedValue([{ count: 1 }]);
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: mockExpenseWhere,
+          leftJoin: vi.fn().mockReturnValue({ where: mockExpenseWhere }),
+        }),
+      });
 
       const app = createTestApp(memberRoutes, "/api/trips");
       const res = await app.request(`${basePath}/${fakeUser2Id}`, {

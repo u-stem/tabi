@@ -13,6 +13,7 @@ const FeedbackDialog = dynamic(() =>
   import("@/components/feedback-dialog").then((mod) => mod.FeedbackDialog),
 );
 
+import { GuestBanner } from "@/components/guest-banner";
 import { Logo } from "@/components/logo";
 import { OfflineBanner } from "@/components/offline-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -54,7 +55,7 @@ export function Header() {
   const { data: friendRequests } = useQuery({
     queryKey: queryKeys.friends.requests(),
     queryFn: () => api<FriendRequestResponse[]>("/api/friends/requests"),
-    enabled: !!session?.user,
+    enabled: !!session?.user && !(session.user as Record<string, unknown>).isAnonymous,
     refetchInterval: 60_000,
   });
   const friendRequestCount = friendRequests?.length ?? 0;
@@ -71,6 +72,7 @@ export function Header() {
   return (
     <header className="select-none border-b">
       <OfflineBanner />
+      <GuestBanner />
       <nav
         aria-label="メインナビゲーション"
         className="container flex h-14 items-center justify-between"

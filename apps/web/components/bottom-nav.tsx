@@ -17,7 +17,7 @@ export function BottomNav() {
   const { data: friendRequests } = useQuery({
     queryKey: queryKeys.friends.requests(),
     queryFn: () => api<FriendRequestResponse[]>("/api/friends/requests"),
-    enabled: !!session?.user,
+    enabled: !!session?.user && !(session.user as Record<string, unknown>).isAnonymous,
     refetchInterval: 60_000,
   });
   const friendRequestCount = friendRequests?.length ?? 0;

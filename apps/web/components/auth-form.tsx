@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
+import { GuestButton } from "@/components/guest-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -102,6 +103,14 @@ export function AuthForm() {
             ログインができなくなりますのでご注意ください。
           </p>
         </form>
+        <div className="mt-4 flex items-center gap-4">
+          <div className="flex-1 border-t" />
+          <span className="text-xs text-muted-foreground">または</span>
+          <div className="flex-1 border-t" />
+        </div>
+        <div className="mt-4">
+          <GuestButton />
+        </div>
       </CardContent>
     </Card>
   );

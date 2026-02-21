@@ -78,6 +78,7 @@ export const users = pgTable("users", {
   image: varchar("image", { length: 500 }),
   username: varchar("username", { length: 30 }).unique(),
   displayUsername: varchar("display_username", { length: 30 }),
+  isAnonymous: boolean("is_anonymous").notNull().default(false),
   guestExpiresAt: timestamp("guest_expires_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

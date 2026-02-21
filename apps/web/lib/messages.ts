@@ -103,6 +103,12 @@ export const MSG = {
   AUTH_SIGNUP_PASSWORD_MISMATCH: "パスワードが一致しません",
   AUTH_SIGNUP_TERMS_REQUIRED: "利用規約とプライバシーポリシーへの同意が必要です",
   AUTH_PASSWORD_TOO_WEAK: "パスワードの要件を満たしていません",
+  AUTH_GUEST_STARTED: "ゲストモードで開始しました",
+  AUTH_GUEST_FAILED: "ゲストアカウントの作成に失敗しました",
+  AUTH_GUEST_UPGRADE_SUCCESS: "アカウント登録が完了しました",
+  AUTH_GUEST_UPGRADE_FAILED: "アカウント登録に失敗しました",
+  AUTH_GUEST_FEATURE_UNAVAILABLE: "この機能を使うにはアカウント登録が必要です",
+  AUTH_GUEST_TRIP_LIMIT: "ゲストモードでは旅行を1件まで作成できます",
 
   // Friend
   FRIEND_REQUEST_SENT: "フレンド申請を送信しました",

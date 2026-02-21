@@ -23,7 +23,7 @@ import {
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { ApiError, api, getApiErrorMessage } from "@/lib/api";
 import { formatDateRangeShort } from "@/lib/format";
 import { useCoverImageUpload } from "@/lib/hooks/use-cover-image-upload";
 import { MSG } from "@/lib/messages";
@@ -129,7 +129,11 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
         toast.success(MSG.TRIP_CREATED);
         onCreated();
       } catch (err) {
-        setError(getApiErrorMessage(err, MSG.TRIP_CREATE_FAILED));
+        if (err instanceof ApiError && err.status === 403) {
+          setError(MSG.AUTH_GUEST_TRIP_LIMIT);
+        } else {
+          setError(getApiErrorMessage(err, MSG.TRIP_CREATE_FAILED));
+        }
       } finally {
         setLoading(false);
       }
@@ -166,7 +170,11 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
         toast.success(MSG.TRIP_CREATED);
         onCreated();
       } catch (err) {
-        setError(getApiErrorMessage(err, MSG.TRIP_CREATE_FAILED));
+        if (err instanceof ApiError && err.status === 403) {
+          setError(MSG.AUTH_GUEST_TRIP_LIMIT);
+        } else {
+          setError(getApiErrorMessage(err, MSG.TRIP_CREATE_FAILED));
+        }
       } finally {
         setLoading(false);
       }

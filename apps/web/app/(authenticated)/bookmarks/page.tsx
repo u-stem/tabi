@@ -38,7 +38,9 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
+import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
+import { isGuestUser } from "@/lib/guest";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
@@ -60,6 +62,8 @@ export default function BookmarksPage() {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const online = useOnlineStatus();
+  const { data: session } = useSession();
+  const isGuest = isGuestUser(session);
 
   const {
     data: bookmarkLists = [],
@@ -68,6 +72,7 @@ export default function BookmarksPage() {
   } = useQuery({
     queryKey: queryKeys.bookmarks.lists(),
     queryFn: () => api<BookmarkListResponse[]>("/api/bookmark-lists"),
+    enabled: !isGuest,
   });
   useAuthRedirect(error);
 
@@ -192,6 +197,16 @@ export default function BookmarksPage() {
     setSelectedIds(new Set());
     setSelectionMode(false);
     setDuplicating(false);
+  }
+
+  if (isGuest) {
+    return (
+      <div className="mt-4 mx-auto max-w-2xl">
+        <div className="rounded-lg border bg-muted/50 p-8 text-center">
+          <p className="text-sm text-muted-foreground">{MSG.AUTH_GUEST_FEATURE_UNAVAILABLE}</p>
+        </div>
+      </div>
+    );
   }
 
   if (isLoading && !showSkeleton) return <div />;

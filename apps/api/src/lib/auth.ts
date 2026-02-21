@@ -49,6 +49,14 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  user: {
+    additionalFields: {
+      guestExpiresAt: {
+        type: "date",
+        required: false,
+      },
+    },
+  },
   databaseHooks: {
     user: {
       create: {
@@ -75,6 +83,7 @@ export const auth = betterAuth({
   plugins: [
     anonymous({
       emailDomainName: "guest.sugara.local",
+      generateName: () => "ゲストユーザー",
       onLinkAccount: async ({ anonymousUser, newUser }) => {
         const oldUserId = anonymousUser.user.id;
         const newUserId = newUser.user.id;
@@ -90,6 +99,7 @@ export const auth = betterAuth({
             .set({ userId: newUserId })
             .where(eq(schema.tripMembers.userId, oldUserId));
 
+          // Guests currently can't create bookmarks, but transfer defensively
           await tx
             .update(schema.bookmarkLists)
             .set({ userId: newUserId })

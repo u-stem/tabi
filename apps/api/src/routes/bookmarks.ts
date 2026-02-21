@@ -14,10 +14,12 @@ import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
 import { checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
+import { requireNonGuest } from "../middleware/require-non-guest";
 import type { AppEnv } from "../types";
 
 const bookmarkRoutes = new Hono<AppEnv>();
 bookmarkRoutes.use("*", requireAuth);
+bookmarkRoutes.use("*", requireNonGuest);
 
 async function verifyListOwnership(listId: string, userId: string) {
   const list = await db.query.bookmarkLists.findFirst({

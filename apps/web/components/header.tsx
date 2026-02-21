@@ -52,12 +52,15 @@ export function Header() {
   const { open: openShortcutHelp } = useShortcutHelp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const isGuest = isGuestUser(session);
 
   const { data: friendRequests } = useQuery({
     queryKey: queryKeys.friends.requests(),
     queryFn: () => api<FriendRequestResponse[]>("/api/friends/requests"),
     enabled: !!session?.user && !isGuestUser(session),
     refetchInterval: 60_000,
+    // Cookie cache may return session without isAnonymous, causing a 403 before fresh session arrives
+    retry: false,
   });
   const friendRequestCount = friendRequests?.length ?? 0;
 
@@ -123,18 +126,22 @@ export function Header() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuLabel className="truncate">{session.user.name}</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href={`/users/${session.user.id}`}>
-                      <User className="h-4 w-4" />
-                      プロフィール
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/settings">
-                      <Settings className="h-4 w-4" />
-                      設定
-                    </Link>
-                  </DropdownMenuItem>
+                  {!isGuest && (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/users/${session.user.id}`}>
+                          <User className="h-4 w-4" />
+                          プロフィール
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/settings">
+                          <Settings className="h-4 w-4" />
+                          設定
+                        </Link>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuItem onClick={openShortcutHelp} className="hidden sm:flex">
                     <Keyboard className="h-4 w-4" />
                     ショートカット
@@ -186,27 +193,31 @@ export function Header() {
                     </SheetDescription>
                   </SheetHeader>
                   <nav className="mt-6 flex flex-col gap-1" aria-label="モバイルメニュー">
-                    <Link
-                      href={`/users/${session.user.id}`}
-                      onClick={() => setMobileMenuOpen(false)}
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <User className="h-4 w-4" />
-                      プロフィール
-                    </Link>
-                    <Link
-                      href="/settings"
-                      onClick={() => setMobileMenuOpen(false)}
-                      className={cn(
-                        "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                        pathname === "/settings"
-                          ? "bg-muted font-medium text-foreground"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      <Settings className="h-4 w-4" />
-                      設定
-                    </Link>
+                    {!isGuest && (
+                      <>
+                        <Link
+                          href={`/users/${session.user.id}`}
+                          onClick={() => setMobileMenuOpen(false)}
+                          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          <User className="h-4 w-4" />
+                          プロフィール
+                        </Link>
+                        <Link
+                          href="/settings"
+                          onClick={() => setMobileMenuOpen(false)}
+                          className={cn(
+                            "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                            pathname === "/settings"
+                              ? "bg-muted font-medium text-foreground"
+                              : "text-muted-foreground hover:text-foreground",
+                          )}
+                        >
+                          <Settings className="h-4 w-4" />
+                          設定
+                        </Link>
+                      </>
+                    )}
                     <button
                       type="button"
                       onClick={() => {

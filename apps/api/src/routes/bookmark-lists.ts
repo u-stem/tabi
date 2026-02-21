@@ -11,10 +11,12 @@ import { bookmarkLists, bookmarks } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
 import { requireAuth } from "../middleware/auth";
+import { requireNonGuest } from "../middleware/require-non-guest";
 import type { AppEnv } from "../types";
 
 const bookmarkListRoutes = new Hono<AppEnv>();
 bookmarkListRoutes.use("*", requireAuth);
+bookmarkListRoutes.use("*", requireNonGuest);
 
 // List own bookmark lists
 bookmarkListRoutes.get("/", async (c) => {

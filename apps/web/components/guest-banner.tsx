@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { GuestUpgradeDialog } from "@/components/guest-upgrade-dialog";
-import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
 import { getGuestDaysRemaining, isGuestUser } from "@/lib/guest";
 
@@ -21,14 +20,13 @@ export function GuestBanner() {
           <span className="text-amber-900 dark:text-amber-200">
             ゲストモード（残り{daysRemaining}日）
           </span>
-          <Button
-            variant="link"
-            size="sm"
-            className="h-auto p-0 text-sm"
+          <button
+            type="button"
+            className="rounded-full bg-amber-600 px-3 py-0.5 text-xs font-medium text-white transition-colors hover:bg-amber-700 dark:bg-amber-500 dark:text-amber-950 dark:hover:bg-amber-400"
             onClick={() => setUpgradeOpen(true)}
           >
             アカウント登録
-          </Button>
+          </button>
         </div>
       </div>
       <GuestUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />

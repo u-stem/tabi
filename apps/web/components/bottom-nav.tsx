@@ -20,6 +20,8 @@ export function BottomNav() {
     queryFn: () => api<FriendRequestResponse[]>("/api/friends/requests"),
     enabled: !!session?.user && !isGuestUser(session),
     refetchInterval: 60_000,
+    // Cookie cache may return session without isAnonymous, causing a 403 before fresh session arrives
+    retry: false,
   });
   const friendRequestCount = friendRequests?.length ?? 0;
 

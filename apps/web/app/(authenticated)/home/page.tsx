@@ -18,7 +18,9 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
+import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
+import { isGuestUser } from "@/lib/guest";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
@@ -35,6 +37,8 @@ export default function HomePage() {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const online = useOnlineStatus();
+  const { data: session } = useSession();
+  const isGuest = isGuestUser(session);
 
   const {
     data: ownedTrips = [],
@@ -265,7 +269,7 @@ export default function HomePage() {
 
   return (
     <>
-      <FriendRequestsCard />
+      {!isGuest && <FriendRequestsCard />}
       {showSkeleton ? (
         <>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">

@@ -29,6 +29,7 @@ import {
 import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api } from "@/lib/api";
 import { authClient, useSession } from "@/lib/auth-client";
+import { isGuestUser } from "@/lib/guest";
 import { translateAuthError } from "@/lib/auth-error";
 import { copyToClipboard } from "@/lib/clipboard";
 import {
@@ -42,12 +43,23 @@ import { MSG } from "@/lib/messages";
 
 export default function SettingsPage() {
   const { data: session } = useSession();
+  const isGuest = isGuestUser(session);
 
   useEffect(() => {
     document.title = pageTitle("設定");
   }, []);
 
   const user = session?.user;
+
+  if (isGuest) {
+    return (
+      <div className="mt-4 mx-auto max-w-2xl">
+        <div className="rounded-lg border bg-muted/50 p-8 text-center">
+          <p className="text-sm text-muted-foreground">{MSG.AUTH_GUEST_FEATURE_UNAVAILABLE}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-8">

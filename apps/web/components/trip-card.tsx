@@ -2,6 +2,7 @@
 
 import type { TripListItem } from "@sugara/shared";
 import { ROLE_LABELS, STATUS_LABELS } from "@sugara/shared";
+import Image from "next/image";
 import Link from "next/link";
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -26,6 +27,8 @@ export const TripCard = memo(function TripCard({
   status,
   role,
   totalSchedules,
+  coverImageUrl,
+  coverImagePosition,
   selectable = false,
   selected = false,
   onSelect,
@@ -36,6 +39,18 @@ export const TripCard = memo(function TripCard({
 
   const inner = (
     <div className="flex h-full flex-col">
+      {coverImageUrl && (
+        <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-xl">
+          <Image
+            src={coverImageUrl}
+            alt=""
+            fill
+            className="object-cover"
+            style={{ objectPosition: `center ${coverImagePosition}%` }}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          />
+        </div>
+      )}
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex min-w-0 items-center gap-2">

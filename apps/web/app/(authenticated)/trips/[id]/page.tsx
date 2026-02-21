@@ -478,6 +478,8 @@ export default function TripDetailPage() {
           destination={trip.destination}
           startDate={trip.startDate}
           endDate={trip.endDate}
+          coverImageUrl={trip.coverImageUrl}
+          coverImagePosition={trip.coverImagePosition}
           open={editOpen}
           onOpenChange={setEditOpen}
           onUpdate={onMutate}

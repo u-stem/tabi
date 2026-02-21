@@ -2,6 +2,7 @@
 
 import type { TripResponse } from "@sugara/shared";
 import { MAX_MEMBERS_PER_TRIP } from "@sugara/shared";
+import Image from "next/image";
 
 import { PresenceAvatars } from "@/components/presence-avatars";
 import { TripActions } from "@/components/trip-actions";
@@ -40,6 +41,20 @@ export function TripHeader({
 
   return (
     <div className="mb-3 lg:mb-6">
+      {trip.coverImageUrl && (
+        <div className="relative mb-3 aspect-[3/1] w-full overflow-hidden rounded-xl">
+          <Image
+            src={trip.coverImageUrl}
+            alt=""
+            fill
+            className="object-cover"
+            style={{ objectPosition: `center ${trip.coverImagePosition}%` }}
+            sizes="100vw"
+            priority
+          />
+        </div>
+      )}
+
       {/* Mobile compact header */}
       <div className="flex h-11 items-center gap-2 lg:hidden">
         <h1 className="min-w-0 flex-1 truncate text-base font-bold">{trip.title}</h1>

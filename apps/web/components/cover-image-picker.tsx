@@ -1,13 +1,32 @@
 "use client";
 
 import { ImagePlus, Move, X } from "lucide-react";
-import Image from "next/image";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 const ALLOWED_TYPES = "image/jpeg,image/png,image/webp";
+
+const PREVIEW_MODES = {
+  home: { label: "ホーム", aspect: 16 / 9 },
+  detail: { label: "詳細", aspect: 3 },
+} as const;
+
+type PreviewMode = keyof typeof PREVIEW_MODES;
+
+function calcCrop(imageAspect: number, targetAspect: number, position: number) {
+  if (!imageAspect || imageAspect >= targetAspect) {
+    return { top: 0, bottom: 0, hasCrop: false } as const;
+  }
+  const visible = imageAspect / targetAspect;
+  const cropped = 1 - visible;
+  return {
+    top: cropped * (position / 100) * 100,
+    bottom: cropped * (1 - position / 100) * 100,
+    hasCrop: true,
+  } as const;
+}
 
 type CoverImagePickerProps = {
   imageUrl: string | null;
@@ -32,7 +51,28 @@ export function CoverImagePicker({
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const dragStartRef = useRef<{ y: number; startPosition: number } | null>(null);
-  const previewUrl = previewFile ? URL.createObjectURL(previewFile) : imageUrl;
+  const [imageAspect, setImageAspect] = useState(0);
+  const [previewMode, setPreviewMode] = useState<PreviewMode>("home");
+
+  const previewUrl = useMemo(
+    () => (previewFile ? URL.createObjectURL(previewFile) : imageUrl),
+    [previewFile, imageUrl],
+  );
+
+  useEffect(() => {
+    return () => {
+      if (previewFile && previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewFile, previewUrl]);
+
+  const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
+    setImageAspect(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight);
+  }, []);
+
+  const crop = useMemo(
+    () => calcCrop(imageAspect, PREVIEW_MODES[previewMode].aspect, position),
+    [imageAspect, previewMode, position],
+  );
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,13 +94,13 @@ export function CoverImagePicker({
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
-      if (disabled) return;
+      if (disabled || !crop.hasCrop) return;
       e.preventDefault();
       setDragging(true);
       dragStartRef.current = { y: e.clientY, startPosition: position };
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [disabled, position],
+    [disabled, crop.hasCrop, position],
   );
 
   const handlePointerMove = useCallback(
@@ -70,7 +110,7 @@ export function CoverImagePicker({
       const deltaY = e.clientY - dragStartRef.current.y;
       const deltaPercent = (deltaY / containerHeight) * 100;
       const newPosition = Math.round(
-        Math.min(100, Math.max(0, dragStartRef.current.startPosition - deltaPercent)),
+        Math.min(100, Math.max(0, dragStartRef.current.startPosition + deltaPercent)),
       );
       onPositionChange(newPosition);
     },
@@ -87,33 +127,68 @@ export function CoverImagePicker({
       <Label>カバー画像</Label>
       {previewUrl ? (
         <div className="space-y-1">
+          {/* Preview mode toggle */}
+          <div className="flex gap-1">
+            {(Object.entries(PREVIEW_MODES) as [PreviewMode, (typeof PREVIEW_MODES)[PreviewMode]][]).map(
+              ([key, { label }]) => (
+                <Button
+                  key={key}
+                  type="button"
+                  variant={previewMode === key ? "default" : "outline"}
+                  size="sm"
+                  className="h-6 px-2 text-xs"
+                  onClick={() => setPreviewMode(key)}
+                >
+                  {label}
+                </Button>
+              ),
+            )}
+          </div>
+
           <div
             ref={containerRef}
             className={cn(
-              "relative aspect-[16/9] w-full overflow-hidden rounded-md border",
-              !disabled && "cursor-grab",
+              "relative w-full overflow-hidden rounded-md border",
+              !disabled && crop.hasCrop && "cursor-grab",
               dragging && "cursor-grabbing",
             )}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
           >
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={previewUrl}
               alt="カバー画像プレビュー"
-              fill
-              className="pointer-events-none object-cover"
-              style={{ objectPosition: `center ${position}%` }}
-              unoptimized={!!previewFile}
+              className="pointer-events-none block w-full"
+              onLoad={handleImageLoad}
               draggable={false}
             />
-            {!disabled && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-black/40 py-1 text-xs text-white">
+
+            {crop.hasCrop && (
+              <>
+                <div
+                  className="pointer-events-none absolute inset-x-0 top-0 bg-black/50"
+                  style={{ height: `${crop.top}%` }}
+                />
+                <div
+                  className="pointer-events-none absolute inset-x-0 bottom-0 bg-black/50"
+                  style={{ height: `${crop.bottom}%` }}
+                />
+              </>
+            )}
+
+            {!disabled && crop.hasCrop && (
+              <div
+                className="pointer-events-none absolute inset-x-0 flex items-center justify-center gap-1 py-1 text-xs text-white"
+                style={{ bottom: `${crop.bottom}%` }}
+              >
                 <Move className="h-3 w-3" />
                 ドラッグで位置を調整
               </div>
             )}
           </div>
+
           <div className="flex gap-2">
             <Button
               type="button"

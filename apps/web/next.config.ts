@@ -77,13 +77,9 @@ const nextConfig: NextConfig = {
         hostname: "*.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
-      {
-        protocol: "http",
-        hostname: "127.0.0.1",
-        port: "54321",
-        pathname: "/storage/v1/object/public/**",
-      },
     ],
+    // Next.js blocks private IPs (127.0.0.1) for SSRF prevention
+    unoptimized: process.env.NODE_ENV === "development",
   },
   headers: async () => [
     {

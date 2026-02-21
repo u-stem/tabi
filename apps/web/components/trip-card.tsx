@@ -38,7 +38,7 @@ export const TripCard = memo(function TripCard({
   const showRole = role !== "owner";
 
   const inner = (
-    <div className="flex h-full flex-col">
+    <div className="flex flex-col">
       {coverImageUrl && (
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-xl">
           <Image
@@ -91,7 +91,7 @@ export const TripCard = memo(function TripCard({
       >
         <Card
           className={cn(
-            "h-full transition-colors hover:bg-accent/50 group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring",
+            "transition-colors hover:bg-accent/50 group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring",
             selected && SELECTED_RING,
           )}
         >
@@ -103,7 +103,7 @@ export const TripCard = memo(function TripCard({
 
   return (
     <Link href={`/trips/${id}`} className="group block focus-visible:outline-none">
-      <Card className="h-full transition-colors hover:bg-accent/50 group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
+      <Card className="transition-colors hover:bg-accent/50 group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
         {inner}
       </Card>
     </Link>

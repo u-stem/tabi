@@ -29,7 +29,6 @@ import {
 import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api } from "@/lib/api";
 import { authClient, useSession } from "@/lib/auth-client";
-import { isGuestUser } from "@/lib/guest";
 import { translateAuthError } from "@/lib/auth-error";
 import { copyToClipboard } from "@/lib/clipboard";
 import {
@@ -39,6 +38,7 @@ import {
   pageTitle,
   validatePassword,
 } from "@/lib/constants";
+import { isGuestUser } from "@/lib/guest";
 import { MSG } from "@/lib/messages";
 
 export default function SettingsPage() {

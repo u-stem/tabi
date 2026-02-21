@@ -521,11 +521,7 @@ export default function TripDetailPage() {
                         />
                       </div>
                     ) : currentDay && currentPattern ? (
-                      <div
-                        id={`mobile-day-panel-${currentDay.id}`}
-                        role="tabpanel"
-                        className="p-4"
-                      >
+                      <div id={`mobile-day-panel-${currentDay.id}`} role="tabpanel" className="p-4">
                         <DayMemoEditor
                           memo={memo}
                           currentDayId={currentDay.id}

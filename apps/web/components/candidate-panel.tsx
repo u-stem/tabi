@@ -76,7 +76,6 @@ import { ActionSheet } from "./action-sheet";
 import { DndInsertIndicator } from "./dnd-insert-indicator";
 import { DragHandle } from "./drag-handle";
 import { ItemMenuButton } from "./item-menu-button";
-import { SwipeableCard } from "./swipeable-card";
 
 type CandidatePanelProps = {
   tripId: string;
@@ -140,8 +139,6 @@ function CandidateCard({
   const transportLabel = spot.transportMethod
     ? TRANSPORT_METHOD_LABELS[spot.transportMethod as TransportMethod]
     : null;
-  const canSwipe = isMobile && !disabled && !selectable;
-
   const cardElement = (
     <div
       ref={setNodeRef}
@@ -371,28 +368,7 @@ function CandidateCard({
 
   return (
     <>
-      {canSwipe ? (
-        <SwipeableCard
-          actions={[
-            {
-              label: "予定に追加",
-              icon: <ArrowLeft className="h-4 w-4" />,
-              color: "blue",
-              onClick: onAssign,
-            },
-            {
-              label: "削除",
-              icon: <Trash2 className="h-4 w-4" />,
-              color: "red",
-              onClick: () => setDeleteOpen(true),
-            },
-          ]}
-        >
-          {cardElement}
-        </SwipeableCard>
-      ) : (
-        cardElement
-      )}
+      {cardElement}
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -52,7 +52,6 @@ import { cn } from "@/lib/utils";
 import { ActionSheet } from "./action-sheet";
 import { DragHandle } from "./drag-handle";
 import { ItemMenuButton } from "./item-menu-button";
-import { SwipeableCard } from "./swipeable-card";
 
 const EditScheduleDialog = dynamic(() =>
   import("./edit-schedule-dialog").then((mod) => mod.EditScheduleDialog),
@@ -614,7 +613,6 @@ function PlaceCard({
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
-  const isMobile = useIsMobile();
   const CategoryIcon = CATEGORY_ICONS[category];
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
   const isPast = timeStatus === "past";
@@ -623,25 +621,6 @@ function PlaceCard({
   const visibleStartTime = crossDayDisplay ? endTime : startTime;
   const visibleEndTime = crossDayDisplay || endDayOffset ? null : endTime;
   const timeStr = formatTimeRange(visibleStartTime, visibleEndTime);
-
-  const canSwipe = isMobile && !disabled && !crossDayDisplay && !selectable;
-
-  const swipeActions = canSwipe
-    ? [
-        {
-          label: "編集",
-          icon: <Pencil className="h-4 w-4" />,
-          color: "blue" as const,
-          onClick: () => setEditOpen(true),
-        },
-        {
-          label: "削除",
-          icon: <Trash2 className="h-4 w-4" />,
-          color: "red" as const,
-          onClick: onDelete,
-        },
-      ]
-    : undefined;
 
   const cardBody = (
     <div
@@ -731,13 +710,7 @@ function PlaceCard({
         colorClasses={colorClasses}
       />
 
-      {swipeActions ? (
-        <SwipeableCard actions={swipeActions} className="min-w-0 flex-1 self-start">
-          {cardBody}
-        </SwipeableCard>
-      ) : (
-        cardBody
-      )}
+      {cardBody}
 
       <ScheduleItemDialogs
         tripId={tripId}
@@ -808,11 +781,9 @@ function TransportConnector({
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
-  const isMobile = useIsMobile();
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
   const isPast = timeStatus === "past";
   const isCurrent = timeStatus === "current";
-  const canSwipe = isMobile && !disabled && !crossDayDisplay && !selectable;
   const TransportIcon = transportMethod
     ? TRANSPORT_ICONS[transportMethod as TransportMethod]
     : CATEGORY_ICONS.transport;
@@ -847,23 +818,6 @@ function TransportConnector({
           time: startTime,
         })
       : null;
-
-  const swipeActions = canSwipe
-    ? [
-        {
-          label: "編集",
-          icon: <Pencil className="h-4 w-4" />,
-          color: "blue" as const,
-          onClick: () => setEditOpen(true),
-        },
-        {
-          label: "削除",
-          icon: <Trash2 className="h-4 w-4" />,
-          color: "red" as const,
-          onClick: onDelete,
-        },
-      ]
-    : undefined;
 
   const cardBody = (
     <div
@@ -960,13 +914,7 @@ function TransportConnector({
         colorClasses={colorClasses}
       />
 
-      {swipeActions ? (
-        <SwipeableCard actions={swipeActions} className="min-w-0 flex-1 self-start">
-          {cardBody}
-        </SwipeableCard>
-      ) : (
-        cardBody
-      )}
+      {cardBody}
 
       <ScheduleItemDialogs
         tripId={tripId}

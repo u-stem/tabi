@@ -6,9 +6,9 @@ import { ArrowRight, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
 import { Collapsible as CollapsiblePrimitive } from "radix-ui";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ActionSheet } from "@/components/action-sheet";
 import { ExpenseDialog } from "@/components/expense-dialog";
 import { ItemMenuButton } from "@/components/item-menu-button";
-import { SwipeableCard } from "@/components/swipeable-card";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -277,9 +277,9 @@ function ExpenseItem({
   onEdit: (expense: Expense) => void;
   onDelete: (expense: Expense) => void;
 }) {
-  const canSwipe = isMobile && canEdit;
+  const [sheetOpen, setSheetOpen] = useState(false);
 
-  const cardElement = (
+  return (
     <CollapsiblePrimitive.Root className="rounded-md border">
       <div className="flex items-start justify-between gap-2 p-3">
         <div className="min-w-0 flex-1">
@@ -291,21 +291,46 @@ function ExpenseItem({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span className="text-sm font-bold">{expense.amount.toLocaleString()}円</span>
-          {canEdit && !isMobile && (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <ItemMenuButton ariaLabel={`${expense.title}のメニュー`} />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(expense)}>
-                  <Pencil /> 編集
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive" onClick={() => onDelete(expense)}>
-                  <Trash2 /> 削除
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+          {canEdit &&
+            (isMobile ? (
+              <>
+                <ItemMenuButton
+                  ariaLabel={`${expense.title}のメニュー`}
+                  onClick={() => setSheetOpen(true)}
+                />
+                <ActionSheet
+                  open={sheetOpen}
+                  onOpenChange={setSheetOpen}
+                  actions={[
+                    {
+                      label: "編集",
+                      icon: <Pencil className="h-4 w-4" />,
+                      onClick: () => onEdit(expense),
+                    },
+                    {
+                      label: "削除",
+                      icon: <Trash2 className="h-4 w-4" />,
+                      onClick: () => onDelete(expense),
+                      variant: "destructive" as const,
+                    },
+                  ]}
+                />
+              </>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <ItemMenuButton ariaLabel={`${expense.title}のメニュー`} />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onEdit(expense)}>
+                    <Pencil /> 編集
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-destructive" onClick={() => onDelete(expense)}>
+                    <Trash2 /> 削除
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ))}
         </div>
       </div>
       {expense.splits.length > 0 && (
@@ -336,29 +361,4 @@ function ExpenseItem({
       )}
     </CollapsiblePrimitive.Root>
   );
-
-  if (canSwipe) {
-    return (
-      <SwipeableCard
-        actions={[
-          {
-            label: "編集",
-            icon: <Pencil className="h-4 w-4" />,
-            color: "blue",
-            onClick: () => onEdit(expense),
-          },
-          {
-            label: "削除",
-            icon: <Trash2 className="h-4 w-4" />,
-            color: "red",
-            onClick: () => onDelete(expense),
-          },
-        ]}
-      >
-        {cardElement}
-      </SwipeableCard>
-    );
-  }
-
-  return cardElement;
 }

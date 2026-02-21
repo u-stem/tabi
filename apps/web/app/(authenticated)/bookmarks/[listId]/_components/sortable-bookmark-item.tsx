@@ -9,7 +9,7 @@ import { useState } from "react";
 import { ActionSheet } from "@/components/action-sheet";
 import { DragHandle } from "@/components/drag-handle";
 import { ItemMenuButton } from "@/components/item-menu-button";
-import { SwipeableCard } from "@/components/swipeable-card";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -78,8 +78,6 @@ export function SortableBookmarkItem({
     transition,
   };
 
-  const canSwipe = isMobile;
-
   const cardContent = (
     <div
       className={cn(
@@ -134,28 +132,7 @@ export function SortableBookmarkItem({
 
   return (
     <div ref={setNodeRef} style={style}>
-      {canSwipe ? (
-        <SwipeableCard
-          actions={[
-            {
-              label: "編集",
-              icon: <Pencil className="h-4 w-4" />,
-              color: "blue" as const,
-              onClick: () => onEdit(bm),
-            },
-            {
-              label: "削除",
-              icon: <Trash2 className="h-4 w-4" />,
-              color: "red" as const,
-              onClick: () => onDelete(bm),
-            },
-          ]}
-        >
-          {cardContent}
-        </SwipeableCard>
-      ) : (
-        cardContent
-      )}
+      {cardContent}
     </div>
   );
 }

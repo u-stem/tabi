@@ -2,11 +2,10 @@
 
 import type { FriendResponse } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { Trash2, UserPlus } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
-import { SwipeableCard } from "@/components/swipeable-card";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -23,7 +22,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -50,7 +48,6 @@ function FriendListSection({
   const queryClient = useQueryClient();
   const [removingFriend, setRemovingFriend] = useState<FriendResponse | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
-  const isMobile = useIsMobile();
 
   async function handleRemove(friendId: string) {
     setLoadingId(friendId);
@@ -87,59 +84,32 @@ function FriendListSection({
             <p className="text-sm text-muted-foreground">フレンドがいません</p>
           ) : (
             <div className="max-h-80 space-y-3 overflow-y-auto">
-              {friends.map((friend) =>
-                isMobile ? (
-                  <SwipeableCard
-                    key={friend.friendId}
-                    actions={[
-                      {
-                        label: "解除",
-                        icon: <Trash2 className="h-4 w-4" />,
-                        color: "red" as const,
-                        onClick: () => setRemovingFriend(friend),
-                      },
-                    ]}
-                  >
-                    <Link
-                      href={`/users/${friend.userId}`}
-                      className="flex items-center gap-2 min-w-0 rounded-lg border bg-card px-3 py-2"
-                    >
-                      <UserAvatar
-                        name={friend.name}
-                        image={friend.image}
-                        className="h-6 w-6 shrink-0"
-                        fallbackClassName="text-xs"
-                      />
-                      <span className="text-sm truncate">{friend.name}</span>
-                    </Link>
-                  </SwipeableCard>
-                ) : (
-                  <div key={friend.friendId} className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <UserAvatar
-                        name={friend.name}
-                        image={friend.image}
-                        className="h-6 w-6 shrink-0"
-                        fallbackClassName="text-xs"
-                      />
-                      <span className="text-sm truncate">{friend.name}</span>
-                    </div>
-                    <div className="flex gap-2 shrink-0">
-                      <Button size="sm" variant="outline" asChild>
-                        <Link href={`/users/${friend.userId}`}>プロフィール</Link>
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        disabled={loadingId === friend.friendId}
-                        onClick={() => setRemovingFriend(friend)}
-                      >
-                        解除
-                      </Button>
-                    </div>
+              {friends.map((friend) => (
+                <div key={friend.friendId} className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <UserAvatar
+                      name={friend.name}
+                      image={friend.image}
+                      className="h-6 w-6 shrink-0"
+                      fallbackClassName="text-xs"
+                    />
+                    <span className="text-sm truncate">{friend.name}</span>
                   </div>
-                ),
-              )}
+                  <div className="flex gap-2 shrink-0">
+                    <Button size="sm" variant="outline" asChild>
+                      <Link href={`/users/${friend.userId}`}>プロフィール</Link>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={loadingId === friend.friendId}
+                      onClick={() => setRemovingFriend(friend)}
+                    >
+                      解除
+                    </Button>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>

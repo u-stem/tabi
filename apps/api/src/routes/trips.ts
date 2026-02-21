@@ -74,7 +74,10 @@ tripRoutes.post("/", async (c) => {
     const existing = await db
       .select({ id: trips.id })
       .from(trips)
-      .innerJoin(tripMembers, and(eq(tripMembers.tripId, trips.id), eq(tripMembers.userId, user.id)))
+      .innerJoin(
+        tripMembers,
+        and(eq(tripMembers.tripId, trips.id), eq(tripMembers.userId, user.id)),
+      )
       .limit(1);
     if (existing.length >= 1) {
       return c.json({ error: ERROR_MSG.GUEST_TRIP_LIMIT }, 403);

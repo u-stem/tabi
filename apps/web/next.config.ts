@@ -7,7 +7,7 @@ const cspDirectives = [
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
-  "img-src 'self' data: https://api.dicebear.com https://*.supabase.co",
+  "img-src 'self' blob: data: https://api.dicebear.com https://*.supabase.co",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.dicebear.com",
   "frame-src 'none'",
   "frame-ancestors 'none'",

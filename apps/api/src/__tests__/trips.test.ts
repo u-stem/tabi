@@ -1172,14 +1172,12 @@ describe("Trip routes", () => {
       mockDbUpdate.mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            returning: vi
-              .fn()
-              .mockResolvedValue([
-                {
-                  coverImageUrl:
-                    "http://localhost:54321/storage/v1/object/public/trip-covers/trip-1/new.jpg",
-                },
-              ]),
+            returning: vi.fn().mockResolvedValue([
+              {
+                coverImageUrl:
+                  "http://localhost:54321/storage/v1/object/public/trip-covers/trip-1/new.jpg",
+              },
+            ]),
           }),
         }),
       });
@@ -1209,14 +1207,12 @@ describe("Trip routes", () => {
       mockDbUpdate.mockReturnValue({
         set: vi.fn().mockReturnValue({
           where: vi.fn().mockReturnValue({
-            returning: vi
-              .fn()
-              .mockResolvedValue([
-                {
-                  coverImageUrl:
-                    "http://localhost:54321/storage/v1/object/public/trip-covers/trip-1/new.jpg",
-                },
-              ]),
+            returning: vi.fn().mockResolvedValue([
+              {
+                coverImageUrl:
+                  "http://localhost:54321/storage/v1/object/public/trip-covers/trip-1/new.jpg",
+              },
+            ]),
           }),
         }),
       });

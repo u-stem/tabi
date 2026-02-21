@@ -511,7 +511,7 @@ export default function TripDetailPage() {
                       hasPoll={!!trip.poll}
                     />
                     {selectedDay === -1 && trip.poll ? (
-                      <div className="min-h-0 overflow-y-auto">
+                      <div>
                         <PollTab
                           pollId={trip.poll.id}
                           isOwner={isOwnerRole(trip.role)}
@@ -524,7 +524,7 @@ export default function TripDetailPage() {
                       <div
                         id={`mobile-day-panel-${currentDay.id}`}
                         role="tabpanel"
-                        className="min-h-0 overflow-y-auto p-4"
+                        className="p-4"
                       >
                         <DayMemoEditor
                           memo={memo}

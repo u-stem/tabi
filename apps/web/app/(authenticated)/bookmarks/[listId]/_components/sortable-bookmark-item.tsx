@@ -87,7 +87,7 @@ export function SortableBookmarkItem({
         isDragging && "opacity-50",
       )}
     >
-      <div className="flex shrink-0 items-center pt-0.5">
+      <div className="flex h-5 shrink-0 items-center">
         <DragHandle attributes={attributes} listeners={listeners} />
       </div>
       <BookmarkItemContent bm={bm} asLink />

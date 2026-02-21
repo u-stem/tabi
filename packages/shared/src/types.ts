@@ -58,6 +58,8 @@ export type TripResponse = {
   startDate: string | null;
   endDate: string | null;
   status: TripStatus;
+  coverImageUrl: string | null;
+  coverImagePosition: number;
   role: MemberRole;
   days: DayResponse[];
   candidates: CandidateResponse[];
@@ -73,6 +75,8 @@ export type TripListItem = {
   startDate: string | null;
   endDate: string | null;
   status: TripStatus;
+  coverImageUrl: string | null;
+  coverImagePosition: number;
   role: MemberRole;
   totalSchedules: number;
   updatedAt: string;

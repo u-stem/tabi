@@ -31,6 +31,16 @@ describe("createTripSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("accepts optional coverImageUrl", () => {
+    const result = createTripSchema.safeParse({
+      title: "Trip",
+      startDate: "2025-03-15",
+      endDate: "2025-03-17",
+      coverImageUrl: "https://example.com/image.jpg",
+    });
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("updateTripSchema", () => {
@@ -71,6 +81,32 @@ describe("updateTripSchema", () => {
   it("rejects empty title", () => {
     const result = updateTripSchema.safeParse({ title: "" });
     expect(result.success).toBe(false);
+  });
+
+  it("accepts coverImageUrl update", () => {
+    const result = updateTripSchema.safeParse({
+      coverImageUrl: "https://example.com/image.jpg",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts null coverImageUrl to remove image", () => {
+    const result = updateTripSchema.safeParse({
+      coverImageUrl: null,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts coverImagePosition between 0 and 100", () => {
+    const result = updateTripSchema.safeParse({
+      coverImagePosition: 30,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects coverImagePosition outside range", () => {
+    expect(updateTripSchema.safeParse({ coverImagePosition: -1 }).success).toBe(false);
+    expect(updateTripSchema.safeParse({ coverImagePosition: 101 }).success).toBe(false);
   });
 });
 

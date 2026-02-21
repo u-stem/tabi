@@ -71,6 +71,8 @@ function makeTrip(overrides: Partial<TripResponse> = {}): TripResponse {
     startDate: "2025-04-01",
     endDate: "2025-04-03",
     status: "planned",
+    coverImageUrl: null,
+    coverImagePosition: 50,
     role: "owner",
     days: [makeDay()],
     candidates: [],

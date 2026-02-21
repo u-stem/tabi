@@ -45,6 +45,8 @@ const tripFixture: TripResponse = {
   startDate: "2025-07-01",
   endDate: "2025-07-03",
   status: "planned",
+  coverImageUrl: null,
+  coverImagePosition: 50,
   role: "owner",
   candidates: [],
   scheduleCount: 2,

@@ -280,8 +280,8 @@ function ExpenseItem({
   const canSwipe = isMobile && canEdit;
 
   const cardElement = (
-    <div className="rounded-md border p-3">
-      <div className="flex items-start justify-between gap-2">
+    <CollapsiblePrimitive.Root className="rounded-md border">
+      <div className="flex items-start justify-between gap-2 p-3">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{expense.title}</p>
           <p className="text-xs text-muted-foreground">
@@ -308,7 +308,33 @@ function ExpenseItem({
           )}
         </div>
       </div>
-    </div>
+      {expense.splits.length > 0 && (
+        <>
+          <CollapsiblePrimitive.Trigger className="flex w-full items-center gap-1 border-t px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/80 transition-colors [&[data-state=open]>svg]:rotate-180">
+            <ChevronDown className="h-3 w-3 transition-transform duration-200" />
+            負担額を表示
+          </CollapsiblePrimitive.Trigger>
+          <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
+            <div className="space-y-1 border-t px-3 pt-2 pb-3">
+              {[...expense.splits]
+                .sort((a, b) => b.amount - a.amount)
+                .map((split) => (
+                  <div
+                    key={split.userId}
+                    className="flex items-center justify-between pl-2 text-sm"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                      {split.user.name}
+                    </span>
+                    <span className="font-medium">{split.amount.toLocaleString()}円</span>
+                  </div>
+                ))}
+            </div>
+          </CollapsiblePrimitive.Content>
+        </>
+      )}
+    </CollapsiblePrimitive.Root>
   );
 
   if (canSwipe) {

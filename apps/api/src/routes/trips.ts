@@ -68,6 +68,19 @@ tripRoutes.get("/", async (c) => {
 // Create a trip (direct dates or poll mode)
 tripRoutes.post("/", async (c) => {
   const user = c.get("user");
+
+  // Guest: limit to 1 trip
+  if (user.isAnonymous) {
+    const existing = await db
+      .select({ id: trips.id })
+      .from(trips)
+      .innerJoin(tripMembers, and(eq(tripMembers.tripId, trips.id), eq(tripMembers.userId, user.id)))
+      .limit(1);
+    if (existing.length >= 1) {
+      return c.json({ error: ERROR_MSG.GUEST_TRIP_LIMIT }, 403);
+    }
+  }
+
   const body = await c.req.json();
   const isPollMode = "pollOptions" in body;
 

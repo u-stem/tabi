@@ -2,6 +2,8 @@ export type AuthUser = {
   id: string;
   name: string;
   email: string;
+  isAnonymous?: boolean | null;
+  guestExpiresAt?: Date | string | null;
 };
 
 export type AppEnv = {

@@ -74,4 +74,7 @@ export const ERROR_MSG = {
   FILE_REQUIRED: "File is required",
   FILE_TYPE_NOT_ALLOWED: "JPEG, PNG, WebP only",
   FILE_TOO_LARGE: "File size must be 3MB or less",
+  GUEST_NOT_ALLOWED: "This feature is not available for guest accounts",
+  GUEST_TRIP_LIMIT: "Guest accounts can only create 1 trip",
+  GUEST_EXPIRED: "Guest account has expired",
 } as const;

@@ -14,6 +14,12 @@ export async function requireAuth(c: Context, next: Next) {
 
     c.set("user", session.user);
     c.set("session", session.session);
+
+    const guestExpiresAt = (session.user as Record<string, unknown>).guestExpiresAt;
+    if (guestExpiresAt && new Date(guestExpiresAt as string) < new Date()) {
+      return c.json({ error: ERROR_MSG.GUEST_EXPIRED }, 401);
+    }
+
     await next();
   } catch (err) {
     console.error("Auth middleware error:", err);

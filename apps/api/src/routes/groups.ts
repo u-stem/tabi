@@ -13,10 +13,12 @@ import { groupMembers, groups, users } from "../db/schema";
 import { ERROR_MSG, PG_UNIQUE_VIOLATION } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
 import { requireAuth } from "../middleware/auth";
+import { requireNonGuest } from "../middleware/require-non-guest";
 import type { AppEnv } from "../types";
 
 const groupRoutes = new Hono<AppEnv>();
 groupRoutes.use("*", requireAuth);
+groupRoutes.use("*", requireNonGuest);
 
 const groupReturning = {
   id: groups.id,

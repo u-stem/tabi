@@ -9,10 +9,12 @@ import { db } from "../db/index";
 import { friends, users } from "../db/schema";
 import { ERROR_MSG, PG_UNIQUE_VIOLATION } from "../lib/constants";
 import { requireAuth } from "../middleware/auth";
+import { requireNonGuest } from "../middleware/require-non-guest";
 import type { AppEnv } from "../types";
 
 const friendRoutes = new Hono<AppEnv>();
 friendRoutes.use("*", requireAuth);
+friendRoutes.use("*", requireNonGuest);
 
 // List accepted friends
 friendRoutes.get("/", async (c) => {

@@ -4,6 +4,7 @@ import { db } from "../db/index";
 import { trips } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
 import { requireAuth } from "../middleware/auth";
+import { requireNonGuest } from "../middleware/require-non-guest";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
 
@@ -23,6 +24,7 @@ const shareRoutes = new Hono<AppEnv>();
 shareRoutes.post(
   "/api/trips/:id/share",
   requireAuth,
+  requireNonGuest,
   requireTripAccess("owner", "id"),
   async (c) => {
     const tripId = c.req.param("id");
@@ -79,6 +81,7 @@ shareRoutes.post(
 shareRoutes.put(
   "/api/trips/:id/share",
   requireAuth,
+  requireNonGuest,
   requireTripAccess("owner", "id"),
   async (c) => {
     const tripId = c.req.param("id");

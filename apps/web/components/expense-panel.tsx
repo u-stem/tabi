@@ -69,9 +69,11 @@ type ExpensesResponse = {
 type ExpensePanelProps = {
   tripId: string;
   canEdit: boolean;
+  addOpen?: boolean;
+  onAddOpenChange?: (open: boolean) => void;
 };
 
-export function ExpensePanel({ tripId, canEdit }: ExpensePanelProps) {
+export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: ExpensePanelProps) {
   const isMobile = useIsMobile();
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({
@@ -79,7 +81,9 @@ export function ExpensePanel({ tripId, canEdit }: ExpensePanelProps) {
     queryFn: () => api<ExpensesResponse>(`/api/trips/${tripId}/expenses`),
   });
 
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [internalDialogOpen, setInternalDialogOpen] = useState(false);
+  const dialogOpen = addOpen ?? internalDialogOpen;
+  const setDialogOpen = onAddOpenChange ?? setInternalDialogOpen;
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null);
 
@@ -138,8 +142,8 @@ export function ExpensePanel({ tripId, canEdit }: ExpensePanelProps) {
 
   return (
     <div className="space-y-4">
-      {/* Toolbar */}
-      {canEdit && (
+      {/* Toolbar (hidden on mobile where FAB is used) */}
+      {canEdit && !isMobile && (
         <div className="flex justify-end">
           <Button variant="outline" size="sm" onClick={handleAdd}>
             <Plus className="h-4 w-4" />

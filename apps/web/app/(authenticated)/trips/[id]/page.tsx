@@ -106,6 +106,7 @@ export default function TripDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [addScheduleOpen, setAddScheduleOpen] = useState(false);
   const [addCandidateOpen, setAddCandidateOpen] = useState(false);
+  const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
@@ -600,7 +601,12 @@ export default function TripDetailPage() {
                 {mobileTab === "expenses" &&
                   (trip.days.length > 0 ? (
                     <div className="p-4">
-                      <ExpensePanel tripId={tripId} canEdit={canEdit} />
+                      <ExpensePanel
+                        tripId={tripId}
+                        canEdit={canEdit}
+                        addOpen={addExpenseOpen}
+                        onAddOpenChange={setAddExpenseOpen}
+                      />
                     </div>
                   ) : (
                     <p className="py-8 text-center text-sm text-muted-foreground">
@@ -739,6 +745,7 @@ export default function TripDetailPage() {
           onClick={() => {
             if (mobileTab === "schedule") setAddScheduleOpen(true);
             else if (mobileTab === "candidates") setAddCandidateOpen(true);
+            else if (mobileTab === "expenses") setAddExpenseOpen(true);
           }}
           label={
             mobileTab === "schedule"
@@ -747,7 +754,7 @@ export default function TripDetailPage() {
                 ? "候補を追加"
                 : "費用を追加"
           }
-          hidden={!canEdit || !online || mobileTab === "expenses"}
+          hidden={!canEdit || !online}
         />
 
         <AddPatternDialog patternOps={patternOps} />

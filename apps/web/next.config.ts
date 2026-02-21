@@ -7,7 +7,7 @@ const cspDirectives = [
   "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self'",
-  "img-src 'self' data: https://api.dicebear.com",
+  "img-src 'self' data: https://api.dicebear.com https://*.supabase.co",
   "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.dicebear.com",
   "frame-src 'none'",
   "frame-ancestors 'none'",
@@ -68,6 +68,21 @@ const nextConfig: NextConfig = {
       "@tanstack/react-query",
       "@supabase/supabase-js",
       "react-day-picker",
+    ],
+  },
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "*.supabase.co",
+        pathname: "/storage/v1/object/public/**",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        port: "54321",
+        pathname: "/storage/v1/object/public/**",
+      },
     ],
   },
   headers: async () => [

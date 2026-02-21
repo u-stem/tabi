@@ -79,35 +79,47 @@ export const auth = betterAuth({
         const oldUserId = anonymousUser.user.id;
         const newUserId = newUser.user.id;
 
-        // Transfer trip ownership
-        await db
-          .update(schema.trips)
-          .set({ ownerId: newUserId })
-          .where(eq(schema.trips.ownerId, oldUserId));
+        await db.transaction(async (tx) => {
+          await tx
+            .update(schema.trips)
+            .set({ ownerId: newUserId })
+            .where(eq(schema.trips.ownerId, oldUserId));
 
-        // Transfer trip memberships
-        await db
-          .update(schema.tripMembers)
-          .set({ userId: newUserId })
-          .where(eq(schema.tripMembers.userId, oldUserId));
+          await tx
+            .update(schema.tripMembers)
+            .set({ userId: newUserId })
+            .where(eq(schema.tripMembers.userId, oldUserId));
 
-        // Transfer bookmark lists
-        await db
-          .update(schema.bookmarkLists)
-          .set({ userId: newUserId })
-          .where(eq(schema.bookmarkLists.userId, oldUserId));
+          await tx
+            .update(schema.bookmarkLists)
+            .set({ userId: newUserId })
+            .where(eq(schema.bookmarkLists.userId, oldUserId));
 
-        // Transfer activity logs
-        await db
-          .update(schema.activityLogs)
-          .set({ userId: newUserId })
-          .where(eq(schema.activityLogs.userId, oldUserId));
+          await tx
+            .update(schema.activityLogs)
+            .set({ userId: newUserId })
+            .where(eq(schema.activityLogs.userId, oldUserId));
 
-        // Transfer schedule reactions
-        await db
-          .update(schema.scheduleReactions)
-          .set({ userId: newUserId })
-          .where(eq(schema.scheduleReactions.userId, oldUserId));
+          await tx
+            .update(schema.scheduleReactions)
+            .set({ userId: newUserId })
+            .where(eq(schema.scheduleReactions.userId, oldUserId));
+
+          await tx
+            .update(schema.schedulePollParticipants)
+            .set({ userId: newUserId })
+            .where(eq(schema.schedulePollParticipants.userId, oldUserId));
+
+          await tx
+            .update(schema.expenses)
+            .set({ paidByUserId: newUserId })
+            .where(eq(schema.expenses.paidByUserId, oldUserId));
+
+          await tx
+            .update(schema.expenseSplits)
+            .set({ userId: newUserId })
+            .where(eq(schema.expenseSplits.userId, oldUserId));
+        });
       },
     }),
     username({ minUsernameLength: 3, maxUsernameLength: 20 }),

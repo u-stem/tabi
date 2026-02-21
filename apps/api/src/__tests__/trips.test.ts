@@ -208,6 +208,109 @@ describe("Trip routes", () => {
       expect(res.status).toBe(401);
     });
 
+    it("returns 403 when guest user already has a trip", async () => {
+      const guestUser = {
+        ...fakeUser,
+        isAnonymous: true,
+        guestExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      mockGetSession.mockResolvedValue({
+        user: guestUser,
+        session: { id: "session-1" },
+      });
+
+      // Guest trip check: select -> from -> innerJoin -> limit returns existing trip
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ id: "existing-trip" }]),
+          }),
+          where: vi.fn().mockResolvedValue([{ count: 0 }]),
+        }),
+      });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Second Trip",
+          destination: "Osaka",
+          startDate: "2025-08-01",
+          endDate: "2025-08-03",
+        }),
+      });
+
+      expect(res.status).toBe(403);
+      const body = await res.json();
+      expect(body).toEqual({ error: "Guest accounts can only create 1 trip" });
+    });
+
+    it("allows guest user to create first trip", async () => {
+      const guestUser = {
+        ...fakeUser,
+        isAnonymous: true,
+        guestExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      };
+      mockGetSession.mockResolvedValue({
+        user: guestUser,
+        session: { id: "session-1" },
+      });
+
+      const createdTrip = {
+        id: "trip-1",
+        ownerId: guestUser.id,
+        title: "First Trip",
+        destination: "Kyoto",
+        startDate: "2025-08-01",
+        endDate: "2025-08-03",
+        status: "draft",
+      };
+
+      // Guest trip check: no existing trips
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          innerJoin: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([]),
+          }),
+          where: vi.fn().mockResolvedValue([{ count: 0 }]),
+        }),
+      });
+
+      mockDbInsert
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([createdTrip]),
+          }),
+        })
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi
+              .fn()
+              .mockResolvedValue([{ id: "day-1" }, { id: "day-2" }, { id: "day-3" }]),
+          }),
+        })
+        .mockReturnValue({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([]),
+          }),
+        });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "First Trip",
+          destination: "Kyoto",
+          startDate: "2025-08-01",
+          endDate: "2025-08-03",
+        }),
+      });
+
+      expect(res.status).toBe(201);
+    });
+
     it("returns 409 when trip limit reached", async () => {
       mockDbSelect.mockReturnValue({
         from: vi.fn().mockReturnValue({

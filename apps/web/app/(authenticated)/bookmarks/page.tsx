@@ -2,7 +2,7 @@
 
 import { type BookmarkListResponse, MAX_BOOKMARK_LISTS_PER_USER } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCheck, Copy, Plus, SquareMousePointer, Trash2, X } from "lucide-react";
+import { Copy, MoreHorizontal, Plus, SquareMousePointer, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
@@ -20,9 +20,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -188,6 +193,8 @@ export default function BookmarksPage() {
     setDuplicating(false);
   }
 
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+
   if (isLoading && !showSkeleton) return <div />;
 
   return (
@@ -233,80 +240,79 @@ export default function BookmarksPage() {
         <>
           <div className="mt-4">
             {selectionMode ? (
-              <div
-                role="toolbar"
-                aria-label="選択操作"
-                className="flex flex-wrap items-center gap-2"
-              >
-                <div className="flex items-center gap-2">
+              <>
+                <div className="flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
                   <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleSelectAll}
-                    disabled={deleting || duplicating}
-                  >
-                    <CheckCheck className="h-4 w-4" />
-                    <span className="hidden sm:inline">全選択</span>
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDeselectAll}
-                    disabled={deleting || duplicating}
-                  >
-                    <X className="h-4 w-4" />
-                    <span className="hidden sm:inline">選択解除</span>
-                  </Button>
-                </div>
-                <div className="flex items-center gap-2 ml-auto">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleDuplicateSelected}
-                    disabled={selectedIds.size === 0 || deleting || duplicating}
-                  >
-                    <Copy className="h-4 w-4" />
-                    <span className="hidden sm:inline">{duplicating ? "複製中..." : "複製"}</span>
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        disabled={selectedIds.size === 0 || deleting || duplicating}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        <span className="hidden sm:inline">{deleting ? "削除中..." : "削除"}</span>
-                      </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>
-                          {selectedIds.size}件のリストを削除しますか？
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                          選択したリストとすべてのブックマークが削除されます。この操作は取り消せません。
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                        <AlertDialogDestructiveAction onClick={handleDeleteSelected}>
-                          <Trash2 className="h-4 w-4" />
-                          削除する
-                        </AlertDialogDestructiveAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
                     onClick={() => handleSelectionModeChange(false)}
                     disabled={deleting || duplicating}
                   >
-                    キャンセル
+                    <X className="h-3.5 w-3.5" />
                   </Button>
+                  <span className="text-xs font-medium">{selectedIds.size}件選択中</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    onClick={
+                      selectedIds.size === filteredBookmarkLists.length
+                        ? handleDeselectAll
+                        : handleSelectAll
+                    }
+                    disabled={deleting || duplicating}
+                  >
+                    {selectedIds.size === filteredBookmarkLists.length ? "全解除" : "全選択"}
+                  </Button>
+                  <div className="ml-auto flex items-center gap-1">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          disabled={selectedIds.size === 0 || deleting || duplicating}
+                        >
+                          <MoreHorizontal className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={handleDuplicateSelected}>
+                          <Copy />
+                          複製
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() => setDeleteConfirmOpen(true)}
+                        >
+                          <Trash2 />
+                          削除
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
                 </div>
-              </div>
+                <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>
+                        {selectedIds.size}件のリストを削除しますか？
+                      </AlertDialogTitle>
+                      <AlertDialogDescription>
+                        選択したリストとすべてのブックマークが削除されます。この操作は取り消せません。
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                      <AlertDialogDestructiveAction onClick={handleDeleteSelected}>
+                        <Trash2 className="h-4 w-4" />
+                        削除する
+                      </AlertDialogDestructiveAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </>
             ) : (
               <div className="flex items-center gap-2">
                 <Select

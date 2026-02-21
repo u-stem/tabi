@@ -2,16 +2,7 @@
 
 import type { BookmarkListResponse } from "@sugara/shared";
 import { MAX_BOOKMARKS_PER_LIST } from "@sugara/shared";
-import {
-  CheckCheck,
-  CheckSquare,
-  Copy,
-  MoreHorizontal,
-  Pencil,
-  Plus,
-  Trash2,
-  X,
-} from "lucide-react";
+import { CheckSquare, Copy, MoreHorizontal, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { ActionSheet } from "@/components/action-sheet";
 import { ItemMenuButton } from "@/components/item-menu-button";
@@ -126,54 +117,46 @@ export function BookmarkListHeader({
       </div>
       <p className="text-sm text-muted-foreground">{list.bookmarkCount}件のブックマーク</p>
       {sel.selectionMode ? (
-        <div className="mt-3 flex flex-wrap select-none items-center gap-1.5">
-          <div className="flex items-center gap-1.5">
-            <Button variant="outline" size="sm" onClick={sel.selectAll}>
-              <CheckCheck className="h-4 w-4" />
-              <span className="hidden sm:inline">全選択</span>
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={sel.deselectAll}
-              disabled={sel.selectedIds.size === 0}
-            >
-              <X className="h-4 w-4" />
-              <span className="hidden sm:inline">選択解除</span>
-            </Button>
-          </div>
-          <div className="flex items-center gap-1.5 ml-auto">
-            <Tooltip>
-              <TooltipTrigger asChild>
+        <div className="mt-3 flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={sel.exit}>
+            <X className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-xs font-medium">{sel.selectedIds.size}件選択中</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={sel.selectedIds.size === bookmarkCount ? sel.deselectAll : sel.selectAll}
+            disabled={sel.batchLoading}
+          >
+            {sel.selectedIds.size === bookmarkCount ? "全解除" : "全選択"}
+          </Button>
+          <div className="ml-auto flex items-center gap-1">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={sel.handleBatchDuplicate}
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
                   disabled={sel.selectedIds.size === 0 || sel.batchLoading}
                 >
-                  <Copy className="h-4 w-4" />
-                  <span className="hidden sm:inline">複製</span>
+                  <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent className="sm:hidden">複製</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="destructive"
-                  size="sm"
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={sel.handleBatchDuplicate}>
+                  <Copy />
+                  複製
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
                   onClick={() => sel.setBatchDeleteOpen(true)}
-                  disabled={sel.selectedIds.size === 0 || sel.batchLoading}
                 >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">削除</span>
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent className="sm:hidden">削除</TooltipContent>
-            </Tooltip>
-            <Button variant="outline" size="sm" onClick={sel.exit}>
-              キャンセル
-            </Button>
+                  <Trash2 />
+                  削除
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       ) : (
@@ -181,27 +164,29 @@ export function BookmarkListHeader({
           {bookmarkCount > 0 && online && (
             <Button variant="outline" size="sm" onClick={sel.enter}>
               <CheckSquare className="h-4 w-4" />
-              <span className="hidden sm:inline">選択</span>
+              選択
             </Button>
           )}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={bmOps.openAdd}
-                  disabled={!online || bookmarkCount >= MAX_BOOKMARKS_PER_LIST}
-                >
-                  <Plus className="h-4 w-4" />
-                  追加
-                </Button>
-              </span>
-            </TooltipTrigger>
-            {bookmarkCount >= MAX_BOOKMARKS_PER_LIST && (
-              <TooltipContent>{MSG.LIMIT_BOOKMARKS}</TooltipContent>
-            )}
-          </Tooltip>
+          {!isMobile && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={bmOps.openAdd}
+                    disabled={!online || bookmarkCount >= MAX_BOOKMARKS_PER_LIST}
+                  >
+                    <Plus className="h-4 w-4" />
+                    追加
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {bookmarkCount >= MAX_BOOKMARKS_PER_LIST && (
+                <TooltipContent>{MSG.LIMIT_BOOKMARKS}</TooltipContent>
+              )}
+            </Tooltip>
+          )}
         </div>
       )}
     </div>

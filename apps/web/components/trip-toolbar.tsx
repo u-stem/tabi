@@ -2,7 +2,8 @@
 
 import type { TripStatus } from "@sugara/shared";
 import { STATUS_LABELS } from "@sugara/shared";
-import { CheckCheck, Copy, SquareMousePointer, Trash2, X } from "lucide-react";
+import { Copy, MoreHorizontal, SquareMousePointer, Trash2, X } from "lucide-react";
+import { useState } from "react";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -12,9 +13,14 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -91,80 +97,78 @@ export function TripToolbar({
   hideSortKey,
   deleteLabel = "旅行",
 }: TripToolbarProps) {
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
   if (selectionMode) {
     return (
-      <div role="toolbar" aria-label="選択操作" className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-2">
+      <>
+        <div className="flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
           <Button
-            variant="outline"
-            size="sm"
-            onClick={onSelectAll}
-            disabled={deleting || duplicating}
-          >
-            <CheckCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">全選択</span>
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={onDeselectAll}
-            disabled={deleting || duplicating}
-          >
-            <X className="h-4 w-4" />
-            <span className="hidden sm:inline">選択解除</span>
-          </Button>
-        </div>
-        <div className="flex items-center gap-2 ml-auto">
-          {!hideDuplicate && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={onDuplicateSelected}
-              disabled={selectedCount === 0 || deleting || duplicating}
-            >
-              <Copy className="h-4 w-4" />
-              <span className="hidden sm:inline">{duplicating ? "複製中..." : "複製"}</span>
-            </Button>
-          )}
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={selectedCount === 0 || deleting || duplicating}
-              >
-                <Trash2 className="h-4 w-4" />
-                <span className="hidden sm:inline">{deleting ? "削除中..." : "削除"}</span>
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>
-                  {selectedCount}件の{deleteLabel}を削除しますか？
-                </AlertDialogTitle>
-                <AlertDialogDescription>
-                  選択した{deleteLabel}が削除されます。この操作は取り消せません。
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                <AlertDialogDestructiveAction onClick={onDeleteSelected}>
-                  <Trash2 className="h-4 w-4" />
-                  削除する
-                </AlertDialogDestructiveAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-          <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
             onClick={() => onSelectionModeChange?.(false)}
             disabled={deleting || duplicating}
           >
-            キャンセル
+            <X className="h-3.5 w-3.5" />
           </Button>
+          <span className="text-xs font-medium">{selectedCount}件選択中</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={selectedCount === totalCount ? onDeselectAll : onSelectAll}
+            disabled={deleting || duplicating}
+          >
+            {selectedCount === totalCount ? "全解除" : "全選択"}
+          </Button>
+          <div className="ml-auto flex items-center gap-1">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  disabled={selectedCount === 0 || deleting || duplicating}
+                >
+                  <MoreHorizontal className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                {!hideDuplicate && (
+                  <DropdownMenuItem onClick={onDuplicateSelected}>
+                    <Copy />
+                    複製
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
+                  <Trash2 />
+                  削除
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
-      </div>
+        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                {selectedCount}件の{deleteLabel}を削除しますか？
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                選択した{deleteLabel}が削除されます。この操作は取り消せません。
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>キャンセル</AlertDialogCancel>
+              <AlertDialogDestructiveAction onClick={onDeleteSelected}>
+                <Trash2 className="h-4 w-4" />
+                削除する
+              </AlertDialogDestructiveAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
     );
   }
 

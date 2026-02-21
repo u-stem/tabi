@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Fab } from "@/components/fab";
 import { Button } from "@/components/ui/button";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -251,6 +252,11 @@ export default function BookmarkListDetailPage() {
       <DeleteListDialog listOps={listOps} listName={list.name} />
       <DeleteBookmarkDialog bmOps={bmOps} />
       <BatchDeleteDialog sel={sel} />
+      <Fab
+        onClick={bmOps.openAdd}
+        label="ブックマークを追加"
+        hidden={!online || sel.selectionMode}
+      />
     </div>
   );
 }

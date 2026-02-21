@@ -181,56 +181,51 @@ export function TripToolbar({
         onChange={(e) => onSearchChange(e.target.value)}
         className="h-8 w-full sm:w-40"
       />
-      <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-1">
-        {(!hideStatusFilter || !hideSortKey) && (
-          <div className="flex items-center gap-2">
-            {!hideStatusFilter && (
-              <Select
-                value={statusFilter}
-                onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}
-              >
-                <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {statusFilters.map((f) => (
-                    <SelectItem key={f.value} value={f.value}>
-                      {f.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            {!hideSortKey && (
-              <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
-                <SelectTrigger className="h-8 w-20 text-xs" aria-label="並び替え">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {sortOptions.map((s) => (
-                    <SelectItem key={s.value} value={s.value}>
-                      {s.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          </div>
+      <div className="flex w-full items-center gap-1.5 [&>*]:flex-1 sm:w-auto sm:flex-1 sm:gap-2 sm:[&>*]:flex-initial">
+        {!hideStatusFilter && (
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}
+          >
+            <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {statusFilters.map((f) => (
+                <SelectItem key={f.value} value={f.value}>
+                  {f.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         )}
-        <div className="flex items-center gap-2 sm:ml-auto">
-          {onSelectionModeChange && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onSelectionModeChange(true)}
-              disabled={disabled || totalCount === 0}
-            >
-              <SquareMousePointer className="h-4 w-4" />
-              <span className="hidden sm:inline">選択</span>
-            </Button>
-          )}
-          {newTripSlot}
-        </div>
+        {!hideSortKey && (
+          <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
+            <SelectTrigger className="h-8 w-20 text-xs" aria-label="並び替え">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+        {onSelectionModeChange && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="sm:ml-auto"
+            onClick={() => onSelectionModeChange(true)}
+            disabled={disabled || totalCount === 0}
+          >
+            <SquareMousePointer className="h-4 w-4" />
+            選択
+          </Button>
+        )}
+        {newTripSlot}
       </div>
     </div>
   );

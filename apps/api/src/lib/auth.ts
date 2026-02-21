@@ -20,9 +20,9 @@ export const auth = betterAuth({
     max: 30,
     storage: "memory",
     customRules: {
+      "/api/auth/sign-in/anonymous": { window: 60, max: 3 },
       "/api/auth/sign-in/*": { window: 60, max: 5 },
       "/api/auth/sign-up/*": { window: 60, max: 3 },
-      "/api/auth/sign-in/anonymous": { window: 60, max: 3 },
       "/api/auth/change-password": { window: 60, max: 3 },
     },
   },
@@ -90,6 +90,24 @@ export const auth = betterAuth({
           .update(schema.tripMembers)
           .set({ userId: newUserId })
           .where(eq(schema.tripMembers.userId, oldUserId));
+
+        // Transfer bookmark lists
+        await db
+          .update(schema.bookmarkLists)
+          .set({ userId: newUserId })
+          .where(eq(schema.bookmarkLists.userId, oldUserId));
+
+        // Transfer activity logs
+        await db
+          .update(schema.activityLogs)
+          .set({ userId: newUserId })
+          .where(eq(schema.activityLogs.userId, oldUserId));
+
+        // Transfer schedule reactions
+        await db
+          .update(schema.scheduleReactions)
+          .set({ userId: newUserId })
+          .where(eq(schema.scheduleReactions.userId, oldUserId));
       },
     }),
     username({ minUsernameLength: 3, maxUsernameLength: 20 }),

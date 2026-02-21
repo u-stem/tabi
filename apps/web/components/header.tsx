@@ -36,6 +36,7 @@ import {
 import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
 import { signOut, useSession } from "@/lib/auth-client";
+import { isGuestUser } from "@/lib/guest";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { MSG } from "@/lib/messages";
 import { NAV_LINKS } from "@/lib/nav-links";
@@ -55,7 +56,7 @@ export function Header() {
   const { data: friendRequests } = useQuery({
     queryKey: queryKeys.friends.requests(),
     queryFn: () => api<FriendRequestResponse[]>("/api/friends/requests"),
-    enabled: !!session?.user && !(session.user as Record<string, unknown>).isAnonymous,
+    enabled: !!session?.user && !isGuestUser(session),
     refetchInterval: 60_000,
   });
   const friendRequestCount = friendRequests?.length ?? 0;

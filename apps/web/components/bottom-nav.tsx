@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
+import { isGuestUser } from "@/lib/guest";
 import { NAV_LINKS } from "@/lib/nav-links";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
@@ -17,7 +18,7 @@ export function BottomNav() {
   const { data: friendRequests } = useQuery({
     queryKey: queryKeys.friends.requests(),
     queryFn: () => api<FriendRequestResponse[]>("/api/friends/requests"),
-    enabled: !!session?.user && !(session.user as Record<string, unknown>).isAnonymous,
+    enabled: !!session?.user && !isGuestUser(session),
     refetchInterval: 60_000,
   });
   const friendRequestCount = friendRequests?.length ?? 0;

@@ -129,7 +129,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
         toast.success(MSG.TRIP_CREATED);
         onCreated();
       } catch (err) {
-        if (err instanceof ApiError && err.status === 403) {
+        if (err instanceof ApiError && err.status === 403 && err.message.includes("Guest")) {
           setError(MSG.AUTH_GUEST_TRIP_LIMIT);
         } else {
           setError(getApiErrorMessage(err, MSG.TRIP_CREATE_FAILED));
@@ -170,7 +170,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
         toast.success(MSG.TRIP_CREATED);
         onCreated();
       } catch (err) {
-        if (err instanceof ApiError && err.status === 403) {
+        if (err instanceof ApiError && err.status === 403 && err.message.includes("Guest")) {
           setError(MSG.AUTH_GUEST_TRIP_LIMIT);
         } else {
           setError(getApiErrorMessage(err, MSG.TRIP_CREATE_FAILED));

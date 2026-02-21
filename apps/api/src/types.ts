@@ -2,7 +2,7 @@ export type AuthUser = {
   id: string;
   name: string;
   email: string;
-  isAnonymous?: boolean | null;
+  isAnonymous: boolean;
   guestExpiresAt?: Date | string | null;
 };
 

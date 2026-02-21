@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
+import { isGuestUser } from "@/lib/guest";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -39,7 +40,7 @@ function PageSkeleton() {
 
 export default function FriendsPage() {
   const { data: session } = useSession();
-  const isGuest = !!(session?.user as Record<string, unknown> | undefined)?.isAnonymous;
+  const isGuest = isGuestUser(session);
 
   useEffect(() => {
     document.title = pageTitle("フレンド");

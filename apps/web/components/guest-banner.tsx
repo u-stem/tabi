@@ -4,19 +4,15 @@ import { useState } from "react";
 import { GuestUpgradeDialog } from "@/components/guest-upgrade-dialog";
 import { Button } from "@/components/ui/button";
 import { useSession } from "@/lib/auth-client";
+import { getGuestDaysRemaining, isGuestUser } from "@/lib/guest";
 
 export function GuestBanner() {
   const { data: session } = useSession();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
 
-  const user = session?.user as Record<string, unknown> | undefined;
-  if (!user?.isAnonymous || !user.guestExpiresAt) return null;
+  if (!isGuestUser(session)) return null;
 
-  const expiresAt = new Date(user.guestExpiresAt as string);
-  const daysRemaining = Math.max(
-    0,
-    Math.ceil((expiresAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000)),
-  );
+  const daysRemaining = getGuestDaysRemaining(session);
 
   return (
     <>

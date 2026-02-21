@@ -166,7 +166,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
             </CollapsiblePrimitive.Trigger>
             <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
               <div className="space-y-1 border-t px-3 pt-2 pb-3">
-                <p className="text-xs text-muted-foreground">各自の収支</p>
+                <p className="text-xs text-muted-foreground">立替状況</p>
                 {[...settlement.balances]
                   .filter((b) => b.net !== 0)
                   .sort((a, b) => b.net - a.net)

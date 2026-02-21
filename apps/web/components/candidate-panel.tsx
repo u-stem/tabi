@@ -440,6 +440,7 @@ export function CandidatePanel({
     id: "candidates",
     data: { type: "candidates" },
   });
+  const isMobile = useIsMobile();
   const [internalAddOpen, setInternalAddOpen] = useState(false);
   const addOpen = controlledAddOpen ?? internalAddOpen;
   const setAddOpen = controlledOnAddOpenChange ?? setInternalAddOpen;
@@ -588,6 +589,7 @@ export function CandidatePanel({
         <div className="mb-2 flex items-center gap-1.5">
           <div className="flex flex-1 items-center gap-1.5 [&>*]:flex-1 lg:flex-initial lg:[&>*]:flex-initial lg:ml-auto">
             {!disabled &&
+              !isMobile &&
               (scheduleLimitReached ? (
                 <Tooltip>
                   <TooltipTrigger asChild>

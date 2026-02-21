@@ -39,6 +39,7 @@ import {
 
 import { useSelection } from "@/lib/hooks/selection-context";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 
 import type { TimelineItem } from "@/lib/merge-timeline";
 import { buildMergedTimeline, timelineSortableIds } from "@/lib/merge-timeline";
@@ -105,6 +106,7 @@ export function DayTimeline({
     data: { type: "timeline" },
   });
 
+  const isMobile = useIsMobile();
   const now = useCurrentTime();
   const isToday = date === toDateString(new Date());
 
@@ -248,6 +250,7 @@ export function DayTimeline({
           <span className="hidden text-sm text-muted-foreground lg:inline">{formatDate(date)}</span>
           <div className="flex flex-1 items-center gap-1.5 [&>*]:flex-1 lg:ml-auto lg:flex-initial lg:[&>*]:flex-initial">
             {!disabled &&
+              !isMobile &&
               (scheduleLimitReached ? (
                 <Tooltip>
                   <TooltipTrigger asChild>

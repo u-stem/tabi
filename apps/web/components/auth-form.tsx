@@ -44,7 +44,7 @@ export function AuthForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow-sm">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">ログイン</CardTitle>
         <CardDescription>ユーザー名でログイン</CardDescription>
@@ -86,7 +86,7 @@ export function AuthForm() {
               {error}
             </div>
           )}
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" className="h-11 w-full" disabled={loading}>
             <LogIn className="h-4 w-4" />
             {loading ? "ログイン中..." : "ログイン"}
           </Button>

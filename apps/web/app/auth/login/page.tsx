@@ -7,7 +7,7 @@ export default function LoginPage() {
       <header className="container flex h-14 items-center">
         <Logo href="/" />
       </header>
-      <main className="flex flex-1 flex-col items-center justify-center px-4">
+      <main className="flex flex-1 flex-col items-center justify-center px-0 sm:px-4">
         <AuthForm />
       </main>
     </div>

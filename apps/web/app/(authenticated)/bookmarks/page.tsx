@@ -9,6 +9,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { BookmarkListCard } from "@/components/bookmark-list-card";
 import { CreateBookmarkListDialog } from "@/components/create-bookmark-list-dialog";
+import { Fab } from "@/components/fab";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import {
   AlertDialog,
@@ -35,6 +36,7 @@ import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -51,6 +53,7 @@ const visibilityFilters: { value: VisibilityFilter; label: string }[] = [
 
 export default function BookmarksPage() {
   const queryClient = useQueryClient();
+  const isMobile = useIsMobile();
   const online = useOnlineStatus();
 
   const {
@@ -331,23 +334,27 @@ export default function BookmarksPage() {
                     <SquareMousePointer className="h-4 w-4" />
                     <span className="hidden sm:inline">選択</span>
                   </Button>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span>
-                        <Button
-                          size="sm"
-                          disabled={!online || bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER}
-                          onClick={() => setCreateDialogOpen(true)}
-                        >
-                          <Plus className="h-4 w-4" />
-                          新規作成
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    {bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER && (
-                      <TooltipContent>{MSG.LIMIT_BOOKMARK_LISTS}</TooltipContent>
-                    )}
-                  </Tooltip>
+                  {!isMobile && (
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span>
+                          <Button
+                            size="sm"
+                            disabled={
+                              !online || bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER
+                            }
+                            onClick={() => setCreateDialogOpen(true)}
+                          >
+                            <Plus className="h-4 w-4" />
+                            新規作成
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER && (
+                        <TooltipContent>{MSG.LIMIT_BOOKMARK_LISTS}</TooltipContent>
+                      )}
+                    </Tooltip>
+                  )}
                 </div>
               </div>
             )}
@@ -379,6 +386,11 @@ export default function BookmarksPage() {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onCreated={invalidateBookmarkLists}
+      />
+      <Fab
+        onClick={() => setCreateDialogOpen(true)}
+        label="リストを新規作成"
+        hidden={!online || selectionMode}
       />
     </>
   );

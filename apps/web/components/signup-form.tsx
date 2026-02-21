@@ -81,7 +81,7 @@ export function SignupForm() {
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow-sm">
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">新規登録</CardTitle>
         <CardDescription>アカウントを作成してはじめる</CardDescription>
@@ -188,7 +188,7 @@ export function SignupForm() {
               {error}
             </div>
           )}
-          <Button type="submit" className="w-full" disabled={loading || !agreed}>
+          <Button type="submit" className="h-11 w-full" disabled={loading || !agreed}>
             <UserPlus className="h-4 w-4" />
             {loading ? "登録中..." : "新規登録"}
           </Button>

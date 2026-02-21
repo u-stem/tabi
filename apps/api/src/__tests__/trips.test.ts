@@ -51,6 +51,18 @@ vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
 }));
 
+const mockValidateCoverImage = vi.fn();
+const mockUploadCoverImage = vi.fn();
+const mockDeleteCoverImage = vi.fn();
+const mockCopyCoverImage = vi.fn();
+
+vi.mock("../lib/storage", () => ({
+  validateCoverImage: (...args: unknown[]) => mockValidateCoverImage(...args),
+  uploadCoverImage: (...args: unknown[]) => mockUploadCoverImage(...args),
+  deleteCoverImage: (...args: unknown[]) => mockDeleteCoverImage(...args),
+  copyCoverImage: (...args: unknown[]) => mockCopyCoverImage(...args),
+}));
+
 import { tripRoutes } from "../routes/trips";
 
 const fakeUser = TEST_USER;
@@ -1062,6 +1074,196 @@ describe("Trip routes", () => {
 
       const app = createTestApp(tripRoutes, "/api/trips");
       const res = await app.request("/api/trips/trip-1", {
+        method: "DELETE",
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("deletes cover image from storage before deleting trip", async () => {
+      mockDbQuery.trips.findFirst.mockResolvedValue({
+        coverImageUrl: "http://localhost:54321/storage/v1/object/public/trip-covers/trip-1/img.jpg",
+      });
+      mockDeleteCoverImage.mockResolvedValue(undefined);
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips/trip-1", { method: "DELETE" });
+
+      expect(res.status).toBe(200);
+      expect(mockDeleteCoverImage).toHaveBeenCalledWith(
+        "http://localhost:54321/storage/v1/object/public/trip-covers/trip-1/img.jpg",
+      );
+    });
+  });
+
+  describe("POST /api/trips/:id/cover-image", () => {
+    it("returns 400 when no file is provided", async () => {
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const formData = new FormData();
+
+      const res = await app.request("/api/trips/trip-1/cover-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toBe("File is required");
+    });
+
+    it("returns 400 when file validation fails", async () => {
+      mockValidateCoverImage.mockReturnValue("JPEG, PNG, WebP only");
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const formData = new FormData();
+      formData.append("file", new File(["data"], "test.gif", { type: "image/gif" }));
+
+      const res = await app.request("/api/trips/trip-1/cover-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      expect(res.status).toBe(400);
+      const body = await res.json();
+      expect(body.error).toBe("JPEG, PNG, WebP only");
+    });
+
+    it("returns 500 when upload fails", async () => {
+      mockValidateCoverImage.mockReturnValue(null);
+      mockDbQuery.trips.findFirst.mockResolvedValue({ coverImageUrl: null });
+      mockUploadCoverImage.mockRejectedValue(new Error("Storage error"));
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const formData = new FormData();
+      formData.append("file", new File(["data"], "test.jpg", { type: "image/jpeg" }));
+
+      const res = await app.request("/api/trips/trip-1/cover-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      expect(res.status).toBe(500);
+    });
+
+    it("returns 404 when user is not a member", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const formData = new FormData();
+      formData.append("file", new File(["data"], "test.jpg", { type: "image/jpeg" }));
+
+      const res = await app.request("/api/trips/trip-1/cover-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("uploads file and returns coverImageUrl", async () => {
+      mockValidateCoverImage.mockReturnValue(null);
+      mockDbQuery.trips.findFirst.mockResolvedValue({ coverImageUrl: null });
+      mockUploadCoverImage.mockResolvedValue(
+        "http://localhost:54321/storage/v1/object/public/trip-covers/trip-1/new.jpg",
+      );
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi
+              .fn()
+              .mockResolvedValue([
+                {
+                  coverImageUrl:
+                    "http://localhost:54321/storage/v1/object/public/trip-covers/trip-1/new.jpg",
+                },
+              ]),
+          }),
+        }),
+      });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const formData = new FormData();
+      formData.append("file", new File(["data"], "test.jpg", { type: "image/jpeg" }));
+
+      const res = await app.request("/api/trips/trip-1/cover-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.coverImageUrl).toContain("trip-covers");
+    });
+
+    it("deletes old cover image before uploading new one", async () => {
+      const oldUrl = "http://localhost:54321/storage/v1/object/public/trip-covers/trip-1/old.jpg";
+      mockValidateCoverImage.mockReturnValue(null);
+      mockDbQuery.trips.findFirst.mockResolvedValue({ coverImageUrl: oldUrl });
+      mockDeleteCoverImage.mockResolvedValue(undefined);
+      mockUploadCoverImage.mockResolvedValue(
+        "http://localhost:54321/storage/v1/object/public/trip-covers/trip-1/new.jpg",
+      );
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi
+              .fn()
+              .mockResolvedValue([
+                {
+                  coverImageUrl:
+                    "http://localhost:54321/storage/v1/object/public/trip-covers/trip-1/new.jpg",
+                },
+              ]),
+          }),
+        }),
+      });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const formData = new FormData();
+      formData.append("file", new File(["data"], "test.jpg", { type: "image/jpeg" }));
+
+      const res = await app.request("/api/trips/trip-1/cover-image", {
+        method: "POST",
+        body: formData,
+      });
+
+      expect(res.status).toBe(200);
+      expect(mockDeleteCoverImage).toHaveBeenCalledWith(oldUrl);
+    });
+  });
+
+  describe("DELETE /api/trips/:id/cover-image", () => {
+    it("deletes cover image and clears DB field", async () => {
+      const url = "http://localhost:54321/storage/v1/object/public/trip-covers/trip-1/img.jpg";
+      mockDbQuery.trips.findFirst.mockResolvedValue({ coverImageUrl: url });
+      mockDeleteCoverImage.mockResolvedValue(undefined);
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue(undefined),
+        }),
+      });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips/trip-1/cover-image", {
+        method: "DELETE",
+      });
+
+      expect(res.status).toBe(200);
+      expect(mockDeleteCoverImage).toHaveBeenCalledWith(url);
+    });
+
+    it("returns 404 when user is viewer", async () => {
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue({
+        tripId: "trip-1",
+        userId: fakeUser.id,
+        role: "viewer",
+      });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      const res = await app.request("/api/trips/trip-1/cover-image", {
         method: "DELETE",
       });
 

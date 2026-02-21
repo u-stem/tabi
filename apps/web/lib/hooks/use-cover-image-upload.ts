@@ -1,5 +1,4 @@
 import { useCallback, useState } from "react";
-import { supabase } from "@/lib/supabase";
 
 const MAX_FILE_SIZE = 3 * 1024 * 1024; // 3MB
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -8,7 +7,7 @@ type UseCoverImageUploadReturn = {
   uploading: boolean;
   error: string | null;
   upload: (tripId: string, file: File) => Promise<string | null>;
-  remove: (url: string) => Promise<void>;
+  remove: (tripId: string) => Promise<void>;
 };
 
 export function useCoverImageUpload(): UseCoverImageUploadReturn {
@@ -30,29 +29,43 @@ export function useCoverImageUpload(): UseCoverImageUploadReturn {
 
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop() || "jpg";
-      const path = `${tripId}/${Date.now()}.${ext}`;
+      const formData = new FormData();
+      formData.append("file", file);
 
-      const { error: uploadError } = await supabase.storage
-        .from("trip-covers")
-        .upload(path, file, { upsert: false });
+      const res = await fetch(`/api/trips/${tripId}/cover-image`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
 
-      if (uploadError) {
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({ error: "Unknown error" }));
+        const message = typeof body.error === "string" ? body.error : "アップロードに失敗しました";
+        console.error("Cover image upload failed:", message);
         setError("アップロードに失敗しました");
         return null;
       }
 
-      const { data } = supabase.storage.from("trip-covers").getPublicUrl(path);
-      return data.publicUrl;
+      const data = await res.json();
+      return data.coverImageUrl;
+    } catch (err) {
+      console.error("Cover image upload failed:", err);
+      setError("アップロードに失敗しました");
+      return null;
     } finally {
       setUploading(false);
     }
   }, []);
 
-  const remove = useCallback(async (url: string) => {
-    const match = url.match(/\/trip-covers\/(.+)$/);
-    if (!match) return;
-    await supabase.storage.from("trip-covers").remove([match[1]]);
+  const remove = useCallback(async (tripId: string) => {
+    try {
+      await fetch(`/api/trips/${tripId}/cover-image`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+    } catch (err) {
+      console.error("Cover image delete failed:", err);
+    }
   }, []);
 
   return { uploading, error, upload, remove };

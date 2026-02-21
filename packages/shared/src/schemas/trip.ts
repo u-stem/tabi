@@ -13,6 +13,7 @@ export const createTripSchema = z
     title: z.string().min(1).max(TRIP_TITLE_MAX_LENGTH),
     destination: z.string().max(TRIP_DESTINATION_MAX_LENGTH).optional(),
     coverImageUrl: z.string().url().max(COVER_IMAGE_URL_MAX_LENGTH).optional(),
+    coverImagePosition: z.number().int().min(0).max(100).optional(),
     startDate: z.string().date(),
     endDate: z.string().date(),
   })
@@ -25,6 +26,7 @@ export const createTripWithPollSchema = z.object({
   title: z.string().min(1).max(TRIP_TITLE_MAX_LENGTH),
   destination: z.string().max(TRIP_DESTINATION_MAX_LENGTH).optional(),
   coverImageUrl: z.string().url().max(COVER_IMAGE_URL_MAX_LENGTH).optional(),
+  coverImagePosition: z.number().int().min(0).max(100).optional(),
   pollOptions: z
     .array(
       z

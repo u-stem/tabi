@@ -42,7 +42,7 @@ export function TripHeader({
   return (
     <div className="mb-3 lg:mb-6">
       {trip.coverImageUrl && (
-        <div className="relative mb-3 aspect-[3/1] w-full overflow-hidden rounded-xl">
+        <div className="-mx-4 relative mb-3 aspect-[3/1] overflow-hidden lg:mx-0 lg:rounded-xl">
           <Image
             src={trip.coverImageUrl}
             alt=""

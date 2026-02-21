@@ -21,6 +21,12 @@ import { logActivity } from "../lib/activity-logger";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
+import {
+  copyCoverImage,
+  deleteCoverImage,
+  uploadCoverImage,
+  validateCoverImage,
+} from "../lib/storage";
 import { createInitialTripDays, generateDateRange, syncTripDays } from "../lib/trip-days";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
@@ -71,7 +77,13 @@ tripRoutes.post("/", async (c) => {
       return c.json({ error: parsed.error.flatten() }, 400);
     }
 
-    const { title, destination = null, pollOptions, coverImageUrl } = parsed.data;
+    const {
+      title,
+      destination = null,
+      pollOptions,
+      coverImageUrl,
+      coverImagePosition,
+    } = parsed.data;
 
     const trip = await db.transaction(async (tx) => {
       const [tripCount] = await tx
@@ -90,6 +102,7 @@ tripRoutes.post("/", async (c) => {
           destination,
           status: "scheduling",
           coverImageUrl: coverImageUrl ?? null,
+          coverImagePosition: coverImagePosition ?? 50,
         })
         .returning();
 
@@ -155,7 +168,14 @@ tripRoutes.post("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const { title, destination = null, startDate, endDate, coverImageUrl } = parsed.data;
+  const {
+    title,
+    destination = null,
+    startDate,
+    endDate,
+    coverImageUrl,
+    coverImagePosition,
+  } = parsed.data;
 
   const trip = await db.transaction(async (tx) => {
     const [tripCount] = await tx
@@ -175,6 +195,7 @@ tripRoutes.post("/", async (c) => {
         startDate,
         endDate,
         coverImageUrl: coverImageUrl ?? null,
+        coverImagePosition: coverImagePosition ?? 50,
       })
       .returning();
 
@@ -420,7 +441,7 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
-  const newTrip = await db.transaction(async (tx) => {
+  let newTrip = await db.transaction(async (tx) => {
     const [tripCount] = await tx
       .select({ count: count() })
       .from(trips)
@@ -438,6 +459,7 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
         startDate: source.startDate,
         endDate: source.endDate,
         status: source.status === "scheduling" ? "scheduling" : "draft",
+        coverImagePosition: source.coverImagePosition,
       })
       .returning();
 
@@ -530,6 +552,15 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
     return c.json({ error: ERROR_MSG.LIMIT_TRIPS }, 409);
   }
 
+  // Copy cover image file in Storage (outside transaction to avoid holding locks)
+  if (source.coverImageUrl) {
+    const copiedUrl = await copyCoverImage(source.coverImageUrl, newTrip.id);
+    if (copiedUrl) {
+      await db.update(trips).set({ coverImageUrl: copiedUrl }).where(eq(trips.id, newTrip.id));
+      newTrip = { ...newTrip, coverImageUrl: copiedUrl };
+    }
+  }
+
   logActivity({
     tripId: newTrip.id,
     userId: user.id,
@@ -541,11 +572,83 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
   return c.json(newTrip, 201);
 });
 
+// Upload cover image (editor+)
+tripRoutes.post("/:id/cover-image", requireTripAccess("editor", "id"), async (c) => {
+  const tripId = c.req.param("id");
+
+  const body = await c.req.parseBody();
+  const file = body.file;
+
+  if (!(file instanceof File)) {
+    return c.json({ error: ERROR_MSG.FILE_REQUIRED }, 400);
+  }
+
+  const validationError = validateCoverImage(file);
+  if (validationError) {
+    return c.json({ error: validationError }, 400);
+  }
+
+  const currentTrip = await db.query.trips.findFirst({
+    where: eq(trips.id, tripId),
+    columns: { coverImageUrl: true },
+  });
+
+  if (currentTrip?.coverImageUrl) {
+    await deleteCoverImage(currentTrip.coverImageUrl);
+  }
+
+  let coverImageUrl: string;
+  try {
+    const buffer = Buffer.from(await file.arrayBuffer());
+    coverImageUrl = await uploadCoverImage(tripId, buffer, file.type);
+  } catch (err) {
+    console.error("Cover image upload failed:", err);
+    return c.json({ error: ERROR_MSG.INTERNAL_ERROR }, 500);
+  }
+
+  const [updated] = await db
+    .update(trips)
+    .set({ coverImageUrl, updatedAt: new Date() })
+    .where(eq(trips.id, tripId))
+    .returning();
+
+  return c.json({ coverImageUrl: updated.coverImageUrl });
+});
+
+// Delete cover image (editor+)
+tripRoutes.delete("/:id/cover-image", requireTripAccess("editor", "id"), async (c) => {
+  const tripId = c.req.param("id");
+
+  const currentTrip = await db.query.trips.findFirst({
+    where: eq(trips.id, tripId),
+    columns: { coverImageUrl: true },
+  });
+
+  if (currentTrip?.coverImageUrl) {
+    await deleteCoverImage(currentTrip.coverImageUrl);
+  }
+
+  await db
+    .update(trips)
+    .set({ coverImageUrl: null, updatedAt: new Date() })
+    .where(eq(trips.id, tripId));
+
+  return c.json({ ok: true });
+});
+
 // Delete trip (owner only)
 tripRoutes.delete("/:id", requireTripAccess("owner", "id"), async (c) => {
   const tripId = c.req.param("id");
 
-  // Log before delete since cascade will remove logs too
+  const trip = await db.query.trips.findFirst({
+    where: eq(trips.id, tripId),
+    columns: { coverImageUrl: true },
+  });
+
+  if (trip?.coverImageUrl) {
+    await deleteCoverImage(trip.coverImageUrl);
+  }
+
   await db.delete(trips).where(eq(trips.id, tripId));
   return c.json({ ok: true });
 });

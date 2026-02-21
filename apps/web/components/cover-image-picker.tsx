@@ -4,29 +4,17 @@ import { ImagePlus, Move, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 const ALLOWED_TYPES = "image/jpeg,image/png,image/webp";
 
 const PREVIEW_MODES = {
-  home: { label: "ホーム", aspect: 16 / 9 },
-  detail: { label: "詳細", aspect: 3 },
+  home: { label: "ホーム", aspect: "aspect-video" },
+  detail: { label: "詳細", aspect: "aspect-[3/1]" },
 } as const;
 
 type PreviewMode = keyof typeof PREVIEW_MODES;
-
-function calcCrop(imageAspect: number, targetAspect: number, position: number) {
-  if (!imageAspect || imageAspect >= targetAspect) {
-    return { top: 0, bottom: 0, hasCrop: false } as const;
-  }
-  const visible = imageAspect / targetAspect;
-  const cropped = 1 - visible;
-  return {
-    top: cropped * (position / 100) * 100,
-    bottom: cropped * (1 - position / 100) * 100,
-    hasCrop: true,
-  } as const;
-}
 
 type CoverImagePickerProps = {
   imageUrl: string | null;
@@ -51,7 +39,6 @@ export function CoverImagePicker({
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
   const dragStartRef = useRef<{ y: number; startPosition: number } | null>(null);
-  const [imageAspect, setImageAspect] = useState(0);
   const [previewMode, setPreviewMode] = useState<PreviewMode>("home");
 
   const previewUrl = useMemo(
@@ -64,15 +51,6 @@ export function CoverImagePicker({
       if (previewFile && previewUrl) URL.revokeObjectURL(previewUrl);
     };
   }, [previewFile, previewUrl]);
-
-  const handleImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    setImageAspect(e.currentTarget.naturalWidth / e.currentTarget.naturalHeight);
-  }, []);
-
-  const crop = useMemo(
-    () => calcCrop(imageAspect, PREVIEW_MODES[previewMode].aspect, position),
-    [imageAspect, previewMode, position],
-  );
 
   const handleFileChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,21 +72,22 @@ export function CoverImagePicker({
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent) => {
-      if (disabled || !crop.hasCrop) return;
+      if (disabled) return;
       e.preventDefault();
       setDragging(true);
       dragStartRef.current = { y: e.clientY, startPosition: position };
       (e.target as HTMLElement).setPointerCapture(e.pointerId);
     },
-    [disabled, crop.hasCrop, position],
+    [disabled, position],
   );
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!dragStartRef.current || !containerRef.current) return;
       const containerHeight = containerRef.current.offsetHeight;
+      // Amplify drag delta for better control in a small preview
       const deltaY = e.clientY - dragStartRef.current.y;
-      const deltaPercent = (deltaY / containerHeight) * 100;
+      const deltaPercent = (deltaY / containerHeight) * 200;
       const newPosition = Math.round(
         Math.min(100, Math.max(0, dragStartRef.current.startPosition + deltaPercent)),
       );
@@ -127,62 +106,44 @@ export function CoverImagePicker({
       <Label>カバー画像</Label>
       {previewUrl ? (
         <div className="space-y-1">
-          {/* Preview mode toggle */}
-          <div className="flex gap-1">
-            {(Object.entries(PREVIEW_MODES) as [PreviewMode, (typeof PREVIEW_MODES)[PreviewMode]][]).map(
-              ([key, { label }]) => (
-                <Button
-                  key={key}
-                  type="button"
-                  variant={previewMode === key ? "default" : "outline"}
-                  size="sm"
-                  className="h-6 px-2 text-xs"
-                  onClick={() => setPreviewMode(key)}
-                >
+          <Tabs value={previewMode} onValueChange={(v) => setPreviewMode(v as PreviewMode)}>
+            <TabsList className="w-full">
+              {(
+                Object.entries(PREVIEW_MODES) as [
+                  PreviewMode,
+                  (typeof PREVIEW_MODES)[PreviewMode],
+                ][]
+              ).map(([key, { label }]) => (
+                <TabsTrigger key={key} value={key} className="flex-1">
                   {label}
-                </Button>
-              ),
-            )}
-          </div>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
 
+          {/* Preview: renders exactly like the real TripCard/TripHeader */}
           <div
             ref={containerRef}
             className={cn(
               "relative w-full overflow-hidden rounded-md border",
-              !disabled && crop.hasCrop && "cursor-grab",
+              PREVIEW_MODES[previewMode].aspect,
+              !disabled && "cursor-grab",
               dragging && "cursor-grabbing",
             )}
             onPointerDown={handlePointerDown}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={previewUrl}
               alt="カバー画像プレビュー"
-              className="pointer-events-none block w-full"
-              onLoad={handleImageLoad}
+              className="pointer-events-none h-full w-full object-cover"
+              style={{ objectPosition: `center ${position}%` }}
               draggable={false}
             />
 
-            {crop.hasCrop && (
-              <>
-                <div
-                  className="pointer-events-none absolute inset-x-0 top-0 bg-black/50"
-                  style={{ height: `${crop.top}%` }}
-                />
-                <div
-                  className="pointer-events-none absolute inset-x-0 bottom-0 bg-black/50"
-                  style={{ height: `${crop.bottom}%` }}
-                />
-              </>
-            )}
-
-            {!disabled && crop.hasCrop && (
-              <div
-                className="pointer-events-none absolute inset-x-0 flex items-center justify-center gap-1 py-1 text-xs text-white"
-                style={{ bottom: `${crop.bottom}%` }}
-              >
+            {!disabled && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-black/30 py-1 text-xs text-white">
                 <Move className="h-3 w-3" />
                 ドラッグで位置を調整
               </div>
@@ -219,7 +180,7 @@ export function CoverImagePicker({
           onDrop={handleFileDrop}
           disabled={disabled}
           className={cn(
-            "flex aspect-[16/9] w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed text-muted-foreground transition-colors",
+            "flex w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed py-8 text-muted-foreground transition-colors",
             !disabled && "cursor-pointer hover:border-primary hover:text-primary",
           )}
         >

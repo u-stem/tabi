@@ -68,7 +68,7 @@ export const TripCard = memo(function TripCard({
             </Badge>
           </div>
         </div>
-        {destination && <CardDescription className="truncate">{destination}</CardDescription>}
+        <CardDescription className="truncate">{destination || "\u00A0"}</CardDescription>
       </CardHeader>
       <CardContent className="mt-auto">
         <p className="text-sm text-muted-foreground">

@@ -118,10 +118,10 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
         });
         if (coverFile && result) {
           const url = await upload(result.id, coverFile);
-          if (url) {
+          if (url && coverPosition !== 50) {
             await api(`/api/trips/${result.id}`, {
               method: "PATCH",
-              body: JSON.stringify({ coverImageUrl: url, coverImagePosition: coverPosition }),
+              body: JSON.stringify({ coverImagePosition: coverPosition }),
             });
           }
         }
@@ -155,10 +155,10 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
         });
         if (coverFile && result) {
           const url = await upload(result.id, coverFile);
-          if (url) {
+          if (url && coverPosition !== 50) {
             await api(`/api/trips/${result.id}`, {
               method: "PATCH",
-              body: JSON.stringify({ coverImageUrl: url, coverImagePosition: coverPosition }),
+              body: JSON.stringify({ coverImagePosition: coverPosition }),
             });
           }
         }

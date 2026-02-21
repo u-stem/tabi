@@ -71,4 +71,7 @@ export const ERROR_MSG = {
   EXPENSE_PAYER_NOT_MEMBER: "Payer must be a trip member",
   EXPENSE_SPLIT_USER_NOT_MEMBER: "Split users must be trip members",
   MEMBER_HAS_EXPENSES: "Cannot remove member who has expenses",
+  FILE_REQUIRED: "File is required",
+  FILE_TYPE_NOT_ALLOWED: "JPEG, PNG, WebP only",
+  FILE_TOO_LARGE: "File size must be 3MB or less",
 } as const;

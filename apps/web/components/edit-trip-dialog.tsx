@@ -105,15 +105,15 @@ export function EditTripDialog({
 
     let newCoverImageUrl: string | null | undefined;
     if (coverFile) {
+      // Upload API deletes old image and updates DB
       const url = await upload(tripId, coverFile);
       if (!url) {
         setLoading(false);
         return;
       }
-      if (coverImageUrl) await remove(coverImageUrl);
       newCoverImageUrl = url;
     } else if (removeCover && coverImageUrl) {
-      await remove(coverImageUrl);
+      await remove(tripId);
       newCoverImageUrl = null;
     }
 

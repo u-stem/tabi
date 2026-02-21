@@ -312,7 +312,7 @@ function ExpenseItem({
         <>
           <CollapsiblePrimitive.Trigger className="flex w-full items-center gap-1 border-t px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/80 transition-colors [&[data-state=open]>svg]:rotate-180">
             <ChevronDown className="h-3 w-3 transition-transform duration-200" />
-            負担額を表示
+            内訳を表示
           </CollapsiblePrimitive.Trigger>
           <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
             <div className="space-y-1 border-t px-3 pt-2 pb-3">

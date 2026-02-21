@@ -7,6 +7,7 @@ import { MoreHorizontal, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-re
 import { useState } from "react";
 import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
+import { Fab } from "@/components/fab";
 import { ItemMenuButton } from "@/components/item-menu-button";
 import {
   AlertDialog,
@@ -136,13 +137,15 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
 
   return (
     <div className="space-y-4">
-      <Card>
+      <Card className="border-0 shadow-none sm:border sm:shadow-sm">
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle>グループ</CardTitle>
-          <Button size="sm" onClick={() => setCreateOpen(true)}>
-            <Plus className="mr-1 h-4 w-4" />
-            新規作成
-          </Button>
+          {!isMobile && (
+            <Button size="sm" onClick={() => setCreateOpen(true)}>
+              <Plus className="mr-1 h-4 w-4" />
+              新規作成
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           {groups.length === 0 ? (
@@ -272,6 +275,8 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
         onOpenChange={(open) => !open && setSheetGroup(null)}
         actions={sheetActions}
       />
+
+      <Fab onClick={() => setCreateOpen(true)} label="グループを作成" hidden={!isMobile} />
     </div>
   );
 }

@@ -29,6 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 export type StatusFilter = "all" | TripStatus;
 export type SortKey = "updatedAt" | "startDate";
@@ -98,6 +99,7 @@ export function TripToolbar({
   deleteLabel = "旅行",
 }: TripToolbarProps) {
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const hasActions = !!onSelectionModeChange || !!newTripSlot;
 
   if (selectionMode) {
     return (
@@ -183,9 +185,14 @@ export function TripToolbar({
         aria-label="旅行を検索"
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="h-8 w-full sm:w-40"
+        className={cn("h-8 sm:w-40", hasActions ? "w-full" : "min-w-0 flex-1")}
       />
-      <div className="flex w-full items-center gap-1.5 [&>*]:flex-1 sm:w-auto sm:flex-1 sm:gap-2 sm:[&>*]:flex-initial">
+      <div
+        className={cn(
+          "flex items-center gap-1.5 sm:w-auto sm:flex-1 sm:gap-2",
+          hasActions && "w-full",
+        )}
+      >
         {!hideStatusFilter && (
           <Select
             value={statusFilter}
@@ -218,18 +225,20 @@ export function TripToolbar({
           </Select>
         )}
         {onSelectionModeChange && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="sm:ml-auto"
-            onClick={() => onSelectionModeChange(true)}
-            disabled={disabled || totalCount === 0}
-          >
-            <SquareMousePointer className="h-4 w-4" />
-            選択
-          </Button>
+          <div className="flex-1 sm:flex-initial sm:ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full sm:w-auto"
+              onClick={() => onSelectionModeChange(true)}
+              disabled={disabled || totalCount === 0}
+            >
+              <SquareMousePointer className="h-4 w-4" />
+              選択
+            </Button>
+          </div>
         )}
-        {newTripSlot}
+        {newTripSlot && <div className="flex-1 sm:flex-initial">{newTripSlot}</div>}
       </div>
     </div>
   );

@@ -78,7 +78,7 @@ function FriendListSection({
 
   return (
     <>
-      <Card>
+      <Card className="border-0 shadow-none sm:border sm:shadow-sm">
         <CardHeader>
           <CardTitle>フレンド一覧</CardTitle>
         </CardHeader>
@@ -100,20 +100,18 @@ function FriendListSection({
                       },
                     ]}
                   >
-                    <div className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <UserAvatar
-                          name={friend.name}
-                          image={friend.image}
-                          className="h-6 w-6 shrink-0"
-                          fallbackClassName="text-xs"
-                        />
-                        <span className="text-sm truncate">{friend.name}</span>
-                      </div>
-                      <Button size="sm" variant="outline" asChild>
-                        <Link href={`/users/${friend.userId}`}>プロフィール</Link>
-                      </Button>
-                    </div>
+                    <Link
+                      href={`/users/${friend.userId}`}
+                      className="flex items-center gap-2 min-w-0 rounded-lg border bg-card px-3 py-2"
+                    >
+                      <UserAvatar
+                        name={friend.name}
+                        image={friend.image}
+                        className="h-6 w-6 shrink-0"
+                        fallbackClassName="text-xs"
+                      />
+                      <span className="text-sm truncate">{friend.name}</span>
+                    </Link>
                   </SwipeableCard>
                 ) : (
                   <div key={friend.friendId} className="flex items-center justify-between gap-2">
@@ -202,7 +200,7 @@ function SendRequestSection() {
   }
 
   return (
-    <Card>
+    <Card className="border-0 shadow-none sm:border sm:shadow-sm">
       <form onSubmit={handleSubmit}>
         <CardHeader className="flex-row items-center justify-between space-y-0">
           <CardTitle>フレンド申請</CardTitle>

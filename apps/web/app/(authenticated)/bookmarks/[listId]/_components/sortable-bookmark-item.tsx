@@ -5,6 +5,8 @@ import { CSS } from "@dnd-kit/utilities";
 import type { BookmarkResponse } from "@sugara/shared";
 import { ExternalLink, Pencil, StickyNote, Trash2 } from "lucide-react";
 import type { CSSProperties } from "react";
+import { useState } from "react";
+import { ActionSheet } from "@/components/action-sheet";
 import { DragHandle } from "@/components/drag-handle";
 import { ItemMenuButton } from "@/components/item-menu-button";
 import { SwipeableCard } from "@/components/swipeable-card";
@@ -66,6 +68,7 @@ export function SortableBookmarkItem({
   onDelete: (bm: BookmarkResponse) => void;
 }) {
   const isMobile = useIsMobile();
+  const [sheetOpen, setSheetOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: bm.id,
   });
@@ -75,22 +78,7 @@ export function SortableBookmarkItem({
     transition,
   };
 
-  const swipeActions = isMobile
-    ? [
-        {
-          label: "編集",
-          icon: <Pencil className="h-4 w-4" />,
-          color: "blue" as const,
-          onClick: () => onEdit(bm),
-        },
-        {
-          label: "削除",
-          icon: <Trash2 className="h-4 w-4" />,
-          color: "red" as const,
-          onClick: () => onDelete(bm),
-        },
-      ]
-    : undefined;
+  const canSwipe = isMobile;
 
   const cardContent = (
     <div
@@ -99,13 +87,32 @@ export function SortableBookmarkItem({
         isDragging && "opacity-50",
       )}
     >
-      {!isMobile && (
-        <div className="flex shrink-0 items-center pt-0.5">
-          <DragHandle attributes={attributes} listeners={listeners} />
-        </div>
-      )}
+      <div className="flex shrink-0 items-center pt-0.5">
+        <DragHandle attributes={attributes} listeners={listeners} />
+      </div>
       <BookmarkItemContent bm={bm} asLink />
-      {!isMobile && (
+      {isMobile ? (
+        <>
+          <ItemMenuButton ariaLabel={`${bm.name}のメニュー`} onClick={() => setSheetOpen(true)} />
+          <ActionSheet
+            open={sheetOpen}
+            onOpenChange={setSheetOpen}
+            actions={[
+              {
+                label: "編集",
+                icon: <Pencil className="h-4 w-4" />,
+                onClick: () => onEdit(bm),
+              },
+              {
+                label: "削除",
+                icon: <Trash2 className="h-4 w-4" />,
+                onClick: () => onDelete(bm),
+                variant: "destructive" as const,
+              },
+            ]}
+          />
+        </>
+      ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <ItemMenuButton ariaLabel={`${bm.name}のメニュー`} />
@@ -127,8 +134,25 @@ export function SortableBookmarkItem({
 
   return (
     <div ref={setNodeRef} style={style}>
-      {swipeActions ? (
-        <SwipeableCard actions={swipeActions}>{cardContent}</SwipeableCard>
+      {canSwipe ? (
+        <SwipeableCard
+          actions={[
+            {
+              label: "編集",
+              icon: <Pencil className="h-4 w-4" />,
+              color: "blue" as const,
+              onClick: () => onEdit(bm),
+            },
+            {
+              label: "削除",
+              icon: <Trash2 className="h-4 w-4" />,
+              color: "red" as const,
+              onClick: () => onDelete(bm),
+            },
+          ]}
+        >
+          {cardContent}
+        </SwipeableCard>
       ) : (
         cardContent
       )}

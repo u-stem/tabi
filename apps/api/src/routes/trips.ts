@@ -71,7 +71,7 @@ tripRoutes.post("/", async (c) => {
       return c.json({ error: parsed.error.flatten() }, 400);
     }
 
-    const { title, destination = null, pollOptions } = parsed.data;
+    const { title, destination = null, pollOptions, coverImageUrl } = parsed.data;
 
     const trip = await db.transaction(async (tx) => {
       const [tripCount] = await tx
@@ -89,6 +89,7 @@ tripRoutes.post("/", async (c) => {
           title,
           destination,
           status: "scheduling",
+          coverImageUrl: coverImageUrl ?? null,
         })
         .returning();
 
@@ -154,7 +155,7 @@ tripRoutes.post("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const { title, destination = null, startDate, endDate } = parsed.data;
+  const { title, destination = null, startDate, endDate, coverImageUrl } = parsed.data;
 
   const trip = await db.transaction(async (tx) => {
     const [tripCount] = await tx
@@ -173,6 +174,7 @@ tripRoutes.post("/", async (c) => {
         destination,
         startDate,
         endDate,
+        coverImageUrl: coverImageUrl ?? null,
       })
       .returning();
 
@@ -332,6 +334,18 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
   }
   if (otherFields.status !== undefined && otherFields.status !== currentTrip.status) {
     updatePayload.status = otherFields.status;
+  }
+  if (
+    otherFields.coverImageUrl !== undefined &&
+    otherFields.coverImageUrl !== currentTrip.coverImageUrl
+  ) {
+    updatePayload.coverImageUrl = otherFields.coverImageUrl;
+  }
+  if (
+    otherFields.coverImagePosition !== undefined &&
+    otherFields.coverImagePosition !== currentTrip.coverImagePosition
+  ) {
+    updatePayload.coverImagePosition = otherFields.coverImagePosition;
   }
   if (datesChanged) {
     if (effectiveStart !== currentTrip.startDate) updatePayload.startDate = effectiveStart;

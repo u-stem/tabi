@@ -727,7 +727,7 @@ export default function TripDetailPage() {
                 const Icon = CATEGORY_ICONS[dnd.activeDragItem.category];
                 const colorClasses = SCHEDULE_COLOR_CLASSES[dnd.activeDragItem.color];
                 return (
-                  <div className="flex items-center gap-2 rounded-md border bg-card p-2 shadow-lg opacity-90">
+                  <div className="flex w-max items-center gap-2 rounded-md border bg-card p-2 shadow-lg opacity-90">
                     <div
                       className={cn(
                         "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white",
@@ -736,7 +736,9 @@ export default function TripDetailPage() {
                     >
                       <Icon className="h-3 w-3" />
                     </div>
-                    <span className="text-sm font-medium">{dnd.activeDragItem.name}</span>
+                    <span className="whitespace-nowrap text-sm font-medium">
+                      {dnd.activeDragItem.name}
+                    </span>
                   </div>
                 );
               })()}

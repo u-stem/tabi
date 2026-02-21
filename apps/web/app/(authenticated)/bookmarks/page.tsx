@@ -81,6 +81,7 @@ export default function BookmarksPage() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleting, setDeleting] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const { open: openShortcutHelp } = useShortcutHelp();
   const shortcuts: ShortcutGroup[] = useMemo(
@@ -192,8 +193,6 @@ export default function BookmarksPage() {
     setSelectionMode(false);
     setDuplicating(false);
   }
-
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   if (isLoading && !showSkeleton) return <div />;
 

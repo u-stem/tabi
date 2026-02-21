@@ -134,38 +134,40 @@ function DaySection({
             {merged.length === 0 ? (
               <p className="py-2 text-center text-xs text-muted-foreground">まだ予定がありません</p>
             ) : (
-              <table className="w-full table-fixed border-collapse text-xs print:text-[11px]">
-                <colgroup>
-                  <col className="w-[15%]" />
-                  <col className="w-[45%]" />
-                  <col className="w-[40%]" />
-                </colgroup>
-                {i === 0 || showPatternLabels ? (
-                  <thead>
-                    <tr className="text-left text-[10px] text-muted-foreground">
-                      <th className="py-1 pr-2 font-medium">時間</th>
-                      <th className="py-1 pr-2 font-medium">名前</th>
-                      <th className="py-1 font-medium">メモ</th>
-                    </tr>
-                  </thead>
-                ) : null}
-                <tbody>
-                  {merged.map((item) => (
-                    <PrintTableRow
-                      key={
-                        item.type === "crossDay"
-                          ? `cross-${item.entry.schedule.id}`
-                          : item.schedule.id
-                      }
-                      schedule={item.type === "crossDay" ? item.entry.schedule : item.schedule}
-                      crossDayDisplay={item.type === "crossDay"}
-                      crossDayPosition={
-                        item.type === "crossDay" ? item.entry.crossDayPosition : undefined
-                      }
-                    />
-                  ))}
-                </tbody>
-              </table>
+              <div className="overflow-x-auto print:overflow-visible">
+                <table className="w-full min-w-[600px] table-fixed border-collapse text-xs print:min-w-0 print:text-[11px]">
+                  <colgroup>
+                    <col className="w-[15%]" />
+                    <col className="w-[45%]" />
+                    <col className="w-[40%]" />
+                  </colgroup>
+                  {i === 0 || showPatternLabels ? (
+                    <thead>
+                      <tr className="text-left text-[10px] text-muted-foreground">
+                        <th className="py-1 pr-2 font-medium">時間</th>
+                        <th className="py-1 pr-2 font-medium">名前</th>
+                        <th className="py-1 font-medium">メモ</th>
+                      </tr>
+                    </thead>
+                  ) : null}
+                  <tbody>
+                    {merged.map((item) => (
+                      <PrintTableRow
+                        key={
+                          item.type === "crossDay"
+                            ? `cross-${item.entry.schedule.id}`
+                            : item.schedule.id
+                        }
+                        schedule={item.type === "crossDay" ? item.entry.schedule : item.schedule}
+                        crossDayDisplay={item.type === "crossDay"}
+                        crossDayPosition={
+                          item.type === "crossDay" ? item.entry.crossDayPosition : undefined
+                        }
+                      />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             )}
           </div>
         );

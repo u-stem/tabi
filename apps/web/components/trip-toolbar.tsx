@@ -181,7 +181,7 @@ export function TripToolbar({
         onChange={(e) => onSearchChange(e.target.value)}
         className="h-8 w-full sm:w-40"
       />
-      <div className="flex w-full items-center gap-2 sm:w-auto">
+      <div className="flex w-full items-center gap-2 sm:w-auto sm:flex-1">
         {(!hideStatusFilter || !hideSortKey) && (
           <div className="flex items-center gap-2">
             {!hideStatusFilter && (

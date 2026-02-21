@@ -8,6 +8,7 @@ import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
 import { CalendarNav, END_YEAR, START_YEAR } from "@/components/calendar-nav";
+import { CoverImagePicker } from "@/components/cover-image-picker";
 import { DateRangePicker } from "@/components/date-range-picker";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -24,6 +25,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { formatDateRangeShort } from "@/lib/format";
+import { useCoverImageUpload } from "@/lib/hooks/use-cover-image-upload";
 import { MSG } from "@/lib/messages";
 
 type DateMode = "direct" | "poll";
@@ -46,6 +48,11 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
+  // Cover image state
+  const [coverFile, setCoverFile] = useState<File | null>(null);
+  const [coverPosition, setCoverPosition] = useState(50);
+  const { uploading, error: uploadError, upload } = useCoverImageUpload();
+
   // Poll mode state
   const [candidates, setCandidates] = useState<CandidateOption[]>([]);
   const [pendingRange, setPendingRange] = useState<DateRange | undefined>();
@@ -59,6 +66,8 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
     setLoading(false);
     setStartDate("");
     setEndDate("");
+    setCoverFile(null);
+    setCoverPosition(50);
     setCandidates([]);
     setPendingRange(undefined);
     setCalendarMonth(new Date());
@@ -103,10 +112,19 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
       if (destination) body.destination = destination;
 
       try {
-        await api("/api/trips", {
+        const result = await api<{ id: string }>("/api/trips", {
           method: "POST",
           body: JSON.stringify(body),
         });
+        if (coverFile && result) {
+          const url = await upload(result.id, coverFile);
+          if (url) {
+            await api(`/api/trips/${result.id}`, {
+              method: "PATCH",
+              body: JSON.stringify({ coverImageUrl: url, coverImagePosition: coverPosition }),
+            });
+          }
+        }
         onOpenChange(false);
         toast.success(MSG.TRIP_CREATED);
         onCreated();
@@ -126,7 +144,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
 
       setLoading(true);
       try {
-        await api<{ id: string }>("/api/trips", {
+        const result = await api<{ id: string }>("/api/trips", {
           method: "POST",
           body: JSON.stringify({
             title,
@@ -135,6 +153,15 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
             endDate: ed,
           }),
         });
+        if (coverFile && result) {
+          const url = await upload(result.id, coverFile);
+          if (url) {
+            await api(`/api/trips/${result.id}`, {
+              method: "PATCH",
+              body: JSON.stringify({ coverImageUrl: url, coverImagePosition: coverPosition }),
+            });
+          }
+        }
         onOpenChange(false);
         toast.success(MSG.TRIP_CREATED);
         onCreated();
@@ -188,6 +215,24 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
                 {destination.length}/{TRIP_DESTINATION_MAX_LENGTH}
               </p>
             </div>
+
+            <CoverImagePicker
+              imageUrl={null}
+              previewFile={coverFile}
+              position={coverPosition}
+              onFileSelect={setCoverFile}
+              onPositionChange={setCoverPosition}
+              onRemove={() => {
+                setCoverFile(null);
+                setCoverPosition(50);
+              }}
+              disabled={loading || uploading}
+            />
+            {uploadError && (
+              <p role="alert" className="text-sm text-destructive">
+                {uploadError}
+              </p>
+            )}
 
             {/* Mode toggle */}
             <Tabs value={dateMode} onValueChange={(v) => setDateMode(v as DateMode)}>
@@ -294,9 +339,9 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
             )}
           </div>
           <ResponsiveDialogFooter className="shrink-0 border-t pt-4">
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading || uploading}>
               <Plus className="h-4 w-4" />
-              {loading ? "作成中..." : "作成"}
+              {loading || uploading ? "作成中..." : "作成"}
             </Button>
           </ResponsiveDialogFooter>
         </form>

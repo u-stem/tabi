@@ -43,6 +43,8 @@ function ResponsiveDialogTrigger({ ...props }: React.ComponentProps<typeof Dialo
   return <Comp {...props} />;
 }
 
+const preventAutoFocus = (e: Event) => e.preventDefault();
+
 function ResponsiveDialogContent({
   className,
   children,
@@ -54,6 +56,7 @@ function ResponsiveDialogContent({
       <DrawerContent
         className={className}
         {...(props as React.ComponentProps<typeof DrawerContent>)}
+        onOpenAutoFocus={preventAutoFocus}
       >
         {children}
       </DrawerContent>

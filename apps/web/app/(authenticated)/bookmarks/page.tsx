@@ -338,7 +338,7 @@ export default function BookmarksPage() {
                     disabled={!online || filteredBookmarkLists.length === 0}
                   >
                     <SquareMousePointer className="h-4 w-4" />
-                    <span className="hidden sm:inline">選択</span>
+                    選択
                   </Button>
                   {!isMobile && (
                     <Tooltip>

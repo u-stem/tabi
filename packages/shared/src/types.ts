@@ -66,6 +66,7 @@ export type TripResponse = {
   scheduleCount: number;
   memberCount: number;
   poll: TripPollSummary | null;
+  chatSession: { id: string; lastMessageAt: string } | null;
 };
 
 export type TripListItem = {
@@ -225,4 +226,24 @@ export type SharedPollResponse = Omit<
   "isOwner" | "myParticipantId" | "tripId" | "ownerId"
 > & {
   shareExpiresAt: string | null;
+};
+
+export type ChatSessionResponse = {
+  id: string;
+  startedBy: {
+    userId: string;
+    name: string;
+    image?: string | null;
+  };
+  createdAt: string;
+  lastMessageAt: string;
+};
+
+export type ChatMessageResponse = {
+  id: string;
+  userId: string;
+  userName: string;
+  userImage?: string | null;
+  content: string;
+  createdAt: string;
 };

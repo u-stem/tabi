@@ -274,6 +274,9 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
             },
           },
         },
+        chatSession: {
+          columns: { id: true, lastMessageAt: true },
+        },
       },
     }),
     queryCandidatesWithReactions(tripId, user.id),
@@ -284,7 +287,7 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
   }
 
-  const { poll: rawPoll, ...trip } = tripWithPoll;
+  const { poll: rawPoll, chatSession: rawChatSession, ...trip } = tripWithPoll;
 
   // Derive from already-fetched data instead of an extra DB query
   const scheduleCount =
@@ -299,6 +302,10 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
       }
     : null;
 
+  const chatSession = rawChatSession
+    ? { id: rawChatSession.id, lastMessageAt: rawChatSession.lastMessageAt.toISOString() }
+    : null;
+
   return c.json({
     ...trip,
     role,
@@ -306,6 +313,7 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
     scheduleCount,
     memberCount,
     poll,
+    chatSession,
   });
 });
 

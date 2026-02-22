@@ -451,6 +451,37 @@ export const expenseSplits = pgTable(
   (table) => [primaryKey({ columns: [table.expenseId, table.userId] })],
 ).enableRLS();
 
+export const chatSessions = pgTable("chat_sessions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" })
+    .unique(),
+  startedBy: uuid("started_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  lastMessageAt: timestamp("last_message_at", { withTimezone: true }).notNull().defaultNow(),
+}).enableRLS();
+
+export const chatMessages = pgTable(
+  "chat_messages",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: uuid("session_id")
+      .notNull()
+      .references(() => chatSessions.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("chat_messages_session_id_created_at_idx").on(table.sessionId, table.createdAt),
+  ],
+).enableRLS();
+
 // --- Relations ---
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -472,6 +503,7 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
   activityLogs: many(activityLogs),
   poll: one(schedulePolls, { fields: [trips.id], references: [schedulePolls.tripId] }),
   expenses: many(expenses),
+  chatSession: one(chatSessions, { fields: [trips.id], references: [chatSessions.tripId] }),
 }));
 
 export const tripMembersRelations = relations(tripMembers, ({ one }) => ({
@@ -589,4 +621,15 @@ export const expensesRelations = relations(expenses, ({ one, many }) => ({
 export const expenseSplitsRelations = relations(expenseSplits, ({ one }) => ({
   expense: one(expenses, { fields: [expenseSplits.expenseId], references: [expenses.id] }),
   user: one(users, { fields: [expenseSplits.userId], references: [users.id] }),
+}));
+
+export const chatSessionsRelations = relations(chatSessions, ({ one, many }) => ({
+  trip: one(trips, { fields: [chatSessions.tripId], references: [trips.id] }),
+  startedByUser: one(users, { fields: [chatSessions.startedBy], references: [users.id] }),
+  messages: many(chatMessages),
+}));
+
+export const chatMessagesRelations = relations(chatMessages, ({ one }) => ({
+  session: one(chatSessions, { fields: [chatMessages.sessionId], references: [chatSessions.id] }),
+  user: one(users, { fields: [chatMessages.userId], references: [users.id] }),
 }));

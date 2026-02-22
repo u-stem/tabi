@@ -79,6 +79,7 @@ function makeTrip(overrides: Partial<TripResponse> = {}): TripResponse {
     scheduleCount: 0,
     memberCount: 1,
     poll: null,
+    chatSession: null,
     ...overrides,
   };
 }

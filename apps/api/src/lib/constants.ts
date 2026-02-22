@@ -77,4 +77,6 @@ export const ERROR_MSG = {
   GUEST_NOT_ALLOWED: "This feature is not available for guest accounts",
   GUEST_TRIP_LIMIT: "Guest accounts can only create 1 trip",
   GUEST_EXPIRED: "Guest account has expired",
+  CHAT_SESSION_NOT_FOUND: "Chat session not found",
+  CHAT_SESSION_ALREADY_EXISTS: "Chat session already exists",
 } as const;

@@ -1,6 +1,7 @@
 export * from "./account";
 export * from "./avatar";
 export * from "./bookmark";
+export * from "./chat";
 export * from "./day-pattern";
 export * from "./expense";
 export * from "./feedback";

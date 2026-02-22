@@ -11,6 +11,7 @@ function Toaster({ ...props }: ToasterProps) {
     <Sonner
       className="toaster group"
       richColors
+      position="top-center"
       theme={resolvedTheme === "dark" ? "dark" : "light"}
       {...props}
     />

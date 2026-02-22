@@ -9,7 +9,8 @@ export function DragHandle({ attributes, listeners }: DragHandleProps) {
   return (
     <button
       type="button"
-      className="shrink-0 cursor-grab touch-none text-muted-foreground hover:text-foreground"
+      // min-h/min-w 44px for mobile touch target (Apple HIG)
+      className="flex min-h-[44px] min-w-[44px] shrink-0 cursor-grab items-center justify-center touch-none text-muted-foreground hover:text-foreground sm:min-h-0 sm:min-w-0"
       aria-label="ドラッグで並び替え"
       {...attributes}
       {...listeners}

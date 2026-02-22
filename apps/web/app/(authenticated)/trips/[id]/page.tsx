@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dialog";
@@ -118,6 +119,8 @@ export default function TripDetailPage() {
   const [saveToBookmarkIds, setSaveToBookmarkIds] = useState<string[]>([]);
   const [bookmarkPickerOpen, setBookmarkPickerOpen] = useState(false);
   const timelinePanelRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   // Keyboard shortcuts
   const { open: openShortcutHelp } = useShortcutHelp();
@@ -717,28 +720,32 @@ export default function TripDetailPage() {
               onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
             />
           </div>
-          <DragOverlay>
-            {dnd.activeDragItem &&
-              (() => {
-                const Icon = CATEGORY_ICONS[dnd.activeDragItem.category];
-                const colorClasses = SCHEDULE_COLOR_CLASSES[dnd.activeDragItem.color];
-                return (
-                  <div className="flex w-max items-center gap-2 rounded-md border bg-card p-2 shadow-lg opacity-90">
-                    <div
-                      className={cn(
-                        "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white",
-                        colorClasses.bg,
-                      )}
-                    >
-                      <Icon className="h-3 w-3" />
-                    </div>
-                    <span className="whitespace-nowrap text-sm font-medium">
-                      {dnd.activeDragItem.name}
-                    </span>
-                  </div>
-                );
-              })()}
-          </DragOverlay>
+          {mounted &&
+            createPortal(
+              <DragOverlay>
+                {dnd.activeDragItem &&
+                  (() => {
+                    const Icon = CATEGORY_ICONS[dnd.activeDragItem.category];
+                    const colorClasses = SCHEDULE_COLOR_CLASSES[dnd.activeDragItem.color];
+                    return (
+                      <div className="flex w-max items-center gap-2 rounded-md border bg-card p-2 shadow-lg opacity-90">
+                        <div
+                          className={cn(
+                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white",
+                            colorClasses.bg,
+                          )}
+                        >
+                          <Icon className="h-3 w-3" />
+                        </div>
+                        <span className="whitespace-nowrap text-sm font-medium">
+                          {dnd.activeDragItem.name}
+                        </span>
+                      </div>
+                    );
+                  })()}
+              </DragOverlay>,
+              document.body,
+            )}
         </DndContext>
 
         <Fab

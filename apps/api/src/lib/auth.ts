@@ -60,13 +60,15 @@ export const auth = betterAuth({
   databaseHooks: {
     user: {
       create: {
-        after: async (user) => {
+        // Set guestExpiresAt BEFORE insert so the session created right after includes it
+        before: async (user) => {
           if (user.isAnonymous) {
-            const expiresAt = new Date(Date.now() + GUEST_TTL_MS);
-            await db
-              .update(schema.users)
-              .set({ guestExpiresAt: expiresAt })
-              .where(eq(schema.users.id, user.id));
+            return {
+              data: {
+                ...user,
+                guestExpiresAt: new Date(Date.now() + GUEST_TTL_MS),
+              },
+            };
           }
         },
       },

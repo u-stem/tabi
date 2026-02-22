@@ -1,7 +1,7 @@
 "use client";
 
 import type { FriendRequestResponse } from "@sugara/shared";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, Keyboard, LogOut, MessageSquare, Settings, User } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -48,6 +48,7 @@ export function Header() {
   const router = useRouter();
   const pathname = usePathname();
   const { data: session } = useSession();
+  const queryClient = useQueryClient();
   const { canInstall, promptInstall } = useInstallPrompt();
   const { open: openShortcutHelp } = useShortcutHelp();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -67,6 +68,8 @@ export function Header() {
   async function handleSignOut() {
     try {
       await signOut();
+      // Prevent stale data from previous account leaking into next session
+      queryClient.clear();
       router.push("/");
     } catch {
       toast.error(MSG.AUTH_LOGOUT_FAILED);

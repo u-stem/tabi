@@ -63,7 +63,6 @@ export function BookmarkFormFields({
           placeholder="金閣寺"
           maxLength={BOOKMARK_NAME_MAX_LENGTH}
           required
-          autoFocus
         />
         <p className="text-right text-xs text-muted-foreground">
           {name.length}/{BOOKMARK_NAME_MAX_LENGTH}

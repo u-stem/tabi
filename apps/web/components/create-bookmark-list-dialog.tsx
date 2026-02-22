@@ -91,7 +91,6 @@ export function CreateBookmarkListDialog({
                 placeholder="行きたい場所"
                 maxLength={BOOKMARK_LIST_NAME_MAX_LENGTH}
                 required
-                autoFocus
               />
               <p className="text-right text-xs text-muted-foreground">
                 {name.length}/{BOOKMARK_LIST_NAME_MAX_LENGTH}

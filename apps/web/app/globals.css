@@ -102,11 +102,6 @@
   * {
     @apply border-border;
   }
-  html {
-    overflow-x: hidden;
-    /* Prevent double-tap zoom on all interactive elements */
-    touch-action: manipulation;
-  }
   body {
     @apply bg-background text-foreground;
     overflow-x: hidden;

@@ -600,7 +600,7 @@ export function CandidatePanel({
         </div>
       ) : (
         <div className="mb-2 flex items-center gap-1.5">
-          <div className="flex flex-1 items-center gap-1.5 [&>*]:flex-1 lg:flex-initial lg:[&>*]:flex-initial">
+          <div className="flex flex-1 items-center gap-1.5 [&>*]:flex-1 lg:flex-initial lg:[&>*]:flex-initial lg:ml-auto">
             {!disabled &&
               !isMobile &&
               (scheduleLimitReached ? (

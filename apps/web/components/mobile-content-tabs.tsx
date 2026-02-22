@@ -1,6 +1,5 @@
 "use client";
 
-import { TAB_ACTIVE, TAB_INACTIVE } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
 export type MobileContentTab = "schedule" | "candidates" | "expenses";
@@ -23,7 +22,7 @@ export function MobileContentTabs({
   candidateCount,
 }: MobileContentTabsProps) {
   return (
-    <div className="flex shrink-0" role="tablist">
+    <div className="mx-3 my-2 flex shrink-0 gap-1 rounded-lg bg-muted p-1" role="tablist">
       {TABS.map((tab) => (
         <button
           key={tab.id}
@@ -31,16 +30,16 @@ export function MobileContentTabs({
           role="tab"
           aria-selected={activeTab === tab.id}
           className={cn(
-            "relative flex-1 px-3 py-2.5 text-sm font-medium transition-colors min-h-[44px]",
-            activeTab === tab.id ? TAB_ACTIVE : TAB_INACTIVE,
+            "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors min-h-[36px]",
+            activeTab === tab.id
+              ? "bg-background text-foreground shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
           )}
           onClick={() => onTabChange(tab.id)}
         >
           {tab.label}
           {tab.id === "candidates" && candidateCount > 0 && (
-            <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-muted px-1 text-xs">
-              {candidateCount}
-            </span>
+            <span className="ml-1 text-xs">{candidateCount}</span>
           )}
         </button>
       ))}

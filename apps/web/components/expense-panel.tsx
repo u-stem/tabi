@@ -281,7 +281,7 @@ function ExpenseItem({
 
   return (
     <CollapsiblePrimitive.Root className="rounded-md border">
-      <div className="flex items-start justify-between gap-2 p-3">
+      <div className="flex items-center justify-between gap-2 p-3">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{expense.title}</p>
           <p className="text-xs text-muted-foreground">

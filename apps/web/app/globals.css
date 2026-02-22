@@ -104,7 +104,14 @@
   }
   body {
     @apply bg-background text-foreground;
-    overflow-x: hidden;
+  }
+  /* Prevent horizontal scroll on mobile only — applying to desktop
+     creates a new containing block that breaks dnd-kit DragOverlay
+     (position: fixed) coordinate calculations. */
+  @media (max-width: 1023px) {
+    body {
+      overflow-x: hidden;
+    }
   }
   button,
   [role="button"] {

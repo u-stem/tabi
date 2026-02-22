@@ -28,7 +28,6 @@ import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
-import { TAB_ACTIVE, TAB_INACTIVE } from "@/lib/styles";
 import { cn } from "@/lib/utils";
 
 type HomeTab = "owned" | "shared";
@@ -310,15 +309,17 @@ export default function HomePage() {
         </div>
       ) : (
         <>
-          <div className="mt-4 flex gap-1 border-b">
+          <div className="mt-4 flex gap-1.5">
             {tabs.map(({ value, label }) => (
               <button
                 key={value}
                 type="button"
                 onClick={() => handleTabChange(value)}
                 className={cn(
-                  "relative px-4 py-2 text-sm font-medium transition-colors",
-                  tab === value ? TAB_ACTIVE : TAB_INACTIVE,
+                  "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors",
+                  tab === value
+                    ? "bg-muted text-foreground"
+                    : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground",
                 )}
               >
                 {label}

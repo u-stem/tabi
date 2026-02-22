@@ -600,7 +600,7 @@ export function CandidatePanel({
         </div>
       ) : (
         <div className="mb-2 flex items-center gap-1.5">
-          <div className="flex flex-1 items-center gap-1.5 [&>*]:flex-1 lg:flex-initial lg:[&>*]:flex-initial lg:ml-auto">
+          <div className="flex flex-1 items-center gap-1.5 [&>*]:flex-1 lg:flex-initial lg:[&>*]:flex-initial">
             {!disabled &&
               !isMobile &&
               (scheduleLimitReached ? (
@@ -679,14 +679,15 @@ export function CandidatePanel({
             ) : (
               <div className="space-y-1.5">
                 {(() => {
-                  const insertIndicator = <DndInsertIndicator />;
+                  const overlayIndicator = <DndInsertIndicator overlay />;
+                  const inlineIndicator = <DndInsertIndicator />;
                   return (
                     <>
                       {sortedCandidates.map((spot, idx) => {
                         const isReorderable = isMobile && reorderMode && !disabled;
                         return (
-                          <div key={spot.id}>
-                            {overCandidateId === spot.id && insertIndicator}
+                          <div key={spot.id} className="relative">
+                            {overCandidateId === spot.id && overlayIndicator}
                             <CandidateCard
                               spot={spot}
                               onEdit={() => setEditSchedule(spot)}
@@ -719,7 +720,7 @@ export function CandidatePanel({
                           </div>
                         );
                       })}
-                      {isOverCandidates && overCandidateId === null && insertIndicator}
+                      {isOverCandidates && overCandidateId === null && inlineIndicator}
                     </>
                   );
                 })()}

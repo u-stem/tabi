@@ -677,7 +677,7 @@ function PlaceCard({
         `${crossDaySourceDayNumber}日目から継続`,
       )}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <LeadingControl
@@ -883,7 +883,7 @@ function TransportConnector({
         crossDayPosition,
       )}
     >
-      <div className="flex items-start justify-between gap-2">
+      <div className="flex items-center justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 items-center gap-2">
             <LeadingControl

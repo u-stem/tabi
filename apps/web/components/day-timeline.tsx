@@ -354,7 +354,8 @@ export function DayTimeline({
           );
         }
 
-        const insertIndicator = <DndInsertIndicator />;
+        const overlayIndicator = <DndInsertIndicator overlay />;
+        const inlineIndicator = <DndInsertIndicator />;
 
         function renderItem(item: TimelineItem, i: number, opts?: { selectable?: boolean }) {
           const isFirst = i === 0;
@@ -380,8 +381,8 @@ export function DayTimeline({
             const sourceMaxEndDayOffset =
               totalDays != null ? totalDays - sourceDayNumber : maxEndDayOffset;
             return (
-              <div key={`cross-${s.id}`}>
-                {showInsertIndicator && insertIndicator}
+              <div key={`cross-${s.id}`} className="relative">
+                {showInsertIndicator && overlayIndicator}
                 <ScheduleItem
                   {...s}
                   tripId={tripId}
@@ -446,8 +447,8 @@ export function DayTimeline({
           );
 
           return (
-            <div key={schedule.id}>
-              {showInsertIndicator && insertIndicator}
+            <div key={schedule.id} className="relative">
+              {showInsertIndicator && overlayIndicator}
               {scheduleEl}
             </div>
           );
@@ -465,7 +466,7 @@ export function DayTimeline({
             >
               <div className="space-y-1.5">
                 {merged.map((item, i) => renderItem(item, i))}
-                {isOverTimeline && overScheduleId === null && insertIndicator}
+                {isOverTimeline && overScheduleId === null && inlineIndicator}
               </div>
             </SortableContext>
           </div>

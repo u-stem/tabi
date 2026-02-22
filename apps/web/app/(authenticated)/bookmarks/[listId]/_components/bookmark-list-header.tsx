@@ -2,7 +2,16 @@
 
 import type { BookmarkListResponse } from "@sugara/shared";
 import { MAX_BOOKMARKS_PER_LIST } from "@sugara/shared";
-import { CheckSquare, Copy, MoreHorizontal, Pencil, Plus, Trash2, X } from "lucide-react";
+import {
+  CheckSquare,
+  Copy,
+  GripVertical,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { ActionSheet } from "@/components/action-sheet";
 import { ItemMenuButton } from "@/components/item-menu-button";
@@ -32,6 +41,8 @@ export function BookmarkListHeader({
   sel,
   listOps,
   bmOps,
+  reorderMode,
+  onReorderModeChange,
 }: {
   list: BookmarkListResponse;
   bookmarkCount: number;
@@ -39,6 +50,8 @@ export function BookmarkListHeader({
   sel: Selection;
   listOps: ListOps;
   bmOps: BmOps;
+  reorderMode?: boolean;
+  onReorderModeChange?: (mode: boolean) => void;
 }) {
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
@@ -159,12 +172,47 @@ export function BookmarkListHeader({
             </DropdownMenu>
           </div>
         </div>
+      ) : reorderMode ? (
+        <div className="mt-3 flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+          <GripVertical className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium">並び替え中</span>
+          <div className="ml-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => onReorderModeChange?.(false)}
+            >
+              完了
+            </Button>
+          </div>
+        </div>
       ) : (
         <div className="mt-3 flex items-center gap-1.5 justify-end">
           {bookmarkCount > 0 && online && (
-            <Button variant="outline" size="sm" onClick={sel.enter}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                onReorderModeChange?.(false);
+                sel.enter();
+              }}
+            >
               <CheckSquare className="h-4 w-4" />
               選択
+            </Button>
+          )}
+          {isMobile && bookmarkCount > 1 && online && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                sel.exit();
+                onReorderModeChange?.(true);
+              }}
+            >
+              <GripVertical className="h-4 w-4" />
+              並び替え
             </Button>
           )}
           {!isMobile && (

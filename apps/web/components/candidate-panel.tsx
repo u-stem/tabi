@@ -21,6 +21,7 @@ import {
   Clock,
   Copy,
   ExternalLink,
+  GripVertical,
   MapPin,
   MoreHorizontal,
   Pencil,
@@ -76,6 +77,7 @@ import { ActionSheet } from "./action-sheet";
 import { DndInsertIndicator } from "./dnd-insert-indicator";
 import { DragHandle } from "./drag-handle";
 import { ItemMenuButton } from "./item-menu-button";
+import { ReorderControls } from "./reorder-controls";
 
 type CandidatePanelProps = {
   tripId: string;
@@ -92,6 +94,7 @@ type CandidatePanelProps = {
   overCandidateId?: string | null;
   maxEndDayOffset?: number;
   onSaveToBookmark?: (scheduleIds: string[]) => void;
+  onReorderCandidate?: (id: string, direction: "up" | "down") => void;
 };
 
 function CandidateCard({
@@ -107,6 +110,11 @@ function CandidateCard({
   selected,
   onSelect,
   draggable,
+  reorderable,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
 }: {
   spot: CandidateResponse;
   onEdit: () => void;
@@ -120,13 +128,18 @@ function CandidateCard({
   selected?: boolean;
   onSelect?: (id: string) => void;
   draggable?: boolean;
+  reorderable?: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 }) {
   const isMobile = useIsMobile();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: spot.id,
-    disabled: !draggable || disabled || selectable,
+    disabled: !draggable || disabled || selectable || reorderable,
     data: { type: "candidate" },
   });
 
@@ -167,6 +180,13 @@ function CandidateCard({
     >
       {selectable ? (
         <SelectionIndicator checked={!!selected} />
+      ) : reorderable ? (
+        <ReorderControls
+          onMoveUp={onMoveUp}
+          onMoveDown={onMoveDown}
+          isFirst={!!isFirst}
+          isLast={!!isLast}
+        />
       ) : draggable ? (
         <DragHandle attributes={attributes} listeners={listeners} />
       ) : null}
@@ -405,6 +425,7 @@ export function CandidatePanel({
   overCandidateId,
   maxEndDayOffset = 0,
   onSaveToBookmark,
+  onReorderCandidate,
 }: CandidatePanelProps) {
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
@@ -417,6 +438,7 @@ export function CandidatePanel({
     data: { type: "candidates" },
   });
   const isMobile = useIsMobile();
+  const [reorderMode, setReorderMode] = useState(false);
   const [internalAddOpen, setInternalAddOpen] = useState(false);
   const addOpen = controlledAddOpen ?? internalAddOpen;
   const setAddOpen = controlledOnAddOpenChange ?? setInternalAddOpen;
@@ -561,6 +583,21 @@ export function CandidatePanel({
             </DropdownMenu>
           </div>
         </div>
+      ) : reorderMode ? (
+        <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+          <GripVertical className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium">並び替え中</span>
+          <div className="ml-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setReorderMode(false)}
+            >
+              完了
+            </Button>
+          </div>
+        </div>
       ) : (
         <div className="mb-2 flex items-center gap-1.5">
           <div className="flex flex-1 items-center gap-1.5 [&>*]:flex-1 lg:flex-initial lg:[&>*]:flex-initial lg:ml-auto">
@@ -585,9 +622,30 @@ export function CandidatePanel({
                 </Button>
               ))}
             {!disabled && candidates.length > 0 && sel.canEnter && (
-              <Button variant="outline" size="sm" onClick={() => sel.enter("candidates")}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setReorderMode(false);
+                  sel.enter("candidates");
+                }}
+              >
                 <CheckSquare className="h-4 w-4" />
                 選択
+              </Button>
+            )}
+            {!disabled && isMobile && candidates.length > 1 && onReorderCandidate && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  sel.exit();
+                  setSortBy("order");
+                  setReorderMode(true);
+                }}
+              >
+                <GripVertical className="h-4 w-4" />
+                並び替え
               </Button>
             )}
             {candidates.length > 0 && (
@@ -624,27 +682,43 @@ export function CandidatePanel({
                   const insertIndicator = <DndInsertIndicator />;
                   return (
                     <>
-                      {sortedCandidates.map((spot) => (
-                        <div key={spot.id}>
-                          {overCandidateId === spot.id && insertIndicator}
-                          <CandidateCard
-                            spot={spot}
-                            onEdit={() => setEditSchedule(spot)}
-                            onDelete={() => handleDelete(spot.id)}
-                            onAssign={() => handleAssign(spot.id)}
-                            onReact={(type) => handleReact(spot.id, type)}
-                            onRemoveReaction={() => handleRemoveReaction(spot.id)}
-                            onSaveToBookmark={
-                              onSaveToBookmark ? () => onSaveToBookmark([spot.id]) : undefined
-                            }
-                            disabled={disabled}
-                            draggable={!selectionMode}
-                            selectable={selectionMode}
-                            selected={selectedIds?.has(spot.id)}
-                            onSelect={sel.toggle}
-                          />
-                        </div>
-                      ))}
+                      {sortedCandidates.map((spot, idx) => {
+                        const isReorderable = isMobile && reorderMode && !disabled;
+                        return (
+                          <div key={spot.id}>
+                            {overCandidateId === spot.id && insertIndicator}
+                            <CandidateCard
+                              spot={spot}
+                              onEdit={() => setEditSchedule(spot)}
+                              onDelete={() => handleDelete(spot.id)}
+                              onAssign={() => handleAssign(spot.id)}
+                              onReact={(type) => handleReact(spot.id, type)}
+                              onRemoveReaction={() => handleRemoveReaction(spot.id)}
+                              onSaveToBookmark={
+                                onSaveToBookmark ? () => onSaveToBookmark([spot.id]) : undefined
+                              }
+                              disabled={disabled}
+                              draggable={!isMobile && !selectionMode}
+                              selectable={selectionMode}
+                              selected={selectedIds?.has(spot.id)}
+                              onSelect={sel.toggle}
+                              reorderable={isReorderable}
+                              onMoveUp={
+                                isReorderable
+                                  ? () => onReorderCandidate?.(spot.id, "up")
+                                  : undefined
+                              }
+                              onMoveDown={
+                                isReorderable
+                                  ? () => onReorderCandidate?.(spot.id, "down")
+                                  : undefined
+                              }
+                              isFirst={idx === 0}
+                              isLast={idx === sortedCandidates.length - 1}
+                            />
+                          </div>
+                        );
+                      })}
                       {isOverCandidates && overCandidateId === null && insertIndicator}
                     </>
                   );
@@ -659,22 +733,30 @@ export function CandidatePanel({
         </div>
       ) : (
         <div className="space-y-1.5">
-          {sortedCandidates.map((spot) => (
-            <CandidateCard
-              key={spot.id}
-              spot={spot}
-              onEdit={() => setEditSchedule(spot)}
-              onDelete={() => handleDelete(spot.id)}
-              onAssign={() => handleAssign(spot.id)}
-              onReact={(type) => handleReact(spot.id, type)}
-              onRemoveReaction={() => handleRemoveReaction(spot.id)}
-              onSaveToBookmark={onSaveToBookmark ? () => onSaveToBookmark([spot.id]) : undefined}
-              disabled={disabled}
-              selectable={selectionMode}
-              selected={selectedIds?.has(spot.id)}
-              onSelect={sel.toggle}
-            />
-          ))}
+          {sortedCandidates.map((spot, idx) => {
+            const isReorderable = isMobile && reorderMode && !disabled;
+            return (
+              <CandidateCard
+                key={spot.id}
+                spot={spot}
+                onEdit={() => setEditSchedule(spot)}
+                onDelete={() => handleDelete(spot.id)}
+                onAssign={() => handleAssign(spot.id)}
+                onReact={(type) => handleReact(spot.id, type)}
+                onRemoveReaction={() => handleRemoveReaction(spot.id)}
+                onSaveToBookmark={onSaveToBookmark ? () => onSaveToBookmark([spot.id]) : undefined}
+                disabled={disabled}
+                selectable={selectionMode}
+                selected={selectedIds?.has(spot.id)}
+                onSelect={sel.toggle}
+                reorderable={isReorderable}
+                onMoveUp={isReorderable ? () => onReorderCandidate?.(spot.id, "up") : undefined}
+                onMoveDown={isReorderable ? () => onReorderCandidate?.(spot.id, "down") : undefined}
+                isFirst={idx === 0}
+                isLast={idx === sortedCandidates.length - 1}
+              />
+            );
+          })}
         </div>
       )}
 

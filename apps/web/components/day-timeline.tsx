@@ -9,6 +9,7 @@ import {
   Bookmark,
   CheckSquare,
   Copy,
+  GripVertical,
   MoreHorizontal,
   Plus,
   Trash2,
@@ -16,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-
+import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,6 +74,7 @@ type DayTimelineProps = {
   onAddScheduleOpenChange?: (open: boolean) => void;
   overScheduleId?: string | null;
   onSaveToBookmark?: (scheduleIds: string[]) => void;
+  onReorderSchedule?: (id: string, direction: "up" | "down") => void;
 };
 
 export function DayTimeline({
@@ -93,6 +95,7 @@ export function DayTimeline({
   onAddScheduleOpenChange,
   overScheduleId,
   onSaveToBookmark,
+  onReorderSchedule,
 }: DayTimelineProps) {
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
@@ -107,6 +110,7 @@ export function DayTimeline({
   });
 
   const isMobile = useIsMobile();
+  const [reorderMode, setReorderMode] = useState(false);
   const now = useCurrentTime();
   const isToday = date === toDateString(new Date());
 
@@ -245,6 +249,21 @@ export function DayTimeline({
             </DropdownMenu>
           </div>
         </div>
+      ) : reorderMode ? (
+        <div className="mb-2 flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+          <GripVertical className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
+          <span className="text-xs font-medium">並び替え中</span>
+          <div className="ml-auto">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setReorderMode(false)}
+            >
+              完了
+            </Button>
+          </div>
+        </div>
       ) : (
         <div className="mb-2 flex select-none items-center gap-1.5">
           <span className="hidden text-sm text-muted-foreground lg:inline">{formatDate(date)}</span>
@@ -276,9 +295,29 @@ export function DayTimeline({
                 />
               ))}
             {!disabled && schedules.length > 0 && sel.canEnter && (
-              <Button variant="outline" size="sm" onClick={() => sel.enter("timeline")}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setReorderMode(false);
+                  sel.enter("timeline");
+                }}
+              >
                 <CheckSquare className="h-4 w-4" />
                 選択
+              </Button>
+            )}
+            {!disabled && isMobile && schedules.length > 1 && onReorderSchedule && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  sel.exit();
+                  setReorderMode(true);
+                }}
+              >
+                <GripVertical className="h-4 w-4" />
+                並び替え
               </Button>
             )}
             {schedules.length > 1 && (
@@ -369,6 +408,10 @@ export function DayTimeline({
 
           const { schedule } = item;
           const schedulesAfter = schedules.filter((s) => s.sortOrder > schedule.sortOrder);
+          const isReorderable = isMobile && reorderMode && !disabled;
+          const scheduleIdx = schedules.findIndex((s) => s.id === schedule.id);
+          const reorderFirst = scheduleIdx === 0;
+          const reorderLast = scheduleIdx === schedules.length - 1;
           const scheduleEl = (
             <ScheduleItem
               {...schedule}
@@ -376,8 +419,8 @@ export function DayTimeline({
               dayId={dayId}
               patternId={patternId}
               date={date}
-              isFirst={isFirst}
-              isLast={isLast}
+              isFirst={isReorderable ? reorderFirst : isFirst}
+              isLast={isReorderable ? reorderLast : isLast}
               onDelete={() => handleDelete(schedule.id)}
               onUpdate={onRefresh}
               onUnassign={
@@ -392,6 +435,12 @@ export function DayTimeline({
               siblingSchedules={schedulesAfter}
               onSaveToBookmark={
                 onSaveToBookmark ? () => onSaveToBookmark([schedule.id]) : undefined
+              }
+              draggable={!isMobile}
+              reorderable={isReorderable}
+              onMoveUp={isReorderable ? () => onReorderSchedule?.(schedule.id, "up") : undefined}
+              onMoveDown={
+                isReorderable ? () => onReorderSchedule?.(schedule.id, "down") : undefined
               }
             />
           );

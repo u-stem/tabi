@@ -62,15 +62,18 @@ export function SortableBookmarkItem({
   bm,
   onEdit,
   onDelete,
+  draggable = true,
 }: {
   bm: BookmarkResponse;
   onEdit: (bm: BookmarkResponse) => void;
   onDelete: (bm: BookmarkResponse) => void;
+  draggable?: boolean;
 }) {
   const isMobile = useIsMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: bm.id,
+    disabled: !draggable,
   });
 
   const style: CSSProperties = {
@@ -85,9 +88,11 @@ export function SortableBookmarkItem({
         isDragging && "opacity-50",
       )}
     >
-      <div className="flex h-5 shrink-0 items-center">
-        <DragHandle attributes={attributes} listeners={listeners} />
-      </div>
+      {draggable && (
+        <div className="flex h-5 shrink-0 items-center">
+          <DragHandle attributes={attributes} listeners={listeners} />
+        </div>
+      )}
       <BookmarkItemContent bm={bm} asLink />
       {isMobile ? (
         <>

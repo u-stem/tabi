@@ -39,6 +39,7 @@ import { useAutoStatusTransition } from "@/lib/hooks/use-auto-status-transition"
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useDayMemo } from "@/lib/hooks/use-day-memo";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
 import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
@@ -83,6 +84,7 @@ export default function TripDetailPage() {
   const params = useParams();
   const tripId = params.id as string;
   const online = useOnlineStatus();
+  const isMobile = useIsMobile();
   const now = useCurrentTime();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -550,6 +552,7 @@ export default function TripDetailPage() {
                           scheduleLimitReached={scheduleLimitReached}
                           scheduleLimitMessage={scheduleLimitMessage}
                           onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                          onReorderSchedule={dnd.reorderSchedule}
                           headerContent={
                             <PatternTabs
                               patterns={currentDay.patterns}
@@ -590,6 +593,7 @@ export default function TripDetailPage() {
                         scheduleLimitMessage={scheduleLimitMessage}
                         maxEndDayOffset={Math.max(0, trip.days.length - 1)}
                         onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                        onReorderCandidate={dnd.reorderCandidate}
                       />
                     </div>
                   ) : (
@@ -672,6 +676,7 @@ export default function TripDetailPage() {
                     scheduleLimitReached={scheduleLimitReached}
                     scheduleLimitMessage={scheduleLimitMessage}
                     onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                    onReorderSchedule={dnd.reorderSchedule}
                     headerContent={
                       <PatternTabs
                         patterns={currentDay.patterns}
@@ -721,6 +726,7 @@ export default function TripDetailPage() {
             />
           </div>
           {mounted &&
+            !isMobile &&
             createPortal(
               <DragOverlay>
                 {dnd.activeDragItem &&

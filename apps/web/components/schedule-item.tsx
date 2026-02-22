@@ -52,6 +52,7 @@ import { cn } from "@/lib/utils";
 import { ActionSheet } from "./action-sheet";
 import { DragHandle } from "./drag-handle";
 import { ItemMenuButton } from "./item-menu-button";
+import { ReorderControls } from "./reorder-controls";
 
 const EditScheduleDialog = dynamic(() =>
   import("./edit-schedule-dialog").then((mod) => mod.EditScheduleDialog),
@@ -100,6 +101,12 @@ type ScheduleItemProps = {
   /** ISO date string (YYYY-MM-DD) for transit search links */
   date?: string;
   onSaveToBookmark?: () => void;
+  /** When false, hide DragHandle and disable useSortable (mobile) */
+  draggable?: boolean;
+  /** When true, show ReorderControls instead of DragHandle */
+  reorderable?: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
 };
 
 type UseSortableReturn = ReturnType<typeof useSortable>;
@@ -113,14 +120,14 @@ type SortableProps = {
 };
 
 export const ScheduleItem = memo(function ScheduleItem(props: ScheduleItemProps) {
-  const { id, category, disabled, selectable, crossDayDisplay } = props;
+  const { id, category, disabled, selectable, crossDayDisplay, draggable, reorderable } = props;
   // Cross-day entries use a prefixed ID so they don't collide with same-day
   // schedule IDs in SortableContext. They register as drop targets but can't
   // be dragged (disabled: true).
   const sortableId = crossDayDisplay ? `cross-${id}` : id;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: sortableId,
-    disabled: disabled || selectable || crossDayDisplay,
+    disabled: disabled || selectable || reorderable || draggable === false || crossDayDisplay,
     data: { type: "schedule" },
   });
 
@@ -449,16 +456,37 @@ function ScheduleItemDialogs({
 function LeadingControl({
   selectable,
   selected,
+  reorderable,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast,
+  draggable,
   crossDayDisplay,
   sortable,
 }: {
   selectable?: boolean;
   selected?: boolean;
+  reorderable?: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
+  draggable?: boolean;
   crossDayDisplay?: boolean;
   sortable: SortableProps;
 }) {
   if (selectable) return <SelectionIndicator checked={!!selected} />;
-  if (!crossDayDisplay)
+  if (reorderable)
+    return (
+      <ReorderControls
+        onMoveUp={onMoveUp}
+        onMoveDown={onMoveDown}
+        isFirst={!!isFirst}
+        isLast={!!isLast}
+      />
+    );
+  if (draggable !== false && !crossDayDisplay)
     return <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />;
   return <span className="inline-block w-4 shrink-0" aria-hidden="true" />;
 }
@@ -610,6 +638,10 @@ function PlaceCard({
   crossDayPosition,
   siblingSchedules,
   onSaveToBookmark,
+  draggable,
+  reorderable,
+  onMoveUp,
+  onMoveDown,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
@@ -651,6 +683,12 @@ function PlaceCard({
             <LeadingControl
               selectable={selectable}
               selected={selected}
+              reorderable={reorderable}
+              onMoveUp={onMoveUp}
+              onMoveDown={onMoveDown}
+              isFirst={isFirst}
+              isLast={isLast}
+              draggable={draggable}
               crossDayDisplay={crossDayDisplay}
               sortable={sortable}
             />
@@ -778,6 +816,10 @@ function TransportConnector({
   siblingSchedules,
   date,
   onSaveToBookmark,
+  draggable,
+  reorderable,
+  onMoveUp,
+  onMoveDown,
 }: ScheduleItemProps & { sortable: SortableProps }) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
@@ -847,6 +889,12 @@ function TransportConnector({
             <LeadingControl
               selectable={selectable}
               selected={selected}
+              reorderable={reorderable}
+              onMoveUp={onMoveUp}
+              onMoveDown={onMoveDown}
+              isFirst={isFirst}
+              isLast={isLast}
+              draggable={draggable}
               crossDayDisplay={crossDayDisplay}
               sortable={sortable}
             />

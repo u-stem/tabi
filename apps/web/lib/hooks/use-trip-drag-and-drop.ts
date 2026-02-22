@@ -368,6 +368,64 @@ export function useTripDragAndDrop({
     }
   }
 
+  async function reorderSchedule(id: string, direction: "up" | "down") {
+    if (!currentDayId || !currentPatternId) return;
+    const idx = localSchedules.findIndex((s) => s.id === id);
+    if (idx === -1) return;
+    const newIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= localSchedules.length) return;
+
+    const snapshot = [...localSchedules];
+    const reordered = arrayMove(localSchedules, idx, newIdx);
+    setLocalSchedules(reordered);
+
+    try {
+      await api(
+        `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          body: JSON.stringify({ scheduleIds: reordered.map((s) => s.id) }),
+        },
+      );
+      onDone();
+    } catch (err) {
+      setLocalSchedules(snapshot);
+      if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
+        toast.error(MSG.CONFLICT_STALE);
+      } else {
+        toast.error(MSG.SCHEDULE_REORDER_FAILED);
+      }
+      onDone();
+    }
+  }
+
+  async function reorderCandidate(id: string, direction: "up" | "down") {
+    const idx = localCandidates.findIndex((c) => c.id === id);
+    if (idx === -1) return;
+    const newIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= localCandidates.length) return;
+
+    const snapshot = [...localCandidates];
+    const reordered = arrayMove(localCandidates, idx, newIdx);
+    setLocalCandidates(reordered);
+
+    try {
+      await api(`/api/trips/${tripId}/candidates/reorder`, {
+        method: "PATCH",
+        body: JSON.stringify({ scheduleIds: reordered.map((c) => c.id) }),
+      });
+      onDone();
+    } catch (err) {
+      setLocalCandidates(snapshot);
+      if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
+        toast.error(MSG.CONFLICT_STALE);
+      } else {
+        toast.error(MSG.SCHEDULE_REORDER_FAILED);
+      }
+      onDone();
+    }
+  }
+
   return {
     sensors,
     collisionDetection,
@@ -379,5 +437,7 @@ export function useTripDragAndDrop({
     handleDragStart,
     handleDragOver,
     handleDragEnd,
+    reorderSchedule,
+    reorderCandidate,
   };
 }

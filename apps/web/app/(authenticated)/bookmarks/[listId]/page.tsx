@@ -21,6 +21,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Fab } from "@/components/fab";
+import { ReorderControls } from "@/components/reorder-controls";
 import { Button } from "@/components/ui/button";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -32,6 +33,7 @@ import { useBookmarkListOperations } from "@/lib/hooks/use-bookmark-list-operati
 import { useBookmarkOperations } from "@/lib/hooks/use-bookmark-operations";
 import { useBookmarkSelection } from "@/lib/hooks/use-bookmark-selection";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -54,6 +56,8 @@ export default function BookmarkListDetailPage() {
   const online = useOnlineStatus();
 
   const [localBookmarks, setLocalBookmarks] = useState<BookmarkResponse[]>([]);
+  const isMobile = useIsMobile();
+  const [reorderMode, setReorderMode] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -148,6 +152,27 @@ export default function BookmarkListDetailPage() {
     }
   }
 
+  async function moveBookmark(id: string, direction: "up" | "down") {
+    const idx = localBookmarks.findIndex((bm) => bm.id === id);
+    if (idx === -1) return;
+    const newIdx = direction === "up" ? idx - 1 : idx + 1;
+    if (newIdx < 0 || newIdx >= localBookmarks.length) return;
+
+    const snapshot = [...localBookmarks];
+    const reordered = arrayMove(localBookmarks, idx, newIdx);
+    setLocalBookmarks(reordered);
+
+    try {
+      await api(`/api/bookmark-lists/${listId}/bookmarks/reorder`, {
+        method: "PATCH",
+        body: JSON.stringify({ orderedIds: reordered.map((bm) => bm.id) }),
+      });
+    } catch {
+      setLocalBookmarks(snapshot);
+      toast.error(MSG.BOOKMARK_REORDER_FAILED);
+    }
+  }
+
   // -- Loading --
 
   if (isLoading && !showSkeleton) return <div />;
@@ -194,6 +219,8 @@ export default function BookmarkListDetailPage() {
         sel={sel}
         listOps={listOps}
         bmOps={bmOps}
+        reorderMode={reorderMode}
+        onReorderModeChange={setReorderMode}
       />
 
       {/* Bookmark list */}
@@ -221,6 +248,25 @@ export default function BookmarkListDetailPage() {
               </button>
             ))}
           </div>
+        ) : reorderMode ? (
+          <div className="space-y-3">
+            {localBookmarks.map((bm, idx) => (
+              <div
+                key={bm.id}
+                className="flex items-start gap-2 rounded-lg border bg-card px-3 py-2 shadow-sm"
+              >
+                <div className="flex h-5 shrink-0 items-center">
+                  <ReorderControls
+                    onMoveUp={() => moveBookmark(bm.id, "up")}
+                    onMoveDown={() => moveBookmark(bm.id, "down")}
+                    isFirst={idx === 0}
+                    isLast={idx === localBookmarks.length - 1}
+                  />
+                </div>
+                <BookmarkItemContent bm={bm} asLink />
+              </div>
+            ))}
+          </div>
         ) : (
           <DndContext
             sensors={sensors}
@@ -238,6 +284,7 @@ export default function BookmarkListDetailPage() {
                     bm={bm}
                     onEdit={bmOps.openEdit}
                     onDelete={bmOps.setDeletingBookmark}
+                    draggable={!isMobile}
                   />
                 ))}
               </div>

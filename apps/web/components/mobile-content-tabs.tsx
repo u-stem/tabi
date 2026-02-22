@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-export type MobileContentTab = "schedule" | "candidates" | "expenses";
+export type MobileContentTab = "schedule" | "candidates" | "expenses" | "chat";
 
 interface MobileContentTabsProps {
   activeTab: MobileContentTab;
@@ -14,6 +14,7 @@ const TABS: { id: MobileContentTab; label: string }[] = [
   { id: "schedule", label: "予定" },
   { id: "candidates", label: "候補" },
   { id: "expenses", label: "費用" },
+  { id: "chat", label: "作戦会議" },
 ];
 
 export function MobileContentTabs({

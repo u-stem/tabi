@@ -1,7 +1,7 @@
 "use client";
 
 import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
-import type { PollDetailResponse, TripResponse } from "@sugara/shared";
+import type { ChatMessageResponse, PollDetailResponse, TripResponse } from "@sugara/shared";
 import {
   canEdit as canEditRole,
   isOwner as isOwnerRole,
@@ -16,6 +16,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dialog";
 import { CandidatePanel } from "@/components/candidate-panel";
+import { ChatPanel } from "@/components/chat-panel";
 import { DayTimeline } from "@/components/day-timeline";
 import { ExpensePanel } from "@/components/expense-panel";
 import { Fab } from "@/components/fab";
@@ -116,7 +117,7 @@ export default function TripDetailPage() {
   const scrollPositions = useRef<Record<string, number>>({});
   const mobileContentRef = useRef<HTMLDivElement>(null);
   const [rightPanelTab, setRightPanelTab] = useState<
-    "candidates" | "activity" | "bookmarks" | "expenses"
+    "candidates" | "activity" | "bookmarks" | "expenses" | "chat"
   >("candidates");
   const [saveToBookmarkIds, setSaveToBookmarkIds] = useState<string[]>([]);
   const [bookmarkPickerOpen, setBookmarkPickerOpen] = useState(false);
@@ -204,10 +205,55 @@ export default function TripDetailPage() {
         : null,
     [session?.user?.id, session?.user?.name, session?.user?.image],
   );
-  const { presence, isConnected, updatePresence, broadcastChange } = useTripSync(
-    tripId,
-    syncUser,
-    invalidateTrip,
+  const onChatMessage = useCallback(
+    (payload: unknown) => {
+      const msg = payload as ChatMessageResponse;
+      // Skip messages from self (already in cache via optimistic update)
+      if (msg.userId === session?.user?.id) return;
+      queryClient.setQueryData<{
+        pages: { items: ChatMessageResponse[]; nextCursor: string | null }[];
+        pageParams: string[];
+      }>(queryKeys.trips.chatMessages(tripId), (old) => {
+        if (!old) return old;
+        const firstPage = old.pages[0];
+        return {
+          ...old,
+          pages: [{ ...firstPage, items: [msg, ...firstPage.items] }, ...old.pages.slice(1)],
+        };
+      });
+    },
+    [queryClient, tripId, session?.user?.id],
+  );
+
+  const onChatSession = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: queryKeys.trips.chatSession(tripId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.trips.chatMessages(tripId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.trips.detail(tripId) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId) });
+  }, [queryClient, tripId]);
+
+  const {
+    presence,
+    isConnected,
+    updatePresence,
+    broadcastChange,
+    broadcastChatMessage,
+    broadcastChatSession,
+  } = useTripSync(tripId, syncUser, invalidateTrip, { onChatMessage, onChatSession });
+
+  const handleBroadcastChatMessage = useCallback(
+    (message: ChatMessageResponse) => {
+      broadcastChatMessage(message);
+    },
+    [broadcastChatMessage],
+  );
+
+  const handleBroadcastChatSession = useCallback(
+    (action: "started" | "ended") => {
+      broadcastChatSession({ action });
+      broadcastChange();
+    },
+    [broadcastChatSession, broadcastChange],
   );
 
   // Mutation callback: refetch + broadcast to other clients
@@ -618,6 +664,16 @@ export default function TripDetailPage() {
                       日程が確定すると費用を記録できます
                     </p>
                   ))}
+                {mobileTab === "chat" && (
+                  <div className="p-4">
+                    <ChatPanel
+                      tripId={tripId}
+                      canEdit={canEdit}
+                      onBroadcastMessage={handleBroadcastChatMessage}
+                      onBroadcastSession={handleBroadcastChatSession}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -721,8 +777,11 @@ export default function TripDetailPage() {
               scheduleLimitMessage={scheduleLimitMessage}
               overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
               hasDays={trip.days.length > 0}
+              hasChatSession={!!trip.chatSession}
               maxEndDayOffset={Math.max(0, trip.days.length - 1)}
               onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+              onBroadcastChatMessage={handleBroadcastChatMessage}
+              onBroadcastChatSession={handleBroadcastChatSession}
             />
           </div>
           {mounted &&
@@ -767,7 +826,7 @@ export default function TripDetailPage() {
                 ? "候補を追加"
                 : "費用を追加"
           }
-          hidden={!canEdit || !online}
+          hidden={!canEdit || !online || mobileTab === "chat"}
         />
 
         <AddPatternDialog patternOps={patternOps} />

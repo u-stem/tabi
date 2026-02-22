@@ -1,9 +1,10 @@
 "use client";
 
-import type { CandidateResponse } from "@sugara/shared";
+import type { CandidateResponse, ChatMessageResponse } from "@sugara/shared";
 import { ActivityLog } from "@/components/activity-log";
 import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
+import { ChatPanel } from "@/components/chat-panel";
 import { ExpensePanel } from "@/components/expense-panel";
 import { type RightPanelTab, RightPanelTabs } from "./right-panel-tabs";
 
@@ -28,6 +29,9 @@ export function RightPanel({
   maxEndDayOffset,
   onSaveToBookmark,
   hasDays,
+  hasChatSession,
+  onBroadcastChatMessage,
+  onBroadcastChatSession,
 }: {
   tripId: string;
   rightPanelTab: RightPanelTab;
@@ -47,6 +51,9 @@ export function RightPanel({
   maxEndDayOffset: number;
   onSaveToBookmark?: (scheduleIds: string[]) => void;
   hasDays: boolean;
+  hasChatSession?: boolean;
+  onBroadcastChatMessage?: (message: ChatMessageResponse) => void;
+  onBroadcastChatSession?: (action: "started" | "ended") => void;
 }) {
   return (
     <div className="hidden max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] lg:flex min-w-0 flex-[2] flex-col rounded-lg border border-dashed bg-card self-start sticky top-4">
@@ -54,9 +61,17 @@ export function RightPanel({
         current={rightPanelTab}
         onChange={setRightPanelTab}
         candidateCount={candidates.length}
+        hasChatSession={hasChatSession}
       />
       <div className="min-h-0 overflow-y-auto p-4">
-        {rightPanelTab === "candidates" ? (
+        {rightPanelTab === "chat" ? (
+          <ChatPanel
+            tripId={tripId}
+            canEdit={canEdit}
+            onBroadcastMessage={onBroadcastChatMessage}
+            onBroadcastSession={onBroadcastChatSession}
+          />
+        ) : rightPanelTab === "candidates" ? (
           currentDayId && currentPatternId ? (
             <CandidatePanel
               tripId={tripId}

@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-export type RightPanelTab = "candidates" | "activity" | "bookmarks" | "expenses";
+export type RightPanelTab = "candidates" | "activity" | "bookmarks" | "expenses" | "chat";
 
 const CHIP_BASE =
   "flex-1 rounded-full px-3 py-1.5 text-center text-sm font-medium transition-[colors,transform] active:scale-[0.95]";
@@ -13,10 +13,12 @@ export function RightPanelTabs({
   current,
   onChange,
   candidateCount,
+  hasChatSession,
 }: {
   current: RightPanelTab;
   onChange: (tab: RightPanelTab) => void;
   candidateCount: number;
+  hasChatSession?: boolean;
 }) {
   return (
     <div
@@ -24,6 +26,18 @@ export function RightPanelTabs({
       role="tablist"
       aria-label="候補・履歴タブ"
     >
+      <button
+        type="button"
+        role="tab"
+        aria-selected={current === "chat"}
+        onClick={() => onChange("chat")}
+        className={cn(CHIP_BASE, current === "chat" ? CHIP_ACTIVE : CHIP_INACTIVE)}
+      >
+        作戦会議
+        {hasChatSession && (
+          <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+        )}
+      </button>
       <button
         type="button"
         role="tab"

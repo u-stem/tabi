@@ -30,7 +30,7 @@ export function MobileContentTabs({
           role="tab"
           aria-selected={activeTab === tab.id}
           className={cn(
-            "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-colors min-h-[36px]",
+            "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-[colors,transform] min-h-[36px] active:scale-[0.97]",
             activeTab === tab.id
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground",

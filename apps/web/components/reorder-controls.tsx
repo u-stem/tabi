@@ -14,7 +14,7 @@ export function ReorderControls({ onMoveUp, onMoveDown, isFirst, isLast }: Reord
         type="button"
         onClick={() => onMoveUp?.()}
         disabled={isFirst}
-        className="flex h-[22px] min-h-[22px] w-[44px] items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground"
+        className="flex h-[22px] min-h-[22px] w-[44px] items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground transition-transform active:scale-[0.85]"
         aria-label="上に移動"
       >
         <ChevronUp className="h-4 w-4" />
@@ -23,7 +23,7 @@ export function ReorderControls({ onMoveUp, onMoveDown, isFirst, isLast }: Reord
         type="button"
         onClick={() => onMoveDown?.()}
         disabled={isLast}
-        className="flex h-[22px] min-h-[22px] w-[44px] items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground"
+        className="flex h-[22px] min-h-[22px] w-[44px] items-center justify-center rounded text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:hover:text-muted-foreground transition-transform active:scale-[0.85]"
         aria-label="下に移動"
       >
         <ChevronDown className="h-4 w-4" />

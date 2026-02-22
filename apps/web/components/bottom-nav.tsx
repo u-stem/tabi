@@ -39,7 +39,7 @@ export function BottomNav() {
               key={link.href}
               href={link.href}
               className={cn(
-                "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-xs transition-colors active:bg-accent",
+                "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-xs transition-[colors,transform] active:bg-accent active:scale-[0.90]",
                 active ? "font-medium text-primary" : "text-muted-foreground",
               )}
             >

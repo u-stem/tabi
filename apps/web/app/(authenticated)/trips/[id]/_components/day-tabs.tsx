@@ -6,7 +6,7 @@ import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
 import { cn } from "@/lib/utils";
 
 const CHIP_BASE =
-  "relative shrink-0 flex items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors min-h-[44px] lg:min-h-0";
+  "relative shrink-0 flex items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-medium transition-[colors,transform] min-h-[44px] lg:min-h-0 active:scale-[0.95]";
 const CHIP_ACTIVE = "bg-muted text-foreground";
 const CHIP_INACTIVE = "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground";
 

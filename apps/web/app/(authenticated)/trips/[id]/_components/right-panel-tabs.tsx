@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 export type RightPanelTab = "candidates" | "activity" | "bookmarks" | "expenses";
 
 const CHIP_BASE =
-  "flex-1 rounded-full px-3 py-1.5 text-center text-sm font-medium transition-colors";
+  "flex-1 rounded-full px-3 py-1.5 text-center text-sm font-medium transition-[colors,transform] active:scale-[0.95]";
 const CHIP_ACTIVE = "bg-muted text-foreground";
 const CHIP_INACTIVE = "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground";
 

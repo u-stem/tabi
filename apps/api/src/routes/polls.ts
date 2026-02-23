@@ -164,8 +164,8 @@ pollRoutes.get("/:pollId", async (c) => {
     participants: participants.map((p) => ({
       id: p.id,
       userId: p.userId,
-      name: p.user!.name,
-      image: p.user!.image,
+      name: p.user?.name ?? "Unknown user",
+      image: p.user?.image ?? null,
       responses: p.responses.map((r) => ({
         optionId: r.optionId,
         response: r.response,
@@ -493,19 +493,21 @@ pollRoutes.post("/:pollId/share", async (c) => {
   const poll = await findPollAsOwner(pollId, user.id);
   if (!poll) return c.json({ error: ERROR_MSG.POLL_NOT_FOUND }, 404);
 
-  const isExpired =
-    poll.shareToken && (!poll.shareTokenExpiresAt || poll.shareTokenExpiresAt < new Date());
+  const now = new Date();
+  const activeShareTokenExpiresAt = poll.shareTokenExpiresAt;
+  const activeShareToken =
+    poll.shareToken && activeShareTokenExpiresAt && activeShareTokenExpiresAt >= now;
 
-  if (poll.shareToken && !isExpired) {
+  if (activeShareToken) {
     return c.json({
       shareToken: poll.shareToken,
-      shareTokenExpiresAt: poll.shareTokenExpiresAt!.toISOString(),
+      shareTokenExpiresAt: activeShareTokenExpiresAt.toISOString(),
     });
   }
 
   // Generate new token (or replace expired / legacy one)
   const expiresAt = shareExpiresAt();
-  const whereCondition = isExpired
+  const whereCondition = poll.shareToken
     ? eq(schedulePolls.id, pollId)
     : and(eq(schedulePolls.id, pollId), isNull(schedulePolls.shareToken));
   const [updated] = await db

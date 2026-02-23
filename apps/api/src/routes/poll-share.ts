@@ -48,8 +48,8 @@ pollShareRoutes.get("/api/polls/shared/:token", async (c) => {
     participants: poll.participants.map((p) => ({
       id: p.id,
       userId: p.userId,
-      name: p.user!.name,
-      image: p.user!.image,
+      name: p.user?.name ?? "Unknown user",
+      image: p.user?.image ?? null,
       responses: p.responses.map((r) => ({
         optionId: r.optionId,
         response: r.response,

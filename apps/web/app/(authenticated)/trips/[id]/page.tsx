@@ -29,6 +29,8 @@ import { ExpensePanel } from "@/components/expense-panel";
 import { Fab } from "@/components/fab";
 import {
   getMobileTabIds,
+  getMobileTabPanelId,
+  getMobileTabTriggerId,
   type MobileContentTab,
   MobileContentTabs,
 } from "@/components/mobile-content-tabs";
@@ -118,7 +120,7 @@ export default function TripDetailPage() {
   useAuthRedirect(queryError);
   const pollId = trip?.poll?.id;
   const { isLoading: isPollLoading } = useQuery({
-    queryKey: queryKeys.polls.detail(pollId!),
+    queryKey: queryKeys.polls.detail(pollId ?? ""),
     queryFn: () => api<PollDetailResponse>(`/api/polls/${pollId}`),
     enabled: !!pollId,
   });
@@ -545,7 +547,9 @@ export default function TripDetailPage() {
       return;
     }
     function measure() {
-      setChatAreaTop(el!.getBoundingClientRect().top);
+      const target = mobileContentRef.current;
+      if (!target) return;
+      setChatAreaTop(target.getBoundingClientRect().top);
     }
     measure();
     const ro = new ResizeObserver(measure);
@@ -981,13 +985,20 @@ export default function TripDetailPage() {
                     tapTransitionRef.current = false;
                   }}
                 >
-                  {renderTabContent(mobileTab)}
+                  <div
+                    id={getMobileTabPanelId(mobileTab)}
+                    role="tabpanel"
+                    aria-labelledby={getMobileTabTriggerId(mobileTab)}
+                  >
+                    {renderTabContent(mobileTab)}
+                  </div>
                 </div>
 
                 {/* Adjacent tab (rendered only during swipe) */}
                 {swipe.adjacent && adjacentTabId && (
                   <div
                     className="absolute top-0 left-0 w-full"
+                    aria-hidden="true"
                     style={{
                       transform:
                         swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",

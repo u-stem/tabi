@@ -188,7 +188,7 @@ function PrintTableRow({
   const displayTime = crossDayDisplay ? schedule.endTime : schedule.startTime;
   const showEndTime = !crossDayDisplay && !schedule.endDayOffset && schedule.endTime;
   const timeStr = displayTime
-    ? `${crossDayDisplay ? "~ " : ""}${displayTime.slice(0, 5)}${showEndTime ? ` - ${schedule.endTime!.slice(0, 5)}` : ""}${!crossDayDisplay && schedule.endDayOffset ? " ~" : ""}`
+    ? `${crossDayDisplay ? "~ " : ""}${displayTime.slice(0, 5)}${showEndTime ? ` - ${schedule.endTime?.slice(0, 5)}` : ""}${!crossDayDisplay && schedule.endDayOffset ? " ~" : ""}`
     : "";
 
   const roleLabel =

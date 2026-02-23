@@ -269,14 +269,14 @@ export function TripActions({
           {
             label: "印刷 / PDF",
             icon: <Printer className="h-4 w-4" />,
-            onClick: () => window.open(`/trips/${tripId}/print`, "_blank"),
+            onClick: () => window.open(`/trips/${tripId}/print`, "_blank", "noopener,noreferrer"),
           },
         ]
       : []),
     {
       label: "エクスポート",
       icon: <FileDown className="h-4 w-4" />,
-      onClick: () => window.open(`/trips/${tripId}/export`, "_blank"),
+      onClick: () => window.open(`/trips/${tripId}/export`, "_blank", "noopener,noreferrer"),
     },
     ...(onEdit
       ? [
@@ -425,14 +425,14 @@ export function TripActions({
             )}
             {canEditRole && (
               <DropdownMenuItem asChild>
-                <NextLink href={`/trips/${tripId}/print`} target="_blank">
+                <NextLink href={`/trips/${tripId}/print`} target="_blank" rel="noopener noreferrer">
                   <Printer />
                   印刷 / PDF
                 </NextLink>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem asChild>
-              <NextLink href={`/trips/${tripId}/export`} target="_blank">
+              <NextLink href={`/trips/${tripId}/export`} target="_blank" rel="noopener noreferrer">
                 <FileDown />
                 エクスポート
               </NextLink>

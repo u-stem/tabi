@@ -557,7 +557,7 @@ function cardBodyProps(
   if (crossDayDisplay && crossDaySourceDayNumber) {
     return {
       role: "group" as const,
-      "aria-label": `${getCrossDayLabel(category, crossDayPosition!) ?? (crossDayAriaFallback || `${crossDaySourceDayNumber}日目から`)}: ${name}`,
+      "aria-label": `${getCrossDayLabel(category, crossDayPosition ?? "intermediate") ?? (crossDayAriaFallback || `${crossDaySourceDayNumber}日目から`)}: ${name}`,
     };
   }
   return {};

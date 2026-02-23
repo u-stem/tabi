@@ -27,6 +27,14 @@ export function getMobileTabIds(): MobileContentTab[] {
   return BASE_TABS.map((t) => t.id);
 }
 
+export function getMobileTabTriggerId(tab: MobileContentTab): string {
+  return `mobile-tab-trigger-${tab}`;
+}
+
+export function getMobileTabPanelId(tab: MobileContentTab): string {
+  return `mobile-tab-panel-${tab}`;
+}
+
 export function MobileContentTabs({
   activeTab,
   onTabChange,
@@ -35,13 +43,20 @@ export function MobileContentTabs({
   const tabs = BASE_TABS;
 
   return (
-    <div className="my-2 grid shrink-0 grid-cols-4 gap-1 rounded-lg bg-muted p-1" role="tablist">
-      {tabs.map((tab) => (
+    <div
+      className="my-2 grid shrink-0 grid-cols-4 gap-1 rounded-lg bg-muted p-1"
+      role="tablist"
+      aria-orientation="horizontal"
+    >
+      {tabs.map((tab, index) => (
         <button
           key={tab.id}
+          id={getMobileTabTriggerId(tab.id)}
           type="button"
           role="tab"
           aria-selected={activeTab === tab.id}
+          aria-controls={getMobileTabPanelId(tab.id)}
+          tabIndex={activeTab === tab.id ? 0 : -1}
           className={cn(
             "min-w-0 rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] min-h-[36px] active:scale-[0.97] overflow-hidden",
             activeTab === tab.id
@@ -49,6 +64,21 @@ export function MobileContentTabs({
               : "text-muted-foreground hover:text-foreground",
           )}
           onClick={() => onTabChange(tab.id, "tap")}
+          onKeyDown={(e) => {
+            if (e.key === "ArrowRight") {
+              e.preventDefault();
+              onTabChange(tabs[(index + 1) % tabs.length].id);
+            } else if (e.key === "ArrowLeft") {
+              e.preventDefault();
+              onTabChange(tabs[(index - 1 + tabs.length) % tabs.length].id);
+            } else if (e.key === "Home") {
+              e.preventDefault();
+              onTabChange(tabs[0].id);
+            } else if (e.key === "End") {
+              e.preventDefault();
+              onTabChange(tabs[tabs.length - 1].id);
+            }
+          }}
         >
           <span className="flex w-full items-center justify-center gap-1 whitespace-nowrap">
             <span className="truncate">{tab.label}</span>

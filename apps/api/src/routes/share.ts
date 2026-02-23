@@ -25,19 +25,21 @@ shareRoutes.post(
       columns: { shareToken: true, shareTokenExpiresAt: true },
     });
 
-    const isExpired =
-      trip?.shareToken && (!trip.shareTokenExpiresAt || trip.shareTokenExpiresAt < new Date());
+    const now = new Date();
+    const activeShareTokenExpiresAt = trip?.shareTokenExpiresAt;
+    const activeShareToken =
+      trip?.shareToken && activeShareTokenExpiresAt && activeShareTokenExpiresAt >= now;
 
-    if (trip?.shareToken && !isExpired) {
+    if (activeShareToken) {
       return c.json({
         shareToken: trip.shareToken,
-        shareTokenExpiresAt: trip.shareTokenExpiresAt!.toISOString(),
+        shareTokenExpiresAt: activeShareTokenExpiresAt.toISOString(),
       });
     }
 
     // Generate new token (or replace expired / legacy one)
     const expiresAt = shareExpiresAt();
-    const whereCondition = isExpired
+    const whereCondition = trip?.shareToken
       ? eq(trips.id, tripId)
       : and(eq(trips.id, tripId), isNull(trips.shareToken));
     const [updated] = await db

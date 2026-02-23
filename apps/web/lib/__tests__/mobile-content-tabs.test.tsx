@@ -42,6 +42,28 @@ describe("MobileContentTabs", () => {
     expect(onChange).toHaveBeenCalledWith("expenses", "tap");
   });
 
+  it("connects tab and tabpanel via aria attributes", () => {
+    render(<MobileContentTabs activeTab="schedule" onTabChange={vi.fn()} candidateCount={0} />);
+    const scheduleTab = screen.getByRole("tab", { name: "予定" });
+    expect(scheduleTab.getAttribute("id")).toBe("mobile-tab-trigger-schedule");
+    expect(scheduleTab.getAttribute("aria-controls")).toBe("mobile-tab-panel-schedule");
+  });
+
+  it("sets tabIndex=0 only on active tab", () => {
+    render(<MobileContentTabs activeTab="chat" onTabChange={vi.fn()} candidateCount={0} />);
+    expect(screen.getByRole("tab", { name: "作戦会議" }).getAttribute("tabindex")).toBe("0");
+    expect(screen.getByRole("tab", { name: "予定" }).getAttribute("tabindex")).toBe("-1");
+  });
+
+  it("moves tab with keyboard arrows", () => {
+    const onChange = vi.fn();
+    render(<MobileContentTabs activeTab="schedule" onTabChange={onChange} candidateCount={0} />);
+    fireEvent.keyDown(screen.getByRole("tab", { name: "予定" }), { key: "ArrowRight" });
+    fireEvent.keyDown(screen.getByRole("tab", { name: "予定" }), { key: "End" });
+    expect(onChange).toHaveBeenNthCalledWith(1, "candidates");
+    expect(onChange).toHaveBeenNthCalledWith(2, "chat");
+  });
+
   it("shows candidate count badge when count is positive", () => {
     render(<MobileContentTabs activeTab="schedule" onTabChange={vi.fn()} candidateCount={5} />);
     expect(screen.getByText("5")).toBeDefined();

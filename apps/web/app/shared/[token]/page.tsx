@@ -370,7 +370,7 @@ function ScheduleCard({
               <>
                 {crossDayDisplay ? "~ " : ""}
                 {displayTime.slice(0, 5)}
-                {showEndTime && ` - ${schedule.endTime!.slice(0, 5)}`}
+                {showEndTime && ` - ${schedule.endTime?.slice(0, 5)}`}
                 {!crossDayDisplay && schedule.endDayOffset ? " ~" : ""}
               </>
             )}

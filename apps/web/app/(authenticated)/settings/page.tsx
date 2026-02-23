@@ -75,6 +75,7 @@ export default function SettingsPage() {
             <Link
               href="/faq"
               target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
             >
               よくある質問
@@ -83,6 +84,7 @@ export default function SettingsPage() {
             <Link
               href="/news"
               target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
             >
               お知らせ
@@ -91,6 +93,7 @@ export default function SettingsPage() {
             <Link
               href="/terms"
               target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
             >
               利用規約
@@ -99,6 +102,7 @@ export default function SettingsPage() {
             <Link
               href="/privacy"
               target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
             >
               プライバシーポリシー

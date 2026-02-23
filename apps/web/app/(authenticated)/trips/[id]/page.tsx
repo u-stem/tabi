@@ -138,6 +138,7 @@ export default function TripDetailPage() {
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
+  const swipeDirectionRef = useRef<"left" | "right" | null>(null);
   const prevDayRef = useRef(0);
   const gPressedRef = useRef(false);
   const scrollPositions = useRef<Record<string, number>>({});
@@ -497,6 +498,7 @@ export default function TripDetailPage() {
       if (idx === -1) return;
       const next = direction === "left" ? idx + 1 : idx - 1;
       if (next < 0 || next >= tabIds.length) return;
+      swipeDirectionRef.current = direction;
       handleMobileTabChange(tabIds[next]);
     },
     [mobileTab, session, handleMobileTabChange],
@@ -758,7 +760,20 @@ export default function TripDetailPage() {
               ref={mobileContentRef}
               className="min-h-0 overflow-y-auto overscroll-contain pb-20"
             >
-              <div key={mobileTab} className="animate-[tab-fade-in_150ms_ease-out]">
+              <div
+                key={mobileTab}
+                ref={(el) => {
+                  // Reset after the animation class is applied via the key remount
+                  if (el) swipeDirectionRef.current = null;
+                }}
+                className={
+                  swipeDirectionRef.current === "left"
+                    ? "animate-[tab-slide-left_200ms_ease-out]"
+                    : swipeDirectionRef.current === "right"
+                      ? "animate-[tab-slide-right_200ms_ease-out]"
+                      : "animate-[tab-fade-in_150ms_ease-out]"
+                }
+              >
                 {mobileTab === "schedule" && (
                   <div className="flex min-w-0 flex-col rounded-lg border bg-card">
                     <DayTabs

@@ -3,14 +3,23 @@
 import type { ChatMessageResponse, ChatSessionResponse } from "@sugara/shared";
 import { CHAT_MESSAGE_MAX_LENGTH } from "@sugara/shared";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, MessageSquare, Send, X } from "lucide-react";
+import { Loader2, Plus, Send, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogDestructiveAction,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { useSession } from "@/lib/auth-client";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -36,15 +45,49 @@ function formatTime(dateStr: string): string {
   return `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
+const URL_RE = /https?:\/\/[^\s<>"']+/g;
+
+function isValidHttpUrl(str: string): boolean {
+  try {
+    const url = new URL(str);
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
+function linkify(text: string): React.ReactNode[] {
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  for (const match of text.matchAll(URL_RE)) {
+    const url = match[0];
+    const index = match.index;
+    if (!isValidHttpUrl(url)) continue;
+    if (index > lastIndex) {
+      parts.push(text.slice(lastIndex, index));
+    }
+    parts.push(
+      <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="underline">
+        {url}
+      </a>,
+    );
+    lastIndex = index + url.length;
+  }
+  if (lastIndex < text.length) {
+    parts.push(text.slice(lastIndex));
+  }
+  return parts;
+}
+
 export function ChatPanel({
   tripId,
   canEdit,
   onBroadcastMessage,
   onBroadcastSession,
 }: ChatPanelProps) {
-  const { data: session } = useSession();
   const queryClient = useQueryClient();
   const [input, setInput] = useState("");
+  const [endConfirmOpen, setEndConfirmOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScroll = useRef(true);
@@ -79,8 +122,8 @@ export function ChatPanel({
 
   const startSession = useMutation({
     mutationFn: () => api<SessionResponse>(`/api/trips/${tripId}/chat/session`, { method: "POST" }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.trips.chatSession(tripId) });
+    onSuccess: (data) => {
+      queryClient.setQueryData(queryKeys.trips.chatSession(tripId), data);
       queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId) });
       toast.success(MSG.CHAT_SESSION_STARTED);
       onBroadcastSession?.("started");
@@ -97,8 +140,8 @@ export function ChatPanel({
   const endSession = useMutation({
     mutationFn: () => api(`/api/trips/${tripId}/chat/session`, { method: "DELETE" }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.trips.chatSession(tripId) });
-      queryClient.setQueryData(queryKeys.trips.chatMessages(tripId), undefined);
+      queryClient.setQueryData(queryKeys.trips.chatSession(tripId), { session: null });
+      queryClient.removeQueries({ queryKey: queryKeys.trips.chatMessages(tripId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId) });
       toast.success(MSG.CHAT_SESSION_ENDED);
       onBroadcastSession?.("ended");
@@ -115,7 +158,6 @@ export function ChatPanel({
         body: JSON.stringify({ content }),
       }),
     onSuccess: (message) => {
-      // Optimistically add message to cache
       queryClient.setQueryData<{ pages: MessagesResponse[]; pageParams: string[] }>(
         queryKeys.trips.chatMessages(tripId),
         (old) => {
@@ -152,14 +194,12 @@ export function ChatPanel({
     [handleSend],
   );
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (shouldAutoScroll.current) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages.length]);
 
-  // Detect if user scrolled up
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
@@ -180,31 +220,52 @@ export function ChatPanel({
 
   if (isSessionLoading) return null;
 
-  // No active session
-  if (!chatSession) {
-    return (
-      <div className="flex flex-col items-center justify-center py-8 text-center">
-        <MessageSquare className="mb-3 h-8 w-8 text-muted-foreground/40" />
-        <p className="mb-4 text-sm text-muted-foreground">{MSG.CHAT_NO_SESSION}</p>
-        {canEdit && (
-          <Button onClick={() => startSession.mutate()} disabled={startSession.isPending} size="sm">
-            {startSession.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-            作戦会議を開始
-          </Button>
-        )}
-      </div>
-    );
-  }
+  const isActive = !!chatSession;
 
   return (
-    <div className="flex h-full flex-col -mx-4 -mb-4">
+    <div>
+      {/* Header: session action button */}
+      {canEdit && (
+        <div className="mb-2 flex justify-end">
+          {isActive ? (
+            <Button
+              variant="outline"
+              onClick={() => setEndConfirmOpen(true)}
+              disabled={endSession.isPending}
+              size="sm"
+            >
+              {endSession.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <X className="h-4 w-4" />
+              )}
+              作戦会議を終了
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={() => startSession.mutate()}
+              disabled={startSession.isPending}
+              size="sm"
+            >
+              {startSession.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              作戦会議を開始
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Messages area */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-2"
+        className="min-h-24 max-h-80 overflow-y-auto rounded-md border border-dashed p-3"
         onScroll={handleScroll}
       >
-        {hasNextPage && (
+        {isActive && hasNextPage && (
           <div className="pb-2 text-center">
             <Button
               variant="ghost"
@@ -220,7 +281,11 @@ export function ChatPanel({
             </Button>
           </div>
         )}
-        {isMessagesLoading ? (
+        {!isActive || messages.length === 0 ? (
+          <div className="flex min-h-16 items-center justify-center">
+            <p className="text-sm text-muted-foreground">{MSG.CHAT_EMPTY}</p>
+          </div>
+        ) : isMessagesLoading ? (
           <div className="space-y-3 py-2">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex gap-2">
@@ -232,38 +297,34 @@ export function ChatPanel({
               </div>
             ))}
           </div>
-        ) : messages.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">{MSG.CHAT_EMPTY}</p>
         ) : (
-          <div className="space-y-3 py-2">
-            {messages.map((msg) => {
-              const isMe = msg.userId === session?.user?.id;
-              return (
-                <div key={msg.id} className={`flex gap-2 ${isMe ? "flex-row-reverse" : ""}`}>
-                  {!isMe && (
-                    <UserAvatar
-                      name={msg.userName}
-                      image={msg.userImage}
-                      className="h-7 w-7 shrink-0"
-                      fallbackClassName="text-xs"
-                    />
-                  )}
-                  <div className={`max-w-[75%] ${isMe ? "text-right" : ""}`}>
-                    {!isMe && (
-                      <p className="mb-0.5 text-xs text-muted-foreground">{msg.userName}</p>
-                    )}
-                    <div
-                      className={`inline-block rounded-2xl px-3 py-1.5 text-sm break-words whitespace-pre-wrap ${
-                        isMe
-                          ? "bg-primary text-primary-foreground rounded-br-sm"
-                          : "bg-muted rounded-bl-sm"
-                      }`}
-                    >
-                      {msg.content}
-                    </div>
-                    <p className="mt-0.5 text-[10px] text-muted-foreground/60">
-                      {formatTime(msg.createdAt)}
+          <div>
+            {messages.map((msg, i) => {
+              const prev = messages[i - 1];
+              const timeDiff = prev
+                ? new Date(msg.createdAt).getTime() - new Date(prev.createdAt).getTime()
+                : 0;
+              const isGrouped = prev?.userId === msg.userId && timeDiff < 60 * 1000;
+              return isGrouped ? (
+                <div key={msg.id} className="pl-9 mt-0.5">
+                  <p className="text-sm break-all whitespace-pre-wrap">{linkify(msg.content)}</p>
+                </div>
+              ) : (
+                <div key={msg.id} className={`flex gap-2 ${i > 0 ? "mt-3" : ""}`}>
+                  <UserAvatar
+                    name={msg.userName}
+                    image={msg.userImage}
+                    className="h-7 w-7 shrink-0 mt-0.5"
+                    fallbackClassName="text-xs"
+                  />
+                  <div className="min-w-0">
+                    <p className="mb-0.5 text-xs">
+                      <span className="font-medium">{msg.userName}</span>
+                      <span className="ml-1.5 text-[10px] text-muted-foreground/60">
+                        {formatTime(msg.createdAt)}
+                      </span>
                     </p>
+                    <p className="text-sm break-all whitespace-pre-wrap">{linkify(msg.content)}</p>
                   </div>
                 </div>
               );
@@ -273,48 +334,56 @@ export function ChatPanel({
         )}
       </div>
 
-      {/* End session button + input area */}
-      <div className="border-t px-3 py-2">
-        {canEdit && (
-          <div className="mb-2 flex justify-center">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 text-xs text-muted-foreground"
-              onClick={() => endSession.mutate()}
-              disabled={endSession.isPending}
+      {/* Input area: always visible, disabled when no session */}
+      {canEdit && (
+        <div className="mt-2 flex items-end gap-2">
+          <textarea
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="メッセージを入力..."
+            maxLength={CHAT_MESSAGE_MAX_LENGTH}
+            rows={1}
+            disabled={!isActive}
+            className="flex-1 resize-none rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          <Button
+            size="icon"
+            className="h-9 w-9 shrink-0"
+            onClick={handleSend}
+            disabled={!isActive || !input.trim() || sendMessage.isPending}
+          >
+            {sendMessage.isPending ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Send className="h-4 w-4" />
+            )}
+          </Button>
+        </div>
+      )}
+
+      <AlertDialog open={endConfirmOpen} onOpenChange={setEndConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>作戦会議を終了しますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              すべてのメッセージが削除されます。この操作は取り消せません。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogDestructiveAction
+              onClick={() => {
+                setEndConfirmOpen(false);
+                endSession.mutate();
+              }}
             >
-              <X className="h-3 w-3" />
-              作戦会議を終了
-            </Button>
-          </div>
-        )}
-        {canEdit && (
-          <div className="flex items-end gap-2">
-            <textarea
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={handleKeyDown}
-              placeholder="メッセージを入力..."
-              maxLength={CHAT_MESSAGE_MAX_LENGTH}
-              rows={1}
-              className="flex-1 resize-none rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-            />
-            <Button
-              size="icon"
-              className="h-9 w-9 shrink-0"
-              onClick={handleSend}
-              disabled={!input.trim() || sendMessage.isPending}
-            >
-              {sendMessage.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
-          </div>
-        )}
-      </div>
+              <X className="h-4 w-4" />
+              終了する
+            </AlertDialogDestructiveAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

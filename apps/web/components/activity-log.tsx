@@ -110,6 +110,10 @@ const ACTION_TEMPLATES: Record<string, Record<string, string>> = {
     option_deleted: "日程案{name}を削除",
     confirmed: "日程{name}を確定",
   },
+  chat_session: {
+    created: "作戦会議を開始",
+    deleted: "作戦会議を終了",
+  },
 };
 
 type ActionParts = {

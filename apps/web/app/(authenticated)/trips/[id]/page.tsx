@@ -777,7 +777,6 @@ export default function TripDetailPage() {
               scheduleLimitMessage={scheduleLimitMessage}
               overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
               hasDays={trip.days.length > 0}
-              hasChatSession={!!trip.chatSession}
               maxEndDayOffset={Math.max(0, trip.days.length - 1)}
               onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
               onBroadcastChatMessage={handleBroadcastChatMessage}

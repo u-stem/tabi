@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 export type RightPanelTab = "candidates" | "activity" | "bookmarks" | "expenses" | "chat";
 
 const CHIP_BASE =
-  "flex-1 rounded-full px-3 py-1.5 text-center text-sm font-medium transition-[colors,transform] active:scale-[0.95]";
+  "shrink-0 rounded-full px-3.5 py-1.5 text-center text-sm font-medium transition-[colors,transform] active:scale-[0.95]";
 const CHIP_ACTIVE = "bg-muted text-foreground";
 const CHIP_INACTIVE = "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground";
 
@@ -13,12 +13,10 @@ export function RightPanelTabs({
   current,
   onChange,
   candidateCount,
-  hasChatSession,
 }: {
   current: RightPanelTab;
   onChange: (tab: RightPanelTab) => void;
   candidateCount: number;
-  hasChatSession?: boolean;
 }) {
   return (
     <div
@@ -26,18 +24,6 @@ export function RightPanelTabs({
       role="tablist"
       aria-label="候補・履歴タブ"
     >
-      <button
-        type="button"
-        role="tab"
-        aria-selected={current === "chat"}
-        onClick={() => onChange("chat")}
-        className={cn(CHIP_BASE, current === "chat" ? CHIP_ACTIVE : CHIP_INACTIVE)}
-      >
-        作戦会議
-        {hasChatSession && (
-          <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
-        )}
-      </button>
       <button
         type="button"
         role="tab"
@@ -51,11 +37,11 @@ export function RightPanelTabs({
       <button
         type="button"
         role="tab"
-        aria-selected={current === "bookmarks"}
-        onClick={() => onChange("bookmarks")}
-        className={cn(CHIP_BASE, current === "bookmarks" ? CHIP_ACTIVE : CHIP_INACTIVE)}
+        aria-selected={current === "chat"}
+        onClick={() => onChange("chat")}
+        className={cn(CHIP_BASE, current === "chat" ? CHIP_ACTIVE : CHIP_INACTIVE)}
       >
-        ブックマーク
+        作戦会議
       </button>
       <button
         type="button"
@@ -74,6 +60,16 @@ export function RightPanelTabs({
         className={cn(CHIP_BASE, current === "activity" ? CHIP_ACTIVE : CHIP_INACTIVE)}
       >
         履歴
+      </button>
+      <div className="shrink-0 self-stretch w-px bg-border" />
+      <button
+        type="button"
+        role="tab"
+        aria-selected={current === "bookmarks"}
+        onClick={() => onChange("bookmarks")}
+        className={cn(CHIP_BASE, current === "bookmarks" ? CHIP_ACTIVE : CHIP_INACTIVE)}
+      >
+        ブックマーク
       </button>
     </div>
   );

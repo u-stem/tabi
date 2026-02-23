@@ -29,7 +29,6 @@ export function RightPanel({
   maxEndDayOffset,
   onSaveToBookmark,
   hasDays,
-  hasChatSession,
   onBroadcastChatMessage,
   onBroadcastChatSession,
 }: {
@@ -51,7 +50,6 @@ export function RightPanel({
   maxEndDayOffset: number;
   onSaveToBookmark?: (scheduleIds: string[]) => void;
   hasDays: boolean;
-  hasChatSession?: boolean;
   onBroadcastChatMessage?: (message: ChatMessageResponse) => void;
   onBroadcastChatSession?: (action: "started" | "ended") => void;
 }) {
@@ -61,7 +59,6 @@ export function RightPanel({
         current={rightPanelTab}
         onChange={setRightPanelTab}
         candidateCount={candidates.length}
-        hasChatSession={hasChatSession}
       />
       <div className="min-h-0 overflow-y-auto p-4">
         {rightPanelTab === "chat" ? (

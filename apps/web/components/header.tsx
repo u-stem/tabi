@@ -33,6 +33,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
 import { signOut, useSession } from "@/lib/auth-client";
@@ -108,7 +109,9 @@ export function Header() {
         </div>
         <div className="flex items-center gap-1">
           <ThemeToggle />
-          {session?.user && (
+          {!session?.user ? (
+            <Skeleton className="h-8 w-8 rounded-full" />
+          ) : (
             <>
               {/* Desktop: dropdown menu */}
               <DropdownMenu>

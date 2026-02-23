@@ -131,6 +131,11 @@ export const auth = betterAuth({
             .update(schema.expenseSplits)
             .set({ userId: newUserId })
             .where(eq(schema.expenseSplits.userId, oldUserId));
+
+          await tx
+            .update(schema.chatMessages)
+            .set({ userId: newUserId })
+            .where(eq(schema.chatMessages.userId, oldUserId));
         });
       },
     }),

@@ -297,7 +297,7 @@ function PasswordSection({ username }: { username: string }) {
     }
 
     if (newPassword !== confirmPassword) {
-      setError("新しいパスワードが一致しません");
+      setError(MSG.AUTH_PASSWORD_MISMATCH);
       setLoading(false);
       return;
     }

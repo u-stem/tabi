@@ -31,6 +31,14 @@ describe("minutesToTime", () => {
   test("converts 1439 to 23:59", () => {
     expect(minutesToTime(1439)).toBe("23:59");
   });
+
+  test("throws for negative minutes", () => {
+    expect(() => minutesToTime(-1)).toThrow();
+  });
+
+  test("throws for minutes > 1439", () => {
+    expect(() => minutesToTime(1440)).toThrow();
+  });
 });
 
 describe("shiftTime", () => {

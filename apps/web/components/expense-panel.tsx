@@ -30,6 +30,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type ExpenseSplit = {
@@ -96,7 +97,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
       setDeleteTarget(null);
     },
     onError: (err) => {
-      toast.error(getApiErrorMessage(err, "Failed to delete expense"));
+      toast.error(getApiErrorMessage(err, MSG.EXPENSE_DELETE_FAILED));
     },
   });
 

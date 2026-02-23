@@ -60,7 +60,9 @@ export async function findPollAsParticipant(pollId: string, userId: string) {
     where: and(eq(tripMembers.tripId, poll.tripId), eq(tripMembers.userId, userId)),
   });
   if (member) {
-    // Auto-add as poll participant so they can respond
+    // Intentional write side-effect: auto-add trip members as poll participants
+    // on first access so they can immediately respond. This is by design because
+    // poll participation is tied to trip membership.
     await db.insert(schedulePollParticipants).values({ pollId, userId }).onConflictDoNothing();
     return poll;
   }

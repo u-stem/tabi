@@ -110,6 +110,7 @@ export const MSG = {
   AUTH_GUEST_UPGRADE_SUCCESS: "アカウント登録が完了しました",
   AUTH_GUEST_UPGRADE_FAILED: "アカウント登録に失敗しました",
   AUTH_GUEST_FEATURE_UNAVAILABLE: "この機能を使うにはアカウント登録が必要です",
+  AUTH_PASSWORD_MISMATCH: "新しいパスワードが一致しません",
   AUTH_GUEST_TRIP_LIMIT: "ゲストモードでは旅行を1件まで作成できます",
 
   // Friend
@@ -166,6 +167,9 @@ export const MSG = {
   // Poll note
   POLL_NOTE_UPDATED: "メモを更新しました",
   POLL_NOTE_UPDATE_FAILED: "メモの更新に失敗しました",
+
+  // Expense
+  EXPENSE_DELETE_FAILED: "経費の削除に失敗しました",
 
   // Account
   ACCOUNT_DELETED: "アカウントを削除しました",

@@ -13,6 +13,9 @@ export function timeToMinutes(time: string): number {
 
 /** total minutes -> "HH:MM" (0-1439 range) */
 export function minutesToTime(mins: number): string {
+  if (mins < 0 || mins > 1439) {
+    throw new Error(`Minutes out of range (0-1439): ${mins}`);
+  }
   const h = Math.floor(mins / 60);
   const m = mins % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;

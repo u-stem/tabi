@@ -15,7 +15,7 @@
         "useExhaustiveDependencies": "off"
       },
       "style": {
-        "noNonNullAssertion": "off"
+        "noNonNullAssertion": "warn"
       },
       "performance": {
         "noImgElement": "off"

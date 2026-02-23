@@ -5,17 +5,17 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCheck, ExternalLink, Plus, SquareMousePointer, StickyNote, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  ResponsiveAlertDialog,
+  ResponsiveAlertDialogAction,
+  ResponsiveAlertDialogCancel,
+  ResponsiveAlertDialogContent,
+  ResponsiveAlertDialogDescription,
+  ResponsiveAlertDialogFooter,
+  ResponsiveAlertDialogHeader,
+  ResponsiveAlertDialogTitle,
+} from "@/components/ui/responsive-alert-dialog";
 import {
   Select,
   SelectContent,
@@ -228,28 +228,33 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
           })}
         </div>
       )}
-      <AlertDialog
+      <ResponsiveAlertDialog
         open={confirmIds.length > 0}
         onOpenChange={(open) => {
           if (!open) setConfirmIds([]);
         }}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{confirmIds.length}件を候補に追加しますか？</AlertDialogTitle>
-            <AlertDialogDescription>
+        <ResponsiveAlertDialogContent>
+          <ResponsiveAlertDialogHeader>
+            <ResponsiveAlertDialogTitle>
+              {confirmIds.length}件を候補に追加しますか？
+            </ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogDescription>
               選択した{confirmIds.length}件のブックマークを旅行の候補に追加します。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction onClick={() => addToCandidates(confirmIds)} disabled={loading}>
+            </ResponsiveAlertDialogDescription>
+          </ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogFooter>
+            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogAction
+              onClick={() => addToCandidates(confirmIds)}
+              disabled={loading}
+            >
               <Plus className="h-4 w-4" />
               {loading ? "追加中..." : "追加する"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </ResponsiveAlertDialogAction>
+          </ResponsiveAlertDialogFooter>
+        </ResponsiveAlertDialogContent>
+      </ResponsiveAlertDialog>
     </div>
   );
 }

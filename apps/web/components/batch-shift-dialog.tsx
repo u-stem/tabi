@@ -6,15 +6,15 @@ import { TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+  ResponsiveAlertDialog,
+  ResponsiveAlertDialogAction,
+  ResponsiveAlertDialogCancel,
+  ResponsiveAlertDialogContent,
+  ResponsiveAlertDialogDescription,
+  ResponsiveAlertDialogFooter,
+  ResponsiveAlertDialogHeader,
+  ResponsiveAlertDialogTitle,
+} from "@/components/ui/responsive-alert-dialog";
 import { api } from "@/lib/api";
 import { formatTime } from "@/lib/format";
 import { MSG } from "@/lib/messages";
@@ -99,15 +99,15 @@ export function BatchShiftDialog({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>以降の予定の時間を調整</AlertDialogTitle>
-          <AlertDialogDescription>
+    <ResponsiveAlertDialog open={open} onOpenChange={onOpenChange}>
+      <ResponsiveAlertDialogContent>
+        <ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogTitle>以降の予定の時間を調整</ResponsiveAlertDialogTitle>
+          <ResponsiveAlertDialogDescription>
             「{scheduleName}」の{sourceLabel}時間が{absDelta}分{direction}なりました。以降の
             {targetSchedules.length}件の予定も同じ分だけずらしますか？
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+          </ResponsiveAlertDialogDescription>
+        </ResponsiveAlertDialogHeader>
         <div className="space-y-1.5 text-sm">
           {previews.map((p) => (
             <div key={p.id} className="flex items-center justify-between gap-2">
@@ -134,13 +134,13 @@ export function BatchShiftDialog({
             </div>
           </div>
         )}
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={loading}>この予定だけ</AlertDialogCancel>
-          <AlertDialogAction onClick={handleShift} disabled={loading}>
+        <ResponsiveAlertDialogFooter>
+          <ResponsiveAlertDialogCancel disabled={loading}>この予定だけ</ResponsiveAlertDialogCancel>
+          <ResponsiveAlertDialogAction onClick={handleShift} disabled={loading}>
             {loading ? "更新中..." : "以降もずらす"}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </ResponsiveAlertDialogAction>
+        </ResponsiveAlertDialogFooter>
+      </ResponsiveAlertDialogContent>
+    </ResponsiveAlertDialog>
   );
 }

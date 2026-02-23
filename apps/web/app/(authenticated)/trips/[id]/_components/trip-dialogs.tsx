@@ -2,19 +2,19 @@
 
 import { PATTERN_LABEL_MAX_LENGTH } from "@sugara/shared";
 import { Check, Plus, Trash2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogDestructiveAction,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  ResponsiveAlertDialog,
+  ResponsiveAlertDialogCancel,
+  ResponsiveAlertDialogContent,
+  ResponsiveAlertDialogDescription,
+  ResponsiveAlertDialogDestructiveAction,
+  ResponsiveAlertDialogFooter,
+  ResponsiveAlertDialogHeader,
+  ResponsiveAlertDialogTitle,
+} from "@/components/ui/responsive-alert-dialog";
 import {
   ResponsiveDialog,
   ResponsiveDialogClose,
@@ -112,55 +112,60 @@ export function RenamePatternDialog({ patternOps }: { patternOps: PatternOps }) 
 
 export function DeletePatternDialog({ patternOps }: { patternOps: PatternOps }) {
   return (
-    <AlertDialog
+    <ResponsiveAlertDialog
       open={patternOps.deleteTarget !== null}
       onOpenChange={(v) => !v && patternOps.setDeleteTarget(null)}
     >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>パターンを削除しますか？</AlertDialogTitle>
-          <AlertDialogDescription>
+      <ResponsiveAlertDialogContent>
+        <ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogTitle>パターンを削除しますか？</ResponsiveAlertDialogTitle>
+          <ResponsiveAlertDialogDescription>
             「{patternOps.deleteTarget?.label}
             」とその中のすべての予定を削除します。この操作は取り消せません。
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>キャンセル</AlertDialogCancel>
-          <AlertDialogDestructiveAction
+          </ResponsiveAlertDialogDescription>
+        </ResponsiveAlertDialogHeader>
+        <ResponsiveAlertDialogFooter>
+          <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+          <ResponsiveAlertDialogDestructiveAction
             onClick={() => {
               if (patternOps.deleteTarget) patternOps.handleDelete(patternOps.deleteTarget.id);
               patternOps.setDeleteTarget(null);
             }}
           >
             削除する
-          </AlertDialogDestructiveAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </ResponsiveAlertDialogDestructiveAction>
+        </ResponsiveAlertDialogFooter>
+      </ResponsiveAlertDialogContent>
+    </ResponsiveAlertDialog>
   );
 }
 
 export function BatchDeleteDialog({ selection }: { selection: Selection }) {
   return (
-    <AlertDialog open={selection.batchDeleteOpen} onOpenChange={selection.setBatchDeleteOpen}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>{selection.selectedIds.size}件を削除しますか？</AlertDialogTitle>
-          <AlertDialogDescription>
+    <ResponsiveAlertDialog
+      open={selection.batchDeleteOpen}
+      onOpenChange={selection.setBatchDeleteOpen}
+    >
+      <ResponsiveAlertDialogContent>
+        <ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogTitle>
+            {selection.selectedIds.size}件を削除しますか？
+          </ResponsiveAlertDialogTitle>
+          <ResponsiveAlertDialogDescription>
             選択した{selection.selectedIds.size}件を削除します。この操作は取り消せません。
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>キャンセル</AlertDialogCancel>
-          <AlertDialogDestructiveAction
+          </ResponsiveAlertDialogDescription>
+        </ResponsiveAlertDialogHeader>
+        <ResponsiveAlertDialogFooter>
+          <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+          <ResponsiveAlertDialogDestructiveAction
             onClick={selection.batchDelete}
             disabled={selection.batchLoading}
           >
             <Trash2 className="h-4 w-4" />
             削除する
-          </AlertDialogDestructiveAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </ResponsiveAlertDialogDestructiveAction>
+        </ResponsiveAlertDialogFooter>
+      </ResponsiveAlertDialogContent>
+    </ResponsiveAlertDialog>
   );
 }

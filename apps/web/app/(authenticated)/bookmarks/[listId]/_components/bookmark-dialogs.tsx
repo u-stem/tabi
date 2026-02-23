@@ -1,19 +1,19 @@
 "use client";
 
 import { BOOKMARK_LIST_NAME_MAX_LENGTH, type BookmarkListVisibility } from "@sugara/shared";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogDestructiveAction,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  ResponsiveAlertDialog,
+  ResponsiveAlertDialogCancel,
+  ResponsiveAlertDialogContent,
+  ResponsiveAlertDialogDescription,
+  ResponsiveAlertDialogDestructiveAction,
+  ResponsiveAlertDialogFooter,
+  ResponsiveAlertDialogHeader,
+  ResponsiveAlertDialogTitle,
+} from "@/components/ui/responsive-alert-dialog";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -195,75 +195,78 @@ export function EditBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
 
 export function DeleteListDialog({ listOps, listName }: { listOps: ListOps; listName: string }) {
   return (
-    <AlertDialog
+    <ResponsiveAlertDialog
       open={listOps.deletingList}
       onOpenChange={(v) => !v && listOps.setDeletingList(false)}
     >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>リストを削除しますか？</AlertDialogTitle>
-          <AlertDialogDescription>
+      <ResponsiveAlertDialogContent>
+        <ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogTitle>リストを削除しますか？</ResponsiveAlertDialogTitle>
+          <ResponsiveAlertDialogDescription>
             「{listName}
             」とそのブックマークがすべて削除されます。この操作は取り消せません。
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>キャンセル</AlertDialogCancel>
-          <AlertDialogDestructiveAction onClick={listOps.handleDelete}>
+          </ResponsiveAlertDialogDescription>
+        </ResponsiveAlertDialogHeader>
+        <ResponsiveAlertDialogFooter>
+          <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+          <ResponsiveAlertDialogDestructiveAction onClick={listOps.handleDelete}>
             削除する
-          </AlertDialogDestructiveAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </ResponsiveAlertDialogDestructiveAction>
+        </ResponsiveAlertDialogFooter>
+      </ResponsiveAlertDialogContent>
+    </ResponsiveAlertDialog>
   );
 }
 
 export function DeleteBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
   return (
-    <AlertDialog
+    <ResponsiveAlertDialog
       open={bmOps.deletingBookmark !== null}
       onOpenChange={(v) => !v && bmOps.setDeletingBookmark(null)}
     >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>ブックマークを削除しますか？</AlertDialogTitle>
-          <AlertDialogDescription>
+      <ResponsiveAlertDialogContent>
+        <ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogTitle>ブックマークを削除しますか？</ResponsiveAlertDialogTitle>
+          <ResponsiveAlertDialogDescription>
             「{bmOps.deletingBookmark?.name}」を削除します。この操作は取り消せません。
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>キャンセル</AlertDialogCancel>
-          <AlertDialogDestructiveAction onClick={bmOps.handleDelete}>
+          </ResponsiveAlertDialogDescription>
+        </ResponsiveAlertDialogHeader>
+        <ResponsiveAlertDialogFooter>
+          <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+          <ResponsiveAlertDialogDestructiveAction onClick={bmOps.handleDelete}>
             削除する
-          </AlertDialogDestructiveAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </ResponsiveAlertDialogDestructiveAction>
+        </ResponsiveAlertDialogFooter>
+      </ResponsiveAlertDialogContent>
+    </ResponsiveAlertDialog>
   );
 }
 
 export function BatchDeleteDialog({ sel }: { sel: Selection }) {
   return (
-    <AlertDialog
+    <ResponsiveAlertDialog
       open={sel.batchDeleteOpen}
       onOpenChange={(v) => !v && sel.setBatchDeleteOpen(false)}
     >
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>
+      <ResponsiveAlertDialogContent>
+        <ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogTitle>
             {sel.selectedIds.size}件のブックマークを削除しますか？
-          </AlertDialogTitle>
-          <AlertDialogDescription>
+          </ResponsiveAlertDialogTitle>
+          <ResponsiveAlertDialogDescription>
             選択したブックマークをすべて削除します。この操作は取り消せません。
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>キャンセル</AlertDialogCancel>
-          <AlertDialogDestructiveAction onClick={sel.handleBatchDelete} disabled={sel.batchLoading}>
+          </ResponsiveAlertDialogDescription>
+        </ResponsiveAlertDialogHeader>
+        <ResponsiveAlertDialogFooter>
+          <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+          <ResponsiveAlertDialogDestructiveAction
+            onClick={sel.handleBatchDelete}
+            disabled={sel.batchLoading}
+          >
             {sel.batchLoading ? "削除中..." : "削除する"}
-          </AlertDialogDestructiveAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+          </ResponsiveAlertDialogDestructiveAction>
+        </ResponsiveAlertDialogFooter>
+      </ResponsiveAlertDialogContent>
+    </ResponsiveAlertDialog>
   );
 }

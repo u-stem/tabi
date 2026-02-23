@@ -5,20 +5,20 @@ import { Check, Copy, ExternalLink, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  ResponsiveAlertDialog,
+  ResponsiveAlertDialogCancel,
+  ResponsiveAlertDialogContent,
+  ResponsiveAlertDialogDescription,
+  ResponsiveAlertDialogFooter,
+  ResponsiveAlertDialogHeader,
+  ResponsiveAlertDialogTitle,
+  ResponsiveAlertDialogTrigger,
+} from "@/components/ui/responsive-alert-dialog";
 import {
   Select,
   SelectContent,
@@ -611,17 +611,19 @@ function DeleteAccountSection({ username }: { username: string }) {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <AlertDialog open={open} onOpenChange={handleOpenChange}>
-          <AlertDialogTrigger asChild>
+        <ResponsiveAlertDialog open={open} onOpenChange={handleOpenChange}>
+          <ResponsiveAlertDialogTrigger asChild>
             <Button variant="destructive">アカウントを削除</Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>本当にアカウントを削除しますか？</AlertDialogTitle>
-              <AlertDialogDescription>
+          </ResponsiveAlertDialogTrigger>
+          <ResponsiveAlertDialogContent>
+            <ResponsiveAlertDialogHeader>
+              <ResponsiveAlertDialogTitle>
+                本当にアカウントを削除しますか？
+              </ResponsiveAlertDialogTitle>
+              <ResponsiveAlertDialogDescription>
                 全ての旅行、メンバーシップ、フレンド情報が完全に削除されます。この操作は元に戻せません。
-              </AlertDialogDescription>
-            </AlertDialogHeader>
+              </ResponsiveAlertDialogDescription>
+            </ResponsiveAlertDialogHeader>
             <div className="space-y-2">
               <input type="hidden" name="username" autoComplete="username" value={username} />
               <Label htmlFor="deletePassword">
@@ -645,8 +647,10 @@ function DeleteAccountSection({ username }: { username: string }) {
                 {error}
               </div>
             )}
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={loading}>キャンセル</AlertDialogCancel>
+            <ResponsiveAlertDialogFooter>
+              <ResponsiveAlertDialogCancel disabled={loading}>
+                キャンセル
+              </ResponsiveAlertDialogCancel>
               <Button
                 variant="destructive"
                 disabled={loading || password.length === 0}
@@ -654,9 +658,9 @@ function DeleteAccountSection({ username }: { username: string }) {
               >
                 {loading ? "削除中..." : "削除する"}
               </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            </ResponsiveAlertDialogFooter>
+          </ResponsiveAlertDialogContent>
+        </ResponsiveAlertDialog>
       </CardContent>
     </Card>
   );

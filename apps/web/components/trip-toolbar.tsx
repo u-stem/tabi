@@ -4,16 +4,6 @@ import type { TripStatus } from "@sugara/shared";
 import { STATUS_LABELS } from "@sugara/shared";
 import { Copy, MoreHorizontal, SquareMousePointer, Trash2, X } from "lucide-react";
 import { useState } from "react";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogDestructiveAction,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,6 +12,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import {
+  ResponsiveAlertDialog,
+  ResponsiveAlertDialogCancel,
+  ResponsiveAlertDialogContent,
+  ResponsiveAlertDialogDescription,
+  ResponsiveAlertDialogDestructiveAction,
+  ResponsiveAlertDialogFooter,
+  ResponsiveAlertDialogHeader,
+  ResponsiveAlertDialogTitle,
+} from "@/components/ui/responsive-alert-dialog";
 import {
   Select,
   SelectContent,
@@ -151,25 +151,25 @@ export function TripToolbar({
             </DropdownMenu>
           </div>
         </div>
-        <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>
+        <ResponsiveAlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+          <ResponsiveAlertDialogContent>
+            <ResponsiveAlertDialogHeader>
+              <ResponsiveAlertDialogTitle>
                 {selectedCount}件の{deleteLabel}を削除しますか？
-              </AlertDialogTitle>
-              <AlertDialogDescription>
+              </ResponsiveAlertDialogTitle>
+              <ResponsiveAlertDialogDescription>
                 選択した{deleteLabel}が削除されます。この操作は取り消せません。
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>キャンセル</AlertDialogCancel>
-              <AlertDialogDestructiveAction onClick={onDeleteSelected}>
+              </ResponsiveAlertDialogDescription>
+            </ResponsiveAlertDialogHeader>
+            <ResponsiveAlertDialogFooter>
+              <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+              <ResponsiveAlertDialogDestructiveAction onClick={onDeleteSelected}>
                 <Trash2 className="h-4 w-4" />
                 削除する
-              </AlertDialogDestructiveAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+              </ResponsiveAlertDialogDestructiveAction>
+            </ResponsiveAlertDialogFooter>
+          </ResponsiveAlertDialogContent>
+        </ResponsiveAlertDialog>
       </>
     );
   }

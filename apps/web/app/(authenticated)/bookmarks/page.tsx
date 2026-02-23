@@ -11,16 +11,6 @@ import { BookmarkListCard } from "@/components/bookmark-list-card";
 import { CreateBookmarkListDialog } from "@/components/create-bookmark-list-dialog";
 import { Fab } from "@/components/fab";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogDestructiveAction,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -28,6 +18,16 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  ResponsiveAlertDialog,
+  ResponsiveAlertDialogCancel,
+  ResponsiveAlertDialogContent,
+  ResponsiveAlertDialogDescription,
+  ResponsiveAlertDialogDestructiveAction,
+  ResponsiveAlertDialogFooter,
+  ResponsiveAlertDialogHeader,
+  ResponsiveAlertDialogTitle,
+} from "@/components/ui/responsive-alert-dialog";
 import {
   Select,
   SelectContent,
@@ -307,25 +307,25 @@ export default function BookmarksPage() {
                     </DropdownMenu>
                   </div>
                 </div>
-                <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
+                <ResponsiveAlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                  <ResponsiveAlertDialogContent>
+                    <ResponsiveAlertDialogHeader>
+                      <ResponsiveAlertDialogTitle>
                         {selectedIds.size}件のリストを削除しますか？
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
+                      </ResponsiveAlertDialogTitle>
+                      <ResponsiveAlertDialogDescription>
                         選択したリストとすべてのブックマークが削除されます。この操作は取り消せません。
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                      <AlertDialogDestructiveAction onClick={handleDeleteSelected}>
+                      </ResponsiveAlertDialogDescription>
+                    </ResponsiveAlertDialogHeader>
+                    <ResponsiveAlertDialogFooter>
+                      <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+                      <ResponsiveAlertDialogDestructiveAction onClick={handleDeleteSelected}>
                         <Trash2 className="h-4 w-4" />
                         削除する
-                      </AlertDialogDestructiveAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
+                      </ResponsiveAlertDialogDestructiveAction>
+                    </ResponsiveAlertDialogFooter>
+                  </ResponsiveAlertDialogContent>
+                </ResponsiveAlertDialog>
               </>
             ) : (
               <div className="flex items-center gap-2">

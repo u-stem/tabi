@@ -22,17 +22,6 @@ import { useCallback, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
 import { CalendarNav, END_YEAR, START_YEAR } from "@/components/calendar-nav";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogDestructiveAction,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -44,6 +33,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  ResponsiveAlertDialog,
+  ResponsiveAlertDialogAction,
+  ResponsiveAlertDialogCancel,
+  ResponsiveAlertDialogContent,
+  ResponsiveAlertDialogDescription,
+  ResponsiveAlertDialogDestructiveAction,
+  ResponsiveAlertDialogFooter,
+  ResponsiveAlertDialogHeader,
+  ResponsiveAlertDialogTitle,
+} from "@/components/ui/responsive-alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { formatDateRangeShort } from "@/lib/format";
@@ -610,14 +610,14 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
       </Dialog>
 
       {/* Confirm final dialog */}
-      <AlertDialog
+      <ResponsiveAlertDialog
         open={!!confirmOptionId}
         onOpenChange={(open) => !open && setConfirmOptionId(null)}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>日程を確定</AlertDialogTitle>
-            <AlertDialogDescription>
+        <ResponsiveAlertDialogContent>
+          <ResponsiveAlertDialogHeader>
+            <ResponsiveAlertDialogTitle>日程を確定</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogDescription>
               この日程で確定しますか？旅行の日程が更新されます。
               {(() => {
                 const opt = poll.options.find((o) => o.id === confirmOptionId);
@@ -627,31 +627,31 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
                   </span>
                 ) : null;
               })()}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction
+            </ResponsiveAlertDialogDescription>
+          </ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogFooter>
+            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogAction
               onClick={() => {
                 if (confirmOptionId) confirmMutation.mutate(confirmOptionId);
                 setConfirmOptionId(null);
               }}
             >
               確定する
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </ResponsiveAlertDialogAction>
+          </ResponsiveAlertDialogFooter>
+        </ResponsiveAlertDialogContent>
+      </ResponsiveAlertDialog>
 
       {/* Delete option dialog */}
-      <AlertDialog
+      <ResponsiveAlertDialog
         open={!!deleteOptionId}
         onOpenChange={(open) => !open && setDeleteOptionId(null)}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>日程案を削除</AlertDialogTitle>
-            <AlertDialogDescription>
+        <ResponsiveAlertDialogContent>
+          <ResponsiveAlertDialogHeader>
+            <ResponsiveAlertDialogTitle>日程案を削除</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogDescription>
               この日程案を削除しますか？回答も全て削除されます。
               {(() => {
                 const opt = poll.options.find((o) => o.id === deleteOptionId);
@@ -661,11 +661,11 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
                   </span>
                 ) : null;
               })()}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogDestructiveAction
+            </ResponsiveAlertDialogDescription>
+          </ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogFooter>
+            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
                 if (deleteOptionId) deleteOptionMutation.mutate(deleteOptionId);
                 setDeleteOptionId(null);
@@ -673,26 +673,28 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
             >
               <Trash2 className="h-4 w-4" />
               削除する
-            </AlertDialogDestructiveAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </ResponsiveAlertDialogDestructiveAction>
+          </ResponsiveAlertDialogFooter>
+        </ResponsiveAlertDialogContent>
+      </ResponsiveAlertDialog>
 
       {/* Delete selected options dialog */}
-      <AlertDialog
+      <ResponsiveAlertDialog
         open={confirmDeleteSelected}
         onOpenChange={(open) => !open && setConfirmDeleteSelected(false)}
       >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{selectedOptionIds.size}件の日程案を削除しますか？</AlertDialogTitle>
-            <AlertDialogDescription>
+        <ResponsiveAlertDialogContent>
+          <ResponsiveAlertDialogHeader>
+            <ResponsiveAlertDialogTitle>
+              {selectedOptionIds.size}件の日程案を削除しますか？
+            </ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogDescription>
               選択した日程案と回答が削除されます。この操作は取り消せません。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogDestructiveAction
+            </ResponsiveAlertDialogDescription>
+          </ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogFooter>
+            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
                 deleteSelectedMutation.mutate([...selectedOptionIds]);
                 setConfirmDeleteSelected(false);
@@ -700,10 +702,10 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
             >
               <Trash2 className="h-4 w-4" />
               削除する
-            </AlertDialogDestructiveAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </ResponsiveAlertDialogDestructiveAction>
+          </ResponsiveAlertDialogFooter>
+        </ResponsiveAlertDialogContent>
+      </ResponsiveAlertDialog>
     </div>
   );
 }

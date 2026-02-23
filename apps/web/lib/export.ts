@@ -376,6 +376,7 @@ function downloadDelimitedText(
   link.href = url;
   link.download = fileName;
   link.click();
+  URL.revokeObjectURL(url);
 }
 
 export async function exportTripToCSV(trip: TripResponse, options: ExportOptions): Promise<void> {

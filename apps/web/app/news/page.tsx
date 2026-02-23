@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default async function NewsPage() {
-  const articles = await getAllNews();
+  const articles = getAllNews();
 
   return (
     <div className="flex min-h-screen flex-col">

@@ -655,7 +655,10 @@ describe("rowsToCSV", () => {
 
 describe("exportTripToCSV", () => {
   beforeEach(() => {
-    vi.stubGlobal("URL", { createObjectURL: vi.fn().mockReturnValue("blob:test") });
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn().mockReturnValue("blob:test"),
+      revokeObjectURL: vi.fn(),
+    });
   });
 
   it("creates a BOM-prefixed CSV blob and triggers download", async () => {
@@ -1051,7 +1054,10 @@ describe("exportTripToExcel - expenses", () => {
 
 describe("exportTripToCSV - expenses", () => {
   beforeEach(() => {
-    vi.stubGlobal("URL", { createObjectURL: vi.fn().mockReturnValue("blob:test") });
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn().mockReturnValue("blob:test"),
+      revokeObjectURL: vi.fn(),
+    });
   });
 
   it("appends expense section when includeExpenses is true", async () => {

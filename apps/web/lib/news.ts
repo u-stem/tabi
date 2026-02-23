@@ -15,7 +15,7 @@ type NewsArticle = NewsMeta & {
 
 const newsDir = path.join(process.cwd(), "content", "news");
 
-export async function getAllNews(): Promise<NewsMeta[]> {
+export function getAllNews(): NewsMeta[] {
   const files = fs.readdirSync(newsDir).filter((f) => f.endsWith(".md"));
 
   const articles = files.map((file) => {
@@ -32,7 +32,8 @@ export async function getAllNews(): Promise<NewsMeta[]> {
   return articles.sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
 }
 
-export async function getNewsBySlug(slug: string): Promise<NewsArticle | null> {
+export function getNewsBySlug(slug: string): NewsArticle | null {
+  if (slug.includes("..") || slug.includes("/")) return null;
   const filePath = path.join(newsDir, `${slug}.md`);
 
   if (!fs.existsSync(filePath)) {

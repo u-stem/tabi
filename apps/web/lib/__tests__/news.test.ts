@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { getAllNews, getNewsBySlug } from "../news";
 
 describe("getAllNews", () => {
-  it("returns articles sorted by date descending", async () => {
-    const articles = await getAllNews();
+  it("returns articles sorted by date descending", () => {
+    const articles = getAllNews();
 
     expect(articles.length).toBeGreaterThan(0);
 
@@ -12,8 +12,8 @@ describe("getAllNews", () => {
     }
   });
 
-  it("returns metadata fields for each article", async () => {
-    const articles = await getAllNews();
+  it("returns metadata fields for each article", () => {
+    const articles = getAllNews();
     const article = articles[0];
 
     expect(article).toHaveProperty("title");
@@ -24,8 +24,8 @@ describe("getAllNews", () => {
 });
 
 describe("getNewsBySlug", () => {
-  it("returns article with metadata and markdown content", async () => {
-    const article = await getNewsBySlug("2026-02-12-launch");
+  it("returns article with metadata and markdown content", () => {
+    const article = getNewsBySlug("2026-02-12-launch");
 
     expect(article).not.toBeNull();
     expect(article!.title).toBe("sugara をリリースしました");
@@ -33,8 +33,8 @@ describe("getNewsBySlug", () => {
     expect(article!.content).toContain("## 主な機能");
   });
 
-  it("returns null for non-existent slug", async () => {
-    const article = await getNewsBySlug("non-existent-article");
+  it("returns null for non-existent slug", () => {
+    const article = getNewsBySlug("non-existent-article");
 
     expect(article).toBeNull();
   });

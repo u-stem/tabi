@@ -24,7 +24,7 @@ export async function api<T>(path: string, options: FetchOptions = {}): Promise<
   }
 
   const headers: HeadersInit = { ...fetchOptions.headers };
-  if (fetchOptions.body) {
+  if (fetchOptions.body && !(fetchOptions.body instanceof FormData)) {
     (headers as Record<string, string>)["Content-Type"] = "application/json";
   }
 

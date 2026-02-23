@@ -59,10 +59,13 @@ export function useCoverImageUpload(): UseCoverImageUploadReturn {
 
   const remove = useCallback(async (tripId: string) => {
     try {
-      await fetch(`/api/trips/${tripId}/cover-image`, {
+      const res = await fetch(`/api/trips/${tripId}/cover-image`, {
         method: "DELETE",
         credentials: "include",
       });
+      if (!res.ok) {
+        console.error("Cover image delete failed:", res.status);
+      }
     } catch (err) {
       console.error("Cover image delete failed:", err);
     }

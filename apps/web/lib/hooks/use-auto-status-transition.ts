@@ -92,6 +92,8 @@ export function useAutoStatusTransition({
           retryCount.current += 1;
           if (retryCount.current < MAX_RETRIES) {
             triggered.current = false;
+          } else {
+            console.warn(`Auto status transition failed after ${MAX_RETRIES} retries`);
           }
         });
     }

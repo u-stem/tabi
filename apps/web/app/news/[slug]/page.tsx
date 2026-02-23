@@ -11,20 +11,20 @@ type Props = {
 };
 
 export async function generateStaticParams() {
-  const articles = await getAllNews();
+  const articles = getAllNews();
   return articles.map((article) => ({ slug: article.slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const article = await getNewsBySlug(slug);
+  const article = getNewsBySlug(slug);
   if (!article) return { title: pageTitle("お知らせ") };
   return { title: pageTitle(article.title) };
 }
 
 export default async function NewsArticlePage({ params }: Props) {
   const { slug } = await params;
-  const article = await getNewsBySlug(slug);
+  const article = getNewsBySlug(slug);
 
   if (!article) {
     notFound();

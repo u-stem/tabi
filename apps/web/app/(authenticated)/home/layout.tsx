@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getAllNews } from "@/lib/news";
 
 export default async function HomeLayout({ children }: { children: React.ReactNode }) {
-  const articles = await getAllNews();
+  const articles = getAllNews();
   const latest = articles[0];
 
   return (

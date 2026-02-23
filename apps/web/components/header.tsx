@@ -78,7 +78,7 @@ export function Header() {
   }
 
   return (
-    <header className="select-none border-b">
+    <header className="sticky top-0 z-30 select-none border-b bg-background">
       <OfflineBanner />
       <GuestBanner />
       <nav

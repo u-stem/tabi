@@ -344,13 +344,10 @@ export function ChatPanel({
   }, [input, chatSession, startSession, sendMessage, editingMessage, editMessage]);
 
   // Mobile long press handler
-  const handleMessageAction = useCallback(
-    (msg: ChatMessageResponse, _anchor: HTMLElement) => {
-      setActionTarget(msg);
-      setActionSheetOpen(true);
-    },
-    [],
-  );
+  const handleMessageAction = useCallback((msg: ChatMessageResponse, _anchor: HTMLElement) => {
+    setActionTarget(msg);
+    setActionSheetOpen(true);
+  }, []);
 
   const sheetActions = useMemo(
     () => [

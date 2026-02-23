@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from "vitest";
 import { useSwipeTab } from "../hooks/use-swipe-tab";
 
 function createMockElement(width = 375) {
@@ -49,16 +49,20 @@ describe("useSwipeTab", () => {
     docListeners = {};
     vi.useFakeTimers();
 
-    addSpy = vi.spyOn(document, "addEventListener").mockImplementation(
-      (event: string, handler: EventListenerOrEventListenerObject, _opts?: unknown) => {
-        docListeners[event] = handler as EventListener;
-      },
-    );
-    removeSpy = vi.spyOn(document, "removeEventListener").mockImplementation(
-      (event: string, _handler: EventListenerOrEventListenerObject, _opts?: unknown) => {
-        delete docListeners[event];
-      },
-    );
+    addSpy = vi
+      .spyOn(document, "addEventListener")
+      .mockImplementation(
+        (event: string, handler: EventListenerOrEventListenerObject, _opts?: unknown) => {
+          docListeners[event] = handler as EventListener;
+        },
+      );
+    removeSpy = vi
+      .spyOn(document, "removeEventListener")
+      .mockImplementation(
+        (event: string, _handler: EventListenerOrEventListenerObject, _opts?: unknown) => {
+          delete docListeners[event];
+        },
+      );
   });
 
   afterEach(() => {

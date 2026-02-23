@@ -56,6 +56,15 @@ export const updateExpenseSchema = z
   .partial()
   .refine(
     (data) => {
+      // splitType and splits must be provided together
+      if (data.splitType !== undefined && !data.splits) return false;
+      if (data.splits && data.splitType === undefined) return false;
+      return true;
+    },
+    { message: "splitType and splits must be provided together", path: ["splits"] },
+  )
+  .refine(
+    (data) => {
       if (data.splits) {
         const ids = data.splits.map((s) => s.userId);
         return new Set(ids).size === ids.length;

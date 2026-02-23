@@ -800,8 +800,8 @@ export default function TripDetailPage() {
                   schedules={dnd.localSchedules}
                   onRefresh={onMutate}
                   disabled={!online || !canEdit}
-                  addScheduleOpen={addScheduleOpen}
-                  onAddScheduleOpenChange={setAddScheduleOpen}
+                  addScheduleOpen={!isLg ? addScheduleOpen : false}
+                  onAddScheduleOpenChange={!isLg ? setAddScheduleOpen : undefined}
                   maxEndDayOffset={Math.max(1, tripData.days.length - 1 - selectedDay)}
                   totalDays={tripData.days.length}
                   crossDayEntries={getCrossDayEntries(tripData.days, currentDay.dayNumber)}
@@ -846,6 +846,8 @@ export default function TripDetailPage() {
               onRefresh={onMutate}
               disabled={!online || !canEdit}
               draggable={false}
+              addDialogOpen={!isLg ? addCandidateOpen : false}
+              onAddDialogOpenChange={!isLg ? setAddCandidateOpen : undefined}
               scheduleLimitReached={scheduleLimitReached}
               scheduleLimitMessage={scheduleLimitMessage}
               maxEndDayOffset={Math.max(0, tripData.days.length - 1)}
@@ -866,8 +868,8 @@ export default function TripDetailPage() {
             <ExpensePanel
               tripId={tripId}
               canEdit={canEdit}
-              addOpen={addExpenseOpen}
-              onAddOpenChange={setAddExpenseOpen}
+              addOpen={!isLg ? addExpenseOpen : false}
+              onAddOpenChange={!isLg ? setAddExpenseOpen : undefined}
             />
           </div>
         ) : (
@@ -1056,8 +1058,8 @@ export default function TripDetailPage() {
                     schedules={dnd.localSchedules}
                     onRefresh={onMutate}
                     disabled={!online || !canEdit}
-                    addScheduleOpen={addScheduleOpen}
-                    onAddScheduleOpenChange={setAddScheduleOpen}
+                    addScheduleOpen={isLg ? addScheduleOpen : false}
+                    onAddScheduleOpenChange={isLg ? setAddScheduleOpen : undefined}
                     maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
                     totalDays={trip.days.length}
                     crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
@@ -1104,7 +1106,7 @@ export default function TripDetailPage() {
               disabled={!online || !canEdit}
               canEdit={canEdit}
               online={online}
-              addCandidateOpen={addCandidateOpen}
+              addCandidateOpen={isLg ? addCandidateOpen : false}
               onAddCandidateOpenChange={setAddCandidateOpen}
               scheduleLimitReached={scheduleLimitReached}
               scheduleLimitMessage={scheduleLimitMessage}

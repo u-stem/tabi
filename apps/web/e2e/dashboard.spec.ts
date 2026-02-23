@@ -83,14 +83,9 @@ test.describe("Dashboard", () => {
       .getByRole("toolbar", { name: "旅行フィルター" })
       .getByRole("button", { name: "選択" })
       .click();
-    await page
-      .getByRole("toolbar", { name: "選択操作" })
-      .getByRole("button", { name: "全選択" })
-      .click();
-    await page
-      .getByRole("toolbar", { name: "選択操作" })
-      .getByRole("button", { name: "複製" })
-      .click();
+    await page.getByRole("button", { name: "全選択" }).click();
+    await page.getByRole("button", { name: "選択操作メニュー" }).click();
+    await page.getByRole("menuitem", { name: "複製" }).click();
 
     await expect(page.getByText("1件の旅行を複製しました")).toBeVisible();
   });
@@ -109,14 +104,9 @@ test.describe("Dashboard", () => {
       .getByRole("toolbar", { name: "旅行フィルター" })
       .getByRole("button", { name: "選択" })
       .click();
-    await page
-      .getByRole("toolbar", { name: "選択操作" })
-      .getByRole("button", { name: "全選択" })
-      .click();
-    await page
-      .getByRole("toolbar", { name: "選択操作" })
-      .getByRole("button", { name: "削除" })
-      .click();
+    await page.getByRole("button", { name: "全選択" }).click();
+    await page.getByRole("button", { name: "選択操作メニュー" }).click();
+    await page.getByRole("menuitem", { name: "削除" }).click();
     await page.getByRole("button", { name: "削除する" }).click();
 
     await expect(page.getByText("Delete Me")).not.toBeVisible();

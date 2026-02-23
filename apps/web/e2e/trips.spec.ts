@@ -10,7 +10,7 @@ test.describe("Trip Management", () => {
     });
 
     expect(tripUrl).toMatch(/\/trips\/[a-f0-9-]+/);
-    await expect(page.getByText("E2E Trip")).toBeVisible();
+    await expect(page.getByText("E2E Trip").last()).toBeVisible();
   });
 
   test("edits trip title and destination", async ({
@@ -32,8 +32,8 @@ test.describe("Trip Management", () => {
     await page.getByRole("button", { name: "更新" }).click();
 
     await expect(page.getByText("旅行を更新しました")).toBeVisible();
-    await expect(page.getByText("After Edit")).toBeVisible();
-    await expect(page.getByText("Yokohama")).toBeVisible();
+    await expect(page.getByText("After Edit").last()).toBeVisible();
+    await expect(page.getByText("Yokohama").last()).toBeVisible();
   });
 
   test("changes trip status", async ({ authenticatedPage: page }) => {

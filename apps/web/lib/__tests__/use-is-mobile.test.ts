@@ -3,14 +3,25 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { useIsMobile } from "../hooks/use-is-mobile";
 
-function mockMatchMedia(matches: boolean) {
+function mockMatchMedia(matches: boolean, legacy = false) {
   const listeners: Array<(e: { matches: boolean }) => void> = [];
   const mql = {
     matches,
-    addEventListener: vi.fn((_: string, cb: (e: { matches: boolean }) => void) => {
+    addEventListener: legacy
+      ? undefined
+      : vi.fn((_: string, cb: (e: { matches: boolean }) => void) => {
+          listeners.push(cb);
+        }),
+    removeEventListener: legacy
+      ? undefined
+      : vi.fn((_: string, cb: (e: { matches: boolean }) => void) => {
+          const idx = listeners.indexOf(cb);
+          if (idx >= 0) listeners.splice(idx, 1);
+        }),
+    addListener: vi.fn((cb: (e: { matches: boolean }) => void) => {
       listeners.push(cb);
     }),
-    removeEventListener: vi.fn((_: string, cb: (e: { matches: boolean }) => void) => {
+    removeListener: vi.fn((cb: (e: { matches: boolean }) => void) => {
       const idx = listeners.indexOf(cb);
       if (idx >= 0) listeners.splice(idx, 1);
     }),
@@ -25,6 +36,12 @@ function mockMatchMedia(matches: boolean) {
 describe("useIsMobile", () => {
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it("uses configured mobile media query", () => {
+    mockMatchMedia(true);
+    renderHook(() => useIsMobile());
+    expect(matchMedia).toHaveBeenCalledWith("(max-width: 767px)");
   });
 
   it("returns true when viewport is narrow", () => {
@@ -56,5 +73,13 @@ describe("useIsMobile", () => {
     const { unmount } = renderHook(() => useIsMobile());
     unmount();
     expect(mql.removeEventListener).toHaveBeenCalledWith("change", expect.any(Function));
+  });
+
+  it("falls back to addListener/removeListener on legacy MediaQueryList", () => {
+    const { mql } = mockMatchMedia(false, true);
+    const { unmount } = renderHook(() => useIsMobile());
+    expect(mql.addListener).toHaveBeenCalledWith(expect.any(Function));
+    unmount();
+    expect(mql.removeListener).toHaveBeenCalledWith(expect.any(Function));
   });
 });

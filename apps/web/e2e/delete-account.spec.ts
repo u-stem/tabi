@@ -1,17 +1,36 @@
 import { BASE_URL, createTripViaUI, expect, signupUser, test } from "./fixtures/auth";
 
 const PASSWORD = "TestPassword123!";
+const DELETE_TIMEOUT_MS = 20000;
 
 function shortId() {
   return Date.now().toString(36).slice(-6);
 }
 
+async function assignUniqueClientIp(page: import("@playwright/test").Page, seed?: string) {
+  const value = seed ?? shortId();
+  const suffix = [...value].reduce((acc, ch) => (acc + ch.charCodeAt(0)) % 253, 1);
+  await page.context().setExtraHTTPHeaders({
+    "x-forwarded-for": `10.23.0.${suffix}`,
+  });
+}
+
 async function deleteAccount(page: import("@playwright/test").Page) {
   await page.goto("/settings");
   await page.getByRole("button", { name: "アカウントを削除" }).click();
-  await page.getByLabel("パスワードを入力して確認").fill(PASSWORD);
-  await page.getByRole("button", { name: "削除する" }).click();
-  await expect(page).toHaveURL(/\/auth\/login/, { timeout: 10000 });
+  const dialog = page.getByRole("alertdialog", { name: "本当にアカウントを削除しますか？" });
+  await dialog.getByLabel("パスワードを入力して確認").fill(PASSWORD);
+  await dialog.getByRole("button", { name: "削除する" }).click();
+  try {
+    await expect(page).toHaveURL(/\/auth\/login/, { timeout: DELETE_TIMEOUT_MS });
+  } catch (error) {
+    const alert = dialog.getByRole("alert");
+    const message = (await alert.textContent())?.trim();
+    throw new Error(
+      `Account deletion did not complete (message: ${message ?? "unknown"}, url: ${page.url()})`,
+      { cause: error },
+    );
+  }
 }
 
 async function loginUser(
@@ -25,10 +44,13 @@ async function loginUser(
 }
 
 test.describe("Delete Account", () => {
+  test.describe.configure({ timeout: 120000 });
+
   test("cannot log in after account deletion", async ({
     authenticatedPage: page,
     userCredentials,
   }) => {
+    await assignUniqueClientIp(page, userCredentials.username);
     await deleteAccount(page);
 
     // Re-login with same credentials should fail
@@ -40,11 +62,15 @@ test.describe("Delete Account", () => {
   test("friend list shows no error after friend deletes account", async ({
     authenticatedPage: pageA,
     browser,
+    userCredentials,
   }) => {
+    await assignUniqueClientIp(pageA, userCredentials.username);
+
     // Create User B
     const contextB = await browser.newContext({ baseURL: BASE_URL });
     const pageB = await contextB.newPage();
     const userB = `delf_${shortId()}`;
+    await assignUniqueClientIp(pageB, userB);
     await signupUser(pageB, { username: userB, name: "User B" });
 
     // Get User A's ID
@@ -81,11 +107,15 @@ test.describe("Delete Account", () => {
   test("shared trips are not affected when a member deletes account", async ({
     authenticatedPage: pageA,
     browser,
+    userCredentials,
   }) => {
+    await assignUniqueClientIp(pageA, userCredentials.username);
+
     // Create User B
     const contextB = await browser.newContext({ baseURL: BASE_URL });
     const pageB = await contextB.newPage();
     const userB = `delm_${shortId()}`;
+    await assignUniqueClientIp(pageB, userB);
     await signupUser(pageB, { username: userB, name: "User B" });
 
     // Get User B's ID

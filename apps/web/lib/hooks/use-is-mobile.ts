@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 
+// Intentionally narrower than the layout breakpoint:
+// avoid treating narrow desktop windows as mobile.
 const MOBILE_BREAKPOINT = 768;
 
 export function useIsMobile(): boolean {
@@ -13,8 +15,14 @@ export function useIsMobile(): boolean {
       setIsMobile(e.matches);
     }
 
-    mql.addEventListener("change", onChange);
-    return () => mql.removeEventListener("change", onChange);
+    if (typeof mql.addEventListener === "function") {
+      mql.addEventListener("change", onChange);
+      return () => mql.removeEventListener("change", onChange);
+    }
+
+    // Older Safari fallback
+    mql.addListener(onChange);
+    return () => mql.removeListener(onChange);
   }, []);
 
   return isMobile;

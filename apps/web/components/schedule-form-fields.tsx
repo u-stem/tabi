@@ -12,7 +12,7 @@ import {
   SCHEDULE_URL_MAX_LENGTH,
 } from "@sugara/shared";
 import { Minus, Plus } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { TimeInput } from "@/components/time-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,14 +95,12 @@ export function ScheduleFormFields({
   // useRef for key counter avoids stale closures; useState for the key array triggers re-render.
   const nextKeyRef = useRef(displayUrls.length);
   const [urlKeys, setUrlKeys] = useState<number[]>(() => displayUrls.map((_, i) => i));
-  const prevLengthRef = useRef(displayUrls.length);
 
   // Sync keys when displayUrls length changes from parent (e.g. dialog reset)
-  if (prevLengthRef.current !== displayUrls.length) {
-    prevLengthRef.current = displayUrls.length;
+  useEffect(() => {
     nextKeyRef.current = displayUrls.length;
     setUrlKeys(Array.from({ length: displayUrls.length }, (_, i) => i));
-  }
+  }, [displayUrls.length]);
 
   const addUrlKey = useCallback(() => {
     const key = nextKeyRef.current++;

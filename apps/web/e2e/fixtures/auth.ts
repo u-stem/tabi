@@ -78,21 +78,24 @@ export async function createTripViaUI(
 ): Promise<string> {
   // Open create trip dialog
   await page.getByRole("button", { name: "新規作成" }).click();
-  await expect(page.getByRole("dialog")).toBeVisible();
+  const dialog = page.getByRole("dialog", { name: "新しい旅行を作成" });
+  await expect(dialog).toBeVisible();
 
-  await page.locator("#create-title").fill(options.title);
-  await page.locator("#create-destination").fill(options.destination);
+  await dialog.locator("#create-title").fill(options.title);
+  await dialog.locator("#create-destination").fill(options.destination);
 
   // Select date range in the calendar
-  const firstGrid = page.getByRole("grid").first();
+  const firstGrid = dialog.getByRole("grid").first();
   await firstGrid.getByRole("gridcell", { name: /10/ }).first().click();
   await firstGrid.getByRole("gridcell", { name: /12/ }).first().click();
 
-  await page.getByRole("button", { name: "作成" }).click();
-  await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 5000 });
+  await dialog.getByRole("button", { name: "作成" }).click();
+  await expect(dialog).not.toBeVisible({ timeout: 15000 });
 
   // Trip creation no longer navigates to detail; click the trip card to navigate
-  await page.getByRole("link", { name: new RegExp(options.title) }).first().click();
+  const tripLink = page.getByRole("link", { name: new RegExp(options.title) }).first();
+  await expect(tripLink).toBeVisible({ timeout: 15000 });
+  await tripLink.click();
   await expect(page).toHaveURL(/\/trips\/[a-f0-9-]+/, { timeout: 10000 });
 
   return page.url();

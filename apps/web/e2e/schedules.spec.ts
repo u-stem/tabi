@@ -14,7 +14,7 @@ test.describe("Schedules", () => {
     await page.getByRole("button", { name: "予定を追加" }).last().click();
 
     await expect(page.getByText("予定を追加しました")).toBeVisible();
-    await expect(page.getByText("金閣寺")).toBeVisible();
+    await expect(page.getByText("金閣寺").last()).toBeVisible();
   });
 
   test("adds a schedule with all fields", async ({
@@ -49,7 +49,7 @@ test.describe("Schedules", () => {
 
     await dialog.getByRole("button", { name: "予定を追加" }).click();
     await expect(page.getByText("予定を追加しました")).toBeVisible();
-    await expect(page.getByText("清水寺")).toBeVisible();
+    await expect(page.getByText("清水寺").last()).toBeVisible();
   });
 
   test("adds a transport schedule with transport-specific fields", async ({
@@ -80,7 +80,7 @@ test.describe("Schedules", () => {
     await dialog.getByRole("button", { name: "予定を追加" }).click();
     await expect(page.getByText("予定を追加しました")).toBeVisible();
     // Transport schedules display as route: "departure → arrival"
-    await expect(page.getByText("東京駅 → 新大阪駅")).toBeVisible();
+    await expect(page.getByText("東京駅 → 新大阪駅").last()).toBeVisible();
   });
 
   test("edits a schedule", async ({ authenticatedPage: page }) => {
@@ -104,7 +104,7 @@ test.describe("Schedules", () => {
     await page.getByRole("button", { name: "予定を更新" }).click();
 
     await expect(page.getByText("予定を更新しました")).toBeVisible();
-    await expect(page.getByText("春日大社")).toBeVisible();
+    await expect(page.getByText("春日大社").last()).toBeVisible();
   });
 
   test("deletes a schedule", async ({ authenticatedPage: page }) => {
@@ -125,7 +125,7 @@ test.describe("Schedules", () => {
     await page.getByRole("button", { name: "削除する" }).click();
 
     await expect(page.getByText("予定を削除しました")).toBeVisible();
-    await expect(page.getByText("大阪城")).not.toBeVisible();
+    await expect(page.getByText("大阪城").last()).not.toBeVisible();
   });
 
   test("unassigns a schedule back to candidates", async ({
@@ -161,12 +161,12 @@ test.describe("Schedules", () => {
     await page.getByRole("button", { name: "予定を追加" }).click();
     await page.getByLabel("名前").fill("太宰府天満宮");
     await page.getByRole("button", { name: "予定を追加" }).last().click();
-    await expect(page.getByText("太宰府天満宮")).toBeVisible();
+    await expect(page.getByText("太宰府天満宮").last()).toBeVisible();
 
     await page.getByRole("button", { name: "予定を追加" }).click();
     await page.getByLabel("名前").fill("博多ラーメン");
     await page.getByRole("button", { name: "予定を追加" }).last().click();
-    await expect(page.getByText("博多ラーメン")).toBeVisible();
+    await expect(page.getByText("博多ラーメン").last()).toBeVisible();
 
     // Sort button should be disabled when schedules have no times
     await expect(page.getByRole("button", { name: "時刻順" })).toBeDisabled();
@@ -196,10 +196,10 @@ test.describe("Schedules", () => {
     // Switch to day 2
     await tab2.click();
     // The schedule from day 1 should not appear in day 2's timeline
-    await expect(page.getByText("まだ予定がありません")).toBeVisible();
+    await expect(page.getByText("まだ予定がありません").last()).toBeVisible();
 
     // Switch back to day 1
     await tab1.click();
-    await expect(page.getByText("東照宮")).toBeVisible();
+    await expect(page.getByText("東照宮").last()).toBeVisible();
   });
 });

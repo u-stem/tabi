@@ -111,6 +111,7 @@ export function TripToolbar({
             className="h-7 w-7"
             onClick={() => onSelectionModeChange?.(false)}
             disabled={deleting || duplicating}
+            aria-label="選択を終了"
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -132,6 +133,7 @@ export function TripToolbar({
                   size="icon"
                   className="h-7 w-7"
                   disabled={selectedCount === 0 || deleting || duplicating}
+                  aria-label="選択操作メニュー"
                 >
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>

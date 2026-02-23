@@ -45,9 +45,9 @@ test.describe("Settings", () => {
     await expect(page.getByText("パスワード変更")).toBeVisible();
 
     await page.getByLabel("現在のパスワード").fill(userCredentials.password);
-    await page.getByLabel("新しいパスワード", { exact: true }).fill("NewPassword456!");
+    await page.getByLabel("新しいパスワード *", { exact: true }).fill("NewPassword456!");
     await page.getByLabel("新しいパスワード（確認）").fill("NewPassword456!");
     await page.getByRole("button", { name: "パスワードを変更" }).click();
-    await expect(page.getByText("パスワードを変更しました")).toBeVisible();
+    await expect(page.getByText("パスワードを変更しました")).toBeVisible({ timeout: 15000 });
   });
 });

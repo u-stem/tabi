@@ -503,7 +503,7 @@ export default function TripDetailPage() {
     },
     [mobileTab, session, handleMobileTabChange],
   );
-  useSwipeTab(mobileContentRef, handleSwipe);
+  useSwipeTab(mobileContentRef, handleSwipe, !!trip);
 
   useEffect(() => {
     if (trip) {

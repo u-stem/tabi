@@ -16,6 +16,7 @@ const HORIZONTAL_BIAS = 1.5;
 export function useSwipeTab(
   ref: RefObject<HTMLElement | null>,
   onSwipe: (direction: "left" | "right") => void,
+  enabled = true,
 ) {
   // Store callback in ref so the effect never re-runs on callback changes.
   // This prevents listener detach/re-attach between tab switches which was
@@ -25,7 +26,7 @@ export function useSwipeTab(
 
   useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || !enabled) return;
 
     let startX = 0;
     let startY = 0;
@@ -65,5 +66,5 @@ export function useSwipeTab(
       el.removeEventListener("touchmove", handleTouchMove);
       el.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [ref]);
+  }, [ref, enabled]);
 }

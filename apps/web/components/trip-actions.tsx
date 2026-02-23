@@ -5,8 +5,10 @@ import { canEdit, isOwner, STATUS_LABELS } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
+  Bookmark,
   Check,
   FileDown,
+  History,
   Link,
   MoreHorizontal,
   Pencil,
@@ -76,6 +78,8 @@ type TripActionsProps = {
   disabled?: boolean;
   memberLimitReached?: boolean;
   compact?: boolean;
+  onOpenBookmarks?: () => void;
+  onOpenActivity?: () => void;
 };
 
 // "scheduling" is system-managed and should not appear in the manual status dropdown
@@ -93,6 +97,8 @@ export function TripActions({
   disabled,
   memberLimitReached,
   compact,
+  onOpenBookmarks,
+  onOpenActivity,
 }: TripActionsProps) {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
@@ -213,6 +219,24 @@ export function TripActions({
   }
 
   const sheetActions = [
+    ...(onOpenBookmarks
+      ? [
+          {
+            label: "ブックマーク",
+            icon: <Bookmark className="h-4 w-4" />,
+            onClick: onOpenBookmarks,
+          },
+        ]
+      : []),
+    ...(onOpenActivity
+      ? [
+          {
+            label: "履歴",
+            icon: <History className="h-4 w-4" />,
+            onClick: onOpenActivity,
+          },
+        ]
+      : []),
     ...(canEditRole && status !== "scheduling"
       ? [
           {

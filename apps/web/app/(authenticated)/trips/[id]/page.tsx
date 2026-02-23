@@ -497,23 +497,24 @@ export default function TripDetailPage() {
 
   const handleSwipe = useCallback(
     (direction: "left" | "right") => {
-      const tabIds = getMobileTabIds(!isGuestUser(session));
+      const tabIds = getMobileTabIds();
       const idx = tabIds.indexOf(mobileTabRef.current);
       if (idx === -1) return;
       const next = direction === "left" ? idx + 1 : idx - 1;
       if (next < 0 || next >= tabIds.length) return;
       handleMobileTabChange(tabIds[next]);
     },
-    [session, handleMobileTabChange],
+    [handleMobileTabChange],
   );
 
-  const tabIds = useMemo(() => getMobileTabIds(!isGuestUser(session)), [session]);
+  const tabIds = useMemo(() => getMobileTabIds(), []);
   const currentTabIdx = tabIds.indexOf(mobileTab);
+  const canSwipeMobileTabs = currentTabIdx !== -1;
   const swipe = useSwipeTab(mobileContentRef, swipeContainerRef, {
     onSwipeComplete: handleSwipe,
-    enabled: !!trip,
-    canSwipePrev: currentTabIdx > 0,
-    canSwipeNext: currentTabIdx < tabIds.length - 1,
+    enabled: !!trip && canSwipeMobileTabs,
+    canSwipePrev: canSwipeMobileTabs && currentTabIdx > 0,
+    canSwipeNext: canSwipeMobileTabs && currentTabIdx < tabIds.length - 1,
   });
 
   useEffect(() => {
@@ -913,6 +914,16 @@ export default function TripDetailPage() {
           canEdit={canEdit}
           onMutate={onMutate}
           onEditOpen={() => setEditOpen(true)}
+          onOpenBookmarks={
+            isGuest
+              ? undefined
+              : () => {
+                  handleMobileTabChange("bookmarks", "tap");
+                }
+          }
+          onOpenActivity={() => {
+            handleMobileTabChange("activity", "tap");
+          }}
         />
         <EditTripDialog
           tripId={tripId}
@@ -940,7 +951,6 @@ export default function TripDetailPage() {
               activeTab={mobileTab}
               onTabChange={handleMobileTabChange}
               candidateCount={dnd.localCandidates.length}
-              showBookmarks={!isGuest}
             />
             <div
               ref={mobileContentRef}

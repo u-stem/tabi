@@ -8,11 +8,24 @@ describe("MobileContentTabs", () => {
     cleanup();
   });
 
-  it("renders three tabs", () => {
+  it("renders four primary tabs", () => {
     render(<MobileContentTabs activeTab="schedule" onTabChange={vi.fn()} candidateCount={0} />);
     expect(screen.getByRole("tab", { name: "予定" })).toBeDefined();
     expect(screen.getByRole("tab", { name: "候補" })).toBeDefined();
     expect(screen.getByRole("tab", { name: "費用" })).toBeDefined();
+    expect(screen.getByRole("tab", { name: "作戦会議" })).toBeDefined();
+  });
+
+  it("uses a fixed 4-column layout for even tab width", () => {
+    render(<MobileContentTabs activeTab="schedule" onTabChange={vi.fn()} candidateCount={0} />);
+    const tabList = screen.getByRole("tablist");
+    expect(tabList.className).toContain("grid-cols-4");
+  });
+
+  it("does not render bookmark/activity tabs", () => {
+    render(<MobileContentTabs activeTab="schedule" onTabChange={vi.fn()} candidateCount={0} />);
+    expect(screen.queryByRole("tab", { name: "ブックマーク" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "履歴" })).toBeNull();
   });
 
   it("marks active tab as selected", () => {

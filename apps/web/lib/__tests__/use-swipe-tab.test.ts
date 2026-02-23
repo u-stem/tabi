@@ -20,8 +20,49 @@ function createMockElement(width = 375) {
   };
 }
 
-function pointer(clientX: number, clientY = 0, pointerId = 1, pointerType = "touch") {
-  return { clientX, clientY, pointerId, pointerType };
+function createTarget(tagName: string, attrs?: Record<string, string>) {
+  const el = document.createElement(tagName);
+  if (attrs) {
+    for (const [key, value] of Object.entries(attrs)) {
+      el.setAttribute(key, value);
+    }
+  }
+  return el;
+}
+
+function pointer(
+  clientX: number,
+  clientY = 0,
+  pointerId = 1,
+  pointerType = "touch",
+  target?: EventTarget | null,
+) {
+  return { clientX, clientY, pointerId, pointerType, target: target ?? null };
+}
+
+function touch(clientX: number, clientY = 0, target?: EventTarget | null) {
+  return { clientX, clientY, target: target ?? null };
+}
+
+function fireTouchStart(
+  listeners: Record<string, EventListener>,
+  x: number,
+  y = 0,
+  target?: EventTarget | null,
+) {
+  listeners.touchstart?.({ touches: [touch(x, y, target)], target: target ?? null } as unknown as Event);
+}
+
+function fireTouchMove(listeners: Record<string, EventListener>, x: number, y = 0) {
+  listeners.touchmove?.({ touches: [touch(x, y)] } as unknown as Event);
+}
+
+function fireTouchEnd(listeners: Record<string, EventListener>, x: number, y = 0) {
+  listeners.touchend?.({ changedTouches: [touch(x, y)] } as unknown as Event);
+}
+
+function fireTouchCancel(listeners: Record<string, EventListener>) {
+  listeners.touchcancel?.({} as Event);
 }
 
 function firePointerDown(
@@ -30,8 +71,9 @@ function firePointerDown(
   y = 0,
   pointerId = 1,
   pointerType = "touch",
+  target?: EventTarget | null,
 ) {
-  listeners.pointerdown?.(pointer(x, y, pointerId, pointerType) as unknown as Event);
+  listeners.pointerdown?.(pointer(x, y, pointerId, pointerType, target) as unknown as Event);
 }
 
 function firePointerMove(
@@ -144,6 +186,20 @@ describe("useSwipeTab", () => {
     expect(cancelCall?.[2]).toEqual({ passive: true });
   });
 
+  it("registers touchmove/touchend/touchcancel on document", () => {
+    renderSwipeHook();
+
+    const moveCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "touchmove");
+    const endCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "touchend");
+    const cancelCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "touchcancel");
+    expect(moveCall).toBeDefined();
+    expect(endCall).toBeDefined();
+    expect(cancelCall).toBeDefined();
+    expect(moveCall?.[2]).toEqual({ passive: true });
+    expect(endCall?.[2]).toEqual({ passive: true });
+    expect(cancelCall?.[2]).toEqual({ passive: true });
+  });
+
   it("does not register listeners when disabled", () => {
     renderSwipeHook({ enabled: false });
 
@@ -241,8 +297,8 @@ describe("useSwipeTab", () => {
 
     act(() => {
       firePointerDown(container.listeners, 200);
-      firePointerMove(docListeners, 185, 0);
-      firePointerUp(docListeners, 185, 0);
+      firePointerMove(docListeners, 180, 0);
+      firePointerUp(docListeners, 180, 0);
     });
 
     expect(swipeEl.el.style.transition).toContain("transform");
@@ -305,6 +361,110 @@ describe("useSwipeTab", () => {
     expect(swipeEl.el.style.transform).toBe("");
   });
 
+  it("does not start swipe from interactive targets (pointer)", () => {
+    const onSwipeComplete = vi.fn();
+    renderSwipeHook({ onSwipeComplete });
+    const button = createTarget("button");
+    const input = createTarget("input");
+    const select = createTarget("select");
+    const textarea = createTarget("textarea");
+
+    act(() => {
+      firePointerDown(container.listeners, 200, 0, 1, "touch", button);
+      firePointerMove(docListeners, 140, 0);
+      firePointerUp(docListeners, 140, 0);
+
+      firePointerDown(container.listeners, 200, 0, 1, "touch", input);
+      firePointerMove(docListeners, 140, 0);
+      firePointerUp(docListeners, 140, 0);
+
+      firePointerDown(container.listeners, 200, 0, 1, "touch", select);
+      firePointerMove(docListeners, 140, 0);
+      firePointerUp(docListeners, 140, 0);
+
+      firePointerDown(container.listeners, 200, 0, 1, "touch", textarea);
+      firePointerMove(docListeners, 140, 0);
+      firePointerUp(docListeners, 140, 0);
+    });
+
+    expect(onSwipeComplete).not.toHaveBeenCalled();
+    expect(swipeEl.el.style.transform).toBe("");
+  });
+
+  it("does not start swipe from combobox/button role targets", () => {
+    const onSwipeComplete = vi.fn();
+    renderSwipeHook({ onSwipeComplete });
+    const combobox = createTarget("div", { role: "combobox" });
+    const roleButton = createTarget("div", { role: "button" });
+
+    act(() => {
+      firePointerDown(container.listeners, 200, 0, 1, "touch", combobox);
+      firePointerMove(docListeners, 140, 0);
+      firePointerUp(docListeners, 140, 0);
+
+      firePointerDown(container.listeners, 200, 0, 1, "touch", roleButton);
+      firePointerMove(docListeners, 140, 0);
+      firePointerUp(docListeners, 140, 0);
+    });
+
+    expect(onSwipeComplete).not.toHaveBeenCalled();
+    expect(swipeEl.el.style.transform).toBe("");
+  });
+
+  it("allows swipe from data-allow-swipe targets", () => {
+    const onSwipeComplete = vi.fn();
+    renderSwipeHook({ onSwipeComplete });
+    const button = createTarget("button", { "data-allow-swipe": "true" });
+
+    act(() => {
+      firePointerDown(container.listeners, 200, 0, 1, "touch", button);
+      firePointerMove(docListeners, 140, 0);
+      firePointerUp(docListeners, 140, 0);
+    });
+
+    expect(swipeEl.el.style.transform).toBe("translateX(-375px)");
+  });
+
+  it("supports touch fallback swipe flow", () => {
+    renderSwipeHook();
+
+    act(() => {
+      fireTouchStart(container.listeners, 200);
+      fireTouchMove(docListeners, 150);
+      fireTouchEnd(docListeners, 150);
+    });
+
+    expect(swipeEl.el.style.transform).toBe("translateX(-375px)");
+  });
+
+  it("does not start touch fallback swipe from interactive targets", () => {
+    const onSwipeComplete = vi.fn();
+    renderSwipeHook({ onSwipeComplete });
+    const input = createTarget("input");
+
+    act(() => {
+      fireTouchStart(container.listeners, 200, 0, input);
+      fireTouchMove(docListeners, 140, 0);
+      fireTouchEnd(docListeners, 140, 0);
+    });
+
+    expect(onSwipeComplete).not.toHaveBeenCalled();
+    expect(swipeEl.el.style.transform).toBe("");
+  });
+
+  it("resets swipe on touchcancel", () => {
+    renderSwipeHook();
+
+    act(() => {
+      fireTouchStart(container.listeners, 200);
+      fireTouchMove(docListeners, 170);
+      fireTouchCancel(docListeners);
+    });
+
+    expect(swipeEl.el.style.transform).toBe("");
+    expect(swipeEl.el.style.transition).toBe("");
+  });
+
   it("resets swipe on pointercancel", () => {
     renderSwipeHook();
 
@@ -328,8 +488,14 @@ describe("useSwipeTab", () => {
     const pointerCancelRemoved = removeSpy.mock.calls.find(
       (c: unknown[]) => c[0] === "pointercancel",
     );
+    const touchMoveRemoved = removeSpy.mock.calls.find((c: unknown[]) => c[0] === "touchmove");
+    const touchEndRemoved = removeSpy.mock.calls.find((c: unknown[]) => c[0] === "touchend");
+    const touchCancelRemoved = removeSpy.mock.calls.find((c: unknown[]) => c[0] === "touchcancel");
     expect(pointerMoveRemoved).toBeDefined();
     expect(pointerUpRemoved).toBeDefined();
     expect(pointerCancelRemoved).toBeDefined();
+    expect(touchMoveRemoved).toBeDefined();
+    expect(touchEndRemoved).toBeDefined();
+    expect(touchCancelRemoved).toBeDefined();
   });
 });

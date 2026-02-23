@@ -2,15 +2,34 @@ import { type RefObject, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 const SWIPE_THRESHOLD = 50;
-const LOCK_THRESHOLD = 15;
-const HORIZONTAL_BIAS = 1.5;
+const LOCK_THRESHOLD = 18;
+const HORIZONTAL_BIAS = 1.8;
 const VELOCITY_THRESHOLD = 0.3;
 const SNAP_DURATION = 250;
+const SWIPE_IGNORE_SELECTOR = [
+  "input",
+  "textarea",
+  "select",
+  "button",
+  "a[href]",
+  "[role='button']",
+  "[role='link']",
+  "[role='combobox']",
+  "[role='menuitem']",
+  "[contenteditable='true']",
+  "[data-swipe-ignore='true']",
+].join(", ");
 
 export type SwipeState = {
   adjacent: "prev" | "next" | null;
   isAnimating: boolean;
 };
+
+function shouldIgnoreSwipeStart(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false;
+  if (target.closest("[data-allow-swipe='true']")) return false;
+  return target.closest(SWIPE_IGNORE_SELECTOR) !== null;
+}
 
 /**
  * Native-like finger-following swipe between tabs.
@@ -18,8 +37,10 @@ export type SwipeState = {
  * Applies translateX directly to swipeRef for 60fps tracking,
  * only uses React state for adjacent tab mount/unmount and animation flag.
  *
- * Pointer events are used so swipe still works inside
+ * Pointer events are used as the primary path so swipe still works inside
  * interactive controls that manipulate pointer capture (e.g. Radix Select).
+ * Touch events are kept as a fallback for environments where pointer events
+ * can be inconsistent.
  */
 export function useSwipeTab(
   containerRef: RefObject<HTMLElement | null>,
@@ -52,6 +73,7 @@ export function useSwipeTab(
     let adjacentSet: "prev" | "next" | null = null;
     let animating = false;
     let tracking = false;
+    let trackingSource: "pointer" | "touch" | null = null;
     let activePointerId: number | null = null;
 
     function resetSwipe() {
@@ -59,6 +81,7 @@ export function useSwipeTab(
       adjacentSet = null;
       animating = false;
       tracking = false;
+      trackingSource = null;
       activePointerId = null;
       swipe.style.transform = "";
       swipe.style.transition = "";
@@ -89,6 +112,7 @@ export function useSwipeTab(
         adjacentSet = null;
         animating = false;
         tracking = false;
+        trackingSource = null;
         activePointerId = null;
         swipe.style.transform = "";
         swipe.style.transition = "";
@@ -97,14 +121,14 @@ export function useSwipeTab(
       }
     }
 
-    function startSwipe(clientX: number, clientY: number, pointerId: number) {
+    function startSwipe(clientX: number, clientY: number, source: "pointer" | "touch") {
       if (animating) return;
       startX = clientX;
       startY = clientY;
       startTime = Date.now();
       axis = "pending";
       tracking = true;
-      activePointerId = pointerId;
+      trackingSource = source;
       containerWidth = container.offsetWidth;
     }
 
@@ -149,6 +173,7 @@ export function useSwipeTab(
 
     function endSwipe(clientX: number) {
       if (!tracking) return;
+      trackingSource = null;
       activePointerId = null;
       if (animating || axis !== "horizontal") {
         if (axis === "pending") resetSwipe();
@@ -191,22 +216,52 @@ export function useSwipeTab(
 
     function handlePointerDown(e: PointerEvent) {
       if (e.pointerType !== "touch") return;
+      if (shouldIgnoreSwipeStart(e.target)) return;
+      if (trackingSource && trackingSource !== "pointer") return;
       if (activePointerId !== null) return;
-      startSwipe(e.clientX, e.clientY, e.pointerId);
+      activePointerId = e.pointerId;
+      startSwipe(e.clientX, e.clientY, "pointer");
     }
 
     function handlePointerMove(e: PointerEvent) {
-      if (activePointerId !== e.pointerId) return;
+      if (trackingSource !== "pointer" || activePointerId !== e.pointerId) return;
       moveSwipe(e.clientX, e.clientY);
     }
 
     function handlePointerUp(e: PointerEvent) {
-      if (activePointerId !== e.pointerId) return;
+      if (trackingSource !== "pointer" || activePointerId !== e.pointerId) return;
       endSwipe(e.clientX);
     }
 
     function handlePointerCancel(e: PointerEvent) {
-      if (activePointerId !== e.pointerId) return;
+      if (trackingSource !== "pointer" || activePointerId !== e.pointerId) return;
+      resetSwipe();
+    }
+
+    function handleTouchStart(e: TouchEvent) {
+      if (shouldIgnoreSwipeStart(e.target)) return;
+      if (trackingSource === "pointer") return;
+      const point = e.touches[0];
+      if (!point) return;
+      startSwipe(point.clientX, point.clientY, "touch");
+    }
+
+    function handleTouchMove(e: TouchEvent) {
+      if (trackingSource !== "touch") return;
+      const point = e.touches[0];
+      if (!point) return;
+      moveSwipe(point.clientX, point.clientY);
+    }
+
+    function handleTouchEnd(e: TouchEvent) {
+      if (trackingSource !== "touch") return;
+      const point = e.changedTouches[0];
+      if (!point) return;
+      endSwipe(point.clientX);
+    }
+
+    function handleTouchCancel() {
+      if (trackingSource !== "touch") return;
       resetSwipe();
     }
 
@@ -219,12 +274,21 @@ export function useSwipeTab(
     document.addEventListener("pointermove", handlePointerMove, { passive: true });
     document.addEventListener("pointerup", handlePointerUp, { passive: true });
     document.addEventListener("pointercancel", handlePointerCancel, { passive: true });
+    // Touch fallback path for environments where pointer events can be flaky.
+    container.addEventListener("touchstart", handleTouchStart, { passive: true, capture: true });
+    document.addEventListener("touchmove", handleTouchMove, { passive: true });
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
+    document.addEventListener("touchcancel", handleTouchCancel, { passive: true });
 
     return () => {
       container.removeEventListener("pointerdown", handlePointerDown, true);
       document.removeEventListener("pointermove", handlePointerMove);
       document.removeEventListener("pointerup", handlePointerUp);
       document.removeEventListener("pointercancel", handlePointerCancel);
+      container.removeEventListener("touchstart", handleTouchStart, true);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
+      document.removeEventListener("touchcancel", handleTouchCancel);
       swipe.style.transform = "";
       swipe.style.transition = "";
     };

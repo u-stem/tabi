@@ -18,7 +18,8 @@ export function TripHeader({
   canEdit,
   onMutate,
   onEditOpen,
-  onBookmarks,
+  onOpenBookmarks,
+  onOpenActivity,
 }: {
   trip: TripResponse;
   tripId: string;
@@ -28,7 +29,8 @@ export function TripHeader({
   canEdit: boolean;
   onMutate: () => Promise<void>;
   onEditOpen: () => void;
-  onBookmarks?: () => void;
+  onOpenBookmarks?: () => void;
+  onOpenActivity?: () => void;
 }) {
   const tripActionsProps = {
     tripId,
@@ -39,7 +41,8 @@ export function TripHeader({
     onEdit: canEdit ? onEditOpen : undefined,
     disabled: !online,
     memberLimitReached: trip.memberCount >= MAX_MEMBERS_PER_TRIP,
-    onBookmarks,
+    onOpenBookmarks,
+    onOpenActivity,
   } as const;
 
   return (

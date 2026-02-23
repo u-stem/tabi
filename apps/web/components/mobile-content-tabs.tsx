@@ -14,7 +14,6 @@ interface MobileContentTabsProps {
   activeTab: MobileContentTab;
   onTabChange: (tab: MobileContentTab, source?: "tap") => void;
   candidateCount: number;
-  showBookmarks?: boolean;
 }
 
 const BASE_TABS: { id: MobileContentTab; label: string }[] = [
@@ -24,27 +23,20 @@ const BASE_TABS: { id: MobileContentTab; label: string }[] = [
   { id: "chat", label: "作戦会議" },
 ];
 
-const EXTRA_TABS: { id: MobileContentTab; label: string }[] = [
-  { id: "bookmarks", label: "ブックマーク" },
-  { id: "activity", label: "履歴" },
-];
-
-export function getMobileTabIds(showBookmarks?: boolean): MobileContentTab[] {
-  const tabs = showBookmarks ? [...BASE_TABS, ...EXTRA_TABS] : BASE_TABS;
-  return tabs.map((t) => t.id);
+export function getMobileTabIds(): MobileContentTab[] {
+  return BASE_TABS.map((t) => t.id);
 }
 
 export function MobileContentTabs({
   activeTab,
   onTabChange,
   candidateCount,
-  showBookmarks,
 }: MobileContentTabsProps) {
-  const tabs = showBookmarks ? [...BASE_TABS, ...EXTRA_TABS] : BASE_TABS;
+  const tabs = BASE_TABS;
 
   return (
     <div
-      className="my-2 flex shrink-0 gap-1 overflow-x-auto rounded-lg bg-muted p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="my-2 grid shrink-0 grid-cols-4 gap-1 rounded-lg bg-muted p-1"
       role="tablist"
     >
       {tabs.map((tab) => (
@@ -54,17 +46,19 @@ export function MobileContentTabs({
           role="tab"
           aria-selected={activeTab === tab.id}
           className={cn(
-            "flex-none rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-[colors,transform] min-h-[36px] active:scale-[0.97]",
+            "min-w-0 rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] min-h-[36px] active:scale-[0.97] overflow-hidden",
             activeTab === tab.id
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground",
           )}
           onClick={() => onTabChange(tab.id, "tap")}
         >
-          {tab.label}
-          {tab.id === "candidates" && candidateCount > 0 && (
-            <span className="ml-1 text-xs">{candidateCount}</span>
-          )}
+          <span className="flex w-full items-center justify-center gap-1 whitespace-nowrap">
+            <span className="truncate">{tab.label}</span>
+            {tab.id === "candidates" && candidateCount > 0 && (
+              <span className="shrink-0 text-xs">{candidateCount}</span>
+            )}
+          </span>
         </button>
       ))}
     </div>

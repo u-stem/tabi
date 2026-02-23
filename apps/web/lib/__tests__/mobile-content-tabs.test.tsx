@@ -26,7 +26,7 @@ describe("MobileContentTabs", () => {
     const onChange = vi.fn();
     render(<MobileContentTabs activeTab="schedule" onTabChange={onChange} candidateCount={0} />);
     fireEvent.click(screen.getByRole("tab", { name: "費用" }));
-    expect(onChange).toHaveBeenCalledWith("expenses");
+    expect(onChange).toHaveBeenCalledWith("expenses", "tap");
   });
 
   it("shows candidate count badge when count is positive", () => {

@@ -142,11 +142,12 @@ export default function TripDetailPage() {
   // value without re-registration on every tab change.
   const mobileTabRef = useRef<MobileContentTab>("schedule");
   const [chatAreaTop, setChatAreaTop] = useState(0);
-  const swipeDirectionRef = useRef<"left" | "right" | null>(null);
   const prevDayRef = useRef(0);
   const gPressedRef = useRef(false);
   const scrollPositions = useRef<Record<string, number>>({});
   const mobileContentRef = useRef<HTMLDivElement>(null);
+  const swipeContainerRef = useRef<HTMLDivElement>(null);
+  const tapTransitionRef = useRef(false);
   const [rightPanelTab, setRightPanelTab] = useState<
     "candidates" | "activity" | "bookmarks" | "expenses" | "chat"
   >("candidates");
@@ -482,10 +483,11 @@ export default function TripDetailPage() {
     [tripId, saveToBookmarkIds, queryClient],
   );
 
-  const handleMobileTabChange = useCallback((tab: MobileContentTab) => {
+  const handleMobileTabChange = useCallback((tab: MobileContentTab, source?: "tap") => {
     if (mobileContentRef.current) {
       scrollPositions.current[mobileTabRef.current] = mobileContentRef.current.scrollTop;
     }
+    tapTransitionRef.current = source === "tap";
     mobileTabRef.current = tab;
     setMobileTab(tab);
     requestAnimationFrame(() => {
@@ -500,12 +502,19 @@ export default function TripDetailPage() {
       if (idx === -1) return;
       const next = direction === "left" ? idx + 1 : idx - 1;
       if (next < 0 || next >= tabIds.length) return;
-      swipeDirectionRef.current = direction;
       handleMobileTabChange(tabIds[next]);
     },
     [session, handleMobileTabChange],
   );
-  useSwipeTab(mobileContentRef, handleSwipe, !!trip);
+
+  const tabIds = useMemo(() => getMobileTabIds(!isGuestUser(session)), [session]);
+  const currentTabIdx = tabIds.indexOf(mobileTab);
+  const swipe = useSwipeTab(mobileContentRef, swipeContainerRef, {
+    onSwipeComplete: handleSwipe,
+    enabled: !!trip,
+    canSwipePrev: currentTabIdx > 0,
+    canSwipeNext: currentTabIdx < tabIds.length - 1,
+  });
 
   useEffect(() => {
     if (trip) {
@@ -737,6 +746,161 @@ export default function TripDetailPage() {
   const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
   const selectionValue = { ...selection, canEnter: canEdit && online };
 
+  const isActivelySwiping = swipe.adjacent !== null || swipe.isAnimating;
+  const adjacentTabId = swipe.adjacent
+    ? tabIds[currentTabIdx + (swipe.adjacent === "next" ? 1 : -1)] ?? null
+    : null;
+
+  // Capture narrowed trip for use in renderTabContent closure
+  // (TypeScript loses narrowing in nested functions)
+  const tripData = trip;
+
+  function renderTabContent(tabId: MobileContentTab) {
+    switch (tabId) {
+      case "schedule":
+        return (
+          <div className="flex min-w-0 flex-col rounded-lg border bg-card">
+            <DayTabs
+              days={tripData.days}
+              selectedDay={selectedDay}
+              onSelectDay={setSelectedDay}
+              otherPresence={otherPresence}
+              hasPoll={!!tripData.poll}
+            />
+            {selectedDay === -1 && tripData.poll ? (
+              <div>
+                <PollTab
+                  pollId={tripData.poll.id}
+                  isOwner={isOwnerRole(tripData.role)}
+                  canEdit={canEdit}
+                  onMutate={onMutate}
+                  onConfirmed={() => setSelectedDay(0)}
+                />
+              </div>
+            ) : currentDay && currentPattern ? (
+              <div id={`mobile-day-panel-${currentDay.id}`} role="tabpanel" className="p-4">
+                <DayMemoEditor
+                  memo={memo}
+                  currentDayId={currentDay.id}
+                  currentDayMemo={currentDay.memo}
+                  canEdit={canEdit}
+                  online={online}
+                />
+                <DayTimeline
+                  key={currentPattern.id}
+                  tripId={tripId}
+                  dayId={currentDay.id}
+                  patternId={currentPattern.id}
+                  date={currentDay.date}
+                  schedules={dnd.localSchedules}
+                  onRefresh={onMutate}
+                  disabled={!online || !canEdit}
+                  addScheduleOpen={addScheduleOpen}
+                  onAddScheduleOpenChange={setAddScheduleOpen}
+                  maxEndDayOffset={Math.max(1, tripData.days.length - 1 - selectedDay)}
+                  totalDays={tripData.days.length}
+                  crossDayEntries={getCrossDayEntries(tripData.days, currentDay.dayNumber)}
+                  overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
+                  scheduleLimitReached={scheduleLimitReached}
+                  scheduleLimitMessage={scheduleLimitMessage}
+                  onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                  onReorderSchedule={dnd.reorderSchedule}
+                  headerContent={
+                    <PatternTabs
+                      patterns={currentDay.patterns}
+                      currentDayId={currentDay.id}
+                      currentPatternIndex={currentPatternIndex}
+                      canEdit={canEdit}
+                      online={online}
+                      patternOps={patternOps}
+                      onSelectPattern={(dayId, index) =>
+                        setSelectedPattern((prev) => ({ ...prev, [dayId]: index }))
+                      }
+                    />
+                  }
+                />
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {MSG.SCHEDULING_STATUS_DESCRIPTION}
+                </p>
+              </div>
+            )}
+          </div>
+        );
+      case "candidates":
+        return currentDay && currentPattern ? (
+          <div className="rounded-lg border bg-card p-4">
+            <CandidatePanel
+              tripId={tripId}
+              candidates={dnd.localCandidates}
+              currentDayId={currentDay.id}
+              currentPatternId={currentPattern.id}
+              onRefresh={onMutate}
+              disabled={!online || !canEdit}
+              draggable={false}
+              scheduleLimitReached={scheduleLimitReached}
+              scheduleLimitMessage={scheduleLimitMessage}
+              maxEndDayOffset={Math.max(0, tripData.days.length - 1)}
+              onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+              onReorderCandidate={dnd.reorderCandidate}
+            />
+          </div>
+        ) : (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            {tripData.days.length > 0
+              ? "日タブを選択すると候補を追加できます"
+              : "日程が確定すると候補を追加できます"}
+          </p>
+        );
+      case "expenses":
+        return tripData.days.length > 0 ? (
+          <div className="rounded-lg border bg-card p-4">
+            <ExpensePanel
+              tripId={tripId}
+              canEdit={canEdit}
+              addOpen={addExpenseOpen}
+              onAddOpenChange={setAddExpenseOpen}
+            />
+          </div>
+        ) : (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            日程が確定すると費用を記録できます
+          </p>
+        );
+      case "chat":
+        return (
+          <ChatPanel
+            tripId={tripId}
+            canEdit={canEdit}
+            mobile
+            onBroadcastMessage={broadcastChatMessage}
+            onBroadcastEdit={broadcastChatMessageEdit}
+            onBroadcastDelete={broadcastChatMessageDelete}
+            onBroadcastSession={handleBroadcastChatSession}
+          />
+        );
+      case "bookmarks":
+        return tripData.days.length > 0 ? (
+          <div className="rounded-lg border bg-card p-4">
+            <BookmarkPanel
+              tripId={tripId}
+              disabled={!online || !canEdit}
+              onCandidateAdded={onMutate}
+            />
+          </div>
+        ) : (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            日程が確定するとブックマークを利用できます
+          </p>
+        );
+      case "activity":
+        return <ActivityLog tripId={tripId} />;
+    }
+  }
+
   return (
     <SelectionProvider value={selectionValue}>
       <div className="mt-4">
@@ -781,7 +945,7 @@ export default function TripDetailPage() {
             <div
               ref={mobileContentRef}
               className={
-                mobileTab === "chat"
+                isActivelySwiping || mobileTab === "chat"
                   ? "min-h-0 overflow-hidden"
                   : "min-h-0 overflow-y-auto overscroll-contain pb-20"
               }
@@ -794,157 +958,29 @@ export default function TripDetailPage() {
               }
             >
               <div
-                key={mobileTab}
-                ref={(el) => {
-                  // Reset after the animation class is applied via the key remount
-                  if (el) swipeDirectionRef.current = null;
-                }}
-                className={
-                  swipeDirectionRef.current === "left"
-                    ? "animate-[tab-slide-left_200ms_ease-out]"
-                    : swipeDirectionRef.current === "right"
-                      ? "animate-[tab-slide-right_200ms_ease-out]"
-                      : "animate-[tab-fade-in_150ms_ease-out]"
-                }
+                ref={swipeContainerRef}
+                className="relative"
+                style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
               >
-                {mobileTab === "schedule" && (
-                  <div className="flex min-w-0 flex-col rounded-lg border bg-card">
-                    <DayTabs
-                      days={trip.days}
-                      selectedDay={selectedDay}
-                      onSelectDay={setSelectedDay}
-                      otherPresence={otherPresence}
-                      hasPoll={!!trip.poll}
-                    />
-                    {selectedDay === -1 && trip.poll ? (
-                      <div>
-                        <PollTab
-                          pollId={trip.poll.id}
-                          isOwner={isOwnerRole(trip.role)}
-                          canEdit={canEdit}
-                          onMutate={onMutate}
-                          onConfirmed={() => setSelectedDay(0)}
-                        />
-                      </div>
-                    ) : currentDay && currentPattern ? (
-                      <div id={`mobile-day-panel-${currentDay.id}`} role="tabpanel" className="p-4">
-                        <DayMemoEditor
-                          memo={memo}
-                          currentDayId={currentDay.id}
-                          currentDayMemo={currentDay.memo}
-                          canEdit={canEdit}
-                          online={online}
-                        />
-                        <DayTimeline
-                          key={currentPattern.id}
-                          tripId={tripId}
-                          dayId={currentDay.id}
-                          patternId={currentPattern.id}
-                          date={currentDay.date}
-                          schedules={dnd.localSchedules}
-                          onRefresh={onMutate}
-                          disabled={!online || !canEdit}
-                          addScheduleOpen={addScheduleOpen}
-                          onAddScheduleOpenChange={setAddScheduleOpen}
-                          maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
-                          totalDays={trip.days.length}
-                          crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
-                          overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
-                          scheduleLimitReached={scheduleLimitReached}
-                          scheduleLimitMessage={scheduleLimitMessage}
-                          onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
-                          onReorderSchedule={dnd.reorderSchedule}
-                          headerContent={
-                            <PatternTabs
-                              patterns={currentDay.patterns}
-                              currentDayId={currentDay.id}
-                              currentPatternIndex={currentPatternIndex}
-                              canEdit={canEdit}
-                              online={online}
-                              patternOps={patternOps}
-                              onSelectPattern={(dayId, index) =>
-                                setSelectedPattern((prev) => ({ ...prev, [dayId]: index }))
-                              }
-                            />
-                          }
-                        />
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {MSG.SCHEDULING_STATUS_DESCRIPTION}
-                        </p>
-                      </div>
-                    )}
+                {/* Current tab */}
+                <div
+                  className={tapTransitionRef.current ? "animate-[tab-fade-in_150ms_ease-out]" : undefined}
+                  ref={() => { tapTransitionRef.current = false; }}
+                >
+                  {renderTabContent(mobileTab)}
+                </div>
+
+                {/* Adjacent tab (rendered only during swipe) */}
+                {swipe.adjacent && adjacentTabId && (
+                  <div
+                    className="absolute top-0 left-0 w-full"
+                    style={{
+                      transform: swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                    }}
+                  >
+                    {renderTabContent(adjacentTabId)}
                   </div>
                 )}
-                {mobileTab === "candidates" &&
-                  (currentDay && currentPattern ? (
-                    <div className="rounded-lg border bg-card p-4">
-                      <CandidatePanel
-                        tripId={tripId}
-                        candidates={dnd.localCandidates}
-                        currentDayId={currentDay.id}
-                        currentPatternId={currentPattern.id}
-                        onRefresh={onMutate}
-                        disabled={!online || !canEdit}
-                        draggable={false}
-                        scheduleLimitReached={scheduleLimitReached}
-                        scheduleLimitMessage={scheduleLimitMessage}
-                        maxEndDayOffset={Math.max(0, trip.days.length - 1)}
-                        onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
-                        onReorderCandidate={dnd.reorderCandidate}
-                      />
-                    </div>
-                  ) : (
-                    <p className="py-8 text-center text-sm text-muted-foreground">
-                      {trip.days.length > 0
-                        ? "日タブを選択すると候補を追加できます"
-                        : "日程が確定すると候補を追加できます"}
-                    </p>
-                  ))}
-                {mobileTab === "expenses" &&
-                  (trip.days.length > 0 ? (
-                    <div className="rounded-lg border bg-card p-4">
-                      <ExpensePanel
-                        tripId={tripId}
-                        canEdit={canEdit}
-                        addOpen={addExpenseOpen}
-                        onAddOpenChange={setAddExpenseOpen}
-                      />
-                    </div>
-                  ) : (
-                    <p className="py-8 text-center text-sm text-muted-foreground">
-                      日程が確定すると費用を記録できます
-                    </p>
-                  ))}
-                {mobileTab === "chat" && (
-                  <ChatPanel
-                    tripId={tripId}
-                    canEdit={canEdit}
-                    mobile
-                    onBroadcastMessage={broadcastChatMessage}
-                    onBroadcastEdit={broadcastChatMessageEdit}
-                    onBroadcastDelete={broadcastChatMessageDelete}
-                    onBroadcastSession={handleBroadcastChatSession}
-                  />
-                )}
-                {mobileTab === "bookmarks" &&
-                  (trip.days.length > 0 ? (
-                    <div className="rounded-lg border bg-card p-4">
-                      <BookmarkPanel
-                        tripId={tripId}
-                        disabled={!online || !canEdit}
-                        onCandidateAdded={onMutate}
-                      />
-                    </div>
-                  ) : (
-                    <p className="py-8 text-center text-sm text-muted-foreground">
-                      日程が確定するとブックマークを利用できます
-                    </p>
-                  ))}
-                {mobileTab === "activity" && <ActivityLog tripId={tripId} />}
               </div>
             </div>
           </div>

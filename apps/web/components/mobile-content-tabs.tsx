@@ -12,7 +12,7 @@ export type MobileContentTab =
 
 interface MobileContentTabsProps {
   activeTab: MobileContentTab;
-  onTabChange: (tab: MobileContentTab) => void;
+  onTabChange: (tab: MobileContentTab, source?: "tap") => void;
   candidateCount: number;
   showBookmarks?: boolean;
 }
@@ -59,7 +59,7 @@ export function MobileContentTabs({
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground",
           )}
-          onClick={() => onTabChange(tab.id)}
+          onClick={() => onTabChange(tab.id, "tap")}
         >
           {tab.label}
           {tab.id === "candidates" && candidateCount > 0 && (

@@ -1,4 +1,5 @@
 import { type RefObject, useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 const SWIPE_THRESHOLD = 50;
 const LOCK_THRESHOLD = 15;
@@ -16,7 +17,10 @@ export type SwipeState = {
  *
  * Applies translateX directly to swipeRef for 60fps tracking,
  * only uses React state for adjacent tab mount/unmount and animation flag.
- * All listeners use capture phase to intercept before Radix UI components.
+ *
+ * touchstart uses capture on container to intercept before Radix UI.
+ * touchmove/touchend listen on document to avoid Radix Select's
+ * releasePointerCapture breaking the touch event chain.
  */
 export function useSwipeTab(
   containerRef: RefObject<HTMLElement | null>,
@@ -46,11 +50,13 @@ export function useSwipeTab(
     let containerWidth = 0;
     let adjacentSet: "prev" | "next" | null = null;
     let animating = false;
+    let tracking = false;
 
     function resetSwipe() {
       axis = "pending";
       adjacentSet = null;
       animating = false;
+      tracking = false;
       swipeEl!.style.transform = "";
       swipeEl!.style.transition = "";
       setAdjacent(null);
@@ -62,7 +68,6 @@ export function useSwipeTab(
       if (!animating) return;
 
       const opts = optionsRef.current;
-      // Determine if this was a complete swipe (moved to full width) or spring-back
       const currentTransform = swipeEl!.style.transform;
       const isFullSlide =
         currentTransform.includes(`${containerWidth}`) ||
@@ -70,8 +75,19 @@ export function useSwipeTab(
 
       if (isFullSlide) {
         const direction = currentTransform.includes("-") ? "left" : "right";
-        resetSwipe();
-        opts.onSwipeComplete(direction);
+        // Flush React state synchronously so the new tab content renders
+        // BEFORE we clear the transform — prevents one-frame flicker
+        flushSync(() => {
+          setAdjacent(null);
+          setIsAnimating(false);
+          opts.onSwipeComplete(direction);
+        });
+        axis = "pending";
+        adjacentSet = null;
+        animating = false;
+        tracking = false;
+        swipeEl!.style.transform = "";
+        swipeEl!.style.transition = "";
       } else {
         resetSwipe();
       }
@@ -83,11 +99,12 @@ export function useSwipeTab(
       startY = e.touches[0].clientY;
       startTime = Date.now();
       axis = "pending";
+      tracking = true;
       containerWidth = container!.offsetWidth;
     }
 
     function handleTouchMove(e: TouchEvent) {
-      if (animating || axis === "vertical") return;
+      if (!tracking || animating || axis === "vertical") return;
 
       const currentX = e.touches[0].clientX;
       const currentY = e.touches[0].clientY;
@@ -129,6 +146,7 @@ export function useSwipeTab(
     }
 
     function handleTouchEnd(e: TouchEvent) {
+      if (!tracking) return;
       if (animating || axis !== "horizontal") {
         if (axis === "pending") resetSwipe();
         return;
@@ -168,15 +186,16 @@ export function useSwipeTab(
       }
     }
 
-    const listenerOptions = { passive: true, capture: true } as const;
-    container.addEventListener("touchstart", handleTouchStart, listenerOptions);
-    container.addEventListener("touchmove", handleTouchMove, listenerOptions);
-    container.addEventListener("touchend", handleTouchEnd, listenerOptions);
+    // touchstart on container with capture to intercept before Radix UI
+    container.addEventListener("touchstart", handleTouchStart, { passive: true, capture: true });
+    // touchmove/touchend on document to survive Radix Select's releasePointerCapture
+    document.addEventListener("touchmove", handleTouchMove, { passive: true });
+    document.addEventListener("touchend", handleTouchEnd, { passive: true });
 
     return () => {
       container.removeEventListener("touchstart", handleTouchStart, true);
-      container.removeEventListener("touchmove", handleTouchMove, true);
-      container.removeEventListener("touchend", handleTouchEnd, true);
+      document.removeEventListener("touchmove", handleTouchMove);
+      document.removeEventListener("touchend", handleTouchEnd);
       swipeEl.style.transform = "";
       swipeEl.style.transition = "";
     };

@@ -1,5 +1,5 @@
 import { act, renderHook } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useSwipeTab } from "../hooks/use-swipe-tab";
 
 function createMockElement(width = 375) {
@@ -39,11 +39,26 @@ function fireTouchEnd(listeners: Record<string, EventListener>, x: number, y = 0
 describe("useSwipeTab", () => {
   let container: ReturnType<typeof createMockElement>;
   let swipeEl: ReturnType<typeof createMockElement>;
+  let docListeners: Record<string, EventListener>;
+  let addSpy: MockInstance;
+  let removeSpy: MockInstance;
 
   beforeEach(() => {
     container = createMockElement();
     swipeEl = createMockElement();
+    docListeners = {};
     vi.useFakeTimers();
+
+    addSpy = vi.spyOn(document, "addEventListener").mockImplementation(
+      (event: string, handler: EventListenerOrEventListenerObject, _opts?: unknown) => {
+        docListeners[event] = handler as EventListener;
+      },
+    );
+    removeSpy = vi.spyOn(document, "removeEventListener").mockImplementation(
+      (event: string, _handler: EventListenerOrEventListenerObject, _opts?: unknown) => {
+        delete docListeners[event];
+      },
+    );
   });
 
   afterEach(() => {
@@ -74,7 +89,7 @@ describe("useSwipeTab", () => {
     );
   }
 
-  it("registers listeners with capture: true", () => {
+  it("registers touchstart on container with capture: true", () => {
     renderSwipeHook();
 
     const calls = container.el.addEventListener as ReturnType<typeof vi.fn>;
@@ -83,24 +98,34 @@ describe("useSwipeTab", () => {
     expect(touchStartCall![2]).toEqual({ passive: true, capture: true });
   });
 
+  it("registers touchmove and touchend on document", () => {
+    renderSwipeHook();
+
+    const moveCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "touchmove");
+    const endCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "touchend");
+    expect(moveCall).toBeDefined();
+    expect(endCall).toBeDefined();
+    expect(moveCall![2]).toEqual({ passive: true });
+    expect(endCall![2]).toEqual({ passive: true });
+  });
+
   it("does not register listeners when disabled", () => {
     renderSwipeHook({ enabled: false });
 
     const calls = container.el.addEventListener as ReturnType<typeof vi.fn>;
     expect(calls).not.toHaveBeenCalled();
+    const moveCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "touchmove");
+    expect(moveCall).toBeUndefined();
   });
 
   it("locks axis as horizontal when dx exceeds dy * bias", () => {
-    const onSwipeComplete = vi.fn();
-    renderSwipeHook({ onSwipeComplete });
+    renderSwipeHook();
 
     act(() => {
       fireTouchStart(container.listeners, 200);
-      // Move horizontally past lock threshold
-      fireTouchMove(container.listeners, 170, 0);
+      fireTouchMove(docListeners, 170, 0);
     });
 
-    // swipeEl should have transform applied
     expect(swipeEl.el.style.transform).toBe("translateX(-30px)");
   });
 
@@ -110,12 +135,10 @@ describe("useSwipeTab", () => {
 
     act(() => {
       fireTouchStart(container.listeners, 200, 0);
-      // Move vertically past lock threshold
-      fireTouchMove(container.listeners, 200, 30);
-      fireTouchEnd(container.listeners, 100, 30);
+      fireTouchMove(docListeners, 200, 30);
+      fireTouchEnd(docListeners, 100, 30);
     });
 
-    // No transform should be applied for vertical swipe
     expect(onSwipeComplete).not.toHaveBeenCalled();
   });
 
@@ -124,7 +147,7 @@ describe("useSwipeTab", () => {
 
     act(() => {
       fireTouchStart(container.listeners, 200);
-      fireTouchMove(container.listeners, 170, 0);
+      fireTouchMove(docListeners, 170, 0);
     });
 
     expect(result.current.adjacent).toBe("next");
@@ -135,7 +158,7 @@ describe("useSwipeTab", () => {
 
     act(() => {
       fireTouchStart(container.listeners, 100);
-      fireTouchMove(container.listeners, 130, 0);
+      fireTouchMove(docListeners, 130, 0);
     });
 
     expect(result.current.adjacent).toBe("prev");
@@ -146,7 +169,7 @@ describe("useSwipeTab", () => {
 
     act(() => {
       fireTouchStart(container.listeners, 200);
-      fireTouchMove(container.listeners, 140, 0);
+      fireTouchMove(docListeners, 140, 0);
     });
 
     // dx=-60, rubber-band: -60/3 = -20
@@ -158,7 +181,7 @@ describe("useSwipeTab", () => {
 
     act(() => {
       fireTouchStart(container.listeners, 100);
-      fireTouchMove(container.listeners, 160, 0);
+      fireTouchMove(docListeners, 160, 0);
     });
 
     // dx=60, rubber-band: 60/3 = 20
@@ -166,16 +189,14 @@ describe("useSwipeTab", () => {
   });
 
   it("completes swipe when distance exceeds threshold", () => {
-    const onSwipeComplete = vi.fn();
-    renderSwipeHook({ onSwipeComplete });
+    renderSwipeHook();
 
     act(() => {
       fireTouchStart(container.listeners, 200);
-      fireTouchMove(container.listeners, 140, 0);
-      fireTouchEnd(container.listeners, 140, 0);
+      fireTouchMove(docListeners, 140, 0);
+      fireTouchEnd(docListeners, 140, 0);
     });
 
-    // Should set transition for snap animation
     expect(swipeEl.el.style.transition).toContain("transform");
     expect(swipeEl.el.style.transform).toBe("translateX(-375px)");
   });
@@ -185,20 +206,17 @@ describe("useSwipeTab", () => {
 
     act(() => {
       fireTouchStart(container.listeners, 200);
-      fireTouchMove(container.listeners, 185, 0);
-      fireTouchEnd(container.listeners, 185, 0);
+      fireTouchMove(docListeners, 185, 0);
+      fireTouchEnd(docListeners, 185, 0);
     });
 
-    // Should snap back to origin
     expect(swipeEl.el.style.transition).toContain("transform");
     expect(swipeEl.el.style.transform).toBe("translateX(0px)");
   });
 
   it("completes swipe on high velocity even with short distance", () => {
-    const onSwipeComplete = vi.fn();
-    renderSwipeHook({ onSwipeComplete });
+    renderSwipeHook();
 
-    // Mock Date.now for velocity calculation
     const now = Date.now();
     vi.spyOn(Date, "now")
       .mockReturnValueOnce(now) // touchstart
@@ -206,8 +224,8 @@ describe("useSwipeTab", () => {
 
     act(() => {
       fireTouchStart(container.listeners, 200);
-      fireTouchMove(container.listeners, 170, 0);
-      fireTouchEnd(container.listeners, 170, 0);
+      fireTouchMove(docListeners, 170, 0);
+      fireTouchEnd(docListeners, 170, 0);
     });
 
     expect(swipeEl.el.style.transform).toBe("translateX(-375px)");
@@ -218,11 +236,34 @@ describe("useSwipeTab", () => {
 
     act(() => {
       fireTouchStart(container.listeners, 200);
-      fireTouchMove(container.listeners, 100, 0);
-      fireTouchEnd(container.listeners, 100, 0);
+      fireTouchMove(docListeners, 100, 0);
+      fireTouchEnd(docListeners, 100, 0);
     });
 
-    // Should spring back (rubber-band), not snap to full width
     expect(swipeEl.el.style.transform).toBe("translateX(0px)");
+  });
+
+  it("ignores touchmove/touchend without prior touchstart on container", () => {
+    renderSwipeHook();
+
+    act(() => {
+      // No touchstart on container — fire move/end directly on document
+      fireTouchMove(docListeners, 170, 0);
+      fireTouchEnd(docListeners, 170, 0);
+    });
+
+    // No transform should be applied since tracking was never set
+    expect(swipeEl.el.style.transform).toBe("");
+  });
+
+  it("cleans up document listeners on unmount", () => {
+    const { unmount } = renderSwipeHook();
+
+    unmount();
+
+    const moveRemoved = removeSpy.mock.calls.find((c: unknown[]) => c[0] === "touchmove");
+    const endRemoved = removeSpy.mock.calls.find((c: unknown[]) => c[0] === "touchend");
+    expect(moveRemoved).toBeDefined();
+    expect(endRemoved).toBeDefined();
   });
 });

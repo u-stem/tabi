@@ -210,7 +210,7 @@ export function ChatPanel({
   const [actionSheetOpen, setActionSheetOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const menuAnchorRef = useRef<HTMLElement | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScroll = useRef(true);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -463,7 +463,10 @@ export function ChatPanel({
 
   useEffect(() => {
     if (shouldAutoScroll.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      const container = scrollContainerRef.current;
+      if (container) {
+        container.scrollTo({ top: container.scrollHeight, behavior: "smooth" });
+      }
     }
   }, [messages.length]);
 
@@ -626,7 +629,7 @@ export function ChatPanel({
                 </div>
               );
             })}
-            <div ref={messagesEndRef} />
+            <div />
           </div>
         )}
       </div>

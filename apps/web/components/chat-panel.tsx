@@ -278,9 +278,10 @@ export function ChatPanel({
         ref={scrollContainerRef}
         className={
           mobile
-            ? "flex min-h-24 flex-1 flex-col overflow-y-auto p-3"
+            ? "flex flex-col overflow-y-auto p-3"
             : "min-h-24 max-h-80 overflow-y-auto rounded-md border border-dashed p-3"
         }
+        style={mobile ? { minHeight: "calc(100dvh - 16rem)" } : undefined}
         onScroll={handleScroll}
       >
         {isActive && hasNextPage && (

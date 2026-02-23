@@ -60,7 +60,7 @@ export function RightPanel({
         onChange={setRightPanelTab}
         candidateCount={candidates.length}
       />
-      <div className="min-h-0 overflow-y-auto p-4">
+      <div className="min-h-0 overflow-y-auto overscroll-contain p-4">
         {rightPanelTab === "chat" ? (
           <ChatPanel
             tripId={tripId}

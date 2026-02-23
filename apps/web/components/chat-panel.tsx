@@ -278,8 +278,8 @@ export function ChatPanel({
         ref={scrollContainerRef}
         className={
           mobile
-            ? "flex flex-col overflow-y-auto p-3"
-            : "min-h-24 max-h-80 overflow-y-auto rounded-md border border-dashed p-3"
+            ? "flex flex-col overflow-y-auto overscroll-contain p-3"
+            : "min-h-24 max-h-80 overflow-y-auto overscroll-contain rounded-md border border-dashed p-3"
         }
         style={mobile ? { height: "calc(100dvh - 16rem)" } : undefined}
         onScroll={handleScroll}

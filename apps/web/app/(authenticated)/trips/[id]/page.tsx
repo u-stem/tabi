@@ -545,7 +545,10 @@ export default function TripDetailPage() {
               onTabChange={handleMobileTabChange}
               candidateCount={dnd.localCandidates.length}
             />
-            <div ref={mobileContentRef} className="min-h-0 overflow-y-auto pb-20">
+            <div
+              ref={mobileContentRef}
+              className="min-h-0 overflow-y-auto overscroll-contain pb-20"
+            >
               <div key={mobileTab} className="animate-[tab-fade-in_150ms_ease-out]">
                 {mobileTab === "schedule" && (
                   <div className="flex min-w-0 flex-col rounded-lg border bg-card">
@@ -684,7 +687,7 @@ export default function TripDetailPage() {
                 hasPoll={!!trip.poll}
               />
               {selectedDay === -1 && trip.poll ? (
-                <div className="min-h-0 overflow-y-auto">
+                <div className="min-h-0 overflow-y-auto overscroll-contain">
                   <PollTab
                     pollId={trip.poll.id}
                     isOwner={isOwnerRole(trip.role)}
@@ -698,7 +701,7 @@ export default function TripDetailPage() {
                   ref={timelinePanelRef}
                   id={`day-panel-${currentDay.id}`}
                   role="tabpanel"
-                  className="min-h-0 overflow-y-auto p-4"
+                  className="min-h-0 overflow-y-auto overscroll-contain p-4"
                 >
                   <DayMemoEditor
                     memo={memo}

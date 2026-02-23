@@ -3,20 +3,11 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { trips } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
+import { generateShareToken, shareExpiresAt } from "../lib/share-token";
 import { requireAuth } from "../middleware/auth";
 import { requireNonGuest } from "../middleware/require-non-guest";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
-
-const SHARE_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
-function generateShareToken() {
-  return crypto.randomUUID().replace(/-/g, "");
-}
-
-function shareExpiresAt() {
-  return new Date(Date.now() + SHARE_LINK_TTL_MS);
-}
 
 const shareRoutes = new Hono<AppEnv>();
 

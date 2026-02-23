@@ -23,6 +23,7 @@ import { formatShortDateRange, logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
 import { findPollAsEditor, findPollAsOwner, findPollAsParticipant } from "../lib/poll-access";
+import { generateShareToken, shareExpiresAt } from "../lib/share-token";
 import { createInitialTripDays } from "../lib/trip-days";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -209,7 +210,8 @@ pollRoutes.patch("/:pollId", async (c) => {
       where: eq(trips.id, poll.tripId),
       columns: { ownerId: true, title: true, destination: true },
     });
-    return c.json(formatPollResponse(poll, trip!));
+    if (!trip) return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
+    return c.json(formatPollResponse(poll, trip));
   }
 
   const [updated] = await db
@@ -222,8 +224,9 @@ pollRoutes.patch("/:pollId", async (c) => {
     where: eq(trips.id, updated.tripId),
     columns: { ownerId: true, title: true, destination: true },
   });
+  if (!trip) return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
 
-  return c.json(formatPollResponse(updated, trip!));
+  return c.json(formatPollResponse(updated, trip));
 });
 
 // Delete poll (owner only)
@@ -237,15 +240,16 @@ pollRoutes.delete("/:pollId", async (c) => {
   }
 
   await db.transaction(async (tx) => {
-    // Cascade delete trip if it's still in scheduling status
     const trip = await tx.query.trips.findFirst({
       where: eq(trips.id, poll.tripId),
       columns: { id: true, status: true },
     });
     if (trip?.status === "scheduling") {
+      // CASCADE deletes the poll
       await tx.delete(trips).where(eq(trips.id, trip.id));
+    } else {
+      await tx.delete(schedulePolls).where(eq(schedulePolls.id, pollId));
     }
-    await tx.delete(schedulePolls).where(eq(schedulePolls.id, pollId));
   });
 
   return c.json({ ok: true });
@@ -481,16 +485,6 @@ pollRoutes.put("/:pollId/responses", async (c) => {
   return c.json({ ok: true });
 });
 
-const SHARE_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
-
-function generateShareToken() {
-  return crypto.randomUUID().replace(/-/g, "");
-}
-
-function shareExpiresAt() {
-  return new Date(Date.now() + SHARE_LINK_TTL_MS);
-}
-
 // Generate or get share link (owner only)
 pollRoutes.post("/:pollId/share", async (c) => {
   const user = c.get("user");
@@ -660,8 +654,9 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
     where: eq(trips.id, tripId),
     columns: { ownerId: true, title: true, destination: true },
   });
+  if (!trip) return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
 
-  return c.json(formatPollResponse(result, trip!));
+  return c.json(formatPollResponse(result, trip));
 });
 
 export { pollRoutes };

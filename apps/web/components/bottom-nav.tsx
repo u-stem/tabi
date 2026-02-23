@@ -46,7 +46,7 @@ export function BottomNav() {
               <link.icon className="h-5 w-5" />
               <span className="sr-only">{link.label}</span>
               {link.href === "/friends" && friendRequestCount > 0 && (
-                <span className="absolute top-1.5 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-medium text-destructive-foreground">
+                <span className="absolute top-1.5 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
                   {friendRequestCount}
                 </span>
               )}

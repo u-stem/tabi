@@ -100,7 +100,7 @@ export function Header() {
             >
               {link.label}
               {link.href === "/friends" && friendRequestCount > 0 && (
-                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-xs font-medium text-destructive-foreground">
+                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium tabular-nums text-destructive-foreground">
                   {friendRequestCount}
                 </span>
               )}

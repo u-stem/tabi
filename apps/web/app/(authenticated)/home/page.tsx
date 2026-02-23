@@ -9,7 +9,6 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { CreateTripDialog } from "@/components/create-trip-dialog";
 import { Fab } from "@/components/fab";
-import { FriendRequestsCard } from "@/components/friend-requests-card";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import { TripCard } from "@/components/trip-card";
 import type { SortKey, StatusFilter } from "@/components/trip-toolbar";
@@ -18,9 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
-import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
-import { isGuestUser } from "@/lib/guest";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
@@ -36,9 +33,6 @@ export default function HomePage() {
   const queryClient = useQueryClient();
   const isMobile = useIsMobile();
   const online = useOnlineStatus();
-  const { data: session } = useSession();
-  const isGuest = isGuestUser(session);
-
   const {
     data: ownedTrips = [],
     isLoading: ownedLoading,
@@ -268,7 +262,6 @@ export default function HomePage() {
 
   return (
     <>
-      {!isGuest && <FriendRequestsCard />}
       {showSkeleton ? (
         <>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">

@@ -278,7 +278,7 @@ export function ChatPanel({
         ref={scrollContainerRef}
         className={
           mobile
-            ? "min-h-24 flex-1 overflow-y-auto p-3"
+            ? "flex min-h-24 flex-1 flex-col overflow-y-auto p-3"
             : "min-h-24 max-h-80 overflow-y-auto rounded-md border border-dashed p-3"
         }
         onScroll={handleScroll}
@@ -300,11 +300,11 @@ export function ChatPanel({
           </div>
         )}
         {!isActive || messages.length === 0 ? (
-          <div className="flex min-h-16 items-center justify-center">
+          <div className={`flex min-h-16 items-center justify-center ${mobile ? "mt-auto" : ""}`}>
             <p className="text-sm text-muted-foreground">{MSG.CHAT_EMPTY}</p>
           </div>
         ) : isMessagesLoading ? (
-          <div className="space-y-3 py-2">
+          <div className={`space-y-3 py-2 ${mobile ? "mt-auto" : ""}`}>
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex gap-2">
                 <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
@@ -316,7 +316,7 @@ export function ChatPanel({
             ))}
           </div>
         ) : (
-          <div>
+          <div className={mobile ? "mt-auto" : ""}>
             {messages.map((msg, i) => {
               const prev = messages[i - 1];
               const timeDiff = prev

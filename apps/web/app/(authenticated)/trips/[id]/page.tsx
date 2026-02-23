@@ -138,6 +138,10 @@ export default function TripDetailPage() {
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
+  // Ref mirrors mobileTab so swipe/tab-change handlers always see the latest
+  // value without re-registration on every tab change.
+  const mobileTabRef = useRef<MobileContentTab>("schedule");
+  const [chatAreaTop, setChatAreaTop] = useState(0);
   const swipeDirectionRef = useRef<"left" | "right" | null>(null);
   const prevDayRef = useRef(0);
   const gPressedRef = useRef(false);
@@ -478,30 +482,28 @@ export default function TripDetailPage() {
     [tripId, saveToBookmarkIds, queryClient],
   );
 
-  const handleMobileTabChange = useCallback(
-    (tab: MobileContentTab) => {
-      if (mobileContentRef.current) {
-        scrollPositions.current[mobileTab] = mobileContentRef.current.scrollTop;
-      }
-      setMobileTab(tab);
-      requestAnimationFrame(() => {
-        mobileContentRef.current?.scrollTo(0, scrollPositions.current[tab] ?? 0);
-      });
-    },
-    [mobileTab],
-  );
+  const handleMobileTabChange = useCallback((tab: MobileContentTab) => {
+    if (mobileContentRef.current) {
+      scrollPositions.current[mobileTabRef.current] = mobileContentRef.current.scrollTop;
+    }
+    mobileTabRef.current = tab;
+    setMobileTab(tab);
+    requestAnimationFrame(() => {
+      mobileContentRef.current?.scrollTo(0, scrollPositions.current[tab] ?? 0);
+    });
+  }, []);
 
   const handleSwipe = useCallback(
     (direction: "left" | "right") => {
       const tabIds = getMobileTabIds(!isGuestUser(session));
-      const idx = tabIds.indexOf(mobileTab);
+      const idx = tabIds.indexOf(mobileTabRef.current);
       if (idx === -1) return;
       const next = direction === "left" ? idx + 1 : idx - 1;
       if (next < 0 || next >= tabIds.length) return;
       swipeDirectionRef.current = direction;
       handleMobileTabChange(tabIds[next]);
     },
-    [mobileTab, session, handleMobileTabChange],
+    [session, handleMobileTabChange],
   );
   useSwipeTab(mobileContentRef, handleSwipe, !!trip);
 
@@ -524,6 +526,26 @@ export default function TripDetailPage() {
       updatePresence("poll", null);
     }
   }, [currentDay?.id, currentPattern?.id, selectedDay, updatePresence]);
+
+  // Measure mobileContentRef top position for chat tab height calculation
+  useEffect(() => {
+    const el = mobileContentRef.current;
+    if (mobileTab !== "chat" || !el) {
+      setChatAreaTop(0);
+      return;
+    }
+    function measure() {
+      setChatAreaTop(el!.getBoundingClientRect().top);
+    }
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    window.visualViewport?.addEventListener("resize", measure);
+    return () => {
+      ro.disconnect();
+      window.visualViewport?.removeEventListener("resize", measure);
+    };
+  }, [mobileTab]);
 
   useAutoStatusTransition({ trip, tripId, now, onMutate });
 
@@ -758,7 +780,18 @@ export default function TripDetailPage() {
             />
             <div
               ref={mobileContentRef}
-              className="min-h-0 overflow-y-auto overscroll-contain pb-20"
+              className={
+                mobileTab === "chat"
+                  ? "min-h-0 overflow-hidden"
+                  : "min-h-0 overflow-y-auto overscroll-contain pb-20"
+              }
+              style={
+                mobileTab === "chat" && chatAreaTop > 0
+                  ? {
+                      height: `calc(100dvh - ${chatAreaTop}px - 3rem - env(safe-area-inset-bottom, 0px))`,
+                    }
+                  : undefined
+              }
             >
               <div
                 key={mobileTab}

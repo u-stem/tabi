@@ -494,7 +494,7 @@ export function ChatPanel({
   const isActive = !!chatSession;
 
   return (
-    <div className={mobile ? "flex flex-col" : ""}>
+    <div className={mobile ? "flex h-full flex-col" : ""}>
       {/* Status bar */}
       {isActive && canEdit && (
         <div className="flex items-center justify-between rounded-t-md border-b bg-muted/50 px-3 py-2">
@@ -515,10 +515,9 @@ export function ChatPanel({
         ref={scrollContainerRef}
         className={
           mobile
-            ? "flex flex-col overflow-y-auto overscroll-contain p-3"
+            ? "flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-3"
             : "min-h-24 max-h-80 overflow-y-auto overscroll-contain rounded-md border border-dashed p-3"
         }
-        style={mobile ? { height: "calc(100dvh - 16rem)" } : undefined}
         onScroll={handleScroll}
       >
         {isActive && hasNextPage && (

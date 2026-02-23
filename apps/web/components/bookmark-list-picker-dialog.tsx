@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
 
 type BookmarkListPickerDialogProps = {
@@ -31,6 +32,7 @@ export function BookmarkListPickerDialog({
     queryFn: () => api<BookmarkListResponse[]>("/api/bookmark-lists"),
     enabled: open,
   });
+  const showSkeleton = useDelayedLoading(isLoading);
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
@@ -42,7 +44,7 @@ export function BookmarkListPickerDialog({
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <div className="max-h-60 overflow-y-auto">
-          {isLoading ? (
+          {isLoading && !showSkeleton ? null : showSkeleton ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
                 <Skeleton key={i} className="h-10 w-full rounded-md" />

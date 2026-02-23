@@ -2,11 +2,10 @@
 
 import { type BookmarkListResponse, MAX_BOOKMARK_LISTS_PER_USER } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, MoreHorizontal, Plus, SquareMousePointer, Trash2, X } from "lucide-react";
+import { CheckSquare, Copy, MoreHorizontal, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
-import { toast } from "sonner";
 import { BookmarkListCard } from "@/components/bookmark-list-card";
 import { CreateBookmarkListDialog } from "@/components/create-bookmark-list-dialog";
 import { Fab } from "@/components/fab";
@@ -42,6 +41,7 @@ import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
+import { useBookmarkListSelection } from "@/lib/hooks/use-bookmark-list-selection";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
@@ -82,11 +82,6 @@ export default function BookmarksPage() {
 
   const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [selectionMode, setSelectionMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [deleting, setDeleting] = useState(false);
-  const [duplicating, setDuplicating] = useState(false);
-  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   const { open: openShortcutHelp } = useShortcutHelp();
   const shortcuts: ShortcutGroup[] = useMemo(
@@ -112,92 +107,22 @@ export default function BookmarksPage() {
     return bookmarkLists.filter((l) => l.visibility === visibilityFilter);
   }, [bookmarkLists, visibilityFilter]);
 
+  const sel = useBookmarkListSelection({
+    listIds: filteredBookmarkLists.map((l) => l.id),
+    invalidateLists: invalidateBookmarkLists,
+  });
+
+  // Prune selected IDs when filtered list changes
   useEffect(() => {
-    if (!selectionMode) return;
+    if (!sel.selectionMode) return;
     const visibleIds = new Set(filteredBookmarkLists.map((l) => l.id));
-    setSelectedIds((prev) => {
-      const pruned = new Set([...prev].filter((id) => visibleIds.has(id)));
-      if (pruned.size === prev.size) return prev;
-      return pruned;
-    });
-  }, [filteredBookmarkLists, selectionMode]);
-
-  function handleSelectionModeChange(mode: boolean) {
-    setSelectionMode(mode);
-    if (!mode) {
-      setSelectedIds(new Set());
+    const currentIds = [...sel.selectedIds];
+    const pruned = currentIds.filter((id) => visibleIds.has(id));
+    if (pruned.length < currentIds.length) {
+      sel.deselectAll();
+      for (const id of pruned) sel.toggle(id);
     }
-  }
-
-  function handleSelect(id: string) {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
-      return next;
-    });
-  }
-
-  function handleSelectAll() {
-    setSelectedIds(new Set(filteredBookmarkLists.map((l) => l.id)));
-  }
-
-  function handleDeselectAll() {
-    setSelectedIds(new Set());
-  }
-
-  async function handleDeleteSelected() {
-    const ids = [...selectedIds];
-    setDeleting(true);
-
-    const results = await Promise.allSettled(
-      ids.map((id) => api(`/api/bookmark-lists/${id}`, { method: "DELETE" })),
-    );
-    const failed = results.filter((r) => r.status === "rejected").length;
-    const succeeded = results.filter((r) => r.status === "fulfilled").length;
-
-    if (succeeded > 0) {
-      await invalidateBookmarkLists();
-    }
-
-    if (failed > 0) {
-      toast.error(MSG.BOOKMARK_LIST_BULK_DELETE_FAILED(failed));
-    } else {
-      toast.success(MSG.BOOKMARK_LIST_BULK_DELETED(succeeded));
-    }
-
-    setSelectedIds(new Set());
-    setSelectionMode(false);
-    setDeleting(false);
-  }
-
-  async function handleDuplicateSelected() {
-    const ids = [...selectedIds];
-    setDuplicating(true);
-
-    const results = await Promise.allSettled(
-      ids.map((id) => api(`/api/bookmark-lists/${id}/duplicate`, { method: "POST" })),
-    );
-    const failed = results.filter((r) => r.status === "rejected").length;
-    const succeeded = results.filter((r) => r.status === "fulfilled").length;
-
-    if (succeeded > 0) {
-      await invalidateBookmarkLists();
-    }
-
-    if (failed > 0) {
-      toast.error(MSG.BOOKMARK_LIST_BULK_DUPLICATE_FAILED(failed));
-    } else {
-      toast.success(MSG.BOOKMARK_LIST_BULK_DUPLICATED(succeeded));
-    }
-
-    setSelectedIds(new Set());
-    setSelectionMode(false);
-    setDuplicating(false);
-  }
+  }, [filteredBookmarkLists, sel.selectionMode]);
 
   if (isGuest) {
     return (
@@ -253,80 +178,59 @@ export default function BookmarksPage() {
       ) : (
         <>
           <div className="mt-4">
-            {selectionMode ? (
-              <>
-                <div className="flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => handleSelectionModeChange(false)}
-                    disabled={deleting || duplicating}
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                  <span className="text-xs font-medium">{selectedIds.size}件選択中</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 px-2 text-xs"
-                    onClick={
-                      selectedIds.size === filteredBookmarkLists.length
-                        ? handleDeselectAll
-                        : handleSelectAll
-                    }
-                    disabled={deleting || duplicating}
-                  >
-                    {selectedIds.size === filteredBookmarkLists.length ? "全解除" : "全選択"}
-                  </Button>
-                  <div className="ml-auto flex items-center gap-1">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7"
-                          disabled={selectedIds.size === 0 || deleting || duplicating}
-                        >
-                          <MoreHorizontal className="h-3.5 w-3.5" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={handleDuplicateSelected}>
-                          <Copy />
-                          複製
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => setDeleteConfirmOpen(true)}
-                        >
-                          <Trash2 />
-                          削除
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+            {sel.selectionMode ? (
+              <div className="flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={sel.exit}
+                  disabled={sel.batchLoading}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+                <span className="text-xs font-medium">{sel.selectedIds.size}件選択中</span>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  onClick={
+                    sel.selectedIds.size === filteredBookmarkLists.length
+                      ? sel.deselectAll
+                      : sel.selectAll
+                  }
+                  disabled={sel.batchLoading}
+                >
+                  {sel.selectedIds.size === filteredBookmarkLists.length ? "全解除" : "全選択"}
+                </Button>
+                <div className="ml-auto flex items-center gap-1">
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        disabled={sel.selectedIds.size === 0 || sel.batchLoading}
+                      >
+                        <MoreHorizontal className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={sel.handleBatchDuplicate}>
+                        <Copy />
+                        複製
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => sel.setBatchDeleteOpen(true)}
+                      >
+                        <Trash2 />
+                        削除
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-                <ResponsiveAlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-                  <ResponsiveAlertDialogContent>
-                    <ResponsiveAlertDialogHeader>
-                      <ResponsiveAlertDialogTitle>
-                        {selectedIds.size}件のリストを削除しますか？
-                      </ResponsiveAlertDialogTitle>
-                      <ResponsiveAlertDialogDescription>
-                        選択したリストとすべてのブックマークが削除されます。この操作は取り消せません。
-                      </ResponsiveAlertDialogDescription>
-                    </ResponsiveAlertDialogHeader>
-                    <ResponsiveAlertDialogFooter>
-                      <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
-                      <ResponsiveAlertDialogDestructiveAction onClick={handleDeleteSelected}>
-                        <Trash2 className="h-4 w-4" />
-                        削除する
-                      </ResponsiveAlertDialogDestructiveAction>
-                    </ResponsiveAlertDialogFooter>
-                  </ResponsiveAlertDialogContent>
-                </ResponsiveAlertDialog>
-              </>
+              </div>
             ) : (
               <div className="flex items-center gap-2">
                 <Select
@@ -348,10 +252,10 @@ export default function BookmarksPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleSelectionModeChange(true)}
+                    onClick={sel.enter}
                     disabled={!online || filteredBookmarkLists.length === 0}
                   >
-                    <SquareMousePointer className="h-4 w-4" />
+                    <CheckSquare className="h-4 w-4" />
                     選択
                   </Button>
                   {!isMobile && (
@@ -393,15 +297,34 @@ export default function BookmarksPage() {
                 <BookmarkListCard
                   key={list.id}
                   {...list}
-                  selectable={selectionMode}
-                  selected={selectedIds.has(list.id)}
-                  onSelect={handleSelect}
+                  selectable={sel.selectionMode}
+                  selected={sel.selectedIds.has(list.id)}
+                  onSelect={sel.toggle}
                 />
               ))}
             </div>
           )}
         </>
       )}
+      <ResponsiveAlertDialog open={sel.batchDeleteOpen} onOpenChange={sel.setBatchDeleteOpen}>
+        <ResponsiveAlertDialogContent>
+          <ResponsiveAlertDialogHeader>
+            <ResponsiveAlertDialogTitle>
+              {sel.selectedIds.size}件のリストを削除しますか？
+            </ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogDescription>
+              選択したリストとすべてのブックマークが削除されます。この操作は取り消せません。
+            </ResponsiveAlertDialogDescription>
+          </ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogFooter>
+            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogDestructiveAction onClick={sel.handleBatchDelete}>
+              <Trash2 className="h-4 w-4" />
+              削除する
+            </ResponsiveAlertDialogDestructiveAction>
+          </ResponsiveAlertDialogFooter>
+        </ResponsiveAlertDialogContent>
+      </ResponsiveAlertDialog>
       <CreateBookmarkListDialog
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
@@ -410,7 +333,7 @@ export default function BookmarksPage() {
       <Fab
         onClick={() => setCreateDialogOpen(true)}
         label="リストを新規作成"
-        hidden={!online || selectionMode}
+        hidden={!online || sel.selectionMode}
       />
     </>
   );

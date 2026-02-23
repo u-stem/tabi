@@ -55,6 +55,10 @@ export const batchBookmarkIdsSchema = z.object({
   bookmarkIds: z.array(z.string().uuid()).min(1),
 });
 
+export const batchBookmarkListIdsSchema = z.object({
+  listIds: z.array(z.string().uuid()).min(1),
+});
+
 export const saveFromSchedulesSchema = z.object({
   tripId: z.string().uuid(),
   scheduleIds: z.array(z.string().uuid()).min(1),

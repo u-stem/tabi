@@ -10,6 +10,7 @@ import { Logo } from "@/components/logo";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { formatDateFromISO, formatDateRangeShort } from "@/lib/format";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -50,7 +51,17 @@ export default function SharedPollPage() {
     retry: false,
   });
 
-  if (isLoading) {
+  const showSkeleton = useDelayedLoading(isLoading);
+
+  if (isLoading && !showSkeleton) {
+    return (
+      <div className="min-h-screen">
+        <SharedPollHeader />
+      </div>
+    );
+  }
+
+  if (showSkeleton) {
     return (
       <div className="min-h-screen">
         <SharedPollHeader />

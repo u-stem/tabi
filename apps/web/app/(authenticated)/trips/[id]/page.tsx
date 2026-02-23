@@ -1,7 +1,12 @@
 "use client";
 
 import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
-import type { ChatMessageResponse, PollDetailResponse, TripResponse } from "@sugara/shared";
+import type {
+  BookmarkListResponse,
+  ChatMessageResponse,
+  PollDetailResponse,
+  TripResponse,
+} from "@sugara/shared";
 import {
   canEdit as canEditRole,
   isOwner as isOwnerRole,
@@ -109,6 +114,13 @@ export default function TripDetailPage() {
     enabled: !!pollId,
   });
   const showSkeleton = useDelayedLoading(isLoading || (!!pollId && isPollLoading));
+
+  // Prefetch bookmark lists so BookmarkPanel renders instantly on tab switch
+  useQuery({
+    queryKey: queryKeys.bookmarks.lists(),
+    queryFn: () => api<BookmarkListResponse[]>("/api/bookmark-lists"),
+    staleTime: 60_000,
+  });
 
   const [editOpen, setEditOpen] = useState(false);
   const [addScheduleOpen, setAddScheduleOpen] = useState(false);

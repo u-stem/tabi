@@ -1,10 +1,11 @@
 import {
+  batchBookmarkListIdsSchema,
   createBookmarkListSchema,
   MAX_BOOKMARK_LISTS_PER_USER,
   reorderBookmarkListsSchema,
   updateBookmarkListSchema,
 } from "@sugara/shared";
-import { count, eq } from "drizzle-orm";
+import { and, count, eq, inArray } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { bookmarkLists, bookmarks } from "../db/schema";
@@ -197,6 +198,92 @@ bookmarkListRoutes.post("/:listId/duplicate", async (c) => {
   }
 
   return c.json(created, 201);
+});
+
+// Batch delete bookmark lists
+bookmarkListRoutes.post("/batch-delete", async (c) => {
+  const user = c.get("user");
+
+  const body = await c.req.json();
+  const parsed = batchBookmarkListIdsSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const found = await db.query.bookmarkLists.findMany({
+    where: and(inArray(bookmarkLists.id, parsed.data.listIds), eq(bookmarkLists.userId, user.id)),
+    columns: { id: true },
+  });
+  if (found.length !== parsed.data.listIds.length) {
+    return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
+  }
+
+  await db.delete(bookmarkLists).where(inArray(bookmarkLists.id, parsed.data.listIds));
+
+  return c.json({ ok: true });
+});
+
+// Batch duplicate bookmark lists
+bookmarkListRoutes.post("/batch-duplicate", async (c) => {
+  const user = c.get("user");
+
+  const body = await c.req.json();
+  const parsed = batchBookmarkListIdsSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const sources = await db.query.bookmarkLists.findMany({
+    where: and(inArray(bookmarkLists.id, parsed.data.listIds), eq(bookmarkLists.userId, user.id)),
+    with: { bookmarks: { orderBy: (b, { asc }) => [asc(b.sortOrder)] } },
+  });
+  if (sources.length !== parsed.data.listIds.length) {
+    return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
+  }
+
+  const result = await db.transaction(async (tx) => {
+    const [{ count: listCount }] = await tx
+      .select({ count: count() })
+      .from(bookmarkLists)
+      .where(eq(bookmarkLists.userId, user.id));
+
+    if (listCount + sources.length > MAX_BOOKMARK_LISTS_PER_USER) {
+      return null;
+    }
+
+    for (let i = 0; i < sources.length; i++) {
+      const source = sources[i];
+      const [newList] = await tx
+        .insert(bookmarkLists)
+        .values({
+          userId: user.id,
+          name: `${source.name} (copy)`,
+          visibility: source.visibility,
+          sortOrder: listCount + i,
+        })
+        .returning();
+
+      if (source.bookmarks.length > 0) {
+        await tx.insert(bookmarks).values(
+          source.bookmarks.map((bm, j) => ({
+            listId: newList.id,
+            name: bm.name,
+            memo: bm.memo,
+            urls: bm.urls,
+            sortOrder: j,
+          })),
+        );
+      }
+    }
+
+    return true;
+  });
+
+  if (!result) {
+    return c.json({ error: ERROR_MSG.LIMIT_BOOKMARK_LISTS }, 409);
+  }
+
+  return c.json({ ok: true }, 201);
 });
 
 // Delete bookmark list (cascades bookmarks)

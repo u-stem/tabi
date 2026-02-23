@@ -2,7 +2,7 @@
 
 import type { BookmarkListResponse, BookmarkResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckCheck, ExternalLink, Plus, SquareMousePointer, StickyNote, X } from "lucide-react";
+import { ArrowLeft, CheckSquare, ExternalLink, Plus, StickyNote, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
@@ -76,6 +77,10 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
     setSelectedIds(new Set(bookmarks.map((bm) => bm.id)));
   }
 
+  function deselectAll() {
+    setSelectedIds(new Set());
+  }
+
   function exitSelection() {
     setSelectionMode(false);
     setSelectedIds(new Set());
@@ -101,7 +106,12 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
     }
   }
 
-  if (listsLoading) {
+  const showListsSkeleton = useDelayedLoading(listsLoading);
+  const showBookmarksSkeleton = useDelayedLoading(bookmarksLoading);
+
+  if (listsLoading && !showListsSkeleton) return null;
+
+  if (showListsSkeleton) {
     return (
       <div className="space-y-3">
         <div className="flex items-center gap-1.5">
@@ -127,32 +137,31 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
   return (
     <div className="space-y-3">
       {selectionMode ? (
-        <div className="flex items-center gap-1.5">
-          <Button variant="outline" size="sm" onClick={selectAll}>
-            <CheckCheck className="h-4 w-4" />
-            <span className="hidden sm:inline">全選択</span>
+        <div className="flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={exitSelection}>
+            <X className="h-3.5 w-3.5" />
           </Button>
+          <span className="text-xs font-medium">{selectedCount}件選択中</span>
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
-            onClick={() => setSelectedIds(new Set())}
-            disabled={selectedCount === 0}
+            className="h-7 px-2 text-xs"
+            onClick={selectedCount === bookmarks.length ? deselectAll : selectAll}
           >
-            <X className="h-4 w-4" />
-            <span className="hidden sm:inline">解除</span>
+            {selectedCount === bookmarks.length ? "全解除" : "全選択"}
           </Button>
-          <div className="flex-1" />
-          <Button
-            size="sm"
-            onClick={() => setConfirmIds(Array.from(selectedIds))}
-            disabled={selectedCount === 0 || loading}
-          >
-            <Plus className="h-4 w-4" />
-            {loading ? "追加中..." : "候補に追加"}
-          </Button>
-          <Button variant="outline" size="sm" onClick={exitSelection}>
-            キャンセル
-          </Button>
+          <div className="ml-auto">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={() => setConfirmIds(Array.from(selectedIds))}
+              disabled={selectedCount === 0 || loading}
+            >
+              <ArrowLeft className="h-3.5 w-3.5" />
+              {loading ? "追加中..." : "候補に追加"}
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="flex items-center gap-1.5">
@@ -181,14 +190,14 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
               className="shrink-0"
               onClick={() => setSelectionMode(true)}
             >
-              <SquareMousePointer className="h-4 w-4" />
+              <CheckSquare className="h-4 w-4" />
               選択
             </Button>
           )}
         </div>
       )}
 
-      {bookmarksLoading ? (
+      {bookmarksLoading && !showBookmarksSkeleton ? null : showBookmarksSkeleton ? (
         <div className="space-y-2">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-14 w-full rounded-md" />

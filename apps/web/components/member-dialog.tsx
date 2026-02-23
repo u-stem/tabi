@@ -43,6 +43,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -71,11 +72,12 @@ export function MemberDialog({
   const [groupRole, setGroupRole] = useState("editor");
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
-  const { data: members = [], isLoading: loading } = useQuery({
+  const { data: members = [], isLoading: membersLoading } = useQuery({
     queryKey: queryKeys.trips.members(tripId),
     queryFn: () => api<MemberResponse[]>(`/api/trips/${tripId}/members`),
     enabled: open,
   });
+  const showSkeleton = useDelayedLoading(membersLoading);
 
   const { data: friends = [] } = useQuery({
     queryKey: queryKeys.friends.list(),
@@ -244,7 +246,7 @@ export function MemberDialog({
         </ResponsiveDialogHeader>
 
         <div className="flex min-h-0 flex-col gap-4">
-          {loading ? (
+          {membersLoading && !showSkeleton ? null : showSkeleton ? (
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-2 rounded-md border p-2">
                 <Skeleton className="h-4 w-28" />

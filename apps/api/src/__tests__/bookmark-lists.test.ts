@@ -304,6 +304,145 @@ describe("Bookmark list routes", () => {
     });
   });
 
+  // --- POST /api/bookmark-lists/batch-delete ---
+  describe("POST /api/bookmark-lists/batch-delete", () => {
+    const listId2 = "00000000-0000-0000-0000-000000000011";
+
+    it("deletes multiple lists", async () => {
+      mockDbQuery.bookmarkLists.findMany.mockResolvedValue([
+        { id: listId, userId },
+        { id: listId2, userId },
+      ]);
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const app = createTestApp(bookmarkListRoutes, "/api/bookmark-lists");
+      const res = await app.request("/api/bookmark-lists/batch-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listIds: [listId, listId2] }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.ok).toBe(true);
+    });
+
+    it("returns 404 when some lists not owned", async () => {
+      mockDbQuery.bookmarkLists.findMany.mockResolvedValue([{ id: listId, userId }]);
+
+      const app = createTestApp(bookmarkListRoutes, "/api/bookmark-lists");
+      const res = await app.request("/api/bookmark-lists/batch-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listIds: [listId, listId2] }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 400 with empty listIds", async () => {
+      const app = createTestApp(bookmarkListRoutes, "/api/bookmark-lists");
+      const res = await app.request("/api/bookmark-lists/batch-delete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listIds: [] }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
+  // --- POST /api/bookmark-lists/batch-duplicate ---
+  describe("POST /api/bookmark-lists/batch-duplicate", () => {
+    const listId2 = "00000000-0000-0000-0000-000000000011";
+
+    it("duplicates multiple lists and returns 201", async () => {
+      mockDbQuery.bookmarkLists.findMany.mockResolvedValue([
+        {
+          id: listId,
+          userId,
+          name: "List A",
+          visibility: "private",
+          bookmarks: [{ id: "b1", name: "BM1", memo: null, urls: [], sortOrder: 0 }],
+        },
+        {
+          id: listId2,
+          userId,
+          name: "List B",
+          visibility: "public",
+          bookmarks: [],
+        },
+      ]);
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: 1 }]),
+        }),
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ id: "new-list-id" }]),
+        }),
+      });
+
+      const app = createTestApp(bookmarkListRoutes, "/api/bookmark-lists");
+      const res = await app.request("/api/bookmark-lists/batch-duplicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listIds: [listId, listId2] }),
+      });
+
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.ok).toBe(true);
+    });
+
+    it("returns 404 when some lists not owned", async () => {
+      mockDbQuery.bookmarkLists.findMany.mockResolvedValue([{ id: listId, userId }]);
+
+      const app = createTestApp(bookmarkListRoutes, "/api/bookmark-lists");
+      const res = await app.request("/api/bookmark-lists/batch-duplicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listIds: [listId, listId2] }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 409 when list limit reached", async () => {
+      mockDbQuery.bookmarkLists.findMany.mockResolvedValue([
+        { id: listId, userId, name: "A", visibility: "private", bookmarks: [] },
+      ]);
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: MAX_BOOKMARK_LISTS_PER_USER }]),
+        }),
+      });
+
+      const app = createTestApp(bookmarkListRoutes, "/api/bookmark-lists");
+      const res = await app.request("/api/bookmark-lists/batch-duplicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listIds: [listId] }),
+      });
+
+      expect(res.status).toBe(409);
+    });
+
+    it("returns 400 with empty listIds", async () => {
+      const app = createTestApp(bookmarkListRoutes, "/api/bookmark-lists");
+      const res = await app.request("/api/bookmark-lists/batch-duplicate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listIds: [] }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+  });
+
   // --- DELETE /api/bookmark-lists/:listId ---
   describe("DELETE /api/bookmark-lists/:listId", () => {
     it("deletes own list", async () => {

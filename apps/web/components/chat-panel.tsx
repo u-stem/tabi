@@ -9,6 +9,12 @@ import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ResponsiveAlertDialog,
   ResponsiveAlertDialogCancel,
   ResponsiveAlertDialogContent,
@@ -122,70 +128,6 @@ function MessageBubble({
   );
 }
 
-// Floating menu for desktop — positioned relative to the trigger button
-function DesktopMessageMenu({
-  anchor,
-  onClose,
-  onEdit,
-  onDelete,
-}: {
-  anchor: HTMLElement;
-  onClose: () => void;
-  onEdit: () => void;
-  onDelete: () => void;
-}) {
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ top: 0, right: 0 });
-
-  useEffect(() => {
-    const rect = anchor.getBoundingClientRect();
-    setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
-  }, [anchor]);
-
-  // Close on outside click
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    }
-    function handleKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape") onClose();
-    }
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [onClose]);
-
-  return (
-    <div
-      ref={menuRef}
-      className="fixed z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
-      style={{ top: pos.top, right: pos.right }}
-    >
-      <button
-        type="button"
-        onClick={onEdit}
-        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
-      >
-        <Pencil className="h-4 w-4" />
-        編集
-      </button>
-      <button
-        type="button"
-        onClick={onDelete}
-        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-accent"
-      >
-        <Trash2 className="h-4 w-4" />
-        削除
-      </button>
-    </div>
-  );
-}
-
 export function ChatPanel({
   tripId,
   canEdit,
@@ -208,8 +150,6 @@ export function ChatPanel({
   // Shared action menu state (single instance for all messages)
   const [actionTarget, setActionTarget] = useState<ChatMessageResponse | null>(null);
   const [actionSheetOpen, setActionSheetOpen] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuAnchorRef = useRef<HTMLElement | null>(null);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScroll = useRef(true);
@@ -403,18 +343,13 @@ export function ChatPanel({
     sendMessage.mutate(trimmed);
   }, [input, chatSession, startSession, sendMessage, editingMessage, editMessage]);
 
-  // Single handler for both mobile (long press) and desktop (button click)
+  // Mobile long press handler
   const handleMessageAction = useCallback(
-    (msg: ChatMessageResponse, anchor: HTMLElement) => {
+    (msg: ChatMessageResponse, _anchor: HTMLElement) => {
       setActionTarget(msg);
-      if (isMobile) {
-        setActionSheetOpen(true);
-      } else {
-        menuAnchorRef.current = anchor;
-        setMenuOpen(true);
-      }
+      setActionSheetOpen(true);
     },
-    [isMobile],
+    [],
   );
 
   const sheetActions = useMemo(
@@ -574,14 +509,30 @@ export function ChatPanel({
                       />
                     </div>
                     {isOwn && !isMobile && (
-                      <button
-                        type="button"
-                        aria-label="メッセージ操作"
-                        onClick={(e) => handleMessageAction(msg, e.currentTarget)}
-                        className="shrink-0 self-center rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover/msg:opacity-100"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label="メッセージ操作"
+                            className="shrink-0 self-center rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover/msg:opacity-100"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleStartEdit(msg)}>
+                            <Pencil className="h-4 w-4" />
+                            編集
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDeleteTarget(msg.id)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            削除
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                   {msg.editedAt && (
@@ -612,14 +563,30 @@ export function ChatPanel({
                       />
                     </div>
                     {isOwn && !isMobile && (
-                      <button
-                        type="button"
-                        aria-label="メッセージ操作"
-                        onClick={(e) => handleMessageAction(msg, e.currentTarget)}
-                        className="shrink-0 self-start mt-0.5 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover/msg:opacity-100"
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button
+                            type="button"
+                            aria-label="メッセージ操作"
+                            className="shrink-0 self-start mt-0.5 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover/msg:opacity-100"
+                          >
+                            <MoreHorizontal className="h-4 w-4" />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleStartEdit(msg)}>
+                            <Pencil className="h-4 w-4" />
+                            編集
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => setDeleteTarget(msg.id)}
+                            className="text-destructive"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            削除
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                   {msg.editedAt && (
@@ -713,27 +680,6 @@ export function ChatPanel({
         }}
         actions={sheetActions}
       />
-
-      {/* Shared desktop DropdownMenu — rendered once, anchored to menuAnchorRef */}
-      {menuOpen && actionTarget && menuAnchorRef.current && (
-        <DesktopMessageMenu
-          anchor={menuAnchorRef.current}
-          onClose={() => {
-            setMenuOpen(false);
-            setActionTarget(null);
-          }}
-          onEdit={() => {
-            if (actionTarget) handleStartEdit(actionTarget);
-            setMenuOpen(false);
-            setActionTarget(null);
-          }}
-          onDelete={() => {
-            if (actionTarget) setDeleteTarget(actionTarget.id);
-            setMenuOpen(false);
-            setActionTarget(null);
-          }}
-        />
-      )}
 
       {/* Delete message confirmation */}
       <ResponsiveAlertDialog

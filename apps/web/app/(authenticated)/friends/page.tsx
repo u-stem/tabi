@@ -77,7 +77,7 @@ export default function FriendsPage() {
     );
   }
 
-  if (isLoading && !showSkeleton) return <PageSkeleton />;
+  if (isLoading && !showSkeleton) return <div />;
   if (showSkeleton) return <PageSkeleton />;
 
   return (

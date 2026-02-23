@@ -220,9 +220,11 @@ export function ChatPanel({
 
   if (showSkeleton) {
     return (
-      <div className="space-y-3">
-        <Skeleton className="h-8 w-32" />
-        <Skeleton className="h-20 w-full" />
+      <div className="space-y-2">
+        <div className="flex justify-end">
+          <Skeleton className="h-8 w-36 rounded-md" />
+        </div>
+        <Skeleton className="h-24 w-full rounded-md border border-dashed" />
       </div>
     );
   }

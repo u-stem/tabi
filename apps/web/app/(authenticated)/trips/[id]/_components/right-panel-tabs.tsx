@@ -1,5 +1,7 @@
 "use client";
 
+import { useSession } from "@/lib/auth-client";
+import { isGuestUser } from "@/lib/guest";
 import { cn } from "@/lib/utils";
 
 export type RightPanelTab = "candidates" | "activity" | "bookmarks" | "expenses" | "chat";
@@ -18,6 +20,9 @@ export function RightPanelTabs({
   onChange: (tab: RightPanelTab) => void;
   candidateCount: number;
 }) {
+  const { data: session } = useSession();
+  const isGuest = isGuestUser(session);
+
   return (
     <div
       className="flex shrink-0 select-none gap-1.5 overflow-x-auto border-b px-3 pb-2.5 pt-3"
@@ -61,16 +66,20 @@ export function RightPanelTabs({
       >
         履歴
       </button>
-      <div className="shrink-0 self-stretch w-px bg-border" />
-      <button
-        type="button"
-        role="tab"
-        aria-selected={current === "bookmarks"}
-        onClick={() => onChange("bookmarks")}
-        className={cn(CHIP_BASE, current === "bookmarks" ? CHIP_ACTIVE : CHIP_INACTIVE)}
-      >
-        ブックマーク
-      </button>
+      {!isGuest && (
+        <>
+          <div className="shrink-0 self-stretch w-px bg-border" />
+          <button
+            type="button"
+            role="tab"
+            aria-selected={current === "bookmarks"}
+            onClick={() => onChange("bookmarks")}
+            className={cn(CHIP_BASE, current === "bookmarks" ? CHIP_ACTIVE : CHIP_INACTIVE)}
+          >
+            ブックマーク
+          </button>
+        </>
+      )}
     </div>
   );
 }

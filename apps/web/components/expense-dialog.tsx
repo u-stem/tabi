@@ -184,7 +184,9 @@ export function ExpenseDialog({
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="expense-title">タイトル</Label>
+            <Label htmlFor="expense-title">
+              タイトル <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="expense-title"
               value={title}
@@ -199,7 +201,9 @@ export function ExpenseDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="expense-amount">金額 (円)</Label>
+            <Label htmlFor="expense-amount">
+              金額 (円) <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="expense-amount"
               type="number"
@@ -212,7 +216,9 @@ export function ExpenseDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="expense-paid-by">支払者</Label>
+            <Label htmlFor="expense-paid-by">
+              支払者 <span className="text-destructive">*</span>
+            </Label>
             <Select value={paidByUserId} onValueChange={setPaidByUserId}>
               <SelectTrigger id="expense-paid-by">
                 <SelectValue placeholder="選択" />

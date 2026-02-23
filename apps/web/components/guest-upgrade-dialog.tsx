@@ -89,7 +89,9 @@ export function GuestUpgradeDialog({
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="upgrade-username">ユーザー名</Label>
+              <Label htmlFor="upgrade-username">
+                ユーザー名 <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="upgrade-username"
                 name="username"
@@ -102,11 +104,15 @@ export function GuestUpgradeDialog({
               <p className="text-xs text-muted-foreground">3〜20文字、英数字とアンダースコアのみ</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="upgrade-name">表示名</Label>
+              <Label htmlFor="upgrade-name">
+                表示名 <span className="text-destructive">*</span>
+              </Label>
               <Input id="upgrade-name" name="name" minLength={1} maxLength={50} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="upgrade-password">パスワード</Label>
+              <Label htmlFor="upgrade-password">
+                パスワード <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="upgrade-password"
                 name="password"
@@ -117,7 +123,9 @@ export function GuestUpgradeDialog({
               <p className="text-xs text-muted-foreground">{getPasswordRequirementsText()}</p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="upgrade-confirmPassword">パスワード（確認）</Label>
+              <Label htmlFor="upgrade-confirmPassword">
+                パスワード（確認） <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="upgrade-confirmPassword"
                 name="confirmPassword"

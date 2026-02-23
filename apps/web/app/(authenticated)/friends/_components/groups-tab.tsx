@@ -227,7 +227,9 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
           <form onSubmit={handleRename}>
             <div className="space-y-4 py-2">
               <div className="space-y-2">
-                <Label htmlFor="edit-group-name">グループ名</Label>
+                <Label htmlFor="edit-group-name">
+                  グループ名 <span className="text-destructive">*</span>
+                </Label>
                 <Input
                   id="edit-group-name"
                   value={editName}

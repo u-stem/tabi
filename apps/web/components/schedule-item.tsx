@@ -453,44 +453,6 @@ function ScheduleItemDialogs({
 
 // -- Shared sub-components extracted from PlaceCard / TransportConnector --
 
-function LeadingControl({
-  selectable,
-  selected,
-  reorderable,
-  onMoveUp,
-  onMoveDown,
-  isFirst,
-  isLast,
-  draggable,
-  crossDayDisplay,
-  sortable,
-}: {
-  selectable?: boolean;
-  selected?: boolean;
-  reorderable?: boolean;
-  onMoveUp?: () => void;
-  onMoveDown?: () => void;
-  isFirst?: boolean;
-  isLast?: boolean;
-  draggable?: boolean;
-  crossDayDisplay?: boolean;
-  sortable: SortableProps;
-}) {
-  if (selectable) return <SelectionIndicator checked={!!selected} />;
-  if (reorderable)
-    return (
-      <ReorderControls
-        onMoveUp={onMoveUp}
-        onMoveDown={onMoveDown}
-        isFirst={!!isFirst}
-        isLast={!!isLast}
-      />
-    );
-  if (draggable !== false && !crossDayDisplay)
-    return <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />;
-  return <span className="inline-block w-4 shrink-0" aria-hidden="true" />;
-}
-
 function ScheduleTimeLabel({
   crossDayDisplay,
   crossDayPosition,
@@ -532,7 +494,7 @@ function ScheduleTimeLabel({
 
   if (!labelEl && !timeEl) return null;
   return (
-    <div className="mt-0.5 flex items-center gap-1.5 pl-6">
+    <div className="mt-0.5 flex items-center gap-1.5">
       {labelEl}
       {timeEl}
     </div>
@@ -677,23 +639,21 @@ function PlaceCard({
         `${crossDaySourceDayNumber}日目から継続`,
       )}
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        {selectable ? (
+          <SelectionIndicator checked={!!selected} />
+        ) : reorderable ? (
+          <ReorderControls
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            isFirst={!!isFirst}
+            isLast={!!isLast}
+          />
+        ) : draggable !== false && !crossDayDisplay ? (
+          <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
+        ) : null}
         <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-2">
-            <LeadingControl
-              selectable={selectable}
-              selected={selected}
-              reorderable={reorderable}
-              onMoveUp={onMoveUp}
-              onMoveDown={onMoveDown}
-              isFirst={isFirst}
-              isLast={isLast}
-              draggable={draggable}
-              crossDayDisplay={crossDayDisplay}
-              sortable={sortable}
-            />
-            <span className="min-w-0 truncate text-sm font-medium">{name}</span>
-          </div>
+          <span className="block min-w-0 truncate text-sm font-medium">{name}</span>
           <ScheduleTimeLabel
             crossDayDisplay={crossDayDisplay}
             crossDayPosition={crossDayPosition}
@@ -702,7 +662,7 @@ function PlaceCard({
             timeStr={timeStr}
           />
           {(address || urls.length > 0 || memo) && (
-            <div className={cn("mt-1 space-y-1 pl-6", selectable && "pointer-events-none")}>
+            <div className={cn("mt-1 space-y-1", selectable && "pointer-events-none")}>
               {address && (
                 <a
                   href={buildMapsSearchUrl(address)}
@@ -883,23 +843,21 @@ function TransportConnector({
         crossDayPosition,
       )}
     >
-      <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        {selectable ? (
+          <SelectionIndicator checked={!!selected} />
+        ) : reorderable ? (
+          <ReorderControls
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            isFirst={!!isFirst}
+            isLast={!!isLast}
+          />
+        ) : draggable !== false && !crossDayDisplay ? (
+          <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
+        ) : null}
         <div className="min-w-0 flex-1">
-          <div className="flex min-w-0 items-center gap-2">
-            <LeadingControl
-              selectable={selectable}
-              selected={selected}
-              reorderable={reorderable}
-              onMoveUp={onMoveUp}
-              onMoveDown={onMoveDown}
-              isFirst={isFirst}
-              isLast={isLast}
-              draggable={draggable}
-              crossDayDisplay={crossDayDisplay}
-              sortable={sortable}
-            />
-            <span className="min-w-0 truncate text-sm font-medium">{name}</span>
-          </div>
+          <span className="block min-w-0 truncate text-sm font-medium">{name}</span>
           <ScheduleTimeLabel
             crossDayDisplay={crossDayDisplay}
             crossDayPosition={crossDayPosition}
@@ -908,7 +866,7 @@ function TransportConnector({
             timeStr={timeStr}
           />
           {(routeStr || urls.length > 0 || memo) && (
-            <div className={cn("mt-1 space-y-1 pl-6", selectable && "pointer-events-none")}>
+            <div className={cn("mt-1 space-y-1", selectable && "pointer-events-none")}>
               {routeStr && (
                 <span className="flex w-fit max-w-full items-center gap-1.5 text-xs text-muted-foreground">
                   <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />

@@ -52,7 +52,9 @@ export function EditListDialog({ listOps }: { listOps: ListOps }) {
         <form onSubmit={listOps.handleUpdate}>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="edit-list-name">リスト名</Label>
+              <Label htmlFor="edit-list-name">
+                リスト名 <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="edit-list-name"
                 value={listOps.editListName}

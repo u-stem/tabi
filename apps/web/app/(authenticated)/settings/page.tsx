@@ -173,7 +173,9 @@ function ProfileSection({ defaultName }: { defaultName: string }) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">表示名</Label>
+            <Label htmlFor="name">
+              表示名 <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="name"
               name="name"
@@ -239,7 +241,9 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="username">ユーザー名</Label>
+            <Label htmlFor="username">
+              ユーザー名 <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="username"
               name="username"
@@ -329,7 +333,9 @@ function PasswordSection({ username }: { username: string }) {
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="hidden" name="username" autoComplete="username" value={username} />
           <div className="space-y-2">
-            <Label htmlFor="currentPassword">現在のパスワード</Label>
+            <Label htmlFor="currentPassword">
+              現在のパスワード <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="currentPassword"
               name="currentPassword"
@@ -342,7 +348,9 @@ function PasswordSection({ username }: { username: string }) {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="newPassword">新しいパスワード</Label>
+            <Label htmlFor="newPassword">
+              新しいパスワード <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="newPassword"
               name="newPassword"
@@ -358,7 +366,9 @@ function PasswordSection({ username }: { username: string }) {
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">新しいパスワード（確認）</Label>
+            <Label htmlFor="confirmPassword">
+              新しいパスワード（確認） <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="confirmPassword"
               name="confirmPassword"
@@ -614,7 +624,9 @@ function DeleteAccountSection({ username }: { username: string }) {
             </AlertDialogHeader>
             <div className="space-y-2">
               <input type="hidden" name="username" autoComplete="username" value={username} />
-              <Label htmlFor="deletePassword">パスワードを入力して確認</Label>
+              <Label htmlFor="deletePassword">
+                パスワードを入力して確認 <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="deletePassword"
                 name="deletePassword"

@@ -72,7 +72,9 @@ export function CreateGroupDialog({ open, onOpenChange, onCreated }: CreateGroup
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label htmlFor="group-name">グループ名</Label>
+              <Label htmlFor="group-name">
+                グループ名 <span className="text-destructive">*</span>
+              </Label>
               <Input
                 id="group-name"
                 value={name}

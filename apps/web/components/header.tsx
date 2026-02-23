@@ -87,7 +87,9 @@ export function Header() {
       >
         <div className="flex items-center gap-6">
           <Logo href="/home" />
-          {NAV_LINKS.map((link) => (
+          {NAV_LINKS.filter(
+            (link) => !isGuest || (link.href !== "/bookmarks" && link.href !== "/friends"),
+          ).map((link) => (
             <Link
               key={link.href}
               href={link.href}

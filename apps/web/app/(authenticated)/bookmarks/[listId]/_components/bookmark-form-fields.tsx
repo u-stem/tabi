@@ -55,7 +55,9 @@ export function BookmarkFormFields({
   return (
     <div className="space-y-4 py-2">
       <div className="space-y-2">
-        <Label htmlFor="bookmark-name">名前</Label>
+        <Label htmlFor="bookmark-name">
+          名前 <span className="text-destructive">*</span>
+        </Label>
         <Input
           id="bookmark-name"
           value={name}

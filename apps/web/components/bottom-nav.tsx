@@ -25,6 +25,11 @@ export function BottomNav() {
   });
   const friendRequestCount = friendRequests?.length ?? 0;
 
+  const isGuest = isGuestUser(session);
+  const visibleLinks = NAV_LINKS.filter(
+    (link) => !isGuest || (link.href !== "/bookmarks" && link.href !== "/friends"),
+  );
+
   return (
     <nav
       aria-label="ボトムナビゲーション"
@@ -32,7 +37,7 @@ export function BottomNav() {
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div className="flex h-12 items-stretch">
-        {NAV_LINKS.map((link) => {
+        {visibleLinks.map((link) => {
           const active = pathname === link.href;
           return (
             <Link

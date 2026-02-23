@@ -10,7 +10,6 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import {
   Check,
-  CheckCheck,
   Circle,
   MessageSquare,
   Plus,
@@ -328,50 +327,45 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
       <div className="space-y-2">
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
           {isOwner && isOpen && selectionMode ? (
-            <div className="flex w-full items-center gap-2">
+            <div className="flex w-full select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
               <Button
-                variant="outline"
-                size="sm"
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
                 onClick={() => {
-                  if (!poll) return;
-                  setSelectedOptionIds(new Set(poll.options.map((o) => o.id)));
+                  setSelectionMode(false);
+                  setSelectedOptionIds(new Set());
                 }}
                 disabled={deleteSelectedMutation.isPending}
               >
-                <CheckCheck className="h-4 w-4" />
-                <span className="hidden sm:inline">全選択</span>
+                <X className="h-3.5 w-3.5" />
               </Button>
+              <span className="text-xs font-medium">{selectedOptionIds.size}件選択中</span>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                onClick={() => setSelectedOptionIds(new Set())}
+                className="h-7 px-2 text-xs"
+                onClick={() => {
+                  if (selectedOptionIds.size === poll.options.length) {
+                    setSelectedOptionIds(new Set());
+                  } else {
+                    setSelectedOptionIds(new Set(poll.options.map((o) => o.id)));
+                  }
+                }}
                 disabled={deleteSelectedMutation.isPending}
               >
-                <X className="h-4 w-4" />
-                <span className="hidden sm:inline">選択解除</span>
+                {selectedOptionIds.size === poll.options.length ? "全解除" : "全選択"}
               </Button>
-              <div className="ml-auto flex items-center gap-2">
+              <div className="ml-auto flex items-center gap-1">
                 <Button
-                  variant="destructive"
+                  variant="ghost"
                   size="sm"
+                  className="h-7 px-2 text-xs text-destructive hover:text-destructive"
                   onClick={() => setConfirmDeleteSelected(true)}
                   disabled={selectedOptionIds.size === 0 || deleteSelectedMutation.isPending}
                 >
-                  <Trash2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">
-                    {deleteSelectedMutation.isPending ? "削除中..." : "削除"}
-                  </span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setSelectionMode(false);
-                    setSelectedOptionIds(new Set());
-                  }}
-                  disabled={deleteSelectedMutation.isPending}
-                >
-                  キャンセル
+                  <Trash2 className="h-3.5 w-3.5" />
+                  削除
                 </Button>
               </div>
             </div>

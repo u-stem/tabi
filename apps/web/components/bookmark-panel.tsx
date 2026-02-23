@@ -104,9 +104,12 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
   if (listsLoading) {
     return (
       <div className="space-y-3">
-        <Skeleton className="h-9 w-full rounded-md" />
-        <Skeleton className="h-16 w-full rounded-md" />
-        <Skeleton className="h-16 w-full rounded-md" />
+        <div className="flex items-center gap-1.5">
+          <Skeleton className="h-8 flex-1 rounded-md" />
+          <Skeleton className="h-8 w-16 rounded-md" />
+        </div>
+        <Skeleton className="h-14 w-full rounded-md" />
+        <Skeleton className="h-14 w-full rounded-md" />
       </div>
     );
   }

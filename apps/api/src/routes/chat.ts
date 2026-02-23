@@ -95,7 +95,6 @@ chatRoutes.post("/:tripId/chat/session", requireTripAccess("editor"), async (c) 
     userId: user.id,
     action: "created",
     entityType: "chat_session",
-    entityName: "作戦会議",
   });
 
   return c.json(
@@ -130,7 +129,6 @@ chatRoutes.delete("/:tripId/chat/session", requireTripAccess("editor"), async (c
     userId: user.id,
     action: "deleted",
     entityType: "chat_session",
-    entityName: "作戦会議",
   });
 
   return c.body(null, 204);

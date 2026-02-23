@@ -112,18 +112,6 @@
   @media (max-width: 1023px) {
     body {
       overflow-x: hidden;
-      /* Native-like: disable text selection & callout outside inputs */
-      -webkit-user-select: none;
-      user-select: none;
-      -webkit-touch-callout: none;
-    }
-    /* Allow selection in form inputs, textareas, and contenteditable */
-    input,
-    textarea,
-    [contenteditable="true"] {
-      -webkit-user-select: text;
-      user-select: text;
-      -webkit-touch-callout: default;
     }
   }
   button,

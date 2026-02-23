@@ -38,6 +38,9 @@ app.onError((err, c) => {
   if (err instanceof SyntaxError) {
     return c.json({ error: ERROR_MSG.INVALID_JSON }, 400);
   }
+  if (err.message?.includes("invalid input syntax for type uuid")) {
+    return c.json({ error: ERROR_MSG.INVALID_ID_FORMAT }, 400);
+  }
   console.error("Unhandled error:", err.stack || err);
   return c.json({ error: ERROR_MSG.INTERNAL_ERROR }, 500);
 });

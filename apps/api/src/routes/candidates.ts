@@ -170,7 +170,13 @@ candidateRoutes.post("/:tripId/candidates/batch-delete", requireTripAccess("edit
     return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
   }
 
-  await db.delete(schedules).where(inArray(schedules.id, parsed.data.scheduleIds));
+  await db.delete(schedules).where(
+    and(
+      inArray(schedules.id, parsed.data.scheduleIds),
+      eq(schedules.tripId, tripId),
+      isNull(schedules.dayPatternId),
+    ),
+  );
 
   logActivity({
     tripId,

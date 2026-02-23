@@ -139,7 +139,9 @@ scheduleRoutes.post(
       return c.json({ error: ERROR_MSG.SCHEDULE_NOT_FOUND }, 404);
     }
 
-    await db.delete(schedules).where(inArray(schedules.id, parsed.data.scheduleIds));
+    await db.delete(schedules).where(
+      and(inArray(schedules.id, parsed.data.scheduleIds), eq(schedules.dayPatternId, patternId)),
+    );
 
     logActivity({
       tripId,

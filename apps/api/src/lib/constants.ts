@@ -13,6 +13,7 @@ export const ERROR_MSG = {
   CANNOT_DELETE_DEFAULT: "Cannot delete default pattern",
   INVALID_JSON: "Invalid JSON",
   INTERNAL_ERROR: "Internal server error",
+  INVALID_ID_FORMAT: "Invalid ID format",
   DATE_ORDER: "End date must be on or after start date",
   SHARED_NOT_FOUND: "Shared trip not found",
   CANDIDATE_NOT_FOUND: "Candidate not found",

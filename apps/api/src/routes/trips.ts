@@ -38,7 +38,10 @@ tripRoutes.use("*", requireAuth);
 // List trips for current user, filtered by scope
 tripRoutes.get("/", async (c) => {
   const user = c.get("user");
-  const scope = c.req.query("scope") as string | undefined;
+  const scope = c.req.query("scope");
+  if (scope !== undefined && scope !== "owned" && scope !== "shared") {
+    return c.json({ error: "Invalid scope parameter" }, 400);
+  }
 
   const roleFilter =
     scope === "owned"

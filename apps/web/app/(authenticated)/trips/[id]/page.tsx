@@ -959,7 +959,7 @@ export default function TripDetailPage() {
             >
               <div
                 ref={swipeContainerRef}
-                className="relative"
+                className="relative touch-pan-y"
                 style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
               >
                 {/* Current tab */}

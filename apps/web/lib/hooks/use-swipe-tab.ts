@@ -18,9 +18,8 @@ export type SwipeState = {
  * Applies translateX directly to swipeRef for 60fps tracking,
  * only uses React state for adjacent tab mount/unmount and animation flag.
  *
- * touchstart uses capture on container to intercept before Radix UI.
- * touchmove/touchend listen on document to avoid Radix Select's
- * releasePointerCapture breaking the touch event chain.
+ * Pointer events are used so swipe still works inside
+ * interactive controls that manipulate pointer capture (e.g. Radix Select).
  */
 export function useSwipeTab(
   containerRef: RefObject<HTMLElement | null>,
@@ -39,9 +38,11 @@ export function useSwipeTab(
   optionsRef.current = options;
 
   useEffect(() => {
-    const container = containerRef.current;
+    const containerEl = containerRef.current;
     const swipeEl = swipeRef.current;
-    if (!container || !swipeEl || options.enabled === false) return;
+    if (!containerEl || !swipeEl || options.enabled === false) return;
+    const container = containerEl;
+    const swipe = swipeEl;
 
     let startX = 0;
     let startY = 0;
@@ -51,24 +52,26 @@ export function useSwipeTab(
     let adjacentSet: "prev" | "next" | null = null;
     let animating = false;
     let tracking = false;
+    let activePointerId: number | null = null;
 
     function resetSwipe() {
       axis = "pending";
       adjacentSet = null;
       animating = false;
       tracking = false;
-      swipeEl!.style.transform = "";
-      swipeEl!.style.transition = "";
+      activePointerId = null;
+      swipe.style.transform = "";
+      swipe.style.transition = "";
       setAdjacent(null);
       setIsAnimating(false);
     }
 
     function handleTransitionEnd() {
-      swipeEl!.removeEventListener("transitionend", handleTransitionEnd);
+      swipe.removeEventListener("transitionend", handleTransitionEnd);
       if (!animating) return;
 
       const opts = optionsRef.current;
-      const currentTransform = swipeEl!.style.transform;
+      const currentTransform = swipe.style.transform;
       const isFullSlide =
         currentTransform.includes(`${containerWidth}`) ||
         currentTransform.includes(`${-containerWidth}`);
@@ -86,30 +89,29 @@ export function useSwipeTab(
         adjacentSet = null;
         animating = false;
         tracking = false;
-        swipeEl!.style.transform = "";
-        swipeEl!.style.transition = "";
+        activePointerId = null;
+        swipe.style.transform = "";
+        swipe.style.transition = "";
       } else {
         resetSwipe();
       }
     }
 
-    function handleTouchStart(e: TouchEvent) {
+    function startSwipe(clientX: number, clientY: number, pointerId: number) {
       if (animating) return;
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
+      startX = clientX;
+      startY = clientY;
       startTime = Date.now();
       axis = "pending";
       tracking = true;
-      containerWidth = container!.offsetWidth;
+      activePointerId = pointerId;
+      containerWidth = container.offsetWidth;
     }
 
-    function handleTouchMove(e: TouchEvent) {
+    function moveSwipe(clientX: number, clientY: number) {
       if (!tracking || animating || axis === "vertical") return;
-
-      const currentX = e.touches[0].clientX;
-      const currentY = e.touches[0].clientY;
-      const dx = currentX - startX;
-      const dy = currentY - startY;
+      const dx = clientX - startX;
+      const dy = clientY - startY;
       const absDx = Math.abs(dx);
       const absDy = Math.abs(dy);
 
@@ -142,17 +144,18 @@ export function useSwipeTab(
         translateX = dx;
       }
 
-      swipeEl!.style.transform = `translateX(${translateX}px)`;
+      swipe.style.transform = `translateX(${translateX}px)`;
     }
 
-    function handleTouchEnd(e: TouchEvent) {
+    function endSwipe(clientX: number) {
       if (!tracking) return;
+      activePointerId = null;
       if (animating || axis !== "horizontal") {
         if (axis === "pending") resetSwipe();
         return;
       }
 
-      const dx = e.changedTouches[0].clientX - startX;
+      const dx = clientX - startX;
       const absDx = Math.abs(dx);
       const elapsed = Date.now() - startTime;
       const velocity = elapsed > 0 ? absDx / elapsed : 0;
@@ -170,34 +173,60 @@ export function useSwipeTab(
         animating = true;
         setIsAnimating(true);
         const targetX = dx < 0 ? -containerWidth : containerWidth;
-        swipeEl!.addEventListener("transitionend", handleTransitionEnd, { once: true });
-        swipeEl!.style.transition = `transform ${SNAP_DURATION}ms cubic-bezier(0.2, 0, 0, 1)`;
+        swipe.addEventListener("transitionend", handleTransitionEnd, { once: true });
+        swipe.style.transition = `transform ${SNAP_DURATION}ms cubic-bezier(0.2, 0, 0, 1)`;
         // Force reflow so transition fires from current position
-        swipeEl!.offsetHeight;
-        swipeEl!.style.transform = `translateX(${targetX}px)`;
+        swipe.offsetHeight;
+        swipe.style.transform = `translateX(${targetX}px)`;
       } else {
         // Spring back to origin
         animating = true;
         setIsAnimating(true);
-        swipeEl!.addEventListener("transitionend", handleTransitionEnd, { once: true });
-        swipeEl!.style.transition = `transform ${SNAP_DURATION}ms cubic-bezier(0.2, 0, 0, 1)`;
-        swipeEl!.offsetHeight;
-        swipeEl!.style.transform = "translateX(0px)";
+        swipe.addEventListener("transitionend", handleTransitionEnd, { once: true });
+        swipe.style.transition = `transform ${SNAP_DURATION}ms cubic-bezier(0.2, 0, 0, 1)`;
+        swipe.offsetHeight;
+        swipe.style.transform = "translateX(0px)";
       }
     }
 
-    // touchstart on container with capture to intercept before Radix UI
-    container.addEventListener("touchstart", handleTouchStart, { passive: true, capture: true });
-    // touchmove/touchend on document to survive Radix Select's releasePointerCapture
-    document.addEventListener("touchmove", handleTouchMove, { passive: true });
-    document.addEventListener("touchend", handleTouchEnd, { passive: true });
+    function handlePointerDown(e: PointerEvent) {
+      if (e.pointerType !== "touch") return;
+      if (activePointerId !== null) return;
+      startSwipe(e.clientX, e.clientY, e.pointerId);
+    }
+
+    function handlePointerMove(e: PointerEvent) {
+      if (activePointerId !== e.pointerId) return;
+      moveSwipe(e.clientX, e.clientY);
+    }
+
+    function handlePointerUp(e: PointerEvent) {
+      if (activePointerId !== e.pointerId) return;
+      endSwipe(e.clientX);
+    }
+
+    function handlePointerCancel(e: PointerEvent) {
+      if (activePointerId !== e.pointerId) return;
+      resetSwipe();
+    }
+
+    // Intercept swipe start before nested controls update pointer capture.
+    container.addEventListener("pointerdown", handlePointerDown, {
+      passive: true,
+      capture: true,
+    });
+    // Keep move/up on document to survive capture shifts from nested controls.
+    document.addEventListener("pointermove", handlePointerMove, { passive: true });
+    document.addEventListener("pointerup", handlePointerUp, { passive: true });
+    document.addEventListener("pointercancel", handlePointerCancel, { passive: true });
 
     return () => {
-      container.removeEventListener("touchstart", handleTouchStart, true);
-      document.removeEventListener("touchmove", handleTouchMove);
-      document.removeEventListener("touchend", handleTouchEnd);
-      swipeEl.style.transform = "";
-      swipeEl.style.transition = "";
+      container.removeEventListener("pointerdown", handlePointerDown, true);
+      document.removeEventListener("pointermove", handlePointerMove);
+      document.removeEventListener("pointerup", handlePointerUp);
+      document.removeEventListener("pointercancel", handlePointerCancel);
+      swipe.style.transform = "";
+      swipe.style.transition = "";
     };
   }, [containerRef, swipeRef, options.enabled]);
 

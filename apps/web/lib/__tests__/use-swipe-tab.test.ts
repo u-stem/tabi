@@ -20,20 +20,48 @@ function createMockElement(width = 375) {
   };
 }
 
-function touch(clientX: number, clientY = 0) {
-  return { clientX, clientY };
+function pointer(clientX: number, clientY = 0, pointerId = 1, pointerType = "touch") {
+  return { clientX, clientY, pointerId, pointerType };
 }
 
-function fireTouchStart(listeners: Record<string, EventListener>, x: number, y = 0) {
-  listeners.touchstart?.({ touches: [touch(x, y)] } as unknown as Event);
+function firePointerDown(
+  listeners: Record<string, EventListener>,
+  x: number,
+  y = 0,
+  pointerId = 1,
+  pointerType = "touch",
+) {
+  listeners.pointerdown?.(pointer(x, y, pointerId, pointerType) as unknown as Event);
 }
 
-function fireTouchMove(listeners: Record<string, EventListener>, x: number, y = 0) {
-  listeners.touchmove?.({ touches: [touch(x, y)] } as unknown as Event);
+function firePointerMove(
+  listeners: Record<string, EventListener>,
+  x: number,
+  y = 0,
+  pointerId = 1,
+  pointerType = "touch",
+) {
+  listeners.pointermove?.(pointer(x, y, pointerId, pointerType) as unknown as Event);
 }
 
-function fireTouchEnd(listeners: Record<string, EventListener>, x: number, y = 0) {
-  listeners.touchend?.({ changedTouches: [touch(x, y)] } as unknown as Event);
+function firePointerUp(
+  listeners: Record<string, EventListener>,
+  x: number,
+  y = 0,
+  pointerId = 1,
+  pointerType = "touch",
+) {
+  listeners.pointerup?.(pointer(x, y, pointerId, pointerType) as unknown as Event);
+}
+
+function firePointerCancel(
+  listeners: Record<string, EventListener>,
+  x: number,
+  y = 0,
+  pointerId = 1,
+  pointerType = "touch",
+) {
+  listeners.pointercancel?.(pointer(x, y, pointerId, pointerType) as unknown as Event);
 }
 
 describe("useSwipeTab", () => {
@@ -93,24 +121,27 @@ describe("useSwipeTab", () => {
     );
   }
 
-  it("registers touchstart on container with capture: true", () => {
+  it("registers pointerdown on container with capture: true", () => {
     renderSwipeHook();
 
     const calls = container.el.addEventListener as ReturnType<typeof vi.fn>;
-    const touchStartCall = calls.mock.calls.find((c: unknown[]) => c[0] === "touchstart");
-    expect(touchStartCall).toBeDefined();
-    expect(touchStartCall![2]).toEqual({ passive: true, capture: true });
+    const pointerDownCall = calls.mock.calls.find((c: unknown[]) => c[0] === "pointerdown");
+    expect(pointerDownCall).toBeDefined();
+    expect(pointerDownCall?.[2]).toEqual({ passive: true, capture: true });
   });
 
-  it("registers touchmove and touchend on document", () => {
+  it("registers pointermove/pointerup/pointercancel on document", () => {
     renderSwipeHook();
 
-    const moveCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "touchmove");
-    const endCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "touchend");
+    const moveCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "pointermove");
+    const upCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "pointerup");
+    const cancelCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "pointercancel");
     expect(moveCall).toBeDefined();
-    expect(endCall).toBeDefined();
-    expect(moveCall![2]).toEqual({ passive: true });
-    expect(endCall![2]).toEqual({ passive: true });
+    expect(upCall).toBeDefined();
+    expect(cancelCall).toBeDefined();
+    expect(moveCall?.[2]).toEqual({ passive: true });
+    expect(upCall?.[2]).toEqual({ passive: true });
+    expect(cancelCall?.[2]).toEqual({ passive: true });
   });
 
   it("does not register listeners when disabled", () => {
@@ -118,29 +149,29 @@ describe("useSwipeTab", () => {
 
     const calls = container.el.addEventListener as ReturnType<typeof vi.fn>;
     expect(calls).not.toHaveBeenCalled();
-    const moveCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "touchmove");
+    const moveCall = addSpy.mock.calls.find((c: unknown[]) => c[0] === "pointermove");
     expect(moveCall).toBeUndefined();
   });
 
-  it("locks axis as horizontal when dx exceeds dy * bias", () => {
+  it("locks axis as horizontal when dx exceeds dy * bias (pointer)", () => {
     renderSwipeHook();
 
     act(() => {
-      fireTouchStart(container.listeners, 200);
-      fireTouchMove(docListeners, 170, 0);
+      firePointerDown(container.listeners, 200);
+      firePointerMove(docListeners, 170, 0);
     });
 
     expect(swipeEl.el.style.transform).toBe("translateX(-30px)");
   });
 
-  it("ignores touch when vertical movement dominates", () => {
+  it("ignores pointer when vertical movement dominates", () => {
     const onSwipeComplete = vi.fn();
     renderSwipeHook({ onSwipeComplete });
 
     act(() => {
-      fireTouchStart(container.listeners, 200, 0);
-      fireTouchMove(docListeners, 200, 30);
-      fireTouchEnd(docListeners, 100, 30);
+      firePointerDown(container.listeners, 200, 0);
+      firePointerMove(docListeners, 200, 30);
+      firePointerUp(docListeners, 100, 30);
     });
 
     expect(onSwipeComplete).not.toHaveBeenCalled();
@@ -150,8 +181,8 @@ describe("useSwipeTab", () => {
     const { result } = renderSwipeHook();
 
     act(() => {
-      fireTouchStart(container.listeners, 200);
-      fireTouchMove(docListeners, 170, 0);
+      firePointerDown(container.listeners, 200);
+      firePointerMove(docListeners, 170, 0);
     });
 
     expect(result.current.adjacent).toBe("next");
@@ -161,8 +192,8 @@ describe("useSwipeTab", () => {
     const { result } = renderSwipeHook();
 
     act(() => {
-      fireTouchStart(container.listeners, 100);
-      fireTouchMove(docListeners, 130, 0);
+      firePointerDown(container.listeners, 100);
+      firePointerMove(docListeners, 130, 0);
     });
 
     expect(result.current.adjacent).toBe("prev");
@@ -172,8 +203,8 @@ describe("useSwipeTab", () => {
     renderSwipeHook({ canSwipeNext: false });
 
     act(() => {
-      fireTouchStart(container.listeners, 200);
-      fireTouchMove(docListeners, 140, 0);
+      firePointerDown(container.listeners, 200);
+      firePointerMove(docListeners, 140, 0);
     });
 
     // dx=-60, rubber-band: -60/3 = -20
@@ -184,8 +215,8 @@ describe("useSwipeTab", () => {
     renderSwipeHook({ canSwipePrev: false });
 
     act(() => {
-      fireTouchStart(container.listeners, 100);
-      fireTouchMove(docListeners, 160, 0);
+      firePointerDown(container.listeners, 100);
+      firePointerMove(docListeners, 160, 0);
     });
 
     // dx=60, rubber-band: 60/3 = 20
@@ -196,9 +227,9 @@ describe("useSwipeTab", () => {
     renderSwipeHook();
 
     act(() => {
-      fireTouchStart(container.listeners, 200);
-      fireTouchMove(docListeners, 140, 0);
-      fireTouchEnd(docListeners, 140, 0);
+      firePointerDown(container.listeners, 200);
+      firePointerMove(docListeners, 140, 0);
+      firePointerUp(docListeners, 140, 0);
     });
 
     expect(swipeEl.el.style.transition).toContain("transform");
@@ -209,9 +240,9 @@ describe("useSwipeTab", () => {
     renderSwipeHook();
 
     act(() => {
-      fireTouchStart(container.listeners, 200);
-      fireTouchMove(docListeners, 185, 0);
-      fireTouchEnd(docListeners, 185, 0);
+      firePointerDown(container.listeners, 200);
+      firePointerMove(docListeners, 185, 0);
+      firePointerUp(docListeners, 185, 0);
     });
 
     expect(swipeEl.el.style.transition).toContain("transform");
@@ -223,13 +254,13 @@ describe("useSwipeTab", () => {
 
     const now = Date.now();
     vi.spyOn(Date, "now")
-      .mockReturnValueOnce(now) // touchstart
-      .mockReturnValueOnce(now + 50); // touchend (50ms, 30px => 0.6px/ms > 0.3)
+      .mockReturnValueOnce(now) // pointerdown
+      .mockReturnValueOnce(now + 50); // pointerup (50ms, 30px => 0.6px/ms > 0.3)
 
     act(() => {
-      fireTouchStart(container.listeners, 200);
-      fireTouchMove(docListeners, 170, 0);
-      fireTouchEnd(docListeners, 170, 0);
+      firePointerDown(container.listeners, 200);
+      firePointerMove(docListeners, 170, 0);
+      firePointerUp(docListeners, 170, 0);
     });
 
     expect(swipeEl.el.style.transform).toBe("translateX(-375px)");
@@ -239,25 +270,52 @@ describe("useSwipeTab", () => {
     renderSwipeHook({ canSwipeNext: false });
 
     act(() => {
-      fireTouchStart(container.listeners, 200);
-      fireTouchMove(docListeners, 100, 0);
-      fireTouchEnd(docListeners, 100, 0);
+      firePointerDown(container.listeners, 200);
+      firePointerMove(docListeners, 100, 0);
+      firePointerUp(docListeners, 100, 0);
     });
 
     expect(swipeEl.el.style.transform).toBe("translateX(0px)");
   });
 
-  it("ignores touchmove/touchend without prior touchstart on container", () => {
+  it("ignores pointermove/pointerup without prior pointerdown on container", () => {
     renderSwipeHook();
 
     act(() => {
-      // No touchstart on container — fire move/end directly on document
-      fireTouchMove(docListeners, 170, 0);
-      fireTouchEnd(docListeners, 170, 0);
+      // No pointerdown on container — fire move/up directly on document
+      firePointerMove(docListeners, 170, 0);
+      firePointerUp(docListeners, 170, 0);
     });
 
     // No transform should be applied since tracking was never set
     expect(swipeEl.el.style.transform).toBe("");
+  });
+
+  it("ignores non-touch pointer events", () => {
+    const onSwipeComplete = vi.fn();
+    renderSwipeHook({ onSwipeComplete });
+
+    act(() => {
+      firePointerDown(container.listeners, 200, 0, 1, "mouse");
+      firePointerMove(docListeners, 120, 0, 1, "mouse");
+      firePointerUp(docListeners, 120, 0, 1, "mouse");
+    });
+
+    expect(onSwipeComplete).not.toHaveBeenCalled();
+    expect(swipeEl.el.style.transform).toBe("");
+  });
+
+  it("resets swipe on pointercancel", () => {
+    renderSwipeHook();
+
+    act(() => {
+      firePointerDown(container.listeners, 200);
+      firePointerMove(docListeners, 170);
+      firePointerCancel(docListeners, 170);
+    });
+
+    expect(swipeEl.el.style.transform).toBe("");
+    expect(swipeEl.el.style.transition).toBe("");
   });
 
   it("cleans up document listeners on unmount", () => {
@@ -265,9 +323,13 @@ describe("useSwipeTab", () => {
 
     unmount();
 
-    const moveRemoved = removeSpy.mock.calls.find((c: unknown[]) => c[0] === "touchmove");
-    const endRemoved = removeSpy.mock.calls.find((c: unknown[]) => c[0] === "touchend");
-    expect(moveRemoved).toBeDefined();
-    expect(endRemoved).toBeDefined();
+    const pointerMoveRemoved = removeSpy.mock.calls.find((c: unknown[]) => c[0] === "pointermove");
+    const pointerUpRemoved = removeSpy.mock.calls.find((c: unknown[]) => c[0] === "pointerup");
+    const pointerCancelRemoved = removeSpy.mock.calls.find(
+      (c: unknown[]) => c[0] === "pointercancel",
+    );
+    expect(pointerMoveRemoved).toBeDefined();
+    expect(pointerUpRemoved).toBeDefined();
+    expect(pointerCancelRemoved).toBeDefined();
   });
 });

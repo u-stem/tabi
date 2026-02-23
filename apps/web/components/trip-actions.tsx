@@ -112,6 +112,9 @@ export function TripActions({
   const [regenerating, setRegenerating] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [statusSheetOpen, setStatusSheetOpen] = useState(false);
+  const menuTriggerId = compact
+    ? `trip-menu-trigger-mobile-${tripId}`
+    : `trip-menu-trigger-desktop-${tripId}`;
 
   async function handleStatusChange(newStatus: string) {
     if (newStatus === status) return;
@@ -357,7 +360,13 @@ export function TripActions({
       ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="icon" className="h-8 w-8" disabled={disabled}>
+            <Button
+              id={menuTriggerId}
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              disabled={disabled}
+            >
               <MoreHorizontal className="h-4 w-4" />
               <span className="sr-only">旅行メニュー</span>
             </Button>

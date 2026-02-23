@@ -50,7 +50,10 @@ function fireTouchStart(
   y = 0,
   target?: EventTarget | null,
 ) {
-  listeners.touchstart?.({ touches: [touch(x, y, target)], target: target ?? null } as unknown as Event);
+  listeners.touchstart?.({
+    touches: [touch(x, y, target)],
+    target: target ?? null,
+  } as unknown as Event);
 }
 
 function fireTouchMove(listeners: Record<string, EventListener>, x: number, y = 0) {

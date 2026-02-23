@@ -35,10 +35,7 @@ export function MobileContentTabs({
   const tabs = BASE_TABS;
 
   return (
-    <div
-      className="my-2 grid shrink-0 grid-cols-4 gap-1 rounded-lg bg-muted p-1"
-      role="tablist"
-    >
+    <div className="my-2 grid shrink-0 grid-cols-4 gap-1 rounded-lg bg-muted p-1" role="tablist">
       {tabs.map((tab) => (
         <button
           key={tab.id}

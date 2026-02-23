@@ -621,7 +621,7 @@ export default function TripDetailPage() {
                 )}
                 {mobileTab === "candidates" &&
                   (currentDay && currentPattern ? (
-                    <div className="p-4">
+                    <div className="rounded-lg border bg-card p-4">
                       <CandidatePanel
                         tripId={tripId}
                         candidates={dnd.localCandidates}
@@ -646,7 +646,7 @@ export default function TripDetailPage() {
                   ))}
                 {mobileTab === "expenses" &&
                   (trip.days.length > 0 ? (
-                    <div className="p-4">
+                    <div className="rounded-lg border bg-card p-4">
                       <ExpensePanel
                         tripId={tripId}
                         canEdit={canEdit}
@@ -660,7 +660,7 @@ export default function TripDetailPage() {
                     </p>
                   ))}
                 {mobileTab === "chat" && (
-                  <div className="p-4">
+                  <div className="rounded-lg border bg-card p-4">
                     <ChatPanel
                       tripId={tripId}
                       canEdit={canEdit}

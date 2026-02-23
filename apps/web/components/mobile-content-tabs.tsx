@@ -23,7 +23,7 @@ export function MobileContentTabs({
   candidateCount,
 }: MobileContentTabsProps) {
   return (
-    <div className="mx-3 my-2 flex shrink-0 gap-1 rounded-lg bg-muted p-1" role="tablist">
+    <div className="my-2 flex shrink-0 gap-1 rounded-lg bg-muted p-1" role="tablist">
       {TABS.map((tab) => (
         <button
           key={tab.id}
@@ -31,7 +31,7 @@ export function MobileContentTabs({
           role="tab"
           aria-selected={activeTab === tab.id}
           className={cn(
-            "flex-1 rounded-md px-3 py-1.5 text-sm font-medium transition-[colors,transform] min-h-[36px] active:scale-[0.97]",
+            "flex-1 rounded-md px-2 py-1.5 text-sm font-medium whitespace-nowrap transition-[colors,transform] min-h-[36px] active:scale-[0.97]",
             activeTab === tab.id
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground",

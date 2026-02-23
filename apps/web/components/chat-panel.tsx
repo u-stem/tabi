@@ -27,6 +27,8 @@ import { queryKeys } from "@/lib/query-keys";
 type ChatPanelProps = {
   tripId: string;
   canEdit: boolean;
+  /** When true, messages fill the container and input is fixed above bottom nav */
+  mobile?: boolean;
   onBroadcastMessage?: (message: ChatMessageResponse) => void;
   onBroadcastSession?: (action: "started" | "ended") => void;
 };
@@ -85,6 +87,7 @@ function linkify(text: string): React.ReactNode[] {
 export function ChatPanel({
   tripId,
   canEdit,
+  mobile = false,
   onBroadcastMessage,
   onBroadcastSession,
 }: ChatPanelProps) {
@@ -234,7 +237,7 @@ export function ChatPanel({
   const isActive = !!chatSession;
 
   return (
-    <div>
+    <div className={mobile ? "flex flex-col" : ""}>
       {/* Header: session action button */}
       {canEdit && (
         <div className="mb-2 flex justify-end">
@@ -273,7 +276,11 @@ export function ChatPanel({
       {/* Messages area */}
       <div
         ref={scrollContainerRef}
-        className="min-h-24 max-h-80 overflow-y-auto rounded-md border border-dashed p-3"
+        className={
+          mobile
+            ? "min-h-24 flex-1 overflow-y-auto p-3"
+            : "min-h-24 max-h-80 overflow-y-auto rounded-md border border-dashed p-3"
+        }
         onScroll={handleScroll}
       >
         {isActive && hasNextPage && (
@@ -348,7 +355,14 @@ export function ChatPanel({
 
       {/* Input area: always visible, disabled when no session */}
       {canEdit && (
-        <div className="mt-2 flex items-end gap-2">
+        <div
+          className={
+            mobile
+              ? "fixed right-0 left-0 z-20 flex items-end gap-2 border-t bg-background px-4 py-2"
+              : "mt-2 flex items-end gap-2"
+          }
+          style={mobile ? { bottom: "calc(3rem + env(safe-area-inset-bottom, 0px))" } : undefined}
+        >
           <textarea
             value={input}
             onChange={(e) => setInput(e.target.value)}

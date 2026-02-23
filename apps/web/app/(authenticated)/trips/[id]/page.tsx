@@ -660,14 +660,13 @@ export default function TripDetailPage() {
                     </p>
                   ))}
                 {mobileTab === "chat" && (
-                  <div className="rounded-lg border bg-card p-4">
-                    <ChatPanel
-                      tripId={tripId}
-                      canEdit={canEdit}
-                      onBroadcastMessage={broadcastChatMessage}
-                      onBroadcastSession={handleBroadcastChatSession}
-                    />
-                  </div>
+                  <ChatPanel
+                    tripId={tripId}
+                    canEdit={canEdit}
+                    mobile
+                    onBroadcastMessage={broadcastChatMessage}
+                    onBroadcastSession={handleBroadcastChatSession}
+                  />
                 )}
               </div>
             </div>

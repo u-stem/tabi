@@ -476,6 +476,7 @@ export const chatMessages = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     content: text("content").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
   },
   (table) => [
     index("chat_messages_session_id_created_at_idx").on(table.sessionId, table.createdAt),

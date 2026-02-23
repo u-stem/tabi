@@ -16,6 +16,8 @@ const SYNC_JITTER_MS = 200;
 
 type TripSyncOptions = {
   onChatMessage?: (payload: unknown) => void;
+  onChatMessageEdit?: (payload: unknown) => void;
+  onChatMessageDelete?: (payload: unknown) => void;
   onChatSession?: (payload: unknown) => void;
 };
 
@@ -30,6 +32,8 @@ export function useTripSync(
   updatePresence: (dayId: string, patternId: string | null) => void;
   broadcastChange: () => void;
   broadcastChatMessage: (payload: unknown) => void;
+  broadcastChatMessageEdit: (payload: unknown) => void;
+  broadcastChatMessageDelete: (payload: unknown) => void;
   broadcastChatSession: (payload: unknown) => void;
 } {
   const [presence, setPresence] = useState<PresenceUser[]>([]);
@@ -43,6 +47,10 @@ export function useTripSync(
   const lastPresenceRef = useRef<{ dayId: string; patternId: string | null } | null>(null);
   const onChatMessageRef = useRef(options?.onChatMessage);
   onChatMessageRef.current = options?.onChatMessage;
+  const onChatMessageEditRef = useRef(options?.onChatMessageEdit);
+  onChatMessageEditRef.current = options?.onChatMessageEdit;
+  const onChatMessageDeleteRef = useRef(options?.onChatMessageDelete);
+  onChatMessageDeleteRef.current = options?.onChatMessageDelete;
   const onChatSessionRef = useRef(options?.onChatSession);
   onChatSessionRef.current = options?.onChatSession;
 
@@ -68,6 +76,12 @@ export function useTripSync(
         })
         .on("broadcast", { event: "chat:message" }, ({ payload }) => {
           onChatMessageRef.current?.(payload);
+        })
+        .on("broadcast", { event: "chat:message:edit" }, ({ payload }) => {
+          onChatMessageEditRef.current?.(payload);
+        })
+        .on("broadcast", { event: "chat:message:delete" }, ({ payload }) => {
+          onChatMessageDeleteRef.current?.(payload);
         })
         .on("broadcast", { event: "chat:session" }, ({ payload }) => {
           onChatSessionRef.current?.(payload);
@@ -184,6 +198,22 @@ export function useTripSync(
     });
   }, []);
 
+  const broadcastChatMessageEdit = useCallback((payload: unknown) => {
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "chat:message:edit",
+      payload: payload as Record<string, unknown>,
+    });
+  }, []);
+
+  const broadcastChatMessageDelete = useCallback((payload: unknown) => {
+    channelRef.current?.send({
+      type: "broadcast",
+      event: "chat:message:delete",
+      payload: payload as Record<string, unknown>,
+    });
+  }, []);
+
   const broadcastChatSession = useCallback((payload: unknown) => {
     channelRef.current?.send({
       type: "broadcast",
@@ -198,6 +228,8 @@ export function useTripSync(
     updatePresence,
     broadcastChange,
     broadcastChatMessage,
+    broadcastChatMessageEdit,
+    broadcastChatMessageDelete,
     broadcastChatSession,
   };
 }

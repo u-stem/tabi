@@ -246,4 +246,5 @@ export type ChatMessageResponse = {
   userImage?: string | null;
   content: string;
   createdAt: string;
+  editedAt?: string;
 };

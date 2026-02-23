@@ -260,6 +260,8 @@ export const MSG = {
   CHAT_SESSION_ENDED: "作戦会議を終了しました",
   CHAT_SESSION_END_FAILED: "作戦会議の終了に失敗しました",
   CHAT_MESSAGE_SEND_FAILED: "メッセージの送信に失敗しました",
+  CHAT_MESSAGE_EDIT_FAILED: "メッセージの編集に失敗しました",
+  CHAT_MESSAGE_DELETE_FAILED: "メッセージの削除に失敗しました",
   CHAT_SESSION_ALREADY_EXISTS: "作戦会議はすでに開始されています",
   CHAT_EMPTY: "メッセージはまだありません",
   CHAT_NO_SESSION: "作戦会議は開始されていません",

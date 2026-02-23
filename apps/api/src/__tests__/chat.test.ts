@@ -5,6 +5,7 @@ const { mockGetSession, mockDbQuery, mockDbInsert, mockDbDelete, mockDbSelect, m
     mockGetSession: vi.fn(),
     mockDbQuery: {
       chatSessions: { findFirst: vi.fn() },
+      chatMessages: { findFirst: vi.fn() },
       tripMembers: { findFirst: vi.fn() },
     },
     mockDbInsert: vi.fn(),
@@ -344,6 +345,135 @@ describe("Chat routes", () => {
       const data = await res.json();
       expect(data.items).toHaveLength(2);
       expect(data.items[0].content).toBe("second");
+    });
+  });
+
+  describe("PATCH /:tripId/chat/messages/:messageId", () => {
+    it("updates message content and returns 200", async () => {
+      const now = new Date();
+      const editedAt = new Date();
+      mockDbQuery.chatMessages.findFirst.mockResolvedValue({
+        id: "msg-1",
+        sessionId,
+        userId: TEST_USER.id,
+        content: "original",
+        createdAt: now,
+        editedAt: null,
+      });
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([
+              {
+                id: "msg-1",
+                sessionId,
+                userId: TEST_USER.id,
+                content: "updated",
+                createdAt: now,
+                editedAt,
+              },
+            ]),
+          }),
+        }),
+      });
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            limit: vi.fn().mockResolvedValue([{ name: TEST_USER.name, image: null }]),
+          }),
+        }),
+      });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/chat/messages/msg-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: "updated" }),
+      });
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.content).toBe("updated");
+      expect(data.editedAt).toBeDefined();
+    });
+
+    it("returns 404 if message not found", async () => {
+      mockDbQuery.chatMessages.findFirst.mockResolvedValue(null);
+
+      const res = await makeApp().request(`/api/trips/${tripId}/chat/messages/msg-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: "updated" }),
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 403 if not message author", async () => {
+      mockDbQuery.chatMessages.findFirst.mockResolvedValue({
+        id: "msg-1",
+        sessionId,
+        userId: "other-user-id",
+        content: "original",
+        createdAt: new Date(),
+      });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/chat/messages/msg-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: "updated" }),
+      });
+      expect(res.status).toBe(403);
+    });
+
+    it("returns 400 for empty content", async () => {
+      const res = await makeApp().request(`/api/trips/${tripId}/chat/messages/msg-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: "" }),
+      });
+      expect(res.status).toBe(400);
+    });
+  });
+
+  describe("DELETE /:tripId/chat/messages/:messageId", () => {
+    it("deletes message and returns 204", async () => {
+      mockDbQuery.chatMessages.findFirst.mockResolvedValue({
+        id: "msg-1",
+        sessionId,
+        userId: TEST_USER.id,
+        content: "to delete",
+        createdAt: new Date(),
+      });
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/chat/messages/msg-1`, {
+        method: "DELETE",
+      });
+      expect(res.status).toBe(204);
+    });
+
+    it("returns 404 if message not found", async () => {
+      mockDbQuery.chatMessages.findFirst.mockResolvedValue(null);
+
+      const res = await makeApp().request(`/api/trips/${tripId}/chat/messages/msg-1`, {
+        method: "DELETE",
+      });
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 403 if not message author", async () => {
+      mockDbQuery.chatMessages.findFirst.mockResolvedValue({
+        id: "msg-1",
+        sessionId,
+        userId: "other-user-id",
+        content: "someone else's",
+        createdAt: new Date(),
+      });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/chat/messages/msg-1`, {
+        method: "DELETE",
+      });
+      expect(res.status).toBe(403);
     });
   });
 });

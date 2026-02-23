@@ -229,6 +229,49 @@ export default function TripDetailPage() {
     [queryClient, tripId, session?.user?.id],
   );
 
+  const onChatMessageEdit = useCallback(
+    (payload: unknown) => {
+      const msg = payload as ChatMessageResponse;
+      if (!msg?.id) return;
+      if (msg.userId === session?.user?.id) return;
+      queryClient.setQueryData<{
+        pages: { items: ChatMessageResponse[]; nextCursor: string | null }[];
+        pageParams: string[];
+      }>(queryKeys.trips.chatMessages(tripId), (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            items: page.items.map((m) => (m.id === msg.id ? msg : m)),
+          })),
+        };
+      });
+    },
+    [queryClient, tripId, session?.user?.id],
+  );
+
+  const onChatMessageDelete = useCallback(
+    (payload: unknown) => {
+      const { messageId } = payload as { messageId: string };
+      if (!messageId) return;
+      queryClient.setQueryData<{
+        pages: { items: ChatMessageResponse[]; nextCursor: string | null }[];
+        pageParams: string[];
+      }>(queryKeys.trips.chatMessages(tripId), (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          pages: old.pages.map((page) => ({
+            ...page,
+            items: page.items.filter((m) => m.id !== messageId),
+          })),
+        };
+      });
+    },
+    [queryClient, tripId],
+  );
+
   const onChatSession = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: queryKeys.trips.chatSession(tripId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.trips.chatMessages(tripId) });
@@ -242,8 +285,15 @@ export default function TripDetailPage() {
     updatePresence,
     broadcastChange,
     broadcastChatMessage,
+    broadcastChatMessageEdit,
+    broadcastChatMessageDelete,
     broadcastChatSession,
-  } = useTripSync(tripId, syncUser, invalidateTrip, { onChatMessage, onChatSession });
+  } = useTripSync(tripId, syncUser, invalidateTrip, {
+    onChatMessage,
+    onChatMessageEdit,
+    onChatMessageDelete,
+    onChatSession,
+  });
 
   const handleBroadcastChatSession = useCallback(
     (action: "started" | "ended") => {
@@ -670,6 +720,8 @@ export default function TripDetailPage() {
                     canEdit={canEdit}
                     mobile
                     onBroadcastMessage={broadcastChatMessage}
+                    onBroadcastEdit={broadcastChatMessageEdit}
+                    onBroadcastDelete={broadcastChatMessageDelete}
                     onBroadcastSession={handleBroadcastChatSession}
                   />
                 )}
@@ -779,6 +831,8 @@ export default function TripDetailPage() {
               maxEndDayOffset={Math.max(0, trip.days.length - 1)}
               onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
               onBroadcastChatMessage={broadcastChatMessage}
+              onBroadcastChatMessageEdit={broadcastChatMessageEdit}
+              onBroadcastChatMessageDelete={broadcastChatMessageDelete}
               onBroadcastChatSession={handleBroadcastChatSession}
             />
           </div>

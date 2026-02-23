@@ -49,11 +49,7 @@ interface ResponsiveAlertDialogProps {
   onOpenChange?: (open: boolean) => void;
 }
 
-function ResponsiveAlertDialog({
-  children,
-  onOpenChange,
-  ...props
-}: ResponsiveAlertDialogProps) {
+function ResponsiveAlertDialog({ children, onOpenChange, ...props }: ResponsiveAlertDialogProps) {
   const isMobile = useIsMobile();
 
   const handleOpenChange = React.useCallback(
@@ -117,9 +113,7 @@ function ResponsiveAlertDialogFooter({ ...props }: React.HTMLAttributes<HTMLDivE
   return <Comp {...props} />;
 }
 
-function ResponsiveAlertDialogTitle({
-  ...props
-}: React.ComponentProps<typeof AlertDialogTitle>) {
+function ResponsiveAlertDialogTitle({ ...props }: React.ComponentProps<typeof AlertDialogTitle>) {
   const isMobile = useMobileContext();
   const Comp = isMobile ? DrawerTitle : AlertDialogTitle;
   return <Comp {...props} />;

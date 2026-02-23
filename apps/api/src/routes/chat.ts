@@ -1,4 +1,8 @@
-import { CHAT_SESSION_TTL_HOURS, sendChatMessageSchema } from "@sugara/shared";
+import {
+  CHAT_SESSION_TTL_HOURS,
+  sendChatMessageSchema,
+  updateChatMessageSchema,
+} from "@sugara/shared";
 import { and, desc, eq, lt } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
@@ -164,6 +168,7 @@ chatRoutes.get("/:tripId/chat/messages", requireTripAccess(), async (c) => {
       userImage: users.image,
       content: chatMessages.content,
       createdAt: chatMessages.createdAt,
+      editedAt: chatMessages.editedAt,
     })
     .from(chatMessages)
     .innerJoin(users, eq(chatMessages.userId, users.id))
@@ -179,6 +184,7 @@ chatRoutes.get("/:tripId/chat/messages", requireTripAccess(), async (c) => {
     items: items.map((m) => ({
       ...m,
       createdAt: m.createdAt.toISOString(),
+      editedAt: m.editedAt?.toISOString(),
     })),
     nextCursor,
   });
@@ -235,6 +241,70 @@ chatRoutes.post("/:tripId/chat/messages", requireTripAccess("editor"), async (c)
     },
     201,
   );
+});
+
+// PATCH /:tripId/chat/messages/:messageId
+chatRoutes.patch("/:tripId/chat/messages/:messageId", requireTripAccess("editor"), async (c) => {
+  const user = c.get("user");
+  const messageId = c.req.param("messageId");
+
+  const body = await c.req.json();
+  const parsed = updateChatMessageSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const existing = await db.query.chatMessages.findFirst({
+    where: eq(chatMessages.id, messageId),
+  });
+  if (!existing) {
+    return c.json({ error: ERROR_MSG.CHAT_MESSAGE_NOT_FOUND }, 404);
+  }
+  if (existing.userId !== user.id) {
+    return c.json({ error: ERROR_MSG.CHAT_MESSAGE_NOT_AUTHOR }, 403);
+  }
+
+  const [updated] = await db
+    .update(chatMessages)
+    .set({ content: parsed.data.content, editedAt: new Date() })
+    .where(eq(chatMessages.id, messageId))
+    .returning();
+
+  const [dbUser] = await db
+    .select({ name: users.name, image: users.image })
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
+
+  return c.json({
+    id: updated.id,
+    userId: user.id,
+    userName: dbUser.name,
+    userImage: dbUser.image,
+    content: updated.content,
+    createdAt: updated.createdAt.toISOString(),
+    editedAt: updated.editedAt?.toISOString(),
+  });
+});
+
+// DELETE /:tripId/chat/messages/:messageId
+chatRoutes.delete("/:tripId/chat/messages/:messageId", requireTripAccess("editor"), async (c) => {
+  const user = c.get("user");
+  const messageId = c.req.param("messageId");
+
+  const existing = await db.query.chatMessages.findFirst({
+    where: eq(chatMessages.id, messageId),
+  });
+  if (!existing) {
+    return c.json({ error: ERROR_MSG.CHAT_MESSAGE_NOT_FOUND }, 404);
+  }
+  if (existing.userId !== user.id) {
+    return c.json({ error: ERROR_MSG.CHAT_MESSAGE_NOT_AUTHOR }, 403);
+  }
+
+  await db.delete(chatMessages).where(eq(chatMessages.id, messageId));
+
+  return c.body(null, 204);
 });
 
 export { chatRoutes };

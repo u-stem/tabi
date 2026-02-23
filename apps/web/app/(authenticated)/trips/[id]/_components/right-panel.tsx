@@ -30,6 +30,8 @@ export function RightPanel({
   onSaveToBookmark,
   hasDays,
   onBroadcastChatMessage,
+  onBroadcastChatMessageEdit,
+  onBroadcastChatMessageDelete,
   onBroadcastChatSession,
 }: {
   tripId: string;
@@ -51,6 +53,8 @@ export function RightPanel({
   onSaveToBookmark?: (scheduleIds: string[]) => void;
   hasDays: boolean;
   onBroadcastChatMessage?: (message: ChatMessageResponse) => void;
+  onBroadcastChatMessageEdit?: (message: ChatMessageResponse) => void;
+  onBroadcastChatMessageDelete?: (payload: { messageId: string }) => void;
   onBroadcastChatSession?: (action: "started" | "ended") => void;
 }) {
   return (
@@ -66,6 +70,8 @@ export function RightPanel({
             tripId={tripId}
             canEdit={canEdit}
             onBroadcastMessage={onBroadcastChatMessage}
+            onBroadcastEdit={onBroadcastChatMessageEdit}
+            onBroadcastDelete={onBroadcastChatMessageDelete}
             onBroadcastSession={onBroadcastChatSession}
           />
         ) : rightPanelTab === "candidates" ? (

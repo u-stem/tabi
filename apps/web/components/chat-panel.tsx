@@ -3,20 +3,20 @@
 import type { ChatMessageResponse, ChatSessionResponse } from "@sugara/shared";
 import { CHAT_MESSAGE_MAX_LENGTH } from "@sugara/shared";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, Plus, Send, X } from "lucide-react";
+import { Loader2, Send, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogDestructiveAction,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import {
+  ResponsiveAlertDialog,
+  ResponsiveAlertDialogCancel,
+  ResponsiveAlertDialogContent,
+  ResponsiveAlertDialogDescription,
+  ResponsiveAlertDialogDestructiveAction,
+  ResponsiveAlertDialogFooter,
+  ResponsiveAlertDialogHeader,
+  ResponsiveAlertDialogTitle,
+} from "@/components/ui/responsive-alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
@@ -134,7 +134,6 @@ export function ChatPanel({
     onSuccess: (data) => {
       queryClient.setQueryData(queryKeys.trips.chatSession(tripId), data);
       queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId) });
-      toast.success(MSG.CHAT_SESSION_STARTED);
       onBroadcastSession?.("started");
     },
     onError: (err) => {
@@ -187,12 +186,21 @@ export function ChatPanel({
     },
   });
 
-  const handleSend = useCallback(() => {
+  const handleSend = useCallback(async () => {
     const trimmed = input.trim();
     if (!trimmed) return;
     setInput("");
+    // Auto-start session on first message
+    if (!chatSession) {
+      try {
+        await startSession.mutateAsync();
+      } catch {
+        setInput(trimmed);
+        return;
+      }
+    }
     sendMessage.mutate(trimmed);
-  }, [input, sendMessage]);
+  }, [input, chatSession, startSession, sendMessage]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -224,9 +232,6 @@ export function ChatPanel({
   if (showSkeleton) {
     return (
       <div className="space-y-2">
-        <div className="flex justify-end">
-          <Skeleton className="h-8 w-36 rounded-md" />
-        </div>
         <Skeleton className="h-24 w-full rounded-md border border-dashed" />
       </div>
     );
@@ -238,38 +243,18 @@ export function ChatPanel({
 
   return (
     <div className={mobile ? "flex flex-col" : ""}>
-      {/* Header: session action button */}
-      {canEdit && (
-        <div className="mb-2 flex justify-end">
-          {isActive ? (
-            <Button
-              variant="outline"
-              onClick={() => setEndConfirmOpen(true)}
-              disabled={endSession.isPending}
-              size="sm"
-            >
-              {endSession.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <X className="h-4 w-4" />
-              )}
-              作戦会議を終了
-            </Button>
-          ) : (
-            <Button
-              variant="outline"
-              onClick={() => startSession.mutate()}
-              disabled={startSession.isPending}
-              size="sm"
-            >
-              {startSession.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Plus className="h-4 w-4" />
-              )}
-              作戦会議を開始
-            </Button>
-          )}
+      {/* Status bar */}
+      {isActive && canEdit && (
+        <div className="flex items-center justify-between rounded-t-md border-b bg-muted/50 px-3 py-2">
+          <span className="text-sm text-muted-foreground">作戦会議中</span>
+          <button
+            type="button"
+            onClick={() => setEndConfirmOpen(true)}
+            disabled={endSession.isPending}
+            className="rounded-md px-2 py-1 text-sm text-muted-foreground transition-colors hover:text-destructive disabled:opacity-50"
+          >
+            {endSession.isPending ? "終了中..." : "終了する"}
+          </button>
         </div>
       )}
 
@@ -354,13 +339,13 @@ export function ChatPanel({
         )}
       </div>
 
-      {/* Input area: always visible, disabled when no session */}
+      {/* Input area */}
       {canEdit && (
         <div
           className={
             mobile
-              ? "fixed right-0 left-0 z-20 flex items-end gap-2 border-t bg-background px-4 py-2"
-              : "mt-2 flex items-end gap-2"
+              ? "fixed right-0 left-0 z-20 flex items-center gap-2 border-t bg-background px-4 py-2"
+              : "mt-2 flex items-center gap-2"
           }
           style={mobile ? { bottom: "calc(3rem + env(safe-area-inset-bottom, 0px))" } : undefined}
         >
@@ -371,16 +356,16 @@ export function ChatPanel({
             placeholder="メッセージを入力..."
             maxLength={CHAT_MESSAGE_MAX_LENGTH}
             rows={1}
-            disabled={!isActive}
+            disabled={startSession.isPending}
             className="flex-1 resize-none rounded-lg border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
           />
           <Button
             size="icon"
             className="h-9 w-9 shrink-0"
             onClick={handleSend}
-            disabled={!isActive || !input.trim() || sendMessage.isPending}
+            disabled={!input.trim() || sendMessage.isPending || startSession.isPending}
           >
-            {sendMessage.isPending ? (
+            {sendMessage.isPending || startSession.isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <Send className="h-4 w-4" />
@@ -389,17 +374,17 @@ export function ChatPanel({
         </div>
       )}
 
-      <AlertDialog open={endConfirmOpen} onOpenChange={setEndConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>作戦会議を終了しますか？</AlertDialogTitle>
-            <AlertDialogDescription>
+      <ResponsiveAlertDialog open={endConfirmOpen} onOpenChange={setEndConfirmOpen}>
+        <ResponsiveAlertDialogContent>
+          <ResponsiveAlertDialogHeader>
+            <ResponsiveAlertDialogTitle>作戦会議を終了しますか？</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogDescription>
               すべてのメッセージが削除されます。この操作は取り消せません。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogDestructiveAction
+            </ResponsiveAlertDialogDescription>
+          </ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogFooter>
+            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
                 setEndConfirmOpen(false);
                 endSession.mutate();
@@ -407,10 +392,10 @@ export function ChatPanel({
             >
               <X className="h-4 w-4" />
               終了する
-            </AlertDialogDestructiveAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </ResponsiveAlertDialogDestructiveAction>
+          </ResponsiveAlertDialogFooter>
+        </ResponsiveAlertDialogContent>
+      </ResponsiveAlertDialog>
     </div>
   );
 }

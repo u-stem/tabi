@@ -246,6 +246,7 @@ chatRoutes.post("/:tripId/chat/messages", requireTripAccess("editor"), async (c)
 // PATCH /:tripId/chat/messages/:messageId
 chatRoutes.patch("/:tripId/chat/messages/:messageId", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
+  const tripId = c.req.param("tripId");
   const messageId = c.req.param("messageId");
 
   const body = await c.req.json();
@@ -254,8 +255,15 @@ chatRoutes.patch("/:tripId/chat/messages/:messageId", requireTripAccess("editor"
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
+  const session = await db.query.chatSessions.findFirst({
+    where: eq(chatSessions.tripId, tripId),
+  });
+  if (!session) {
+    return c.json({ error: ERROR_MSG.CHAT_MESSAGE_NOT_FOUND }, 404);
+  }
+
   const existing = await db.query.chatMessages.findFirst({
-    where: eq(chatMessages.id, messageId),
+    where: and(eq(chatMessages.id, messageId), eq(chatMessages.sessionId, session.id)),
   });
   if (!existing) {
     return c.json({ error: ERROR_MSG.CHAT_MESSAGE_NOT_FOUND }, 404);
@@ -290,10 +298,18 @@ chatRoutes.patch("/:tripId/chat/messages/:messageId", requireTripAccess("editor"
 // DELETE /:tripId/chat/messages/:messageId
 chatRoutes.delete("/:tripId/chat/messages/:messageId", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
+  const tripId = c.req.param("tripId");
   const messageId = c.req.param("messageId");
 
+  const session = await db.query.chatSessions.findFirst({
+    where: eq(chatSessions.tripId, tripId),
+  });
+  if (!session) {
+    return c.json({ error: ERROR_MSG.CHAT_MESSAGE_NOT_FOUND }, 404);
+  }
+
   const existing = await db.query.chatMessages.findFirst({
-    where: eq(chatMessages.id, messageId),
+    where: and(eq(chatMessages.id, messageId), eq(chatMessages.sessionId, session.id)),
   });
   if (!existing) {
     return c.json({ error: ERROR_MSG.CHAT_MESSAGE_NOT_FOUND }, 404);

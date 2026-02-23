@@ -3,17 +3,11 @@
 import type { ChatMessageResponse, ChatSessionResponse } from "@sugara/shared";
 import { CHAT_MESSAGE_MAX_LENGTH } from "@sugara/shared";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { EllipsisVertical, Loader2, Pencil, Send, Trash2, X } from "lucide-react";
+import { Loader2, MoreHorizontal, Pencil, Send, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   ResponsiveAlertDialog,
   ResponsiveAlertDialogCancel,
@@ -96,85 +90,98 @@ function linkify(text: string): React.ReactNode[] {
   return parts;
 }
 
-// Sub-component for message content with action triggers
-function MessageContent({
+// Lightweight message bubble — text + mobile long press only
+function MessageBubble({
   msg,
   isOwn,
   isMobile,
-  onEdit,
-  onDelete,
+  onAction,
 }: {
   msg: ChatMessageResponse;
   isOwn: boolean;
   isMobile: boolean;
-  onEdit: () => void;
-  onDelete: () => void;
+  onAction: (msg: ChatMessageResponse, anchor: HTMLElement) => void;
 }) {
-  const [sheetOpen, setSheetOpen] = useState(false);
-
   const longPress = useLongPress({
-    onLongPress: () => setSheetOpen(true),
+    onLongPress: () => onAction(msg, document.body),
     disabled: !isOwn || !isMobile,
   });
 
-  const sheetActions = useMemo(
-    () => [
-      { label: "編集", icon: <Pencil className="h-4 w-4" />, onClick: onEdit },
-      {
-        label: "削除",
-        icon: <Trash2 className="h-4 w-4" />,
-        onClick: onDelete,
-        variant: "destructive" as const,
-      },
-    ],
-    [onEdit, onDelete],
+  return (
+    <div
+      {...(isOwn && isMobile
+        ? {
+            onTouchStart: longPress.onTouchStart,
+            onTouchMove: longPress.onTouchMove,
+            onTouchEnd: longPress.onTouchEnd,
+          }
+        : {})}
+    >
+      <p className="text-sm break-all whitespace-pre-wrap">{linkify(msg.content)}</p>
+    </div>
   );
+}
+
+// Floating menu for desktop — positioned relative to the trigger button
+function DesktopMessageMenu({
+  anchor,
+  onClose,
+  onEdit,
+  onDelete,
+}: {
+  anchor: HTMLElement;
+  onClose: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ top: 0, right: 0 });
+
+  useEffect(() => {
+    const rect = anchor.getBoundingClientRect();
+    setPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right });
+  }, [anchor]);
+
+  // Close on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    document.addEventListener("mousedown", handleClick);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClick);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [onClose]);
 
   return (
-    <div className="group relative min-w-0">
-      <div
-        {...(isOwn && isMobile
-          ? {
-              onTouchStart: longPress.onTouchStart,
-              onTouchMove: longPress.onTouchMove,
-              onTouchEnd: longPress.onTouchEnd,
-            }
-          : {})}
+    <div
+      ref={menuRef}
+      className="fixed z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95"
+      style={{ top: pos.top, right: pos.right }}
+    >
+      <button
+        type="button"
+        onClick={onEdit}
+        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground"
       >
-        <p className="text-sm break-all whitespace-pre-wrap">{linkify(msg.content)}</p>
-        {msg.editedAt && <span className="text-[10px] text-muted-foreground/60">(編集済み)</span>}
-      </div>
-
-      {/* Desktop: hover action button */}
-      {isOwn && !isMobile && (
-        <div className="absolute -top-2 right-0 hidden group-hover:block">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <EllipsisVertical className="h-3.5 w-3.5" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={onEdit}>
-                <Pencil className="h-4 w-4" />
-                編集
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive" onClick={onDelete}>
-                <Trash2 className="h-4 w-4" />
-                削除
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
-
-      {/* Mobile: ActionSheet */}
-      {isOwn && isMobile && (
-        <ActionSheet open={sheetOpen} onOpenChange={setSheetOpen} actions={sheetActions} />
-      )}
+        <Pencil className="h-4 w-4" />
+        編集
+      </button>
+      <button
+        type="button"
+        onClick={onDelete}
+        className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm text-destructive hover:bg-accent"
+      >
+        <Trash2 className="h-4 w-4" />
+        削除
+      </button>
     </div>
   );
 }
@@ -198,6 +205,11 @@ export function ChatPanel({
     null,
   );
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  // Shared action menu state (single instance for all messages)
+  const [actionTarget, setActionTarget] = useState<ChatMessageResponse | null>(null);
+  const [actionSheetOpen, setActionSheetOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuAnchorRef = useRef<HTMLElement | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const shouldAutoScroll = useRef(true);
@@ -372,8 +384,10 @@ export function ChatPanel({
     setInput("");
 
     if (editingMessage) {
-      editMessage.mutate({ messageId: editingMessage.id, content: trimmed });
       setEditingMessage(null);
+      if (trimmed !== editingMessage.content) {
+        editMessage.mutate({ messageId: editingMessage.id, content: trimmed });
+      }
       return;
     }
 
@@ -388,6 +402,49 @@ export function ChatPanel({
     }
     sendMessage.mutate(trimmed);
   }, [input, chatSession, startSession, sendMessage, editingMessage, editMessage]);
+
+  // Single handler for both mobile (long press) and desktop (button click)
+  const handleMessageAction = useCallback(
+    (msg: ChatMessageResponse, anchor: HTMLElement) => {
+      setActionTarget(msg);
+      if (isMobile) {
+        setActionSheetOpen(true);
+      } else {
+        menuAnchorRef.current = anchor;
+        setMenuOpen(true);
+      }
+    },
+    [isMobile],
+  );
+
+  const sheetActions = useMemo(
+    () => [
+      {
+        label: "編集",
+        icon: <Pencil className="h-4 w-4" />,
+        onClick: () => {
+          if (actionTarget) handleStartEdit(actionTarget);
+        },
+      },
+      {
+        label: "削除",
+        icon: <Trash2 className="h-4 w-4" />,
+        onClick: () => {
+          if (actionTarget) setDeleteTarget(actionTarget.id);
+        },
+        variant: "destructive" as const,
+      },
+    ],
+    [actionTarget, handleStartEdit],
+  );
+
+  // Auto-resize textarea to fit content (max ~5 lines)
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
+  }, [input]);
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -504,43 +561,68 @@ export function ChatPanel({
                 prev?.userId === msg.userId && timeDiff < MESSAGE_GROUP_THRESHOLD_MS;
               const isOwn = msg.userId === currentUserId;
               return isGrouped ? (
-                <div key={msg.id} className="pl-9 mt-0.5">
-                  <MessageContent
-                    msg={msg}
-                    isOwn={isOwn}
-                    isMobile={isMobile}
-                    onEdit={() => handleStartEdit(msg)}
-                    onDelete={() => setDeleteTarget(msg.id)}
-                  />
+                <div key={msg.id} className="mt-0.5">
+                  <div className="group/msg -mx-2 flex items-start rounded px-2 pl-11 transition-colors hover:bg-muted/50">
+                    <div className="min-w-0 flex-1">
+                      <MessageBubble
+                        msg={msg}
+                        isOwn={isOwn}
+                        isMobile={isMobile}
+                        onAction={handleMessageAction}
+                      />
+                    </div>
+                    {isOwn && !isMobile && (
+                      <button
+                        type="button"
+                        aria-label="メッセージ操作"
+                        onClick={(e) => handleMessageAction(msg, e.currentTarget)}
+                        className="shrink-0 self-center rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover/msg:opacity-100"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                  {msg.editedAt && (
+                    <p className="pl-9 text-[10px] text-muted-foreground/60">(編集済み)</p>
+                  )}
                 </div>
               ) : (
-                <div key={msg.id} className={`flex gap-2 ${i > 0 ? "mt-3" : ""}`}>
-                  <UserAvatar
-                    name={msg.userName}
-                    image={msg.userImage}
-                    className="h-7 w-7 shrink-0 mt-0.5"
-                    fallbackClassName="text-xs"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="mb-0.5 text-xs">
-                      <span className="font-medium">{msg.userName}</span>
-                      <span className="ml-1.5 text-[10px] text-muted-foreground/60">
-                        {formatTime(msg.createdAt)}
-                      </span>
-                      {msg.editedAt && (
-                        <span className="ml-1 text-[10px] text-muted-foreground/60">
-                          (編集済み)
-                        </span>
-                      )}
-                    </p>
-                    <MessageContent
-                      msg={msg}
-                      isOwn={isOwn}
-                      isMobile={isMobile}
-                      onEdit={() => handleStartEdit(msg)}
-                      onDelete={() => setDeleteTarget(msg.id)}
+                <div key={msg.id} className={i > 0 ? "mt-2" : ""}>
+                  <div className="group/msg -mx-2 flex items-start gap-2 rounded px-2 py-1 transition-colors hover:bg-muted/50">
+                    <UserAvatar
+                      name={msg.userName}
+                      image={msg.userImage}
+                      className="h-7 w-7 shrink-0 mt-0.5"
+                      fallbackClassName="text-xs"
                     />
+                    <div className="min-w-0 flex-1">
+                      <p className="mb-0.5 text-xs">
+                        <span className="font-medium">{msg.userName}</span>
+                        <span className="ml-1.5 text-[10px] text-muted-foreground/60">
+                          {formatTime(msg.createdAt)}
+                        </span>
+                      </p>
+                      <MessageBubble
+                        msg={msg}
+                        isOwn={isOwn}
+                        isMobile={isMobile}
+                        onAction={handleMessageAction}
+                      />
+                    </div>
+                    {isOwn && !isMobile && (
+                      <button
+                        type="button"
+                        aria-label="メッセージ操作"
+                        onClick={(e) => handleMessageAction(msg, e.currentTarget)}
+                        className="shrink-0 self-start mt-0.5 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover/msg:opacity-100"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </button>
+                    )}
                   </div>
+                  {msg.editedAt && (
+                    <p className="pl-9 text-[10px] text-muted-foreground/60">(編集済み)</p>
+                  )}
                 </div>
               );
             })}
@@ -568,7 +650,7 @@ export function ChatPanel({
               </button>
             </div>
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex items-end gap-2">
             <textarea
               ref={textareaRef}
               value={input}
@@ -619,6 +701,37 @@ export function ChatPanel({
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>
       </ResponsiveAlertDialog>
+
+      {/* Shared mobile ActionSheet (single instance) */}
+      <ActionSheet
+        open={actionSheetOpen}
+        onOpenChange={(open) => {
+          setActionSheetOpen(open);
+          if (!open) setActionTarget(null);
+        }}
+        actions={sheetActions}
+      />
+
+      {/* Shared desktop DropdownMenu — rendered once, anchored to menuAnchorRef */}
+      {menuOpen && actionTarget && menuAnchorRef.current && (
+        <DesktopMessageMenu
+          anchor={menuAnchorRef.current}
+          onClose={() => {
+            setMenuOpen(false);
+            setActionTarget(null);
+          }}
+          onEdit={() => {
+            if (actionTarget) handleStartEdit(actionTarget);
+            setMenuOpen(false);
+            setActionTarget(null);
+          }}
+          onDelete={() => {
+            if (actionTarget) setDeleteTarget(actionTarget.id);
+            setMenuOpen(false);
+            setActionTarget(null);
+          }}
+        />
+      )}
 
       {/* Delete message confirmation */}
       <ResponsiveAlertDialog

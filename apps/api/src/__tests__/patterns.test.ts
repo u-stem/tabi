@@ -367,4 +367,101 @@ describe("Pattern routes", () => {
       expect(res.status).toBe(409);
     });
   });
+
+  describe(`POST ${basePath}/${patternId}/overwrite`, () => {
+    const sourceId = "00000000-0000-0000-0000-000000000001";
+
+    it("overwrites target pattern schedules with source schedules", async () => {
+      const sourceSchedules = [
+        {
+          id: "s-1",
+          name: "Tokyo Tower",
+          category: "sightseeing",
+          address: null,
+          startTime: "09:00",
+          endTime: "10:00",
+          sortOrder: 0,
+          memo: null,
+          urls: null,
+          departurePlace: null,
+          arrivalPlace: null,
+          transportMethod: null,
+          color: null,
+          endDayOffset: 0,
+        },
+      ];
+      // First findFirst: verify target pattern
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValueOnce({
+        id: patternId,
+        tripDayId: dayId,
+        label: "Target",
+      });
+      // Second findFirst: get source pattern with schedules
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValueOnce({
+        id: sourceId,
+        tripDayId: dayId,
+        label: "Source",
+        schedules: sourceSchedules,
+      });
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const app = createTestApp(patternRoutes, "/api/trips");
+      const res = await app.request(`${basePath}/${patternId}/overwrite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourcePatternId: sourceId }),
+      });
+
+      expect(res.status).toBe(200);
+      expect(mockDbDelete).toHaveBeenCalled();
+      expect(mockDbInsert).toHaveBeenCalled();
+    });
+
+    it("returns 404 when target pattern does not exist", async () => {
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValueOnce(undefined);
+
+      const app = createTestApp(patternRoutes, "/api/trips");
+      const res = await app.request(`${basePath}/${patternId}/overwrite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourcePatternId: sourceId }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 404 when source pattern does not exist", async () => {
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValueOnce({
+        id: patternId,
+        tripDayId: dayId,
+        label: "Target",
+      });
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValueOnce(undefined);
+
+      const app = createTestApp(patternRoutes, "/api/trips");
+      const res = await app.request(`${basePath}/${patternId}/overwrite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourcePatternId: sourceId }),
+      });
+
+      expect(res.status).toBe(404);
+    });
+
+    it("returns 400 for invalid body", async () => {
+      const app = createTestApp(patternRoutes, "/api/trips");
+      const res = await app.request(`${basePath}/${patternId}/overwrite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourcePatternId: "not-a-uuid" }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+  });
 });

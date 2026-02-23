@@ -61,6 +61,7 @@ import {
   AddPatternDialog,
   BatchDeleteDialog,
   DeletePatternDialog,
+  OverwritePatternDialog,
   RenamePatternDialog,
 } from "./_components/trip-dialogs";
 import { TripHeader } from "./_components/trip-header";
@@ -430,7 +431,7 @@ export default function TripDetailPage() {
   // Only re-run on navigation changes, not when selection ref changes
   useEffect(() => {
     selection.exit();
-  }, [selectedDay, mobileTab]);
+  }, [selectedDay, mobileTab, rightPanelTab]);
 
   if (showSkeleton) {
     return (
@@ -885,6 +886,7 @@ export default function TripDetailPage() {
         <RenamePatternDialog patternOps={patternOps} />
         <BatchDeleteDialog selection={selection} />
         <DeletePatternDialog patternOps={patternOps} />
+        <OverwritePatternDialog patternOps={patternOps} patterns={currentDay?.patterns ?? []} />
         <BookmarkListPickerDialog
           open={bookmarkPickerOpen}
           onOpenChange={setBookmarkPickerOpen}

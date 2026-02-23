@@ -28,6 +28,7 @@ export function usePatternOperations({
   const [deleteTarget, setDeleteTarget] = useState<DayPatternResponse | null>(null);
   const [renameTarget, setRenameTarget] = useState<DayPatternResponse | null>(null);
   const [renameLabel, setRenameLabel] = useState("");
+  const [overwriteSource, setOverwriteSource] = useState<DayPatternResponse | null>(null);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -130,6 +131,21 @@ export function usePatternOperations({
     }
   }
 
+  async function handleOverwrite(targetPatternId: string, sourcePatternId: string) {
+    if (!currentDayId) return;
+    try {
+      await api(`/api/trips/${tripId}/days/${currentDayId}/patterns/${targetPatternId}/overwrite`, {
+        method: "POST",
+        body: JSON.stringify({ sourcePatternId }),
+      });
+      toast.success(MSG.PATTERN_OVERWRITTEN);
+      setOverwriteSource(null);
+      onDone();
+    } catch {
+      toast.error(MSG.PATTERN_OVERWRITE_FAILED);
+    }
+  }
+
   function startRename(pattern: DayPatternResponse) {
     setRenameTarget(pattern);
     setRenameLabel(pattern.label);
@@ -162,7 +178,10 @@ export function usePatternOperations({
     },
     deleteTarget,
     setDeleteTarget,
+    overwriteSource,
+    setOverwriteSource,
     handleDuplicate,
     handleDelete,
+    handleOverwrite,
   };
 }

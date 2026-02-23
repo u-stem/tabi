@@ -2,7 +2,15 @@
 
 import type { TripResponse } from "@sugara/shared";
 import { MAX_PATTERNS_PER_DAY } from "@sugara/shared";
-import { ChevronDown, Copy, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  ClipboardPaste,
+  Copy,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useState } from "react";
 import { ActionSheet } from "@/components/action-sheet";
 import { PatternPickerDrawer } from "@/components/pattern-picker-drawer";
@@ -62,6 +70,13 @@ export function PatternTabs({
           label: "複製",
           icon: <Copy className="h-4 w-4" />,
           onClick: () => patternOps.handleDuplicate(currentPattern.id),
+        });
+      }
+      if (patterns.length > 1) {
+        menuActions.push({
+          label: "上書き",
+          icon: <ClipboardPaste className="h-4 w-4" />,
+          onClick: () => patternOps.setOverwriteSource(currentPattern),
         });
       }
       if (!currentPattern.isDefault) {
@@ -173,6 +188,12 @@ export function PatternTabs({
                     <Copy />
                     複製
                   </DropdownMenuItem>
+                  {patterns.length > 1 && (
+                    <DropdownMenuItem onClick={() => patternOps.setOverwriteSource(pattern)}>
+                      <ClipboardPaste />
+                      上書き
+                    </DropdownMenuItem>
+                  )}
                   {!pattern.isDefault && (
                     <DropdownMenuItem
                       className="text-destructive"

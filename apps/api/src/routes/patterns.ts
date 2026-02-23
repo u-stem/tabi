@@ -1,6 +1,7 @@
 import {
   createDayPatternSchema,
   MAX_PATTERNS_PER_DAY,
+  overwriteDayPatternSchema,
   updateDayPatternSchema,
 } from "@sugara/shared";
 import { and, count, eq } from "drizzle-orm";
@@ -236,6 +237,65 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
   });
 
   return c.json(result, 201);
+});
+
+// Overwrite pattern schedules with another pattern's schedules
+patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/overwrite", async (c) => {
+  const user = c.get("user");
+  const tripId = c.req.param("tripId");
+  const dayId = c.req.param("dayId");
+  const patternId = c.req.param("patternId");
+
+  const role = await verifyDayAccess(tripId, dayId, user.id);
+  if (!canEdit(role)) {
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
+  }
+
+  const body = await c.req.json();
+  const parsed = overwriteDayPatternSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const [target, source] = await Promise.all([
+    db.query.dayPatterns.findFirst({
+      where: and(eq(dayPatterns.id, patternId), eq(dayPatterns.tripDayId, dayId)),
+    }),
+    db.query.dayPatterns.findFirst({
+      where: and(eq(dayPatterns.id, parsed.data.sourcePatternId), eq(dayPatterns.tripDayId, dayId)),
+      with: { schedules: true },
+    }),
+  ]);
+  if (!target) {
+    return c.json({ error: ERROR_MSG.PATTERN_NOT_FOUND }, 404);
+  }
+  if (!source) {
+    return c.json({ error: ERROR_MSG.PATTERN_NOT_FOUND }, 404);
+  }
+
+  await db.transaction(async (tx) => {
+    await tx.delete(schedules).where(eq(schedules.dayPatternId, patternId));
+
+    if (source.schedules.length > 0) {
+      await tx.insert(schedules).values(
+        source.schedules.map((schedule) => ({
+          tripId,
+          dayPatternId: patternId,
+          ...buildScheduleCloneValues(schedule),
+        })),
+      );
+    }
+  });
+
+  logActivity({
+    tripId,
+    userId: user.id,
+    action: "updated",
+    entityType: "pattern",
+    entityName: target.label,
+  });
+
+  return c.json({ ok: true });
 });
 
 export { patternRoutes };

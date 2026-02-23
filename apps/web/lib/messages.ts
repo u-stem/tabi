@@ -81,6 +81,8 @@ export const MSG = {
   PATTERN_DELETE_FAILED: "パターンの削除に失敗しました",
   PATTERN_RENAMED: "名前を変更しました",
   PATTERN_RENAME_FAILED: "名前の変更に失敗しました",
+  PATTERN_OVERWRITTEN: "パターンを上書きしました",
+  PATTERN_OVERWRITE_FAILED: "パターンの上書きに失敗しました",
 
   // Settings
   SETTINGS_PROFILE_UPDATED: "プロフィールを更新しました",

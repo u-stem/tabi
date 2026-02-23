@@ -1,7 +1,9 @@
 "use client";
 
+import type { DayPatternResponse } from "@sugara/shared";
 import { PATTERN_LABEL_MAX_LENGTH } from "@sugara/shared";
-import { Check, Plus, Trash2 } from "lucide-react";
+import { Check, ClipboardPaste, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -137,6 +139,82 @@ export function DeletePatternDialog({ patternOps }: { patternOps: PatternOps }) 
         </ResponsiveAlertDialogFooter>
       </ResponsiveAlertDialogContent>
     </ResponsiveAlertDialog>
+  );
+}
+
+export function OverwritePatternDialog({
+  patternOps,
+  patterns,
+}: {
+  patternOps: PatternOps;
+  patterns: DayPatternResponse[];
+}) {
+  const source = patternOps.overwriteSource;
+  const destinationOptions = patterns.filter((p) => p.id !== source?.id);
+  const [selectedDestId, setSelectedDestId] = useState<string | null>(null);
+
+  return (
+    <ResponsiveDialog
+      open={source !== null}
+      onOpenChange={(open) => {
+        if (!open) {
+          patternOps.setOverwriteSource(null);
+          setSelectedDestId(null);
+        }
+      }}
+    >
+      <ResponsiveDialogContent className="sm:max-w-sm">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>パターンを上書き</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            「{source?.label}
+            」の予定を、選択したパターンにコピーします。コピー先の既存の予定はすべて削除されます。
+          </ResponsiveDialogDescription>
+        </ResponsiveDialogHeader>
+        <div className="space-y-2">
+          <Label>コピー先パターン</Label>
+          <div className="space-y-1">
+            {destinationOptions.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setSelectedDestId(p.id)}
+                className={`flex w-full items-center gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors ${
+                  selectedDestId === p.id
+                    ? "border-primary bg-primary/5 text-foreground"
+                    : "border-border text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {selectedDestId === p.id && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                <span className="truncate">{p.label}</span>
+                <span className="ml-auto shrink-0 text-xs text-muted-foreground">
+                  {p.schedules.length}件
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <ResponsiveDialogFooter>
+          <ResponsiveDialogClose asChild>
+            <Button type="button" variant="outline">
+              キャンセル
+            </Button>
+          </ResponsiveDialogClose>
+          <Button
+            disabled={!selectedDestId}
+            onClick={() => {
+              if (source && selectedDestId) {
+                patternOps.handleOverwrite(selectedDestId, source.id);
+                setSelectedDestId(null);
+              }
+            }}
+          >
+            <ClipboardPaste className="h-4 w-4" />
+            上書き
+          </Button>
+        </ResponsiveDialogFooter>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }
 

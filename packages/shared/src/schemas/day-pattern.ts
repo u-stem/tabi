@@ -10,3 +10,7 @@ export const updateDayPatternSchema = z.object({
   label: z.string().min(1).max(PATTERN_LABEL_MAX_LENGTH).optional(),
   sortOrder: z.number().int().min(0).optional(),
 });
+
+export const overwriteDayPatternSchema = z.object({
+  sourcePatternId: z.string().uuid(),
+});

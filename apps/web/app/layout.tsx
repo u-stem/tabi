@@ -17,6 +17,7 @@ const notoSansJP = Noto_Sans_JP({
   subsets: ["latin"],
   variable: "--font-noto-sans-jp",
   display: "swap",
+  preload: false,
 });
 
 export const viewport: Viewport = {

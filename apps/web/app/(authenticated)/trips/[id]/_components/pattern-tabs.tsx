@@ -136,7 +136,7 @@ export function PatternTabs({
             className={cn(
               "flex max-w-48 items-center rounded-full border transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-1",
               isActive
-                ? "border-border text-foreground hover:bg-muted"
+                ? "border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:bg-blue-900 dark:text-blue-200 dark:hover:bg-blue-800"
                 : "border-transparent text-muted-foreground hover:border-border hover:text-foreground",
             )}
           >

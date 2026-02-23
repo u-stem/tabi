@@ -40,6 +40,7 @@ import { useAutoStatusTransition } from "@/lib/hooks/use-auto-status-transition"
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useDayMemo } from "@/lib/hooks/use-day-memo";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { useIsLg } from "@/lib/hooks/use-is-lg";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
@@ -85,6 +86,7 @@ export default function TripDetailPage() {
   const params = useParams();
   const tripId = params.id as string;
   const online = useOnlineStatus();
+  const isLg = useIsLg();
   const isMobile = useIsMobile();
   const now = useCurrentTime();
   const { data: session } = useSession();
@@ -539,7 +541,7 @@ export default function TripDetailPage() {
           accessibility={{ announcements: dndAnnouncements }}
         >
           {/* Mobile layout */}
-          <div className="lg:hidden">
+          <div className="lg:hidden" inert={isLg || undefined}>
             <MobileContentTabs
               activeTab={mobileTab}
               onTabChange={handleMobileTabChange}

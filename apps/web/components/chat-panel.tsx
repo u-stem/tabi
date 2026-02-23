@@ -4,7 +4,7 @@ import type { ChatMessageResponse, ChatSessionResponse } from "@sugara/shared";
 import { CHAT_MESSAGE_MAX_LENGTH } from "@sugara/shared";
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Loader2, Plus, Send, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import {
   AlertDialog,
@@ -40,12 +40,15 @@ type MessagesResponse = {
   nextCursor: string | null;
 };
 
+const MESSAGE_GROUP_THRESHOLD_MS = 60 * 1000;
+const SCROLL_BOTTOM_THRESHOLD = 50;
+
 function formatTime(dateStr: string): string {
   const date = new Date(dateStr);
   return `${date.getHours()}:${String(date.getMinutes()).padStart(2, "0")}`;
 }
 
-const URL_RE = /https?:\/\/[^\s<>"']+/g;
+const URL_RE = /https?:\/\/[^\s<>"']+[^\s<>"'.,;:!?)}\]]/g;
 
 function isValidHttpUrl(str: string): boolean {
   try {
@@ -118,7 +121,10 @@ export function ChatPanel({
   });
 
   // Messages come from API in desc order per page; reverse for display
-  const messages = (messagesData?.pages.flatMap((page) => page.items) ?? []).slice().reverse();
+  const messages = useMemo(
+    () => (messagesData?.pages.flatMap((page) => page.items) ?? []).slice().reverse(),
+    [messagesData],
+  );
 
   const startSession = useMutation({
     mutationFn: () => api<SessionResponse>(`/api/trips/${tripId}/chat/session`, { method: "POST" }),
@@ -172,7 +178,8 @@ export function ChatPanel({
       shouldAutoScroll.current = true;
       onBroadcastMessage?.(message);
     },
-    onError: (err) => {
+    onError: (err, content) => {
+      setInput(content);
       toast.error(getApiErrorMessage(err, MSG.CHAT_MESSAGE_SEND_FAILED));
     },
   });
@@ -203,7 +210,9 @@ export function ChatPanel({
   const handleScroll = useCallback(() => {
     const container = scrollContainerRef.current;
     if (!container) return;
-    const atBottom = container.scrollHeight - container.scrollTop - container.clientHeight < 50;
+    const atBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight <
+      SCROLL_BOTTOM_THRESHOLD;
     shouldAutoScroll.current = atBottom;
   }, []);
 
@@ -304,7 +313,8 @@ export function ChatPanel({
               const timeDiff = prev
                 ? new Date(msg.createdAt).getTime() - new Date(prev.createdAt).getTime()
                 : 0;
-              const isGrouped = prev?.userId === msg.userId && timeDiff < 60 * 1000;
+              const isGrouped =
+                prev?.userId === msg.userId && timeDiff < MESSAGE_GROUP_THRESHOLD_MS;
               return isGrouped ? (
                 <div key={msg.id} className="pl-9 mt-0.5">
                   <p className="text-sm break-all whitespace-pre-wrap">{linkify(msg.content)}</p>

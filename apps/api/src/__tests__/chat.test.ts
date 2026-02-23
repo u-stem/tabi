@@ -80,6 +80,35 @@ describe("Chat routes", () => {
       expect(data.session).toBeNull();
     });
 
+    it("returns null after cleaning up expired session", async () => {
+      const expiredTime = new Date(Date.now() - 73 * 60 * 60 * 1000);
+      // cleanupExpiredSession finds the expired session
+      mockDbQuery.chatSessions.findFirst.mockResolvedValue({
+        id: sessionId,
+        tripId,
+        lastMessageAt: expiredTime,
+      });
+      const mockDeleteWhere = vi.fn().mockResolvedValue(undefined);
+      mockDbDelete.mockReturnValue({ where: mockDeleteWhere });
+      // After cleanup, GET session query returns no rows
+      const mockInnerJoin = vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          limit: vi.fn().mockResolvedValue([]),
+        }),
+      });
+      mockDbSelect.mockReturnValue({
+        from: vi.fn().mockReturnValue({
+          innerJoin: mockInnerJoin,
+        }),
+      });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/chat/session`);
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.session).toBeNull();
+      expect(mockDbDelete).toHaveBeenCalled();
+    });
+
     it("returns 404 if not a trip member", async () => {
       mockDbQuery.tripMembers.findFirst.mockResolvedValue(null);
       const res = await makeApp().request(`/api/trips/${tripId}/chat/session`);

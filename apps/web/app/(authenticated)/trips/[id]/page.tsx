@@ -207,9 +207,11 @@ export default function TripDetailPage() {
   );
   const onChatMessage = useCallback(
     (payload: unknown) => {
-      const msg = payload as ChatMessageResponse;
+      const msg = payload as Record<string, unknown>;
+      if (!msg || typeof msg.id !== "string" || typeof msg.content !== "string") return;
+      const chatMsg = msg as unknown as ChatMessageResponse;
       // Skip messages from self (already in cache via optimistic update)
-      if (msg.userId === session?.user?.id) return;
+      if (chatMsg.userId === session?.user?.id) return;
       queryClient.setQueryData<{
         pages: { items: ChatMessageResponse[]; nextCursor: string | null }[];
         pageParams: string[];
@@ -218,7 +220,7 @@ export default function TripDetailPage() {
         const firstPage = old.pages[0];
         return {
           ...old,
-          pages: [{ ...firstPage, items: [msg, ...firstPage.items] }, ...old.pages.slice(1)],
+          pages: [{ ...firstPage, items: [chatMsg, ...firstPage.items] }, ...old.pages.slice(1)],
         };
       });
     },
@@ -240,13 +242,6 @@ export default function TripDetailPage() {
     broadcastChatMessage,
     broadcastChatSession,
   } = useTripSync(tripId, syncUser, invalidateTrip, { onChatMessage, onChatSession });
-
-  const handleBroadcastChatMessage = useCallback(
-    (message: ChatMessageResponse) => {
-      broadcastChatMessage(message);
-    },
-    [broadcastChatMessage],
-  );
 
   const handleBroadcastChatSession = useCallback(
     (action: "started" | "ended") => {
@@ -669,7 +664,7 @@ export default function TripDetailPage() {
                     <ChatPanel
                       tripId={tripId}
                       canEdit={canEdit}
-                      onBroadcastMessage={handleBroadcastChatMessage}
+                      onBroadcastMessage={broadcastChatMessage}
                       onBroadcastSession={handleBroadcastChatSession}
                     />
                   </div>
@@ -779,7 +774,7 @@ export default function TripDetailPage() {
               hasDays={trip.days.length > 0}
               maxEndDayOffset={Math.max(0, trip.days.length - 1)}
               onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
-              onBroadcastChatMessage={handleBroadcastChatMessage}
+              onBroadcastChatMessage={broadcastChatMessage}
               onBroadcastChatSession={handleBroadcastChatSession}
             />
           </div>

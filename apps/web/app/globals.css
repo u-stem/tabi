@@ -112,6 +112,11 @@
   @media (max-width: 1023px) {
     body {
       overflow-x: hidden;
+      /* Native apps never show persistent scrollbars */
+      scrollbar-width: none;
+      &::-webkit-scrollbar {
+        display: none;
+      }
     }
   }
   button,

@@ -64,7 +64,8 @@ export function useSwipeTab(
       const opts = optionsRef.current;
       // Determine if this was a complete swipe (moved to full width) or spring-back
       const currentTransform = swipeEl!.style.transform;
-      const isFullSlide = currentTransform.includes(`${containerWidth}`) ||
+      const isFullSlide =
+        currentTransform.includes(`${containerWidth}`) ||
         currentTransform.includes(`${-containerWidth}`);
 
       if (isFullSlide) {

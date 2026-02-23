@@ -78,9 +78,7 @@ describe("useSwipeTab", () => {
     renderSwipeHook();
 
     const calls = container.el.addEventListener as ReturnType<typeof vi.fn>;
-    const touchStartCall = calls.mock.calls.find(
-      (c: unknown[]) => c[0] === "touchstart",
-    );
+    const touchStartCall = calls.mock.calls.find((c: unknown[]) => c[0] === "touchstart");
     expect(touchStartCall).toBeDefined();
     expect(touchStartCall![2]).toEqual({ passive: true, capture: true });
   });

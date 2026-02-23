@@ -748,7 +748,7 @@ export default function TripDetailPage() {
 
   const isActivelySwiping = swipe.adjacent !== null || swipe.isAnimating;
   const adjacentTabId = swipe.adjacent
-    ? tabIds[currentTabIdx + (swipe.adjacent === "next" ? 1 : -1)] ?? null
+    ? (tabIds[currentTabIdx + (swipe.adjacent === "next" ? 1 : -1)] ?? null)
     : null;
 
   // Capture narrowed trip for use in renderTabContent closure
@@ -964,8 +964,12 @@ export default function TripDetailPage() {
               >
                 {/* Current tab */}
                 <div
-                  className={tapTransitionRef.current ? "animate-[tab-fade-in_150ms_ease-out]" : undefined}
-                  ref={() => { tapTransitionRef.current = false; }}
+                  className={
+                    tapTransitionRef.current ? "animate-[tab-fade-in_150ms_ease-out]" : undefined
+                  }
+                  ref={() => {
+                    tapTransitionRef.current = false;
+                  }}
                 >
                   {renderTabContent(mobileTab)}
                 </div>
@@ -975,7 +979,8 @@ export default function TripDetailPage() {
                   <div
                     className="absolute top-0 left-0 w-full"
                     style={{
-                      transform: swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                      transform:
+                        swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
                     }}
                   >
                     {renderTabContent(adjacentTabId)}

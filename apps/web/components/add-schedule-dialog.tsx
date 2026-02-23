@@ -38,6 +38,7 @@ type AddScheduleDialogProps = {
   maxEndDayOffset?: number;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
 };
 
 export function AddScheduleDialog({
@@ -49,6 +50,7 @@ export function AddScheduleDialog({
   maxEndDayOffset = 0,
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
+  hideTrigger,
 }: AddScheduleDialogProps) {
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
@@ -137,12 +139,14 @@ export function AddScheduleDialog({
         }
       }}
     >
-      <ResponsiveDialogTrigger asChild>
-        <Button variant="outline" size="sm" disabled={disabled}>
-          <Plus className="h-4 w-4" />
-          予定を追加
-        </Button>
-      </ResponsiveDialogTrigger>
+      {!hideTrigger && (
+        <ResponsiveDialogTrigger asChild>
+          <Button variant="outline" size="sm" disabled={disabled}>
+            <Plus className="h-4 w-4" />
+            予定を追加
+          </Button>
+        </ResponsiveDialogTrigger>
+      )}
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>予定を追加</ResponsiveDialogTitle>

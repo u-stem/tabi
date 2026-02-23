@@ -22,6 +22,7 @@ import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
+import { isDialogOpen } from "@/lib/hotkeys";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
@@ -89,8 +90,20 @@ export default function HomePage() {
   const showSkeleton = useDelayedLoading(isLoading);
 
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
-  useHotkeys("/", () => searchInputRef.current?.focus(), { useKey: true, preventDefault: true });
-  useHotkeys("n", () => setCreateTripOpen(true), { preventDefault: true });
+  useHotkeys(
+    "/",
+    () => {
+      if (!isDialogOpen()) searchInputRef.current?.focus();
+    },
+    { useKey: true, preventDefault: true },
+  );
+  useHotkeys(
+    "n",
+    () => {
+      if (!isDialogOpen()) setCreateTripOpen(true);
+    },
+    { preventDefault: true },
+  );
 
   const invalidateAll = async () => {
     await Promise.all([

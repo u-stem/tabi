@@ -19,6 +19,33 @@ type ShortcutHelpDialogProps = {
   shortcuts: ShortcutGroup[];
 };
 
+function ShortcutKeys({ keys }: { keys: string }) {
+  const parts = keys.split(" ");
+  if (parts.length === 1) {
+    return (
+      <kbd data-shortcut-key className="rounded border bg-muted px-2 py-0.5 font-mono text-xs">
+        {keys}
+      </kbd>
+    );
+  }
+  return (
+    <span className="inline-flex items-center gap-1">
+      {parts.map((part, i) => (
+        <span key={part} className="inline-flex items-center gap-1">
+          {i > 0 && (
+            <span className="text-xs text-muted-foreground" aria-hidden="true">
+              →
+            </span>
+          )}
+          <kbd data-shortcut-key className="rounded border bg-muted px-2 py-0.5 font-mono text-xs">
+            {part}
+          </kbd>
+        </span>
+      ))}
+    </span>
+  );
+}
+
 export function ShortcutHelpDialog({ open, onOpenChange, shortcuts }: ShortcutHelpDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -35,12 +62,7 @@ export function ShortcutHelpDialog({ open, onOpenChange, shortcuts }: ShortcutHe
                 {group.items.map((item) => (
                   <div key={item.key} className="flex items-center justify-between py-1">
                     <span className="text-sm">{item.description}</span>
-                    <kbd
-                      data-shortcut-key
-                      className="rounded border bg-muted px-2 py-0.5 font-mono text-xs"
-                    >
-                      {item.key}
-                    </kbd>
+                    <ShortcutKeys keys={item.key} />
                   </div>
                 ))}
               </div>

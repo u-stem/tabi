@@ -19,13 +19,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
+import { ActivityLog } from "@/components/activity-log";
 import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dialog";
+import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
 import { ChatPanel } from "@/components/chat-panel";
 import { DayTimeline } from "@/components/day-timeline";
 import { ExpensePanel } from "@/components/expense-panel";
 import { Fab } from "@/components/fab";
-import { type MobileContentTab, MobileContentTabs } from "@/components/mobile-content-tabs";
+import {
+  getMobileTabIds,
+  type MobileContentTab,
+  MobileContentTabs,
+} from "@/components/mobile-content-tabs";
 
 const EditTripDialog = dynamic(() =>
   import("@/components/edit-trip-dialog").then((mod) => mod.EditTripDialog),
@@ -39,6 +45,7 @@ import { useSession } from "@/lib/auth-client";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { pageTitle } from "@/lib/constants";
 import { getCrossDayEntries } from "@/lib/cross-day";
+import { isGuestUser } from "@/lib/guest";
 import { SelectionProvider } from "@/lib/hooks/selection-context";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useAutoStatusTransition } from "@/lib/hooks/use-auto-status-transition";
@@ -50,8 +57,10 @@ import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
 import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
+import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
+import { isDialogOpen } from "@/lib/hotkeys";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -129,6 +138,8 @@ export default function TripDetailPage() {
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
+  const prevDayRef = useRef(0);
+  const gPressedRef = useRef(false);
   const scrollPositions = useRef<Record<string, number>>({});
   const mobileContentRef = useRef<HTMLDivElement>(null);
   const [rightPanelTab, setRightPanelTab] = useState<
@@ -140,6 +151,10 @@ export default function TripDetailPage() {
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
+  const currentDay = trip?.days[selectedDay] ?? null;
+  const currentPatternIndex = currentDay ? (selectedPattern[currentDay.id] ?? 0) : 0;
+  const currentPattern = currentDay?.patterns[currentPatternIndex] ?? null;
+
   // Keyboard shortcuts
   const { open: openShortcutHelp } = useShortcutHelp();
   const tripShortcuts: ShortcutGroup[] = useMemo(
@@ -150,6 +165,14 @@ export default function TripDetailPage() {
           { key: "1-9", description: "N日目に切替" },
           { key: "[", description: "前の日へ" },
           { key: "]", description: "次の日へ" },
+          ...(trip?.poll ? [{ key: "p", description: "日程調整タブ" }] : []),
+        ],
+      },
+      {
+        group: "パターン",
+        items: [
+          { key: "{", description: "前のパターンへ" },
+          { key: "}", description: "次のパターンへ" },
         ],
       },
       {
@@ -160,21 +183,44 @@ export default function TripDetailPage() {
           { key: "e", description: "旅行を編集" },
         ],
       },
+      ...(isLg
+        ? [
+            {
+              group: "パネル",
+              items: [
+                { key: "g c", description: "候補" },
+                { key: "g h", description: "作戦会議" },
+                { key: "g x", description: "費用" },
+                { key: "g l", description: "履歴" },
+                { key: "g b", description: "ブックマーク" },
+              ],
+            },
+          ]
+        : []),
     ],
-    [],
+    [trip?.poll, isLg],
   );
   useRegisterShortcuts(tripShortcuts);
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
   useHotkeys("1,2,3,4,5,6,7,8,9", (e) => {
+    if (isDialogOpen()) return;
     const dayIndex = Number(e.key) - 1;
     if (trip && dayIndex < trip.days.length) {
       setSelectedDay(dayIndex);
     }
   });
-  useHotkeys("[", () => setSelectedDay((prev) => Math.max(0, prev - 1)), { useKey: true });
+  useHotkeys(
+    "[",
+    () => {
+      if (isDialogOpen()) return;
+      setSelectedDay((prev) => Math.max(0, prev - 1));
+    },
+    { useKey: true },
+  );
   useHotkeys(
     "]",
     () => {
+      if (isDialogOpen()) return;
       if (trip) {
         setSelectedDay((prev) => Math.min(trip.days.length - 1, prev + 1));
       }
@@ -182,8 +228,92 @@ export default function TripDetailPage() {
     { useKey: true },
   );
   useHotkeys(
+    "{",
+    () => {
+      if (isDialogOpen()) return;
+      if (!currentDay) return;
+      const dayId = currentDay.id;
+      setSelectedPattern((prev) => ({
+        ...prev,
+        [dayId]: Math.max(0, (prev[dayId] ?? 0) - 1),
+      }));
+    },
+    { useKey: true },
+  );
+  useHotkeys(
+    "}",
+    () => {
+      if (isDialogOpen()) return;
+      if (!currentDay) return;
+      const dayId = currentDay.id;
+      const maxIndex = currentDay.patterns.length - 1;
+      setSelectedPattern((prev) => ({
+        ...prev,
+        [dayId]: Math.min(maxIndex, (prev[dayId] ?? 0) + 1),
+      }));
+    },
+    { useKey: true },
+  );
+  useHotkeys(
+    "p",
+    () => {
+      if (isDialogOpen()) return;
+      if (!trip?.poll) return;
+      if (selectedDay === -1) {
+        setSelectedDay(prevDayRef.current);
+      } else {
+        prevDayRef.current = selectedDay;
+        setSelectedDay(-1);
+      }
+    },
+    { preventDefault: true },
+  );
+  // Track "g" press to prevent sequence suffixes (c, h, etc.) from firing standalone handlers
+  useHotkeys("g", () => {
+    gPressedRef.current = true;
+    setTimeout(() => {
+      gPressedRef.current = false;
+    }, 1000);
+  });
+  useHotkeys(
+    "g>c",
+    () => {
+      if (!isDialogOpen()) setRightPanelTab("candidates");
+    },
+    { enabled: isLg },
+  );
+  useHotkeys(
+    "g>h",
+    () => {
+      if (!isDialogOpen()) setRightPanelTab("chat");
+    },
+    { enabled: isLg },
+  );
+  useHotkeys(
+    "g>x",
+    () => {
+      if (!isDialogOpen()) setRightPanelTab("expenses");
+    },
+    { enabled: isLg },
+  );
+  useHotkeys(
+    "g>l",
+    () => {
+      if (!isDialogOpen()) setRightPanelTab("activity");
+    },
+    { enabled: isLg },
+  );
+  useHotkeys(
+    "g>b",
+    () => {
+      if (!isDialogOpen()) setRightPanelTab("bookmarks");
+    },
+    { enabled: isLg },
+  );
+  useHotkeys(
     "a",
     () => {
+      if (isDialogOpen()) return;
       if (canEditRef.current && online) setAddScheduleOpen(true);
     },
     { preventDefault: true },
@@ -191,6 +321,8 @@ export default function TripDetailPage() {
   useHotkeys(
     "c",
     () => {
+      if (gPressedRef.current) return;
+      if (isDialogOpen()) return;
       if (canEditRef.current && online) setAddCandidateOpen(true);
     },
     { preventDefault: true },
@@ -198,6 +330,7 @@ export default function TripDetailPage() {
   useHotkeys(
     "e",
     () => {
+      if (isDialogOpen()) return;
       if (canEditRef.current) setEditOpen(true);
     },
     { preventDefault: true },
@@ -357,15 +490,24 @@ export default function TripDetailPage() {
     [mobileTab],
   );
 
+  const handleSwipe = useCallback(
+    (direction: "left" | "right") => {
+      const tabIds = getMobileTabIds(!isGuestUser(session));
+      const idx = tabIds.indexOf(mobileTab);
+      if (idx === -1) return;
+      const next = direction === "left" ? idx + 1 : idx - 1;
+      if (next < 0 || next >= tabIds.length) return;
+      handleMobileTabChange(tabIds[next]);
+    },
+    [mobileTab, session, handleMobileTabChange],
+  );
+  useSwipeTab(mobileContentRef, handleSwipe);
+
   useEffect(() => {
     if (trip) {
       document.title = pageTitle(trip.title);
     }
   }, [trip?.title]);
-
-  const currentDay = trip?.days[selectedDay] ?? null;
-  const currentPatternIndex = currentDay ? (selectedPattern[currentDay.id] ?? 0) : 0;
-  const currentPattern = currentDay?.patterns[currentPatternIndex] ?? null;
 
   // Exclude self from presence display
   const otherPresence = useMemo(
@@ -565,6 +707,7 @@ export default function TripDetailPage() {
 
   const canEdit = canEditRole(trip.role);
   canEditRef.current = canEdit;
+  const isGuest = isGuestUser(session);
 
   const scheduleLimitReached = trip.scheduleCount >= MAX_SCHEDULES_PER_TRIP;
   const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
@@ -609,6 +752,7 @@ export default function TripDetailPage() {
               activeTab={mobileTab}
               onTabChange={handleMobileTabChange}
               candidateCount={dnd.localCandidates.length}
+              showBookmarks={!isGuest}
             />
             <div
               ref={mobileContentRef}
@@ -738,6 +882,21 @@ export default function TripDetailPage() {
                     onBroadcastSession={handleBroadcastChatSession}
                   />
                 )}
+                {mobileTab === "bookmarks" &&
+                  (trip.days.length > 0 ? (
+                    <div className="rounded-lg border bg-card p-4">
+                      <BookmarkPanel
+                        tripId={tripId}
+                        disabled={!online || !canEdit}
+                        onCandidateAdded={onMutate}
+                      />
+                    </div>
+                  ) : (
+                    <p className="py-8 text-center text-sm text-muted-foreground">
+                      日程が確定するとブックマークを利用できます
+                    </p>
+                  ))}
+                {mobileTab === "activity" && <ActivityLog tripId={tripId} />}
               </div>
             </div>
           </div>
@@ -880,8 +1039,13 @@ export default function TripDetailPage() {
 
         <Fab
           onClick={() => {
-            if (mobileTab === "schedule") setAddScheduleOpen(true);
-            else if (mobileTab === "candidates") setAddCandidateOpen(true);
+            if (mobileTab === "schedule") {
+              if (scheduleLimitReached) {
+                toast.error(scheduleLimitMessage);
+                return;
+              }
+              setAddScheduleOpen(true);
+            } else if (mobileTab === "candidates") setAddCandidateOpen(true);
             else if (mobileTab === "expenses") setAddExpenseOpen(true);
           }}
           label={
@@ -891,7 +1055,13 @@ export default function TripDetailPage() {
                 ? "候補を追加"
                 : "費用を追加"
           }
-          hidden={!canEdit || !online || mobileTab === "chat"}
+          hidden={
+            !canEdit ||
+            !online ||
+            mobileTab === "chat" ||
+            mobileTab === "bookmarks" ||
+            mobileTab === "activity"
+          }
         />
 
         <AddPatternDialog patternOps={patternOps} />

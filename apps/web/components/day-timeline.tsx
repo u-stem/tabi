@@ -294,6 +294,19 @@ export function DayTimeline({
                   onOpenChange={onAddScheduleOpenChange}
                 />
               ))}
+            {!disabled && isMobile && !scheduleLimitReached && (
+              <AddScheduleDialog
+                tripId={tripId}
+                dayId={dayId}
+                patternId={patternId}
+                onAdd={onRefresh}
+                disabled={disabled}
+                maxEndDayOffset={maxEndDayOffset}
+                open={addScheduleOpen}
+                onOpenChange={onAddScheduleOpenChange}
+                hideTrigger
+              />
+            )}
             {!disabled && schedules.length > 0 && sel.canEnter && (
               <Button
                 variant="outline"

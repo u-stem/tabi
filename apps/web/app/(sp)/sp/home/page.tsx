@@ -399,7 +399,7 @@ export default function SpHomePage() {
 
           {/* Swipe area - px-0.5/-mx-0.5 allows focus rings to bleed past overflow-x-hidden boundary.
               min-h-[60vh] ensures a large touch target even when the card list is empty. */}
-          <div ref={contentRef} className="mt-2 min-h-[60vh] overflow-x-hidden px-0.5 -mx-0.5">
+          <div ref={contentRef} className="mt-2 min-h-[60vh] overflow-x-hidden px-0.5 -mx-0.5 touch-pan-y">
             <div
               ref={swipeRef}
               className="relative touch-pan-y"

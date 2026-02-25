@@ -2,6 +2,7 @@ import {
   addPollOptionSchema,
   addPollParticipantSchema,
   confirmPollSchema,
+  MAX_MEMBERS_PER_TRIP,
   MAX_OPTIONS_PER_POLL,
   MAX_PARTICIPANTS_PER_POLL,
   submitPollResponsesSchema,
@@ -620,6 +621,9 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
     const existingUserIds = new Set(existingMembers.map((m) => m.userId));
 
     const newMembers = participants.filter((p) => !existingUserIds.has(p.userId));
+    if (existingMembers.length + newMembers.length > MAX_MEMBERS_PER_TRIP) {
+      return null;
+    }
     if (newMembers.length > 0) {
       await tx.insert(tripMembers).values(
         newMembers.map((p) => ({
@@ -642,6 +646,10 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
 
     return updatedPoll;
   });
+
+  if (!result) {
+    return c.json({ error: ERROR_MSG.LIMIT_MEMBERS }, 409);
+  }
 
   logActivity({
     tripId,

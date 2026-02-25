@@ -43,7 +43,6 @@ import { isGuestUser } from "@/lib/guest";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useBookmarkListSelection } from "@/lib/hooks/use-bookmark-list-selection";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { isDialogOpen } from "@/lib/hotkeys";
 import { MSG } from "@/lib/messages";
@@ -61,7 +60,6 @@ const visibilityFilters: { value: VisibilityFilter; label: string }[] = [
 
 export default function BookmarksPage() {
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
   const online = useOnlineStatus();
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
@@ -265,27 +263,25 @@ export default function BookmarksPage() {
                     <CheckSquare className="h-4 w-4" />
                     選択
                   </Button>
-                  {!isMobile && (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span>
-                          <Button
-                            size="sm"
-                            disabled={
-                              !online || bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER
-                            }
-                            onClick={() => setCreateDialogOpen(true)}
-                          >
-                            <Plus className="h-4 w-4" />
-                            新規作成
-                          </Button>
-                        </span>
-                      </TooltipTrigger>
-                      {bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER && (
-                        <TooltipContent>{MSG.LIMIT_BOOKMARK_LISTS}</TooltipContent>
-                      )}
-                    </Tooltip>
-                  )}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span>
+                        <Button
+                          size="sm"
+                          disabled={
+                            !online || bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER
+                          }
+                          onClick={() => setCreateDialogOpen(true)}
+                        >
+                          <Plus className="h-4 w-4" />
+                          新規作成
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER && (
+                      <TooltipContent>{MSG.LIMIT_BOOKMARK_LISTS}</TooltipContent>
+                    )}
+                  </Tooltip>
                 </div>
               </div>
             )}

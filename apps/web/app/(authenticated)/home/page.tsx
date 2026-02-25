@@ -20,7 +20,6 @@ import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { isDialogOpen } from "@/lib/hotkeys";
 import { MSG } from "@/lib/messages";
@@ -32,7 +31,6 @@ type HomeTab = "owned" | "shared";
 
 export default function HomePage() {
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
   const online = useOnlineStatus();
   const {
     data: ownedTrips = [],
@@ -252,7 +250,7 @@ export default function HomePage() {
   // Avoid flashing empty state during the 200ms skeleton delay
   if (isLoading && !showSkeleton) return <div />;
 
-  const newTripButton = !isMobile ? (
+  const newTripButton = (
     <Tooltip>
       <TooltipTrigger asChild>
         <span>
@@ -266,7 +264,7 @@ export default function HomePage() {
         <TooltipContent>{MSG.LIMIT_TRIPS}</TooltipContent>
       )}
     </Tooltip>
-  ) : null;
+  );
 
   const tabs = [
     { value: "owned", label: "自分の旅行" },

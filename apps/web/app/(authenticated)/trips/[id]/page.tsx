@@ -49,7 +49,6 @@ import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useDayMemo } from "@/lib/hooks/use-day-memo";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useIsLg } from "@/lib/hooks/use-is-lg";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
 import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
@@ -98,7 +97,6 @@ export default function TripDetailPage() {
   const tripId = params.id as string;
   const online = useOnlineStatus();
   const isLg = useIsLg();
-  const isMobile = useIsMobile();
   const now = useCurrentTime();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -972,7 +970,6 @@ export default function TripDetailPage() {
             />
           </div>
           {mounted &&
-            !isMobile &&
             createPortal(
               <DragOverlay>
                 {dnd.activeDragItem &&

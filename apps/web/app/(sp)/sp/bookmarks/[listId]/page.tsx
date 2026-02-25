@@ -20,6 +20,19 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import {
+  AddBookmarkDialog,
+  BatchDeleteDialog,
+  DeleteBookmarkDialog,
+  DeleteListDialog,
+  EditBookmarkDialog,
+  EditListDialog,
+} from "@/app/(authenticated)/bookmarks/[listId]/_components/bookmark-dialogs";
+import { BookmarkListHeader } from "@/app/(authenticated)/bookmarks/[listId]/_components/bookmark-list-header";
+import {
+  BookmarkItemContent,
+  SortableBookmarkItem,
+} from "@/app/(authenticated)/bookmarks/[listId]/_components/sortable-bookmark-item";
 import { Fab } from "@/components/fab";
 import { ReorderControls } from "@/components/reorder-controls";
 import { Button } from "@/components/ui/button";
@@ -37,18 +50,8 @@ import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
-import {
-  AddBookmarkDialog,
-  BatchDeleteDialog,
-  DeleteBookmarkDialog,
-  DeleteListDialog,
-  EditBookmarkDialog,
-  EditListDialog,
-} from "./_components/bookmark-dialogs";
-import { BookmarkListHeader } from "./_components/bookmark-list-header";
-import { BookmarkItemContent, SortableBookmarkItem } from "./_components/sortable-bookmark-item";
 
-export default function BookmarkListDetailPage() {
+export default function SpBookmarkListDetailPage() {
   const { listId } = useParams<{ listId: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -114,7 +117,7 @@ export default function BookmarkListDetailPage() {
   const listOps = useBookmarkListOperations({
     listId,
     invalidateLists,
-    onDeleted: () => router.push("/bookmarks"),
+    onDeleted: () => router.push("/sp/bookmarks"),
   });
 
   const bmOps = useBookmarkOperations({
@@ -124,8 +127,6 @@ export default function BookmarkListDetailPage() {
     invalidateBookmarks,
     invalidateLists,
   });
-
-  // -- Drag and drop --
 
   async function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
@@ -171,8 +172,6 @@ export default function BookmarkListDetailPage() {
     }
   }
 
-  // -- Loading --
-
   if (isLoading && !showSkeleton) return <div />;
 
   if (showSkeleton) {
@@ -202,7 +201,7 @@ export default function BookmarkListDetailPage() {
       <div className="mt-8 text-center">
         <p className="text-muted-foreground">リストが見つかりません</p>
         <Button variant="outline" size="sm" className="mt-4" asChild>
-          <Link href="/bookmarks">ブックマーク一覧に戻る</Link>
+          <Link href="/sp/bookmarks">ブックマーク一覧に戻る</Link>
         </Button>
       </div>
     );
@@ -221,7 +220,6 @@ export default function BookmarkListDetailPage() {
         onReorderModeChange={setReorderMode}
       />
 
-      {/* Bookmark list */}
       <div>
         {localBookmarks.length === 0 ? (
           <p className="mt-8 text-center text-muted-foreground">
@@ -266,6 +264,7 @@ export default function BookmarkListDetailPage() {
             ))}
           </div>
         ) : (
+          // SP: always treat as mobile — disable drag-and-drop, use touch-friendly reorder
           <DndContext
             sensors={sensors}
             collisionDetection={closestCenter}
@@ -282,7 +281,7 @@ export default function BookmarkListDetailPage() {
                     bm={bm}
                     onEdit={bmOps.openEdit}
                     onDelete={bmOps.setDeletingBookmark}
-                    draggable
+                    draggable={false}
                   />
                 ))}
               </div>

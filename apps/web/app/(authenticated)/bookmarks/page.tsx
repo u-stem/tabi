@@ -268,9 +268,7 @@ export default function BookmarksPage() {
                       <span>
                         <Button
                           size="sm"
-                          disabled={
-                            !online || bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER
-                          }
+                          disabled={!online || bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER}
                           onClick={() => setCreateDialogOpen(true)}
                         >
                           <Plus className="h-4 w-4" />

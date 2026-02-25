@@ -316,11 +316,13 @@ export function TripToolbar({
           <Button
             variant="outline"
             size="sm"
+            className="h-8 w-8 px-0 sm:w-auto sm:px-3"
             onClick={() => onSelectionModeChange(true)}
             disabled={disabled || totalCount === 0}
+            aria-label="選択モード"
           >
             <SquareMousePointer className="h-4 w-4" />
-            選択
+            <span className="sr-only sm:not-sr-only">選択</span>
           </Button>
         </div>
       )}

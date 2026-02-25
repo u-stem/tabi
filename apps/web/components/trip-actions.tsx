@@ -64,7 +64,7 @@ import { useSession } from "@/lib/auth-client";
 import { copyToClipboard } from "@/lib/clipboard";
 import { formatDateFromISO } from "@/lib/format";
 import { isGuestUser } from "@/lib/guest";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -107,7 +107,7 @@ export function TripActions({
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
   const router = useRouter();
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
   const [deleting, setDeleting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [memberOpen, setMemberOpen] = useState(false);
@@ -131,13 +131,13 @@ export function TripActions({
       queryClient.setQueryData(cacheKey, { ...prev, status: newStatus });
     }
     toast.success(MSG.TRIP_STATUS_CHANGED);
-    onStatusChange?.();
 
     try {
       await api(`/api/trips/${tripId}`, {
         method: "PATCH",
         body: JSON.stringify({ status: newStatus }),
       });
+      onStatusChange?.();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.TRIP_STATUS_CHANGE_FAILED);

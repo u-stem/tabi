@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { stripProtocol } from "@/lib/format";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
 
 export function BookmarkItemContent({ bm, asLink }: { bm: BookmarkResponse; asLink?: boolean }) {
@@ -69,7 +69,7 @@ export function SortableBookmarkItem({
   onDelete: (bm: BookmarkResponse) => void;
   draggable?: boolean;
 }) {
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: bm.id,

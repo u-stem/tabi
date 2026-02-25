@@ -38,7 +38,7 @@ import {
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { CreateGroupDialog } from "./create-group-dialog";
@@ -46,7 +46,7 @@ import { GroupMembersDialog } from "./group-detail-dialog";
 
 export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
   const queryClient = useQueryClient();
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
   const [createOpen, setCreateOpen] = useState(false);
   const [membersGroupId, setMembersGroupId] = useState<string | null>(null);
   const [editGroup, setEditGroup] = useState<GroupResponse | null>(null);

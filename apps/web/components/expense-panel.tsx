@@ -29,7 +29,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -75,7 +75,7 @@ type ExpensePanelProps = {
 };
 
 export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: ExpensePanelProps) {
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
   const queryClient = useQueryClient();
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.expenses.list(tripId),

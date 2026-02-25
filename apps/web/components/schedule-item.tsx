@@ -45,7 +45,7 @@ import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
 import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
 import type { TimeStatus } from "@/lib/format";
 import { formatTime, formatTimeRange, isSafeUrl, stripProtocol } from "@/lib/format";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { CATEGORY_ICONS, TRANSPORT_ICONS } from "@/lib/icons";
 import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
@@ -165,7 +165,7 @@ function ScheduleMenu({
   onUnassign?: () => void;
   onSaveToBookmark?: () => void;
 }) {
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
 

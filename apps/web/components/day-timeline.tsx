@@ -40,7 +40,7 @@ import {
 
 import { useSelection } from "@/lib/hooks/selection-context";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 
 import type { TimelineItem } from "@/lib/merge-timeline";
 import { buildMergedTimeline, timelineSortableIds } from "@/lib/merge-timeline";
@@ -109,7 +109,7 @@ export function DayTimeline({
     data: { type: "timeline" },
   });
 
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
   const [reorderMode, setReorderMode] = useState(false);
   const now = useCurrentTime();
   const isToday = date === toDateString(new Date());

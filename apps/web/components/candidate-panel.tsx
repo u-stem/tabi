@@ -67,7 +67,7 @@ import { api } from "@/lib/api";
 import { DROP_ZONE_ACTIVE, SELECTED_RING } from "@/lib/colors";
 import { formatTimeRange, isSafeUrl, stripProtocol } from "@/lib/format";
 import { useSelection } from "@/lib/hooks/selection-context";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
@@ -134,7 +134,7 @@ function CandidateCard({
   isFirst?: boolean;
   isLast?: boolean;
 }) {
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -437,7 +437,7 @@ export function CandidatePanel({
     id: "candidates",
     data: { type: "candidates" },
   });
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
   const [reorderMode, setReorderMode] = useState(false);
   const [internalAddOpen, setInternalAddOpen] = useState(false);
   const addOpen = controlledAddOpen ?? internalAddOpen;

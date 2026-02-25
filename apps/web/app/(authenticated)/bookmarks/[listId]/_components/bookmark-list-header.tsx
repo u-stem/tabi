@@ -27,7 +27,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import type { useBookmarkListOperations } from "@/lib/hooks/use-bookmark-list-operations";
 import type { useBookmarkOperations } from "@/lib/hooks/use-bookmark-operations";
 import type { useBookmarkSelection } from "@/lib/hooks/use-bookmark-selection";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 
 type ListOps = ReturnType<typeof useBookmarkListOperations>;
@@ -53,7 +53,7 @@ export function BookmarkListHeader({
   reorderMode?: boolean;
   onReorderModeChange?: (mode: boolean) => void;
 }) {
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const sheetActions = [

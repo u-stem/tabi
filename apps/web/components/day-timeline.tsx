@@ -320,10 +320,11 @@ export function DayTimeline({
                 選択
               </Button>
             )}
-            {!disabled && isMobile && schedules.length > 1 && onReorderSchedule && (
+            {!disabled && isMobile && schedules.length > 0 && onReorderSchedule && (
               <Button
                 variant="outline"
                 size="sm"
+                disabled={schedules.length <= 1}
                 onClick={() => {
                   sel.exit();
                   setReorderMode(true);
@@ -333,7 +334,7 @@ export function DayTimeline({
                 並び替え
               </Button>
             )}
-            {schedules.length > 1 && (
+            {schedules.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"

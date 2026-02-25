@@ -1,3 +1,5 @@
+import type { Session } from "better-auth";
+
 export type AuthUser = {
   id: string;
   name: string;
@@ -9,7 +11,7 @@ export type AuthUser = {
 export type AppEnv = {
   Variables: {
     user: AuthUser;
-    session: unknown;
+    session: Session;
     tripRole: import("@sugara/shared").MemberRole;
   };
 };
@@ -18,6 +20,6 @@ export type AppEnv = {
 export type OptionalAuthEnv = {
   Variables: {
     user?: AuthUser;
-    session?: unknown;
+    session?: Session;
   };
 };

@@ -2,7 +2,18 @@
 
 import type { TripResponse } from "@sugara/shared";
 import { MAX_PATTERNS_PER_DAY } from "@sugara/shared";
-import { ClipboardPaste, Copy, MoreHorizontal, Pencil, Plus, Trash2 } from "lucide-react";
+import {
+  ChevronDown,
+  ClipboardPaste,
+  Copy,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+} from "lucide-react";
+import { useState } from "react";
+import { ActionSheet } from "@/components/action-sheet";
+import { PatternPickerDrawer } from "@/components/pattern-picker-drawer";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,6 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import type { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
 import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
@@ -33,6 +45,23 @@ export function PatternTabs({
   patternOps: PatternOps;
   onSelectPattern: (dayId: string, index: number) => void;
 }) {
+  const isMobile = useMobile();
+
+  if (isMobile) {
+    return (
+      <MobilePatternTabs
+        patterns={patterns}
+        currentDayId={currentDayId}
+        currentPatternIndex={currentPatternIndex}
+        canEdit={canEdit}
+        online={online}
+        patternOps={patternOps}
+        onSelectPattern={onSelectPattern}
+      />
+    );
+  }
+
+  // Desktop: pill tabs with per-pattern DropdownMenu
   return (
     <div className="mb-2 flex flex-wrap select-none items-center gap-1.5">
       {patterns.map((pattern, index) => {
@@ -127,6 +156,122 @@ export function PatternTabs({
             <Plus className="inline h-3 w-3" /> パターン追加
           </button>
         ))}
+    </div>
+  );
+}
+
+// Mobile: current pattern pill (→ PatternPickerDrawer) + ActionSheet for management
+function MobilePatternTabs({
+  patterns,
+  currentDayId,
+  currentPatternIndex,
+  canEdit,
+  online,
+  patternOps,
+  onSelectPattern,
+}: {
+  patterns: TripResponse["days"][number]["patterns"];
+  currentDayId: string;
+  currentPatternIndex: number;
+  canEdit: boolean;
+  online: boolean;
+  patternOps: PatternOps;
+  onSelectPattern: (dayId: string, index: number) => void;
+}) {
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [actionSheetOpen, setActionSheetOpen] = useState(false);
+  const currentPattern = patterns[currentPatternIndex];
+  const multiplePatterns = patterns.length > 1;
+
+  const menuActions = currentPattern
+    ? [
+        {
+          label: "名前変更",
+          icon: <Pencil className="h-4 w-4" />,
+          onClick: () => patternOps.rename.start(currentPattern),
+        },
+        ...(patterns.length < MAX_PATTERNS_PER_DAY
+          ? [
+              {
+                label: "複製",
+                icon: <Copy className="h-4 w-4" />,
+                onClick: () => patternOps.handleDuplicate(currentPattern.id),
+              },
+            ]
+          : []),
+        ...(multiplePatterns
+          ? [
+              {
+                label: "上書き",
+                icon: <ClipboardPaste className="h-4 w-4" />,
+                onClick: () => patternOps.setOverwriteSource(currentPattern),
+              },
+            ]
+          : []),
+        ...(!currentPattern.isDefault
+          ? [
+              {
+                label: "削除",
+                icon: <Trash2 className="h-4 w-4" />,
+                onClick: () => patternOps.setDeleteTarget(currentPattern),
+                variant: "destructive" as const,
+              },
+            ]
+          : []),
+      ]
+    : [];
+
+  return (
+    <div className="mb-2 flex select-none items-center gap-1.5">
+      {/* Current pattern — tap to open picker when multiple patterns exist */}
+      <button
+        type="button"
+        onClick={() => multiplePatterns && setPickerOpen(true)}
+        disabled={!multiplePatterns}
+        className="flex min-w-0 flex-1 items-center gap-1 rounded-full border border-transparent bg-muted px-3 py-1.5 text-xs font-medium disabled:pointer-events-none"
+      >
+        <span className="truncate">{currentPattern?.label}</span>
+        {multiplePatterns && <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />}
+      </button>
+
+      {/* Pattern management */}
+      {canEdit && currentPattern && (
+        <>
+          <button
+            type="button"
+            aria-label={`${currentPattern.label}のメニュー`}
+            onClick={() => setActionSheetOpen(true)}
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
+          <ActionSheet
+            open={actionSheetOpen}
+            onOpenChange={setActionSheetOpen}
+            actions={menuActions}
+          />
+        </>
+      )}
+
+      {/* Add pattern */}
+      {canEdit && online && patterns.length < MAX_PATTERNS_PER_DAY && (
+        <button
+          type="button"
+          aria-label="パターン追加"
+          onClick={() => patternOps.add.setOpen(true)}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground transition-colors"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+      )}
+
+      <PatternPickerDrawer
+        open={pickerOpen}
+        onOpenChange={setPickerOpen}
+        patterns={patterns}
+        currentPatternIndex={currentPatternIndex}
+        onSelect={(index) => onSelectPattern(currentDayId, index)}
+      />
     </div>
   );
 }

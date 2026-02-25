@@ -542,7 +542,7 @@ export default function SpTripDetailPage() {
               <div
                 ref={swipeContainerRef}
                 className="relative touch-pan-y"
-                style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
+                style={{ willChange: isActivelySwiping ? "transform" : "auto" }}
               >
                 {/* Current tab */}
                 <div

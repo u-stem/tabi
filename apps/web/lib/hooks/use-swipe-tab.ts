@@ -105,6 +105,10 @@ export function useSwipeTab(
 
       if (isFullSlide) {
         const direction = currentTransform.includes("-") ? "left" : "right";
+        // Clear transition first so React's synchronous DOM updates (willChange
+        // teardown, overflow class change) cannot re-trigger a CSS transition
+        // from translateX(-width) → translateX(0).
+        swipe.style.transition = "";
         // Flush React state synchronously so the new tab content renders
         // BEFORE we clear the transform — prevents one-frame flicker
         flushSync(() => {
@@ -119,7 +123,6 @@ export function useSwipeTab(
         trackingSource = null;
         activePointerId = null;
         swipe.style.transform = "";
-        swipe.style.transition = "";
       } else {
         resetSwipe();
       }

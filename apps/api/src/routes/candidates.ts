@@ -2,7 +2,7 @@ import {
   assignCandidateSchema,
   batchAssignCandidatesSchema,
   batchBookmarkIdsSchema,
-  batchDeleteSchedulesSchema,
+  batchScheduleIdsSchema,
   createCandidateSchema,
   MAX_SCHEDULES_PER_TRIP,
   reorderSchedulesSchema,
@@ -154,7 +154,7 @@ candidateRoutes.post("/:tripId/candidates/batch-delete", requireTripAccess("edit
   const tripId = c.req.param("tripId");
 
   const body = await c.req.json();
-  const parsed = batchDeleteSchedulesSchema.safeParse(body);
+  const parsed = batchScheduleIdsSchema.safeParse(body);
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
@@ -200,7 +200,7 @@ candidateRoutes.post(
     const tripId = c.req.param("tripId");
 
     const body = await c.req.json();
-    const parsed = batchDeleteSchedulesSchema.safeParse(body);
+    const parsed = batchScheduleIdsSchema.safeParse(body);
     if (!parsed.success) {
       return c.json({ error: parsed.error.flatten() }, 400);
     }

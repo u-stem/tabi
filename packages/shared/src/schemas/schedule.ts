@@ -99,13 +99,13 @@ export const batchAssignCandidatesSchema = z.object({
   dayPatternId: z.string().uuid(),
 });
 
-export const batchUnassignSchedulesSchema = z.object({
+export const batchScheduleIdsSchema = z.object({
   scheduleIds: z.array(z.string().uuid()).min(1),
 });
 
-export const batchDeleteSchedulesSchema = z.object({
-  scheduleIds: z.array(z.string().uuid()).min(1),
-});
+// Backward-compatible aliases
+export const batchUnassignSchedulesSchema = batchScheduleIdsSchema;
+export const batchDeleteSchedulesSchema = batchScheduleIdsSchema;
 
 export const batchShiftSchedulesSchema = z.object({
   scheduleIds: z.array(z.string().uuid()).min(1),

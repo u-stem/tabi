@@ -56,6 +56,9 @@ export function Header() {
   const { open: openShortcutHelp } = useShortcutHelp();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const isGuest = isGuestUser(session);
+  const visibleNavLinks = NAV_LINKS.filter(
+    (link) => !isGuest || (link.href !== "/bookmarks" && link.href !== "/friends"),
+  );
   // Prevent hydration mismatch: better-auth may return cached session synchronously
   // on the client while the server always starts with null.
   const [mounted, setMounted] = useState(false);
@@ -92,9 +95,7 @@ export function Header() {
       >
         <div className="flex items-center gap-6">
           <Logo href="/home" />
-          {NAV_LINKS.filter(
-            (link) => !isGuest || (link.href !== "/bookmarks" && link.href !== "/friends"),
-          ).map((link) => (
+          {visibleNavLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -132,9 +133,7 @@ export function Header() {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 {/* Nav links: shown only below md breakpoint where header links are hidden */}
-                {NAV_LINKS.filter(
-                  (link) => !isGuest || (link.href !== "/bookmarks" && link.href !== "/friends"),
-                ).map((link) => (
+                {visibleNavLinks.map((link) => (
                   <DropdownMenuItem key={link.href} asChild className="md:hidden">
                     <Link href={link.href} className={cn(pathname === link.href && "font-medium")}>
                       <link.icon className="h-4 w-4" />

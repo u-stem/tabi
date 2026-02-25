@@ -1,5 +1,5 @@
 import {
-  batchDeleteSchedulesSchema,
+  batchScheduleIdsSchema,
   batchShiftSchedulesSchema,
   batchUnassignSchedulesSchema,
   createScheduleSchema,
@@ -124,7 +124,7 @@ scheduleRoutes.post(
     }
 
     const body = await c.req.json();
-    const parsed = batchDeleteSchedulesSchema.safeParse(body);
+    const parsed = batchScheduleIdsSchema.safeParse(body);
     if (!parsed.success) {
       return c.json({ error: parsed.error.flatten() }, 400);
     }
@@ -285,7 +285,7 @@ scheduleRoutes.post(
     }
 
     const body = await c.req.json();
-    const parsed = batchDeleteSchedulesSchema.safeParse(body);
+    const parsed = batchScheduleIdsSchema.safeParse(body);
     if (!parsed.success) {
       return c.json({ error: parsed.error.flatten() }, 400);
     }

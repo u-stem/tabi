@@ -341,7 +341,7 @@ export default function HomePage() {
               sortKey={sortKey}
               onSortKeyChange={setSortKey}
               selectionMode={selectionMode}
-              onSelectionModeChange={tab !== "shared" ? handleSelectionModeChange : undefined}
+              onSelectionModeChange={handleSelectionModeChange}
               selectedCount={selectedIds.size}
               totalCount={filteredTrips.length}
               onSelectAll={handleSelectAll}
@@ -351,6 +351,7 @@ export default function HomePage() {
               deleting={deleting}
               duplicating={duplicating}
               disabled={!online}
+              hideDelete={tab === "shared"}
               newTripSlot={tab !== "shared" ? newTripButton : undefined}
             />
           </div>
@@ -369,7 +370,7 @@ export default function HomePage() {
                   key={trip.id}
                   {...trip}
                   priority={index === 0}
-                  selectable={selectionMode && tab === "owned"}
+                  selectable={selectionMode}
                   selected={selectedIds.has(trip.id)}
                   onSelect={handleSelect}
                 />

@@ -259,9 +259,7 @@ export default function SpHomePage() {
           sortKey={isActive ? sortKey : "updatedAt"}
           onSortKeyChange={isActive ? setSortKey : () => {}}
           selectionMode={isActive ? selectionMode : false}
-          onSelectionModeChange={
-            isActive && targetTab !== "shared" ? handleSelectionModeChange : undefined
-          }
+          onSelectionModeChange={isActive ? handleSelectionModeChange : undefined}
           selectedCount={isActive ? selectedIds.size : 0}
           totalCount={displayTrips.length}
           onSelectAll={isActive ? handleSelectAll : () => {}}
@@ -271,6 +269,7 @@ export default function SpHomePage() {
           deleting={isActive ? deleting : false}
           duplicating={isActive ? duplicating : false}
           disabled={!online}
+          hideDelete={targetTab === "shared"}
         />
         {baseData.length === 0 ? (
           <p className="mt-8 text-center text-muted-foreground">
@@ -288,7 +287,7 @@ export default function SpHomePage() {
                 {...trip}
                 hrefPrefix="/sp/trips"
                 priority={isActive && index === 0}
-                selectable={isActive && selectionMode && targetTab === "owned"}
+                selectable={isActive && selectionMode}
                 selected={isActive ? selectedIds.has(trip.id) : false}
                 onSelect={isActive ? handleSelect : undefined}
               />

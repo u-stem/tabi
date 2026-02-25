@@ -56,6 +56,7 @@ type TripToolbarProps = {
   newTripSlot?: React.ReactNode;
   searchInputRef?: React.RefObject<HTMLInputElement | null>;
   hideDuplicate?: boolean;
+  hideDelete?: boolean;
   hideStatusFilter?: boolean;
   hideSortKey?: boolean;
   deleteLabel?: string;
@@ -95,6 +96,7 @@ export function TripToolbar({
   newTripSlot,
   searchInputRef,
   hideDuplicate,
+  hideDelete,
   hideStatusFilter,
   hideSortKey,
   deleteLabel = "旅行",
@@ -160,12 +162,16 @@ export function TripToolbar({
                           },
                         ]
                       : []),
-                    {
-                      label: "削除",
-                      icon: <Trash2 className="h-4 w-4" />,
-                      onClick: () => setDeleteOpen(true),
-                      variant: "destructive" as const,
-                    },
+                    ...(!hideDelete
+                      ? [
+                          {
+                            label: "削除",
+                            icon: <Trash2 className="h-4 w-4" />,
+                            onClick: () => setDeleteOpen(true),
+                            variant: "destructive" as const,
+                          },
+                        ]
+                      : []),
                   ]}
                 />
               </>
@@ -189,37 +195,41 @@ export function TripToolbar({
                       複製
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={() => setDeleteOpen(true)}
-                  >
-                    <Trash2 />
-                    削除
-                  </DropdownMenuItem>
+                  {!hideDelete && (
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={() => setDeleteOpen(true)}
+                    >
+                      <Trash2 />
+                      削除
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
           </div>
         </div>
-        <ResponsiveAlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-          <ResponsiveAlertDialogContent>
-            <ResponsiveAlertDialogHeader>
-              <ResponsiveAlertDialogTitle>
-                {selectedCount}件の{deleteLabel}を削除しますか？
-              </ResponsiveAlertDialogTitle>
-              <ResponsiveAlertDialogDescription>
-                選択した{deleteLabel}が削除されます。この操作は取り消せません。
-              </ResponsiveAlertDialogDescription>
-            </ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogFooter>
-              <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
-              <ResponsiveAlertDialogDestructiveAction onClick={onDeleteSelected}>
-                <Trash2 className="h-4 w-4" />
-                削除する
-              </ResponsiveAlertDialogDestructiveAction>
-            </ResponsiveAlertDialogFooter>
-          </ResponsiveAlertDialogContent>
-        </ResponsiveAlertDialog>
+        {!hideDelete && (
+          <ResponsiveAlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+            <ResponsiveAlertDialogContent>
+              <ResponsiveAlertDialogHeader>
+                <ResponsiveAlertDialogTitle>
+                  {selectedCount}件の{deleteLabel}を削除しますか？
+                </ResponsiveAlertDialogTitle>
+                <ResponsiveAlertDialogDescription>
+                  選択した{deleteLabel}が削除されます。この操作は取り消せません。
+                </ResponsiveAlertDialogDescription>
+              </ResponsiveAlertDialogHeader>
+              <ResponsiveAlertDialogFooter>
+                <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+                <ResponsiveAlertDialogDestructiveAction onClick={onDeleteSelected}>
+                  <Trash2 className="h-4 w-4" />
+                  削除する
+                </ResponsiveAlertDialogDestructiveAction>
+              </ResponsiveAlertDialogFooter>
+            </ResponsiveAlertDialogContent>
+          </ResponsiveAlertDialog>
+        )}
       </>
     );
   }

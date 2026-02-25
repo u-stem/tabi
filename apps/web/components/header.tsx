@@ -6,7 +6,6 @@ import {
   Download,
   Keyboard,
   LogOut,
-  Menu,
   MessageSquare,
   Settings,
   Smartphone,
@@ -116,32 +115,6 @@ export function Header() {
           ))}
         </div>
         <div className="flex items-center gap-1">
-          {/* Hamburger: visible only below md breakpoint */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
-                <Menu className="h-5 w-5" />
-                <span className="sr-only">メニュー</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              {NAV_LINKS.filter(
-                (link) => !isGuest || (link.href !== "/bookmarks" && link.href !== "/friends"),
-              ).map((link) => (
-                <DropdownMenuItem key={link.href} asChild>
-                  <Link href={link.href} className={cn(pathname === link.href && "font-medium")}>
-                    <link.icon className="h-4 w-4" />
-                    {link.label}
-                    {link.href === "/friends" && friendRequestCount > 0 && (
-                      <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium tabular-nums text-destructive-foreground">
-                        {friendRequestCount}
-                      </span>
-                    )}
-                  </Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
           <ThemeToggle />
           {!mounted || !session?.user ? (
             <Skeleton className="h-8 w-8 rounded-full" />
@@ -158,6 +131,23 @@ export function Header() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {/* Nav links: shown only below md breakpoint where header links are hidden */}
+                {NAV_LINKS.filter(
+                  (link) => !isGuest || (link.href !== "/bookmarks" && link.href !== "/friends"),
+                ).map((link) => (
+                  <DropdownMenuItem key={link.href} asChild className="md:hidden">
+                    <Link href={link.href} className={cn(pathname === link.href && "font-medium")}>
+                      <link.icon className="h-4 w-4" />
+                      {link.label}
+                      {link.href === "/friends" && friendRequestCount > 0 && (
+                        <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium tabular-nums text-destructive-foreground">
+                          {friendRequestCount}
+                        </span>
+                      )}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+                <DropdownMenuSeparator className="md:hidden" />
                 <DropdownMenuLabel className="truncate">{session.user.name}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {!isGuest && (

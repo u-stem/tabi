@@ -177,7 +177,7 @@ export function Header() {
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => switchViewMode("sp")}>
+                  <DropdownMenuItem onClick={() => void switchViewMode("sp")}>
                     <Smartphone className="h-4 w-4" />
                     SP版で表示
                   </DropdownMenuItem>
@@ -269,7 +269,7 @@ export function Header() {
                       type="button"
                       onClick={() => {
                         setMobileMenuOpen(false);
-                        switchViewMode("sp");
+                        void switchViewMode("sp");
                       }}
                       className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >

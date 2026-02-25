@@ -19,10 +19,24 @@ export const SP_PREFIX = "/sp";
 /**
  * Set the view mode cookie and navigate to the appropriate version.
  * Call this from client components (header toggle button, etc.).
+ *
+ * Prefers the Cookie Store API (Baseline 2025) when available,
+ * falling back to document.cookie for older browsers.
  */
-export function switchViewMode(mode: ViewMode): void {
-  // Set cookie with 1-year expiry
-  document.cookie = `${VIEW_MODE_COOKIE}=${mode}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
+export async function switchViewMode(mode: ViewMode): Promise<void> {
+  const maxAge = 60 * 60 * 24 * 365;
+
+  if ("cookieStore" in window) {
+    await cookieStore.set({
+      name: VIEW_MODE_COOKIE,
+      value: mode,
+      path: "/",
+      expires: Date.now() + maxAge * 1000,
+      sameSite: "lax",
+    });
+  } else {
+    document.cookie = `${VIEW_MODE_COOKIE}=${mode}; path=/; max-age=${maxAge}; SameSite=Lax`;
+  }
 
   const { pathname, search, hash } = window.location;
 

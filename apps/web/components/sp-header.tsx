@@ -143,7 +143,7 @@ export function SpHeader() {
                       type="button"
                       onClick={() => {
                         setMobileMenuOpen(false);
-                        switchViewMode("desktop");
+                        void switchViewMode("desktop");
                       }}
                       className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                     >

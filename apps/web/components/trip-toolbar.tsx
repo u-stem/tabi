@@ -31,7 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
-import { cn } from "@/lib/utils";
 
 export type StatusFilter = "all" | TripStatus;
 export type SortKey = "updatedAt" | "startDate";
@@ -105,8 +104,6 @@ export function TripToolbar({
   const [statusSheetOpen, setStatusSheetOpen] = useState(false);
   const [sortSheetOpen, setSortSheetOpen] = useState(false);
   const [actionSheetOpen, setActionSheetOpen] = useState(false);
-  const hasActions = !!onSelectionModeChange || !!newTripSlot;
-
   const currentStatusLabel = statusFilters.find((f) => f.value === statusFilter)?.label ?? "すべて";
   const currentSortLabel = sortOptions.find((s) => s.value === sortKey)?.label ?? "更新日";
 
@@ -228,7 +225,7 @@ export function TripToolbar({
   }
 
   return (
-    <div role="toolbar" aria-label="旅行フィルター" className="flex flex-wrap items-center gap-2">
+    <div role="toolbar" aria-label="旅行フィルター" className="flex items-center gap-2">
       <Input
         ref={searchInputRef}
         id="trips-search"
@@ -238,108 +235,101 @@ export function TripToolbar({
         aria-label="旅行を検索"
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        className={cn("h-8 sm:w-40", hasActions ? "w-full" : "min-w-0 flex-1")}
+        className="h-8 min-w-0 flex-1 sm:w-40 sm:flex-none"
       />
-      <div
-        className={cn(
-          "flex items-center gap-1.5 sm:w-auto sm:flex-1 sm:gap-2",
-          hasActions && "w-full",
-        )}
-      >
-        {!hideStatusFilter &&
-          (isMobile ? (
-            <>
-              <button
-                type="button"
-                aria-label="ステータスで絞り込み"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setStatusSheetOpen(true);
-                }}
-                className="flex h-8 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
-              >
-                {currentStatusLabel}
-                <ChevronDown className="h-3 w-3 text-muted-foreground" />
-              </button>
-              <ActionSheet
-                open={statusSheetOpen}
-                onOpenChange={setStatusSheetOpen}
-                actions={statusFilters.map((f) => ({
-                  label: f.label,
-                  onClick: () => onStatusFilterChange(f.value),
-                }))}
-              />
-            </>
-          ) : (
-            <Select
-              value={statusFilter}
-              onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}
+      {!hideStatusFilter &&
+        (isMobile ? (
+          <>
+            <button
+              type="button"
+              aria-label="ステータスで絞り込み"
+              onClick={(e) => {
+                e.currentTarget.blur();
+                setStatusSheetOpen(true);
+              }}
+              className="flex h-8 shrink-0 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
             >
-              <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {statusFilters.map((f) => (
-                  <SelectItem key={f.value} value={f.value}>
-                    {f.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ))}
-        {!hideSortKey &&
-          (isMobile ? (
-            <>
-              <button
-                type="button"
-                aria-label="並び替え"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setSortSheetOpen(true);
-                }}
-                className="flex h-8 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
-              >
-                {currentSortLabel}
-                <ChevronDown className="h-3 w-3 text-muted-foreground" />
-              </button>
-              <ActionSheet
-                open={sortSheetOpen}
-                onOpenChange={setSortSheetOpen}
-                actions={sortOptions.map((s) => ({
-                  label: s.label,
-                  onClick: () => onSortKeyChange(s.value),
-                }))}
-              />
-            </>
-          ) : (
-            <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
-              <SelectTrigger className="h-8 w-20 text-xs" aria-label="並び替え">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {sortOptions.map((s) => (
-                  <SelectItem key={s.value} value={s.value}>
-                    {s.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ))}
-        {onSelectionModeChange && (
-          <div className="ml-auto">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onSelectionModeChange(true)}
-              disabled={disabled || totalCount === 0}
+              {currentStatusLabel}
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            </button>
+            <ActionSheet
+              open={statusSheetOpen}
+              onOpenChange={setStatusSheetOpen}
+              actions={statusFilters.map((f) => ({
+                label: f.label,
+                onClick: () => onStatusFilterChange(f.value),
+              }))}
+            />
+          </>
+        ) : (
+          <Select
+            value={statusFilter}
+            onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}
+          >
+            <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {statusFilters.map((f) => (
+                <SelectItem key={f.value} value={f.value}>
+                  {f.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ))}
+      {!hideSortKey &&
+        (isMobile ? (
+          <>
+            <button
+              type="button"
+              aria-label="並び替え"
+              onClick={(e) => {
+                e.currentTarget.blur();
+                setSortSheetOpen(true);
+              }}
+              className="flex h-8 shrink-0 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
             >
-              <SquareMousePointer className="h-4 w-4" />
-              選択
-            </Button>
-          </div>
-        )}
-        {newTripSlot && <div className="flex-1 sm:flex-initial">{newTripSlot}</div>}
-      </div>
+              {currentSortLabel}
+              <ChevronDown className="h-3 w-3 text-muted-foreground" />
+            </button>
+            <ActionSheet
+              open={sortSheetOpen}
+              onOpenChange={setSortSheetOpen}
+              actions={sortOptions.map((s) => ({
+                label: s.label,
+                onClick: () => onSortKeyChange(s.value),
+              }))}
+            />
+          </>
+        ) : (
+          <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
+            <SelectTrigger className="h-8 w-20 text-xs" aria-label="並び替え">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {sortOptions.map((s) => (
+                <SelectItem key={s.value} value={s.value}>
+                  {s.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ))}
+      {onSelectionModeChange && (
+        <div className="ml-auto shrink-0">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onSelectionModeChange(true)}
+            disabled={disabled || totalCount === 0}
+          >
+            <SquareMousePointer className="h-4 w-4" />
+            選択
+          </Button>
+        </div>
+      )}
+      {newTripSlot && <div className="shrink-0">{newTripSlot}</div>}
     </div>
   );
 }

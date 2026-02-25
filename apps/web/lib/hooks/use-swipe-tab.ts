@@ -1,9 +1,11 @@
 import { type RefObject, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
-const SWIPE_THRESHOLD = 50;
-const LOCK_THRESHOLD = 18;
-const HORIZONTAL_BIAS = 1.8;
+const SWIPE_THRESHOLD = 40;
+const LOCK_THRESHOLD = 10;
+// 1.2 allows swipes up to ~40° from horizontal (iOS-like).
+// 1.8 was too strict and rejected natural diagonal swipes.
+const HORIZONTAL_BIAS = 1.2;
 const VELOCITY_THRESHOLD = 0.3;
 const SNAP_DURATION = 250;
 // Only block elements that use pointer capture or have browser-native pointer

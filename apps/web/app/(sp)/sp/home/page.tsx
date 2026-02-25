@@ -384,20 +384,20 @@ export default function SpHomePage() {
             ))}
           </div>
 
-          {/* Swipe area */}
-          <div ref={contentRef} className="mt-4 overflow-x-hidden">
+          {/* Swipe area - px-0.5/-mx-0.5 allows focus rings to bleed past overflow-x-hidden boundary */}
+          <div ref={contentRef} className="mt-4 overflow-x-hidden px-0.5 -mx-0.5">
             <div
               ref={swipeRef}
               className="relative touch-pan-y"
               style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
             >
-              {/* Current tab */}
-              <div>{renderTabContent(tab)}</div>
+              {/* Current tab - pt-0.5 prevents the top of the focus ring from being clipped */}
+              <div className="pt-0.5">{renderTabContent(tab)}</div>
 
               {/* Adjacent tab (rendered only during swipe) */}
               {swipe.adjacent && adjacentTab && (
                 <div
-                  className="absolute top-0 left-0 w-full"
+                  className="absolute top-0 left-0 w-full pt-0.5"
                   aria-hidden="true"
                   style={{
                     transform: swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",

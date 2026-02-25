@@ -326,11 +326,10 @@ export function TripToolbar({
             </Select>
           ))}
         {onSelectionModeChange && (
-          <div className="flex-1 sm:flex-initial sm:ml-auto">
+          <div className="ml-auto">
             <Button
               variant="outline"
               size="sm"
-              className="w-full sm:w-auto"
               onClick={() => onSelectionModeChange(true)}
               disabled={disabled || totalCount === 0}
             >

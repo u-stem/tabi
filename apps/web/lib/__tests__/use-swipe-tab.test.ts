@@ -364,19 +364,14 @@ describe("useSwipeTab", () => {
     expect(swipeEl.el.style.transform).toBe("");
   });
 
-  it("does not start swipe from interactive targets (pointer)", () => {
+  it("does not start swipe from pointer-capturing targets (pointer)", () => {
     const onSwipeComplete = vi.fn();
     renderSwipeHook({ onSwipeComplete });
-    const button = createTarget("button");
     const input = createTarget("input");
     const select = createTarget("select");
     const textarea = createTarget("textarea");
 
     act(() => {
-      firePointerDown(container.listeners, 200, 0, 1, "touch", button);
-      firePointerMove(docListeners, 140, 0);
-      firePointerUp(docListeners, 140, 0);
-
       firePointerDown(container.listeners, 200, 0, 1, "touch", input);
       firePointerMove(docListeners, 140, 0);
       firePointerUp(docListeners, 140, 0);
@@ -394,18 +389,13 @@ describe("useSwipeTab", () => {
     expect(swipeEl.el.style.transform).toBe("");
   });
 
-  it("does not start swipe from combobox/button role targets", () => {
+  it("does not start swipe from combobox targets", () => {
     const onSwipeComplete = vi.fn();
     renderSwipeHook({ onSwipeComplete });
     const combobox = createTarget("div", { role: "combobox" });
-    const roleButton = createTarget("div", { role: "button" });
 
     act(() => {
       firePointerDown(container.listeners, 200, 0, 1, "touch", combobox);
-      firePointerMove(docListeners, 140, 0);
-      firePointerUp(docListeners, 140, 0);
-
-      firePointerDown(container.listeners, 200, 0, 1, "touch", roleButton);
       firePointerMove(docListeners, 140, 0);
       firePointerUp(docListeners, 140, 0);
     });
@@ -414,13 +404,26 @@ describe("useSwipeTab", () => {
     expect(swipeEl.el.style.transform).toBe("");
   });
 
-  it("allows swipe from data-allow-swipe targets", () => {
-    const onSwipeComplete = vi.fn();
-    renderSwipeHook({ onSwipeComplete });
-    const button = createTarget("button", { "data-allow-swipe": "true" });
+  it("allows swipe from button targets", () => {
+    renderSwipeHook();
+    const button = createTarget("button");
 
     act(() => {
       firePointerDown(container.listeners, 200, 0, 1, "touch", button);
+      firePointerMove(docListeners, 140, 0);
+      firePointerUp(docListeners, 140, 0);
+    });
+
+    // snap animation started — transform set to full-width target
+    expect(swipeEl.el.style.transform).toBe("translateX(-375px)");
+  });
+
+  it("allows swipe from a[href] targets", () => {
+    renderSwipeHook();
+    const link = createTarget("a", { href: "/some/path" });
+
+    act(() => {
+      firePointerDown(container.listeners, 200, 0, 1, "touch", link);
       firePointerMove(docListeners, 140, 0);
       firePointerUp(docListeners, 140, 0);
     });

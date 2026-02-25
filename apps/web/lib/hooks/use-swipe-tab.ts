@@ -6,18 +6,16 @@ const LOCK_THRESHOLD = 18;
 const HORIZONTAL_BIAS = 1.8;
 const VELOCITY_THRESHOLD = 0.3;
 const SNAP_DURATION = 250;
-// Elements that block swipe initiation. Use data-allow-swipe="true" on a
-// wrapper to opt specific link containers (e.g. TripCard) back into swipe.
+// Only block elements that use pointer capture or have browser-native pointer
+// handling (inputs, selects, Radix combobox). Simple clickable elements like
+// <button> and <a> do NOT need to be blocked because the axis-lock and
+// distance threshold distinguish taps from swipes at event time.
+// Use data-swipe-ignore="true" to opt specific elements out of swipe.
 const SWIPE_IGNORE_SELECTOR = [
   "input",
   "textarea",
   "select",
-  "button",
-  "a[href]",
-  "[role='button']",
-  "[role='link']",
   "[role='combobox']",
-  "[role='menuitem']",
   "[contenteditable='true']",
   "[data-swipe-ignore='true']",
 ].join(", ");
@@ -29,7 +27,6 @@ export type SwipeState = {
 
 function shouldIgnoreSwipeStart(target: EventTarget | null): boolean {
   if (!(target instanceof Element)) return false;
-  if (target.closest("[data-allow-swipe='true']")) return false;
   return target.closest(SWIPE_IGNORE_SELECTOR) !== null;
 }
 

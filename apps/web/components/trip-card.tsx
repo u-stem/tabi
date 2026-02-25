@@ -109,7 +109,7 @@ export const TripCard = memo(function TripCard({
   }
 
   return (
-    <Link href={`${hrefPrefix}/${id}`} className="group block focus-visible:outline-none" data-allow-swipe="true">
+    <Link href={`${hrefPrefix}/${id}`} className="group block focus-visible:outline-none">
       <Card className="transition-[colors,transform] hover:bg-accent/50 active:scale-[0.98] group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
         {inner}
       </Card>

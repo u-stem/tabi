@@ -197,7 +197,10 @@ export function Header() {
                 variant="ghost"
                 size="icon"
                 className="rounded-full sm:hidden"
-                onClick={() => setMobileMenuOpen(true)}
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setMobileMenuOpen(true);
+                }}
               >
                 <UserAvatar
                   name={session.user.name ?? ""}

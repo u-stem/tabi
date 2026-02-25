@@ -81,7 +81,10 @@ export function SpHeader() {
                 variant="ghost"
                 size="icon"
                 className="rounded-full"
-                onClick={() => setMobileMenuOpen(true)}
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setMobileMenuOpen(true);
+                }}
               >
                 <UserAvatar
                   name={session.user.name ?? ""}

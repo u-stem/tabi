@@ -109,8 +109,11 @@ tripRoutes.post("/", async (c) => {
         .select({ count: count() })
         .from(trips)
         .where(eq(trips.ownerId, user.id));
-      if (tripCount.count >= MAX_TRIPS_PER_USER) {
-        return null;
+      // Guests are pre-checked above, but guard again inside the transaction to
+      // catch race conditions and return the same error code as the pre-check.
+      const limit = user.isAnonymous ? 1 : MAX_TRIPS_PER_USER;
+      if (tripCount.count >= limit) {
+        return user.isAnonymous ? ("GUEST_LIMIT" as const) : null;
       }
 
       const [created] = await tx
@@ -158,6 +161,9 @@ tripRoutes.post("/", async (c) => {
       return created;
     });
 
+    if (trip === "GUEST_LIMIT") {
+      return c.json({ error: ERROR_MSG.GUEST_TRIP_LIMIT }, 403);
+    }
     if (!trip) {
       return c.json({ error: ERROR_MSG.LIMIT_TRIPS }, 409);
     }
@@ -201,8 +207,11 @@ tripRoutes.post("/", async (c) => {
       .select({ count: count() })
       .from(trips)
       .where(eq(trips.ownerId, user.id));
-    if (tripCount.count >= MAX_TRIPS_PER_USER) {
-      return null;
+    // Guests are pre-checked above, but guard again inside the transaction to
+    // catch race conditions and return the same error code as the pre-check.
+    const limit = user.isAnonymous ? 1 : MAX_TRIPS_PER_USER;
+    if (tripCount.count >= limit) {
+      return user.isAnonymous ? ("GUEST_LIMIT" as const) : null;
     }
 
     const [created] = await tx
@@ -230,6 +239,9 @@ tripRoutes.post("/", async (c) => {
     return created;
   });
 
+  if (trip === "GUEST_LIMIT") {
+    return c.json({ error: ERROR_MSG.GUEST_TRIP_LIMIT }, 403);
+  }
   if (!trip) {
     return c.json({ error: ERROR_MSG.LIMIT_TRIPS }, 409);
   }

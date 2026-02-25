@@ -6,12 +6,13 @@ const LOCK_THRESHOLD = 18;
 const HORIZONTAL_BIAS = 1.8;
 const VELOCITY_THRESHOLD = 0.3;
 const SNAP_DURATION = 250;
+// a[href] is intentionally excluded: horizontal swipes on links cancel the
+// browser's click (pointer moved too far), so links still work on true taps.
 const SWIPE_IGNORE_SELECTOR = [
   "input",
   "textarea",
   "select",
   "button",
-  "a[href]",
   "[role='button']",
   "[role='link']",
   "[role='combobox']",

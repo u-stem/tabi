@@ -2,8 +2,9 @@
 
 import type { TripStatus } from "@sugara/shared";
 import { STATUS_LABELS } from "@sugara/shared";
-import { Copy, MoreHorizontal, SquareMousePointer, Trash2, X } from "lucide-react";
+import { ChevronDown, Copy, MoreHorizontal, SquareMousePointer, Trash2, X } from "lucide-react";
 import { useState } from "react";
+import { ActionSheet } from "@/components/action-sheet";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
 
 export type StatusFilter = "all" | TripStatus;
@@ -98,8 +100,15 @@ export function TripToolbar({
   hideSortKey,
   deleteLabel = "旅行",
 }: TripToolbarProps) {
+  const isMobile = useMobile();
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [statusSheetOpen, setStatusSheetOpen] = useState(false);
+  const [sortSheetOpen, setSortSheetOpen] = useState(false);
+  const [actionSheetOpen, setActionSheetOpen] = useState(false);
   const hasActions = !!onSelectionModeChange || !!newTripSlot;
+
+  const currentStatusLabel = statusFilters.find((f) => f.value === statusFilter)?.label ?? "すべて";
+  const currentSortLabel = sortOptions.find((s) => s.value === sortKey)?.label ?? "更新日";
 
   if (selectionMode) {
     return (
@@ -126,31 +135,73 @@ export function TripToolbar({
             {selectedCount === totalCount ? "全解除" : "全選択"}
           </Button>
           <div className="ml-auto flex items-center gap-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            {isMobile ? (
+              <>
                 <Button
                   variant="ghost"
                   size="icon"
                   className="h-7 w-7"
                   disabled={selectedCount === 0 || deleting || duplicating}
                   aria-label="選択操作メニュー"
+                  onClick={(e) => {
+                    e.currentTarget.blur();
+                    setActionSheetOpen(true);
+                  }}
                 >
                   <MoreHorizontal className="h-3.5 w-3.5" />
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {!hideDuplicate && (
-                  <DropdownMenuItem onClick={onDuplicateSelected}>
-                    <Copy />
-                    複製
+                <ActionSheet
+                  open={actionSheetOpen}
+                  onOpenChange={setActionSheetOpen}
+                  actions={[
+                    ...(!hideDuplicate
+                      ? [
+                          {
+                            label: "複製",
+                            icon: <Copy className="h-4 w-4" />,
+                            onClick: onDuplicateSelected,
+                          },
+                        ]
+                      : []),
+                    {
+                      label: "削除",
+                      icon: <Trash2 className="h-4 w-4" />,
+                      onClick: () => setDeleteOpen(true),
+                      variant: "destructive" as const,
+                    },
+                  ]}
+                />
+              </>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    disabled={selectedCount === 0 || deleting || duplicating}
+                    aria-label="選択操作メニュー"
+                  >
+                    <MoreHorizontal className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  {!hideDuplicate && (
+                    <DropdownMenuItem onClick={onDuplicateSelected}>
+                      <Copy />
+                      複製
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 />
+                    削除
                   </DropdownMenuItem>
-                )}
-                <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
-                  <Trash2 />
-                  削除
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
         <ResponsiveAlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
@@ -195,37 +246,85 @@ export function TripToolbar({
           hasActions && "w-full",
         )}
       >
-        {!hideStatusFilter && (
-          <Select
-            value={statusFilter}
-            onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}
-          >
-            <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusFilters.map((f) => (
-                <SelectItem key={f.value} value={f.value}>
-                  {f.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
-        {!hideSortKey && (
-          <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
-            <SelectTrigger className="h-8 w-20 text-xs" aria-label="並び替え">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )}
+        {!hideStatusFilter &&
+          (isMobile ? (
+            <>
+              <button
+                type="button"
+                aria-label="ステータスで絞り込み"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setStatusSheetOpen(true);
+                }}
+                className="flex h-8 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
+              >
+                {currentStatusLabel}
+                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+              </button>
+              <ActionSheet
+                open={statusSheetOpen}
+                onOpenChange={setStatusSheetOpen}
+                actions={statusFilters.map((f) => ({
+                  label: f.label,
+                  onClick: () => onStatusFilterChange(f.value),
+                }))}
+              />
+            </>
+          ) : (
+            <Select
+              value={statusFilter}
+              onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}
+            >
+              <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {statusFilters.map((f) => (
+                  <SelectItem key={f.value} value={f.value}>
+                    {f.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ))}
+        {!hideSortKey &&
+          (isMobile ? (
+            <>
+              <button
+                type="button"
+                aria-label="並び替え"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setSortSheetOpen(true);
+                }}
+                className="flex h-8 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
+              >
+                {currentSortLabel}
+                <ChevronDown className="h-3 w-3 text-muted-foreground" />
+              </button>
+              <ActionSheet
+                open={sortSheetOpen}
+                onOpenChange={setSortSheetOpen}
+                actions={sortOptions.map((s) => ({
+                  label: s.label,
+                  onClick: () => onSortKeyChange(s.value),
+                }))}
+              />
+            </>
+          ) : (
+            <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
+              <SelectTrigger className="h-8 w-20 text-xs" aria-label="並び替え">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {sortOptions.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>
+                    {s.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ))}
         {onSelectionModeChange && (
           <div className="flex-1 sm:flex-initial sm:ml-auto">
             <Button

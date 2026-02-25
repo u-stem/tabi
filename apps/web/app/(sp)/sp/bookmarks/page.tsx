@@ -2,20 +2,15 @@
 
 import { type BookmarkListResponse, MAX_BOOKMARK_LISTS_PER_USER } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckSquare, Copy, MoreHorizontal, Trash2, X } from "lucide-react";
+import { CheckSquare, ChevronDown, Copy, MoreHorizontal, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import { ActionSheet } from "@/components/action-sheet";
 import { BookmarkListCard } from "@/components/bookmark-list-card";
 import { CreateBookmarkListDialog } from "@/components/create-bookmark-list-dialog";
 import { Fab } from "@/components/fab";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   ResponsiveAlertDialog,
   ResponsiveAlertDialogCancel,
@@ -26,13 +21,6 @@ import {
   ResponsiveAlertDialogHeader,
   ResponsiveAlertDialogTitle,
 } from "@/components/ui/responsive-alert-dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
@@ -76,6 +64,8 @@ export default function SpBookmarksPage() {
   }, []);
 
   const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
+  const [visibilitySheetOpen, setVisibilitySheetOpen] = useState(false);
+  const [actionSheetOpen, setActionSheetOpen] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const showSkeleton = useDelayedLoading(isLoading);
 
@@ -183,50 +173,59 @@ export default function SpBookmarksPage() {
                   {sel.selectedIds.size === filteredBookmarkLists.length ? "全解除" : "全選択"}
                 </Button>
                 <div className="ml-auto flex items-center gap-1">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        disabled={sel.selectedIds.size === 0 || sel.batchLoading}
-                      >
-                        <MoreHorizontal className="h-3.5 w-3.5" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={sel.handleBatchDuplicate}>
-                        <Copy />
-                        複製
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => sel.setBatchDeleteOpen(true)}
-                      >
-                        <Trash2 />
-                        削除
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
+                    disabled={sel.selectedIds.size === 0 || sel.batchLoading}
+                    onClick={(e) => {
+                      e.currentTarget.blur();
+                      setActionSheetOpen(true);
+                    }}
+                  >
+                    <MoreHorizontal className="h-3.5 w-3.5" />
+                  </Button>
+                  <ActionSheet
+                    open={actionSheetOpen}
+                    onOpenChange={setActionSheetOpen}
+                    actions={[
+                      {
+                        label: "複製",
+                        icon: <Copy className="h-4 w-4" />,
+                        onClick: sel.handleBatchDuplicate,
+                      },
+                      {
+                        label: "削除",
+                        icon: <Trash2 className="h-4 w-4" />,
+                        onClick: () => sel.setBatchDeleteOpen(true),
+                        variant: "destructive",
+                      },
+                    ]}
+                  />
                 </div>
               </div>
             ) : (
               <div className="flex items-center gap-2">
-                <Select
-                  value={visibilityFilter}
-                  onValueChange={(v) => setVisibilityFilter(v as VisibilityFilter)}
+                <button
+                  type="button"
+                  aria-label="公開状態で絞り込み"
+                  onClick={(e) => {
+                    e.currentTarget.blur();
+                    setVisibilitySheetOpen(true);
+                  }}
+                  className="flex h-8 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
                 >
-                  <SelectTrigger className="h-8 w-[100px] text-xs" aria-label="公開状態で絞り込み">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {visibilityFilters.map((f) => (
-                      <SelectItem key={f.value} value={f.value}>
-                        {f.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  {visibilityFilters.find((f) => f.value === visibilityFilter)?.label ?? "すべて"}
+                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
+                </button>
+                <ActionSheet
+                  open={visibilitySheetOpen}
+                  onOpenChange={setVisibilitySheetOpen}
+                  actions={visibilityFilters.map((f) => ({
+                    label: f.label,
+                    onClick: () => setVisibilityFilter(f.value),
+                  }))}
+                />
                 <div className="flex items-center gap-2 ml-auto">
                   <Button
                     variant="outline"

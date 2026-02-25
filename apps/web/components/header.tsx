@@ -34,13 +34,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
@@ -61,7 +54,6 @@ export function Header() {
   const queryClient = useQueryClient();
   const { canInstall, promptInstall } = useInstallPrompt();
   const { open: openShortcutHelp } = useShortcutHelp();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const isGuest = isGuestUser(session);
   // Prevent hydration mismatch: better-auth may return cached session synchronously
@@ -107,7 +99,7 @@ export function Header() {
               key={link.href}
               href={link.href}
               className={cn(
-                "hidden items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors sm:inline-flex",
+                "inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors",
                 pathname === link.href
                   ? "bg-muted font-medium text-foreground"
                   : "text-muted-foreground hover:text-foreground",
@@ -127,177 +119,64 @@ export function Header() {
           {!mounted || !session?.user ? (
             <Skeleton className="h-8 w-8 rounded-full" />
           ) : (
-            <>
-              {/* Desktop: dropdown menu */}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="hidden rounded-full sm:inline-flex"
-                  >
-                    <UserAvatar
-                      name={session.user.name ?? ""}
-                      image={session.user.image}
-                      className="h-8 w-8"
-                    />
-                    <span className="sr-only">ユーザーメニュー</span>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel className="truncate">{session.user.name}</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {!isGuest && (
-                    <>
-                      <DropdownMenuItem asChild>
-                        <Link href={`/users/${session.user.id}`}>
-                          <User className="h-4 w-4" />
-                          プロフィール
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link href="/settings">
-                          <Settings className="h-4 w-4" />
-                          設定
-                        </Link>
-                      </DropdownMenuItem>
-                    </>
-                  )}
-                  <DropdownMenuItem onClick={openShortcutHelp} className="hidden sm:flex">
-                    <Keyboard className="h-4 w-4" />
-                    ショートカット
-                    <kbd className="ml-auto rounded border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground">
-                      ?
-                    </kbd>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
-                    <MessageSquare className="h-4 w-4" />
-                    フィードバック
-                  </DropdownMenuItem>
-                  {canInstall && (
-                    <DropdownMenuItem onClick={promptInstall}>
-                      <Download className="h-4 w-4" />
-                      アプリをインストール
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <UserAvatar
+                    name={session.user.name ?? ""}
+                    image={session.user.image}
+                    className="h-8 w-8"
+                  />
+                  <span className="sr-only">ユーザーメニュー</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel className="truncate">{session.user.name}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                {!isGuest && (
+                  <>
+                    <DropdownMenuItem asChild>
+                      <Link href={`/users/${session.user.id}`}>
+                        <User className="h-4 w-4" />
+                        プロフィール
+                      </Link>
                     </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => void switchViewMode("sp")}>
-                    <Smartphone className="h-4 w-4" />
-                    SP版で表示
+                    <DropdownMenuItem asChild>
+                      <Link href="/settings">
+                        <Settings className="h-4 w-4" />
+                        設定
+                      </Link>
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuItem onClick={openShortcutHelp}>
+                  <Keyboard className="h-4 w-4" />
+                  ショートカット
+                  <kbd className="ml-auto rounded border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground">
+                    ?
+                  </kbd>
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
+                  <MessageSquare className="h-4 w-4" />
+                  フィードバック
+                </DropdownMenuItem>
+                {canInstall && (
+                  <DropdownMenuItem onClick={promptInstall}>
+                    <Download className="h-4 w-4" />
+                    アプリをインストール
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="h-4 w-4" />
-                    ログアウト
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* Mobile: avatar + sheet (nav links handled by BottomNav) */}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="rounded-full sm:hidden"
-                onClick={(e) => {
-                  e.currentTarget.blur();
-                  setMobileMenuOpen(true);
-                }}
-              >
-                <UserAvatar
-                  name={session.user.name ?? ""}
-                  image={session.user.image}
-                  className="h-8 w-8"
-                />
-                <span className="sr-only">ユーザーメニュー</span>
-              </Button>
-              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetContent side="right">
-                  <SheetHeader>
-                    <SheetTitle className="truncate">{session.user.name}</SheetTitle>
-                    <SheetDescription>
-                      {session.user.displayUsername
-                        ? `@${session.user.displayUsername}`
-                        : session.user.username
-                          ? `@${session.user.username}`
-                          : ""}
-                    </SheetDescription>
-                  </SheetHeader>
-                  <nav className="mt-6 flex flex-col gap-1" aria-label="モバイルメニュー">
-                    {!isGuest && (
-                      <>
-                        <Link
-                          href={`/users/${session.user.id}`}
-                          onClick={() => setMobileMenuOpen(false)}
-                          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                          <User className="h-4 w-4" />
-                          プロフィール
-                        </Link>
-                        <Link
-                          href="/settings"
-                          onClick={() => setMobileMenuOpen(false)}
-                          className={cn(
-                            "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                            pathname === "/settings"
-                              ? "bg-muted font-medium text-foreground"
-                              : "text-muted-foreground hover:text-foreground",
-                          )}
-                        >
-                          <Settings className="h-4 w-4" />
-                          設定
-                        </Link>
-                      </>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setFeedbackOpen(true);
-                        setMobileMenuOpen(false);
-                      }}
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <MessageSquare className="h-4 w-4" />
-                      フィードバック
-                    </button>
-                    {canInstall && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          promptInstall();
-                          setMobileMenuOpen(false);
-                        }}
-                        className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        <Download className="h-4 w-4" />
-                        アプリをインストール
-                      </button>
-                    )}
-                    <div className="my-2 border-t" />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMobileMenuOpen(false);
-                        void switchViewMode("sp");
-                      }}
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <Smartphone className="h-4 w-4" />
-                      SP版で表示
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        handleSignOut();
-                        setMobileMenuOpen(false);
-                      }}
-                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      ログアウト
-                    </button>
-                  </nav>
-                </SheetContent>
-              </Sheet>
-            </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => void switchViewMode("sp")}>
+                  <Smartphone className="h-4 w-4" />
+                  SP版で表示
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4" />
+                  ログアウト
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </nav>

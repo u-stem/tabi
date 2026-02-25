@@ -289,11 +289,9 @@ export default function SpTripDetailPage() {
           <Skeleton className="h-5 w-36" />
           <Skeleton className="ml-auto h-8 w-8 rounded-md" />
         </div>
-        <div className="flex shrink-0">
-          {(["w-12", "w-16", "w-12"] as const).map((w, i) => (
-            <div key={w + String(i)} className="flex flex-1 items-center justify-center py-2.5">
-              <Skeleton className={`h-4 ${w}`} />
-            </div>
+        <div className="my-2 grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-9 rounded-md" />
           ))}
         </div>
         <div className="rounded-lg border bg-card">

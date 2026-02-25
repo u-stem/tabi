@@ -298,8 +298,11 @@ export default function SpHomePage() {
     <>
       {showSkeleton ? (
         <>
+          <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+            <Skeleton className="h-9 rounded-md" />
+            <Skeleton className="h-9 rounded-md" />
+          </div>
           <div className="mt-4 flex flex-col gap-2">
-            <Skeleton className="h-8 w-full" />
             <div className="flex items-center gap-2">
               <Skeleton className="h-8 w-[120px]" />
               <Skeleton className="h-8 w-[100px]" />
@@ -311,7 +314,7 @@ export default function SpHomePage() {
           </div>
           <div className="mt-4 grid gap-4">
             {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
-              <div key={key} className="rounded-xl border bg-card shadow">
+              <div key={key} className="rounded-lg border bg-card shadow-sm">
                 <div className="flex flex-col space-y-1.5 p-6">
                   <div className="flex items-center justify-between">
                     <Skeleton className="h-5 w-32" />
@@ -399,7 +402,10 @@ export default function SpHomePage() {
 
           {/* Swipe area - px-0.5/-mx-0.5 allows focus rings to bleed past overflow-x-hidden boundary.
               min-h-[60vh] ensures a large touch target even when the card list is empty. */}
-          <div ref={contentRef} className="mt-2 min-h-[60vh] overflow-x-hidden px-0.5 -mx-0.5 touch-pan-y">
+          <div
+            ref={contentRef}
+            className="mt-2 min-h-[60vh] overflow-x-hidden px-0.5 -mx-0.5 touch-pan-y"
+          >
             <div
               ref={swipeRef}
               className="relative touch-pan-y"

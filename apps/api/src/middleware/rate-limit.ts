@@ -3,6 +3,9 @@ import { ERROR_MSG } from "../lib/constants";
 
 type RateLimitEntry = { count: number; resetAt: number };
 
+// In-memory store. In Vercel's serverless environment each function instance
+// has its own memory, so this store is not shared across instances.
+// The rate limit is therefore best-effort and not a hard guarantee.
 // Shared store cache keyed by "window:max" to prevent duplicate setIntervals
 const storeCache = new Map<string, Map<string, RateLimitEntry>>();
 

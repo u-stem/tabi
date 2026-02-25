@@ -135,10 +135,13 @@ export default function SpHomePage() {
   );
 
   const currentTabIdx = HOME_TABS.indexOf(tab);
+  // enabled transitions false→true when content (and refs) become visible,
+  // triggering the effect to re-run and register listeners.
   const swipe = useSwipeTab(contentRef, swipeRef, {
     onSwipeComplete: handleSwipe,
     canSwipePrev: currentTabIdx > 0,
     canSwipeNext: currentTabIdx < HOME_TABS.length - 1,
+    enabled: !showSkeleton && !error,
   });
 
   const adjacentTab =

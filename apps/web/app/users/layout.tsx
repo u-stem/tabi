@@ -19,12 +19,8 @@ export default function UsersLayout({ children }: { children: React.ReactNode })
       <TooltipProvider>
         <ShortcutHelpProvider>
           <div className="min-h-screen">
-            <div className="overflow-x-auto">
-              <div className="min-w-[1024px]">
-                <Header />
-                <main className="container py-4 sm:py-8">{children}</main>
-              </div>
-            </div>
+            <Header />
+            <main className="container py-4 sm:py-8">{children}</main>
           </div>
         </ShortcutHelpProvider>
       </TooltipProvider>

@@ -364,10 +364,11 @@ export default function HomePage() {
             <p className="mt-8 text-center text-muted-foreground">条件に一致する旅行がありません</p>
           ) : (
             <div className="mt-4 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredTrips.map((trip) => (
+              {filteredTrips.map((trip, index) => (
                 <TripCard
                   key={trip.id}
                   {...trip}
+                  priority={index === 0}
                   selectable={selectionMode && tab === "owned"}
                   selected={selectedIds.has(trip.id)}
                   onSelect={handleSelect}

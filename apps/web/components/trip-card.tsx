@@ -18,6 +18,8 @@ type TripCardProps = TripListItem & {
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (id: string) => void;
+  /** Pass true for the first visible card to avoid lazy-loading the LCP image. */
+  priority?: boolean;
 };
 
 export const TripCard = memo(function TripCard({
@@ -35,6 +37,7 @@ export const TripCard = memo(function TripCard({
   selectable = false,
   selected = false,
   onSelect,
+  priority = false,
 }: TripCardProps) {
   const hasDates = startDate && endDate;
   const dayCount = hasDates ? getDayCount(startDate, endDate) : null;
@@ -48,6 +51,7 @@ export const TripCard = memo(function TripCard({
             src={coverImageUrl}
             alt=""
             fill
+            priority={priority}
             className="object-cover"
             style={{ objectPosition: `center ${coverImagePosition}%` }}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

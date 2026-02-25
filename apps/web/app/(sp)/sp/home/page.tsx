@@ -16,8 +16,8 @@ import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
-import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
+import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
@@ -282,11 +282,12 @@ export default function SpHomePage() {
           <p className="mt-8 text-center text-muted-foreground">条件に一致する旅行がありません</p>
         ) : (
           <div className="mt-4 grid items-start gap-4">
-            {displayTrips.map((trip) => (
+            {displayTrips.map((trip, index) => (
               <TripCard
                 key={trip.id}
                 {...trip}
                 hrefPrefix="/sp/trips"
+                priority={isActive && index === 0}
                 selectable={isActive && selectionMode && targetTab === "owned"}
                 selected={isActive ? selectedIds.has(trip.id) : false}
                 onSelect={isActive ? handleSelect : undefined}
@@ -383,8 +384,7 @@ export default function SpHomePage() {
                   className="absolute top-0 left-0 w-full"
                   aria-hidden="true"
                   style={{
-                    transform:
-                      swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                    transform: swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
                   }}
                 >
                   {renderTabContent(adjacentTab)}

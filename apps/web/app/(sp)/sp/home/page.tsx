@@ -243,58 +243,43 @@ export default function SpHomePage() {
     setDuplicating(false);
   }
 
-  function renderTabContent(targetTab: HomeTab) {
+  // Only card content — toolbar lives outside the swipe container so that the
+  // search <input> never blocks swipe initiation.
+  function renderCardList(targetTab: HomeTab) {
     const isActive = targetTab === tab;
     const baseData = targetTab === "shared" ? sharedTrips : ownedTrips;
     const displayTrips = isActive ? filteredTrips : baseData;
 
+    if (baseData.length === 0) {
+      return (
+        <p className="mt-8 text-center text-muted-foreground">
+          {targetTab === "shared"
+            ? "共有された旅行はありません"
+            : "まだ旅行がありません。旅行を作成してプランを立てましょう"}
+        </p>
+      );
+    }
+
+    if (displayTrips.length === 0) {
+      return (
+        <p className="mt-8 text-center text-muted-foreground">条件に一致する旅行がありません</p>
+      );
+    }
+
     return (
-      <>
-        <TripToolbar
-          searchInputRef={isActive ? searchInputRef : undefined}
-          search={isActive ? search : ""}
-          onSearchChange={isActive ? setSearch : () => {}}
-          statusFilter={isActive ? statusFilter : "all"}
-          onStatusFilterChange={isActive ? setStatusFilter : () => {}}
-          sortKey={isActive ? sortKey : "updatedAt"}
-          onSortKeyChange={isActive ? setSortKey : () => {}}
-          selectionMode={isActive ? selectionMode : false}
-          onSelectionModeChange={isActive ? handleSelectionModeChange : undefined}
-          selectedCount={isActive ? selectedIds.size : 0}
-          totalCount={displayTrips.length}
-          onSelectAll={isActive ? handleSelectAll : () => {}}
-          onDeselectAll={isActive ? handleDeselectAll : () => {}}
-          onDeleteSelected={isActive ? handleDeleteSelectedTrips : () => {}}
-          onDuplicateSelected={isActive ? handleDuplicateSelected : () => {}}
-          deleting={isActive ? deleting : false}
-          duplicating={isActive ? duplicating : false}
-          disabled={!online}
-          hideDelete={targetTab === "shared"}
-        />
-        {baseData.length === 0 ? (
-          <p className="mt-8 text-center text-muted-foreground">
-            {targetTab === "shared"
-              ? "共有された旅行はありません"
-              : "まだ旅行がありません。旅行を作成してプランを立てましょう"}
-          </p>
-        ) : displayTrips.length === 0 ? (
-          <p className="mt-8 text-center text-muted-foreground">条件に一致する旅行がありません</p>
-        ) : (
-          <div className="mt-4 grid items-start gap-4">
-            {displayTrips.map((trip, index) => (
-              <TripCard
-                key={trip.id}
-                {...trip}
-                hrefPrefix="/sp/trips"
-                priority={isActive && index === 0}
-                selectable={isActive && selectionMode}
-                selected={isActive ? selectedIds.has(trip.id) : false}
-                onSelect={isActive ? handleSelect : undefined}
-              />
-            ))}
-          </div>
-        )}
-      </>
+      <div className="mt-4 grid items-start gap-4">
+        {displayTrips.map((trip, index) => (
+          <TripCard
+            key={trip.id}
+            {...trip}
+            hrefPrefix="/sp/trips"
+            priority={isActive && index === 0}
+            selectable={isActive && selectionMode}
+            selected={isActive ? selectedIds.has(trip.id) : false}
+            onSelect={isActive ? handleSelect : undefined}
+          />
+        ))}
+      </div>
     );
   }
 
@@ -383,15 +368,42 @@ export default function SpHomePage() {
             ))}
           </div>
 
-          {/* Swipe area - px-0.5/-mx-0.5 allows focus rings to bleed past overflow-x-hidden boundary */}
-          <div ref={contentRef} className="mt-4 overflow-x-hidden px-0.5 -mx-0.5">
+          {/* Toolbar is outside the swipe container so the search <input> never
+              blocks swipe initiation. Only card content goes inside. */}
+          <div className="mt-4">
+            <TripToolbar
+              searchInputRef={searchInputRef}
+              search={search}
+              onSearchChange={setSearch}
+              statusFilter={statusFilter}
+              onStatusFilterChange={setStatusFilter}
+              sortKey={sortKey}
+              onSortKeyChange={setSortKey}
+              selectionMode={selectionMode}
+              onSelectionModeChange={handleSelectionModeChange}
+              selectedCount={selectedIds.size}
+              totalCount={filteredTrips.length}
+              onSelectAll={handleSelectAll}
+              onDeselectAll={handleDeselectAll}
+              onDeleteSelected={handleDeleteSelectedTrips}
+              onDuplicateSelected={handleDuplicateSelected}
+              deleting={deleting}
+              duplicating={duplicating}
+              disabled={!online}
+              hideDelete={tab === "shared"}
+            />
+          </div>
+
+          {/* Swipe area - px-0.5/-mx-0.5 allows focus rings to bleed past overflow-x-hidden boundary.
+              min-h-[60vh] ensures a large touch target even when the card list is empty. */}
+          <div ref={contentRef} className="mt-2 min-h-[60vh] overflow-x-hidden px-0.5 -mx-0.5">
             <div
               ref={swipeRef}
               className="relative touch-pan-y"
               style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
             >
               {/* Current tab - pt-0.5 prevents the top of the focus ring from being clipped */}
-              <div className="pt-0.5">{renderTabContent(tab)}</div>
+              <div className="pt-0.5">{renderCardList(tab)}</div>
 
               {/* Adjacent tab (rendered only during swipe) */}
               {swipe.adjacent && adjacentTab && (
@@ -402,7 +414,7 @@ export default function SpHomePage() {
                     transform: swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
                   }}
                 >
-                  {renderTabContent(adjacentTab)}
+                  {renderCardList(adjacentTab)}
                 </div>
               )}
             </div>

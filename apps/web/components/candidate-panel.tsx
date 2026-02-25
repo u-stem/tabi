@@ -288,7 +288,7 @@ function CandidateCard({
             type="button"
             onClick={() => (spot.myReaction === "like" ? onRemoveReaction?.() : onReact("like"))}
             className={cn(
-              "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs transition-colors",
+              "inline-flex min-h-[36px] items-center gap-1 rounded px-2 py-1 text-xs transition-colors",
               spot.myReaction === "like" ? "bg-accent font-medium" : "hover:bg-muted",
             )}
             aria-label="いいね"
@@ -303,7 +303,7 @@ function CandidateCard({
             type="button"
             onClick={() => (spot.myReaction === "hmm" ? onRemoveReaction?.() : onReact("hmm"))}
             className={cn(
-              "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-xs transition-colors",
+              "inline-flex min-h-[36px] items-center gap-1 rounded px-2 py-1 text-xs transition-colors",
               spot.myReaction === "hmm" ? "bg-accent font-medium" : "hover:bg-muted",
             )}
             aria-label="うーん"

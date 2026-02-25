@@ -192,7 +192,10 @@ export default function SpTripDetailPage() {
   const canSwipeMobileTabs = currentTabIdx !== -1;
   const swipe = useSwipeTab(mobileContentRef, swipeContainerRef, {
     onSwipeComplete: handleSwipe,
-    enabled: !!trip && canSwipeMobileTabs,
+    // !showSkeleton ensures refs are populated before listeners are registered.
+    // Without this, enabled can flip true while skeleton is still mounted (refs null),
+    // and then stays true when content renders — so the effect never re-runs.
+    enabled: !showSkeleton && !!trip && canSwipeMobileTabs,
     canSwipePrev: canSwipeMobileTabs && currentTabIdx > 0,
     canSwipeNext: canSwipeMobileTabs && currentTabIdx < tabIds.length - 1,
   });
@@ -534,8 +537,8 @@ export default function SpTripDetailPage() {
               ref={mobileContentRef}
               className={
                 isActivelySwiping
-                  ? "min-h-0 overflow-hidden"
-                  : "min-h-0 overflow-y-auto overscroll-contain pb-20"
+                  ? "min-h-0 overflow-hidden touch-pan-y"
+                  : "min-h-0 overflow-y-auto overscroll-contain pb-20 touch-pan-y"
               }
             >
               <div

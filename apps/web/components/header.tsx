@@ -6,6 +6,7 @@ import {
   Download,
   Keyboard,
   LogOut,
+  Menu,
   MessageSquare,
   Settings,
   Smartphone,
@@ -99,7 +100,7 @@ export function Header() {
               key={link.href}
               href={link.href}
               className={cn(
-                "inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors",
+                "hidden md:inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors",
                 pathname === link.href
                   ? "bg-muted font-medium text-foreground"
                   : "text-muted-foreground hover:text-foreground",
@@ -115,6 +116,32 @@ export function Header() {
           ))}
         </div>
         <div className="flex items-center gap-1">
+          {/* Hamburger: visible only below md breakpoint */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+                <span className="sr-only">メニュー</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {NAV_LINKS.filter(
+                (link) => !isGuest || (link.href !== "/bookmarks" && link.href !== "/friends"),
+              ).map((link) => (
+                <DropdownMenuItem key={link.href} asChild>
+                  <Link href={link.href} className={cn(pathname === link.href && "font-medium")}>
+                    <link.icon className="h-4 w-4" />
+                    {link.label}
+                    {link.href === "/friends" && friendRequestCount > 0 && (
+                      <span className="ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium tabular-nums text-destructive-foreground">
+                        {friendRequestCount}
+                      </span>
+                    )}
+                  </Link>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
           <ThemeToggle />
           {!mounted || !session?.user ? (
             <Skeleton className="h-8 w-8 rounded-full" />

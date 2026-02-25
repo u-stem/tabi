@@ -362,7 +362,7 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
   }
 
   // Build update payload with only changed fields
-  const updatePayload: Record<string, unknown> = {};
+  const updatePayload: Partial<typeof trips.$inferInsert> = {};
   if (otherFields.title !== undefined && otherFields.title !== currentTrip.title) {
     updatePayload.title = otherFields.title;
   }

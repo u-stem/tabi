@@ -7,8 +7,8 @@ import { usePathname } from "next/navigation";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { isGuestUser } from "@/lib/guest";
+import { SP_NAV_LINKS } from "@/lib/nav-links";
 import { queryKeys } from "@/lib/query-keys";
-import { SP_NAV_LINKS } from "@/lib/sp-nav-links";
 import { cn } from "@/lib/utils";
 
 export function SpBottomNav() {

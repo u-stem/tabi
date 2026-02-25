@@ -349,18 +349,34 @@ export default function SpHomePage() {
         </div>
       ) : (
         <>
-          {/* Tab pills */}
-          <div className="mt-4 flex gap-1.5">
-            {tabs.map(({ value, label }) => (
+          {/* Tab bar */}
+          <div
+            role="tablist"
+            aria-orientation="horizontal"
+            className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+          >
+            {tabs.map(({ value, label }, index) => (
               <button
                 key={value}
                 type="button"
+                role="tab"
+                aria-selected={tab === value}
+                tabIndex={tab === value ? 0 : -1}
                 onClick={() => handleTabChange(value)}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowRight") {
+                    e.preventDefault();
+                    handleTabChange(tabs[(index + 1) % tabs.length].value);
+                  } else if (e.key === "ArrowLeft") {
+                    e.preventDefault();
+                    handleTabChange(tabs[(index - 1 + tabs.length) % tabs.length].value);
+                  }
+                }}
                 className={cn(
-                  "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.95]",
+                  "min-h-[36px] rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.97]",
                   tab === value
-                    ? "bg-muted text-foreground"
-                    : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? "bg-background text-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground",
                 )}
               >
                 {label}

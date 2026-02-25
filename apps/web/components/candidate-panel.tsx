@@ -212,7 +212,6 @@ function CandidateCard({
               "flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400",
               selectable && "pointer-events-none",
             )}
-            onClick={(e) => e.stopPropagation()}
           >
             <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
             <span className="truncate">{spot.address}</span>
@@ -248,7 +247,6 @@ function CandidateCard({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="truncate text-blue-600 hover:underline dark:text-blue-400"
-                    onClick={(e) => e.stopPropagation()}
                   >
                     {routeStr}
                   </a>
@@ -269,7 +267,6 @@ function CandidateCard({
               "flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400",
               selectable && "pointer-events-none",
             )}
-            onClick={(e) => e.stopPropagation()}
           >
             <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
             <span className="truncate">{stripProtocol(u)}</span>

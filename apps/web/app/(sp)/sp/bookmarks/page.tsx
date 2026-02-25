@@ -1,6 +1,6 @@
 "use client";
 
-import type { BookmarkListResponse } from "@sugara/shared";
+import { type BookmarkListResponse, MAX_BOOKMARK_LISTS_PER_USER } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckSquare, Copy, MoreHorizontal, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -291,7 +291,7 @@ export default function SpBookmarksPage() {
       <Fab
         onClick={() => setCreateDialogOpen(true)}
         label="リストを新規作成"
-        hidden={!online || sel.selectionMode}
+        hidden={!online || sel.selectionMode || bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER}
       />
     </>
   );

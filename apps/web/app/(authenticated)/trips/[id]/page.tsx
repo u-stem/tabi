@@ -188,7 +188,6 @@ export default function TripDetailPage() {
               group: "パネル",
               items: [
                 { key: "g c", description: "候補" },
-                { key: "g h", description: "作戦会議" },
                 { key: "g x", description: "費用" },
                 { key: "g l", description: "履歴" },
                 { key: "g b", description: "ブックマーク" },

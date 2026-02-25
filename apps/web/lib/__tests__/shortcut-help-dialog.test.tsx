@@ -45,7 +45,6 @@ const tripShortcuts: ShortcutGroup[] = [
     group: "パネル",
     items: [
       { key: "g c", description: "候補" },
-      { key: "g h", description: "作戦会議" },
       { key: "g x", description: "費用" },
       { key: "g l", description: "履歴" },
       { key: "g b", description: "ブックマーク" },
@@ -105,13 +104,13 @@ describe("ShortcutHelpDialog with trip shortcuts", () => {
     const kbds = document.querySelectorAll("kbd[data-shortcut-key]");
     const keys = [...kbds].map((el) => el.textContent);
     // Sequence keys are split: "g c" renders as separate <kbd>g</kbd> → <kbd>c</kbd>
-    expect(keys.filter((k) => k === "g").length).toBeGreaterThanOrEqual(5);
-    expect(keys).toContain("h");
+    // Panel shortcuts: g c, g x, g l, g b (g h removed with chat feature)
+    expect(keys.filter((k) => k === "g").length).toBeGreaterThanOrEqual(4);
     expect(keys).toContain("x");
     expect(keys).toContain("l");
     expect(keys).toContain("b");
     // Arrow separators are rendered between sequence parts
-    expect(screen.getAllByText("→").length).toBeGreaterThanOrEqual(5);
+    expect(screen.getAllByText("→").length).toBeGreaterThanOrEqual(4);
   });
 
   it("renders poll toggle shortcut", () => {

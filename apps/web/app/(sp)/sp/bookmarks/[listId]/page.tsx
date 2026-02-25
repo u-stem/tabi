@@ -5,7 +5,6 @@ import {
   DndContext,
   type DragEndEvent,
   PointerSensor,
-  TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -60,10 +59,9 @@ export default function SpBookmarkListDetailPage() {
   const [localBookmarks, setLocalBookmarks] = useState<BookmarkResponse[]>([]);
   const [reorderMode, setReorderMode] = useState(false);
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
-  );
+  // TouchSensor is intentionally omitted: all items are non-draggable on SP,
+  // and TouchSensor's 200ms delay would interfere with scroll.
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 8 } }));
 
   const {
     data: lists = [],

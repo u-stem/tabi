@@ -120,8 +120,5 @@ test.describe("Mobile trip detail", () => {
 
     await clickTripMenuAction(page, "履歴");
     await expect(page.getByText(/まだ履歴がありません|旅行「.*」を作成/).first()).toBeVisible();
-
-    await page.getByRole("tab", { name: "作戦会議" }).click();
-    await expect(page.getByPlaceholder("メッセージを入力...")).toBeVisible();
   });
 });

@@ -7,9 +7,17 @@ import { cn } from "@/lib/utils";
 
 const Drawer = ({
   shouldScaleBackground = true,
+  // Disable vaul's built-in input repositioning: it moves the drawer upward when
+  // an input is focused, but after the keyboard dismisses the drawer can end up
+  // at the wrong height, showing only a partial view of its content.
+  repositionInputs = false,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
-  <DrawerPrimitive.Root shouldScaleBackground={shouldScaleBackground} {...props} />
+  <DrawerPrimitive.Root
+    shouldScaleBackground={shouldScaleBackground}
+    repositionInputs={repositionInputs}
+    {...props}
+  />
 );
 
 const DrawerTrigger = DrawerPrimitive.Trigger;
@@ -44,7 +52,7 @@ const DrawerContent = React.forwardRef<
       {...props}
     >
       <div className="mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full bg-muted" />
-      <div className="min-h-0 overflow-y-auto overscroll-contain px-4">{children}</div>
+      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4">{children}</div>
     </DrawerPrimitive.Content>
   </DrawerPortal>
 ));

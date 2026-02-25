@@ -158,7 +158,8 @@ describe("Share Integration", () => {
     const trip = await db.query.trips.findFirst({
       where: eq(trips.id, tripId),
     });
-    const res = await app.request(`/api/shared/${trip!.shareToken}`);
+    if (!trip) throw new Error("Trip not found");
+    const res = await app.request(`/api/shared/${trip.shareToken}`);
     expect(res.status).toBe(404);
   });
 

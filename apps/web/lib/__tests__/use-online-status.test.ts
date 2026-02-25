@@ -101,7 +101,7 @@ describe("useOnlineStatus", () => {
 
     // Stale verification finally resolves → should NOT override online state
     await act(async () => {
-      fetchResolve!();
+      fetchResolve?.();
     });
 
     expect(result.current).toBe(true);

@@ -28,9 +28,10 @@ describe("getNewsBySlug", () => {
     const article = getNewsBySlug("2026-02-12-launch");
 
     expect(article).not.toBeNull();
-    expect(article!.title).toBe("sugara をリリースしました");
-    expect(article!.date).toBe("2026-02-12");
-    expect(article!.content).toContain("## 主な機能");
+    if (!article) throw new Error("article not found");
+    expect(article.title).toBe("sugara をリリースしました");
+    expect(article.date).toBe("2026-02-12");
+    expect(article.content).toContain("## 主な機能");
   });
 
   it("returns null for non-existent slug", () => {

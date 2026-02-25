@@ -86,7 +86,7 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
   const splitAmounts =
     splitType === "equal"
       ? calculateEqualSplit(amount, splits.length)
-      : splits.map((s) => s.amount!);
+      : splits.map((s) => s.amount ?? 0);
 
   const result = await db.transaction(async (tx) => {
     const [expense] = await tx
@@ -168,7 +168,7 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
       const splitAmounts =
         finalSplitType === "equal"
           ? calculateEqualSplit(finalAmount, splits.length)
-          : splits.map((s) => s.amount!);
+          : splits.map((s) => s.amount ?? 0);
 
       await tx.delete(expenseSplits).where(eq(expenseSplits.expenseId, expenseId));
       await tx.insert(expenseSplits).values(

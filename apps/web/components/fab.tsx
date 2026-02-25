@@ -2,6 +2,7 @@
 
 import { Plus } from "lucide-react";
 import { haptics } from "@/lib/haptics";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
 
 // BottomNav h-12 (48px) + 32px spacing
@@ -15,6 +16,9 @@ interface FabProps {
 }
 
 export function Fab({ onClick, label, hidden, className }: FabProps) {
+  // In SP context MobileContext is true so lg:hidden is skipped,
+  // allowing the FAB to appear even on desktop-sized viewports.
+  const isMobile = useMobile();
   if (hidden) return null;
 
   return (
@@ -22,7 +26,8 @@ export function Fab({ onClick, label, hidden, className }: FabProps) {
       type="button"
       aria-label={label}
       className={cn(
-        "fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95 lg:hidden",
+        "fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-transform active:scale-95",
+        !isMobile && "lg:hidden",
         className,
       )}
       style={{ bottom: `calc(env(safe-area-inset-bottom, 0px) + ${BOTTOM_NAV_CLEARANCE_PX}px)` }}

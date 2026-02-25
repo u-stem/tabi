@@ -105,29 +105,28 @@ export function TripToolbar({
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [statusSheetOpen, setStatusSheetOpen] = useState(false);
   const [sortSheetOpen, setSortSheetOpen] = useState(false);
-  const [actionSheetOpen, setActionSheetOpen] = useState(false);
   const currentStatusLabel = statusFilters.find((f) => f.value === statusFilter)?.label ?? "すべて";
   const currentSortLabel = sortOptions.find((s) => s.value === sortKey)?.label ?? "更新日";
 
   if (selectionMode) {
     return (
       <>
-        <div className="flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+        <div className="flex h-8 select-none items-center gap-1.5 rounded-lg bg-muted px-1.5">
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7"
+            className="h-8 w-8"
             onClick={() => onSelectionModeChange?.(false)}
             disabled={deleting || duplicating}
             aria-label="選択を終了"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="h-4 w-4" />
           </Button>
           <span className="text-xs font-medium">{selectedCount}件選択中</span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2 text-xs"
+            className="h-8 px-2 text-xs"
             onClick={selectedCount === totalCount ? onDeselectAll : onSelectAll}
             disabled={deleting || duplicating}
           >
@@ -136,44 +135,30 @@ export function TripToolbar({
           <div className="ml-auto flex items-center gap-1">
             {isMobile ? (
               <>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  disabled={selectedCount === 0 || deleting || duplicating}
-                  aria-label="選択操作メニュー"
-                  onClick={(e) => {
-                    e.currentTarget.blur();
-                    setActionSheetOpen(true);
-                  }}
-                >
-                  <MoreHorizontal className="h-3.5 w-3.5" />
-                </Button>
-                <ActionSheet
-                  open={actionSheetOpen}
-                  onOpenChange={setActionSheetOpen}
-                  actions={[
-                    ...(!hideDuplicate
-                      ? [
-                          {
-                            label: "複製",
-                            icon: <Copy className="h-4 w-4" />,
-                            onClick: onDuplicateSelected,
-                          },
-                        ]
-                      : []),
-                    ...(!hideDelete
-                      ? [
-                          {
-                            label: "削除",
-                            icon: <Trash2 className="h-4 w-4" />,
-                            onClick: () => setDeleteOpen(true),
-                            variant: "destructive" as const,
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
+                {!hideDuplicate && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs"
+                    disabled={selectedCount === 0 || deleting || duplicating}
+                    onClick={onDuplicateSelected}
+                  >
+                    <Copy className="h-4 w-4" />
+                    複製
+                  </Button>
+                )}
+                {!hideDelete && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs text-destructive"
+                    disabled={selectedCount === 0 || deleting || duplicating}
+                    onClick={() => setDeleteOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    削除
+                  </Button>
+                )}
               </>
             ) : (
               <DropdownMenu>
@@ -181,11 +166,11 @@ export function TripToolbar({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-7 w-7"
+                    className="h-8 w-8"
                     disabled={selectedCount === 0 || deleting || duplicating}
                     aria-label="選択操作メニュー"
                   >
-                    <MoreHorizontal className="h-3.5 w-3.5" />
+                    <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

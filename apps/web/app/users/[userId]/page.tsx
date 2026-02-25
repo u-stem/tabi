@@ -183,7 +183,7 @@ function ErrorMessage({ message }: { message: string }) {
 
 export default function PublicProfilePage() {
   const params = useParams();
-  const userId = params.userId as string;
+  const userId = typeof params.userId === "string" ? params.userId : null;
   const { data: session, isPending: isSessionPending } = useSession();
   const isAuthenticated = !isSessionPending && !!session;
 
@@ -192,8 +192,9 @@ export default function PublicProfilePage() {
     isLoading,
     error: queryError,
   } = useQuery({
-    queryKey: queryKeys.profile.bookmarkLists(userId),
+    queryKey: queryKeys.profile.bookmarkLists(userId ?? ""),
     queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
+    enabled: userId !== null,
   });
 
   const showSkeleton = useDelayedLoading(isLoading);
@@ -236,7 +237,7 @@ export default function PublicProfilePage() {
     }
     return (
       <div className="mx-auto max-w-2xl">
-        <ProfileContent profile={profile} userId={userId} />
+        <ProfileContent profile={profile} userId={userId ?? ""} />
       </div>
     );
   }
@@ -287,7 +288,7 @@ export default function PublicProfilePage() {
     <div className="min-h-screen">
       <ProfileHeader />
       <div className="container max-w-2xl py-8">
-        <ProfileContent profile={profile} userId={userId} />
+        <ProfileContent profile={profile} userId={userId ?? ""} />
       </div>
     </div>
   );

@@ -63,7 +63,7 @@ function SharedHeader() {
 
 export default function SharedTripPage() {
   const params = useParams();
-  const token = params.token as string;
+  const token = typeof params.token === "string" ? params.token : null;
   const queryClient = useQueryClient();
   const [hasUpdate, setHasUpdate] = useState(false);
 
@@ -72,8 +72,9 @@ export default function SharedTripPage() {
     isLoading,
     error: queryError,
   } = useQuery({
-    queryKey: queryKeys.shared.trip(token),
+    queryKey: queryKeys.shared.trip(token ?? ""),
     queryFn: () => api<SharedTripResponse>(`/api/shared/${token}`),
+    enabled: token !== null,
   });
 
   const showSkeleton = useDelayedLoading(isLoading);
@@ -88,7 +89,7 @@ export default function SharedTripPage() {
 
   function handleRefresh() {
     setHasUpdate(false);
-    queryClient.invalidateQueries({ queryKey: queryKeys.shared.trip(token) });
+    queryClient.invalidateQueries({ queryKey: queryKeys.shared.trip(token ?? "") });
   }
 
   // Subscribe to broadcast updates

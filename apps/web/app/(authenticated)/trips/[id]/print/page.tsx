@@ -28,15 +28,16 @@ import { cn } from "@/lib/utils";
 export default function TripPrintPage() {
   const params = useParams();
   const searchParams = useSearchParams();
-  const tripId = params.id as string;
+  const tripId = typeof params.id === "string" ? params.id : null;
 
   const {
     data: trip,
     isLoading,
     error,
   } = useQuery({
-    queryKey: queryKeys.trips.detail(tripId),
+    queryKey: queryKeys.trips.detail(tripId ?? ""),
     queryFn: () => api<TripResponse>(`/api/trips/${tripId}`),
+    enabled: tripId !== null,
   });
   useAuthRedirect(error);
 

@@ -39,15 +39,16 @@ function SharedPollHeader() {
 
 export default function SharedPollPage() {
   const params = useParams();
-  const token = params.token as string;
+  const token = typeof params.token === "string" ? params.token : null;
 
   const {
     data: poll,
     isLoading,
     error,
   } = useQuery({
-    queryKey: queryKeys.polls.shared(token),
+    queryKey: queryKeys.polls.shared(token ?? ""),
     queryFn: () => api<SharedPollResponse>(`/api/polls/shared/${token}`),
+    enabled: token !== null,
     retry: false,
   });
 

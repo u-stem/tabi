@@ -67,7 +67,7 @@ import { queryKeys } from "@/lib/query-keys";
 
 export default function SpTripDetailPage() {
   const params = useParams();
-  const tripId = params.id as string;
+  const tripId = typeof params.id === "string" ? params.id : null;
   const online = useOnlineStatus();
   const now = useCurrentTime();
   const { data: session } = useSession();
@@ -78,8 +78,9 @@ export default function SpTripDetailPage() {
     isLoading,
     error: queryError,
   } = useQuery({
-    queryKey: queryKeys.trips.detail(tripId),
+    queryKey: queryKeys.trips.detail(tripId ?? ""),
     queryFn: () => api<TripResponse>(`/api/trips/${tripId}`),
+    enabled: tripId !== null,
   });
   useAuthRedirect(queryError);
   const pollId = trip?.poll?.id;
@@ -117,7 +118,7 @@ export default function SpTripDetailPage() {
   const currentPattern = currentDay?.patterns[currentPatternIndex] ?? null;
 
   const invalidateTrip = useCallback(async () => {
-    await queryClient.invalidateQueries({ queryKey: queryKeys.trips.detail(tripId) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.trips.detail(tripId ?? "") });
     if (pollId) {
       await queryClient.invalidateQueries({ queryKey: queryKeys.polls.detail(pollId) });
     }
@@ -131,7 +132,7 @@ export default function SpTripDetailPage() {
     [session?.user?.id, session?.user?.name, session?.user?.image],
   );
   const { presence, isConnected, updatePresence, broadcastChange } = useTripSync(
-    tripId,
+    tripId ?? "",
     syncUser,
     invalidateTrip,
   );
@@ -139,7 +140,7 @@ export default function SpTripDetailPage() {
   const onMutate = useCallback(async () => {
     await invalidateTrip();
     broadcastChange();
-    await queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId) });
+    await queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId ?? "") });
   }, [invalidateTrip, broadcastChange, queryClient, tripId]);
 
   const handleSaveToBookmark = useCallback((scheduleIds: string[]) => {
@@ -219,7 +220,7 @@ export default function SpTripDetailPage() {
     }
   }, [currentDay?.id, currentPattern?.id, selectedDay, updatePresence]);
 
-  useAutoStatusTransition({ trip, tripId, now, onMutate });
+  useAutoStatusTransition({ trip, tripId: tripId ?? "", now, onMutate });
 
   // Show poll tab by default for scheduling trips
   useEffect(() => {
@@ -236,7 +237,7 @@ export default function SpTripDetailPage() {
   );
 
   const dnd = useTripDragAndDrop({
-    tripId,
+    tripId: tripId ?? "",
     currentDayId: currentDay?.id ?? null,
     currentPatternId: currentPattern?.id ?? null,
     schedules: dndSchedules,
@@ -246,14 +247,14 @@ export default function SpTripDetailPage() {
   });
 
   const patternOps = usePatternOperations({
-    tripId,
+    tripId: tripId ?? "",
     currentDayId: currentDay?.id ?? null,
     onDone: onMutate,
     onPatternDeleted: (dayId) => setSelectedPattern((prev) => ({ ...prev, [dayId]: 0 })),
   });
 
   const memo = useDayMemo({
-    tripId,
+    tripId: tripId ?? "",
     currentDayId: currentDay?.id ?? null,
     onDone: onMutate,
   });
@@ -269,7 +270,7 @@ export default function SpTripDetailPage() {
   );
 
   const selection = useScheduleSelection({
-    tripId,
+    tripId: tripId ?? "",
     currentDayId: currentDay?.id ?? null,
     currentPatternId: currentPattern?.id ?? null,
     timelineScheduleIds,
@@ -280,6 +281,9 @@ export default function SpTripDetailPage() {
   useEffect(() => {
     selection.exit();
   }, [selectedDay, mobileTab]);
+
+  // Routing guarantees params.id is always a string, but guard defensively
+  if (!tripId) return null;
 
   // --- Skeleton ---
   if (showSkeleton) {
@@ -378,7 +382,7 @@ export default function SpTripDetailPage() {
                 />
                 <DayTimeline
                   key={currentPattern.id}
-                  tripId={tripId}
+                  tripId={tripId ?? ""}
                   dayId={currentDay.id}
                   patternId={currentPattern.id}
                   date={currentDay.date}
@@ -424,7 +428,7 @@ export default function SpTripDetailPage() {
         return currentDay && currentPattern ? (
           <div className="rounded-lg border bg-card p-4">
             <CandidatePanel
-              tripId={tripId}
+              tripId={tripId ?? ""}
               candidates={dnd.localCandidates}
               currentDayId={currentDay.id}
               currentPatternId={currentPattern.id}
@@ -451,7 +455,7 @@ export default function SpTripDetailPage() {
         return tripData.days.length > 0 ? (
           <div className="rounded-lg border bg-card p-4">
             <ExpensePanel
-              tripId={tripId}
+              tripId={tripId ?? ""}
               canEdit={canEdit}
               addOpen={addExpenseOpen}
               onAddOpenChange={setAddExpenseOpen}
@@ -466,7 +470,7 @@ export default function SpTripDetailPage() {
         return tripData.days.length > 0 ? (
           <div className="rounded-lg border bg-card p-4">
             <BookmarkPanel
-              tripId={tripId}
+              tripId={tripId ?? ""}
               disabled={!online || !canEdit}
               onCandidateAdded={onMutate}
             />
@@ -477,7 +481,7 @@ export default function SpTripDetailPage() {
           </p>
         );
       case "activity":
-        return <ActivityLog tripId={tripId} />;
+        return <ActivityLog tripId={tripId ?? ""} />;
     }
   }
 

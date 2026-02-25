@@ -150,19 +150,21 @@ function ExpensePreviewTable({
 
 export default function TripExportPage() {
   const params = useParams();
-  const tripId = params.id as string;
+  const tripId = typeof params.id === "string" ? params.id : null;
 
   const {
     data: trip,
     isLoading,
     error,
   } = useQuery({
-    queryKey: queryKeys.trips.detail(tripId),
+    queryKey: queryKeys.trips.detail(tripId ?? ""),
     queryFn: () => api<TripResponse>(`/api/trips/${tripId}`),
+    enabled: tripId !== null,
   });
   const { data: expensesData } = useQuery({
-    queryKey: queryKeys.expenses.list(tripId),
+    queryKey: queryKeys.expenses.list(tripId ?? ""),
     queryFn: () => api<ExpensesResponse>(`/api/trips/${tripId}/expenses`),
+    enabled: tripId !== null,
   });
 
   useAuthRedirect(error);

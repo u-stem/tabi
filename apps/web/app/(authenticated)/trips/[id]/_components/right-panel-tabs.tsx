@@ -4,7 +4,7 @@ import { useSession } from "@/lib/auth-client";
 import { isGuestUser } from "@/lib/guest";
 import { cn } from "@/lib/utils";
 
-export type RightPanelTab = "candidates" | "activity" | "bookmarks" | "expenses" | "chat";
+export type RightPanelTab = "candidates" | "activity" | "bookmarks" | "expenses";
 
 const CHIP_BASE =
   "shrink-0 rounded-full px-3.5 py-1.5 text-center text-sm font-medium transition-[colors,transform] active:scale-[0.95]";
@@ -38,15 +38,6 @@ export function RightPanelTabs({
       >
         候補
         {candidateCount > 0 && <span className="ml-1 text-xs">{candidateCount}</span>}
-      </button>
-      <button
-        type="button"
-        role="tab"
-        aria-selected={current === "chat"}
-        onClick={() => onChange("chat")}
-        className={cn(CHIP_BASE, current === "chat" ? CHIP_ACTIVE : CHIP_INACTIVE)}
-      >
-        作戦会議
       </button>
       <button
         type="button"

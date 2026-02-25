@@ -13,6 +13,8 @@ import { formatDateRange, getDayCount } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 type TripCardProps = TripListItem & {
+  /** URL prefix for trip links. Defaults to "/trips". SP pages use "/sp/trips". */
+  hrefPrefix?: string;
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (id: string) => void;
@@ -29,6 +31,7 @@ export const TripCard = memo(function TripCard({
   totalSchedules,
   coverImageUrl,
   coverImagePosition,
+  hrefPrefix = "/trips",
   selectable = false,
   selected = false,
   onSelect,
@@ -102,7 +105,7 @@ export const TripCard = memo(function TripCard({
   }
 
   return (
-    <Link href={`/trips/${id}`} className="group block focus-visible:outline-none">
+    <Link href={`${hrefPrefix}/${id}`} className="group block focus-visible:outline-none">
       <Card className="transition-[colors,transform] hover:bg-accent/50 active:scale-[0.98] group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
         {inner}
       </Card>

@@ -10,6 +10,8 @@ import { SELECTED_RING } from "@/lib/colors";
 import { cn } from "@/lib/utils";
 
 type BookmarkListCardProps = BookmarkListResponse & {
+  /** URL prefix for bookmark list links. Defaults to "/bookmarks". SP pages use "/sp/bookmarks". */
+  hrefPrefix?: string;
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (id: string) => void;
@@ -20,6 +22,7 @@ export const BookmarkListCard = memo(function BookmarkListCard({
   name,
   visibility,
   bookmarkCount,
+  hrefPrefix = "/bookmarks",
   selectable = false,
   selected = false,
   onSelect,
@@ -79,7 +82,7 @@ export const BookmarkListCard = memo(function BookmarkListCard({
   }
 
   return (
-    <Link href={`/bookmarks/${id}`} className="group block focus-visible:outline-none">
+    <Link href={`${hrefPrefix}/${id}`} className="group block focus-visible:outline-none">
       <Card className="transition-[colors,transform] hover:bg-accent/50 active:scale-[0.98] group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
         {inner}
       </Card>

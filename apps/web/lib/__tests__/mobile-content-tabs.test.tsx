@@ -8,24 +8,24 @@ describe("MobileContentTabs", () => {
     cleanup();
   });
 
-  it("renders four primary tabs", () => {
+  it("renders three primary tabs", () => {
     render(<MobileContentTabs activeTab="schedule" onTabChange={vi.fn()} candidateCount={0} />);
     expect(screen.getByRole("tab", { name: "予定" })).toBeDefined();
     expect(screen.getByRole("tab", { name: "候補" })).toBeDefined();
     expect(screen.getByRole("tab", { name: "費用" })).toBeDefined();
-    expect(screen.getByRole("tab", { name: "作戦会議" })).toBeDefined();
   });
 
-  it("uses a fixed 4-column layout for even tab width", () => {
+  it("uses a fixed 3-column layout for even tab width", () => {
     render(<MobileContentTabs activeTab="schedule" onTabChange={vi.fn()} candidateCount={0} />);
     const tabList = screen.getByRole("tablist");
-    expect(tabList.className).toContain("grid-cols-4");
+    expect(tabList.className).toContain("grid-cols-3");
   });
 
-  it("does not render bookmark/activity tabs", () => {
+  it("does not render bookmark/activity/chat tabs", () => {
     render(<MobileContentTabs activeTab="schedule" onTabChange={vi.fn()} candidateCount={0} />);
     expect(screen.queryByRole("tab", { name: "ブックマーク" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "履歴" })).toBeNull();
+    expect(screen.queryByRole("tab", { name: "作戦会議" })).toBeNull();
   });
 
   it("marks active tab as selected", () => {
@@ -50,8 +50,8 @@ describe("MobileContentTabs", () => {
   });
 
   it("sets tabIndex=0 only on active tab", () => {
-    render(<MobileContentTabs activeTab="chat" onTabChange={vi.fn()} candidateCount={0} />);
-    expect(screen.getByRole("tab", { name: "作戦会議" }).getAttribute("tabindex")).toBe("0");
+    render(<MobileContentTabs activeTab="expenses" onTabChange={vi.fn()} candidateCount={0} />);
+    expect(screen.getByRole("tab", { name: "費用" }).getAttribute("tabindex")).toBe("0");
     expect(screen.getByRole("tab", { name: "予定" }).getAttribute("tabindex")).toBe("-1");
   });
 
@@ -61,7 +61,7 @@ describe("MobileContentTabs", () => {
     fireEvent.keyDown(screen.getByRole("tab", { name: "予定" }), { key: "ArrowRight" });
     fireEvent.keyDown(screen.getByRole("tab", { name: "予定" }), { key: "End" });
     expect(onChange).toHaveBeenNthCalledWith(1, "candidates");
-    expect(onChange).toHaveBeenNthCalledWith(2, "chat");
+    expect(onChange).toHaveBeenNthCalledWith(2, "expenses");
   });
 
   it("shows candidate count badge when count is positive", () => {

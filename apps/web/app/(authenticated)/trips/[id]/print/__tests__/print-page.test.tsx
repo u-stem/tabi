@@ -52,7 +52,6 @@ const tripFixture: TripResponse = {
   scheduleCount: 2,
   memberCount: 1,
   poll: null,
-  chatSession: null,
   days: [
     {
       id: "day-1",

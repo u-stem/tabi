@@ -14,27 +14,15 @@ export type PresenceUser = {
 const SYNC_DEBOUNCE_MS = 300;
 const SYNC_JITTER_MS = 200;
 
-type TripSyncOptions = {
-  onChatMessage?: (payload: unknown) => void;
-  onChatMessageEdit?: (payload: unknown) => void;
-  onChatMessageDelete?: (payload: unknown) => void;
-  onChatSession?: (payload: unknown) => void;
-};
-
 export function useTripSync(
   tripId: string,
   user: { id: string; name: string; image?: string | null } | null,
   onSync: () => void,
-  options?: TripSyncOptions,
 ): {
   presence: PresenceUser[];
   isConnected: boolean;
   updatePresence: (dayId: string, patternId: string | null) => void;
   broadcastChange: () => void;
-  broadcastChatMessage: (payload: unknown) => void;
-  broadcastChatMessageEdit: (payload: unknown) => void;
-  broadcastChatMessageDelete: (payload: unknown) => void;
-  broadcastChatSession: (payload: unknown) => void;
 } {
   const [presence, setPresence] = useState<PresenceUser[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -45,15 +33,6 @@ export function useTripSync(
   const userRef = useRef(user);
   userRef.current = user;
   const lastPresenceRef = useRef<{ dayId: string; patternId: string | null } | null>(null);
-  const onChatMessageRef = useRef(options?.onChatMessage);
-  onChatMessageRef.current = options?.onChatMessage;
-  const onChatMessageEditRef = useRef(options?.onChatMessageEdit);
-  onChatMessageEditRef.current = options?.onChatMessageEdit;
-  const onChatMessageDeleteRef = useRef(options?.onChatMessageDelete);
-  onChatMessageDeleteRef.current = options?.onChatMessageDelete;
-  const onChatSessionRef = useRef(options?.onChatSession);
-  onChatSessionRef.current = options?.onChatSession;
-
   const debouncedSync = useCallback(() => {
     if (syncTimer.current) {
       clearTimeout(syncTimer.current);
@@ -73,18 +52,6 @@ export function useTripSync(
       channel
         .on("broadcast", { event: "trip:updated" }, () => {
           debouncedSync();
-        })
-        .on("broadcast", { event: "chat:message" }, ({ payload }) => {
-          onChatMessageRef.current?.(payload);
-        })
-        .on("broadcast", { event: "chat:message:edit" }, ({ payload }) => {
-          onChatMessageEditRef.current?.(payload);
-        })
-        .on("broadcast", { event: "chat:message:delete" }, ({ payload }) => {
-          onChatMessageDeleteRef.current?.(payload);
-        })
-        .on("broadcast", { event: "chat:session" }, ({ payload }) => {
-          onChatSessionRef.current?.(payload);
         })
         .on("presence", { event: "sync" }, () => {
           const state = channel.presenceState<PresenceUser>();
@@ -190,46 +157,10 @@ export function useTripSync(
     });
   }, []);
 
-  const broadcastChatMessage = useCallback((payload: unknown) => {
-    channelRef.current?.send({
-      type: "broadcast",
-      event: "chat:message",
-      payload: payload as Record<string, unknown>,
-    });
-  }, []);
-
-  const broadcastChatMessageEdit = useCallback((payload: unknown) => {
-    channelRef.current?.send({
-      type: "broadcast",
-      event: "chat:message:edit",
-      payload: payload as Record<string, unknown>,
-    });
-  }, []);
-
-  const broadcastChatMessageDelete = useCallback((payload: unknown) => {
-    channelRef.current?.send({
-      type: "broadcast",
-      event: "chat:message:delete",
-      payload: payload as Record<string, unknown>,
-    });
-  }, []);
-
-  const broadcastChatSession = useCallback((payload: unknown) => {
-    channelRef.current?.send({
-      type: "broadcast",
-      event: "chat:session",
-      payload: payload as Record<string, unknown>,
-    });
-  }, []);
-
   return {
     presence,
     isConnected,
     updatePresence,
     broadcastChange,
-    broadcastChatMessage,
-    broadcastChatMessageEdit,
-    broadcastChatMessageDelete,
-    broadcastChatSession,
   };
 }

@@ -2,7 +2,15 @@
 
 import type { FriendRequestResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Download, Keyboard, LogOut, MessageSquare, Settings, User } from "lucide-react";
+import {
+  Download,
+  Keyboard,
+  LogOut,
+  MessageSquare,
+  Settings,
+  Smartphone,
+  User,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -44,6 +52,7 @@ import { NAV_LINKS } from "@/lib/nav-links";
 import { queryKeys } from "@/lib/query-keys";
 import { useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
+import { switchViewMode } from "@/lib/view-mode";
 
 export function Header() {
   const router = useRouter();
@@ -167,6 +176,11 @@ export function Header() {
                       アプリをインストール
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => switchViewMode("sp")}>
+                    <Smartphone className="h-4 w-4" />
+                    SP版で表示
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleSignOut}>
                     <LogOut className="h-4 w-4" />
                     ログアウト
@@ -250,6 +264,18 @@ export function Header() {
                         アプリをインストール
                       </button>
                     )}
+                    <div className="my-2 border-t" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setMobileMenuOpen(false);
+                        switchViewMode("sp");
+                      }}
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <Smartphone className="h-4 w-4" />
+                      SP版で表示
+                    </button>
                     <button
                       type="button"
                       onClick={() => {

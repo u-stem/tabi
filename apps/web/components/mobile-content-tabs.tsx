@@ -2,13 +2,7 @@
 
 import { cn } from "@/lib/utils";
 
-export type MobileContentTab =
-  | "schedule"
-  | "candidates"
-  | "expenses"
-  | "chat"
-  | "bookmarks"
-  | "activity";
+export type MobileContentTab = "schedule" | "candidates" | "expenses" | "bookmarks" | "activity";
 
 interface MobileContentTabsProps {
   activeTab: MobileContentTab;
@@ -20,7 +14,6 @@ const BASE_TABS: { id: MobileContentTab; label: string }[] = [
   { id: "schedule", label: "予定" },
   { id: "candidates", label: "候補" },
   { id: "expenses", label: "費用" },
-  { id: "chat", label: "作戦会議" },
 ];
 
 export function getMobileTabIds(): MobileContentTab[] {
@@ -44,7 +37,7 @@ export function MobileContentTabs({
 
   return (
     <div
-      className="my-2 grid shrink-0 grid-cols-4 gap-1 rounded-lg bg-muted p-1"
+      className="my-2 grid shrink-0 grid-cols-3 gap-1 rounded-lg bg-muted p-1"
       role="tablist"
       aria-orientation="horizontal"
     >

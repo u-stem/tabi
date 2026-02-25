@@ -6,8 +6,6 @@ export const queryKeys = {
     detail: (tripId: string) => [...queryKeys.trips.all, tripId] as const,
     members: (tripId: string) => [...queryKeys.trips.all, tripId, "members"] as const,
     activityLogs: (tripId: string) => [...queryKeys.trips.all, tripId, "activity-logs"] as const,
-    chatSession: (tripId: string) => [...queryKeys.trips.all, tripId, "chat-session"] as const,
-    chatMessages: (tripId: string) => [...queryKeys.trips.all, tripId, "chat-messages"] as const,
   },
   friends: {
     all: ["friends"] as const,

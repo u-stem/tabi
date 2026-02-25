@@ -1,6 +1,6 @@
 "use client";
 
-import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
+import { DndContext } from "@dnd-kit/core";
 import type { BookmarkListResponse, PollDetailResponse, TripResponse } from "@sugara/shared";
 import {
   canEdit as canEditRole,
@@ -11,8 +11,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { ActivityLog } from "@/components/activity-log";
 import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dialog";
@@ -33,12 +31,22 @@ const EditTripDialog = dynamic(() =>
   import("@/components/edit-trip-dialog").then((mod) => mod.EditTripDialog),
 );
 
-import { ScrollToTop } from "@/components/scroll-to-top";
-import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
+// Reuse trip page sub-components from the desktop page's _components
+import { DayMemoEditor } from "@/app/(authenticated)/trips/[id]/_components/day-memo-editor";
+import { DayTabs } from "@/app/(authenticated)/trips/[id]/_components/day-tabs";
+import { PatternTabs } from "@/app/(authenticated)/trips/[id]/_components/pattern-tabs";
+import { PollTab } from "@/app/(authenticated)/trips/[id]/_components/poll-tab";
+import {
+  AddPatternDialog,
+  BatchDeleteDialog,
+  DeletePatternDialog,
+  OverwritePatternDialog,
+  RenamePatternDialog,
+} from "@/app/(authenticated)/trips/[id]/_components/trip-dialogs";
+import { TripHeader } from "@/app/(authenticated)/trips/[id]/_components/trip-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
-import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { pageTitle } from "@/lib/constants";
 import { getCrossDayEntries } from "@/lib/cross-day";
 import { isGuestUser } from "@/lib/guest";
@@ -48,57 +56,19 @@ import { useAutoStatusTransition } from "@/lib/hooks/use-auto-status-transition"
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useDayMemo } from "@/lib/hooks/use-day-memo";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
-import { useIsLg } from "@/lib/hooks/use-is-lg";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
 import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
 import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
-import { isDialogOpen } from "@/lib/hotkeys";
-import { CATEGORY_ICONS } from "@/lib/icons";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
-import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
-import { cn } from "@/lib/utils";
-import { DayMemoEditor } from "./_components/day-memo-editor";
-import { DayTabs } from "./_components/day-tabs";
-import { PatternTabs } from "./_components/pattern-tabs";
-import { PollTab } from "./_components/poll-tab";
-import { RightPanel } from "./_components/right-panel";
-import {
-  AddPatternDialog,
-  BatchDeleteDialog,
-  DeletePatternDialog,
-  OverwritePatternDialog,
-  RenamePatternDialog,
-} from "./_components/trip-dialogs";
-import { TripHeader } from "./_components/trip-header";
 
-const dndAnnouncements: Announcements = {
-  onDragStart({ active }) {
-    return `${active.id} を持ち上げました`;
-  },
-  onDragOver({ active, over }) {
-    if (over) return `${active.id} を ${over.id} の上に移動中`;
-    return `${active.id} をドラッグ中`;
-  },
-  onDragEnd({ active, over }) {
-    if (over) return `${active.id} を ${over.id} の位置にドロップしました`;
-    return `${active.id} をドロップしました`;
-  },
-  onDragCancel({ active }) {
-    return `${active.id} のドラッグをキャンセルしました`;
-  },
-};
-
-export default function TripDetailPage() {
+export default function SpTripDetailPage() {
   const params = useParams();
   const tripId = params.id as string;
   const online = useOnlineStatus();
-  const isLg = useIsLg();
-  const isMobile = useIsMobile();
   const now = useCurrentTime();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
@@ -120,7 +90,7 @@ export default function TripDetailPage() {
   });
   const showSkeleton = useDelayedLoading(isLoading || (!!pollId && isPollLoading));
 
-  // Prefetch bookmark lists so BookmarkPanel renders instantly on tab switch
+  // Prefetch bookmark lists
   useQuery({
     queryKey: queryKeys.bookmarks.lists(),
     queryFn: () => api<BookmarkListResponse[]>("/api/bookmark-lists"),
@@ -134,204 +104,17 @@ export default function TripDetailPage() {
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
-  // Ref mirrors mobileTab so swipe/tab-change handlers always see the latest
-  // value without re-registration on every tab change.
   const mobileTabRef = useRef<MobileContentTab>("schedule");
-  const prevDayRef = useRef(0);
-  const gPressedRef = useRef(false);
   const scrollPositions = useRef<Record<string, number>>({});
   const mobileContentRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const tapTransitionRef = useRef(false);
-  const [rightPanelTab, setRightPanelTab] = useState<
-    "candidates" | "activity" | "bookmarks" | "expenses"
-  >("candidates");
   const [saveToBookmarkIds, setSaveToBookmarkIds] = useState<string[]>([]);
   const [bookmarkPickerOpen, setBookmarkPickerOpen] = useState(false);
-  const timelinePanelRef = useRef<HTMLDivElement>(null);
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
 
   const currentDay = trip?.days[selectedDay] ?? null;
   const currentPatternIndex = currentDay ? (selectedPattern[currentDay.id] ?? 0) : 0;
   const currentPattern = currentDay?.patterns[currentPatternIndex] ?? null;
-
-  // Keyboard shortcuts
-  const { open: openShortcutHelp } = useShortcutHelp();
-  const tripShortcuts: ShortcutGroup[] = useMemo(
-    () => [
-      {
-        group: "ナビゲーション",
-        items: [
-          { key: "1-9", description: "N日目に切替" },
-          { key: "[", description: "前の日へ" },
-          { key: "]", description: "次の日へ" },
-          ...(trip?.poll ? [{ key: "p", description: "日程調整タブ" }] : []),
-        ],
-      },
-      {
-        group: "パターン",
-        items: [
-          { key: "{", description: "前のパターンへ" },
-          { key: "}", description: "次のパターンへ" },
-        ],
-      },
-      {
-        group: "操作",
-        items: [
-          { key: "a", description: "予定を追加" },
-          { key: "c", description: "候補を追加" },
-          { key: "e", description: "旅行を編集" },
-        ],
-      },
-      ...(isLg
-        ? [
-            {
-              group: "パネル",
-              items: [
-                { key: "g c", description: "候補" },
-                { key: "g h", description: "作戦会議" },
-                { key: "g x", description: "費用" },
-                { key: "g l", description: "履歴" },
-                { key: "g b", description: "ブックマーク" },
-              ],
-            },
-          ]
-        : []),
-    ],
-    [trip?.poll, isLg],
-  );
-  useRegisterShortcuts(tripShortcuts);
-  useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
-  useHotkeys("1,2,3,4,5,6,7,8,9", (e) => {
-    if (isDialogOpen()) return;
-    const dayIndex = Number(e.key) - 1;
-    if (trip && dayIndex < trip.days.length) {
-      setSelectedDay(dayIndex);
-    }
-  });
-  useHotkeys(
-    "[",
-    () => {
-      if (isDialogOpen()) return;
-      setSelectedDay((prev) => Math.max(0, prev - 1));
-    },
-    { useKey: true },
-  );
-  useHotkeys(
-    "]",
-    () => {
-      if (isDialogOpen()) return;
-      if (trip) {
-        setSelectedDay((prev) => Math.min(trip.days.length - 1, prev + 1));
-      }
-    },
-    { useKey: true },
-  );
-  useHotkeys(
-    "{",
-    () => {
-      if (isDialogOpen()) return;
-      if (!currentDay) return;
-      const dayId = currentDay.id;
-      setSelectedPattern((prev) => ({
-        ...prev,
-        [dayId]: Math.max(0, (prev[dayId] ?? 0) - 1),
-      }));
-    },
-    { useKey: true },
-  );
-  useHotkeys(
-    "}",
-    () => {
-      if (isDialogOpen()) return;
-      if (!currentDay) return;
-      const dayId = currentDay.id;
-      const maxIndex = currentDay.patterns.length - 1;
-      setSelectedPattern((prev) => ({
-        ...prev,
-        [dayId]: Math.min(maxIndex, (prev[dayId] ?? 0) + 1),
-      }));
-    },
-    { useKey: true },
-  );
-  useHotkeys(
-    "p",
-    () => {
-      if (isDialogOpen()) return;
-      if (!trip?.poll) return;
-      if (selectedDay === -1) {
-        setSelectedDay(prevDayRef.current);
-      } else {
-        prevDayRef.current = selectedDay;
-        setSelectedDay(-1);
-      }
-    },
-    { preventDefault: true },
-  );
-  // Track "g" press to prevent sequence suffixes (c, h, etc.) from firing standalone handlers
-  useHotkeys("g", () => {
-    gPressedRef.current = true;
-    setTimeout(() => {
-      gPressedRef.current = false;
-    }, 1000);
-  });
-  useHotkeys(
-    "g>c",
-    () => {
-      if (!isDialogOpen()) setRightPanelTab("candidates");
-    },
-    { enabled: isLg },
-  );
-  useHotkeys(
-    "g>x",
-    () => {
-      if (!isDialogOpen()) setRightPanelTab("expenses");
-    },
-    { enabled: isLg },
-  );
-  useHotkeys(
-    "g>l",
-    () => {
-      if (!isDialogOpen()) setRightPanelTab("activity");
-    },
-    { enabled: isLg },
-  );
-  useHotkeys(
-    "g>b",
-    () => {
-      if (!isDialogOpen()) setRightPanelTab("bookmarks");
-    },
-    { enabled: isLg },
-  );
-  useHotkeys(
-    "a",
-    () => {
-      if (isDialogOpen()) return;
-      if (canEditRef.current && online) setAddScheduleOpen(true);
-    },
-    { preventDefault: true },
-  );
-  useHotkeys(
-    "c",
-    () => {
-      if (gPressedRef.current) return;
-      if (isDialogOpen()) return;
-      if (canEditRef.current && online) setAddCandidateOpen(true);
-    },
-    { preventDefault: true },
-  );
-  useHotkeys(
-    "e",
-    () => {
-      if (isDialogOpen()) return;
-      if (canEditRef.current) setEditOpen(true);
-    },
-    { preventDefault: true },
-  );
-
-  // Stable ref for canEdit to avoid re-registering hotkeys on every trip change
-  const canEditRef = useRef(false);
 
   const invalidateTrip = useCallback(async () => {
     await queryClient.invalidateQueries({ queryKey: queryKeys.trips.detail(tripId) });
@@ -353,7 +136,6 @@ export default function TripDetailPage() {
     invalidateTrip,
   );
 
-  // Mutation callback: refetch + broadcast to other clients
   const onMutate = useCallback(async () => {
     await invalidateTrip();
     broadcastChange();
@@ -421,7 +203,6 @@ export default function TripDetailPage() {
     }
   }, [trip?.title]);
 
-  // Exclude self from presence display
   const otherPresence = useMemo(
     () => (session?.user ? presence.filter((u) => u.userId !== session.user.id) : presence),
     [presence, session?.user],
@@ -444,7 +225,6 @@ export default function TripDetailPage() {
     }
   }, [trip?.status, trip?.poll?.id]);
 
-  // Stable references to avoid infinite re-render when values are null
   const dndSchedules = useMemo(() => currentPattern?.schedules ?? [], [currentPattern?.schedules]);
   const dndCandidates = useMemo(() => trip?.candidates ?? [], [trip?.candidates]);
   const dndCrossDayEntries = useMemo(
@@ -494,115 +274,50 @@ export default function TripDetailPage() {
     onDone: onMutate,
   });
 
-  // Only re-run on navigation changes, not when selection ref changes
   useEffect(() => {
     selection.exit();
-  }, [selectedDay, mobileTab, rightPanelTab]);
+  }, [selectedDay, mobileTab]);
 
+  // --- Skeleton ---
   if (showSkeleton) {
     return (
       <div className="mt-4">
-        {/* Mobile skeleton */}
-        <div className="lg:hidden">
-          <div className="flex h-11 items-center gap-2">
-            <Skeleton className="h-5 w-36" />
-            <Skeleton className="ml-auto h-8 w-8 rounded-md" />
-          </div>
-          <div className="flex shrink-0">
-            {(["w-12", "w-16", "w-12"] as const).map((w, i) => (
-              <div key={w + String(i)} className="flex flex-1 items-center justify-center py-2.5">
-                <Skeleton className={`h-4 ${w}`} />
-              </div>
+        <div className="flex h-11 items-center gap-2">
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="ml-auto h-8 w-8 rounded-md" />
+        </div>
+        <div className="flex shrink-0">
+          {(["w-12", "w-16", "w-12"] as const).map((w, i) => (
+            <div key={w + String(i)} className="flex flex-1 items-center justify-center py-2.5">
+              <Skeleton className={`h-4 ${w}`} />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-lg border bg-card">
+          <div className="flex gap-1.5 px-3 pt-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-[44px] w-14 rounded-full" />
             ))}
           </div>
-          <div className="rounded-lg border bg-card">
-            <div className="flex gap-1.5 px-3 pt-3">
+          <div className="p-4">
+            <Skeleton className="mb-3 h-9 w-full rounded-md" />
+            <div className="mb-2 flex items-center gap-1.5">
+              <Skeleton className="h-8 flex-1 rounded-md" />
+              <Skeleton className="h-8 flex-1 rounded-md" />
+              <Skeleton className="h-8 flex-1 rounded-md" />
+            </div>
+            <div className="mb-2 flex items-center gap-1.5">
+              <Skeleton className="h-7 w-24 rounded-full" />
+              <Skeleton className="h-7 w-7 rounded-md" />
+              <Skeleton className="h-7 w-7 rounded-md" />
+            </div>
+            <div className="space-y-1.5">
               {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-[44px] w-14 rounded-full" />
+                <div key={i} className="flex gap-3 py-1.5">
+                  <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
+                  <Skeleton className="h-20 flex-1 rounded-md" />
+                </div>
               ))}
-            </div>
-            <div className="p-4">
-              <Skeleton className="mb-3 h-9 w-full rounded-md" />
-              <div className="mb-2 flex items-center gap-1.5">
-                <Skeleton className="h-8 flex-1 rounded-md" />
-                <Skeleton className="h-8 flex-1 rounded-md" />
-                <Skeleton className="h-8 flex-1 rounded-md" />
-              </div>
-              <div className="mb-2 flex items-center gap-1.5">
-                <Skeleton className="h-7 w-24 rounded-full" />
-                <Skeleton className="h-7 w-7 rounded-md" />
-                <Skeleton className="h-7 w-7 rounded-md" />
-              </div>
-              <div className="space-y-1.5">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex gap-3 py-1.5">
-                    <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
-                    <Skeleton className="h-20 flex-1 rounded-md" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop skeleton */}
-        <div className="hidden lg:block">
-          <div className="mb-6">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="mt-2 h-4 w-64" />
-            <div className="mt-3 flex items-center gap-2">
-              <Skeleton className="h-8 w-20 rounded-md" />
-              <Skeleton className="h-8 w-20 rounded-md" />
-            </div>
-          </div>
-          <div className="flex gap-4">
-            <div className="flex min-w-0 max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
-              <div className="flex shrink-0 gap-1.5 px-3 pt-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-7 w-14 rounded-full" />
-                ))}
-              </div>
-              <div className="p-4">
-                <Skeleton className="mb-3 h-9 w-full rounded-md" />
-                <div className="mb-2 flex items-center gap-1.5">
-                  <Skeleton className="h-4 w-20" />
-                  <div className="ml-auto flex items-center gap-1.5">
-                    <Skeleton className="h-8 w-24 rounded-md" />
-                    <Skeleton className="h-8 w-16 rounded-md" />
-                    <Skeleton className="h-8 w-16 rounded-md" />
-                  </div>
-                </div>
-                <div className="mb-2 flex items-center gap-1.5">
-                  <Skeleton className="h-7 w-24 rounded-full" />
-                  <Skeleton className="h-7 w-7 rounded-md" />
-                  <Skeleton className="h-7 w-7 rounded-md" />
-                </div>
-                <div className="space-y-1.5">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex gap-3 py-1.5">
-                      <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
-                      <Skeleton className="h-24 flex-1 rounded-md" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="flex-[2] self-start sticky top-4 rounded-lg border border-dashed bg-card p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <Skeleton className="h-5 w-20" />
-                <Skeleton className="h-8 w-20 rounded-md" />
-              </div>
-              <div className="space-y-2">
-                {[1, 2].map((i) => (
-                  <div key={i} className="flex items-center gap-2 py-1">
-                    <Skeleton className="h-2.5 w-2.5 shrink-0 rounded-full" />
-                    <div className="flex-1 space-y-1">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-3 w-16" />
-                    </div>
-                  </div>
-                ))}
-              </div>
             </div>
           </div>
         </div>
@@ -610,7 +325,6 @@ export default function TripDetailPage() {
     );
   }
 
-  // Avoid flashing "not found" during the 200ms skeleton delay
   if (isLoading || (!!pollId && isPollLoading)) return null;
 
   if (queryError || !trip) {
@@ -618,9 +332,7 @@ export default function TripDetailPage() {
   }
 
   const canEdit = canEditRole(trip.role);
-  canEditRef.current = canEdit;
   const isGuest = isGuestUser(session);
-
   const scheduleLimitReached = trip.scheduleCount >= MAX_SCHEDULES_PER_TRIP;
   const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
   const selectionValue = { ...selection, canEnter: canEdit && online };
@@ -630,8 +342,6 @@ export default function TripDetailPage() {
     ? (tabIds[currentTabIdx + (swipe.adjacent === "next" ? 1 : -1)] ?? null)
     : null;
 
-  // Capture narrowed trip for use in renderTabContent closure
-  // (TypeScript loses narrowing in nested functions)
   const tripData = trip;
 
   function renderTabContent(tabId: MobileContentTab) {
@@ -674,8 +384,8 @@ export default function TripDetailPage() {
                   schedules={dnd.localSchedules}
                   onRefresh={onMutate}
                   disabled={!online || !canEdit}
-                  addScheduleOpen={!isLg ? addScheduleOpen : false}
-                  onAddScheduleOpenChange={!isLg ? setAddScheduleOpen : undefined}
+                  addScheduleOpen={addScheduleOpen}
+                  onAddScheduleOpenChange={setAddScheduleOpen}
                   maxEndDayOffset={Math.max(1, tripData.days.length - 1 - selectedDay)}
                   totalDays={tripData.days.length}
                   crossDayEntries={getCrossDayEntries(tripData.days, currentDay.dayNumber)}
@@ -720,8 +430,8 @@ export default function TripDetailPage() {
               onRefresh={onMutate}
               disabled={!online || !canEdit}
               draggable={false}
-              addDialogOpen={!isLg ? addCandidateOpen : false}
-              onAddDialogOpenChange={!isLg ? setAddCandidateOpen : undefined}
+              addDialogOpen={addCandidateOpen}
+              onAddDialogOpenChange={setAddCandidateOpen}
               scheduleLimitReached={scheduleLimitReached}
               scheduleLimitMessage={scheduleLimitMessage}
               maxEndDayOffset={Math.max(0, tripData.days.length - 1)}
@@ -742,8 +452,8 @@ export default function TripDetailPage() {
             <ExpensePanel
               tripId={tripId}
               canEdit={canEdit}
-              addOpen={!isLg ? addExpenseOpen : false}
-              onAddOpenChange={!isLg ? setAddExpenseOpen : undefined}
+              addOpen={addExpenseOpen}
+              onAddOpenChange={setAddExpenseOpen}
             />
           </div>
         ) : (
@@ -811,10 +521,10 @@ export default function TripDetailPage() {
           onDragStart={dnd.handleDragStart}
           onDragOver={dnd.handleDragOver}
           onDragEnd={dnd.handleDragEnd}
-          accessibility={{ announcements: dndAnnouncements }}
+          accessibility={{ announcements: undefined }}
         >
-          {/* Mobile layout */}
-          <div className="lg:hidden" inert={isLg || undefined}>
+          {/* SP mobile layout — always visible, no lg:hidden */}
+          <div>
             <MobileContentTabs
               activeTab={mobileTab}
               onTabChange={handleMobileTabChange}
@@ -867,137 +577,6 @@ export default function TripDetailPage() {
               </div>
             </div>
           </div>
-
-          {/* Desktop layout */}
-          <div className="hidden lg:flex items-start gap-4">
-            {/* Left panel */}
-            <div className="flex min-w-0 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
-              <DayTabs
-                days={trip.days}
-                selectedDay={selectedDay}
-                onSelectDay={setSelectedDay}
-                otherPresence={otherPresence}
-                hasPoll={!!trip.poll}
-              />
-              {selectedDay === -1 && trip.poll ? (
-                <div className="min-h-0 overflow-y-auto overscroll-contain">
-                  <PollTab
-                    pollId={trip.poll.id}
-                    isOwner={isOwnerRole(trip.role)}
-                    canEdit={canEdit}
-                    onMutate={onMutate}
-                    onConfirmed={() => setSelectedDay(0)}
-                  />
-                </div>
-              ) : currentDay && currentPattern ? (
-                <div
-                  ref={timelinePanelRef}
-                  id={`day-panel-${currentDay.id}`}
-                  role="tabpanel"
-                  className="min-h-0 overflow-y-auto overscroll-contain p-4"
-                >
-                  <DayMemoEditor
-                    memo={memo}
-                    currentDayId={currentDay.id}
-                    currentDayMemo={currentDay.memo}
-                    canEdit={canEdit}
-                    online={online}
-                  />
-
-                  <DayTimeline
-                    key={currentPattern.id}
-                    tripId={tripId}
-                    dayId={currentDay.id}
-                    patternId={currentPattern.id}
-                    date={currentDay.date}
-                    schedules={dnd.localSchedules}
-                    onRefresh={onMutate}
-                    disabled={!online || !canEdit}
-                    addScheduleOpen={isLg ? addScheduleOpen : false}
-                    onAddScheduleOpenChange={isLg ? setAddScheduleOpen : undefined}
-                    maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
-                    totalDays={trip.days.length}
-                    crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
-                    overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
-                    scheduleLimitReached={scheduleLimitReached}
-                    scheduleLimitMessage={scheduleLimitMessage}
-                    onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
-                    onReorderSchedule={dnd.reorderSchedule}
-                    headerContent={
-                      <PatternTabs
-                        patterns={currentDay.patterns}
-                        currentDayId={currentDay.id}
-                        currentPatternIndex={currentPatternIndex}
-                        canEdit={canEdit}
-                        online={online}
-                        patternOps={patternOps}
-                        onSelectPattern={(dayId, index) =>
-                          setSelectedPattern((prev) => ({ ...prev, [dayId]: index }))
-                        }
-                      />
-                    }
-                  />
-                  <ScrollToTop containerRef={timelinePanelRef} />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {MSG.SCHEDULING_STATUS_DESCRIPTION}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            {/* Right panel */}
-            <RightPanel
-              tripId={tripId}
-              rightPanelTab={rightPanelTab}
-              setRightPanelTab={setRightPanelTab}
-              candidates={dnd.localCandidates}
-              currentDayId={currentDay?.id ?? null}
-              currentPatternId={currentPattern?.id ?? null}
-              onRefresh={onMutate}
-              disabled={!online || !canEdit}
-              canEdit={canEdit}
-              online={online}
-              addCandidateOpen={isLg ? addCandidateOpen : false}
-              onAddCandidateOpenChange={setAddCandidateOpen}
-              scheduleLimitReached={scheduleLimitReached}
-              scheduleLimitMessage={scheduleLimitMessage}
-              overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
-              hasDays={trip.days.length > 0}
-              maxEndDayOffset={Math.max(0, trip.days.length - 1)}
-              onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
-            />
-          </div>
-          {mounted &&
-            !isMobile &&
-            createPortal(
-              <DragOverlay>
-                {dnd.activeDragItem &&
-                  (() => {
-                    const Icon = CATEGORY_ICONS[dnd.activeDragItem.category];
-                    const colorClasses = SCHEDULE_COLOR_CLASSES[dnd.activeDragItem.color];
-                    return (
-                      <div className="flex w-max items-center gap-2 rounded-md border bg-card p-2 shadow-lg opacity-90">
-                        <div
-                          className={cn(
-                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white",
-                            colorClasses.bg,
-                          )}
-                        >
-                          <Icon className="h-3 w-3" />
-                        </div>
-                        <span className="whitespace-nowrap text-sm font-medium">
-                          {dnd.activeDragItem.name}
-                        </span>
-                      </div>
-                    );
-                  })()}
-              </DragOverlay>,
-              document.body,
-            )}
         </DndContext>
 
         <Fab

@@ -260,18 +260,6 @@ export const MSG = {
   EXPORT_SUCCESS: "エクスポートしました",
   EXPORT_FAILED: "エクスポートに失敗しました",
 
-  // Chat
-  CHAT_SESSION_STARTED: "作戦会議を開始しました",
-  CHAT_SESSION_START_FAILED: "作戦会議の開始に失敗しました",
-  CHAT_SESSION_ENDED: "作戦会議を終了しました",
-  CHAT_SESSION_END_FAILED: "作戦会議の終了に失敗しました",
-  CHAT_MESSAGE_SEND_FAILED: "メッセージの送信に失敗しました",
-  CHAT_MESSAGE_EDIT_FAILED: "メッセージの編集に失敗しました",
-  CHAT_MESSAGE_DELETE_FAILED: "メッセージの削除に失敗しました",
-  CHAT_SESSION_ALREADY_EXISTS: "作戦会議はすでに開始されています",
-  CHAT_EMPTY: "メッセージはまだありません",
-  CHAT_NO_SESSION: "作戦会議は開始されていません",
-
   // Shared view
   SHARED_LINK_INVALID: "このリンクは無効か、有効期限が切れています",
   SHARED_TRIP_FETCH_FAILED: "旅行の取得に失敗しました",

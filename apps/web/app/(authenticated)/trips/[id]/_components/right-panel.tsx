@@ -1,10 +1,9 @@
 "use client";
 
-import type { CandidateResponse, ChatMessageResponse } from "@sugara/shared";
+import type { CandidateResponse } from "@sugara/shared";
 import { ActivityLog } from "@/components/activity-log";
 import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
-import { ChatPanel } from "@/components/chat-panel";
 import { ExpensePanel } from "@/components/expense-panel";
 import { type RightPanelTab, RightPanelTabs } from "./right-panel-tabs";
 
@@ -29,10 +28,6 @@ export function RightPanel({
   maxEndDayOffset,
   onSaveToBookmark,
   hasDays,
-  onBroadcastChatMessage,
-  onBroadcastChatMessageEdit,
-  onBroadcastChatMessageDelete,
-  onBroadcastChatSession,
 }: {
   tripId: string;
   rightPanelTab: RightPanelTab;
@@ -52,10 +47,6 @@ export function RightPanel({
   maxEndDayOffset: number;
   onSaveToBookmark?: (scheduleIds: string[]) => void;
   hasDays: boolean;
-  onBroadcastChatMessage?: (message: ChatMessageResponse) => void;
-  onBroadcastChatMessageEdit?: (message: ChatMessageResponse) => void;
-  onBroadcastChatMessageDelete?: (payload: { messageId: string }) => void;
-  onBroadcastChatSession?: (action: "started" | "ended") => void;
 }) {
   return (
     <div className="hidden max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] lg:flex min-w-0 flex-[2] flex-col rounded-lg border border-dashed bg-card self-start sticky top-4">
@@ -65,16 +56,7 @@ export function RightPanel({
         candidateCount={candidates.length}
       />
       <div className="min-h-0 overflow-y-auto overscroll-contain p-4">
-        {rightPanelTab === "chat" ? (
-          <ChatPanel
-            tripId={tripId}
-            canEdit={canEdit}
-            onBroadcastMessage={onBroadcastChatMessage}
-            onBroadcastEdit={onBroadcastChatMessageEdit}
-            onBroadcastDelete={onBroadcastChatMessageDelete}
-            onBroadcastSession={onBroadcastChatSession}
-          />
-        ) : rightPanelTab === "candidates" ? (
+        {rightPanelTab === "candidates" ? (
           currentDayId && currentPatternId ? (
             <CandidatePanel
               tripId={tripId}

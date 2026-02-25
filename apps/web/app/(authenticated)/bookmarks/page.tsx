@@ -154,7 +154,7 @@ export default function BookmarksPage() {
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
-              <div key={key} className="rounded-xl border bg-card shadow">
+              <div key={key} className="rounded-lg border bg-card shadow-sm">
                 <div className="flex flex-col space-y-1.5 p-6">
                   <div className="flex items-center justify-between">
                     <Skeleton className="h-5 w-32" />

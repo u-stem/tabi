@@ -2,6 +2,7 @@
 
 import type { FriendRequestResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
+import type React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { api } from "@/lib/api";
@@ -11,7 +12,19 @@ import { NAV_LINKS } from "@/lib/nav-links";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
-export function BottomNav() {
+type NavLink = {
+  href: string;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+type BottomNavBaseProps = {
+  className?: string;
+  links: readonly NavLink[];
+  friendHref: string;
+};
+
+export function BottomNavBase({ className, links, friendHref }: BottomNavBaseProps) {
   const pathname = usePathname();
   const { data: session } = useSession();
 
@@ -26,14 +39,18 @@ export function BottomNav() {
   const friendRequestCount = friendRequests?.length ?? 0;
 
   const isGuest = isGuestUser(session);
-  const visibleLinks = NAV_LINKS.filter(
-    (link) => !isGuest || (link.href !== "/bookmarks" && link.href !== "/friends"),
+  const bookmarkHref = friendHref.replace("/friends", "/bookmarks");
+  const visibleLinks = links.filter(
+    (link) => !isGuest || (link.href !== bookmarkHref && link.href !== friendHref),
   );
 
   return (
     <nav
       aria-label="ボトムナビゲーション"
-      className="fixed inset-x-0 bottom-0 z-40 select-none border-t bg-background sm:hidden print:hidden"
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-40 select-none border-t bg-background print:hidden",
+        className,
+      )}
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
       <div className="flex h-12 items-stretch">
@@ -50,7 +67,7 @@ export function BottomNav() {
             >
               <link.icon className="h-5 w-5" />
               <span className="sr-only">{link.label}</span>
-              {link.href === "/friends" && friendRequestCount > 0 && (
+              {link.href === friendHref && friendRequestCount > 0 && (
                 <span className="absolute top-1.5 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
                   {friendRequestCount}
                 </span>
@@ -61,4 +78,8 @@ export function BottomNav() {
       </div>
     </nav>
   );
+}
+
+export function BottomNav() {
+  return <BottomNavBase links={NAV_LINKS} friendHref="/friends" className="sm:hidden" />;
 }

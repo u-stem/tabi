@@ -75,6 +75,8 @@ export function useSwipeTab(
     let tracking = false;
     let trackingSource: "pointer" | "touch" | null = null;
     let activePointerId: number | null = null;
+    let activeTouchId: number | null = null;
+    let unmounted = false;
 
     function resetSwipe() {
       axis = "pending";
@@ -83,6 +85,7 @@ export function useSwipeTab(
       tracking = false;
       trackingSource = null;
       activePointerId = null;
+      activeTouchId = null;
       swipe.style.transform = "";
       swipe.style.transition = "";
       setAdjacent(null);
@@ -91,7 +94,7 @@ export function useSwipeTab(
 
     function handleTransitionEnd() {
       swipe.removeEventListener("transitionend", handleTransitionEnd);
-      if (!animating) return;
+      if (unmounted || !animating) return;
 
       const opts = optionsRef.current;
       const currentTransform = swipe.style.transform;
@@ -123,13 +126,16 @@ export function useSwipeTab(
 
     function startSwipe(clientX: number, clientY: number, source: "pointer" | "touch") {
       if (animating) return;
+      containerWidth = container.offsetWidth;
+      // Bail out if the container has no width (e.g. hidden/unmeasured) to
+      // prevent the transform string comparison from producing false positives.
+      if (containerWidth === 0) return;
       startX = clientX;
       startY = clientY;
       startTime = Date.now();
       axis = "pending";
       tracking = true;
       trackingSource = source;
-      containerWidth = container.offsetWidth;
     }
 
     function moveSwipe(clientX: number, clientY: number) {
@@ -241,27 +247,31 @@ export function useSwipeTab(
     function handleTouchStart(e: TouchEvent) {
       if (shouldIgnoreSwipeStart(e.target)) return;
       if (trackingSource === "pointer") return;
+      if (activeTouchId !== null) return;
       const point = e.touches[0];
       if (!point) return;
+      activeTouchId = point.identifier;
       startSwipe(point.clientX, point.clientY, "touch");
     }
 
     function handleTouchMove(e: TouchEvent) {
       if (trackingSource !== "touch") return;
-      const point = e.touches[0];
+      const point = Array.from(e.touches).find((t) => t.identifier === activeTouchId);
       if (!point) return;
       moveSwipe(point.clientX, point.clientY);
     }
 
     function handleTouchEnd(e: TouchEvent) {
       if (trackingSource !== "touch") return;
-      const point = e.changedTouches[0];
+      const point = Array.from(e.changedTouches).find((t) => t.identifier === activeTouchId);
       if (!point) return;
+      activeTouchId = null;
       endSwipe(point.clientX);
     }
 
     function handleTouchCancel() {
       if (trackingSource !== "touch") return;
+      activeTouchId = null;
       resetSwipe();
     }
 
@@ -281,6 +291,7 @@ export function useSwipeTab(
     document.addEventListener("touchcancel", handleTouchCancel, { passive: true });
 
     return () => {
+      unmounted = true;
       container.removeEventListener("pointerdown", handlePointerDown, true);
       document.removeEventListener("pointermove", handlePointerMove);
       document.removeEventListener("pointerup", handlePointerUp);

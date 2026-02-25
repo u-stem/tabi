@@ -254,12 +254,13 @@ function MobilePatternTabs({
       )}
 
       {/* Add pattern */}
-      {canEdit && online && patterns.length < MAX_PATTERNS_PER_DAY && (
+      {canEdit && online && (
         <button
           type="button"
           aria-label="パターン追加"
+          disabled={patterns.length >= MAX_PATTERNS_PER_DAY}
           onClick={() => patternOps.add.setOpen(true)}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground transition-colors"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground transition-colors disabled:pointer-events-none disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
         </button>

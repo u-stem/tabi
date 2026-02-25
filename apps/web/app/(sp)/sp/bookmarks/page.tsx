@@ -4,6 +4,7 @@ import { type BookmarkListResponse, MAX_BOOKMARK_LISTS_PER_USER } from "@sugara/
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckSquare, Copy, MoreHorizontal, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { BookmarkListCard } from "@/components/bookmark-list-card";
 import { CreateBookmarkListDialog } from "@/components/create-bookmark-list-dialog";
@@ -289,9 +290,15 @@ export default function SpBookmarksPage() {
         onCreated={invalidateBookmarkLists}
       />
       <Fab
-        onClick={() => setCreateDialogOpen(true)}
+        onClick={() => {
+          if (bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER) {
+            toast.info(MSG.LIMIT_BOOKMARK_LISTS);
+            return;
+          }
+          setCreateDialogOpen(true);
+        }}
         label="リストを新規作成"
-        hidden={!online || sel.selectionMode || bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER}
+        hidden={!online || sel.selectionMode}
       />
     </>
   );

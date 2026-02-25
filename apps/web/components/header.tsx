@@ -14,7 +14,7 @@ import {
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const FeedbackDialog = dynamic(() =>
@@ -64,6 +64,10 @@ export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const isGuest = isGuestUser(session);
+  // Prevent hydration mismatch: better-auth may return cached session synchronously
+  // on the client while the server always starts with null.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const { data: friendRequests } = useQuery({
     queryKey: queryKeys.friends.requests(),
@@ -120,7 +124,7 @@ export function Header() {
         </div>
         <div className="flex items-center gap-1">
           <ThemeToggle />
-          {!session?.user ? (
+          {!mounted || !session?.user ? (
             <Skeleton className="h-8 w-8 rounded-full" />
           ) : (
             <>

@@ -1,4 +1,7 @@
 import { and, desc, eq, notInArray } from "drizzle-orm";
+import { db } from "../db/index";
+import { activityLogs } from "../db/schema";
+import { MAX_LOGS_PER_TRIP } from "./constants";
 
 /** "2025-02-07" → "2/7" */
 export function formatShortDate(iso: string): string {
@@ -10,10 +13,6 @@ export function formatShortDateRange(start: string, end: string): string {
   if (start === end) return formatShortDate(start);
   return `${formatShortDate(start)} - ${formatShortDate(end)}`;
 }
-
-import { db } from "../db/index";
-import { activityLogs } from "../db/schema";
-import { MAX_LOGS_PER_TRIP } from "./constants";
 
 type LogActivityParams = {
   tripId: string;

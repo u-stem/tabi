@@ -23,12 +23,12 @@ bun run lint         # 全パッケージ lint (Biome via turbo)
 bun run format       # 全パッケージ format (Biome via turbo)
 bun run check        # lint + format + import sort (Biome via turbo)
 bun run check-types  # TypeScript 型チェック
-bun run db:push      # DB スキーマ反映
-bun run db:generate  # マイグレーション生成
-bun run db:migrate   # マイグレーション実行
-bun run db:studio    # Drizzle Studio 起動
-bun run db:seed      # 開発用シードデータ投入
-bun run db:seed-user # 本番用ユーザー作成 (環境変数で指定)
+bun run db:generate              # マイグレーション生成 (スキーマ変更後に実行)
+bun run db:migrate               # マイグレーション実行 (ローカル・本番共通)
+bun run db:studio                # Drizzle Studio 起動
+bun run db:seed                  # 開発用シードデータ投入
+bun run db:seed-user             # 本番用ユーザー作成 (環境変数で指定)
+bun run db:init-migration-tracking  # push→migrate 移行時の一回限り初期化
 ```
 
 パッケージ単位の実行は `--filter` を使用:
@@ -70,12 +70,12 @@ bun run --filter @sugara/shared check-types
 
 ## 開発環境
 
-- 初回セットアップ: `bun install && supabase start && bun run db:push && bun run db:seed`
+- 初回セットアップ: `bun install && supabase start && bun run db:migrate && bun run db:seed`
 - ローカル Supabase 起動: `supabase start`
 - Web + API: `bun run --filter @sugara/web dev` (localhost:3000)
 - API エンドポイント: http://localhost:3000/api
 - Supabase Studio: http://127.0.0.1:54323
-- DB リセット: `supabase db reset && bun run db:push && bun run db:seed`
+- DB リセット: `supabase db reset && bun run db:migrate && bun run db:seed`
 - 結合テスト: `bun run --filter @sugara/api test:integration` (PostgreSQL の `sugara_test` DB が必要)
 
 ## 規約
@@ -86,3 +86,21 @@ bun run --filter @sugara/shared check-types
 - デッドコード禁止、TODO は Issue 化する
 - `biome-ignore` による lint 抑制禁止。根本的に修正する
 - Git フック (lefthook): `bun install` で自動セットアップ。`--no-verify` でのスキップ禁止
+
+## DB スキーマ変更
+
+`db:push` は使わない。スキーマ変更は必ず migration 経由で行う。
+
+```bash
+# 1. schema.ts を変更する
+# 2. migration ファイルを生成
+bun run db:generate
+
+# 3. ローカル DB に適用
+bun run db:migrate
+
+# 4. 本番 DB に適用 (MIGRATION_URL は Supabase の Transaction Pooler URL)
+MIGRATION_URL=<本番URL> bun run db:migrate
+```
+
+`db:push` で適用した変更は migration 履歴に残らず、本番との差分追跡が不可能になる。

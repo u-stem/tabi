@@ -81,7 +81,8 @@ async function createTripWithPoll(app: Hono, overrides?: Partial<typeof VALID_TR
     where: eq(schedulePolls.tripId, trip.id),
     with: { options: { orderBy: (o, { asc }) => [asc(o.sortOrder)] }, participants: true },
   });
-  return { tripId: trip.id as string, pollId: poll!.id as string, poll: poll! };
+  if (!poll) throw new Error("Poll not created for trip");
+  return { tripId: trip.id as string, pollId: poll.id as string, poll };
 }
 
 describe("Polls Integration", () => {
@@ -442,9 +443,9 @@ describe("Polls Integration", () => {
     });
     expect(members).toHaveLength(2);
     const ownerMember = members.find((m) => m.userId === owner.id);
-    expect(ownerMember!.role).toBe("owner");
+    expect(ownerMember?.role).toBe("owner");
     const otherMember = members.find((m) => m.userId === other.id);
-    expect(otherMember!.role).toBe("editor");
+    expect(otherMember?.role).toBe("editor");
   });
 
   it("rejects confirm on non-open poll", async () => {
@@ -538,10 +539,10 @@ describe("Trip creation with poll mode", () => {
     });
 
     expect(poll).toBeTruthy();
-    expect(poll!.status).toBe("open");
-    expect(poll!.options).toHaveLength(2);
-    expect(poll!.participants).toHaveLength(1);
-    expect(poll!.participants[0].userId).toBe(owner.id);
+    expect(poll?.status).toBe("open");
+    expect(poll?.options).toHaveLength(2);
+    expect(poll?.participants).toHaveLength(1);
+    expect(poll?.participants[0].userId).toBe(owner.id);
   });
 
   it("still creates a normal draft trip with startDate/endDate", async () => {
@@ -604,11 +605,12 @@ describe("Poll confirm with existing trip", () => {
       where: eq(schedulePolls.tripId, trip.id),
       with: { options: true },
     });
+    if (!poll) throw new Error("Poll not found");
 
     // Confirm with second option
     const confirmRes = await app.request(
-      `/api/polls/${poll!.id}/confirm`,
-      json({ optionId: poll!.options[1].id }),
+      `/api/polls/${poll.id}/confirm`,
+      json({ optionId: poll.options[1].id }),
     );
     expect(confirmRes.status).toBe(200);
 
@@ -616,9 +618,9 @@ describe("Poll confirm with existing trip", () => {
     const updatedTrip = await db.query.trips.findFirst({
       where: eq(trips.id, trip.id),
     });
-    expect(updatedTrip!.status).toBe("draft");
-    expect(updatedTrip!.startDate).toBe("2026-09-10");
-    expect(updatedTrip!.endDate).toBe("2026-09-12");
+    expect(updatedTrip?.status).toBe("draft");
+    expect(updatedTrip?.startDate).toBe("2026-09-10");
+    expect(updatedTrip?.endDate).toBe("2026-09-12");
 
     // Verify trip_days were created
     const days = await db.query.tripDays.findMany({
@@ -645,17 +647,18 @@ describe("Poll confirm with existing trip", () => {
       where: eq(schedulePolls.tripId, trip.id),
       with: { options: true },
     });
+    if (!poll) throw new Error("Poll not found");
 
     // Add participant to poll
     await db.insert(schedulePollParticipants).values({
-      pollId: poll!.id,
+      pollId: poll.id,
       userId: other.id,
     });
 
     // Confirm
     const confirmRes = await app.request(
-      `/api/polls/${poll!.id}/confirm`,
-      json({ optionId: poll!.options[0].id }),
+      `/api/polls/${poll.id}/confirm`,
+      json({ optionId: poll.options[0].id }),
     );
     expect(confirmRes.status).toBe(200);
 
@@ -760,8 +763,9 @@ describe("Delete poll cascade", () => {
     const poll = await db.query.schedulePolls.findFirst({
       where: eq(schedulePolls.tripId, trip.id),
     });
+    if (!poll) throw new Error("Poll not found");
 
-    const deleteRes = await app.request(`/api/polls/${poll!.id}`, { method: "DELETE" });
+    const deleteRes = await app.request(`/api/polls/${poll.id}`, { method: "DELETE" });
     expect(deleteRes.status).toBe(200);
 
     const deletedTrip = await db.query.trips.findFirst({
@@ -786,12 +790,13 @@ describe("Delete poll cascade", () => {
       where: eq(schedulePolls.tripId, trip.id),
       with: { options: true },
     });
+    if (!poll) throw new Error("Poll not found");
 
     // Confirm the poll first
-    await app.request(`/api/polls/${poll!.id}/confirm`, json({ optionId: poll!.options[0].id }));
+    await app.request(`/api/polls/${poll.id}/confirm`, json({ optionId: poll.options[0].id }));
 
     // Now delete the poll
-    const deleteRes = await app.request(`/api/polls/${poll!.id}`, { method: "DELETE" });
+    const deleteRes = await app.request(`/api/polls/${poll.id}`, { method: "DELETE" });
     expect(deleteRes.status).toBe(200);
 
     // Trip should still exist (now in draft status)
@@ -799,6 +804,6 @@ describe("Delete poll cascade", () => {
       where: eq(trips.id, trip.id),
     });
     expect(existingTrip).toBeTruthy();
-    expect(existingTrip!.status).toBe("draft");
+    expect(existingTrip?.status).toBe("draft");
   });
 });

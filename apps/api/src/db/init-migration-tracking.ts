@@ -6,9 +6,9 @@
 //   bun run db:init-migration-tracking
 //   MIGRATION_URL=<production_url> bun run db:init-migration-tracking
 
-import { createHash } from "crypto";
-import { readFileSync } from "fs";
-import { join } from "path";
+import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import postgres from "postgres";
 
 const url =
@@ -20,9 +20,9 @@ const isLocalhost = url.includes("localhost") || url.includes("127.0.0.1");
 const sql = postgres(url, { ssl: isLocalhost ? false : "require", max: 1 });
 
 const migrationsDir = join(import.meta.dir, "../../drizzle");
-const journal = JSON.parse(
-  readFileSync(join(migrationsDir, "meta/_journal.json"), "utf-8"),
-) as { entries: { idx: number; tag: string; when: number }[] };
+const journal = JSON.parse(readFileSync(join(migrationsDir, "meta/_journal.json"), "utf-8")) as {
+  entries: { idx: number; tag: string; when: number }[];
+};
 
 async function main() {
   await sql`CREATE SCHEMA IF NOT EXISTS drizzle`;
@@ -42,8 +42,7 @@ async function main() {
     const content = readFileSync(filePath, "utf-8");
     const hash = createHash("sha256").update(content).digest("hex");
 
-    const existing =
-      await sql`SELECT id FROM drizzle.__drizzle_migrations WHERE hash = ${hash}`;
+    const existing = await sql`SELECT id FROM drizzle.__drizzle_migrations WHERE hash = ${hash}`;
     if (existing.length > 0) {
       console.log(`skip  ${entry.tag}`);
       skipped++;

@@ -911,7 +911,7 @@ describe("buildExpenseRows", () => {
 
     const totalRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "合計");
     expect(totalRow).toBeDefined();
-    expect(totalRow![EXPENSE_EXPORT_HEADERS.amount]).toBe(8000);
+    expect(totalRow?.[EXPENSE_EXPORT_HEADERS.amount]).toBe(8000);
   });
 
   it("includes balance section with non-zero balances", () => {
@@ -923,10 +923,11 @@ describe("buildExpenseRows", () => {
 
     const aliceRow = rows.find(
       (r) =>
-        r[EXPENSE_EXPORT_HEADERS.title] === "Alice" && rows.indexOf(r) > rows.indexOf(sectionRow!),
+        r[EXPENSE_EXPORT_HEADERS.title] === "Alice" &&
+        rows.indexOf(r) > rows.indexOf(sectionRow ?? {}),
     );
     expect(aliceRow).toBeDefined();
-    expect(aliceRow![EXPENSE_EXPORT_HEADERS.amount]).toBe(1000);
+    expect(aliceRow?.[EXPENSE_EXPORT_HEADERS.amount]).toBe(1000);
   });
 
   it("includes transfer section", () => {
@@ -938,8 +939,8 @@ describe("buildExpenseRows", () => {
 
     const transferRow = rows.find((r) => String(r[EXPENSE_EXPORT_HEADERS.title]).includes("→"));
     expect(transferRow).toBeDefined();
-    expect(transferRow![EXPENSE_EXPORT_HEADERS.title]).toBe("Bob → Alice");
-    expect(transferRow![EXPENSE_EXPORT_HEADERS.amount]).toBe(1000);
+    expect(transferRow?.[EXPENSE_EXPORT_HEADERS.title]).toBe("Bob → Alice");
+    expect(transferRow?.[EXPENSE_EXPORT_HEADERS.amount]).toBe(1000);
   });
 
   it("sorts balances by net descending", () => {

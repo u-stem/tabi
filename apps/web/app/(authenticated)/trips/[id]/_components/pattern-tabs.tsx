@@ -33,8 +33,6 @@ export function PatternTabs({
   patternOps: PatternOps;
   onSelectPattern: (dayId: string, index: number) => void;
 }) {
-  const currentPattern = patterns[currentPatternIndex];
-
   return (
     <div className="mb-2 flex flex-wrap select-none items-center gap-1.5">
       {patterns.map((pattern, index) => {

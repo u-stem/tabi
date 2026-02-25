@@ -822,9 +822,10 @@ async function main() {
       options: { id: string; startDate: string }[];
     }>(`/api/polls/${seedPollId}`, { headers: { cookie: ownerCookies } });
     const optionsByDate = new Map(pollDetail.options.map((o) => [o.startDate, o.id]));
-    const opt1 = optionsByDate.get("2026-04-10")!;
-    const opt2 = optionsByDate.get("2026-04-17")!;
-    const opt3 = optionsByDate.get("2026-04-24")!;
+    const opt1 = optionsByDate.get("2026-04-10");
+    const opt2 = optionsByDate.get("2026-04-17");
+    const opt3 = optionsByDate.get("2026-04-24");
+    if (!opt1 || !opt2 || !opt3) throw new Error("Expected poll options not found by date");
 
     type PollResponse = { optionId: string; response: "ok" | "maybe" | "ng" };
 

@@ -3,7 +3,7 @@
 import type { TripListItem } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { CreateTripDialog } from "@/components/create-trip-dialog";
 import { Fab } from "@/components/fab";
@@ -16,12 +16,14 @@ import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
 type HomeTab = "owned" | "shared";
+const HOME_TABS = ["owned", "shared"] as const satisfies readonly HomeTab[];
 
 export default function SpHomePage() {
   const queryClient = useQueryClient();
@@ -54,6 +56,7 @@ export default function SpHomePage() {
   }, []);
 
   const [tab, setTab] = useState<HomeTab>("owned");
+  const tabRef = useRef<HomeTab>("owned");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("updatedAt");
@@ -64,6 +67,10 @@ export default function SpHomePage() {
   const [deleting, setDeleting] = useState(false);
   const [duplicating, setDuplicating] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Swipe refs
+  const contentRef = useRef<HTMLDivElement>(null);
+  const swipeRef = useRef<HTMLDivElement>(null);
 
   const showSkeleton = useDelayedLoading(isLoading);
 
@@ -105,15 +112,41 @@ export default function SpHomePage() {
     return result;
   }, [baseTrips, search, statusFilter, sortKey]);
 
-  function handleTabChange(newTab: HomeTab) {
-    if (newTab === tab) return;
+  const handleTabChange = useCallback((newTab: HomeTab) => {
+    if (newTab === tabRef.current) return;
+    tabRef.current = newTab;
     setTab(newTab);
     setSearch("");
     setStatusFilter("all");
     setSortKey("updatedAt");
     setSelectionMode(false);
     setSelectedIds(new Set());
-  }
+  }, []);
+
+  const handleSwipe = useCallback(
+    (direction: "left" | "right") => {
+      const idx = HOME_TABS.indexOf(tabRef.current);
+      if (idx === -1) return;
+      const nextIdx = direction === "left" ? idx + 1 : idx - 1;
+      if (nextIdx < 0 || nextIdx >= HOME_TABS.length) return;
+      handleTabChange(HOME_TABS[nextIdx]);
+    },
+    [handleTabChange],
+  );
+
+  const currentTabIdx = HOME_TABS.indexOf(tab);
+  const swipe = useSwipeTab(contentRef, swipeRef, {
+    onSwipeComplete: handleSwipe,
+    canSwipePrev: currentTabIdx > 0,
+    canSwipeNext: currentTabIdx < HOME_TABS.length - 1,
+  });
+
+  const adjacentTab =
+    swipe.adjacent === "next"
+      ? HOME_TABS[currentTabIdx + 1]
+      : swipe.adjacent === "prev"
+        ? HOME_TABS[currentTabIdx - 1]
+        : undefined;
 
   useEffect(() => {
     if (!selectionMode) return;
@@ -210,6 +243,61 @@ export default function SpHomePage() {
     setDuplicating(false);
   }
 
+  function renderTabContent(targetTab: HomeTab) {
+    const isActive = targetTab === tab;
+    const baseData = targetTab === "shared" ? sharedTrips : ownedTrips;
+    const displayTrips = isActive ? filteredTrips : baseData;
+
+    return (
+      <>
+        <TripToolbar
+          searchInputRef={isActive ? searchInputRef : undefined}
+          search={isActive ? search : ""}
+          onSearchChange={isActive ? setSearch : () => {}}
+          statusFilter={isActive ? statusFilter : "all"}
+          onStatusFilterChange={isActive ? setStatusFilter : () => {}}
+          sortKey={isActive ? sortKey : "updatedAt"}
+          onSortKeyChange={isActive ? setSortKey : () => {}}
+          selectionMode={isActive ? selectionMode : false}
+          onSelectionModeChange={
+            isActive && targetTab !== "shared" ? handleSelectionModeChange : undefined
+          }
+          selectedCount={isActive ? selectedIds.size : 0}
+          totalCount={displayTrips.length}
+          onSelectAll={isActive ? handleSelectAll : () => {}}
+          onDeselectAll={isActive ? handleDeselectAll : () => {}}
+          onDeleteSelected={isActive ? handleDeleteSelectedTrips : () => {}}
+          onDuplicateSelected={isActive ? handleDuplicateSelected : () => {}}
+          deleting={isActive ? deleting : false}
+          duplicating={isActive ? duplicating : false}
+          disabled={!online}
+        />
+        {baseData.length === 0 ? (
+          <p className="mt-8 text-center text-muted-foreground">
+            {targetTab === "shared"
+              ? "共有された旅行はありません"
+              : "まだ旅行がありません。旅行を作成してプランを立てましょう"}
+          </p>
+        ) : displayTrips.length === 0 ? (
+          <p className="mt-8 text-center text-muted-foreground">条件に一致する旅行がありません</p>
+        ) : (
+          <div className="mt-4 grid items-start gap-4">
+            {displayTrips.map((trip) => (
+              <TripCard
+                key={trip.id}
+                {...trip}
+                hrefPrefix="/sp/trips"
+                selectable={isActive && selectionMode && targetTab === "owned"}
+                selected={isActive ? selectedIds.has(trip.id) : false}
+                onSelect={isActive ? handleSelect : undefined}
+              />
+            ))}
+          </div>
+        )}
+      </>
+    );
+  }
+
   // Avoid flashing empty state during the 200ms skeleton delay
   if (isLoading && !showSkeleton) return <div />;
 
@@ -260,6 +348,7 @@ export default function SpHomePage() {
         </div>
       ) : (
         <>
+          {/* Tab pills */}
           <div className="mt-4 flex gap-1.5">
             {tabs.map(({ value, label }) => (
               <button
@@ -278,50 +367,31 @@ export default function SpHomePage() {
             ))}
           </div>
 
-          <div className="mt-4">
-            <TripToolbar
-              searchInputRef={searchInputRef}
-              search={search}
-              onSearchChange={setSearch}
-              statusFilter={statusFilter}
-              onStatusFilterChange={setStatusFilter}
-              sortKey={sortKey}
-              onSortKeyChange={setSortKey}
-              selectionMode={selectionMode}
-              onSelectionModeChange={tab !== "shared" ? handleSelectionModeChange : undefined}
-              selectedCount={selectedIds.size}
-              totalCount={filteredTrips.length}
-              onSelectAll={handleSelectAll}
-              onDeselectAll={handleDeselectAll}
-              onDeleteSelected={handleDeleteSelectedTrips}
-              onDuplicateSelected={handleDuplicateSelected}
-              deleting={deleting}
-              duplicating={duplicating}
-              disabled={!online}
-            />
-          </div>
-          {baseTrips.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">
-              {tab === "shared"
-                ? "共有された旅行はありません"
-                : "まだ旅行がありません。旅行を作成してプランを立てましょう"}
-            </p>
-          ) : filteredTrips.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">条件に一致する旅行がありません</p>
-          ) : (
-            <div className="mt-4 grid items-start gap-4">
-              {filteredTrips.map((trip) => (
-                <TripCard
-                  key={trip.id}
-                  {...trip}
-                  hrefPrefix="/sp/trips"
-                  selectable={selectionMode && tab === "owned"}
-                  selected={selectedIds.has(trip.id)}
-                  onSelect={handleSelect}
-                />
-              ))}
+          {/* Swipe area */}
+          <div ref={contentRef} className="mt-4 overflow-x-hidden">
+            <div
+              ref={swipeRef}
+              className="relative touch-pan-y"
+              style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
+            >
+              {/* Current tab */}
+              <div>{renderTabContent(tab)}</div>
+
+              {/* Adjacent tab (rendered only during swipe) */}
+              {swipe.adjacent && adjacentTab && (
+                <div
+                  className="absolute top-0 left-0 w-full"
+                  aria-hidden="true"
+                  style={{
+                    transform:
+                      swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                  }}
+                >
+                  {renderTabContent(adjacentTab)}
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </>
       )}
       <CreateTripDialog

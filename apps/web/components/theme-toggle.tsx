@@ -2,6 +2,8 @@
 
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
+import { useState } from "react";
+import { ActionSheet } from "@/components/action-sheet";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -9,17 +11,45 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 
 export function ThemeToggle() {
   const { setTheme } = useTheme();
+  const isMobile = useMobile();
+  const [open, setOpen] = useState(false);
+
+  const icon = (
+    <>
+      <Sun className="h-4 w-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+      <Moon className="absolute h-4 w-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+      <span className="sr-only">テーマ切替</span>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <>
+        <Button variant="ghost" size="icon" onClick={() => setOpen(true)}>
+          {icon}
+        </Button>
+        <ActionSheet
+          open={open}
+          onOpenChange={setOpen}
+          actions={[
+            { label: "ライト", onClick: () => setTheme("light") },
+            { label: "ダーク", onClick: () => setTheme("dark") },
+            { label: "システム", onClick: () => setTheme("system") },
+          ]}
+        />
+      </>
+    );
+  }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon">
-          <Sun className="h-4 w-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-          <Moon className="absolute h-4 w-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-          <span className="sr-only">テーマ切替</span>
+          {icon}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

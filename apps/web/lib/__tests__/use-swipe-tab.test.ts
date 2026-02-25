@@ -57,7 +57,10 @@ function fireTouchStart(
 }
 
 function fireTouchMove(listeners: Record<string, EventListener>, x: number, y = 0) {
-  listeners.touchmove?.({ touches: [touch(x, y)] } as unknown as Event);
+  listeners.touchmove?.({
+    touches: [touch(x, y)],
+    preventDefault: vi.fn(),
+  } as unknown as Event);
 }
 
 function fireTouchEnd(listeners: Record<string, EventListener>, x: number, y = 0) {
@@ -198,7 +201,8 @@ describe("useSwipeTab", () => {
     expect(moveCall).toBeDefined();
     expect(endCall).toBeDefined();
     expect(cancelCall).toBeDefined();
-    expect(moveCall?.[2]).toEqual({ passive: true });
+    // touchmove is non-passive so preventDefault() can cancel browser scroll
+    expect(moveCall?.[2]).toEqual({ passive: false });
     expect(endCall?.[2]).toEqual({ passive: true });
     expect(cancelCall?.[2]).toEqual({ passive: true });
   });

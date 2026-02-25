@@ -260,6 +260,11 @@ export function useSwipeTab(
       const point = Array.from(e.touches).find((t) => t.identifier === activeTouchId);
       if (!point) return;
       moveSwipe(point.clientX, point.clientY);
+      // Once horizontal axis is locked, prevent browser vertical scroll so the
+      // swipe takes full ownership of the gesture — same as native UIScrollView.
+      if (axis === "horizontal") {
+        e.preventDefault();
+      }
     }
 
     function handleTouchEnd(e: TouchEvent) {
@@ -287,7 +292,8 @@ export function useSwipeTab(
     document.addEventListener("pointercancel", handlePointerCancel, { passive: true });
     // Touch fallback path for environments where pointer events can be flaky.
     container.addEventListener("touchstart", handleTouchStart, { passive: true, capture: true });
-    document.addEventListener("touchmove", handleTouchMove, { passive: true });
+    // non-passive so preventDefault() can cancel browser scroll after axis lock.
+    document.addEventListener("touchmove", handleTouchMove, { passive: false });
     document.addEventListener("touchend", handleTouchEnd, { passive: true });
     document.addEventListener("touchcancel", handleTouchCancel, { passive: true });
 

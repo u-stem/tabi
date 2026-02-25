@@ -32,7 +32,7 @@ export function DayMemoEditor({
             placeholder="メモを入力..."
             maxLength={DAY_MEMO_MAX_LENGTH}
             rows={3}
-            className="resize-none text-sm"
+            className="resize-none"
             autoFocus
           />
           <div className="flex items-center justify-between">

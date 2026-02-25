@@ -348,7 +348,7 @@ export function DayTimeline({
           </div>
         </div>
       )}
-      {!selectionMode && headerContent}
+      {!selectionMode && !reorderMode && headerContent}
 
       {(() => {
         const merged = buildMergedTimeline(schedules, crossDayEntries);

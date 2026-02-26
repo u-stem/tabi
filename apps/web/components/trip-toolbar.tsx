@@ -2,8 +2,17 @@
 
 import type { TripStatus } from "@sugara/shared";
 import { STATUS_LABELS } from "@sugara/shared";
-import { ChevronDown, Copy, MoreHorizontal, SquareMousePointer, Trash2, X } from "lucide-react";
-import { useState } from "react";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  Copy,
+  ListFilter,
+  MoreHorizontal,
+  SquareMousePointer,
+  Trash2,
+  X,
+} from "lucide-react";
+import { type ReactNode, useState } from "react";
 import { ActionSheet } from "@/components/action-sheet";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,17 +71,18 @@ type TripToolbarProps = {
   deleteLabel?: string;
 };
 
-const statusFilters: { value: StatusFilter; label: string }[] = [
-  { value: "all", label: "すべて" },
+const statusFilters: { value: StatusFilter; label: string; icon: ReactNode }[] = [
+  { value: "all", label: "すべて", icon: <ListFilter className="h-4 w-4" /> },
   ...Object.entries(STATUS_LABELS).map(([value, label]) => ({
     value: value as TripStatus,
     label,
+    icon: <ListFilter className="h-4 w-4" />,
   })),
 ];
 
-const sortOptions: { value: SortKey; label: string }[] = [
-  { value: "updatedAt", label: "更新日" },
-  { value: "startDate", label: "出発日" },
+const sortOptions: { value: SortKey; label: string; icon: ReactNode }[] = [
+  { value: "updatedAt", label: "更新日", icon: <ArrowUpDown className="h-4 w-4" /> },
+  { value: "startDate", label: "出発日", icon: <ArrowUpDown className="h-4 w-4" /> },
 ];
 
 export function TripToolbar({
@@ -252,6 +262,7 @@ export function TripToolbar({
               onOpenChange={setStatusSheetOpen}
               actions={statusFilters.map((f) => ({
                 label: f.label,
+                icon: f.icon,
                 onClick: () => onStatusFilterChange(f.value),
               }))}
             />
@@ -293,6 +304,7 @@ export function TripToolbar({
               onOpenChange={setSortSheetOpen}
               actions={sortOptions.map((s) => ({
                 label: s.label,
+                icon: s.icon,
                 onClick: () => onSortKeyChange(s.value),
               }))}
             />

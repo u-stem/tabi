@@ -8,17 +8,18 @@ describe("MobileContentTabs", () => {
     cleanup();
   });
 
-  it("renders three primary tabs", () => {
+  it("renders four primary tabs", () => {
     render(<MobileContentTabs activeTab="schedule" onTabChange={vi.fn()} candidateCount={0} />);
     expect(screen.getByRole("tab", { name: "予定" })).toBeDefined();
     expect(screen.getByRole("tab", { name: "候補" })).toBeDefined();
     expect(screen.getByRole("tab", { name: "費用" })).toBeDefined();
+    expect(screen.getByRole("tab", { name: "お土産" })).toBeDefined();
   });
 
-  it("uses a fixed 3-column layout for even tab width", () => {
+  it("uses a fixed 4-column layout for even tab width", () => {
     render(<MobileContentTabs activeTab="schedule" onTabChange={vi.fn()} candidateCount={0} />);
     const tabList = screen.getByRole("tablist");
-    expect(tabList.className).toContain("grid-cols-3");
+    expect(tabList.className).toContain("grid-cols-4");
   });
 
   it("does not render bookmark/activity/chat tabs", () => {
@@ -61,7 +62,7 @@ describe("MobileContentTabs", () => {
     fireEvent.keyDown(screen.getByRole("tab", { name: "予定" }), { key: "ArrowRight" });
     fireEvent.keyDown(screen.getByRole("tab", { name: "予定" }), { key: "End" });
     expect(onChange).toHaveBeenNthCalledWith(1, "candidates");
-    expect(onChange).toHaveBeenNthCalledWith(2, "expenses");
+    expect(onChange).toHaveBeenNthCalledWith(2, "souvenirs");
   });
 
   it("shows candidate count badge when count is positive", () => {

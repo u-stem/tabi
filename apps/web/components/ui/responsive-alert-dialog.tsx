@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -50,7 +50,7 @@ interface ResponsiveAlertDialogProps {
 }
 
 function ResponsiveAlertDialog({ children, onOpenChange, ...props }: ResponsiveAlertDialogProps) {
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
 
   // Blur on both open and close in Drawer mode to prevent aria-hidden timing warnings.
   React.useLayoutEffect(() => {

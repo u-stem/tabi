@@ -26,6 +26,7 @@ import {
   type MobileContentTab,
   MobileContentTabs,
 } from "@/components/mobile-content-tabs";
+import { SouvenirPanel } from "@/components/souvenir-panel";
 
 const EditTripDialog = dynamic(() =>
   import("@/components/edit-trip-dialog").then((mod) => mod.EditTripDialog),
@@ -102,6 +103,7 @@ export default function SpTripDetailPage() {
   const [addScheduleOpen, setAddScheduleOpen] = useState(false);
   const [addCandidateOpen, setAddCandidateOpen] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
+  const [addSouvenirOpen, setAddSouvenirOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
@@ -480,6 +482,20 @@ export default function SpTripDetailPage() {
             日程が確定するとブックマークを利用できます
           </p>
         );
+      case "souvenirs":
+        return tripData.days.length > 0 ? (
+          <div className="rounded-lg border bg-card p-4">
+            <SouvenirPanel
+              tripId={tripId ?? ""}
+              addOpen={addSouvenirOpen}
+              onAddOpenChange={setAddSouvenirOpen}
+            />
+          </div>
+        ) : (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            日程が確定するとお土産リストを利用できます
+          </p>
+        );
       case "activity":
         return <ActivityLog tripId={tripId ?? ""} />;
     }
@@ -539,8 +555,8 @@ export default function SpTripDetailPage() {
               ref={mobileContentRef}
               className={
                 isActivelySwiping
-                  ? "min-h-0 overflow-hidden pb-20 touch-pan-y"
-                  : "min-h-0 overflow-y-auto overscroll-contain pb-20 touch-pan-y"
+                  ? "overflow-hidden pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
+                  : "overflow-y-auto overscroll-contain pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
               }
             >
               <div
@@ -594,13 +610,16 @@ export default function SpTripDetailPage() {
               setAddScheduleOpen(true);
             } else if (mobileTab === "candidates") setAddCandidateOpen(true);
             else if (mobileTab === "expenses") setAddExpenseOpen(true);
+            else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
           }}
           label={
             mobileTab === "schedule"
               ? "予定を追加"
               : mobileTab === "candidates"
                 ? "候補を追加"
-                : "費用を追加"
+                : mobileTab === "souvenirs"
+                  ? "お土産を追加"
+                  : "費用を追加"
           }
           hidden={!canEdit || !online || mobileTab === "bookmarks" || mobileTab === "activity"}
         />

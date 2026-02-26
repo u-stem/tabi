@@ -3,7 +3,7 @@
 import type { ExpenseSplitType } from "@sugara/shared";
 import { EXPENSE_TITLE_MAX_LENGTH } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Plus } from "lucide-react";
+import { Check, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   ResponsiveDialog,
+  ResponsiveDialogClose,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
   ResponsiveDialogFooter,
@@ -295,6 +296,12 @@ export function ExpenseDialog({
           </div>
 
           <ResponsiveDialogFooter>
+            <ResponsiveDialogClose asChild>
+              <Button type="button" variant="outline">
+                <X className="h-4 w-4" />
+                キャンセル
+              </Button>
+            </ResponsiveDialogClose>
             <Button
               type="submit"
               disabled={

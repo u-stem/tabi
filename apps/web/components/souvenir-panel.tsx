@@ -1,7 +1,17 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckSquare, ExternalLink, MapPin, Pencil, Plus, Trash2, X } from "lucide-react";
+import {
+  CheckSquare,
+  ExternalLink,
+  MapPin,
+  Pencil,
+  Plus,
+  StickyNote,
+  Trash2,
+  User,
+  X,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -378,38 +388,46 @@ function SouvenirItemRow({
         >
           {item.name}
         </p>
-        {item.recipient && <p className="text-xs text-muted-foreground">{item.recipient} 向け</p>}
-        {item.addresses.map((addr) => (
-          <a
-            key={addr}
-            href={buildMapsSearchUrl(addr)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-              "flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400",
-              selectMode && "pointer-events-none",
+        {(item.recipient || item.addresses.length > 0 || item.urls.length > 0 || item.memo) && (
+          <div className={cn("mt-1 space-y-1", selectMode && "pointer-events-none")}>
+            {item.recipient && (
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <User className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                <span>{item.recipient} 向け</span>
+              </div>
             )}
-          >
-            <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-            <span className="truncate">{addr}</span>
-          </a>
-        ))}
-        {item.urls.filter(isSafeUrl).map((url) => (
-          <a
-            key={url}
-            href={url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cn(
-              "flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400",
-              selectMode && "pointer-events-none",
+            {item.addresses.map((addr) => (
+              <a
+                key={addr}
+                href={buildMapsSearchUrl(addr)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+              >
+                <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                <span className="truncate">{addr}</span>
+              </a>
+            ))}
+            {item.urls.filter(isSafeUrl).map((url) => (
+              <a
+                key={url}
+                href={url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+              >
+                <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                <span className="truncate">{stripProtocol(url)}</span>
+              </a>
+            ))}
+            {item.memo && (
+              <div className="flex items-start gap-1.5 text-xs text-muted-foreground/70">
+                <StickyNote className="mt-0.5 h-3 w-3 shrink-0" />
+                <p className="whitespace-pre-line">{item.memo}</p>
+              </div>
             )}
-          >
-            <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-            <span className="truncate">{stripProtocol(url)}</span>
-          </a>
-        ))}
-        {item.memo && <p className="text-xs text-muted-foreground">{item.memo}</p>}
+          </div>
+        )}
       </div>
       {!selectMode &&
         (isMobile ? (

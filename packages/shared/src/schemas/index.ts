@@ -10,4 +10,5 @@ export * from "./member";
 export * from "./poll";
 export * from "./schedule";
 export * from "./trip";
+export * from "./souvenir";
 export * from "./trip-day";

@@ -21,3 +21,4 @@ export const BOOKMARK_URL_MAX_LENGTH = 2000;
 export const MAX_URLS_PER_BOOKMARK = 5;
 
 export const MAX_EXPENSES_PER_TRIP = 200;
+export const MAX_SOUVENIRS_PER_USER_PER_TRIP = 100;

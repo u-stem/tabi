@@ -18,7 +18,6 @@ import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
 import { ExpensePanel } from "@/components/expense-panel";
-import { SouvenirPanel } from "@/components/souvenir-panel";
 import { Fab } from "@/components/fab";
 import {
   getMobileTabIds,
@@ -27,6 +26,7 @@ import {
   type MobileContentTab,
   MobileContentTabs,
 } from "@/components/mobile-content-tabs";
+import { SouvenirPanel } from "@/components/souvenir-panel";
 
 const EditTripDialog = dynamic(() =>
   import("@/components/edit-trip-dialog").then((mod) => mod.EditTripDialog),
@@ -482,10 +482,14 @@ export default function SpTripDetailPage() {
           </p>
         );
       case "souvenirs":
-        return (
+        return tripData.days.length > 0 ? (
           <div className="rounded-lg border bg-card p-4">
             <SouvenirPanel tripId={tripId ?? ""} />
           </div>
+        ) : (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            日程が確定するとお土産リストを利用できます
+          </p>
         );
       case "activity":
         return <ActivityLog tripId={tripId ?? ""} />;

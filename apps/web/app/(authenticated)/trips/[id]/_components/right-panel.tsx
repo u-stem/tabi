@@ -99,7 +99,13 @@ export function RightPanel({
             </p>
           )
         ) : rightPanelTab === "souvenirs" ? (
-          <SouvenirPanel tripId={tripId} />
+          hasDays ? (
+            <SouvenirPanel tripId={tripId} />
+          ) : (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              日程が確定するとお土産リストを利用できます
+            </p>
+          )
         ) : (
           <ActivityLog tripId={tripId} />
         )}

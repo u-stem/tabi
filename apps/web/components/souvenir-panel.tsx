@@ -103,7 +103,7 @@ export function SouvenirPanel({ tripId }: SouvenirPanelProps) {
   return (
     <div className="space-y-3">
       <div className="flex justify-end">
-        <Button size="sm" onClick={() => setDialogOpen(true)}>
+        <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
           <Plus className="h-4 w-4" />
           追加
         </Button>

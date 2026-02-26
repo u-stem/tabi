@@ -393,7 +393,7 @@ function SouvenirItemRow({
             {item.recipient && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <User className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <span>{item.recipient} 向け</span>
+                <span>{item.recipient}</span>
               </div>
             )}
             {item.addresses.map((addr) => (

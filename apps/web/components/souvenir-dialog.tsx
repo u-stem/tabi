@@ -156,7 +156,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="souvenir-recipient">誰向け</Label>
+            <Label htmlFor="souvenir-recipient">対象</Label>
             <Input
               id="souvenir-recipient"
               value={recipient}

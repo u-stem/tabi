@@ -36,6 +36,10 @@ export const queryKeys = {
     all: ["expenses"] as const,
     list: (tripId: string) => [...queryKeys.expenses.all, tripId] as const,
   },
+  souvenirs: {
+    all: ["souvenirs"] as const,
+    list: (tripId: string) => [...queryKeys.souvenirs.all, tripId] as const,
+  },
   shared: {
     trip: (token: string) => ["shared", token] as const,
   },

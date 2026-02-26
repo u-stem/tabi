@@ -1,15 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  CheckSquare,
-  ExternalLink,
-  MapPin,
-  Pencil,
-  Plus,
-  Trash2,
-  X,
-} from "lucide-react";
+import { CheckSquare, ExternalLink, MapPin, Pencil, Plus, Trash2, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -53,8 +45,8 @@ type SouvenirItem = {
   id: string;
   name: string;
   recipient: string | null;
-  url: string | null;
-  address: string | null;
+  urls: string[];
+  addresses: string[];
   memo: string | null;
   isPurchased: boolean;
   createdAt: string;
@@ -387,9 +379,10 @@ function SouvenirItemRow({
           {item.name}
         </p>
         {item.recipient && <p className="text-xs text-muted-foreground">{item.recipient} 向け</p>}
-        {item.address && (
+        {item.addresses.map((addr) => (
           <a
-            href={buildMapsSearchUrl(item.address)}
+            key={addr}
+            href={buildMapsSearchUrl(addr)}
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
@@ -398,12 +391,13 @@ function SouvenirItemRow({
             )}
           >
             <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-            <span className="truncate">{item.address}</span>
+            <span className="truncate">{addr}</span>
           </a>
-        )}
-        {item.url && isSafeUrl(item.url) && (
+        ))}
+        {item.urls.filter(isSafeUrl).map((url) => (
           <a
-            href={item.url}
+            key={url}
+            href={url}
             target="_blank"
             rel="noopener noreferrer"
             className={cn(
@@ -412,9 +406,9 @@ function SouvenirItemRow({
             )}
           >
             <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-            <span className="truncate">{stripProtocol(item.url)}</span>
+            <span className="truncate">{stripProtocol(url)}</span>
           </a>
-        )}
+        ))}
         {item.memo && <p className="text-xs text-muted-foreground">{item.memo}</p>}
       </div>
       {!selectMode &&

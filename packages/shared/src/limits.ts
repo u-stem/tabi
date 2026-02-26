@@ -22,3 +22,5 @@ export const MAX_URLS_PER_BOOKMARK = 5;
 
 export const MAX_EXPENSES_PER_TRIP = 200;
 export const MAX_SOUVENIRS_PER_USER_PER_TRIP = 100;
+export const MAX_URLS_PER_SOUVENIR = 5;
+export const MAX_ADDRESSES_PER_SOUVENIR = 5;

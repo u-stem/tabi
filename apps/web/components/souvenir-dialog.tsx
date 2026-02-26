@@ -1,13 +1,15 @@
 "use client";
 
 import {
+  MAX_ADDRESSES_PER_SOUVENIR,
+  MAX_URLS_PER_SOUVENIR,
   SOUVENIR_ADDRESS_MAX_LENGTH,
   SOUVENIR_NAME_MAX_LENGTH,
   SOUVENIR_RECIPIENT_MAX_LENGTH,
   SOUVENIR_URL_MAX_LENGTH,
 } from "@sugara/shared";
-import { Check, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Check, Minus, Plus, X } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,8 +30,8 @@ type SouvenirItem = {
   id: string;
   name: string;
   recipient: string | null;
-  url: string | null;
-  address: string | null;
+  urls: string[];
+  addresses: string[];
   memo: string | null;
   isPurchased: boolean;
 };
@@ -42,13 +44,35 @@ type SouvenirDialogProps = {
   onSaved: () => void;
 };
 
+function useStringArrayField(initial: string[]) {
+  const displayValues = initial.length > 0 ? initial : [""];
+  const nextKeyRef = useRef(displayValues.length);
+  const [keys, setKeys] = useState<number[]>(() => displayValues.map((_, i) => i));
+
+  useEffect(() => {
+    nextKeyRef.current = displayValues.length;
+    setKeys(Array.from({ length: displayValues.length }, (_, i) => i));
+  }, [displayValues.length]);
+
+  const addKey = useCallback(() => {
+    const key = nextKeyRef.current++;
+    setKeys((prev) => [...prev, key]);
+  }, []);
+
+  const removeKey = useCallback((index: number) => {
+    setKeys((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  return { keys, addKey, removeKey };
+}
+
 export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: SouvenirDialogProps) {
   const isEdit = !!item;
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [recipient, setRecipient] = useState("");
-  const [url, setUrl] = useState("");
-  const [address, setAddress] = useState("");
+  const [urls, setUrls] = useState<string[]>([]);
+  const [addresses, setAddresses] = useState<string[]>([]);
   const [memo, setMemo] = useState("");
 
   useEffect(() => {
@@ -56,17 +80,23 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
     if (item) {
       setName(item.name);
       setRecipient(item.recipient ?? "");
-      setUrl(item.url ?? "");
-      setAddress(item.address ?? "");
+      setUrls(item.urls);
+      setAddresses(item.addresses);
       setMemo(item.memo ?? "");
     } else {
       setName("");
       setRecipient("");
-      setUrl("");
-      setAddress("");
+      setUrls([]);
+      setAddresses([]);
       setMemo("");
     }
   }, [open, item]);
+
+  const displayUrls = urls.length > 0 ? urls : [""];
+  const displayAddresses = addresses.length > 0 ? addresses : [""];
+
+  const urlField = useStringArrayField(urls);
+  const addressField = useStringArrayField(addresses);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,8 +107,8 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
       const body = {
         name: name.trim(),
         recipient: recipient.trim() || null,
-        url: url.trim() || null,
-        address: address.trim() || null,
+        urls: urls.filter((u) => u.trim()),
+        addresses: addresses.filter((a) => a.trim()),
         memo: memo.trim() || null,
       };
 
@@ -136,24 +166,93 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="souvenir-url">URL</Label>
-            <Input
-              id="souvenir-url"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://..."
-              maxLength={SOUVENIR_URL_MAX_LENGTH}
-            />
+            <Label>住所・場所</Label>
+            {displayAddresses.map((addr, index) => (
+              <div key={addressField.keys[index]} className="flex items-center gap-1">
+                <Input
+                  value={addr}
+                  onChange={(e) => {
+                    const next = [...displayAddresses];
+                    next[index] = e.target.value;
+                    setAddresses(next);
+                  }}
+                  placeholder="例: 渋谷区道玄坂..."
+                  maxLength={SOUVENIR_ADDRESS_MAX_LENGTH}
+                />
+                {index > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => {
+                      addressField.removeKey(index);
+                      setAddresses(displayAddresses.filter((_, i) => i !== index));
+                    }}
+                    aria-label="住所を削除"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            {displayAddresses.length < MAX_ADDRESSES_PER_SOUVENIR && (
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  addressField.addKey();
+                  setAddresses([...displayAddresses, ""]);
+                }}
+              >
+                <Plus className="inline h-3 w-3" /> 住所を追加
+              </button>
+            )}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="souvenir-address">住所・場所</Label>
-            <Input
-              id="souvenir-address"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              placeholder="例: 渋谷区道玄坂..."
-              maxLength={SOUVENIR_ADDRESS_MAX_LENGTH}
-            />
+            <Label>URL</Label>
+            {displayUrls.map((url, index) => (
+              <div key={urlField.keys[index]} className="flex items-center gap-1">
+                <Input
+                  type="url"
+                  value={url}
+                  onChange={(e) => {
+                    const next = [...displayUrls];
+                    next[index] = e.target.value;
+                    setUrls(next);
+                  }}
+                  placeholder="https://..."
+                  maxLength={SOUVENIR_URL_MAX_LENGTH}
+                />
+                {index > 0 && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => {
+                      urlField.removeKey(index);
+                      setUrls(displayUrls.filter((_, i) => i !== index));
+                    }}
+                    aria-label="URL を削除"
+                  >
+                    <Minus className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+            ))}
+            {displayUrls.length < MAX_URLS_PER_SOUVENIR && (
+              <button
+                type="button"
+                className="text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => {
+                  urlField.addKey();
+                  setUrls([...displayUrls, ""]);
+                }}
+              >
+                <Plus className="inline h-3 w-3" /> URL を追加
+              </button>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="souvenir-memo">メモ</Label>

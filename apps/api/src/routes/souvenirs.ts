@@ -48,10 +48,10 @@ souvenirRoutes.post("/:tripId/souvenirs", requireTripAccess(), async (c) => {
     return c.json({ error: ERROR_MSG.LIMIT_SOUVENIRS }, 409);
   }
 
-  const { name, recipient, url, address, memo } = parsed.data;
+  const { name, recipient, urls, addresses, memo } = parsed.data;
   const [item] = await db
     .insert(souvenirItems)
-    .values({ tripId, userId: user.id, name, recipient, url, address, memo })
+    .values({ tripId, userId: user.id, name, recipient, urls, addresses, memo })
     .returning();
 
   return c.json(item, 201);

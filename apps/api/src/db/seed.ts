@@ -417,25 +417,27 @@ const SAMPLE_CANDIDATES = [
 const SAMPLE_SOUVENIRS_DEV: {
   name: string;
   recipient?: string;
-  address?: string;
+  addresses?: string[];
+  urls?: string[];
   memo?: string;
   isPurchased: boolean;
 }[] = [
   {
     name: "八ツ橋",
     recipient: "職場へのお土産",
-    address: "京都市左京区聖護院西町7",
+    addresses: ["京都市左京区聖護院西町7", "京都市下京区東塩小路町 京都駅構内"],
     memo: "つぶあん入りと生八ツ橋を各2箱",
     isPurchased: true,
   },
   {
     name: "宇治抹茶 小山園",
+    urls: ["https://www.horaido.co.jp/"],
     memo: "抹茶ラテ用に粉末タイプ",
     isPurchased: false,
   },
   {
     name: "清水焼 湯呑み",
-    address: "京都市東山区清水2丁目",
+    addresses: ["京都市東山区清水2丁目"],
     memo: "清水坂の陶器屋で探す",
     isPurchased: false,
   },
@@ -453,7 +455,8 @@ const SAMPLE_SOUVENIRS_ALICE = [
   },
   {
     name: "金平糖 緑寿庵清水",
-    address: "京都市左京区吉田泉殿町38-2",
+    addresses: ["京都市左京区吉田泉殿町38-2"],
+    urls: ["https://www.konpeito.co.jp/"],
     memo: "季節限定フレーバーをチェック",
   },
 ];

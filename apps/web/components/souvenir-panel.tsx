@@ -1,5 +1,6 @@
 "use client";
 
+import type { SouvenirItem } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckSquare,
@@ -50,17 +51,6 @@ import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
 import { buildMapsSearchUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
-
-type SouvenirItem = {
-  id: string;
-  name: string;
-  recipient: string | null;
-  urls: string[];
-  addresses: string[];
-  memo: string | null;
-  isPurchased: boolean;
-  createdAt: string;
-};
 
 type SouvenirPanelProps = {
   tripId: string;

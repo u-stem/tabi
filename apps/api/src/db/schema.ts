@@ -610,6 +610,7 @@ export const souvenirItems = pgTable(
     memo: text("memo"),
     isPurchased: boolean("is_purchased").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
     index("souvenir_items_trip_id_idx").on(table.tripId),

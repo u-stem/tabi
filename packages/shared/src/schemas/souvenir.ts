@@ -41,3 +41,15 @@ export const updateSouvenirSchema = z
 
 export type CreateSouvenirInput = z.infer<typeof createSouvenirSchema>;
 export type UpdateSouvenirInput = z.infer<typeof updateSouvenirSchema>;
+
+export type SouvenirItem = {
+  id: string;
+  name: string;
+  recipient: string | null;
+  urls: string[];
+  addresses: string[];
+  memo: string | null;
+  isPurchased: boolean;
+  createdAt: string;
+  updatedAt: string;
+};

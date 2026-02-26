@@ -7,6 +7,7 @@ import {
   SOUVENIR_NAME_MAX_LENGTH,
   SOUVENIR_RECIPIENT_MAX_LENGTH,
   SOUVENIR_URL_MAX_LENGTH,
+  type SouvenirItem,
 } from "@sugara/shared";
 import { Check, Minus, Plus, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -26,16 +27,6 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { api, getApiErrorMessage } from "@/lib/api";
 
-type SouvenirItem = {
-  id: string;
-  name: string;
-  recipient: string | null;
-  urls: string[];
-  addresses: string[];
-  memo: string | null;
-  isPurchased: boolean;
-};
-
 type SouvenirDialogProps = {
   tripId: string;
   open: boolean;
@@ -44,15 +35,17 @@ type SouvenirDialogProps = {
   onSaved: () => void;
 };
 
-function useStringArrayField(initial: string[]) {
+function useStringArrayField(initial: string[], open: boolean) {
   const displayValues = initial.length > 0 ? initial : [""];
   const nextKeyRef = useRef(displayValues.length);
   const [keys, setKeys] = useState<number[]>(() => displayValues.map((_, i) => i));
 
+  // Reset keys when dialog opens or array length changes to prevent key drift
+  // across item switches where both items have the same number of entries.
   useEffect(() => {
     nextKeyRef.current = displayValues.length;
     setKeys(Array.from({ length: displayValues.length }, (_, i) => i));
-  }, [displayValues.length]);
+  }, [open, displayValues.length]);
 
   const addKey = useCallback(() => {
     const key = nextKeyRef.current++;
@@ -95,8 +88,8 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
   const displayUrls = urls.length > 0 ? urls : [""];
   const displayAddresses = addresses.length > 0 ? addresses : [""];
 
-  const urlField = useStringArrayField(urls);
-  const addressField = useStringArrayField(addresses);
+  const urlField = useStringArrayField(urls, open);
+  const addressField = useStringArrayField(addresses, open);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

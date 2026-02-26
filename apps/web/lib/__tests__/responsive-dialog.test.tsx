@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../hooks/use-is-mobile", () => ({
-  useIsMobile: vi.fn(),
+  useMobile: vi.fn(),
 }));
 
 import {
@@ -14,9 +14,9 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "../../components/ui/responsive-dialog";
-import { useIsMobile } from "../hooks/use-is-mobile";
+import { useMobile } from "../hooks/use-is-mobile";
 
-const mockUseIsMobile = vi.mocked(useIsMobile);
+const mockUseMobile = vi.mocked(useMobile);
 
 describe("ResponsiveDialog", () => {
   afterEach(() => {
@@ -24,7 +24,7 @@ describe("ResponsiveDialog", () => {
   });
 
   it("renders Dialog content on desktop", () => {
-    mockUseIsMobile.mockReturnValue(false);
+    mockUseMobile.mockReturnValue(false);
     render(
       <ResponsiveDialog open>
         <ResponsiveDialogContent>
@@ -44,7 +44,7 @@ describe("ResponsiveDialog", () => {
   });
 
   it("renders Drawer content on mobile", () => {
-    mockUseIsMobile.mockReturnValue(true);
+    mockUseMobile.mockReturnValue(true);
     render(
       <ResponsiveDialog open>
         <ResponsiveDialogContent>

@@ -2,7 +2,19 @@
 
 import { type BookmarkListResponse, MAX_BOOKMARK_LISTS_PER_USER } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CheckSquare, ChevronDown, Copy, MoreHorizontal, Trash2, X } from "lucide-react";
+import {
+  CheckSquare,
+  ChevronDown,
+  Copy,
+  Globe,
+  ListFilter,
+  Lock,
+  MoreHorizontal,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
+import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
@@ -35,11 +47,11 @@ import { queryKeys } from "@/lib/query-keys";
 
 type VisibilityFilter = "all" | "public" | "friends_only" | "private";
 
-const visibilityFilters: { value: VisibilityFilter; label: string }[] = [
-  { value: "all", label: "すべて" },
-  { value: "public", label: "公開" },
-  { value: "friends_only", label: "フレンド限定" },
-  { value: "private", label: "非公開" },
+const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.ReactNode }[] = [
+  { value: "all", label: "すべて", icon: <ListFilter className="h-4 w-4" /> },
+  { value: "public", label: "公開", icon: <Globe className="h-4 w-4" /> },
+  { value: "friends_only", label: "フレンド限定", icon: <Users className="h-4 w-4" /> },
+  { value: "private", label: "非公開", icon: <Lock className="h-4 w-4" /> },
 ];
 
 export default function SpBookmarksPage() {
@@ -222,6 +234,7 @@ export default function SpBookmarksPage() {
                   onOpenChange={setVisibilitySheetOpen}
                   actions={visibilityFilters.map((f) => ({
                     label: f.label,
+                    icon: f.icon,
                     onClick: () => setVisibilityFilter(f.value),
                   }))}
                 />

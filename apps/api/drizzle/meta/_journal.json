@@ -71,6 +71,13 @@
       "when": 1772064000000,
       "tag": "0009_souvenir_items",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1772150400000,
+      "tag": "0010_add_polls_and_expenses",
+      "breakpoints": true
     }
   ]
 }

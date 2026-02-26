@@ -555,8 +555,8 @@ export default function SpTripDetailPage() {
               ref={mobileContentRef}
               className={
                 isActivelySwiping
-                  ? "min-h-0 overflow-hidden pb-20 touch-pan-y"
-                  : "min-h-0 overflow-y-auto overscroll-contain pb-20 touch-pan-y"
+                  ? "overflow-hidden pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
+                  : "overflow-y-auto overscroll-contain pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
               }
             >
               <div

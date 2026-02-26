@@ -211,9 +211,9 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
       )}
 
       {items.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          お土産リストはまだありません
-        </p>
+        <div className="flex min-h-24 items-center justify-center rounded-md border border-dashed text-center">
+          <p className="text-sm text-muted-foreground">お土産リストはまだありません</p>
+        </div>
       ) : (
         <div className="space-y-1">
           {remaining.map((item) => (

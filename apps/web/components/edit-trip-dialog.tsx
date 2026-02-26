@@ -1,7 +1,7 @@
 "use client";
 
 import { TRIP_DESTINATION_MAX_LENGTH, TRIP_TITLE_MAX_LENGTH } from "@sugara/shared";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CoverImagePicker } from "@/components/cover-image-picker";
@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   ResponsiveDialog,
+  ResponsiveDialogClose,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
   ResponsiveDialogFooter,
@@ -232,6 +233,12 @@ export function EditTripDialog({
             )}
           </div>
           <ResponsiveDialogFooter className="shrink-0 border-t pt-4">
+            <ResponsiveDialogClose asChild>
+              <Button type="button" variant="outline">
+                <X className="h-4 w-4" />
+                キャンセル
+              </Button>
+            </ResponsiveDialogClose>
             <Button type="submit" disabled={busy}>
               <Check className="h-4 w-4" />
               {busy ? "更新中..." : "更新"}

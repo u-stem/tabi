@@ -9,7 +9,6 @@ import { bookmarkListRoutes } from "./routes/bookmark-lists";
 import { bookmarkRoutes } from "./routes/bookmarks";
 import { candidateRoutes } from "./routes/candidates";
 import { expenseRoutes } from "./routes/expenses";
-import { souvenirRoutes } from "./routes/souvenirs";
 import { feedbackRoutes } from "./routes/feedback";
 import { friendRoutes } from "./routes/friends";
 import { groupRoutes } from "./routes/groups";
@@ -21,6 +20,7 @@ import { profileRoutes } from "./routes/profile";
 import { reactionRoutes } from "./routes/reactions";
 import { scheduleRoutes } from "./routes/schedules";
 import { shareRoutes } from "./routes/share";
+import { souvenirRoutes } from "./routes/souvenirs";
 import { tripDayRoutes } from "./routes/trip-days";
 import { tripRoutes } from "./routes/trips";
 

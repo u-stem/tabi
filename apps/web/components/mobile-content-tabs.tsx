@@ -2,7 +2,13 @@
 
 import { cn } from "@/lib/utils";
 
-export type MobileContentTab = "schedule" | "candidates" | "expenses" | "bookmarks" | "activity" | "souvenirs";
+export type MobileContentTab =
+  | "schedule"
+  | "candidates"
+  | "expenses"
+  | "bookmarks"
+  | "activity"
+  | "souvenirs";
 
 interface MobileContentTabsProps {
   activeTab: MobileContentTab;

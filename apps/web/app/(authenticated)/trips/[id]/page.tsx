@@ -65,7 +65,7 @@ import { DayMemoEditor } from "./_components/day-memo-editor";
 import { DayTabs } from "./_components/day-tabs";
 import { PatternTabs } from "./_components/pattern-tabs";
 import { PollTab } from "./_components/poll-tab";
-import { type RightPanelTab, RightPanel } from "./_components/right-panel";
+import { RightPanel, type RightPanelTab } from "./_components/right-panel";
 import {
   AddPatternDialog,
   BatchDeleteDialog,

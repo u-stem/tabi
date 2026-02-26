@@ -64,6 +64,13 @@
       "when": 1771977600000,
       "tag": "0008_remove_poll_redundant_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1772064000000,
+      "tag": "0009_souvenir_items",
+      "breakpoints": true
     }
   ]
 }

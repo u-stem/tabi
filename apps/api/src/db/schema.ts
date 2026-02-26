@@ -590,3 +590,32 @@ export const expenseSplitsRelations = relations(expenseSplits, ({ one }) => ({
   expense: one(expenses, { fields: [expenseSplits.expenseId], references: [expenses.id] }),
   user: one(users, { fields: [expenseSplits.userId], references: [users.id] }),
 }));
+
+export const souvenirItems = pgTable(
+  "souvenir_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    tripId: uuid("trip_id")
+      .notNull()
+      .references(() => trips.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 200 }).notNull(),
+    recipient: varchar("recipient", { length: 100 }),
+    url: varchar("url", { length: 2000 }),
+    address: varchar("address", { length: 500 }),
+    memo: text("memo"),
+    isPurchased: boolean("is_purchased").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("souvenir_items_trip_id_idx").on(table.tripId),
+    index("souvenir_items_user_id_idx").on(table.userId),
+  ],
+).enableRLS();
+
+export const souvenirItemsRelations = relations(souvenirItems, ({ one }) => ({
+  trip: one(trips, { fields: [souvenirItems.tripId], references: [trips.id] }),
+  user: one(users, { fields: [souvenirItems.userId], references: [users.id] }),
+}));

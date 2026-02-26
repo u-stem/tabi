@@ -110,7 +110,7 @@ export function SouvenirPanel({ tripId }: SouvenirPanelProps) {
       <div className="flex justify-end">
         <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
           <Plus className="h-4 w-4" />
-          追加
+          お土産を追加
         </Button>
       </div>
 

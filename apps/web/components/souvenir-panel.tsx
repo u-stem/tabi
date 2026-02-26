@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/responsive-alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
 
 type SouvenirItem = {
@@ -83,14 +84,18 @@ export function SouvenirPanel({ tripId }: SouvenirPanelProps) {
     setEditingItem(null);
   };
 
-  if (isLoading) {
+  const showSkeleton = useDelayedLoading(isLoading);
+
+  if (showSkeleton) {
     return (
       <div className="space-y-2">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
+        <Skeleton className="h-12 w-full rounded-md" />
+        <Skeleton className="h-12 w-full rounded-md" />
       </div>
     );
   }
+
+  if (isLoading) return null;
 
   if (isError) {
     return <p className="py-8 text-center text-sm text-muted-foreground">読み込みに失敗しました</p>;

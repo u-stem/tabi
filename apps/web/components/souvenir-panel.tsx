@@ -11,9 +11,13 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { toast } from "sonner";
-import { SouvenirDialog } from "@/components/souvenir-dialog";
+
+const SouvenirDialog = dynamic(() =>
+  import("@/components/souvenir-dialog").then((mod) => mod.SouvenirDialog),
+);
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {

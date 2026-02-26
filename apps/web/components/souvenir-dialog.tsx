@@ -109,7 +109,9 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="souvenir-name">品名</Label>
+            <Label htmlFor="souvenir-name">
+              品名 <span className="text-destructive">*</span>
+            </Label>
             <Input
               id="souvenir-name"
               value={name}

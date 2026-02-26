@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { type ReactNode, useLayoutEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
@@ -37,7 +38,7 @@ export function ActionSheet({ open, onOpenChange, actions }: ActionSheetProps) {
             <Button
               key={action.label}
               variant={action.variant === "destructive" ? "destructive" : "outline"}
-              className="h-12 w-full text-base"
+              className="h-12 w-full justify-start text-base"
               onClick={() => {
                 action.onClick();
                 onOpenChange(false);
@@ -49,9 +50,10 @@ export function ActionSheet({ open, onOpenChange, actions }: ActionSheetProps) {
           ))}
           <Button
             variant="outline"
-            className="mt-1 h-12 w-full text-base"
+            className="mt-1 h-12 w-full justify-start text-base"
             onClick={() => onOpenChange(false)}
           >
+            <X className="mr-2 h-4 w-4" />
             キャンセル
           </Button>
         </div>

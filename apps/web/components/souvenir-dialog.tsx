@@ -6,7 +6,7 @@ import {
   SOUVENIR_RECIPIENT_MAX_LENGTH,
   SOUVENIR_URL_MAX_LENGTH,
 } from "@sugara/shared";
-import { X } from "lucide-react";
+import { Check, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -167,6 +167,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={loading || !name.trim()}>
+              {isEdit ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
               {loading ? "保存中..." : isEdit ? "保存" : "追加"}
             </Button>
           </ResponsiveDialogFooter>

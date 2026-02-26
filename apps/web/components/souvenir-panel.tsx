@@ -161,9 +161,9 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
   const selectedCount = selectedIds.size;
 
   return (
-    <div className="space-y-3">
+    <div>
       {selectMode ? (
-        <div className="flex items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+        <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
           <Button variant="ghost" size="icon" className="h-7 w-7" onClick={exitSelectMode}>
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -194,7 +194,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
           </div>
         </div>
       ) : (
-        <div className="flex items-center justify-end gap-1.5">
+        <div className="mb-2 flex items-center justify-end gap-1.5">
           {items.length > 0 && (
             <Button variant="outline" size="sm" onClick={() => setSelectMode(true)}>
               <CheckSquare className="h-4 w-4" />

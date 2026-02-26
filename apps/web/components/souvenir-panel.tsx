@@ -38,8 +38,8 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { SELECTED_RING } from "@/lib/colors";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
-import { buildMapsSearchUrl } from "@/lib/transport-link";
 import { queryKeys } from "@/lib/query-keys";
+import { buildMapsSearchUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
 
 type SouvenirItem = {
@@ -179,12 +179,13 @@ export function SouvenirPanel({ tripId }: SouvenirPanelProps) {
           <div className="ml-auto">
             <Button
               variant="ghost"
-              size="icon"
-              className="h-7 w-7"
+              size="sm"
+              className="h-7 px-2 text-xs text-destructive hover:text-destructive"
               disabled={selectedCount === 0 || bulkDeleteMutation.isPending}
               onClick={() => setBulkDeleteOpen(true)}
             >
               <Trash2 className="h-3.5 w-3.5" />
+              削除
             </Button>
           </div>
         </div>
@@ -361,7 +362,9 @@ function SouvenirItemRow({
         />
       )}
       <div className="min-w-0 flex-1">
-        <p className={`text-sm font-medium ${item.isPurchased && !selectMode ? "line-through" : ""}`}>
+        <p
+          className={`text-sm font-medium ${item.isPurchased && !selectMode ? "line-through" : ""}`}
+        >
           {item.name}
         </p>
         {item.recipient && <p className="text-xs text-muted-foreground">{item.recipient} 向け</p>}

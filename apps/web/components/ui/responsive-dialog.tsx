@@ -105,7 +105,7 @@ function ResponsiveDialogHeader({ ...props }: React.HTMLAttributes<HTMLDivElemen
 function ResponsiveDialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   const isMobile = useMobileContext();
   if (isMobile) {
-    return <DrawerFooter className={cn("flex-row justify-end", className)} {...props} />;
+    return <DrawerFooter className={cn("flex-row [&>*]:flex-1", className)} {...props} />;
   }
   return <DialogFooter className={className} {...props} />;
 }

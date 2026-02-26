@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   ResponsiveDialog,
+  ResponsiveDialogClose,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
   ResponsiveDialogFooter,
@@ -116,6 +117,11 @@ export function CreateBookmarkListDialog({
             </div>
           </div>
           <ResponsiveDialogFooter>
+            <ResponsiveDialogClose asChild>
+              <Button type="button" variant="outline">
+                キャンセル
+              </Button>
+            </ResponsiveDialogClose>
             <Button type="submit" disabled={submitting || !name.trim()}>
               {submitting ? "作成中..." : "作成"}
             </Button>

@@ -15,6 +15,7 @@ import { ScheduleFormFields } from "@/components/schedule-form-fields";
 import { Button } from "@/components/ui/button";
 import {
   ResponsiveDialog,
+  ResponsiveDialogClose,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
   ResponsiveDialogFooter,
@@ -154,6 +155,11 @@ export function AddCandidateDialog({
             </p>
           )}
           <ResponsiveDialogFooter>
+            <ResponsiveDialogClose asChild>
+              <Button type="button" variant="outline">
+                キャンセル
+              </Button>
+            </ResponsiveDialogClose>
             <Button type="submit" disabled={loading}>
               <Plus className="h-4 w-4" />
               {loading ? "追加中..." : "追加"}

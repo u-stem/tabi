@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   ResponsiveDialog,
+  ResponsiveDialogClose,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
   ResponsiveDialogFooter,
@@ -95,6 +96,11 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
             </div>
           )}
           <ResponsiveDialogFooter className="mt-4">
+            <ResponsiveDialogClose asChild>
+              <Button type="button" variant="outline">
+                キャンセル
+              </Button>
+            </ResponsiveDialogClose>
             <Button type="submit" disabled={loading || !body.trim() || cooldown}>
               {loading ? "送信中..." : "送信"}
             </Button>

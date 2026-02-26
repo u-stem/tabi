@@ -273,7 +273,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
             </ResponsiveDialogClose>
             <Button type="submit" disabled={loading || !name.trim()}>
               {isEdit ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-              {loading ? "保存中..." : isEdit ? "保存" : "追加"}
+              {loading ? (isEdit ? "更新中..." : "追加中...") : isEdit ? "更新" : "追加"}
             </Button>
           </ResponsiveDialogFooter>
         </form>

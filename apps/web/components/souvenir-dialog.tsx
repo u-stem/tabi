@@ -16,6 +16,7 @@ import {
   ResponsiveDialog,
   ResponsiveDialogClose,
   ResponsiveDialogContent,
+  ResponsiveDialogDescription,
   ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
@@ -106,6 +107,9 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
       <ResponsiveDialogContent className="sm:max-w-sm">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{isEdit ? "お土産を編集" : "お土産を追加"}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {isEdit ? "お土産の内容を変更します。" : "新しいお土産を追加します。"}
+          </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">

@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useState } from "react";
 import { ActionSheet } from "@/components/action-sheet";
@@ -36,9 +36,21 @@ export function ThemeToggle() {
           open={open}
           onOpenChange={setOpen}
           actions={[
-            { label: "ライト", onClick: () => setTheme("light") },
-            { label: "ダーク", onClick: () => setTheme("dark") },
-            { label: "システム", onClick: () => setTheme("system") },
+            {
+              label: "ライト",
+              icon: <Sun className="h-4 w-4" />,
+              onClick: () => setTheme("light"),
+            },
+            {
+              label: "ダーク",
+              icon: <Moon className="h-4 w-4" />,
+              onClick: () => setTheme("dark"),
+            },
+            {
+              label: "システム",
+              icon: <Monitor className="h-4 w-4" />,
+              onClick: () => setTheme("system"),
+            },
           ]}
         />
       </>
@@ -53,9 +65,18 @@ export function ThemeToggle() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")}>ライト</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>ダーク</DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>システム</DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("light")}>
+          <Sun className="h-4 w-4" />
+          ライト
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          <Moon className="h-4 w-4" />
+          ダーク
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
+          <Monitor className="h-4 w-4" />
+          システム
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );

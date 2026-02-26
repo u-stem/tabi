@@ -119,8 +119,8 @@ describe("POST /api/trips/:tripId/souvenirs", () => {
       id: itemId,
       name: "Matcha Kit Kat",
       recipient: "Mom",
-      url: "https://example.com",
-      address: "Shibuya, Tokyo",
+      urls: ["https://example.com"],
+      addresses: ["Shibuya, Tokyo"],
       memo: "Green box",
       isPurchased: false,
     };
@@ -136,12 +136,15 @@ describe("POST /api/trips/:tripId/souvenirs", () => {
       body: JSON.stringify({
         name: "Matcha Kit Kat",
         recipient: "Mom",
-        url: "https://example.com",
-        address: "Shibuya, Tokyo",
+        urls: ["https://example.com"],
+        addresses: ["Shibuya, Tokyo"],
         memo: "Green box",
       }),
     });
     expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.urls).toEqual(["https://example.com"]);
+    expect(body.addresses).toEqual(["Shibuya, Tokyo"]);
   });
 
   it("returns 400 for empty name", async () => {

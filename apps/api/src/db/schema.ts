@@ -462,6 +462,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   ownedGroups: many(groups),
   groupMemberships: many(groupMembers),
   schedulePollParticipations: many(schedulePollParticipants),
+  souvenirItems: many(souvenirItems),
 }));
 
 export const tripsRelations = relations(trips, ({ one, many }) => ({
@@ -472,6 +473,7 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
   activityLogs: many(activityLogs),
   poll: one(schedulePolls, { fields: [trips.id], references: [schedulePolls.tripId] }),
   expenses: many(expenses),
+  souvenirItems: many(souvenirItems),
 }));
 
 export const tripMembersRelations = relations(tripMembers, ({ one }) => ({

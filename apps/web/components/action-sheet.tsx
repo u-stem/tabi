@@ -23,8 +23,10 @@ export function ActionSheet({ open, onOpenChange, actions }: ActionSheetProps) {
   // Blur any focused element before the drawer applies aria-hidden to the page.
   // useLayoutEffect fires before Radix's useEffect that sets aria-hidden,
   // preventing the "aria-hidden on focused element's ancestor" browser warning.
+  // Blur on both open and close: opening sets aria-hidden on the page (requires blur before),
+  // closing triggers Vaul's data-state=closed while aria-hidden is still on the drawer.
   useLayoutEffect(() => {
-    if (open && document.activeElement instanceof HTMLElement) {
+    if (document.activeElement instanceof HTMLElement) {
       document.activeElement.blur();
     }
   }, [open]);

@@ -2,12 +2,15 @@
 
 import type { BookmarkListResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
-import { Bookmark } from "lucide-react";
+import { Bookmark, X } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import {
   ResponsiveDialog,
+  ResponsiveDialogClose,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
@@ -82,6 +85,14 @@ export function BookmarkListPickerDialog({
             </div>
           )}
         </div>
+        <ResponsiveDialogFooter>
+          <ResponsiveDialogClose asChild>
+            <Button type="button" variant="outline">
+              <X className="h-4 w-4" />
+              キャンセル
+            </Button>
+          </ResponsiveDialogClose>
+        </ResponsiveDialogFooter>
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );

@@ -49,6 +49,11 @@ interface ResponsiveDialogProps {
 function ResponsiveDialog({ children, onOpenChange, ...props }: ResponsiveDialogProps) {
   const isMobile = useIsMobile();
 
+  // Blur on both open and close in Drawer mode: same aria-hidden timing issue as ActionSheet.
+  React.useLayoutEffect(() => {
+    if (isMobile) blurActiveElement();
+  }, [isMobile, props.open]);
+
   const handleOpenChange = React.useCallback(
     (open: boolean) => {
       if (!open) blurActiveElement();

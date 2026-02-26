@@ -18,6 +18,7 @@ import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
 import { ExpensePanel } from "@/components/expense-panel";
+import { SouvenirPanel } from "@/components/souvenir-panel";
 import { Fab } from "@/components/fab";
 import {
   getMobileTabIds,
@@ -479,6 +480,12 @@ export default function SpTripDetailPage() {
           <p className="py-8 text-center text-sm text-muted-foreground">
             日程が確定するとブックマークを利用できます
           </p>
+        );
+      case "souvenirs":
+        return (
+          <div className="rounded-lg border bg-card p-4">
+            <SouvenirPanel tripId={tripId ?? ""} />
+          </div>
         );
       case "activity":
         return <ActivityLog tripId={tripId ?? ""} />;

@@ -1,7 +1,7 @@
 "use client";
 
 import { BOOKMARK_LIST_NAME_MAX_LENGTH, type BookmarkListVisibility } from "@sugara/shared";
-import { X } from "lucide-react";
+import { Check, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -90,6 +90,7 @@ export function EditListDialog({ listOps }: { listOps: ListOps }) {
               キャンセル
             </Button>
             <Button type="submit" disabled={!listOps.editListName.trim()}>
+              <Check className="h-4 w-4" />
               保存
             </Button>
           </ResponsiveDialogFooter>
@@ -139,6 +140,7 @@ export function AddBookmarkDialog({ bmOps, listName }: { bmOps: BmOps; listName:
               キャンセル
             </Button>
             <Button type="submit" disabled={bmOps.submitting || !bmOps.bookmarkName.trim()}>
+              <Plus className="h-4 w-4" />
               {bmOps.submitting ? "追加中..." : "追加"}
             </Button>
           </ResponsiveDialogFooter>
@@ -188,6 +190,7 @@ export function EditBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
               キャンセル
             </Button>
             <Button type="submit" disabled={bmOps.submitting || !bmOps.bookmarkName.trim()}>
+              <Check className="h-4 w-4" />
               {bmOps.submitting ? "保存中..." : "保存"}
             </Button>
           </ResponsiveDialogFooter>

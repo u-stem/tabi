@@ -5,7 +5,7 @@ import {
   type BookmarkListResponse,
   type BookmarkListVisibility,
 } from "@sugara/shared";
-import { X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -125,6 +125,7 @@ export function CreateBookmarkListDialog({
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={submitting || !name.trim()}>
+              <Plus className="h-4 w-4" />
               {submitting ? "作成中..." : "作成"}
             </Button>
           </ResponsiveDialogFooter>

@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   ResponsiveDialog,
+  ResponsiveDialogClose,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
   ResponsiveDialogFooter,
@@ -347,6 +348,12 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
             )}
           </div>
           <ResponsiveDialogFooter className="shrink-0 border-t pt-4">
+            <ResponsiveDialogClose asChild>
+              <Button type="button" variant="outline">
+                <X className="h-4 w-4" />
+                キャンセル
+              </Button>
+            </ResponsiveDialogClose>
             <Button type="submit" disabled={loading || uploading}>
               <Plus className="h-4 w-4" />
               {loading || uploading ? "作成中..." : "作成"}

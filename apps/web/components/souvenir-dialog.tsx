@@ -134,7 +134,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="sm:max-w-sm">
+      <ResponsiveDialogContent className="sm:max-w-md">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>{isEdit ? "お土産を編集" : "お土産を追加"}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>

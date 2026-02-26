@@ -52,6 +52,11 @@ interface ResponsiveAlertDialogProps {
 function ResponsiveAlertDialog({ children, onOpenChange, ...props }: ResponsiveAlertDialogProps) {
   const isMobile = useIsMobile();
 
+  // Blur on both open and close in Drawer mode to prevent aria-hidden timing warnings.
+  React.useLayoutEffect(() => {
+    if (isMobile) blurActiveElement();
+  }, [isMobile, props.open]);
+
   const handleOpenChange = React.useCallback(
     (open: boolean) => {
       if (!open) blurActiveElement();
@@ -107,10 +112,12 @@ function ResponsiveAlertDialogHeader({ ...props }: React.HTMLAttributes<HTMLDivE
   return <Comp {...props} />;
 }
 
-function ResponsiveAlertDialogFooter({ ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function ResponsiveAlertDialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   const isMobile = useMobileContext();
-  const Comp = isMobile ? DrawerFooter : AlertDialogFooter;
-  return <Comp {...props} />;
+  if (isMobile) {
+    return <DrawerFooter className={cn("flex-row [&>*]:flex-1", className)} {...props} />;
+  }
+  return <AlertDialogFooter className={className} {...props} />;
 }
 
 function ResponsiveAlertDialogTitle({ ...props }: React.ComponentProps<typeof AlertDialogTitle>) {

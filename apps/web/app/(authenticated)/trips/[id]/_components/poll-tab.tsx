@@ -630,7 +630,7 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogAction
               onClick={() => {
                 if (confirmOptionId) confirmMutation.mutate(confirmOptionId);
@@ -664,7 +664,7 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
                 if (deleteOptionId) deleteOptionMutation.mutate(deleteOptionId);
@@ -693,7 +693,7 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
                 deleteSelectedMutation.mutate([...selectedOptionIds]);

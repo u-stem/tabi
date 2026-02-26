@@ -414,7 +414,7 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={handleRemoveMember}>
               削除する
             </ResponsiveAlertDialogDestructiveAction>

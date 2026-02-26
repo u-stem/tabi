@@ -1,7 +1,7 @@
 "use client";
 
 import { buildDiceBearUrl, DICEBEAR_STYLES, type DiceBearStyle } from "@sugara/shared";
-import { Check, Copy, ExternalLink, RefreshCw } from "lucide-react";
+import { Check, Copy, ExternalLink, RefreshCw, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -653,7 +653,7 @@ function DeleteAccountSection({ username }: { username: string }) {
             )}
             <ResponsiveAlertDialogFooter>
               <ResponsiveAlertDialogCancel disabled={loading}>
-                キャンセル
+                <X className="h-4 w-4" />キャンセル
               </ResponsiveAlertDialogCancel>
               <Button
                 variant="destructive"

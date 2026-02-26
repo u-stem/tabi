@@ -20,6 +20,7 @@ import {
   StickyNote,
   Trash2,
   Undo2,
+  X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import type { CSSProperties } from "react";
@@ -240,7 +241,7 @@ function ScheduleMenu({
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={onDelete}>
               <Trash2 className="h-4 w-4" />
               削除する

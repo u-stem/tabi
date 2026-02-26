@@ -7,7 +7,7 @@ import type {
   MemberResponse,
 } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { UserPlus } from "lucide-react";
+import { UserPlus, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -547,7 +547,7 @@ export function MemberDialog({
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
                 if (removeMember) handleRemove(removeMember.userId);

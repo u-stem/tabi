@@ -2,7 +2,7 @@
 
 import type { ExpenseSplitType } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, ChevronDown, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Collapsible as CollapsiblePrimitive } from "radix-ui";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -253,7 +253,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
               disabled={deleteMutation.isPending}

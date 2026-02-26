@@ -216,7 +216,7 @@ export function TripToolbar({
                 </ResponsiveAlertDialogDescription>
               </ResponsiveAlertDialogHeader>
               <ResponsiveAlertDialogFooter>
-                <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+                <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
                 <ResponsiveAlertDialogDestructiveAction onClick={onDeleteSelected}>
                   <Trash2 className="h-4 w-4" />
                   削除する

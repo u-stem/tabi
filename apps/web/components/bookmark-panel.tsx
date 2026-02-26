@@ -253,7 +253,10 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel>
+              <X className="h-4 w-4" />
+              キャンセル
+            </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogAction
               onClick={() => addToCandidates(confirmIds)}
               disabled={loading}

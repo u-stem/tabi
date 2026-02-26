@@ -2,7 +2,7 @@
 
 import type { FriendResponse } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { UserPlus } from "lucide-react";
+import { UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -127,7 +127,7 @@ function FriendListSection({
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
                 if (removingFriend) handleRemove(removingFriend.friendId);

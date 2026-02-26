@@ -16,6 +16,7 @@ import {
   RefreshCw,
   Trash2,
   Users,
+  X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import NextLink from "next/link";
@@ -509,7 +510,7 @@ export function TripActions({
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={handleDelete}>
               <Trash2 className="h-4 w-4" />
               削除する

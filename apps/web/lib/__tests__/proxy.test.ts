@@ -2,10 +2,7 @@ import { NextRequest } from "next/server";
 import { describe, expect, it } from "vitest";
 import { proxy } from "../../proxy";
 
-function makeRequest(
-  pathname: string,
-  opts: { viewMode?: string; ua?: string } = {},
-): NextRequest {
+function makeRequest(pathname: string, opts: { viewMode?: string; ua?: string } = {}): NextRequest {
   const url = `http://localhost${pathname}`;
   const headers: Record<string, string> = {};
   if (opts.ua) headers["user-agent"] = opts.ua;

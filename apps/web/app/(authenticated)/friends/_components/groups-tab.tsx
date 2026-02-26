@@ -3,7 +3,7 @@
 import type { GroupResponse } from "@sugara/shared";
 import { GROUP_NAME_MAX_LENGTH } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { MoreHorizontal, Pencil, Plus, Trash2, UserPlus, Users } from "lucide-react";
+import { MoreHorizontal, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
@@ -244,6 +244,7 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
             </div>
             <ResponsiveDialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditGroup(null)}>
+                <X className="h-4 w-4" />
                 キャンセル
               </Button>
               <Button type="submit" disabled={!editName.trim()}>

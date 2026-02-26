@@ -8,7 +8,7 @@ import type {
 } from "@sugara/shared";
 import { DEFAULT_SCHEDULE_CATEGORY } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ScheduleFormFields } from "@/components/schedule-form-fields";
@@ -180,6 +180,7 @@ export function AddScheduleDialog({
           <ResponsiveDialogFooter>
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
+                <X className="h-4 w-4" />
                 キャンセル
               </Button>
             </ResponsiveDialogClose>

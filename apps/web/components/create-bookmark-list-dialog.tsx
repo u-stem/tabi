@@ -5,6 +5,7 @@ import {
   type BookmarkListResponse,
   type BookmarkListVisibility,
 } from "@sugara/shared";
+import { X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -119,6 +120,7 @@ export function CreateBookmarkListDialog({
           <ResponsiveDialogFooter>
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
+                <X className="h-4 w-4" />
                 キャンセル
               </Button>
             </ResponsiveDialogClose>

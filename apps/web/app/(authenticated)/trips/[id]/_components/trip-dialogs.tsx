@@ -2,7 +2,7 @@
 
 import type { DayPatternResponse } from "@sugara/shared";
 import { PATTERN_LABEL_MAX_LENGTH } from "@sugara/shared";
-import { Check, ClipboardPaste, Plus, Trash2 } from "lucide-react";
+import { Check, ClipboardPaste, Plus, Trash2, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +57,7 @@ export function AddPatternDialog({ patternOps }: { patternOps: PatternOps }) {
           <ResponsiveDialogFooter>
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
+                <X className="h-4 w-4" />
                 キャンセル
               </Button>
             </ResponsiveDialogClose>
@@ -98,6 +99,7 @@ export function RenamePatternDialog({ patternOps }: { patternOps: PatternOps }) 
           <ResponsiveDialogFooter>
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
+                <X className="h-4 w-4" />
                 キャンセル
               </Button>
             </ResponsiveDialogClose>
@@ -197,6 +199,7 @@ export function OverwritePatternDialog({
         <ResponsiveDialogFooter>
           <ResponsiveDialogClose asChild>
             <Button type="button" variant="outline">
+              <X className="h-4 w-4" />
               キャンセル
             </Button>
           </ResponsiveDialogClose>

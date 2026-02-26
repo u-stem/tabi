@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -145,6 +146,7 @@ export function GuestUpgradeDialog({
           </div>
           <ResponsiveDialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              <X className="h-4 w-4" />
               キャンセル
             </Button>
             <Button type="submit" disabled={loading}>

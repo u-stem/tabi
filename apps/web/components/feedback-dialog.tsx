@@ -1,6 +1,7 @@
 "use client";
 
 import { FEEDBACK_BODY_MAX_LENGTH } from "@sugara/shared";
+import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -98,6 +99,7 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
           <ResponsiveDialogFooter className="mt-4">
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
+                <X className="h-4 w-4" />
                 キャンセル
               </Button>
             </ResponsiveDialogClose>

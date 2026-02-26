@@ -7,7 +7,7 @@ import type {
   TripResponse,
 } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ScheduleFormFields } from "@/components/schedule-form-fields";
@@ -181,6 +181,7 @@ export function EditCandidateDialog({
           <ResponsiveDialogFooter>
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
+                <X className="h-4 w-4" />
                 キャンセル
               </Button>
             </ResponsiveDialogClose>

@@ -1,6 +1,7 @@
 "use client";
 
 import { BOOKMARK_LIST_NAME_MAX_LENGTH, type BookmarkListVisibility } from "@sugara/shared";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,6 +86,7 @@ export function EditListDialog({ listOps }: { listOps: ListOps }) {
           </div>
           <ResponsiveDialogFooter>
             <Button type="button" variant="outline" onClick={() => listOps.setEditingList(false)}>
+              <X className="h-4 w-4" />
               キャンセル
             </Button>
             <Button type="submit" disabled={!listOps.editListName.trim()}>
@@ -133,6 +135,7 @@ export function AddBookmarkDialog({ bmOps, listName }: { bmOps: BmOps; listName:
                 bmOps.setAddBookmarkOpen(false);
               }}
             >
+              <X className="h-4 w-4" />
               キャンセル
             </Button>
             <Button type="submit" disabled={bmOps.submitting || !bmOps.bookmarkName.trim()}>
@@ -181,6 +184,7 @@ export function EditBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
                 bmOps.setEditingBookmark(null);
               }}
             >
+              <X className="h-4 w-4" />
               キャンセル
             </Button>
             <Button type="submit" disabled={bmOps.submitting || !bmOps.bookmarkName.trim()}>

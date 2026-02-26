@@ -5,7 +5,6 @@ import {
   CheckSquare,
   ExternalLink,
   MapPin,
-  MoreHorizontal,
   Pencil,
   Plus,
   Trash2,
@@ -14,6 +13,8 @@ import {
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ActionSheet } from "@/components/action-sheet";
+import { ItemMenuButton } from "@/components/item-menu-button";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 
 const SouvenirDialog = dynamic(() =>
@@ -227,6 +228,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
             <SouvenirItemRow
               key={item.id}
               item={item}
+              isMobile={isMobile}
               selectMode={selectMode}
               selected={selectedIds.has(item.id)}
               onSelect={() => toggleSelect(item.id)}
@@ -243,6 +245,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
             <SouvenirItemRow
               key={item.id}
               item={item}
+              isMobile={isMobile}
               selectMode={selectMode}
               selected={selectedIds.has(item.id)}
               onSelect={() => toggleSelect(item.id)}
@@ -325,6 +328,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
 
 function SouvenirItemRow({
   item,
+  isMobile,
   selectMode,
   selected,
   onSelect,
@@ -333,6 +337,7 @@ function SouvenirItemRow({
   onDelete,
 }: {
   item: SouvenirItem;
+  isMobile: boolean;
   selectMode: boolean;
   selected: boolean;
   onSelect: () => void;
@@ -340,6 +345,7 @@ function SouvenirItemRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
+  const [sheetOpen, setSheetOpen] = useState(false);
   return (
     <div
       className={cn(
@@ -411,28 +417,51 @@ function SouvenirItemRow({
         )}
         {item.memo && <p className="text-xs text-muted-foreground">{item.memo}</p>}
       </div>
-      {!selectMode && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" aria-label="メニュー">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={onEdit}>
-              <Pencil className="mr-2 h-4 w-4" />
-              編集
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={onDelete}
-              className="text-destructive focus:text-destructive"
-            >
-              <Trash2 className="mr-2 h-4 w-4" />
-              削除
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
+      {!selectMode &&
+        (isMobile ? (
+          <>
+            <ItemMenuButton
+              ariaLabel={`${item.name}のメニュー`}
+              onClick={() => setSheetOpen(true)}
+            />
+            <ActionSheet
+              open={sheetOpen}
+              onOpenChange={setSheetOpen}
+              actions={[
+                {
+                  label: "編集",
+                  icon: <Pencil className="h-4 w-4" />,
+                  onClick: onEdit,
+                },
+                {
+                  label: "削除",
+                  icon: <Trash2 className="h-4 w-4" />,
+                  onClick: onDelete,
+                  variant: "destructive" as const,
+                },
+              ]}
+            />
+          </>
+        ) : (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <ItemMenuButton ariaLabel={`${item.name}のメニュー`} />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={onEdit}>
+                <Pencil />
+                編集
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={onDelete}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 />
+                削除
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ))}
     </div>
   );
 }

@@ -1,7 +1,16 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ExternalLink, MapPin, MoreHorizontal, Pencil, Plus, Trash2, X } from "lucide-react";
+import {
+  CheckSquare,
+  ExternalLink,
+  MapPin,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { SouvenirDialog } from "@/components/souvenir-dialog";
@@ -23,8 +32,10 @@ import {
   ResponsiveAlertDialogHeader,
   ResponsiveAlertDialogTitle,
 } from "@/components/ui/responsive-alert-dialog";
+import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { SELECTED_RING } from "@/lib/colors";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { buildMapsSearchUrl } from "@/lib/transport-link";
@@ -87,7 +98,9 @@ export function SouvenirPanel({ tripId }: SouvenirPanelProps) {
 
   const bulkDeleteMutation = useMutation({
     mutationFn: (ids: string[]) =>
-      Promise.all(ids.map((id) => api(`/api/trips/${tripId}/souvenirs/${id}`, { method: "DELETE" }))),
+      Promise.all(
+        ids.map((id) => api(`/api/trips/${tripId}/souvenirs/${id}`, { method: "DELETE" })),
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.souvenirs.list(tripId) });
       setSelectedIds(new Set());
@@ -141,65 +154,54 @@ export function SouvenirPanel({ tripId }: SouvenirPanelProps) {
   const items = data?.items ?? [];
   const purchased = items.filter((i) => i.isPurchased);
   const remaining = items.filter((i) => !i.isPurchased);
+  const selectedCount = selectedIds.size;
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2">
-        {selectMode ? (
-          <>
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="souvenir-select-all"
-                checked={selectedIds.size === items.length && items.length > 0}
-                onCheckedChange={(checked) => {
-                  if (checked) {
-                    setSelectedIds(new Set(items.map((i) => i.id)));
-                  } else {
-                    setSelectedIds(new Set());
-                  }
-                }}
-                aria-label="全選択"
-              />
-              <label
-                htmlFor="souvenir-select-all"
-                className="cursor-pointer text-sm text-muted-foreground"
-              >
-                {selectedIds.size > 0 ? `${selectedIds.size}件選択中` : "全選択"}
-              </label>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant="destructive"
-                size="sm"
-                disabled={selectedIds.size === 0 || bulkDeleteMutation.isPending}
-                onClick={() => setBulkDeleteOpen(true)}
-              >
-                <Trash2 className="h-4 w-4" />
-                削除
-              </Button>
-              <Button variant="outline" size="sm" onClick={exitSelectMode}>
-                <X className="h-4 w-4" />
-                キャンセル
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <div />
-            <div className="flex gap-2">
-              {items.length > 0 && (
-                <Button variant="ghost" size="sm" onClick={() => setSelectMode(true)}>
-                  選択
-                </Button>
-              )}
-              <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
-                <Plus className="h-4 w-4" />
-                お土産を追加
-              </Button>
-            </div>
-          </>
-        )}
-      </div>
+      {selectMode ? (
+        <div className="flex items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={exitSelectMode}>
+            <X className="h-3.5 w-3.5" />
+          </Button>
+          <span className="text-xs font-medium">{selectedCount}件選択中</span>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 px-2 text-xs"
+            onClick={() =>
+              selectedCount === items.length
+                ? setSelectedIds(new Set())
+                : setSelectedIds(new Set(items.map((i) => i.id)))
+            }
+          >
+            {selectedCount === items.length ? "全解除" : "全選択"}
+          </Button>
+          <div className="ml-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              disabled={selectedCount === 0 || bulkDeleteMutation.isPending}
+              onClick={() => setBulkDeleteOpen(true)}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex items-center justify-end gap-1.5">
+          {items.length > 0 && (
+            <Button variant="outline" size="sm" onClick={() => setSelectMode(true)}>
+              <CheckSquare className="h-4 w-4" />
+              選択
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
+            <Plus className="h-4 w-4" />
+            お土産を追加
+          </Button>
+        </div>
+      )}
 
       {items.length === 0 ? (
         <p className="py-8 text-center text-sm text-muted-foreground">
@@ -286,7 +288,7 @@ export function SouvenirPanel({ tripId }: SouvenirPanelProps) {
           <ResponsiveAlertDialogHeader>
             <ResponsiveAlertDialogTitle>まとめて削除しますか？</ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              選択した{selectedIds.size}件を削除します。この操作は取り消せません。
+              選択した{selectedCount}件を削除します。この操作は取り消せません。
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
@@ -327,29 +329,39 @@ function SouvenirItemRow({
   return (
     <div
       className={cn(
-        "flex items-start gap-3 rounded-md border p-3",
+        "flex items-center gap-2 rounded-md border p-3",
         item.isPurchased && !selectMode ? "opacity-50" : "",
-        selectMode && selected ? "border-primary bg-primary/5" : "",
+        selectMode &&
+          "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        selectMode && selected && SELECTED_RING,
       )}
+      {...(selectMode
+        ? {
+            onClick: onSelect,
+            onKeyDown: (e: React.KeyboardEvent) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSelect();
+              }
+            },
+            role: "button" as const,
+            tabIndex: 0,
+            "aria-pressed": selected,
+          }
+        : {})}
     >
       {selectMode ? (
-        <Checkbox
-          checked={selected}
-          onCheckedChange={onSelect}
-          onClick={(e) => e.stopPropagation()}
-          className="mt-0.5 shrink-0"
-          aria-label={`${item.name}を選択`}
-        />
+        <SelectionIndicator checked={selected} />
       ) : (
         <Checkbox
           checked={item.isPurchased}
           onCheckedChange={(checked) => onToggle(checked === true)}
-          className="mt-0.5 shrink-0"
+          className="shrink-0"
           aria-label={item.isPurchased ? "購入済みを取り消す" : "購入済みにする"}
         />
       )}
       <div className="min-w-0 flex-1">
-        <p className={`text-sm font-medium ${item.isPurchased ? "line-through" : ""}`}>
+        <p className={`text-sm font-medium ${item.isPurchased && !selectMode ? "line-through" : ""}`}>
           {item.name}
         </p>
         {item.recipient && <p className="text-xs text-muted-foreground">{item.recipient} 向け</p>}
@@ -358,8 +370,10 @@ function SouvenirItemRow({
             href={buildMapsSearchUrl(item.address)}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
-            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              "flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400",
+              selectMode && "pointer-events-none",
+            )}
           >
             <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
             <span className="truncate">{item.address}</span>
@@ -370,8 +384,10 @@ function SouvenirItemRow({
             href={item.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
-            onClick={(e) => e.stopPropagation()}
+            className={cn(
+              "flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400",
+              selectMode && "pointer-events-none",
+            )}
           >
             <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
             <span className="truncate">{stripProtocol(item.url)}</span>
@@ -391,7 +407,10 @@ function SouvenirItemRow({
               <Pencil className="mr-2 h-4 w-4" />
               編集
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={onDelete} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem
+              onClick={onDelete}
+              className="text-destructive focus:text-destructive"
+            >
               <Trash2 className="mr-2 h-4 w-4" />
               削除
             </DropdownMenuItem>

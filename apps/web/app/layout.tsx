@@ -51,7 +51,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           enableSystem
           disableTransitionOnChange
         >
-          <SwProvider swUrl="/serwist/sw.js">
+          <SwProvider swUrl="/sw.js" disable={process.env.NODE_ENV !== "production"}>
             <QueryProvider>{children}</QueryProvider>
           </SwProvider>
           <Toaster />

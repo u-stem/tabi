@@ -1,4 +1,4 @@
-import { withSerwist } from "@serwist/turbopack";
+import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
 
 const cspDirectives = [
@@ -89,4 +89,9 @@ const nextConfig: NextConfig = {
   ],
 };
 
-export default withSerwist(nextConfig);
+export default withSerwistInit({
+  swSrc: "app/sw.ts",
+  swDest: "public/sw.js",
+  // Bump revision when app/offline/page.tsx content changes
+  additionalPrecacheEntries: [{ url: "/offline", revision: "1" }],
+})(nextConfig);

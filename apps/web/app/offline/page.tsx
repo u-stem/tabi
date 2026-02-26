@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { WifiOff } from "lucide-react";
+import type { Metadata } from "next";
 import { pageTitle } from "@/lib/constants";
 
 export const metadata: Metadata = {

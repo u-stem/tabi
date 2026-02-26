@@ -2,9 +2,9 @@
 
 import type { FriendRequestResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
-import type React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type React from "react";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { isGuestUser } from "@/lib/guest";

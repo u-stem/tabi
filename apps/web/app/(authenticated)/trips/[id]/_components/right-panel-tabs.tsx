@@ -51,34 +51,32 @@ export function RightPanelTabs({
       <button
         type="button"
         role="tab"
-        aria-selected={current === "souvenirs"}
-        onClick={() => onChange("souvenirs")}
-        className={cn(CHIP_BASE, current === "souvenirs" ? CHIP_ACTIVE : CHIP_INACTIVE)}
-      >
-        お土産
-      </button>
-      <button
-        type="button"
-        role="tab"
         aria-selected={current === "activity"}
         onClick={() => onChange("activity")}
         className={cn(CHIP_BASE, current === "activity" ? CHIP_ACTIVE : CHIP_INACTIVE)}
       >
         履歴
       </button>
+      <div className="shrink-0 self-stretch w-px bg-border" />
+      <button
+        type="button"
+        role="tab"
+        aria-selected={current === "souvenirs"}
+        onClick={() => onChange("souvenirs")}
+        className={cn(CHIP_BASE, current === "souvenirs" ? CHIP_ACTIVE : CHIP_INACTIVE)}
+      >
+        お土産
+      </button>
       {!isGuest && (
-        <>
-          <div className="shrink-0 self-stretch w-px bg-border" />
-          <button
-            type="button"
-            role="tab"
-            aria-selected={current === "bookmarks"}
-            onClick={() => onChange("bookmarks")}
-            className={cn(CHIP_BASE, current === "bookmarks" ? CHIP_ACTIVE : CHIP_INACTIVE)}
-          >
-            ブックマーク
-          </button>
-        </>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={current === "bookmarks"}
+          onClick={() => onChange("bookmarks")}
+          className={cn(CHIP_BASE, current === "bookmarks" ? CHIP_ACTIVE : CHIP_INACTIVE)}
+        >
+          ブックマーク
+        </button>
       )}
     </div>
   );

@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-
 import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { cn } from "@/lib/utils";
 
 import {
   Dialog,
@@ -102,10 +102,12 @@ function ResponsiveDialogHeader({ ...props }: React.HTMLAttributes<HTMLDivElemen
   return <Comp {...props} />;
 }
 
-function ResponsiveDialogFooter({ ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function ResponsiveDialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   const isMobile = useMobileContext();
-  const Comp = isMobile ? DrawerFooter : DialogFooter;
-  return <Comp {...props} />;
+  if (isMobile) {
+    return <DrawerFooter className={cn("flex-row justify-end", className)} {...props} />;
+  }
+  return <DialogFooter className={className} {...props} />;
 }
 
 function ResponsiveDialogTitle({ ...props }: React.ComponentProps<typeof DialogTitle>) {

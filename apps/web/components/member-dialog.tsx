@@ -547,7 +547,10 @@ export function MemberDialog({
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel>
+              <X className="h-4 w-4" />
+              キャンセル
+            </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
                 if (removeMember) handleRemove(removeMember.userId);

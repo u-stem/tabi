@@ -653,7 +653,8 @@ function DeleteAccountSection({ username }: { username: string }) {
             )}
             <ResponsiveAlertDialogFooter>
               <ResponsiveAlertDialogCancel disabled={loading}>
-                <X className="h-4 w-4" />キャンセル
+                <X className="h-4 w-4" />
+                キャンセル
               </ResponsiveAlertDialogCancel>
               <Button
                 variant="destructive"

@@ -287,7 +287,10 @@ export default function SpBookmarksPage() {
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel>
+              <X className="h-4 w-4" />
+              キャンセル
+            </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={sel.handleBatchDelete}>
               <Trash2 className="h-4 w-4" />
               削除する

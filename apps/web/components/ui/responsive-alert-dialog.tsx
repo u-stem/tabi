@@ -112,7 +112,10 @@ function ResponsiveAlertDialogHeader({ ...props }: React.HTMLAttributes<HTMLDivE
   return <Comp {...props} />;
 }
 
-function ResponsiveAlertDialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+function ResponsiveAlertDialogFooter({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) {
   const isMobile = useMobileContext();
   if (isMobile) {
     return <DrawerFooter className={cn("flex-row [&>*]:flex-1", className)} {...props} />;

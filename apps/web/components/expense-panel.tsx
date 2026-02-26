@@ -253,7 +253,10 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel>
+              <X className="h-4 w-4" />
+              キャンセル
+            </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
               disabled={deleteMutation.isPending}

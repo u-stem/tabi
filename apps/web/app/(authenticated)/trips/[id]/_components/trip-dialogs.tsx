@@ -129,7 +129,10 @@ export function DeletePatternDialog({ patternOps }: { patternOps: PatternOps }) 
           </ResponsiveAlertDialogDescription>
         </ResponsiveAlertDialogHeader>
         <ResponsiveAlertDialogFooter>
-          <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
+          <ResponsiveAlertDialogCancel>
+            <X className="h-4 w-4" />
+            キャンセル
+          </ResponsiveAlertDialogCancel>
           <ResponsiveAlertDialogDestructiveAction
             onClick={() => {
               if (patternOps.deleteTarget) patternOps.handleDelete(patternOps.deleteTarget.id);
@@ -237,7 +240,10 @@ export function BatchDeleteDialog({ selection }: { selection: Selection }) {
           </ResponsiveAlertDialogDescription>
         </ResponsiveAlertDialogHeader>
         <ResponsiveAlertDialogFooter>
-          <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
+          <ResponsiveAlertDialogCancel>
+            <X className="h-4 w-4" />
+            キャンセル
+          </ResponsiveAlertDialogCancel>
           <ResponsiveAlertDialogDestructiveAction
             onClick={selection.batchDelete}
             disabled={selection.batchLoading}

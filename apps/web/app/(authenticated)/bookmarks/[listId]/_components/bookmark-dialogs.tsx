@@ -215,7 +215,10 @@ export function DeleteListDialog({ listOps, listName }: { listOps: ListOps; list
           </ResponsiveAlertDialogDescription>
         </ResponsiveAlertDialogHeader>
         <ResponsiveAlertDialogFooter>
-          <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
+          <ResponsiveAlertDialogCancel>
+            <X className="h-4 w-4" />
+            キャンセル
+          </ResponsiveAlertDialogCancel>
           <ResponsiveAlertDialogDestructiveAction onClick={listOps.handleDelete}>
             削除する
           </ResponsiveAlertDialogDestructiveAction>
@@ -239,7 +242,10 @@ export function DeleteBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
           </ResponsiveAlertDialogDescription>
         </ResponsiveAlertDialogHeader>
         <ResponsiveAlertDialogFooter>
-          <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
+          <ResponsiveAlertDialogCancel>
+            <X className="h-4 w-4" />
+            キャンセル
+          </ResponsiveAlertDialogCancel>
           <ResponsiveAlertDialogDestructiveAction onClick={bmOps.handleDelete}>
             削除する
           </ResponsiveAlertDialogDestructiveAction>
@@ -265,7 +271,10 @@ export function BatchDeleteDialog({ sel }: { sel: Selection }) {
           </ResponsiveAlertDialogDescription>
         </ResponsiveAlertDialogHeader>
         <ResponsiveAlertDialogFooter>
-          <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
+          <ResponsiveAlertDialogCancel>
+            <X className="h-4 w-4" />
+            キャンセル
+          </ResponsiveAlertDialogCancel>
           <ResponsiveAlertDialogDestructiveAction
             onClick={sel.handleBatchDelete}
             disabled={sel.batchLoading}

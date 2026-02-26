@@ -269,7 +269,10 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel><X className="h-4 w-4" />キャンセル</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel>
+              <X className="h-4 w-4" />
+              キャンセル
+            </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={handleDelete}>
               削除する
             </ResponsiveAlertDialogDestructiveAction>

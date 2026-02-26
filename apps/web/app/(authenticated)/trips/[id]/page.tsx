@@ -65,7 +65,7 @@ import { DayMemoEditor } from "./_components/day-memo-editor";
 import { DayTabs } from "./_components/day-tabs";
 import { PatternTabs } from "./_components/pattern-tabs";
 import { PollTab } from "./_components/poll-tab";
-import { RightPanel } from "./_components/right-panel";
+import { RightPanel, type RightPanelTab } from "./_components/right-panel";
 import {
   AddPatternDialog,
   BatchDeleteDialog,
@@ -141,9 +141,7 @@ export default function TripDetailPage() {
   const mobileContentRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const tapTransitionRef = useRef(false);
-  const [rightPanelTab, setRightPanelTab] = useState<
-    "candidates" | "activity" | "bookmarks" | "expenses"
-  >("candidates");
+  const [rightPanelTab, setRightPanelTab] = useState<RightPanelTab>("candidates");
   const [saveToBookmarkIds, setSaveToBookmarkIds] = useState<string[]>([]);
   const [bookmarkPickerOpen, setBookmarkPickerOpen] = useState(false);
   const timelinePanelRef = useRef<HTMLDivElement>(null);

@@ -414,6 +414,53 @@ const SAMPLE_CANDIDATES = [
   },
 ];
 
+const SAMPLE_SOUVENIRS_DEV: {
+  name: string;
+  recipient?: string;
+  addresses?: string[];
+  urls?: string[];
+  memo?: string;
+  isPurchased: boolean;
+}[] = [
+  {
+    name: "八ツ橋",
+    recipient: "職場へのお土産",
+    addresses: ["京都市左京区聖護院西町7", "京都市下京区東塩小路町 京都駅構内"],
+    memo: "つぶあん入りと生八ツ橋を各2箱",
+    isPurchased: true,
+  },
+  {
+    name: "宇治抹茶 小山園",
+    urls: ["https://www.horaido.co.jp/"],
+    memo: "抹茶ラテ用に粉末タイプ",
+    isPurchased: false,
+  },
+  {
+    name: "清水焼 湯呑み",
+    addresses: ["京都市東山区清水2丁目"],
+    memo: "清水坂の陶器屋で探す",
+    isPurchased: false,
+  },
+  {
+    name: "京都限定ポッキー",
+    recipient: "友達へ",
+    isPurchased: false,
+  },
+];
+
+const SAMPLE_SOUVENIRS_ALICE = [
+  {
+    name: "西陣織 がま口",
+    memo: "自分用",
+  },
+  {
+    name: "金平糖 緑寿庵清水",
+    addresses: ["京都市左京区吉田泉殿町38-2"],
+    urls: ["https://www.konpeito.co.jp/"],
+    memo: "季節限定フレーバーをチェック",
+  },
+];
+
 const SAMPLE_POLL_TRIP = {
   title: "沖縄旅行",
   destination: "沖縄",
@@ -775,9 +822,37 @@ async function main() {
       });
       console.log(`  費用: ${exp.title} (${exp.amount.toLocaleString()}円)`);
     }
+
+    // 8. Create souvenirs
+    console.log("\nCreating souvenirs...");
+    for (const { isPurchased, ...souvenirData } of SAMPLE_SOUVENIRS_DEV) {
+      const created = await apiFetch<{ id: string }>(`/api/trips/${trip.id}/souvenirs`, {
+        method: "POST",
+        body: JSON.stringify(souvenirData),
+        headers: { cookie: ownerCookies },
+      });
+      if (isPurchased) {
+        await apiFetch(`/api/trips/${trip.id}/souvenirs/${created.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ isPurchased: true }),
+          headers: { cookie: ownerCookies },
+        });
+      }
+      console.log(`  dev: ${souvenirData.name}${isPurchased ? " (購入済み)" : ""}`);
+    }
+    if (aliceData) {
+      for (const souvenirData of SAMPLE_SOUVENIRS_ALICE) {
+        await apiFetch(`/api/trips/${trip.id}/souvenirs`, {
+          method: "POST",
+          body: JSON.stringify(souvenirData),
+          headers: { cookie: aliceData.cookies },
+        });
+        console.log(`  alice: ${souvenirData.name}`);
+      }
+    }
   }
 
-  // 8. Create poll trip (skip if already exists)
+  // 9. Create poll trip (skip if already exists)
   console.log(`\nCreating poll trip: ${SAMPLE_POLL_TRIP.title}`);
   const existingPollTrip = existingTrips.find((t) => t.title === SAMPLE_POLL_TRIP.title);
   if (existingPollTrip) {
@@ -869,7 +944,7 @@ async function main() {
     }
   }
 
-  // 9. Create friend relationships (skip if already friends)
+  // 10. Create friend relationships (skip if already friends)
   console.log("\nCreating friend relationships...");
 
   async function ensureFriends(
@@ -907,7 +982,7 @@ async function main() {
     await ensureFriends(aliceData.cookies, bobData.cookies, bobData.userId, "alice <-> bob");
   }
 
-  // 10. Create groups with members (skip if already exists)
+  // 11. Create groups with members (skip if already exists)
   console.log("\nCreating groups...");
 
   async function ensureGroup(name: string, memberUserIds: string[], label: string) {
@@ -941,7 +1016,7 @@ async function main() {
     "家族 (dev所有, alice)",
   );
 
-  // 11. Create bookmark lists with bookmarks (skip if already exists)
+  // 12. Create bookmark lists with bookmarks (skip if already exists)
   console.log(`\nCreating ${SAMPLE_BOOKMARK_LISTS.length} bookmark lists...`);
   for (const listData of SAMPLE_BOOKMARK_LISTS) {
     if (existingBookmarkLists.some((l) => l.name === listData.name)) {

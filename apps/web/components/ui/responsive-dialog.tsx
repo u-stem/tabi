@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useIsMobile } from "@/lib/hooks/use-is-mobile";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
 
 import {
@@ -47,7 +47,7 @@ interface ResponsiveDialogProps {
 }
 
 function ResponsiveDialog({ children, onOpenChange, ...props }: ResponsiveDialogProps) {
-  const isMobile = useIsMobile();
+  const isMobile = useMobile();
 
   // Blur on both open and close in Drawer mode: same aria-hidden timing issue as ActionSheet.
   React.useLayoutEffect(() => {

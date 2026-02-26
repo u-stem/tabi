@@ -20,6 +20,7 @@ import { profileRoutes } from "./routes/profile";
 import { reactionRoutes } from "./routes/reactions";
 import { scheduleRoutes } from "./routes/schedules";
 import { shareRoutes } from "./routes/share";
+import { souvenirRoutes } from "./routes/souvenirs";
 import { tripDayRoutes } from "./routes/trip-days";
 import { tripRoutes } from "./routes/trips";
 
@@ -58,6 +59,7 @@ app.route("/api/trips", memberRoutes);
 app.route("/api/trips", tripDayRoutes);
 app.route("/api/trips", activityLogRoutes);
 app.route("/api/trips", expenseRoutes);
+app.route("/api/trips", souvenirRoutes);
 app.route("/api/polls", pollRoutes);
 app.route("/api/friends", friendRoutes);
 app.route("/api/groups", groupRoutes);

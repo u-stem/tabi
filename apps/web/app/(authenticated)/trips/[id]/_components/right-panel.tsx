@@ -5,6 +5,7 @@ import { ActivityLog } from "@/components/activity-log";
 import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
 import { ExpensePanel } from "@/components/expense-panel";
+import { SouvenirPanel } from "@/components/souvenir-panel";
 import { type RightPanelTab, RightPanelTabs } from "./right-panel-tabs";
 
 export type { RightPanelTab };
@@ -97,6 +98,8 @@ export function RightPanel({
               日程が確定すると費用を記録できます
             </p>
           )
+        ) : rightPanelTab === "souvenirs" ? (
+          <SouvenirPanel tripId={tripId} />
         ) : (
           <ActivityLog tripId={tripId} />
         )}

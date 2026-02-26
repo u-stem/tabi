@@ -4,7 +4,7 @@ import { useSession } from "@/lib/auth-client";
 import { isGuestUser } from "@/lib/guest";
 import { cn } from "@/lib/utils";
 
-export type RightPanelTab = "candidates" | "activity" | "bookmarks" | "expenses";
+export type RightPanelTab = "candidates" | "activity" | "bookmarks" | "expenses" | "souvenirs";
 
 const CHIP_BASE =
   "shrink-0 rounded-full px-3.5 py-1.5 text-center text-sm font-medium transition-[colors,transform] active:scale-[0.95]";
@@ -47,6 +47,15 @@ export function RightPanelTabs({
         className={cn(CHIP_BASE, current === "expenses" ? CHIP_ACTIVE : CHIP_INACTIVE)}
       >
         費用
+      </button>
+      <button
+        type="button"
+        role="tab"
+        aria-selected={current === "souvenirs"}
+        onClick={() => onChange("souvenirs")}
+        className={cn(CHIP_BASE, current === "souvenirs" ? CHIP_ACTIVE : CHIP_INACTIVE)}
+      >
+        お土産
       </button>
       <button
         type="button"

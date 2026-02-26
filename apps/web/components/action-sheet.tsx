@@ -8,7 +8,8 @@ import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/compone
 interface ActionSheetAction {
   label: string;
   icon?: ReactNode;
-  onClick: () => void;
+  onClick?: () => void;
+  href?: string;
   variant?: "default" | "destructive";
 }
 
@@ -34,20 +35,34 @@ export function ActionSheet({ open, onOpenChange, actions }: ActionSheetProps) {
         <DrawerTitle className="sr-only">アクション</DrawerTitle>
         <DrawerDescription className="sr-only">操作を選択してください</DrawerDescription>
         <div className="flex flex-col gap-2 pb-4 pt-2">
-          {actions.map((action) => (
-            <Button
-              key={action.label}
-              variant={action.variant === "destructive" ? "destructive" : "outline"}
-              className="h-12 w-full justify-start text-base"
-              onClick={() => {
-                action.onClick();
-                onOpenChange(false);
-              }}
-            >
-              {action.icon && <span className="mr-2">{action.icon}</span>}
-              {action.label}
-            </Button>
-          ))}
+          {actions.map((action) =>
+            action.href ? (
+              <Button
+                key={action.label}
+                variant={action.variant === "destructive" ? "destructive" : "outline"}
+                className="h-12 w-full justify-start text-base"
+                asChild
+              >
+                <a href={action.href} onClick={() => onOpenChange(false)}>
+                  {action.icon && <span className="mr-2">{action.icon}</span>}
+                  {action.label}
+                </a>
+              </Button>
+            ) : (
+              <Button
+                key={action.label}
+                variant={action.variant === "destructive" ? "destructive" : "outline"}
+                className="h-12 w-full justify-start text-base"
+                onClick={() => {
+                  action.onClick?.();
+                  onOpenChange(false);
+                }}
+              >
+                {action.icon && <span className="mr-2">{action.icon}</span>}
+                {action.label}
+              </Button>
+            ),
+          )}
           <Button
             variant="outline"
             className="mt-1 h-12 w-full justify-start text-base"

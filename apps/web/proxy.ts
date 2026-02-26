@@ -13,9 +13,11 @@ export async function proxy(request: NextRequest) {
   const ua = request.headers.get("user-agent") ?? "";
   const isMobileUA = MOBILE_UA_REGEX.test(ua);
   const isOnSp = pathname.startsWith(SP_PREFIX);
-  const isOnAuthenticatedRoute = SP_ROUTES.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
-  );
+  // /print and /export have no SP counterparts; skip SP redirect for these sub-paths
+  const isSpExcludedSubpath = /\/(print|export)(\/|$)/.test(pathname);
+  const isOnAuthenticatedRoute =
+    !isSpExcludedSubpath &&
+    SP_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 
   let desiredMode: "desktop" | "sp";
   if (viewMode === "desktop" || viewMode === "sp") {

@@ -269,14 +269,14 @@ export function TripActions({
           {
             label: "印刷 / PDF",
             icon: <Printer className="h-4 w-4" />,
-            onClick: () => window.open(`/trips/${tripId}/print`, "_blank", "noopener,noreferrer"),
+            href: `/trips/${tripId}/print`,
           },
         ]
       : []),
     {
       label: "エクスポート",
       icon: <FileDown className="h-4 w-4" />,
-      onClick: () => window.open(`/trips/${tripId}/export`, "_blank", "noopener,noreferrer"),
+      href: `/trips/${tripId}/export`,
     },
     ...(onEdit
       ? [

@@ -14,10 +14,12 @@ import {
 import dynamic from "next/dynamic";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 
 const SouvenirDialog = dynamic(() =>
   import("@/components/souvenir-dialog").then((mod) => mod.SouvenirDialog),
 );
+
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -59,11 +61,16 @@ type SouvenirItem = {
 
 type SouvenirPanelProps = {
   tripId: string;
+  addOpen?: boolean;
+  onAddOpenChange?: (open: boolean) => void;
 };
 
-export function SouvenirPanel({ tripId }: SouvenirPanelProps) {
+export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPanelProps) {
+  const isMobile = useMobile();
   const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
+  const [internalDialogOpen, setInternalDialogOpen] = useState(false);
+  const dialogOpen = addOpen ?? internalDialogOpen;
+  const setDialogOpen = onAddOpenChange ?? setInternalDialogOpen;
   const [editingItem, setEditingItem] = useState<SouvenirItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SouvenirItem | null>(null);
   const [selectMode, setSelectMode] = useState(false);
@@ -201,10 +208,12 @@ export function SouvenirPanel({ tripId }: SouvenirPanelProps) {
               選択
             </Button>
           )}
-          <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4" />
-            お土産を追加
-          </Button>
+          {!isMobile && (
+            <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4" />
+              お土産を追加
+            </Button>
+          )}
         </div>
       )}
 

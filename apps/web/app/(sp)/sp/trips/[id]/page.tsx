@@ -444,6 +444,7 @@ export default function SpTripDetailPage() {
               maxEndDayOffset={Math.max(0, tripData.days.length - 1)}
               onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
               onReorderCandidate={dnd.reorderCandidate}
+              days={tripData.days}
             />
           </div>
         ) : (

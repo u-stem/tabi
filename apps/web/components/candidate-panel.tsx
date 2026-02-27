@@ -6,6 +6,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   CATEGORY_LABELS,
   type CandidateResponse,
+  type DayResponse,
   type ScheduleCategory,
   type ScheduleResponse,
   TRANSPORT_METHOD_LABELS,
@@ -42,6 +43,10 @@ const AddCandidateDialog = dynamic(() =>
 
 const EditCandidateDialog = dynamic(() =>
   import("@/components/edit-candidate-dialog").then((mod) => mod.EditCandidateDialog),
+);
+
+const DayPickerDrawer = dynamic(() =>
+  import("@/components/day-picker-drawer").then((mod) => mod.DayPickerDrawer),
 );
 
 import { Button } from "@/components/ui/button";
@@ -95,6 +100,7 @@ type CandidatePanelProps = {
   maxEndDayOffset?: number;
   onSaveToBookmark?: (scheduleIds: string[]) => void;
   onReorderCandidate?: (id: string, direction: "up" | "down") => void;
+  days?: DayResponse[];
 };
 
 function CandidateCard({
@@ -426,6 +432,7 @@ export function CandidatePanel({
   maxEndDayOffset = 0,
   onSaveToBookmark,
   onReorderCandidate,
+  days,
 }: CandidatePanelProps) {
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
@@ -439,6 +446,8 @@ export function CandidatePanel({
   });
   const isMobile = useMobile();
   const [reorderMode, setReorderMode] = useState(false);
+  const [dayPickerOpen, setDayPickerOpen] = useState(false);
+  const [assignPendingSpotId, setAssignPendingSpotId] = useState<string | null>(null);
   const [internalAddOpen, setInternalAddOpen] = useState(false);
   const addOpen = controlledAddOpen ?? internalAddOpen;
   const setAddOpen = controlledOnAddOpenChange ?? setInternalAddOpen;
@@ -694,7 +703,14 @@ export function CandidatePanel({
                               spot={spot}
                               onEdit={() => setEditSchedule(spot)}
                               onDelete={() => handleDelete(spot.id)}
-                              onAssign={() => handleAssign(spot.id)}
+                              onAssign={
+                                isMobile && days
+                                  ? () => {
+                                      setAssignPendingSpotId(spot.id);
+                                      setDayPickerOpen(true);
+                                    }
+                                  : () => handleAssign(spot.id)
+                              }
                               onReact={(type) => handleReact(spot.id, type)}
                               onRemoveReaction={() => handleRemoveReaction(spot.id)}
                               onSaveToBookmark={
@@ -744,7 +760,14 @@ export function CandidatePanel({
                 spot={spot}
                 onEdit={() => setEditSchedule(spot)}
                 onDelete={() => handleDelete(spot.id)}
-                onAssign={() => handleAssign(spot.id)}
+                onAssign={
+                  isMobile && days
+                    ? () => {
+                        setAssignPendingSpotId(spot.id);
+                        setDayPickerOpen(true);
+                      }
+                    : () => handleAssign(spot.id)
+                }
                 onReact={(type) => handleReact(spot.id, type)}
                 onRemoveReaction={() => handleRemoveReaction(spot.id)}
                 onSaveToBookmark={onSaveToBookmark ? () => onSaveToBookmark([spot.id]) : undefined}
@@ -781,6 +804,36 @@ export function CandidatePanel({
           }}
           onUpdate={onRefresh}
           maxEndDayOffset={maxEndDayOffset}
+        />
+      )}
+
+      {isMobile && days && days.length > 0 && (
+        <DayPickerDrawer
+          open={dayPickerOpen}
+          onOpenChange={(open) => {
+            setDayPickerOpen(open);
+            if (!open) setAssignPendingSpotId(null);
+          }}
+          days={days.map((d, i) => ({
+            id: d.id,
+            date: d.date,
+            dayIndex: i,
+          }))}
+          defaultDayIndex={Math.max(
+            0,
+            days.findIndex((d) => d.id === currentDayId),
+          )}
+          onConfirm={(dayId) => {
+            const targetDay = days.find((d) => d.id === dayId);
+            const targetPatternId =
+              targetDay?.patterns.find((p) => p.isDefault)?.id ??
+              targetDay?.patterns[0]?.id ??
+              currentPatternId;
+            if (assignPendingSpotId) {
+              handleAssign(assignPendingSpotId, dayId, targetPatternId);
+            }
+            setAssignPendingSpotId(null);
+          }}
         />
       )}
     </div>

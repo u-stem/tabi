@@ -29,8 +29,8 @@ interface DayPickerDrawerProps {
   onOpenChange: (open: boolean) => void;
   days: DayOption[];
   defaultDayIndex: number;
-  patterns?: PatternOption[];
-  defaultPatternId?: string;
+  // patterns per day: first entry is treated as default selection
+  patternsByDayId?: Record<string, PatternOption[]>;
   onConfirm: (dayId: string, patternId: string | undefined) => void;
 }
 
@@ -39,14 +39,21 @@ export function DayPickerDrawer({
   onOpenChange,
   days,
   defaultDayIndex,
-  patterns,
-  defaultPatternId,
+  patternsByDayId,
   onConfirm,
 }: DayPickerDrawerProps) {
-  const [selectedDayId, setSelectedDayId] = useState(
-    () => days[defaultDayIndex]?.id ?? days[0]?.id,
+  const initialDayId = days[defaultDayIndex]?.id ?? days[0]?.id;
+  const [selectedDayId, setSelectedDayId] = useState(() => initialDayId);
+  const [selectedPatternId, setSelectedPatternId] = useState(
+    () => patternsByDayId?.[initialDayId]?.[0]?.id,
   );
-  const [selectedPatternId, setSelectedPatternId] = useState(defaultPatternId);
+
+  function handleDayChange(dayId: string) {
+    setSelectedDayId(dayId);
+    setSelectedPatternId(patternsByDayId?.[dayId]?.[0]?.id);
+  }
+
+  const currentPatterns = patternsByDayId?.[selectedDayId];
 
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
@@ -70,7 +77,7 @@ export function DayPickerDrawer({
                   name="day"
                   aria-label={`${day.dayIndex + 1}日目`}
                   checked={selectedDayId === day.id}
-                  onChange={() => setSelectedDayId(day.id)}
+                  onChange={() => handleDayChange(day.id)}
                   className="h-4 w-4 accent-primary"
                 />
                 <span className="text-sm">
@@ -81,7 +88,7 @@ export function DayPickerDrawer({
             );
           })}
         </div>
-        {patterns && patterns.length > 1 && (
+        {currentPatterns && currentPatterns.length > 1 && (
           <div className="border-t py-3">
             <label className="text-xs text-muted-foreground">
               パターン
@@ -90,7 +97,7 @@ export function DayPickerDrawer({
                 value={selectedPatternId}
                 onChange={(e) => setSelectedPatternId(e.target.value)}
               >
-                {patterns.map((p) => (
+                {currentPatterns.map((p) => (
                   <option key={p.id} value={p.id}>
                     {p.label}
                   </option>

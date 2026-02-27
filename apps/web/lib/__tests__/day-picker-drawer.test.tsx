@@ -58,4 +58,37 @@ describe("DayPickerDrawer", () => {
     fireEvent.click(screen.getByRole("button", { name: "追加する" }));
     expect(onConfirm).toHaveBeenCalledWith("d3", undefined);
   });
+
+  it("switches pattern options when day changes", () => {
+    const onConfirm = vi.fn();
+    const patternsByDayId = {
+      d1: [
+        { id: "p1a", label: "パターンA" },
+        { id: "p1b", label: "パターンB" },
+      ],
+      d2: [
+        { id: "p2a", label: "パターンX" },
+        { id: "p2b", label: "パターンY" },
+      ],
+      d3: [{ id: "p3a", label: "パターンZ" }],
+    };
+    render(
+      <DayPickerDrawer
+        open
+        onOpenChange={vi.fn()}
+        days={MOCK_DAYS}
+        defaultDayIndex={0}
+        patternsByDayId={patternsByDayId}
+        onConfirm={onConfirm}
+      />,
+    );
+    // d1 has 2 patterns, so select should be visible
+    expect(screen.getByText("パターンA")).toBeDefined();
+    // switch to d2
+    fireEvent.click(screen.getByRole("radio", { name: /2日目/ }));
+    expect(screen.getByText("パターンX")).toBeDefined();
+    // confirm: should pass d2 and first pattern of d2
+    fireEvent.click(screen.getByRole("button", { name: "追加する" }));
+    expect(onConfirm).toHaveBeenCalledWith("d2", "p2a");
+  });
 });

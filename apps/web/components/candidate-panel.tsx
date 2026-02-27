@@ -823,14 +823,19 @@ export function CandidatePanel({
             0,
             days.findIndex((d) => d.id === currentDayId),
           )}
-          onConfirm={(dayId) => {
-            const targetDay = days.find((d) => d.id === dayId);
-            const targetPatternId =
-              targetDay?.patterns.find((p) => p.isDefault)?.id ??
-              targetDay?.patterns[0]?.id ??
-              currentPatternId;
+          patternsByDayId={Object.fromEntries(
+            days.map((d) => {
+              // put the default pattern first so the drawer pre-selects it
+              const sorted = [...d.patterns].sort((a, b) => {
+                if (a.isDefault !== b.isDefault) return a.isDefault ? -1 : 1;
+                return a.sortOrder - b.sortOrder;
+              });
+              return [d.id, sorted.map((p) => ({ id: p.id, label: p.label }))];
+            }),
+          )}
+          onConfirm={(dayId, patternId) => {
             if (assignPendingSpotId) {
-              handleAssign(assignPendingSpotId, dayId, targetPatternId);
+              handleAssign(assignPendingSpotId, dayId, patternId ?? currentPatternId);
             }
             setAssignPendingSpotId(null);
           }}

@@ -82,7 +82,7 @@ describe("DayPickerDrawer", () => {
         onConfirm={onConfirm}
       />,
     );
-    // d1 has 2 patterns, so select should be visible
+    // d1 has 2 patterns, so pattern radio buttons should be visible
     expect(screen.getByText("パターンA")).toBeDefined();
     // switch to d2
     fireEvent.click(screen.getByRole("radio", { name: /2日目/ }));

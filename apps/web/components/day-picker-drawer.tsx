@@ -89,21 +89,24 @@ export function DayPickerDrawer({
           })}
         </div>
         {currentPatterns && currentPatterns.length > 1 && (
-          <div className="border-t py-3">
-            <label className="text-xs text-muted-foreground">
-              パターン
-              <select
-                className="mt-1 block w-full rounded-md border bg-background px-3 py-2 text-sm"
-                value={selectedPatternId}
-                onChange={(e) => setSelectedPatternId(e.target.value)}
+          <div className="border-t" role="radiogroup" aria-label="パターン">
+            <p className="px-3 pt-3 text-xs text-muted-foreground">パターン</p>
+            {currentPatterns.map((p) => (
+              <label
+                key={p.id}
+                className="flex min-h-[44px] cursor-pointer items-center gap-3 rounded-md px-3 py-3 hover:bg-accent"
               >
-                {currentPatterns.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+                <input
+                  type="radio"
+                  name="pattern"
+                  aria-label={p.label}
+                  checked={selectedPatternId === p.id}
+                  onChange={() => setSelectedPatternId(p.id)}
+                  className="h-4 w-4 accent-primary"
+                />
+                <span className="text-sm">{p.label}</span>
+              </label>
+            ))}
           </div>
         )}
         <DrawerFooter>

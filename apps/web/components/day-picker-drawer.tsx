@@ -64,7 +64,7 @@ export function DayPickerDrawer({
             候補を追加する日を選択してください
           </DrawerDescription>
         </DrawerHeader>
-        <div role="radiogroup">
+        <div className="max-h-[50dvh] overflow-y-auto overscroll-contain" role="radiogroup">
           {days.map((day) => {
             const dateStr = format(parseISO(day.date), "M/d (E)", { locale: ja });
             return (

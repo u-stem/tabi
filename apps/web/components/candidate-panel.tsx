@@ -456,13 +456,15 @@ export function CandidatePanel({
     return candidates;
   }, [candidates, sortBy]);
 
-  async function handleAssign(spotId: string) {
+  async function handleAssign(spotId: string, dayId?: string, patternId?: string) {
+    const targetDayId = dayId ?? currentDayId;
+    const targetPatternId = patternId ?? currentPatternId;
     await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(
         cacheKey,
-        moveCandidateToSchedule(prev, spotId, currentDayId, currentPatternId),
+        moveCandidateToSchedule(prev, spotId, targetDayId, targetPatternId),
       );
     }
     toast.success(MSG.CANDIDATE_ASSIGNED);
@@ -470,7 +472,7 @@ export function CandidatePanel({
     try {
       await api(`/api/trips/${tripId}/candidates/${spotId}/assign`, {
         method: "POST",
-        body: JSON.stringify({ dayPatternId: currentPatternId }),
+        body: JSON.stringify({ dayPatternId: targetPatternId }),
       });
       onRefresh();
     } catch {

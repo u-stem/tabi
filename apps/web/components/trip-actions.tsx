@@ -45,6 +45,9 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -412,9 +415,39 @@ export function TripActions({
           <DropdownMenuContent align="end">
             {compact && (
               <>
-                <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                  {STATUS_LABELS[status]}
-                </DropdownMenuLabel>
+                {onOpenBookmarks && (
+                  <DropdownMenuItem onClick={onOpenBookmarks}>
+                    <Bookmark />
+                    ブックマーク
+                  </DropdownMenuItem>
+                )}
+                {onOpenActivity && (
+                  <DropdownMenuItem onClick={onOpenActivity}>
+                    <History />
+                    履歴
+                  </DropdownMenuItem>
+                )}
+                {canEditRole && status !== "scheduling" ? (
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <ArrowUpDown />
+                      ステータス: {STATUS_LABELS[status]}
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      {statuses.map(([value, label]) => (
+                        <DropdownMenuItem key={value} onClick={() => handleStatusChange(value)}>
+                          {STATUS_ICONS[value]}
+                          {label}
+                          {value === status && <Check className="ml-auto h-4 w-4" />}
+                        </DropdownMenuItem>
+                      ))}
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                ) : (
+                  <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
+                    {STATUS_LABELS[status]}
+                  </DropdownMenuLabel>
+                )}
                 <DropdownMenuSeparator />
               </>
             )}

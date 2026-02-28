@@ -23,6 +23,8 @@ export function RightPanel({
   online,
   addCandidateOpen,
   onAddCandidateOpenChange,
+  addSouvenirOpen,
+  onAddSouvenirOpenChange,
   scheduleLimitReached,
   scheduleLimitMessage,
   overCandidateId,
@@ -42,6 +44,8 @@ export function RightPanel({
   online: boolean;
   addCandidateOpen: boolean;
   onAddCandidateOpenChange: (open: boolean) => void;
+  addSouvenirOpen: boolean;
+  onAddSouvenirOpenChange: (open: boolean) => void;
   scheduleLimitReached: boolean;
   scheduleLimitMessage: string;
   overCandidateId: string | null;
@@ -100,7 +104,11 @@ export function RightPanel({
           )
         ) : rightPanelTab === "souvenirs" ? (
           hasDays ? (
-            <SouvenirPanel tripId={tripId} />
+            <SouvenirPanel
+              tripId={tripId}
+              addOpen={addSouvenirOpen}
+              onAddOpenChange={onAddSouvenirOpenChange}
+            />
           ) : (
             <p className="py-8 text-center text-sm text-muted-foreground">
               日程が確定するとお土産リストを利用できます

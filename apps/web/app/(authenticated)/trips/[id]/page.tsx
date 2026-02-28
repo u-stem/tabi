@@ -28,6 +28,7 @@ import {
   type MobileContentTab,
   MobileContentTabs,
 } from "@/components/mobile-content-tabs";
+import { SouvenirPanel } from "@/components/souvenir-panel";
 
 const EditTripDialog = dynamic(() =>
   import("@/components/edit-trip-dialog").then((mod) => mod.EditTripDialog),
@@ -129,6 +130,7 @@ export default function TripDetailPage() {
   const [addScheduleOpen, setAddScheduleOpen] = useState(false);
   const [addCandidateOpen, setAddCandidateOpen] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
+  const [addSouvenirOpen, setAddSouvenirOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
@@ -153,6 +155,11 @@ export default function TripDetailPage() {
   const currentPattern = currentDay?.patterns[currentPatternIndex] ?? null;
 
   // Keyboard shortcuts
+  // Computed early (before early returns) for use in shortcut help display and enabled flags.
+  // Handlers use canEditRef.current instead to avoid re-registration on every trip change.
+  const canEditEarly = trip ? canEditRole(trip.role) : false;
+  const isGuestEarly = isGuestUser(session);
+
   const { open: openShortcutHelp } = useShortcutHelp();
   const tripShortcuts: ShortcutGroup[] = useMemo(
     () => [
@@ -172,14 +179,19 @@ export default function TripDetailPage() {
           { key: "}", description: "次のパターンへ" },
         ],
       },
-      {
-        group: "操作",
-        items: [
-          { key: "a", description: "予定を追加" },
-          { key: "c", description: "候補を追加" },
-          { key: "e", description: "旅行を編集" },
-        ],
-      },
+      ...(canEditEarly
+        ? [
+            {
+              group: "操作",
+              items: [
+                { key: "a", description: "予定を追加" },
+                { key: "c", description: "候補を追加" },
+                { key: "s", description: "お土産を追加" },
+                { key: "e", description: "旅行を編集" },
+              ],
+            },
+          ]
+        : []),
       ...(isLg
         ? [
             {
@@ -187,14 +199,15 @@ export default function TripDetailPage() {
               items: [
                 { key: "g c", description: "候補" },
                 { key: "g x", description: "費用" },
+                { key: "g s", description: "お土産" },
                 { key: "g l", description: "履歴" },
-                { key: "g b", description: "ブックマーク" },
+                ...(!isGuestEarly ? [{ key: "g b", description: "ブックマーク" }] : []),
               ],
             },
           ]
         : []),
     ],
-    [trip?.poll, isLg],
+    [trip?.poll, isLg, canEditEarly, isGuestEarly],
   );
   useRegisterShortcuts(tripShortcuts);
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
@@ -293,11 +306,18 @@ export default function TripDetailPage() {
     { enabled: isLg },
   );
   useHotkeys(
+    "g>s",
+    () => {
+      if (!isDialogOpen()) setRightPanelTab("souvenirs");
+    },
+    { enabled: isLg },
+  );
+  useHotkeys(
     "g>b",
     () => {
       if (!isDialogOpen()) setRightPanelTab("bookmarks");
     },
-    { enabled: isLg },
+    { enabled: isLg && !isGuestEarly },
   );
   useHotkeys(
     "a",
@@ -313,6 +333,18 @@ export default function TripDetailPage() {
       if (gPressedRef.current) return;
       if (isDialogOpen()) return;
       if (canEditRef.current && online) setAddCandidateOpen(true);
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "s",
+    () => {
+      if (gPressedRef.current) return;
+      if (isDialogOpen()) return;
+      if (canEditRef.current && online) {
+        if (isLg) setRightPanelTab("souvenirs");
+        setAddSouvenirOpen(true);
+      }
     },
     { preventDefault: true },
   );
@@ -760,6 +792,20 @@ export default function TripDetailPage() {
             日程が確定するとブックマークを利用できます
           </p>
         );
+      case "souvenirs":
+        return tripData.days.length > 0 ? (
+          <div className="rounded-lg border bg-card p-4">
+            <SouvenirPanel
+              tripId={tripId}
+              addOpen={!isLg ? addSouvenirOpen : false}
+              onAddOpenChange={!isLg ? setAddSouvenirOpen : undefined}
+            />
+          </div>
+        ) : (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            日程が確定するとお土産リストを利用できます
+          </p>
+        );
       case "activity":
         return <ActivityLog tripId={tripId} />;
     }
@@ -958,6 +1004,8 @@ export default function TripDetailPage() {
               online={online}
               addCandidateOpen={isLg ? addCandidateOpen : false}
               onAddCandidateOpenChange={setAddCandidateOpen}
+              addSouvenirOpen={isLg ? addSouvenirOpen : false}
+              onAddSouvenirOpenChange={setAddSouvenirOpen}
               scheduleLimitReached={scheduleLimitReached}
               scheduleLimitMessage={scheduleLimitMessage}
               overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
@@ -1004,13 +1052,16 @@ export default function TripDetailPage() {
               setAddScheduleOpen(true);
             } else if (mobileTab === "candidates") setAddCandidateOpen(true);
             else if (mobileTab === "expenses") setAddExpenseOpen(true);
+            else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
           }}
           label={
             mobileTab === "schedule"
               ? "予定を追加"
               : mobileTab === "candidates"
                 ? "候補を追加"
-                : "費用を追加"
+                : mobileTab === "expenses"
+                  ? "費用を追加"
+                  : "お土産を追加"
           }
           hidden={!canEdit || !online || mobileTab === "bookmarks" || mobileTab === "activity"}
         />

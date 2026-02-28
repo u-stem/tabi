@@ -5,6 +5,7 @@ import {
   date,
   index,
   integer,
+  jsonb,
   pgEnum,
   pgTable,
   primaryKey,
@@ -233,6 +234,18 @@ export const schedules = pgTable(
 ).enableRLS();
 
 export const reactionTypeEnum = pgEnum("reaction_type", ["like", "hmm"]);
+
+export const notificationTypeEnum = pgEnum("notification_type", [
+  "member_added",
+  "member_removed",
+  "role_changed",
+  "schedule_created",
+  "schedule_updated",
+  "schedule_deleted",
+  "poll_started",
+  "poll_closed",
+  "expense_added",
+]);
 
 export const scheduleReactions = pgTable(
   "schedule_reactions",
@@ -635,3 +648,63 @@ export const appSettings = pgTable(
   },
   (table) => [check("app_settings_single_row", sql`${table.id} = 1`)],
 );
+
+export const notifications = pgTable(
+  "notifications",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    tripId: uuid("trip_id").references(() => trips.id, { onDelete: "cascade" }),
+    type: notificationTypeEnum("type").notNull(),
+    payload: jsonb("payload").notNull().default({}),
+    readAt: timestamp("read_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("notifications_user_id_idx").on(table.userId),
+    index("notifications_created_at_idx").on(table.createdAt),
+  ],
+).enableRLS();
+
+export const pushSubscriptions = pgTable(
+  "push_subscriptions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    endpoint: text("endpoint").notNull(),
+    p256dh: text("p256dh").notNull(),
+    auth: text("auth").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("push_subscriptions_user_id_idx").on(table.userId)],
+).enableRLS();
+
+export const notificationPreferences = pgTable(
+  "notification_preferences",
+  {
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: notificationTypeEnum("type").notNull(),
+    inApp: boolean("in_app").notNull().default(true),
+    push: boolean("push").notNull().default(true),
+  },
+  (table) => [primaryKey({ columns: [table.userId, table.type] })],
+).enableRLS();
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, { fields: [notifications.userId], references: [users.id] }),
+  trip: one(trips, { fields: [notifications.tripId], references: [trips.id] }),
+}));
+
+export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one }) => ({
+  user: one(users, { fields: [pushSubscriptions.userId], references: [users.id] }),
+}));
+
+export const notificationPreferencesRelations = relations(notificationPreferences, ({ one }) => ({
+  user: one(users, { fields: [notificationPreferences.userId], references: [users.id] }),
+}));

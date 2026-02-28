@@ -67,9 +67,7 @@ async function fetchStats(sevenDaysAgo: Date, thirtyDaysAgo: Date) {
     .where(gte(sessions.createdAt, thirtyDaysAgo));
   // DB size in bytes. pg_database_size returns bigint; postgres.js serializes
   // bigint as string, so Number() conversion is safe for sizes below 2^53.
-  const dbSizeResult = await db.execute(
-    sql`SELECT pg_database_size(current_database()) AS size`,
-  );
+  const dbSizeResult = await db.execute(sql`SELECT pg_database_size(current_database()) AS size`);
 
   return {
     totalUsersResult,

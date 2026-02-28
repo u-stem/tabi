@@ -2,6 +2,7 @@ import { and, count, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { notifications } from "../db/schema";
+import { ERROR_MSG } from "../lib/constants";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -45,7 +46,7 @@ notificationRoutes.put("/:id/read", async (c) => {
     where: and(eq(notifications.id, id), eq(notifications.userId, user.id)),
   });
   if (!item) {
-    return c.json({ error: "Notification not found" }, 404);
+    return c.json({ error: ERROR_MSG.NOTIFICATION_NOT_FOUND }, 404);
   }
   await db.update(notifications).set({ readAt: new Date() }).where(eq(notifications.id, id));
   return c.json({ ok: true });

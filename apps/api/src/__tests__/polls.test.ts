@@ -1,13 +1,26 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockGetSession, mockDbSelect, mockDbInsert, mockDbUpdate, mockFindPollAsOwner } =
-  vi.hoisted(() => ({
-    mockGetSession: vi.fn(),
-    mockDbSelect: vi.fn(),
-    mockDbInsert: vi.fn(),
-    mockDbUpdate: vi.fn(),
-    mockFindPollAsOwner: vi.fn(),
-  }));
+const {
+  mockGetSession,
+  mockDbSelect,
+  mockDbInsert,
+  mockDbUpdate,
+  mockFindPollAsOwner,
+  mockDbQuery,
+  mockCreateNotification,
+} = vi.hoisted(() => ({
+  mockGetSession: vi.fn(),
+  mockDbSelect: vi.fn(),
+  mockDbInsert: vi.fn(),
+  mockDbUpdate: vi.fn(),
+  mockFindPollAsOwner: vi.fn(),
+  mockDbQuery: {
+    users: { findFirst: vi.fn() },
+    trips: { findFirst: vi.fn() },
+    schedulePollParticipants: { findFirst: vi.fn(), findMany: vi.fn() },
+  },
+  mockCreateNotification: vi.fn(),
+}));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -19,10 +32,15 @@ vi.mock("../lib/auth", () => ({
 
 vi.mock("../db/index", () => ({
   db: {
+    query: mockDbQuery,
     select: (...args: unknown[]) => mockDbSelect(...args),
     insert: (...args: unknown[]) => mockDbInsert(...args),
     update: (...args: unknown[]) => mockDbUpdate(...args),
   },
+}));
+
+vi.mock("../lib/notifications", () => ({
+  createNotification: (...args: unknown[]) => mockCreateNotification(...args),
 }));
 
 vi.mock("../lib/poll-access", () => ({
@@ -47,6 +65,8 @@ describe("Poll routes", () => {
       user: fakeUser,
       session: { id: "session-1" },
     });
+    mockDbQuery.trips.findFirst.mockResolvedValue({ title: "テスト旅行" });
+    mockCreateNotification.mockResolvedValue(undefined);
   });
 
   describe("POST /api/polls/:pollId/options", () => {
@@ -138,6 +158,50 @@ describe("Poll routes", () => {
       });
 
       expect(res.status).toBe(201);
+    });
+  });
+
+  describe("POST /api/polls/:pollId/participants", () => {
+    it("sends poll_started notification when participant is added", async () => {
+      mockFindPollAsOwner.mockResolvedValue({
+        id: "poll-1",
+        status: "open",
+        tripId: "trip-1",
+        trip: { ownerId: fakeUser.id },
+      });
+      mockDbSelect.mockReturnValueOnce({
+        from: vi.fn().mockReturnValue({
+          where: vi.fn().mockResolvedValue([{ count: 0 }]),
+        }),
+      });
+      mockDbQuery.users.findFirst.mockResolvedValue({
+        id: "00000000-0000-0000-0000-000000000002",
+        name: "New Participant",
+        image: null,
+      });
+      mockDbQuery.schedulePollParticipants.findFirst.mockResolvedValue(undefined);
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([
+            { id: "part-1", pollId: "poll-1", userId: "00000000-0000-0000-0000-000000000002" },
+          ]),
+        }),
+      });
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) }),
+      });
+
+      const app = createTestApp(pollRoutes, "/api/polls");
+      const res = await app.request("/api/polls/poll-1/participants", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: "00000000-0000-0000-0000-000000000002" }),
+      });
+
+      expect(res.status).toBe(201);
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "poll_started" }),
+      );
     });
   });
 });

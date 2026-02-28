@@ -22,6 +22,7 @@ import {
 } from "../db/schema";
 import { formatShortDateRange, logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
+import { createNotification } from "../lib/notifications";
 import { hasChanges } from "../lib/has-changes";
 import { findPollAsEditor, findPollAsOwner, findPollAsParticipant } from "../lib/poll-access";
 import { generateShareToken, shareExpiresAt } from "../lib/share-token";
@@ -395,6 +396,17 @@ pollRoutes.post("/:pollId/participants", async (c) => {
 
   await db.update(schedulePolls).set({ updatedAt: new Date() }).where(eq(schedulePolls.id, pollId));
 
+  void db.query.trips
+    .findFirst({ where: eq(trips.id, poll.tripId), columns: { title: true } })
+    .then((trip) => {
+      void createNotification({
+        type: "poll_started",
+        userId: targetUser.id,
+        tripId: poll.tripId,
+        payload: { actorName: user.name, tripName: trip?.title ?? "旅行" },
+      });
+    });
+
   return c.json(
     {
       id: participant.id,
@@ -665,6 +677,27 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
     columns: { ownerId: true, title: true, destination: true },
   });
   if (!trip) return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
+
+  const tripName = trip.title ?? "旅行";
+  const confirmedDateRange = formatShortDateRange(option.startDate, option.endDate);
+  void (async () => {
+    const participants = await db.query.schedulePollParticipants.findMany({
+      where: eq(schedulePollParticipants.pollId, pollId),
+      columns: { userId: true },
+    });
+    await Promise.all(
+      participants
+        .filter((p) => p.userId !== user.id)
+        .map((p) =>
+          createNotification({
+            type: "poll_closed",
+            userId: p.userId,
+            tripId,
+            payload: { actorName: user.name, tripName, entityName: confirmedDateRange },
+          }),
+        ),
+    );
+  })();
 
   return c.json(formatPollResponse(result, trip));
 });

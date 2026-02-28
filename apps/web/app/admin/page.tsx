@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { notFound } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { ApiError, api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
@@ -99,8 +100,11 @@ export default function AdminPage() {
     },
   });
 
-  const isForbidden = error instanceof ApiError && error.status === 403;
   const updatedAt = dataUpdatedAt > 0 ? new Date(dataUpdatedAt).toLocaleTimeString() : null;
+
+  if (error instanceof ApiError && (error.status === 403 || error.status === 401)) {
+    notFound();
+  }
 
   return (
     <div className="min-h-screen">
@@ -115,12 +119,6 @@ export default function AdminPage() {
       </header>
 
       <main className="container max-w-4xl space-y-8 py-8">
-        {isForbidden && (
-          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-6 text-center">
-            <p className="font-medium text-destructive">アクセス権がありません</p>
-          </div>
-        )}
-
         {isLoading && <p className="text-center text-sm text-muted-foreground">読み込み中...</p>}
 
         {data && (

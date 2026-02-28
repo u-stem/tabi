@@ -49,13 +49,13 @@ adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {
     db.select({ count: count() }).from(schedules),
     // Total souvenir items
     db.select({ count: count() }).from(souvenirItems),
-    // MAU: distinct users active in the last 30 days.
+    // MAU: distinct users who created a session in the last 30 days.
     // COUNT(DISTINCT) in DB is far cheaper than SELECT DISTINCT + JS count.
-    // Uses updatedAt (last activity) rather than createdAt (session start) for accuracy.
+    // Uses createdAt because updatedAt was added manually and has NULL for all existing rows.
     db
       .select({ count: countDistinct(sessions.userId) })
       .from(sessions)
-      .where(gte(sessions.updatedAt, thirtyDaysAgo)),
+      .where(gte(sessions.createdAt, thirtyDaysAgo)),
     // DB size in bytes. pg_database_size returns bigint; postgres.js serializes
     // bigint as string, so Number() conversion is safe for sizes below 2^53.
     db.execute(sql`SELECT pg_database_size(current_database()) AS size`),

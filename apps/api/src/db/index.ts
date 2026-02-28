@@ -13,5 +13,7 @@ const client = postgres(connectionString, {
   max: isLocalhost ? 10 : 3,
   idle_timeout: 20,
   max_lifetime: 60 * 30,
+  // Prevent indefinite hang when the pooler rejects or queues connections
+  connect_timeout: 10,
 });
 export const db = drizzle(client, { schema });

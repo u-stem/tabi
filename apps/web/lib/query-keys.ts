@@ -43,4 +43,7 @@ export const queryKeys = {
   shared: {
     trip: (token: string) => ["shared", token] as const,
   },
+  admin: {
+    stats: () => ["admin", "stats"] as const,
+  },
 };

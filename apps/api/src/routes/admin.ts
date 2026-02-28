@@ -49,13 +49,13 @@ adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {
     db.select({ count: count() }).from(schedules),
     // Total souvenir items
     db.select({ count: count() }).from(souvenirItems),
-    // MAU: distinct users with session activity in last 30 days.
-    // updatedAt reflects session refreshes by Better Auth, capturing returning users
-    // who logged in before the window but remained active.
+    // MAU: distinct users who created a session in the last 30 days.
+    // Uses createdAt because updatedAt may not exist in production if the sessions
+    // table was created by Better Auth before Drizzle migrations ran.
     db
       .selectDistinct({ userId: sessions.userId })
       .from(sessions)
-      .where(gte(sessions.updatedAt, thirtyDaysAgo)),
+      .where(gte(sessions.createdAt, thirtyDaysAgo)),
     // DB size in bytes. pg_database_size returns bigint; postgres.js serializes
     // bigint as string, so Number() conversion is safe for sizes below 2^53.
     db.execute(sql`SELECT pg_database_size(current_database()) AS size`),

@@ -10,11 +10,24 @@ type TripStatus = "scheduling" | "draft" | "planned" | "active" | "completed";
 
 const adminRoutes = new Hono<AppEnv>();
 
-adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {
-  const now = new Date();
-  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+// Resolves with the value or rejects with Error("query_timeout") after ms milliseconds.
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const id = setTimeout(() => reject(new Error("query_timeout")), ms);
+    promise.then(
+      (v) => {
+        clearTimeout(id);
+        resolve(v);
+      },
+      (e) => {
+        clearTimeout(id);
+        reject(e);
+      },
+    );
+  });
+}
 
+async function fetchStats(sevenDaysAgo: Date, thirtyDaysAgo: Date) {
   const [
     totalUsersResult,
     guestUsersResult,
@@ -60,6 +73,49 @@ adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {
     // bigint as string, so Number() conversion is safe for sizes below 2^53.
     db.execute(sql`SELECT pg_database_size(current_database()) AS size`),
   ]);
+
+  return {
+    totalUsersResult,
+    guestUsersResult,
+    newUsers7dResult,
+    newUsers30dResult,
+    tripStatusResult,
+    newTrips7dResult,
+    totalSchedulesResult,
+    totalSouvenirsResult,
+    mauResult,
+    dbSizeResult,
+  };
+}
+
+adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {
+  const now = new Date();
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+  let stats: Awaited<ReturnType<typeof fetchStats>>;
+  try {
+    stats = await withTimeout(fetchStats(sevenDaysAgo, thirtyDaysAgo), 20_000);
+  } catch (err) {
+    if (err instanceof Error && err.message === "query_timeout") {
+      console.error("[admin/stats] query timeout after 20s");
+      return c.json({ error: "Query timeout" }, 504);
+    }
+    throw err;
+  }
+
+  const {
+    totalUsersResult,
+    guestUsersResult,
+    newUsers7dResult,
+    newUsers30dResult,
+    tripStatusResult,
+    newTrips7dResult,
+    totalSchedulesResult,
+    totalSouvenirsResult,
+    mauResult,
+    dbSizeResult,
+  } = stats;
 
   // Build trips.byStatus map
   const statusMap: Record<TripStatus, number> = {

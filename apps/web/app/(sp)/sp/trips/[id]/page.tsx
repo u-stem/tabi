@@ -85,7 +85,7 @@ export default function SpTripDetailPage() {
   });
   useAuthRedirect(queryError);
   const pollId = trip?.poll?.id;
-  const { isLoading: isPollLoading } = useQuery({
+  const { isLoading: isPollLoading, data: pollData } = useQuery({
     queryKey: queryKeys.polls.detail(pollId ?? ""),
     queryFn: () => api<PollDetailResponse>(`/api/polls/${pollId}`),
     enabled: !!pollId,
@@ -104,6 +104,7 @@ export default function SpTripDetailPage() {
   const [addCandidateOpen, setAddCandidateOpen] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const [addSouvenirOpen, setAddSouvenirOpen] = useState(false);
+  const [addPollOptionOpen, setAddPollOptionOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
@@ -371,6 +372,8 @@ export default function SpTripDetailPage() {
                   canEdit={canEdit}
                   onMutate={onMutate}
                   onConfirmed={() => setSelectedDay(0)}
+                  addOptionOpen={addPollOptionOpen}
+                  onAddOptionOpenChange={setAddPollOptionOpen}
                 />
               </div>
             ) : currentDay && currentPattern ? (
@@ -604,25 +607,39 @@ export default function SpTripDetailPage() {
         <Fab
           onClick={() => {
             if (mobileTab === "schedule") {
-              if (scheduleLimitReached) {
-                toast.error(scheduleLimitMessage);
-                return;
+              if (selectedDay === -1) {
+                setAddPollOptionOpen(true);
+              } else {
+                if (scheduleLimitReached) {
+                  toast.error(scheduleLimitMessage);
+                  return;
+                }
+                setAddScheduleOpen(true);
               }
-              setAddScheduleOpen(true);
             } else if (mobileTab === "candidates") setAddCandidateOpen(true);
             else if (mobileTab === "expenses") setAddExpenseOpen(true);
             else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
           }}
           label={
             mobileTab === "schedule"
-              ? "予定を追加"
+              ? selectedDay === -1
+                ? "日程案追加"
+                : "予定を追加"
               : mobileTab === "candidates"
                 ? "候補を追加"
                 : mobileTab === "souvenirs"
                   ? "お土産を追加"
                   : "費用を追加"
           }
-          hidden={!canEdit || !online || mobileTab === "bookmarks" || mobileTab === "activity"}
+          hidden={
+            !canEdit ||
+            !online ||
+            mobileTab === "bookmarks" ||
+            mobileTab === "activity" ||
+            (mobileTab === "schedule" &&
+              selectedDay === -1 &&
+              (!isOwnerRole(tripData.role) || pollData?.status !== "open"))
+          }
         />
 
         <AddPatternDialog patternOps={patternOps} />

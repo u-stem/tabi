@@ -18,7 +18,7 @@ import {
   Triangle,
   X,
 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
 import { CalendarNav, END_YEAR, START_YEAR } from "@/components/calendar-nav";
@@ -33,6 +33,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import {
   ResponsiveAlertDialog,
   ResponsiveAlertDialogAction,
@@ -85,10 +95,21 @@ type PollTabProps = {
   canEdit: boolean;
   onMutate: () => void | Promise<void>;
   onConfirmed?: () => void;
+  addOptionOpen?: boolean;
+  onAddOptionOpenChange?: (open: boolean) => void;
 };
 
-export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: PollTabProps) {
+export function PollTab({
+  pollId,
+  isOwner,
+  canEdit,
+  onMutate,
+  onConfirmed,
+  addOptionOpen,
+  onAddOptionOpenChange,
+}: PollTabProps) {
   const queryClient = useQueryClient();
+  const isMobile = useMobile();
 
   const { data: poll, isLoading } = useQuery({
     queryKey: queryKeys.polls.detail(pollId),
@@ -99,6 +120,11 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
 
   const [showAddOption, setShowAddOption] = useState(false);
   const [pendingRange, setPendingRange] = useState<DateRange | undefined>();
+
+  // Allow parent (e.g. FAB) to open the add-option dialog
+  useEffect(() => {
+    if (addOptionOpen) setShowAddOption(true);
+  }, [addOptionOpen]);
   const [addOptionMonth, setAddOptionMonth] = useState<Date>(new Date());
   const [showConfirmSelect, setShowConfirmSelect] = useState(false);
   const [confirmOptionId, setConfirmOptionId] = useState<string | null>(null);
@@ -504,18 +530,21 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
       </div>
 
       {/* Add option dialog */}
-      <Dialog
+      <ResponsiveDialog
         open={showAddOption}
         onOpenChange={(open) => {
           setShowAddOption(open);
           if (!open) setPendingRange(undefined);
+          onAddOptionOpenChange?.(open);
         }}
       >
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>日程案を追加</DialogTitle>
-            <DialogDescription>カレンダーで日付範囲を選択してください</DialogDescription>
-          </DialogHeader>
+        <ResponsiveDialogContent className="sm:max-w-2xl">
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>日程案を追加</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>
+              カレンダーで日付範囲を選択してください
+            </ResponsiveDialogDescription>
+          </ResponsiveDialogHeader>
           <div className="flex flex-col items-center">
             <CalendarNav
               month={addOptionMonth}
@@ -529,24 +558,19 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
               onSelect={setPendingRange}
               month={addOptionMonth}
               onMonthChange={setAddOptionMonth}
-              numberOfMonths={2}
+              numberOfMonths={isMobile ? 1 : 2}
               locale={ja}
               hideNavigation
               startMonth={new Date(START_YEAR, 0)}
               endMonth={new Date(END_YEAR, 11)}
             />
           </div>
-          <div className="flex justify-end gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                setShowAddOption(false);
-                setPendingRange(undefined);
-              }}
-            >
-              キャンセル
-            </Button>
+          <ResponsiveDialogFooter>
+            <ResponsiveDialogClose asChild>
+              <Button variant="outline" size="sm">
+                キャンセル
+              </Button>
+            </ResponsiveDialogClose>
             <Button
               size="sm"
               onClick={handleAddOption}
@@ -555,9 +579,9 @@ export function PollTab({ pollId, isOwner, canEdit, onMutate, onConfirmed }: Pol
               <Plus className="h-4 w-4" />
               {addOptionMutation.isPending ? "追加中..." : "追加"}
             </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
 
       {/* Confirm option select dialog */}
       <Dialog open={showConfirmSelect} onOpenChange={setShowConfirmSelect}>

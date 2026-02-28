@@ -27,9 +27,11 @@ import { MSG } from "@/lib/messages";
 export function GuestUpgradeDialog({
   open,
   onOpenChange,
+  signupEnabled = true,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  signupEnabled?: boolean;
 }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +83,24 @@ export function GuestUpgradeDialog({
     setLoading(false);
     onOpenChange(false);
     router.refresh();
+  }
+
+  if (!signupEnabled) {
+    return (
+      <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
+        <ResponsiveDialogContent>
+          <ResponsiveDialogHeader>
+            <ResponsiveDialogTitle>アカウント登録</ResponsiveDialogTitle>
+          </ResponsiveDialogHeader>
+          <p className="px-1 py-2 text-sm text-muted-foreground">{MSG.AUTH_SIGNUP_DISABLED_DETAIL}</p>
+          <ResponsiveDialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              閉じる
+            </Button>
+          </ResponsiveDialogFooter>
+        </ResponsiveDialogContent>
+      </ResponsiveDialog>
+    );
   }
 
   return (

@@ -3,22 +3,18 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { GuestUpgradeDialog } from "@/components/guest-upgrade-dialog";
+import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { getGuestDaysRemaining, isGuestUser } from "@/lib/guest";
 import { queryKeys } from "@/lib/query-keys";
-
-async function fetchPublicSettings(): Promise<{ signupEnabled: boolean }> {
-  const res = await fetch("/api/public/settings");
-  if (!res.ok) return { signupEnabled: true };
-  return res.json();
-}
 
 export function GuestBanner() {
   const { data: session } = useSession();
   const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { data: settings } = useQuery({
     queryKey: queryKeys.publicSettings.all,
-    queryFn: fetchPublicSettings,
+    // Fail-open: if the request fails, treat signup as enabled
+    queryFn: () => api<{ signupEnabled: boolean }>("/api/public/settings").catch(() => ({ signupEnabled: true })),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -45,7 +41,7 @@ export function GuestBanner() {
           )}
         </div>
       </div>
-      <GuestUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
+      <GuestUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} signupEnabled={signupEnabled} />
     </>
   );
 }

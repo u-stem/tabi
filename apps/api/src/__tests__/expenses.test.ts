@@ -1,23 +1,34 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbSelect } =
-  vi.hoisted(() => ({
-    mockGetSession: vi.fn(),
-    mockDbQuery: {
-      expenses: {
-        findMany: vi.fn(),
-        findFirst: vi.fn(),
-      },
-      tripMembers: {
-        findFirst: vi.fn(),
-        findMany: vi.fn(),
-      },
+const {
+  mockGetSession,
+  mockDbQuery,
+  mockDbInsert,
+  mockDbUpdate,
+  mockDbDelete,
+  mockDbSelect,
+  mockCreateNotification,
+} = vi.hoisted(() => ({
+  mockGetSession: vi.fn(),
+  mockDbQuery: {
+    expenses: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
     },
-    mockDbInsert: vi.fn(),
-    mockDbUpdate: vi.fn(),
-    mockDbDelete: vi.fn(),
-    mockDbSelect: vi.fn(),
-  }));
+    tripMembers: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+    },
+    trips: {
+      findFirst: vi.fn(),
+    },
+  },
+  mockDbInsert: vi.fn(),
+  mockDbUpdate: vi.fn(),
+  mockDbDelete: vi.fn(),
+  mockDbSelect: vi.fn(),
+  mockCreateNotification: vi.fn(),
+}));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -42,6 +53,10 @@ vi.mock("../db/index", () => {
 
 vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../lib/notifications", () => ({
+  createNotification: (...args: unknown[]) => mockCreateNotification(...args),
 }));
 
 import { MAX_EXPENSES_PER_TRIP } from "@sugara/shared";
@@ -83,6 +98,8 @@ describe("Expense routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setupAuth();
+    mockDbQuery.trips.findFirst.mockResolvedValue({ title: "テスト旅行" });
+    mockCreateNotification.mockResolvedValue(undefined);
   });
 
   describe("GET /api/trips/:tripId/expenses", () => {
@@ -313,6 +330,33 @@ describe("Expense routes", () => {
       });
 
       expect(res.status).toBe(404);
+    });
+
+    it("POST: 経費作成時に splits の他ユーザーに createNotification を呼ぶ", async () => {
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([
+        { userId: userId1 },
+        { userId: userId2 },
+      ]);
+      mockCountQuery(0);
+      mockDbInsert
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValueOnce([{ id: "exp-1", ...validBody, createdAt: new Date() }]),
+          }),
+        })
+        .mockReturnValueOnce({
+          values: vi.fn().mockResolvedValueOnce(undefined),
+        });
+
+      await makeApp().request(`/api/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validBody),
+      });
+
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "expense_added" }),
+      );
     });
   });
 

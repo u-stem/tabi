@@ -273,4 +273,31 @@ describe("Share routes", () => {
       expect(res.status).toBe(200);
     });
   });
+
+  describe("GET /api/shared/:token rate limiting", () => {
+    it("returns 429 after 30 requests from the same IP", async () => {
+      mockDbQuery.trips.findFirst.mockResolvedValue({
+        id: "trip-1",
+        title: "Test Trip",
+        destination: "Tokyo",
+        startDate: null,
+        endDate: null,
+        shareToken: "valid-token",
+        shareTokenExpiresAt: new Date("2099-01-01"),
+        tripMembers: [],
+        tripDays: [],
+        ownerId: "user-1",
+      });
+
+      const app = createTestApp(shareRoutes, "/");
+      const headers = { "x-forwarded-for": "10.0.0.1" };
+
+      for (let i = 0; i < 30; i++) {
+        await app.request("/api/shared/valid-token", { headers });
+      }
+
+      const res = await app.request("/api/shared/valid-token", { headers });
+      expect(res.status).toBe(429);
+    });
+  });
 });

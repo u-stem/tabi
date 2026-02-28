@@ -5,11 +5,14 @@ import { trips } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
 import { generateShareToken, shareExpiresAt } from "../lib/share-token";
 import { requireAuth } from "../middleware/auth";
+import { rateLimitByIp } from "../middleware/rate-limit";
 import { requireNonGuest } from "../middleware/require-non-guest";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
 
 const shareRoutes = new Hono<AppEnv>();
+
+const sharedTripRateLimit = rateLimitByIp({ window: 60, max: 30 });
 
 // Generate or get share link (owner only)
 shareRoutes.post(
@@ -98,7 +101,7 @@ shareRoutes.put(
 );
 
 // View shared trip (no auth required)
-shareRoutes.get("/api/shared/:token", async (c) => {
+shareRoutes.get("/api/shared/:token", sharedTripRateLimit, async (c) => {
   const token = c.req.param("token");
 
   const trip = await db.query.trips.findFirst({

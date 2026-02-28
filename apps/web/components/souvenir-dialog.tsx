@@ -5,11 +5,13 @@ import {
   MAX_URLS_PER_SOUVENIR,
   SOUVENIR_ADDRESS_MAX_LENGTH,
   SOUVENIR_NAME_MAX_LENGTH,
+  SOUVENIR_PRIORITY_LABELS,
   SOUVENIR_RECIPIENT_MAX_LENGTH,
   SOUVENIR_URL_MAX_LENGTH,
   type SouvenirItem,
+  type SouvenirPriority,
 } from "@sugara/shared";
-import { Check, Minus, Plus, X } from "lucide-react";
+import { Check, Flame, Minus, Plus, Star, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +28,7 @@ import {
 } from "@/components/ui/responsive-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 type SouvenirDialogProps = {
   tripId: string;
@@ -67,6 +70,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
   const [urls, setUrls] = useState<string[]>([]);
   const [addresses, setAddresses] = useState<string[]>([]);
   const [memo, setMemo] = useState("");
+  const [priority, setPriority] = useState<SouvenirPriority | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -76,12 +80,14 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
       setUrls(item.urls);
       setAddresses(item.addresses);
       setMemo(item.memo ?? "");
+      setPriority(item.priority);
     } else {
       setName("");
       setRecipient("");
       setUrls([]);
       setAddresses([]);
       setMemo("");
+      setPriority(null);
     }
   }, [open, item]);
 
@@ -103,6 +109,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
         urls: urls.filter((u) => u.trim()),
         addresses: addresses.filter((a) => a.trim()),
         memo: memo.trim() || null,
+        priority,
       };
 
       if (isEdit) {
@@ -246,6 +253,49 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
                 <Plus className="inline h-3 w-3" /> URL を追加
               </button>
             )}
+          </div>
+          <div className="space-y-2">
+            <Label>優先度</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={cn("flex-1", priority === null && "bg-muted")}
+                onClick={() => setPriority(null)}
+              >
+                <Minus className="h-3.5 w-3.5" />
+                未設定
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "flex-1",
+                  priority === "high" &&
+                    "border-rose-300 bg-rose-100 text-rose-800 hover:bg-rose-100 dark:border-rose-700 dark:bg-rose-900 dark:text-rose-200 dark:hover:bg-rose-900",
+                )}
+                onClick={() => setPriority("high")}
+              >
+                <Flame className="h-3.5 w-3.5" />
+                {SOUVENIR_PRIORITY_LABELS.high}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className={cn(
+                  "flex-1",
+                  priority === "medium" &&
+                    "border-amber-300 bg-amber-100 text-amber-800 hover:bg-amber-100 dark:border-amber-700 dark:bg-amber-900 dark:text-amber-200 dark:hover:bg-amber-900",
+                )}
+                onClick={() => setPriority("medium")}
+              >
+                <Star className="h-3.5 w-3.5" />
+                {SOUVENIR_PRIORITY_LABELS.medium}
+              </Button>
+            </div>
           </div>
           <div className="space-y-2">
             <Label htmlFor="souvenir-memo">メモ</Label>

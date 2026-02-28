@@ -1,14 +1,17 @@
 "use client";
 
-import type { SouvenirItem } from "@sugara/shared";
+import { SOUVENIR_PRIORITY_LABELS, type SouvenirItem, type SouvenirPriority } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowUpDown,
   CheckSquare,
   ChevronDown,
   ExternalLink,
+  Flame,
   MapPin,
   Pencil,
   Plus,
+  Star,
   StickyNote,
   Trash2,
   User,
@@ -26,6 +29,7 @@ const SouvenirDialog = dynamic(() =>
   import("@/components/souvenir-dialog").then((mod) => mod.SouvenirDialog),
 );
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -54,6 +58,8 @@ import { queryKeys } from "@/lib/query-keys";
 import { buildMapsSearchUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
 
+const PRIORITY_ORDER: Record<SouvenirPriority, number> = { high: 0, medium: 1 };
+
 type SouvenirPanelProps = {
   tripId: string;
   addOpen?: boolean;
@@ -72,6 +78,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [purchasedOpen, setPurchasedOpen] = useState(false);
+  const [sortBy, setSortBy] = useState<"priority" | "created">("priority");
 
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.souvenirs.list(tripId),
@@ -159,8 +166,18 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
   }
 
   const items = data?.items ?? [];
-  const purchased = items.filter((i) => i.isPurchased);
-  const remaining = items.filter((i) => !i.isPurchased);
+
+  const sortItems = (list: SouvenirItem[]) => {
+    if (sortBy === "created") return list;
+    return [...list].sort((a, b) => {
+      const pa = a.priority != null ? PRIORITY_ORDER[a.priority] : 2;
+      const pb = b.priority != null ? PRIORITY_ORDER[b.priority] : 2;
+      return pa !== pb ? pa - pb : a.createdAt.localeCompare(b.createdAt);
+    });
+  };
+
+  const purchased = sortItems(items.filter((i) => i.isPurchased));
+  const remaining = sortItems(items.filter((i) => !i.isPurchased));
   const selectedCount = selectedIds.size;
 
   return (
@@ -197,15 +214,38 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
           </div>
         </div>
       ) : (
-        <div className="mb-2 flex items-center justify-end gap-1.5">
+        <div className="mb-2 flex items-center gap-1.5">
           {items.length > 0 && (
-            <Button variant="outline" size="sm" onClick={() => setSelectMode(true)}>
-              <CheckSquare className="h-4 w-4" />
-              選択
-            </Button>
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(isMobile && "flex-1")}
+                aria-pressed={sortBy === "priority"}
+                aria-label={sortBy === "priority" ? "作成順に切り替える" : "優先度順に切り替える"}
+                onClick={() => setSortBy(sortBy === "priority" ? "created" : "priority")}
+              >
+                <ArrowUpDown className="h-4 w-4" />
+                {sortBy === "priority" ? "優先度順" : "作成順"}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className={cn(isMobile && "flex-1")}
+                onClick={() => setSelectMode(true)}
+              >
+                <CheckSquare className="h-4 w-4" />
+                選択
+              </Button>
+            </>
           )}
           {!isMobile && (
-            <Button variant="outline" size="sm" onClick={() => setDialogOpen(true)}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-auto"
+              onClick={() => setDialogOpen(true)}
+            >
               <Plus className="h-4 w-4" />
               お土産を追加
             </Button>
@@ -400,9 +440,31 @@ function SouvenirItemRow({
         />
       )}
       <div className="min-w-0 flex-1">
-        <p className={`text-sm font-medium ${item.isPurchased && !selected ? "line-through" : ""}`}>
-          {item.name}
-        </p>
+        <div className="flex items-center gap-1.5">
+          <p
+            className={`text-sm font-medium ${item.isPurchased && !selected ? "line-through" : ""}`}
+          >
+            {item.name}
+          </p>
+          {item.priority && (
+            <Badge
+              variant="outline"
+              className={cn(
+                "shrink-0 gap-1 px-1.5 py-0 text-xs",
+                item.priority === "high"
+                  ? "border-rose-300 bg-rose-100 text-rose-800 dark:border-rose-700 dark:bg-rose-900 dark:text-rose-200"
+                  : "border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-700 dark:bg-amber-900 dark:text-amber-200",
+              )}
+            >
+              {item.priority === "high" ? (
+                <Flame className="h-2.5 w-2.5" />
+              ) : (
+                <Star className="h-2.5 w-2.5" />
+              )}
+              {SOUVENIR_PRIORITY_LABELS[item.priority]}
+            </Badge>
+          )}
+        </div>
         {(item.recipient || item.addresses.length > 0 || item.urls.length > 0 || item.memo) && (
           <div className={cn("mt-1 space-y-1", selectMode && "pointer-events-none")}>
             {item.recipient && (

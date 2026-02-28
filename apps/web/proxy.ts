@@ -38,6 +38,20 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Redirect /sp/[path] to /[path] when the path has no SP counterpart (e.g. /sp/admin → /admin).
+  // SP_ROUTES lists the only routes that have dedicated SP pages.
+  if (isOnSp) {
+    const desktopPathname = pathname.slice(SP_PREFIX.length) || "/home";
+    const hasSpCounterpart = SP_ROUTES.some(
+      (route) => desktopPathname === route || desktopPathname.startsWith(`${route}/`),
+    );
+    if (!hasSpCounterpart) {
+      const url = request.nextUrl.clone();
+      url.pathname = desktopPathname;
+      return NextResponse.redirect(url);
+    }
+  }
+
   // ── Auth guard ─────────────────────────────────────────
   const isProtected = protectedPaths.some((path) => pathname.startsWith(path));
   const isGuestOnly = guestOnlyPaths.includes(pathname);

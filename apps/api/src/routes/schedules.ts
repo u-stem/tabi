@@ -11,8 +11,9 @@ import {
 import { and, eq, inArray, isNotNull, isNull, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { schedules } from "../db/schema";
+import { schedules, tripMembers, trips } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
+import { createNotification } from "../lib/notifications";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
 import { canEdit, verifyPatternAccess } from "../lib/permissions";
@@ -105,6 +106,19 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules", async 
     entityType: "schedule",
     entityName: schedule.name,
   });
+
+  void (async () => {
+    const [members, trip] = await Promise.all([
+      db.query.tripMembers.findMany({ where: eq(tripMembers.tripId, tripId), columns: { userId: true } }),
+      db.query.trips.findFirst({ where: eq(trips.id, tripId), columns: { title: true } }),
+    ]);
+    const tripName = trip?.title ?? "旅行";
+    await Promise.all(
+      members
+        .filter((m) => m.userId !== user.id)
+        .map((m) => createNotification({ type: "schedule_created", userId: m.userId, tripId, payload: { actorName: user.name, tripName, entityName: schedule.name } })),
+    );
+  })();
 
   return c.json(schedule, 201);
 });
@@ -457,6 +471,19 @@ scheduleRoutes.patch(
       entityName: updated.name,
     });
 
+    void (async () => {
+      const [members, trip] = await Promise.all([
+        db.query.tripMembers.findMany({ where: eq(tripMembers.tripId, tripId), columns: { userId: true } }),
+        db.query.trips.findFirst({ where: eq(trips.id, tripId), columns: { title: true } }),
+      ]);
+      const tripName = trip?.title ?? "旅行";
+      await Promise.all(
+        members
+          .filter((m) => m.userId !== user.id)
+          .map((m) => createNotification({ type: "schedule_updated", userId: m.userId, tripId, payload: { actorName: user.name, tripName, entityName: updated.name } })),
+      );
+    })();
+
     return c.json(updated);
   },
 );
@@ -493,6 +520,19 @@ scheduleRoutes.delete(
       entityType: "schedule",
       entityName: existing.name,
     });
+
+    void (async () => {
+      const [members, trip] = await Promise.all([
+        db.query.tripMembers.findMany({ where: eq(tripMembers.tripId, tripId), columns: { userId: true } }),
+        db.query.trips.findFirst({ where: eq(trips.id, tripId), columns: { title: true } }),
+      ]);
+      const tripName = trip?.title ?? "旅行";
+      await Promise.all(
+        members
+          .filter((m) => m.userId !== user.id)
+          .map((m) => createNotification({ type: "schedule_deleted", userId: m.userId, tripId, payload: { actorName: user.name, tripName } })),
+      );
+    })();
 
     return c.json({ ok: true });
   },

@@ -1,8 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestApp, TEST_USER } from "./test-helpers";
 
-const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbSelect } =
-  vi.hoisted(() => ({
+const {
+  mockGetSession,
+  mockDbQuery,
+  mockDbInsert,
+  mockDbUpdate,
+  mockDbDelete,
+  mockDbSelect,
+  mockCreateNotification,
+} = vi.hoisted(() => ({
     mockGetSession: vi.fn(),
     mockDbQuery: {
       schedules: {
@@ -20,12 +27,14 @@ const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, m
       },
       tripMembers: {
         findFirst: vi.fn(),
+        findMany: vi.fn(),
       },
     },
     mockDbInsert: vi.fn(),
     mockDbUpdate: vi.fn(),
     mockDbDelete: vi.fn(),
     mockDbSelect: vi.fn(),
+    mockCreateNotification: vi.fn(),
   }));
 
 vi.mock("../lib/auth", () => ({
@@ -51,6 +60,10 @@ vi.mock("../db/index", () => {
 
 vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../lib/notifications", () => ({
+  createNotification: (...args: unknown[]) => mockCreateNotification(...args),
 }));
 
 import { MAX_SCHEDULES_PER_TRIP } from "@sugara/shared";
@@ -85,6 +98,9 @@ describe("Schedule routes", () => {
       userId: fakeUser.id,
       role: "owner",
     });
+    mockDbQuery.tripMembers.findMany.mockResolvedValue([]);
+    mockDbQuery.trips.findFirst.mockResolvedValue({ title: "テスト旅行" });
+    mockCreateNotification.mockResolvedValue(undefined);
   });
 
   describe(`GET ${basePath}`, () => {

@@ -5,6 +5,7 @@ import { Check, Copy, ExternalLink, RefreshCw, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import { NotificationPreferencesSection } from "@/components/notification-preferences-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -70,6 +71,7 @@ export default function SettingsPage() {
           <ProfileSection defaultName={user.name ?? ""} />
           <UsernameSection defaultUsername={user.displayUsername ?? user.username ?? ""} />
           <PasswordSection username={user.username ?? ""} />
+          <NotificationPreferencesSection />
           <DeleteAccountSection username={user.username ?? ""} />
           <div className="flex flex-wrap select-none items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <Link

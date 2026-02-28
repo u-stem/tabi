@@ -1,19 +1,19 @@
+import type { NotificationType } from "@sugara/shared";
 import { and, eq } from "drizzle-orm";
 import webpush from "web-push";
 import { db } from "../db/index";
-import {
-  notificationPreferences,
-  notifications,
-  pushSubscriptions,
-} from "../db/schema";
+import { notificationPreferences, notifications, pushSubscriptions } from "../db/schema";
 import { env } from "./env";
-import type { NotificationType } from "@sugara/shared";
 
-webpush.setVapidDetails(
-  env.VAPID_SUBJECT,
-  env.VAPID_PUBLIC_KEY,
-  env.VAPID_PRIVATE_KEY,
-);
+// Lazy VAPID setup: configured on first push send to avoid crashing at import
+// when VAPID env vars are absent (e.g. in unit tests).
+let vapidConfigured = false;
+function ensureVapid() {
+  if (!vapidConfigured && env.VAPID_PUBLIC_KEY) {
+    webpush.setVapidDetails(env.VAPID_SUBJECT, env.VAPID_PUBLIC_KEY, env.VAPID_PRIVATE_KEY);
+    vapidConfigured = true;
+  }
+}
 
 export type NotificationPayload = {
   actorName?: string;
@@ -103,16 +103,11 @@ function buildPushMessage(
   }
 }
 
-async function createNotificationInternal(
-  params: CreateNotificationParams,
-): Promise<void> {
+async function createNotificationInternal(params: CreateNotificationParams): Promise<void> {
   const { type, userId, tripId, payload } = params;
 
   const pref = await db.query.notificationPreferences.findFirst({
-    where: and(
-      eq(notificationPreferences.userId, userId),
-      eq(notificationPreferences.type, type),
-    ),
+    where: and(eq(notificationPreferences.userId, userId), eq(notificationPreferences.type, type)),
   });
 
   const inAppEnabled = pref?.inApp ?? true;
@@ -133,6 +128,7 @@ async function sendPushToUser(
   payload: NotificationPayload,
   tripId?: string,
 ): Promise<void> {
+  ensureVapid();
   const subs = await db.query.pushSubscriptions.findMany({
     where: eq(pushSubscriptions.userId, userId),
   });

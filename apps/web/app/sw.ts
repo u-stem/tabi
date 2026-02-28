@@ -38,3 +38,31 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+// Push notification handlers (separate from serwist)
+self.addEventListener("push", (event) => {
+  if (!event.data) return;
+  const data = event.data.json() as { title: string; body: string; url: string };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, {
+      body: data.body,
+      icon: "/icon-192x192.png",
+      badge: "/icon-72x72.png",
+      data: { url: data.url },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      const url = (event.notification.data as { url: string }).url;
+      const existing = clientList.find((c) => c.url.includes(url));
+      if (existing) return existing.focus();
+      return self.clients.openWindow(url);
+    }),
+  );
+});

@@ -121,6 +121,13 @@ export default function AdminPage() {
       <main className="container max-w-4xl space-y-8 py-8">
         {isLoading && <p className="text-center text-sm text-muted-foreground">読み込み中...</p>}
 
+        {error &&
+          !(error instanceof ApiError && (error.status === 403 || error.status === 401)) && (
+            <p className="text-center text-sm text-destructive">
+              エラー: {error instanceof Error ? error.message : "不明なエラー"}
+            </p>
+          )}
+
         {data && (
           <>
             <Section title="ユーザー">

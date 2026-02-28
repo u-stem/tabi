@@ -28,51 +28,48 @@ function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
 }
 
 async function fetchStats(sevenDaysAgo: Date, thirtyDaysAgo: Date) {
-  const [
-    totalUsersResult,
-    guestUsersResult,
-    newUsers7dResult,
-    newUsers30dResult,
-    tripStatusResult,
-    newTrips7dResult,
-    totalSchedulesResult,
-    totalSouvenirsResult,
-    mauResult,
-    dbSizeResult,
-  ] = await Promise.all([
-    // Non-guest users
-    db.select({ count: count() }).from(users).where(eq(users.isAnonymous, false)),
-    // Guest users
-    db.select({ count: count() }).from(users).where(eq(users.isAnonymous, true)),
-    // New non-guest users in last 7 days
-    db
-      .select({ count: count() })
-      .from(users)
-      .where(and(eq(users.isAnonymous, false), gte(users.createdAt, sevenDaysAgo))),
-    // New non-guest users in last 30 days
-    db
-      .select({ count: count() })
-      .from(users)
-      .where(and(eq(users.isAnonymous, false), gte(users.createdAt, thirtyDaysAgo))),
-    // Trips grouped by status
-    db.select({ status: trips.status, count: count() }).from(trips).groupBy(trips.status),
-    // New trips in last 7 days
-    db.select({ count: count() }).from(trips).where(gte(trips.createdAt, sevenDaysAgo)),
-    // Total schedules
-    db.select({ count: count() }).from(schedules),
-    // Total souvenir items
-    db.select({ count: count() }).from(souvenirItems),
-    // MAU: distinct users who created a session in the last 30 days.
-    // COUNT(DISTINCT) in DB is far cheaper than SELECT DISTINCT + JS count.
-    // Uses createdAt because updatedAt was added manually and has NULL for all existing rows.
-    db
-      .select({ count: countDistinct(sessions.userId) })
-      .from(sessions)
-      .where(gte(sessions.createdAt, thirtyDaysAgo)),
-    // DB size in bytes. pg_database_size returns bigint; postgres.js serializes
-    // bigint as string, so Number() conversion is safe for sizes below 2^53.
-    db.execute(sql`SELECT pg_database_size(current_database()) AS size`),
-  ]);
+  // Run sequentially rather than via Promise.all to avoid Supavisor (Supabase's
+  // Transaction Pooler) pipeline stalls. Concurrent queries cause PostgreSQL to enter
+  // ClientRead wait — Supavisor finishes the query but doesn't forward results back —
+  // leading to indefinite hangs. Sequential execution avoids pipelining entirely.
+  const totalUsersResult = await db
+    .select({ count: count() })
+    .from(users)
+    .where(eq(users.isAnonymous, false));
+  const guestUsersResult = await db
+    .select({ count: count() })
+    .from(users)
+    .where(eq(users.isAnonymous, true));
+  const newUsers7dResult = await db
+    .select({ count: count() })
+    .from(users)
+    .where(and(eq(users.isAnonymous, false), gte(users.createdAt, sevenDaysAgo)));
+  const newUsers30dResult = await db
+    .select({ count: count() })
+    .from(users)
+    .where(and(eq(users.isAnonymous, false), gte(users.createdAt, thirtyDaysAgo)));
+  const tripStatusResult = await db
+    .select({ status: trips.status, count: count() })
+    .from(trips)
+    .groupBy(trips.status);
+  const newTrips7dResult = await db
+    .select({ count: count() })
+    .from(trips)
+    .where(gte(trips.createdAt, sevenDaysAgo));
+  const totalSchedulesResult = await db.select({ count: count() }).from(schedules);
+  const totalSouvenirsResult = await db.select({ count: count() }).from(souvenirItems);
+  // MAU: distinct users who created a session in the last 30 days.
+  // COUNT(DISTINCT) in DB is far cheaper than SELECT DISTINCT + JS count.
+  // Uses createdAt because updatedAt was added manually and has NULL for all existing rows.
+  const mauResult = await db
+    .select({ count: countDistinct(sessions.userId) })
+    .from(sessions)
+    .where(gte(sessions.createdAt, thirtyDaysAgo));
+  // DB size in bytes. pg_database_size returns bigint; postgres.js serializes
+  // bigint as string, so Number() conversion is safe for sizes below 2^53.
+  const dbSizeResult = await db.execute(
+    sql`SELECT pg_database_size(current_database()) AS size`,
+  );
 
   return {
     totalUsersResult,

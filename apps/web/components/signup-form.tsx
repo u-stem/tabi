@@ -72,7 +72,12 @@ export function SignupForm() {
       password,
     });
     if (result.error) {
-      setError(translateAuthError(result.error, MSG.AUTH_SIGNUP_FAILED));
+      // 403 = signup disabled by admin
+      const msg =
+        result.error.status === 403
+          ? MSG.AUTH_SIGNUP_DISABLED
+          : translateAuthError(result.error, MSG.AUTH_SIGNUP_FAILED);
+      setError(msg);
       setLoading(false);
       return;
     }

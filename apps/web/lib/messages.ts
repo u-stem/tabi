@@ -97,6 +97,9 @@ export const MSG = {
   SETTINGS_AVATAR_RESET: "アバターをリセットしました",
 
   // Auth
+  AUTH_SIGNUP_DISABLED: "現在、新規利用の受付を停止しています",
+  AUTH_SIGNUP_DISABLED_DETAIL:
+    "現在、新規アカウントの作成を受け付けていません。ゲストとして引き続きご利用いただけます。",
   AUTH_LOGIN_FAILED: "ログインに失敗しました",
   AUTH_LOGIN_SUCCESS: "ログインしました",
   AUTH_LOGOUT_FAILED: "ログアウトに失敗しました",

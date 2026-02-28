@@ -1,9 +1,13 @@
+import { getAppSettings } from "@sugara/api/lib/app-settings";
 import { ArrowRight, LogIn } from "lucide-react";
 import Link from "next/link";
+import { MSG } from "@/lib/messages";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { signupEnabled } = await getAppSettings();
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="container flex h-14 items-center">
@@ -17,20 +21,32 @@ export default function HomePage() {
         <p className="mt-4 max-w-lg text-base text-muted-foreground sm:text-lg">
           旅行の計画を作成・共有できる共同編集アプリ。
         </p>
-        <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-          <Button asChild size="lg">
-            <Link href="/auth/signup">
-              <ArrowRight className="h-4 w-4" />
-              新規登録
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/auth/login">
-              <LogIn className="h-4 w-4" />
-              ログイン
-            </Link>
-          </Button>
-        </div>
+        {signupEnabled ? (
+          <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+            <Button asChild size="lg">
+              <Link href="/auth/signup">
+                <ArrowRight className="h-4 w-4" />
+                新規登録
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/auth/login">
+                <LogIn className="h-4 w-4" />
+                ログイン
+              </Link>
+            </Button>
+          </div>
+        ) : (
+          <div className="mt-8 flex flex-col items-center gap-4">
+            <p className="text-sm text-muted-foreground">{MSG.AUTH_SIGNUP_DISABLED}</p>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/auth/login">
+                <LogIn className="h-4 w-4" />
+                ログイン
+              </Link>
+            </Button>
+          </div>
+        )}
       </main>
 
       <footer className="container flex flex-wrap items-center justify-center gap-x-4 gap-y-1 py-4 text-sm text-muted-foreground">

@@ -89,12 +89,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export default function AdminPage() {
-  const { data, isLoading, error } = useQuery({
+  const { data, isLoading, error, dataUpdatedAt } = useQuery({
     queryKey: queryKeys.admin.stats(),
     queryFn: () => api<AdminStatsResponse>("/api/admin/stats"),
+    staleTime: 5 * 60 * 1000,
+    retry: (failureCount, err) => {
+      if (err instanceof ApiError && (err.status === 403 || err.status === 401)) return false;
+      return failureCount < 3;
+    },
   });
 
   const isForbidden = error instanceof ApiError && error.status === 403;
+  const updatedAt = dataUpdatedAt > 0 ? new Date(dataUpdatedAt).toLocaleTimeString() : null;
 
   return (
     <div className="min-h-screen">
@@ -102,6 +108,9 @@ export default function AdminPage() {
         <div className="container flex h-14 items-center gap-3">
           <Logo />
           <span className="text-sm font-medium text-muted-foreground">管理ダッシュボード</span>
+          {updatedAt && (
+            <span className="ml-auto text-xs text-muted-foreground">最終更新: {updatedAt}</span>
+          )}
         </div>
       </header>
 

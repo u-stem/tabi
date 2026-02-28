@@ -277,4 +277,32 @@ describe("Poll share routes", () => {
       expect(res.status).toBe(200);
     });
   });
+
+  describe("GET /api/polls/shared/:token rate limiting", () => {
+    it("returns 429 after 30 requests from the same IP", async () => {
+      mockDbQuery.schedulePolls.findFirst.mockResolvedValue({
+        id: "poll-1",
+        trip: { title: "Trip Poll", destination: "Kyoto" },
+        note: null,
+        status: "open",
+        deadline: null,
+        confirmedOptionId: null,
+        shareTokenExpiresAt: new Date("2099-01-01"),
+        options: [],
+        participants: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      const app = createTestApp(pollShareRoutes, "/");
+      const headers = { "x-forwarded-for": "10.0.0.2" };
+
+      for (let i = 0; i < 30; i++) {
+        await app.request("/api/polls/shared/valid-token", { headers });
+      }
+
+      const res = await app.request("/api/polls/shared/valid-token", { headers });
+      expect(res.status).toBe(429);
+    });
+  });
 });

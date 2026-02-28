@@ -3,11 +3,14 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { schedulePolls } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
+import { rateLimitByIp } from "../middleware/rate-limit";
 
 const pollShareRoutes = new Hono();
 
+const sharedPollRateLimit = rateLimitByIp({ window: 60, max: 30 });
+
 // Get shared poll (no auth)
-pollShareRoutes.get("/api/polls/shared/:token", async (c) => {
+pollShareRoutes.get("/api/polls/shared/:token", sharedPollRateLimit, async (c) => {
   const token = c.req.param("token");
 
   const poll = await db.query.schedulePolls.findFirst({

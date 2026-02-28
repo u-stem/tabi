@@ -1,8 +1,10 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
+import { toast } from "sonner";
 import { Logo } from "@/components/logo";
+import { Switch } from "@/components/ui/switch";
 import { ApiError, api } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -89,7 +91,11 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
+type AdminSettingsResponse = { signupEnabled: boolean };
+
 export default function AdminPage() {
+  const queryClient = useQueryClient();
+
   const { data, isLoading, error, dataUpdatedAt } = useQuery({
     queryKey: queryKeys.admin.stats(),
     queryFn: () => api<AdminStatsResponse>("/api/admin/stats"),
@@ -97,6 +103,29 @@ export default function AdminPage() {
     retry: (failureCount, err) => {
       if (err instanceof ApiError && (err.status === 403 || err.status === 401)) return false;
       return failureCount < 3;
+    },
+  });
+
+  const { data: settings } = useQuery({
+    queryKey: queryKeys.admin.settings(),
+    queryFn: () => api<AdminSettingsResponse>("/api/admin/settings"),
+    staleTime: 30 * 1000,
+  });
+
+  const toggleSignup = useMutation({
+    mutationFn: (signupEnabled: boolean) =>
+      api<AdminSettingsResponse>("/api/admin/settings", {
+        method: "PATCH",
+        body: JSON.stringify({ signupEnabled }),
+      }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.admin.settings(), updated);
+      toast.success(
+        updated.signupEnabled ? "新規利用受付を再開しました" : "新規利用受付を停止しました",
+      );
+    },
+    onError: () => {
+      toast.error("設定の変更に失敗しました");
     },
   });
 
@@ -127,6 +156,28 @@ export default function AdminPage() {
               エラー: {error instanceof Error ? error.message : "不明なエラー"}
             </p>
           )}
+
+        {settings !== undefined && (
+          <Section title="設定">
+            <div className="rounded-lg border bg-card p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-medium text-sm">新規利用受付</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {settings.signupEnabled
+                      ? "新規アカウントの作成を受け付けています"
+                      : "新規アカウントの作成を停止しています"}
+                  </p>
+                </div>
+                <Switch
+                  checked={settings.signupEnabled}
+                  disabled={toggleSignup.isPending}
+                  onCheckedChange={(checked) => toggleSignup.mutate(checked)}
+                />
+              </div>
+            </div>
+          </Section>
+        )}
 
         {data && (
           <>

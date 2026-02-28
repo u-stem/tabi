@@ -7,6 +7,13 @@ export const SOUVENIR_RECIPIENT_MAX_LENGTH = 100;
 export const SOUVENIR_URL_MAX_LENGTH = 2000;
 export const SOUVENIR_ADDRESS_MAX_LENGTH = 500;
 
+export const SOUVENIR_PRIORITY_VALUES = ["high", "medium"] as const;
+export type SouvenirPriority = (typeof SOUVENIR_PRIORITY_VALUES)[number];
+export const SOUVENIR_PRIORITY_LABELS: Record<SouvenirPriority, string> = {
+  high: "絶対",
+  medium: "できれば",
+};
+
 const souvenirUrlsSchema = z
   .array(httpUrlSchema(SOUVENIR_URL_MAX_LENGTH))
   .max(MAX_URLS_PER_SOUVENIR)
@@ -23,6 +30,7 @@ export const createSouvenirSchema = z.object({
   urls: souvenirUrlsSchema,
   addresses: souvenirAddressesSchema,
   memo: z.string().optional(),
+  priority: z.enum(SOUVENIR_PRIORITY_VALUES).nullable().optional(),
 });
 
 export const updateSouvenirSchema = z
@@ -33,6 +41,7 @@ export const updateSouvenirSchema = z
     addresses: souvenirAddressesSchema,
     memo: z.string().nullable(),
     isPurchased: z.boolean(),
+    priority: z.enum(SOUVENIR_PRIORITY_VALUES).nullable(),
   })
   .partial()
   .refine((data) => Object.keys(data).length > 0, {
@@ -49,6 +58,7 @@ export type SouvenirItem = {
   urls: string[];
   addresses: string[];
   memo: string | null;
+  priority: SouvenirPriority | null;
   isPurchased: boolean;
   createdAt: string;
   updatedAt: string;

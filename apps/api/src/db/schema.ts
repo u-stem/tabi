@@ -68,6 +68,8 @@ export const expenseSplitTypeEnum = pgEnum("expense_split_type", ["equal", "cust
 export const pollStatusEnum = pgEnum("poll_status", ["open", "confirmed", "closed"]);
 export const pollResponseEnum = pgEnum("poll_response", ["ok", "maybe", "ng"]);
 
+export const souvenirPriorityEnum = pgEnum("souvenir_priority", ["high", "medium"]);
+
 // --- Tables ---
 
 export const users = pgTable("users", {
@@ -608,6 +610,7 @@ export const souvenirItems = pgTable(
     urls: text("urls").array().notNull().default([]),
     addresses: text("addresses").array().notNull().default([]),
     memo: text("memo"),
+    priority: souvenirPriorityEnum("priority"),
     isPurchased: boolean("is_purchased").notNull().default(false),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

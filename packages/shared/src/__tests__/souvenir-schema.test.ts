@@ -49,4 +49,41 @@ describe("updateSouvenirSchema", () => {
     const result = updateSouvenirSchema.safeParse({ name: "" });
     expect(result.success).toBe(false);
   });
+
+  it("accepts priority-only update", () => {
+    const result = updateSouvenirSchema.safeParse({ priority: "high" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts priority null reset", () => {
+    const result = updateSouvenirSchema.safeParse({ priority: null });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe("createSouvenirSchema priority", () => {
+  it("accepts priority high", () => {
+    const result = createSouvenirSchema.safeParse({ name: "Tokyo banana", priority: "high" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts priority medium", () => {
+    const result = createSouvenirSchema.safeParse({ name: "Tokyo banana", priority: "medium" });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts priority null", () => {
+    const result = createSouvenirSchema.safeParse({ name: "Tokyo banana", priority: null });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts missing priority (optional)", () => {
+    const result = createSouvenirSchema.safeParse({ name: "Tokyo banana" });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid priority value", () => {
+    const result = createSouvenirSchema.safeParse({ name: "Tokyo banana", priority: "low" });
+    expect(result.success).toBe(false);
+  });
 });

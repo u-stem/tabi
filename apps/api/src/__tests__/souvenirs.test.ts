@@ -157,6 +157,26 @@ describe("POST /api/trips/:tripId/souvenirs", () => {
     expect(res.status).toBe(400);
   });
 
+  it("creates souvenir item with priority", async () => {
+    setupAuth();
+    mockCountQuery(0);
+    const created = { id: itemId, name: "Tokyo banana", priority: "high", isPurchased: false };
+    mockDbInsert.mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([created]),
+      }),
+    });
+
+    const res = await makeApp().request(`/api/trips/${tripId}/souvenirs`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: "Tokyo banana", priority: "high" }),
+    });
+    expect(res.status).toBe(201);
+    const body = await res.json();
+    expect(body.priority).toBe("high");
+  });
+
   it("returns 409 when limit reached", async () => {
     setupAuth();
     mockCountQuery(MAX_SOUVENIRS_PER_USER_PER_TRIP);
@@ -204,6 +224,35 @@ describe("PATCH /api/trips/:tripId/souvenirs/:itemId", () => {
       body: JSON.stringify({ isPurchased: true }),
     });
     expect(res.status).toBe(404);
+  });
+
+  it("resets priority to null", async () => {
+    setupAuth();
+    const existing = {
+      id: itemId,
+      name: "Tokyo banana",
+      priority: "high",
+      isPurchased: false,
+      userId: fakeUser.id,
+    };
+    mockDbQuery.souvenirItems.findFirst.mockResolvedValue(existing);
+    const updated = { ...existing, priority: null };
+    mockDbUpdate.mockReturnValue({
+      set: vi.fn().mockReturnValue({
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([updated]),
+        }),
+      }),
+    });
+
+    const res = await makeApp().request(`/api/trips/${tripId}/souvenirs/${itemId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ priority: null }),
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.priority).toBeNull();
   });
 
   it("returns 400 for empty update body", async () => {

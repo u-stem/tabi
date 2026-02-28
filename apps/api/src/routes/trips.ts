@@ -2,6 +2,7 @@ import {
   createTripSchema,
   createTripWithPollSchema,
   MAX_TRIPS_PER_USER,
+  STATUS_LABELS,
   updateTripSchema,
 } from "@sugara/shared";
 import { and, count, desc, eq, getTableColumns, ne } from "drizzle-orm";
@@ -439,7 +440,7 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
     action: "updated",
     entityType: "trip",
     entityName: updated.title,
-    detail: updatePayload.status ? `status: ${updatePayload.status}` : undefined,
+    detail: updatePayload.status ? `ステータス: ${STATUS_LABELS[updatePayload.status]}` : undefined,
   });
 
   return c.json(updated);

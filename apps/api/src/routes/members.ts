@@ -1,4 +1,9 @@
-import { addMemberSchema, MAX_MEMBERS_PER_TRIP, updateMemberRoleSchema } from "@sugara/shared";
+import {
+  addMemberSchema,
+  MAX_MEMBERS_PER_TRIP,
+  ROLE_LABELS,
+  updateMemberRoleSchema,
+} from "@sugara/shared";
 import { and, count, eq, inArray, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
@@ -158,7 +163,7 @@ memberRoutes.patch("/:tripId/members/:userId", requireTripAccess("owner"), async
     action: "role_changed",
     entityType: "member",
     entityName: existing.user.name,
-    detail: `${existing.role} → ${parsed.data.role}`,
+    detail: `${ROLE_LABELS[existing.role]} → ${ROLE_LABELS[parsed.data.role]}`,
   });
 
   return c.json({ ok: true });

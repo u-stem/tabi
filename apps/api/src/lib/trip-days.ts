@@ -89,15 +89,11 @@ export async function syncTripDays(
     .filter((u, i) => allDays[i].dayNumber !== u.dayNumber);
 
   if (updates.length > 0) {
-    const ids = updates.map((u) => u.id);
-    // Use SQL CASE expression for single-query bulk update
-    const caseParts = updates.map((u) => sql`WHEN ${u.id} THEN ${u.dayNumber}`);
-    await tx
-      .update(tripDays)
-      .set({
-        dayNumber: sql`CASE ${tripDays.id} ${sql.join(caseParts, sql` `)} END`,
-      })
-      .where(inArray(tripDays.id, ids));
+    // CASE expression causes prepared-statement issues in postgres.js; use VALUES FROM instead
+    const valuesList = updates.map((u) => sql`(${u.id}::uuid, ${u.dayNumber}::int)`);
+    await tx.execute(
+      sql`UPDATE "trip_days" SET "day_number" = v.day_number FROM (VALUES ${sql.join(valuesList, sql`, `)}) AS v(id, day_number) WHERE "trip_days"."id" = v.id`,
+    );
   }
 }
 

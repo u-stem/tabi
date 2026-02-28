@@ -285,7 +285,6 @@ export function TripActions({
             label: "印刷 / PDF",
             icon: <Printer className="h-4 w-4" />,
             href: `/trips/${tripId}/print`,
-            target: "_blank",
           },
         ]
       : []),
@@ -293,7 +292,6 @@ export function TripActions({
       label: "エクスポート",
       icon: <FileDown className="h-4 w-4" />,
       href: `/trips/${tripId}/export`,
-      target: "_blank",
     },
     ...(onEdit
       ? [
@@ -472,14 +470,14 @@ export function TripActions({
             )}
             {canEditRole && (
               <DropdownMenuItem asChild>
-                <NextLink href={`/trips/${tripId}/print`} target="_blank" rel="noopener noreferrer">
+                <NextLink href={`/trips/${tripId}/print`}>
                   <Printer />
                   印刷 / PDF
                 </NextLink>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem asChild>
-              <NextLink href={`/trips/${tripId}/export`} target="_blank" rel="noopener noreferrer">
+              <NextLink href={`/trips/${tripId}/export`}>
                 <FileDown />
                 エクスポート
               </NextLink>

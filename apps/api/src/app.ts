@@ -4,6 +4,7 @@ import { ERROR_MSG } from "./lib/constants";
 import { env } from "./lib/env";
 import { accountRoutes } from "./routes/account";
 import { activityLogRoutes } from "./routes/activity-logs";
+import { adminRoutes } from "./routes/admin";
 import { authRoutes } from "./routes/auth";
 import { bookmarkListRoutes } from "./routes/bookmark-lists";
 import { bookmarkRoutes } from "./routes/bookmarks";
@@ -70,5 +71,6 @@ app.route("/api", accountRoutes);
 app.route("/api", feedbackRoutes);
 app.route("/", shareRoutes);
 app.route("/", pollShareRoutes);
+app.route("/", adminRoutes);
 
 export { app };

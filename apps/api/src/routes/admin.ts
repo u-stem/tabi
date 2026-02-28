@@ -2,11 +2,15 @@ import { and, count, eq, gte, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { schedules, sessions, souvenirItems, trips, users } from "../db/schema";
+import { requireAuth } from "../middleware/auth";
 import { requireAdmin } from "../middleware/require-admin";
+import type { AppEnv } from "../types";
 
-const adminRoutes = new Hono();
+type TripStatus = "scheduling" | "draft" | "planned" | "active" | "completed";
 
-adminRoutes.get("/api/admin/stats", requireAdmin, async (c) => {
+const adminRoutes = new Hono<AppEnv>();
+
+adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {
   const now = new Date();
   const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -45,20 +49,26 @@ adminRoutes.get("/api/admin/stats", requireAdmin, async (c) => {
     db.select({ count: count() }).from(schedules),
     // Total souvenir items
     db.select({ count: count() }).from(souvenirItems),
-    // MAU: distinct users with a session created in last 30 days
+    // MAU: distinct users with session activity in last 30 days.
+    // updatedAt reflects session refreshes by Better Auth, capturing returning users
+    // who logged in before the window but remained active.
     db
       .selectDistinct({ userId: sessions.userId })
       .from(sessions)
-      .where(gte(sessions.createdAt, thirtyDaysAgo)),
-    // DB size in bytes
+      .where(gte(sessions.updatedAt, thirtyDaysAgo)),
+    // DB size in bytes. pg_database_size returns bigint; postgres.js serializes
+    // bigint as string, so Number() conversion is safe for sizes below 2^53.
     db.execute(sql`SELECT pg_database_size(current_database()) AS size`),
   ]);
 
   // Build trips.byStatus map
-  const statusMap = { scheduling: 0, draft: 0, planned: 0, active: 0, completed: 0 } as Record<
-    string,
-    number
-  >;
+  const statusMap: Record<TripStatus, number> = {
+    scheduling: 0,
+    draft: 0,
+    planned: 0,
+    active: 0,
+    completed: 0,
+  };
   for (const row of tripStatusResult) {
     statusMap[row.status] = Number(row.count);
   }

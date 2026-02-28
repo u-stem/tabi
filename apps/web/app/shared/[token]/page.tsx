@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { pageTitle } from "@/lib/constants";
 import { formatDateRange } from "@/lib/format";
 import { getSeason } from "@/lib/season";
+import type { SharedTripResponse } from "./_components/shared-trip-client";
 import { SharedTripClient } from "./_components/shared-trip-client";
 
 type Props = { params: Promise<{ token: string }> };
@@ -18,12 +19,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   try {
     const baseUrl = process.env.BETTER_AUTH_BASE_URL ?? "http://localhost:3000";
+    // Cache OGP data for 60s to balance freshness with server load on social crawlers
     const res = await fetch(`${baseUrl}/api/shared/${token}`, {
       next: { revalidate: 60 },
     });
     if (!res.ok) return fallback;
 
-    const trip = await res.json();
+    const trip = (await res.json()) as SharedTripResponse;
     const description = [
       trip.destination,
       trip.startDate && trip.endDate ? formatDateRange(trip.startDate, trip.endDate) : null,

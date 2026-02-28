@@ -38,7 +38,7 @@ import { supabase } from "@/lib/supabase";
 import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
 
-type SharedTripResponse = {
+export type SharedTripResponse = {
   id: string;
   title: string;
   destination: string;

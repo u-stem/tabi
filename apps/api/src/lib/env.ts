@@ -30,4 +30,13 @@ export const env = {
   get GITHUB_FEEDBACK_REPO() {
     return process.env.GITHUB_FEEDBACK_REPO;
   },
+  get VAPID_PUBLIC_KEY() {
+    return withDefault("VAPID_PUBLIC_KEY", "");
+  },
+  get VAPID_PRIVATE_KEY() {
+    return withDefault("VAPID_PRIVATE_KEY", "");
+  },
+  get VAPID_SUBJECT() {
+    return withDefault("VAPID_SUBJECT", "mailto:admin@sugara.app");
+  },
 };

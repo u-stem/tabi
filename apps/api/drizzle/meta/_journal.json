@@ -99,6 +99,13 @@
       "when": 1772409600000,
       "tag": "0013_souvenir_priority",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1772496000000,
+      "tag": "0014_app_settings",
+      "breakpoints": true
     }
   ]
 }

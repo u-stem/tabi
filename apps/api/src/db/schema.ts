@@ -625,3 +625,13 @@ export const souvenirItemsRelations = relations(souvenirItems, ({ one }) => ({
   trip: one(trips, { fields: [souvenirItems.tripId], references: [trips.id] }),
   user: one(users, { fields: [souvenirItems.userId], references: [users.id] }),
 }));
+
+// Single-row settings table. The CHECK constraint and default enforce id = 1 always.
+export const appSettings = pgTable(
+  "app_settings",
+  {
+    id: smallint("id").primaryKey().default(1),
+    signupEnabled: boolean("signup_enabled").notNull().default(true),
+  },
+  (table) => [check("app_settings_single_row", sql`${table.id} = 1`)],
+);

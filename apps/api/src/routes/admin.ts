@@ -1,7 +1,8 @@
 import { and, count, countDistinct, eq, gte, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { schedules, sessions, souvenirItems, trips, users } from "../db/schema";
+import { appSettings, schedules, sessions, souvenirItems, trips, users } from "../db/schema";
+import { getAppSettings } from "../lib/app-settings";
 import { requireAuth } from "../middleware/auth";
 import { requireAdmin } from "../middleware/require-admin";
 import type { AppEnv } from "../types";
@@ -82,6 +83,26 @@ async function fetchStats(sevenDaysAgo: Date, thirtyDaysAgo: Date) {
     dbSizeResult,
   };
 }
+
+adminRoutes.get("/api/admin/settings", requireAuth, requireAdmin, async (c) => {
+  const settings = await getAppSettings();
+  return c.json({ signupEnabled: settings.signupEnabled });
+});
+
+adminRoutes.patch("/api/admin/settings", requireAuth, requireAdmin, async (c) => {
+  const body = await c.req.json<{ signupEnabled: unknown }>();
+
+  if (typeof body.signupEnabled !== "boolean") {
+    return c.json({ error: "signupEnabled must be a boolean" }, 400);
+  }
+
+  await db
+    .update(appSettings)
+    .set({ signupEnabled: body.signupEnabled })
+    .where(eq(appSettings.id, 1));
+
+  return c.json({ signupEnabled: body.signupEnabled });
+});
 
 adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {
   const now = new Date();

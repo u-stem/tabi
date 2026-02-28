@@ -16,6 +16,7 @@ import { groupRoutes } from "./routes/groups";
 import { memberRoutes } from "./routes/members";
 import { patternRoutes } from "./routes/patterns";
 import { pollShareRoutes } from "./routes/poll-share";
+import { publicSettingsRoutes } from "./routes/public-settings";
 import { pollRoutes } from "./routes/polls";
 import { profileRoutes } from "./routes/profile";
 import { reactionRoutes } from "./routes/reactions";
@@ -71,6 +72,7 @@ app.route("/api", accountRoutes);
 app.route("/api", feedbackRoutes);
 app.route("/", shareRoutes);
 app.route("/", pollShareRoutes);
+app.route("/", publicSettingsRoutes);
 app.route("/", adminRoutes);
 
 export { app };

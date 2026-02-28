@@ -1,4 +1,4 @@
-import { and, count, eq, gte, sql } from "drizzle-orm";
+import { and, count, countDistinct, eq, gte, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { schedules, sessions, souvenirItems, trips, users } from "../db/schema";
@@ -50,9 +50,10 @@ adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {
     // Total souvenir items
     db.select({ count: count() }).from(souvenirItems),
     // MAU: distinct users active in the last 30 days.
+    // COUNT(DISTINCT) in DB is far cheaper than SELECT DISTINCT + JS count.
     // Uses updatedAt (last activity) rather than createdAt (session start) for accuracy.
     db
-      .selectDistinct({ userId: sessions.userId })
+      .select({ count: countDistinct(sessions.userId) })
       .from(sessions)
       .where(gte(sessions.updatedAt, thirtyDaysAgo)),
     // DB size in bytes. pg_database_size returns bigint; postgres.js serializes
@@ -90,7 +91,7 @@ adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {
       souvenirs: Number(totalSouvenirsResult[0]?.count ?? 0),
     },
     supabase: {
-      mau: mauResult.length,
+      mau: Number(mauResult[0]?.count ?? 0),
       dbSizeBytes: Number((dbSizeResult[0] as { size: string }).size),
     },
   });

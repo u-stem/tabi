@@ -112,33 +112,33 @@ export default function SharedTripPage() {
       <div className="min-h-screen">
         <SharedHeader />
         <div className="container max-w-3xl py-8">
-          <div className="mb-8">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-8 w-48" />
-              <Skeleton className="h-5 w-16 rounded-full" />
-            </div>
-            <div className="mt-1 flex items-center gap-3">
+          {/* Hero skeleton */}
+          <div className="mb-8 rounded-xl border bg-card px-6 py-6 shadow-sm">
+            <Skeleton className="mb-3 h-5 w-16 rounded-full" />
+            <Skeleton className="h-8 w-56" />
+            <div className="mt-3 flex items-center gap-4">
               <Skeleton className="h-4 w-20" />
               <Skeleton className="h-4 w-36" />
             </div>
           </div>
+          {/* Day card skeletons */}
           <div className="space-y-6">
             {[1, 2].map((day) => (
-              <div key={day} className="rounded-lg border bg-card p-4 sm:p-5">
-                <div className="mb-3 flex items-center gap-2">
-                  <Skeleton className="h-7 w-7 rounded-full" />
-                  <Skeleton className="h-5 w-16" />
-                  <Skeleton className="h-4 w-24" />
+              <div key={day} className="overflow-hidden rounded-xl border bg-card shadow-sm">
+                <div className="border-b bg-muted/40 px-4 py-3 sm:px-5">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 p-4 sm:p-5">
                   {[1, 2].map((s) => (
-                    <div key={s} className="rounded-md border p-3 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <Skeleton className="h-5 w-12 rounded-full" />
-                        <Skeleton className="h-4 w-28" />
-                        <Skeleton className="h-3 w-20" />
+                    <div key={s} className="flex items-start gap-3 rounded-lg px-3 py-2.5">
+                      <Skeleton className="h-5 w-5 rounded-md" />
+                      <div className="flex-1 space-y-1.5">
+                        <Skeleton className="h-4 w-40" />
+                        <Skeleton className="h-3 w-28" />
                       </div>
-                      <Skeleton className="h-3 w-36" />
                     </div>
                   ))}
                 </div>
@@ -258,6 +258,12 @@ export default function SharedTripPage() {
                       crossDayEntries={i === 0 ? crossDayEntries : undefined}
                     />
                   ))}
+                  {day.memo && (
+                    <div className="mt-3 flex items-start gap-2 border-t pt-3 text-sm text-muted-foreground">
+                      <StickyNote className="mt-0.5 h-4 w-4 shrink-0" />
+                      <p className="whitespace-pre-line">{day.memo}</p>
+                    </div>
+                  )}
                 </div>
               </section>
             );
@@ -369,10 +375,16 @@ function ScheduleCard({
     schedule.memo;
 
   return (
-    <div className={cn("flex items-start gap-2 px-3 py-2", crossDayDisplay && "bg-muted/30")}>
+    <div
+      className={cn(
+        "relative flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors",
+        crossDayDisplay ? "bg-muted/40" : "hover:bg-muted/30",
+      )}
+    >
+      {/* Dot marker — aligns with the vertical line in PatternSection */}
       <div
         className={cn(
-          "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-white",
+          "relative z-10 mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-white",
           colorClasses.bg,
         )}
       >

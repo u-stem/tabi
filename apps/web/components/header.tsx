@@ -183,10 +183,12 @@ export function Header() {
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => void switchViewMode("sp")}>
-                  <Smartphone className="h-4 w-4" />
-                  SP版で表示
-                </DropdownMenuItem>
+                {!/\/(print|export)(\/|$)/.test(pathname) && (
+                  <DropdownMenuItem onClick={() => void switchViewMode("sp")}>
+                    <Smartphone className="h-4 w-4" />
+                    SP版で表示
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="h-4 w-4" />
                   ログアウト

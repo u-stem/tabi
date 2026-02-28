@@ -661,7 +661,7 @@ export function CandidatePanel({
             )}
             {candidates.length > 0 && (
               <Button
-                variant={sortBy === "popular" ? "secondary" : "outline"}
+                variant="outline"
                 size="sm"
                 onClick={() => setSortBy(sortBy === "popular" ? "order" : "popular")}
               >

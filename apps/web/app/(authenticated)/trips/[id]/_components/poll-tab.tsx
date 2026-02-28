@@ -34,16 +34,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  ResponsiveDialog,
-  ResponsiveDialogClose,
-  ResponsiveDialogContent,
-  ResponsiveDialogDescription,
-  ResponsiveDialogFooter,
-  ResponsiveDialogHeader,
-  ResponsiveDialogTitle,
-} from "@/components/ui/responsive-dialog";
-import { useMobile } from "@/lib/hooks/use-is-mobile";
-import {
   ResponsiveAlertDialog,
   ResponsiveAlertDialogAction,
   ResponsiveAlertDialogCancel,
@@ -54,9 +44,19 @@ import {
   ResponsiveAlertDialogHeader,
   ResponsiveAlertDialogTitle,
 } from "@/components/ui/responsive-alert-dialog";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { formatDateRangeShort } from "@/lib/format";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { usePollMemo } from "@/lib/hooks/use-poll-memo";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -395,6 +395,24 @@ export function PollTab({
                 </Button>
               </div>
             </div>
+          ) : isMobile ? (
+            isOwner && isOpen ? (
+              <div className="flex w-full gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => setSelectionMode(true)}
+                >
+                  <SquareMousePointer className="h-4 w-4" />
+                  選択
+                </Button>
+                <Button size="sm" className="flex-1" onClick={() => setShowConfirmSelect(true)}>
+                  <Check className="h-4 w-4" />
+                  確定
+                </Button>
+              </div>
+            ) : null
           ) : (
             <>
               <h3 className="text-sm font-semibold">回答状況</h3>
@@ -402,7 +420,7 @@ export function PollTab({
                 <div className="ml-auto flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => setSelectionMode(true)}>
                     <SquareMousePointer className="h-4 w-4" />
-                    <span className="hidden sm:inline">選択</span>
+                    選択
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => setShowAddOption(true)}>
                     <Plus className="h-4 w-4" />
@@ -417,20 +435,7 @@ export function PollTab({
             </>
           )}
         </div>
-        <div
-          className="grid divide-y overflow-x-auto rounded-lg border"
-          style={{
-            gridTemplateColumns: [
-              selectionMode ? "auto" : null,
-              "auto",
-              poll.myParticipantId && !selectionMode ? "auto" : null,
-              "1fr",
-              isOwner && isOpen && !selectionMode ? "auto" : null,
-            ]
-              .filter(Boolean)
-              .join(" "),
-          }}
-        >
+        <div className="divide-y rounded-lg border">
           {poll.options.map((opt) => {
             const isConfirmedOption = opt.id === poll.confirmedOptionId;
             const myParticipant = poll.participants.find((p) => p.id === poll.myParticipantId);
@@ -447,31 +452,62 @@ export function PollTab({
               <div
                 key={opt.id}
                 className={cn(
-                  "col-span-full grid grid-cols-subgrid items-center gap-2 px-3 py-2",
+                  "flex flex-col px-3 gap-2",
+                  selectionMode ? "py-3" : "py-2",
                   isConfirmedOption && "bg-blue-50/50 dark:bg-blue-900/10",
                 )}
               >
-                {selectionMode && (
-                  <Checkbox
-                    checked={selectedOptionIds.has(opt.id)}
-                    onCheckedChange={() => toggleOptionSelect(opt.id)}
-                  />
-                )}
-
-                <div className="flex items-center gap-1 whitespace-nowrap">
-                  <span className="text-sm tabular-nums font-medium">
-                    {formatDateRangeShort(opt.startDate, opt.endDate)}
-                  </span>
-                  {isConfirmedOption && (
-                    <Badge
-                      variant="outline"
-                      className="border-blue-300 px-1 py-0 text-[10px] text-blue-600 dark:border-blue-700 dark:text-blue-400"
+                {/* 行1: チェックボックス・日程・カウント・削除 */}
+                <div className="flex items-center gap-2">
+                  {selectionMode && (
+                    <Checkbox
+                      checked={selectedOptionIds.has(opt.id)}
+                      onCheckedChange={() => toggleOptionSelect(opt.id)}
+                    />
+                  )}
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm tabular-nums font-medium">
+                      {formatDateRangeShort(opt.startDate, opt.endDate)}
+                    </span>
+                    {isConfirmedOption && (
+                      <Badge
+                        variant="outline"
+                        className="border-blue-300 px-1 py-0 text-[10px] text-blue-600 dark:border-blue-700 dark:text-blue-400"
+                      >
+                        確定
+                      </Badge>
+                    )}
+                  </div>
+                  {!selectionMode && (
+                    <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
+                      {counts.map(({ value, count }) => {
+                        if (count === 0) return null;
+                        const Icon = RESPONSE_ICON_COMPONENTS[value];
+                        return (
+                          <span
+                            key={value}
+                            className={`inline-flex items-center gap-0.5 ${RESPONSE_STYLES[value].countClassName}`}
+                          >
+                            <Icon className="h-3 w-3" />
+                            {count}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
+                  {!selectionMode && isOwner && isOpen && !isMobile && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                      onClick={() => setDeleteOptionId(opt.id)}
                     >
-                      確定
-                    </Badge>
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   )}
                 </div>
 
+                {/* 行2: 回答ボタン（均等配置） */}
                 {!selectionMode && poll.myParticipantId && (
                   <div className="flex gap-1">
                     {(["ok", "maybe", "ng"] as const).map((value) => {
@@ -482,7 +518,7 @@ export function PollTab({
                         <button
                           key={value}
                           type="button"
-                          className={`flex h-7 w-9 items-center justify-center rounded border transition-colors ${
+                          className={`flex h-8 flex-1 items-center justify-center rounded border transition-colors ${
                             isActive
                               ? config.activeClassName
                               : "border-muted-foreground/20 text-muted-foreground hover:bg-accent"
@@ -495,33 +531,6 @@ export function PollTab({
                       );
                     })}
                   </div>
-                )}
-
-                <div className="flex items-center justify-end gap-2 text-sm text-muted-foreground">
-                  {counts.map(({ value, count }) => {
-                    if (count === 0) return null;
-                    const Icon = RESPONSE_ICON_COMPONENTS[value];
-                    return (
-                      <span
-                        key={value}
-                        className={`inline-flex items-center gap-0.5 ${RESPONSE_STYLES[value].countClassName}`}
-                      >
-                        <Icon className="h-3 w-3" />
-                        {count}
-                      </span>
-                    );
-                  })}
-                </div>
-
-                {!selectionMode && isOwner && isOpen && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
-                    onClick={() => setDeleteOptionId(opt.id)}
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </Button>
                 )}
               </div>
             );
@@ -567,12 +576,12 @@ export function PollTab({
           </div>
           <ResponsiveDialogFooter>
             <ResponsiveDialogClose asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline">
+                <X className="h-4 w-4" />
                 キャンセル
               </Button>
             </ResponsiveDialogClose>
             <Button
-              size="sm"
               onClick={handleAddOption}
               disabled={!pendingRange?.from || addOptionMutation.isPending}
             >

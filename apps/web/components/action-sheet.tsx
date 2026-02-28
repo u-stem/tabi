@@ -10,6 +10,7 @@ interface ActionSheetAction {
   icon?: ReactNode;
   onClick?: () => void;
   href?: string;
+  target?: string;
   variant?: "default" | "destructive";
 }
 
@@ -45,7 +46,12 @@ export function ActionSheet({ open, onOpenChange, actions }: ActionSheetProps) {
                 className="h-12 w-full justify-start text-base"
                 asChild
               >
-                <a href={action.href} onClick={() => onOpenChange(false)}>
+                <a
+                  href={action.href}
+                  target={action.target}
+                  rel={action.target === "_blank" ? "noopener noreferrer" : undefined}
+                  onClick={() => onOpenChange(false)}
+                >
                   {action.icon && <span className="mr-2">{action.icon}</span>}
                   {action.label}
                 </a>

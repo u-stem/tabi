@@ -4,6 +4,7 @@ import type { SouvenirItem } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckSquare,
+  ChevronDown,
   ExternalLink,
   MapPin,
   Pencil,
@@ -14,6 +15,7 @@ import {
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { Collapsible as CollapsiblePrimitive } from "radix-ui";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
@@ -69,6 +71,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
+  const [purchasedOpen, setPurchasedOpen] = useState(false);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.souvenirs.list(tripId),
@@ -215,40 +218,64 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
           <p className="text-sm text-muted-foreground">お土産リストはまだありません</p>
         </div>
       ) : (
-        <div className="space-y-1">
-          {remaining.map((item) => (
-            <SouvenirItemRow
-              key={item.id}
-              item={item}
-              isMobile={isMobile}
-              selectMode={selectMode}
-              selected={selectedIds.has(item.id)}
-              onSelect={() => toggleSelect(item.id)}
-              onToggle={(isPurchased) => toggleMutation.mutate({ id: item.id, isPurchased })}
-              onEdit={() => {
-                setEditingItem(item);
-                setDialogOpen(true);
-              }}
-              onDelete={() => setDeleteTarget(item)}
-            />
-          ))}
-          {purchased.length > 0 && remaining.length > 0 && <div className="my-2 border-t" />}
-          {purchased.map((item) => (
-            <SouvenirItemRow
-              key={item.id}
-              item={item}
-              isMobile={isMobile}
-              selectMode={selectMode}
-              selected={selectedIds.has(item.id)}
-              onSelect={() => toggleSelect(item.id)}
-              onToggle={(isPurchased) => toggleMutation.mutate({ id: item.id, isPurchased })}
-              onEdit={() => {
-                setEditingItem(item);
-                setDialogOpen(true);
-              }}
-              onDelete={() => setDeleteTarget(item)}
-            />
-          ))}
+        <div>
+          {remaining.length > 0 && (
+            <div className="space-y-1">
+              {remaining.map((item) => (
+                <SouvenirItemRow
+                  key={item.id}
+                  item={item}
+                  isMobile={isMobile}
+                  selectMode={selectMode}
+                  selected={selectedIds.has(item.id)}
+                  onSelect={() => toggleSelect(item.id)}
+                  onToggle={(isPurchased) => toggleMutation.mutate({ id: item.id, isPurchased })}
+                  onEdit={() => {
+                    setEditingItem(item);
+                    setDialogOpen(true);
+                  }}
+                  onDelete={() => setDeleteTarget(item)}
+                />
+              ))}
+            </div>
+          )}
+          {purchased.length > 0 && (
+            <CollapsiblePrimitive.Root
+              open={purchasedOpen || selectMode}
+              onOpenChange={(open) => !selectMode && setPurchasedOpen(open)}
+              className={cn("rounded-md border bg-muted/50", remaining.length > 0 && "mt-2")}
+            >
+              <CollapsiblePrimitive.Trigger
+                disabled={selectMode}
+                className="flex w-full items-center gap-1 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/80 disabled:pointer-events-none [&[data-state=open]>svg]:rotate-180"
+              >
+                <ChevronDown className="h-3 w-3 transition-transform duration-200" />
+                購入済み ({purchased.length}件)
+              </CollapsiblePrimitive.Trigger>
+              <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
+                <div className="space-y-1 border-t p-2">
+                  {purchased.map((item) => (
+                    <SouvenirItemRow
+                      key={item.id}
+                      item={item}
+                      isMobile={isMobile}
+                      selectMode={selectMode}
+                      selected={selectedIds.has(item.id)}
+                      onSelect={() => toggleSelect(item.id)}
+                      onToggle={(isPurchased) =>
+                        toggleMutation.mutate({ id: item.id, isPurchased })
+                      }
+                      onEdit={() => {
+                        setEditingItem(item);
+                        setDialogOpen(true);
+                      }}
+                      onDelete={() => setDeleteTarget(item)}
+                    />
+                  ))}
+                </div>
+              </CollapsiblePrimitive.Content>
+            </CollapsiblePrimitive.Root>
+          )}
         </div>
       )}
 
@@ -342,7 +369,7 @@ function SouvenirItemRow({
     <div
       className={cn(
         "flex items-center gap-2 rounded-md border p-3",
-        item.isPurchased && !selectMode ? "opacity-50" : "",
+        item.isPurchased && !selected ? "opacity-50" : "",
         selectMode &&
           "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         selectMode && selected && SELECTED_RING,
@@ -373,9 +400,7 @@ function SouvenirItemRow({
         />
       )}
       <div className="min-w-0 flex-1">
-        <p
-          className={`text-sm font-medium ${item.isPurchased && !selectMode ? "line-through" : ""}`}
-        >
+        <p className={`text-sm font-medium ${item.isPurchased && !selected ? "line-through" : ""}`}>
           {item.name}
         </p>
         {(item.recipient || item.addresses.length > 0 || item.urls.length > 0 || item.memo) && (

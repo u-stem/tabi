@@ -66,7 +66,7 @@ export function DayPickerDrawer({
         </DrawerHeader>
         <div className="max-h-[50dvh] overflow-y-auto overscroll-contain" role="radiogroup">
           {days.map((day) => {
-            const dateStr = format(parseISO(day.date), "M/d (E)", { locale: ja });
+            const dateStr = format(parseISO(day.date), "M月d日 (E)", { locale: ja });
             return (
               <label
                 key={day.id}

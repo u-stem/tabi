@@ -126,7 +126,7 @@ export function stripProtocol(url: string): string {
 export function formatDateWithDay(dateStr: string): string {
   const d = parse(dateStr, "yyyy-MM-dd", new Date());
   if (!isValid(d)) return dateStr;
-  return format(d, "M/d (E)", { locale: ja });
+  return format(d, "M月d日 (E)", { locale: ja });
 }
 
 /** Format a date range like "2/7 (土) - 2/8 (日)" or single date "2/7 (土)" */

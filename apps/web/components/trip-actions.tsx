@@ -6,12 +6,16 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
   Bookmark,
+  CalendarCheck,
   Check,
+  CheckCircle,
   FileDown,
   History,
   Link,
   MoreHorizontal,
   Pencil,
+  PenLine,
+  Plane,
   Printer,
   RefreshCw,
   Trash2,
@@ -21,7 +25,7 @@ import {
 import dynamic from "next/dynamic";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
 const MemberDialog = dynamic(() =>
@@ -87,6 +91,13 @@ type TripActionsProps = {
 const statuses = (Object.entries(STATUS_LABELS) as [TripStatus, string][]).filter(
   ([value]) => value !== "scheduling",
 );
+
+const STATUS_ICONS: Record<string, ReactNode> = {
+  draft: <PenLine className="h-4 w-4" />,
+  planned: <CalendarCheck className="h-4 w-4" />,
+  active: <Plane className="h-4 w-4" />,
+  completed: <CheckCircle className="h-4 w-4" />,
+};
 
 export function TripActions({
   tripId,
@@ -271,6 +282,7 @@ export function TripActions({
             label: "印刷 / PDF",
             icon: <Printer className="h-4 w-4" />,
             href: `/trips/${tripId}/print`,
+            target: "_blank",
           },
         ]
       : []),
@@ -278,6 +290,7 @@ export function TripActions({
       label: "エクスポート",
       icon: <FileDown className="h-4 w-4" />,
       href: `/trips/${tripId}/export`,
+      target: "_blank",
     },
     ...(onEdit
       ? [
@@ -481,21 +494,23 @@ export function TripActions({
               <Button
                 key={value}
                 variant={value === status ? "default" : "outline"}
-                className="h-12 w-full text-base"
+                className="h-12 w-full justify-start text-base"
                 onClick={() => {
                   handleStatusChange(value);
                   setStatusSheetOpen(false);
                 }}
               >
-                {value === status && <Check className="mr-2 h-4 w-4" />}
+                <span className="mr-2">{STATUS_ICONS[value]}</span>
                 {label}
+                {value === status && <Check className="ml-auto h-4 w-4" />}
               </Button>
             ))}
             <Button
               variant="outline"
-              className="mt-1 h-12 w-full text-base"
+              className="mt-1 h-12 w-full justify-start text-base"
               onClick={() => setStatusSheetOpen(false)}
             >
+              <X className="mr-2 h-4 w-4" />
               キャンセル
             </Button>
           </div>

@@ -3,11 +3,17 @@
 import type { TripStatus } from "@sugara/shared";
 import { STATUS_LABELS } from "@sugara/shared";
 import {
-  ArrowUpDown,
+  CalendarCheck,
+  CalendarClock,
+  CheckCircle,
   ChevronDown,
+  Clock,
   Copy,
   ListFilter,
   MoreHorizontal,
+  PenLine,
+  Plane,
+  PlaneTakeoff,
   SquareMousePointer,
   Trash2,
   X,
@@ -71,18 +77,26 @@ type TripToolbarProps = {
   deleteLabel?: string;
 };
 
+const STATUS_ICONS: Record<string, ReactNode> = {
+  scheduling: <CalendarClock className="h-4 w-4" />,
+  draft: <PenLine className="h-4 w-4" />,
+  planned: <CalendarCheck className="h-4 w-4" />,
+  active: <Plane className="h-4 w-4" />,
+  completed: <CheckCircle className="h-4 w-4" />,
+};
+
 const statusFilters: { value: StatusFilter; label: string; icon: ReactNode }[] = [
   { value: "all", label: "すべて", icon: <ListFilter className="h-4 w-4" /> },
   ...Object.entries(STATUS_LABELS).map(([value, label]) => ({
     value: value as TripStatus,
     label,
-    icon: <ListFilter className="h-4 w-4" />,
+    icon: STATUS_ICONS[value],
   })),
 ];
 
 const sortOptions: { value: SortKey; label: string; icon: ReactNode }[] = [
-  { value: "updatedAt", label: "更新日", icon: <ArrowUpDown className="h-4 w-4" /> },
-  { value: "startDate", label: "出発日", icon: <ArrowUpDown className="h-4 w-4" /> },
+  { value: "updatedAt", label: "更新日", icon: <Clock className="h-4 w-4" /> },
+  { value: "startDate", label: "出発日", icon: <PlaneTakeoff className="h-4 w-4" /> },
 ];
 
 export function TripToolbar({
@@ -114,7 +128,6 @@ export function TripToolbar({
   const isMobile = useMobile();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [statusSheetOpen, setStatusSheetOpen] = useState(false);
-  const [sortSheetOpen, setSortSheetOpen] = useState(false);
   const currentStatusLabel = statusFilters.find((f) => f.value === statusFilter)?.label ?? "すべて";
   const currentSortLabel = sortOptions.find((s) => s.value === sortKey)?.label ?? "更新日";
 
@@ -281,51 +294,26 @@ export function TripToolbar({
             <SelectContent>
               {statusFilters.map((f) => (
                 <SelectItem key={f.value} value={f.value}>
-                  {f.label}
+                  <span className="flex items-center gap-2">
+                    {f.icon}
+                    {f.label}
+                  </span>
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
         ))}
-      {!hideSortKey &&
-        (isMobile ? (
-          <>
-            <button
-              type="button"
-              aria-label="並び替え"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                setSortSheetOpen(true);
-              }}
-              className="flex h-8 shrink-0 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
-            >
-              {currentSortLabel}
-              <ChevronDown className="h-3 w-3 text-muted-foreground" />
-            </button>
-            <ActionSheet
-              open={sortSheetOpen}
-              onOpenChange={setSortSheetOpen}
-              actions={sortOptions.map((s) => ({
-                label: s.label,
-                icon: s.icon,
-                onClick: () => onSortKeyChange(s.value),
-              }))}
-            />
-          </>
-        ) : (
-          <Select value={sortKey} onValueChange={(v) => onSortKeyChange(v as SortKey)}>
-            <SelectTrigger className="h-8 w-20 text-xs" aria-label="並び替え">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {sortOptions.map((s) => (
-                <SelectItem key={s.value} value={s.value}>
-                  {s.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ))}
+      {!hideSortKey && (
+        <button
+          type="button"
+          aria-label="並び替え"
+          onClick={() => onSortKeyChange(sortKey === "updatedAt" ? "startDate" : "updatedAt")}
+          className="flex h-8 shrink-0 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
+        >
+          {sortOptions.find((s) => s.value === sortKey)?.icon}
+          {currentSortLabel}
+        </button>
+      )}
       {onSelectionModeChange && (
         <div className="ml-auto shrink-0">
           <Button

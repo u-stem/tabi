@@ -39,7 +39,7 @@ export function ShareDialog({ open, onOpenChange, shareUrl, expiresAt }: ShareDi
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
-      <ResponsiveDialogContent className="max-w-sm">
+      <ResponsiveDialogContent className="sm:max-w-sm">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>共有リンク</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>

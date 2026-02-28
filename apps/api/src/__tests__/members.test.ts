@@ -1,23 +1,34 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestApp } from "./test-helpers";
 
-const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbSelect } =
-  vi.hoisted(() => ({
-    mockGetSession: vi.fn(),
-    mockDbQuery: {
-      tripMembers: {
-        findFirst: vi.fn(),
-        findMany: vi.fn(),
-      },
-      users: {
-        findFirst: vi.fn(),
-      },
+const {
+  mockGetSession,
+  mockDbQuery,
+  mockDbInsert,
+  mockDbUpdate,
+  mockDbDelete,
+  mockDbSelect,
+  mockCreateNotification,
+} = vi.hoisted(() => ({
+  mockGetSession: vi.fn(),
+  mockDbQuery: {
+    tripMembers: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
-    mockDbInsert: vi.fn(),
-    mockDbUpdate: vi.fn(),
-    mockDbDelete: vi.fn(),
-    mockDbSelect: vi.fn(),
-  }));
+    users: {
+      findFirst: vi.fn(),
+    },
+    trips: {
+      findFirst: vi.fn(),
+    },
+  },
+  mockDbInsert: vi.fn(),
+  mockDbUpdate: vi.fn(),
+  mockDbDelete: vi.fn(),
+  mockDbSelect: vi.fn(),
+  mockCreateNotification: vi.fn(),
+}));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -44,6 +55,10 @@ vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("../lib/notifications", () => ({
+  createNotification: (...args: unknown[]) => mockCreateNotification(...args),
+}));
+
 import { MAX_MEMBERS_PER_TRIP } from "@sugara/shared";
 import { memberRoutes } from "../routes/members";
 
@@ -66,6 +81,8 @@ describe("Member routes", () => {
       userId: fakeUserId,
       role: "owner",
     });
+    mockDbQuery.trips.findFirst.mockResolvedValue({ title: "テスト旅行" });
+    mockCreateNotification.mockResolvedValue(undefined);
     // Default: count query returns 0 (under limit / no expenses)
     const mockWhere = vi.fn().mockResolvedValue([{ count: 0 }]);
     mockDbSelect.mockReturnValue({
@@ -225,6 +242,30 @@ describe("Member routes", () => {
       });
 
       expect(res.status).toBe(409);
+    });
+
+    it("POST: メンバー追加時に createNotification を呼ぶ", async () => {
+      mockDbQuery.users.findFirst.mockResolvedValue({
+        id: fakeUser2Id,
+        name: "New Member",
+      });
+      mockDbQuery.tripMembers.findFirst
+        .mockResolvedValueOnce({ tripId, userId: fakeUserId, role: "owner" })
+        .mockResolvedValueOnce(undefined);
+      mockDbInsert.mockReturnValue({
+        values: vi.fn().mockResolvedValue(undefined),
+      });
+
+      const app = createTestApp(memberRoutes, "/api/trips");
+      await app.request(basePath, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: fakeUser2Id, role: "editor" }),
+      });
+
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        expect.objectContaining({ type: "member_added" }),
+      );
     });
   });
 

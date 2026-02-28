@@ -7,8 +7,9 @@ import {
 import { and, count, eq, inArray, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { expenseSplits, expenses, tripMembers, users } from "../db/schema";
+import { expenseSplits, expenses, tripMembers, trips, users } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
+import { createNotification } from "../lib/notifications";
 import { ERROR_MSG } from "../lib/constants";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
@@ -118,6 +119,17 @@ memberRoutes.post("/:tripId/members", requireTripAccess("owner"), async (c) => {
     detail: parsed.data.role,
   });
 
+  void db.query.trips
+    .findFirst({ where: eq(trips.id, tripId), columns: { title: true } })
+    .then((trip) => {
+      void createNotification({
+        type: "member_added",
+        userId: targetUser.id,
+        tripId,
+        payload: { actorName: user.name, tripName: trip?.title ?? "旅行" },
+      });
+    });
+
   return c.json(
     {
       userId: targetUser.id,
@@ -166,6 +178,21 @@ memberRoutes.patch("/:tripId/members/:userId", requireTripAccess("owner"), async
     detail: `${ROLE_LABELS[existing.role]} → ${ROLE_LABELS[parsed.data.role]}`,
   });
 
+  void db.query.trips
+    .findFirst({ where: eq(trips.id, tripId), columns: { title: true } })
+    .then((trip) => {
+      void createNotification({
+        type: "role_changed",
+        userId: targetUserId,
+        tripId,
+        payload: {
+          actorName: user.name,
+          tripName: trip?.title ?? "旅行",
+          newRole: ROLE_LABELS[parsed.data.role],
+        },
+      });
+    });
+
   return c.json({ ok: true });
 });
 
@@ -213,6 +240,17 @@ memberRoutes.delete("/:tripId/members/:userId", requireTripAccess("owner"), asyn
     entityType: "member",
     entityName: existing.user.name,
   });
+
+  void db.query.trips
+    .findFirst({ where: eq(trips.id, tripId), columns: { title: true } })
+    .then((trip) => {
+      void createNotification({
+        type: "member_removed",
+        userId: targetUserId,
+        tripId,
+        payload: { actorName: user.name, tripName: trip?.title ?? "旅行" },
+      });
+    });
 
   return c.json({ ok: true });
 });

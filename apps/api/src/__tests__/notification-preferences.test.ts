@@ -45,8 +45,20 @@ describe("Notification preference routes", () => {
     const res = await app.request("/api/notification-preferences", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type: "schedule_created", push: false }),
+      body: JSON.stringify({ type: "schedule_created", inApp: false }),
     });
+    expect(res.status).toBe(200);
+    expect(mockDbInsert).toHaveBeenCalled();
+  });
+
+  it("PUT /api/notification-preferences は push フィールドを無視する", async () => {
+    const app = createTestApp(notificationPreferenceRoutes, "/api/notification-preferences");
+    const res = await app.request("/api/notification-preferences", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ type: "schedule_created", inApp: false, push: true }),
+    });
+    // push field in body should not cause error — it is silently ignored by Zod
     expect(res.status).toBe(200);
     expect(mockDbInsert).toHaveBeenCalled();
   });

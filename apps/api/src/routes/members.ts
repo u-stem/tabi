@@ -214,24 +214,32 @@ memberRoutes.delete("/:tripId/members/:userId", requireTripAccess("owner"), asyn
     return c.json({ error: ERROR_MSG.MEMBER_NOT_FOUND }, 404);
   }
 
-  // Block removal if user has expenses (as payer or in splits)
-  const [{ count: expenseCount }] = await db
-    .select({ count: count() })
-    .from(expenses)
-    .leftJoin(expenseSplits, eq(expenseSplits.expenseId, expenses.id))
-    .where(
-      and(
-        eq(expenses.tripId, tripId),
-        or(eq(expenses.paidByUserId, targetUserId), eq(expenseSplits.userId, targetUserId)),
-      ),
-    );
-  if (expenseCount > 0) {
+  // Check and delete atomically to prevent TOCTOU: a new expense could be added
+  // between the check and the delete if not wrapped in a transaction.
+  const deleted = await db.transaction(async (tx) => {
+    const [{ count: expenseCount }] = await tx
+      .select({ count: count() })
+      .from(expenses)
+      .leftJoin(expenseSplits, eq(expenseSplits.expenseId, expenses.id))
+      .where(
+        and(
+          eq(expenses.tripId, tripId),
+          or(eq(expenses.paidByUserId, targetUserId), eq(expenseSplits.userId, targetUserId)),
+        ),
+      );
+
+    if (expenseCount > 0) return "has_expenses" as const;
+
+    await tx
+      .delete(tripMembers)
+      .where(and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, targetUserId)));
+
+    return "ok" as const;
+  });
+
+  if (deleted === "has_expenses") {
     return c.json({ error: ERROR_MSG.MEMBER_HAS_EXPENSES }, 409);
   }
-
-  await db
-    .delete(tripMembers)
-    .where(and(eq(tripMembers.tripId, tripId), eq(tripMembers.userId, targetUserId)));
 
   logActivity({
     tripId,

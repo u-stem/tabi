@@ -85,7 +85,7 @@ export function NotificationPreferencesSection() {
     queryKey: queryKeys.notifications.pushPreferences(deviceEndpoint ?? ""),
     queryFn: () =>
       api<Record<string, boolean>>(
-        `/api/push-subscriptions/preferences?endpoint=${encodeURIComponent(deviceEndpoint!)}`,
+        `/api/push-subscriptions/preferences?endpoint=${encodeURIComponent(deviceEndpoint ?? "")}`,
       ),
     enabled: !!deviceEndpoint && pushPermission === "granted",
   });

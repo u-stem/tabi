@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateCoverImage } from "../lib/storage";
+import { extractStoragePath, validateCoverImage } from "../lib/storage";
 
 describe("validateCoverImage", () => {
   it("returns null for valid JPEG", () => {
@@ -38,5 +38,34 @@ describe("validateCoverImage", () => {
     expect(validateCoverImage({ type: "image/gif", size: 3 * 1024 * 1024 + 1 })).toBe(
       "JPEG, PNG, WebP only",
     );
+  });
+});
+
+describe("extractStoragePath", () => {
+  it("有効な Supabase URL からパスを抽出する", () => {
+    const url =
+      "https://xxx.supabase.co/storage/v1/object/public/trip-covers/trip-1/123.jpg";
+    expect(extractStoragePath(url)).toBe("trip-1/123.jpg");
+  });
+
+  it("別オリジンの URL には null を返す", () => {
+    expect(
+      extractStoragePath("https://evil.com/trip-covers/trip-1/123.jpg"),
+    ).toBeNull();
+  });
+
+  it("パストラバーサルには null を返す", () => {
+    const url =
+      "https://xxx.supabase.co/storage/v1/object/public/trip-covers/../secret";
+    expect(extractStoragePath(url)).toBeNull();
+  });
+
+  it("空文字列には null を返す", () => {
+    expect(extractStoragePath("")).toBeNull();
+  });
+
+  it("prefix は含むがパスが空の URL には null を返す", () => {
+    const url = "https://xxx.supabase.co/storage/v1/object/public/trip-covers/";
+    expect(extractStoragePath(url)).toBeNull();
   });
 });

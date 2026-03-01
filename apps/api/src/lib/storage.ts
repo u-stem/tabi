@@ -59,6 +59,21 @@ export async function uploadCoverImage(
   return data.publicUrl;
 }
 
+const SUPABASE_STORAGE_PATH_PREFIX = `/storage/v1/object/public/${TRIP_COVERS_BUCKET}/`;
+
+/**
+ * Extract the storage path from a Supabase public URL.
+ * Returns null if the URL does not originate from the expected bucket.
+ */
+export function extractStoragePath(url: string): string | null {
+  const idx = url.indexOf(SUPABASE_STORAGE_PATH_PREFIX);
+  if (idx === -1) return null;
+  const path = url.slice(idx + SUPABASE_STORAGE_PATH_PREFIX.length);
+  // Prevent path traversal
+  if (!path || path.includes("..")) return null;
+  return path;
+}
+
 /**
  * Copy a cover image to a new trip's directory.
  * Returns the new public URL, or null if the copy failed.
@@ -67,10 +82,9 @@ export async function copyCoverImage(
   sourceUrl: string,
   destTripId: string,
 ): Promise<string | null> {
-  const match = sourceUrl.match(/\/trip-covers\/(.+)$/);
-  if (!match) return null;
+  const sourcePath = extractStoragePath(sourceUrl);
+  if (!sourcePath) return null;
 
-  const sourcePath = match[1];
   const ext = sourcePath.split(".").pop() || "jpg";
   const destPath = `${destTripId}/${Date.now()}.${ext}`;
 
@@ -87,11 +101,11 @@ export async function copyCoverImage(
 }
 
 export async function deleteCoverImage(url: string): Promise<void> {
-  const match = url.match(/\/trip-covers\/(.+)$/);
-  if (!match) return;
+  const path = extractStoragePath(url);
+  if (!path) return;
 
   const supabaseAdmin = getSupabaseAdmin();
-  const { error } = await supabaseAdmin.storage.from(TRIP_COVERS_BUCKET).remove([match[1]]);
+  const { error } = await supabaseAdmin.storage.from(TRIP_COVERS_BUCKET).remove([path]);
 
   if (error) {
     console.error("Storage delete failed:", error.message);

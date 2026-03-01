@@ -1,12 +1,6 @@
 "use client";
 
-import { EmptyState } from "@/components/ui/empty-state";
-import {
-  type BookmarkListResponse,
-  MAX_BOOKMARK_LISTS_PER_USER,
-  VISIBILITY_LABELS,
-} from "@sugara/shared";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { MAX_BOOKMARK_LISTS_PER_USER, VISIBILITY_LABELS } from "@sugara/shared";
 import {
   CheckSquare,
   ChevronDown,
@@ -20,14 +14,14 @@ import {
   X,
 } from "lucide-react";
 import type React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
-
 import { ActionSheet } from "@/components/action-sheet";
 import { BookmarkListCard } from "@/components/bookmark-list-card";
 import { CreateBookmarkListDialog } from "@/components/create-bookmark-list-dialog";
 import { Fab } from "@/components/fab";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   ResponsiveAlertDialog,
   ResponsiveAlertDialogCancel,
@@ -39,18 +33,13 @@ import {
   ResponsiveAlertDialogTitle,
 } from "@/components/ui/responsive-alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
-import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
-import { useBookmarkListSelection } from "@/lib/hooks/use-bookmark-list-selection";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { useBookmarkLists, type VisibilityFilter } from "@/lib/hooks/use-bookmark-lists";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
-import { queryKeys } from "@/lib/query-keys";
-
-type VisibilityFilter = "all" | "public" | "friends_only" | "private";
+import { useState } from "react";
 
 const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.ReactNode }[] = [
   { value: "all", label: "すべて", icon: <ListFilter className="h-4 w-4" /> },
@@ -64,55 +53,30 @@ const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.R
 ];
 
 export default function SpBookmarksPage() {
-  const queryClient = useQueryClient();
   const online = useOnlineStatus();
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
 
   const {
-    data: bookmarkLists = [],
+    bookmarkLists,
+    filteredBookmarkLists,
     isLoading,
+    showSkeleton,
     error,
-  } = useQuery({
-    queryKey: queryKeys.bookmarks.lists(),
-    queryFn: () => api<BookmarkListResponse[]>("/api/bookmark-lists"),
-    enabled: !isGuest,
-  });
-  useAuthRedirect(error);
+    visibilityFilter,
+    setVisibilityFilter,
+    createDialogOpen,
+    setCreateDialogOpen,
+    invalidateBookmarkLists,
+    sel,
+  } = useBookmarkLists(isGuest);
+
+  const [visibilitySheetOpen, setVisibilitySheetOpen] = useState(false);
+  const [actionSheetOpen, setActionSheetOpen] = useState(false);
 
   useEffect(() => {
     document.title = pageTitle("ブックマーク");
   }, []);
-
-  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
-  const [visibilitySheetOpen, setVisibilitySheetOpen] = useState(false);
-  const [actionSheetOpen, setActionSheetOpen] = useState(false);
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const showSkeleton = useDelayedLoading(isLoading);
-
-  const invalidateBookmarkLists = () =>
-    queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.lists() });
-
-  const filteredBookmarkLists = useMemo(() => {
-    if (visibilityFilter === "all") return bookmarkLists;
-    return bookmarkLists.filter((l) => l.visibility === visibilityFilter);
-  }, [bookmarkLists, visibilityFilter]);
-
-  const sel = useBookmarkListSelection({
-    listIds: filteredBookmarkLists.map((l) => l.id),
-    invalidateLists: invalidateBookmarkLists,
-  });
-
-  useEffect(() => {
-    if (!sel.selectionMode) return;
-    const visibleIds = new Set(filteredBookmarkLists.map((l) => l.id));
-    const currentIds = [...sel.selectedIds];
-    const pruned = currentIds.filter((id) => visibleIds.has(id));
-    if (pruned.length < currentIds.length) {
-      sel.deselectAll();
-      for (const id of pruned) sel.toggle(id);
-    }
-  }, [filteredBookmarkLists, sel.selectionMode]);
 
   if (isGuest) {
     return (

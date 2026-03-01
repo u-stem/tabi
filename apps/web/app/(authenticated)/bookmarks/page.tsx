@@ -1,16 +1,9 @@
 "use client";
 
-import { EmptyState } from "@/components/ui/empty-state";
-import {
-  type BookmarkListResponse,
-  MAX_BOOKMARK_LISTS_PER_USER,
-  VISIBILITY_LABELS,
-} from "@sugara/shared";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { MAX_BOOKMARK_LISTS_PER_USER, VISIBILITY_LABELS } from "@sugara/shared";
 import { CheckSquare, Copy, MoreHorizontal, Plus, Trash2, X } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-
 import { BookmarkListCard } from "@/components/bookmark-list-card";
 import { CreateBookmarkListDialog } from "@/components/create-bookmark-list-dialog";
 import { Fab } from "@/components/fab";
@@ -22,6 +15,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   ResponsiveAlertDialog,
   ResponsiveAlertDialogCancel,
@@ -41,20 +35,14 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
-import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
-import { useBookmarkListSelection } from "@/lib/hooks/use-bookmark-list-selection";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { useBookmarkLists, type VisibilityFilter } from "@/lib/hooks/use-bookmark-lists";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { isDialogOpen } from "@/lib/hotkeys";
 import { MSG } from "@/lib/messages";
-import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
-
-type VisibilityFilter = "all" | "public" | "friends_only" | "private";
 
 const visibilityFilters: { value: VisibilityFilter; label: string }[] = [
   { value: "all", label: "すべて" },
@@ -64,28 +52,23 @@ const visibilityFilters: { value: VisibilityFilter; label: string }[] = [
 ];
 
 export default function BookmarksPage() {
-  const queryClient = useQueryClient();
   const online = useOnlineStatus();
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
 
   const {
-    data: bookmarkLists = [],
+    bookmarkLists,
+    filteredBookmarkLists,
     isLoading,
+    showSkeleton,
     error,
-  } = useQuery({
-    queryKey: queryKeys.bookmarks.lists(),
-    queryFn: () => api<BookmarkListResponse[]>("/api/bookmark-lists"),
-    enabled: !isGuest,
-  });
-  useAuthRedirect(error);
-
-  useEffect(() => {
-    document.title = pageTitle("ブックマーク");
-  }, []);
-
-  const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+    visibilityFilter,
+    setVisibilityFilter,
+    createDialogOpen,
+    setCreateDialogOpen,
+    invalidateBookmarkLists,
+    sel,
+  } = useBookmarkLists(isGuest);
 
   const { open: openShortcutHelp } = useShortcutHelp();
   const shortcuts: ShortcutGroup[] = useMemo(
@@ -98,7 +81,10 @@ export default function BookmarksPage() {
     [],
   );
   useRegisterShortcuts(shortcuts);
-  const showSkeleton = useDelayedLoading(isLoading);
+
+  useEffect(() => {
+    document.title = pageTitle("ブックマーク");
+  }, []);
 
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
   useHotkeys(
@@ -108,31 +94,6 @@ export default function BookmarksPage() {
     },
     { preventDefault: true },
   );
-
-  const invalidateBookmarkLists = () =>
-    queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.lists() });
-
-  const filteredBookmarkLists = useMemo(() => {
-    if (visibilityFilter === "all") return bookmarkLists;
-    return bookmarkLists.filter((l) => l.visibility === visibilityFilter);
-  }, [bookmarkLists, visibilityFilter]);
-
-  const sel = useBookmarkListSelection({
-    listIds: filteredBookmarkLists.map((l) => l.id),
-    invalidateLists: invalidateBookmarkLists,
-  });
-
-  // Prune selected IDs when filtered list changes
-  useEffect(() => {
-    if (!sel.selectionMode) return;
-    const visibleIds = new Set(filteredBookmarkLists.map((l) => l.id));
-    const currentIds = [...sel.selectedIds];
-    const pruned = currentIds.filter((id) => visibleIds.has(id));
-    if (pruned.length < currentIds.length) {
-      sel.deselectAll();
-      for (const id of pruned) sel.toggle(id);
-    }
-  }, [filteredBookmarkLists, sel.selectionMode]);
 
   if (isGuest) {
     return (

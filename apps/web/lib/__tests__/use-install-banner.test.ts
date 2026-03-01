@@ -7,10 +7,19 @@ describe("useInstallBanner", () => {
     localStorage.clear();
     // Default: Android Chrome, not standalone
     vi.stubGlobal("navigator", {
-      userAgent:
-        "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/91.0",
+      userAgent: "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 Chrome/91.0",
     });
-    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: false }));
+    // mobile viewport: true, standalone: false
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockImplementation((query: string) => ({
+        matches: query === "(max-width: 767px)",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+      })),
+    );
   });
 
   afterEach(() => {
@@ -19,7 +28,17 @@ describe("useInstallBanner", () => {
   });
 
   it("showBanner=false when already standalone (installed)", () => {
-    vi.stubGlobal("matchMedia", vi.fn().mockReturnValue({ matches: true }));
+    // standalone: true (already installed)
+    vi.stubGlobal(
+      "matchMedia",
+      vi.fn().mockImplementation((query: string) => ({
+        matches: query === "(display-mode: standalone)" || query === "(max-width: 767px)",
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+      })),
+    );
     const { result } = renderHook(() => useInstallBanner());
     expect(result.current.showBanner).toBe(false);
   });

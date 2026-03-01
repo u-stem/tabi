@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useInstallPrompt } from "./use-install-prompt";
+import { useIsMobile } from "./use-is-mobile";
 
 const DISMISSED_KEY = "install-banner-dismissed";
 
@@ -20,6 +21,7 @@ type BannerState = {
 
 export function useInstallBanner() {
   const { canInstall, promptInstall } = useInstallPrompt();
+  const isMobile = useIsMobile();
   // null = not yet mounted (SSR-safe: renders nothing until client-side init)
   const [state, setState] = useState<BannerState | null>(null);
 
@@ -41,7 +43,7 @@ export function useInstallBanner() {
   }
 
   const { isIos, isStandalone, dismissed } = state;
-  const showBanner = !isStandalone && !dismissed && (canInstall || isIos);
+  const showBanner = isMobile && !isStandalone && !dismissed && (canInstall || isIos);
 
   return { showBanner, isIos, canInstall, promptInstall, dismiss };
 }

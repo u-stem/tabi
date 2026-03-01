@@ -15,6 +15,7 @@ const FeedbackDialog = dynamic(() =>
 import { GuestBanner } from "@/components/guest-banner";
 import { InstallBanner } from "@/components/install-banner";
 import { Logo } from "@/components/logo";
+import { NotificationBell } from "@/components/notification-bell";
 import { OfflineBanner } from "@/components/offline-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ export function SpHeader() {
       >
         <Logo href="/sp/home" />
         <div className="flex items-center gap-1">
+          {mounted && session?.user && !isGuest && <NotificationBell />}
           <ThemeToggle />
           {!mounted || !session?.user ? (
             <Skeleton className="h-8 w-8 rounded-full" />

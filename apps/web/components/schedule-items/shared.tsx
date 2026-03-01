@@ -1,0 +1,526 @@
+"use client";
+
+import { useSortable } from "@dnd-kit/sortable";
+import type {
+  ScheduleCategory,
+  ScheduleColor,
+  ScheduleResponse,
+  TimeDelta,
+} from "@sugara/shared";
+import { shiftTime } from "@sugara/shared";
+import {
+  Bookmark,
+  Clock,
+  ExternalLink,
+  Pencil,
+  StickyNote,
+  Trash2,
+  Undo2,
+  X,
+} from "lucide-react";
+import dynamic from "next/dynamic";
+import type { CSSProperties } from "react";
+import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  ResponsiveAlertDialog,
+  ResponsiveAlertDialogCancel,
+  ResponsiveAlertDialogContent,
+  ResponsiveAlertDialogDescription,
+  ResponsiveAlertDialogDestructiveAction,
+  ResponsiveAlertDialogFooter,
+  ResponsiveAlertDialogHeader,
+  ResponsiveAlertDialogTitle,
+} from "@/components/ui/responsive-alert-dialog";
+import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
+import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
+import type { TimeStatus } from "@/lib/format";
+import { isSafeUrl, stripProtocol } from "@/lib/format";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
+import { cn } from "@/lib/utils";
+import { ActionSheet } from "../action-sheet";
+import { ItemMenuButton } from "../item-menu-button";
+
+const EditScheduleDialog = dynamic(() =>
+  import("../edit-schedule-dialog").then((mod) => mod.EditScheduleDialog),
+);
+const BatchShiftDialog = dynamic(() =>
+  import("../batch-shift-dialog").then((mod) => mod.BatchShiftDialog),
+);
+
+type UseSortableReturn = ReturnType<typeof useSortable>;
+
+export type SortableProps = {
+  nodeRef: UseSortableReturn["setNodeRef"];
+  style: CSSProperties;
+  attributes: UseSortableReturn["attributes"];
+  listeners: UseSortableReturn["listeners"];
+  isDragging: boolean;
+};
+
+export type ScheduleItemProps = {
+  id: string;
+  name: string;
+  category: ScheduleCategory;
+  address?: string | null;
+  urls: string[];
+  startTime?: string | null;
+  endTime?: string | null;
+  endDayOffset?: number | null;
+  memo?: string | null;
+  departurePlace?: string | null;
+  arrivalPlace?: string | null;
+  transportMethod?: string | null;
+  color?: ScheduleColor;
+  updatedAt: string;
+  tripId: string;
+  dayId: string;
+  patternId: string;
+  onDelete: () => void;
+  onUpdate: () => void;
+  onUnassign?: () => void;
+  disabled?: boolean;
+  isFirst?: boolean;
+  isLast?: boolean;
+  timeStatus?: TimeStatus | null;
+  selectable?: boolean;
+  selected?: boolean;
+  onSelect?: (id: string) => void;
+  maxEndDayOffset?: number;
+  /** When true, display endTime only and hide endDayOffset label (cross-day target view) */
+  crossDayDisplay?: boolean;
+  /** Source day number for cross-day display (e.g. "1日目から継続") */
+  crossDaySourceDayNumber?: number;
+  /** Position within multi-day span: "intermediate" or "final" */
+  crossDayPosition?: "intermediate" | "final";
+  /** Subsequent schedules for batch time shift (sorted by sortOrder) */
+  siblingSchedules?: ScheduleResponse[];
+  /** ISO date string (YYYY-MM-DD) for transit search links */
+  date?: string;
+  onSaveToBookmark?: () => void;
+  /** When false, hide DragHandle and disable useSortable (mobile) */
+  draggable?: boolean;
+  /** When true, show ReorderControls instead of DragHandle */
+  reorderable?: boolean;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+};
+
+export function ScheduleMenu({
+  name,
+  disabled,
+  onEdit,
+  onDelete,
+  onUnassign,
+  onSaveToBookmark,
+}: {
+  name: string;
+  disabled?: boolean;
+  onEdit: () => void;
+  onDelete: () => void;
+  onUnassign?: () => void;
+  onSaveToBookmark?: () => void;
+}) {
+  const isMobile = useMobile();
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [sheetOpen, setSheetOpen] = useState(false);
+
+  const sheetActions = [
+    { label: "編集", icon: <Pencil className="h-4 w-4" />, onClick: onEdit },
+    ...(onUnassign
+      ? [{ label: "候補に戻す", icon: <Undo2 className="h-4 w-4" />, onClick: onUnassign }]
+      : []),
+    ...(onSaveToBookmark
+      ? [
+          {
+            label: "ブックマークに保存",
+            icon: <Bookmark className="h-4 w-4" />,
+            onClick: onSaveToBookmark,
+          },
+        ]
+      : []),
+    {
+      label: "削除",
+      icon: <Trash2 className="h-4 w-4" />,
+      onClick: () => setDeleteOpen(true),
+      variant: "destructive" as const,
+    },
+  ];
+
+  return (
+    <>
+      {isMobile ? (
+        <>
+          <ItemMenuButton
+            ariaLabel={`${name}のメニュー`}
+            disabled={disabled}
+            onClick={() => setSheetOpen(true)}
+          />
+          <ActionSheet open={sheetOpen} onOpenChange={setSheetOpen} actions={sheetActions} />
+        </>
+      ) : (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <ItemMenuButton ariaLabel={`${name}のメニュー`} disabled={disabled} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={onEdit}>
+              <Pencil />
+              編集
+            </DropdownMenuItem>
+            {onUnassign && (
+              <DropdownMenuItem onClick={onUnassign}>
+                <Undo2 />
+                候補に戻す
+              </DropdownMenuItem>
+            )}
+            {onSaveToBookmark && (
+              <DropdownMenuItem onClick={onSaveToBookmark}>
+                <Bookmark />
+                ブックマークに保存
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
+              <Trash2 />
+              削除
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+      <ResponsiveAlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+        <ResponsiveAlertDialogContent>
+          <ResponsiveAlertDialogHeader>
+            <ResponsiveAlertDialogTitle>予定を削除しますか？</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogDescription>
+              「{name}」を削除します。この操作は取り消せません。
+            </ResponsiveAlertDialogDescription>
+          </ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogFooter>
+            <ResponsiveAlertDialogCancel>
+              <X className="h-4 w-4" />
+              キャンセル
+            </ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogDestructiveAction onClick={onDelete}>
+              <Trash2 className="h-4 w-4" />
+              削除する
+            </ResponsiveAlertDialogDestructiveAction>
+          </ResponsiveAlertDialogFooter>
+        </ResponsiveAlertDialogContent>
+      </ResponsiveAlertDialog>
+    </>
+  );
+}
+
+function partitionShiftTargets(
+  schedules: ScheduleResponse[],
+  delta: number,
+): { shiftable: ScheduleResponse[]; skipped: ScheduleResponse[] } {
+  const shiftable: ScheduleResponse[] = [];
+  const skipped: ScheduleResponse[] = [];
+  for (const s of schedules) {
+    if (!s.startTime && !s.endTime) continue;
+    if (s.category === "hotel" && s.endDayOffset && s.endDayOffset > 0) {
+      skipped.push(s);
+      continue;
+    }
+    const canShiftStart = s.startTime ? shiftTime(s.startTime, delta) !== null : true;
+    const canShiftEnd =
+      !s.endTime || (s.endDayOffset && s.endDayOffset > 0)
+        ? true
+        : shiftTime(s.endTime, delta) !== null;
+    if (canShiftStart && canShiftEnd) {
+      shiftable.push(s);
+    } else {
+      skipped.push(s);
+    }
+  }
+  return { shiftable, skipped };
+}
+
+export function useShiftProposal(siblingSchedules?: ScheduleResponse[]) {
+  const [shiftDialogOpen, setShiftDialogOpen] = useState(false);
+  const [shiftDelta, setShiftDelta] = useState(0);
+  const [shiftSource, setShiftSource] = useState<"start" | "end">("start");
+  const [shiftTargets, setShiftTargets] = useState<ScheduleResponse[]>([]);
+  const [shiftSkipped, setShiftSkipped] = useState<ScheduleResponse[]>([]);
+
+  const onShiftProposal =
+    siblingSchedules && siblingSchedules.length > 0
+      ? (timeDelta: TimeDelta) => {
+          const { shiftable, skipped } = partitionShiftTargets(siblingSchedules, timeDelta.delta);
+          if (shiftable.length > 0) {
+            setShiftDelta(timeDelta.delta);
+            setShiftSource(timeDelta.source);
+            setShiftTargets(shiftable);
+            setShiftSkipped(skipped);
+            setShiftDialogOpen(true);
+          }
+        }
+      : undefined;
+
+  return {
+    shiftDialogOpen,
+    setShiftDialogOpen,
+    shiftDelta,
+    shiftSource,
+    shiftTargets,
+    shiftSkipped,
+    onShiftProposal,
+  };
+}
+
+export function TimelineNode({
+  variant,
+  icon: Icon,
+  isFirst,
+  isLast,
+  isPast,
+  isCurrent,
+  colorClasses,
+}: {
+  variant: "place" | "transport";
+  icon: React.ComponentType<{ className?: string }>;
+  isFirst?: boolean;
+  isLast?: boolean;
+  isPast: boolean;
+  isCurrent: boolean;
+  colorClasses: (typeof SCHEDULE_COLOR_CLASSES)[ScheduleColor];
+}) {
+  const isPlace = variant === "place";
+  const nodeSize = isPlace ? "h-7 w-7" : "h-5 w-5";
+  const iconSize = isPlace ? "h-3.5 w-3.5" : "h-2.5 w-2.5";
+  const ringOffset = isPlace ? "ring-offset-2" : "ring-offset-1";
+
+  const lineSegment = (hidden: boolean) => (
+    <div
+      className={cn(
+        "w-px flex-1",
+        hidden
+          ? "border-transparent"
+          : cn(
+              "border-l",
+              isPast
+                ? `border-solid ${colorClasses.border}`
+                : "border-dashed border-muted-foreground/30",
+            ),
+      )}
+    />
+  );
+
+  return (
+    <div className={cn("flex flex-col items-center", !isPlace && "w-7")} aria-hidden="true">
+      {lineSegment(!!isFirst)}
+      <div className="relative flex shrink-0 items-center justify-center">
+        {isCurrent && (
+          <span
+            className={cn(
+              "absolute animate-ping rounded-full opacity-30",
+              nodeSize,
+              colorClasses.bg,
+            )}
+          />
+        )}
+        <div
+          className={cn(
+            "relative flex items-center justify-center rounded-full",
+            nodeSize,
+            isPlace
+              ? cn("text-white", colorClasses.bg)
+              : cn("border-2 bg-background", colorClasses.border),
+            isPast && "opacity-50",
+            isCurrent && `ring-2 ${ringOffset} ring-offset-background ${colorClasses.ring}`,
+          )}
+        >
+          <Icon className={cn(iconSize, !isPlace && colorClasses.text)} />
+        </div>
+      </div>
+      {lineSegment(!!isLast)}
+    </div>
+  );
+}
+
+export function ScheduleItemDialogs({
+  tripId,
+  dayId,
+  patternId,
+  schedule,
+  editOpen,
+  onEditOpenChange,
+  onUpdate,
+  maxEndDayOffset,
+  shift,
+}: {
+  tripId: string;
+  dayId: string;
+  patternId: string;
+  schedule: {
+    id: string;
+    name: string;
+    category: ScheduleCategory;
+    address?: string | null;
+    urls: string[];
+    startTime?: string | null;
+    endTime?: string | null;
+    endDayOffset?: number | null;
+    memo?: string | null;
+    departurePlace?: string | null;
+    arrivalPlace?: string | null;
+    transportMethod?: string | null;
+    color?: ScheduleColor;
+    updatedAt: string;
+  };
+  editOpen: boolean;
+  onEditOpenChange: (open: boolean) => void;
+  onUpdate: () => void;
+  maxEndDayOffset?: number;
+  shift: ReturnType<typeof useShiftProposal>;
+}) {
+  return (
+    <>
+      <EditScheduleDialog
+        tripId={tripId}
+        dayId={dayId}
+        patternId={patternId}
+        schedule={{
+          ...schedule,
+          color: schedule.color ?? "blue",
+          urls: schedule.urls,
+          sortOrder: 0,
+        }}
+        open={editOpen}
+        onOpenChange={onEditOpenChange}
+        onUpdate={onUpdate}
+        maxEndDayOffset={maxEndDayOffset}
+        onShiftProposal={shift.onShiftProposal}
+      />
+      <BatchShiftDialog
+        open={shift.shiftDialogOpen}
+        onOpenChange={shift.setShiftDialogOpen}
+        tripId={tripId}
+        dayId={dayId}
+        patternId={patternId}
+        scheduleName={schedule.name}
+        deltaMinutes={shift.shiftDelta}
+        deltaSource={shift.shiftSource}
+        targetSchedules={shift.shiftTargets}
+        skippedSchedules={shift.shiftSkipped}
+        onDone={onUpdate}
+      />
+    </>
+  );
+}
+
+export function ScheduleTimeLabel({
+  crossDayDisplay,
+  crossDayPosition,
+  endDayOffset,
+  category,
+  timeStr,
+}: {
+  crossDayDisplay?: boolean;
+  crossDayPosition?: "intermediate" | "final";
+  endDayOffset?: number | null;
+  category: ScheduleCategory;
+  timeStr: string;
+}) {
+  const labelText = crossDayDisplay
+    ? crossDayPosition
+      ? getCrossDayLabel(category, crossDayPosition)
+      : null
+    : endDayOffset != null && endDayOffset > 0
+      ? getStartDayLabel(category)
+      : null;
+
+  const labelEl = labelText ? (
+    <span className="shrink-0 whitespace-nowrap rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+      {labelText}
+    </span>
+  ) : null;
+
+  const timeEl = !timeStr ? null : crossDayDisplay ? (
+    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+      <Clock className="h-3 w-3 shrink-0 text-muted-foreground/70" />~ {timeStr}
+    </span>
+  ) : (
+    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+      <Clock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+      {timeStr}
+      {endDayOffset != null && endDayOffset > 0 ? " ~" : ""}
+    </span>
+  );
+
+  if (!labelEl && !timeEl) return null;
+  return (
+    <div className="mt-0.5 flex items-center gap-1.5">
+      {labelEl}
+      {timeEl}
+    </div>
+  );
+}
+
+export function ScheduleLinks({ urls, memo }: { urls: string[]; memo?: string | null }) {
+  const safeUrls = urls.filter(isSafeUrl);
+  if (safeUrls.length === 0 && !memo) return null;
+  return (
+    <>
+      {safeUrls.map((u) => (
+        <a
+          key={u}
+          href={u}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+        >
+          <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+          <span className="truncate">{stripProtocol(u)}</span>
+        </a>
+      ))}
+      {memo && (
+        <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
+          <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
+          <p className="whitespace-pre-line">{memo}</p>
+        </div>
+      )}
+    </>
+  );
+}
+
+export function cardBodyProps(
+  id: string,
+  name: string,
+  category: ScheduleCategory,
+  selectable?: boolean,
+  selected?: boolean,
+  onSelect?: (id: string) => void,
+  crossDayDisplay?: boolean,
+  crossDaySourceDayNumber?: number,
+  crossDayPosition?: "intermediate" | "final",
+  crossDayAriaFallback?: string,
+): Record<string, unknown> {
+  if (selectable) {
+    return {
+      onClick: () => onSelect?.(id),
+      onKeyDown: (e: React.KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect?.(id);
+        }
+      },
+      role: "button" as const,
+      tabIndex: 0,
+      "aria-pressed": selected,
+    };
+  }
+  if (crossDayDisplay && crossDaySourceDayNumber) {
+    return {
+      role: "group" as const,
+      "aria-label": `${getCrossDayLabel(category, crossDayPosition ?? "intermediate") ?? (crossDayAriaFallback || `${crossDaySourceDayNumber}日目から`)}: ${name}`,
+    };
+  }
+  return {};
+}

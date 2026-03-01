@@ -1,0 +1,199 @@
+"use client";
+
+import { MapPin } from "lucide-react";
+import { memo, useState } from "react";
+import { SelectionIndicator } from "@/components/ui/selection-indicator";
+import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
+import { formatTimeRange } from "@/lib/format";
+import { CATEGORY_ICONS } from "@/lib/icons";
+import { buildMapsSearchUrl } from "@/lib/transport-link";
+import { cn } from "@/lib/utils";
+import { DragHandle } from "../drag-handle";
+import { ReorderControls } from "../reorder-controls";
+import type { ScheduleItemProps, SortableProps } from "./shared";
+import {
+  ScheduleItemDialogs,
+  ScheduleLinks,
+  ScheduleMenu,
+  ScheduleTimeLabel,
+  TimelineNode,
+  cardBodyProps,
+  useShiftProposal,
+} from "./shared";
+
+type PlaceItemProps = ScheduleItemProps & { sortable: SortableProps };
+
+export const PlaceItem = memo(function PlaceItem({
+  id,
+  name,
+  category,
+  address,
+  urls,
+  startTime,
+  endTime,
+  endDayOffset,
+  memo,
+  departurePlace,
+  arrivalPlace,
+  transportMethod,
+  color = "blue",
+  updatedAt,
+  tripId,
+  dayId,
+  patternId,
+  onDelete,
+  onUpdate,
+  onUnassign,
+  disabled,
+  isFirst,
+  isLast,
+  timeStatus,
+  selectable,
+  selected,
+  onSelect,
+  sortable,
+  maxEndDayOffset,
+  crossDayDisplay,
+  crossDaySourceDayNumber,
+  crossDayPosition,
+  siblingSchedules,
+  onSaveToBookmark,
+  draggable,
+  reorderable,
+  onMoveUp,
+  onMoveDown,
+}: PlaceItemProps) {
+  const [editOpen, setEditOpen] = useState(false);
+  const shift = useShiftProposal(siblingSchedules);
+  const CategoryIcon = CATEGORY_ICONS[category];
+  const colorClasses = SCHEDULE_COLOR_CLASSES[color];
+  const isPast = timeStatus === "past";
+  const isCurrent = timeStatus === "current";
+
+  const visibleStartTime = crossDayDisplay ? endTime : startTime;
+  const visibleEndTime = crossDayDisplay || endDayOffset ? null : endTime;
+  const timeStr = formatTimeRange(visibleStartTime, visibleEndTime);
+
+  const cardBody = (
+    <div
+      className={cn(
+        "min-w-0 flex-1 rounded-md border p-3",
+        isPast && "opacity-50",
+        crossDayDisplay && "border-dashed bg-muted/30",
+        selectable &&
+          "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        selectable && selected && SELECTED_RING,
+      )}
+      {...cardBodyProps(
+        id,
+        name,
+        category,
+        selectable,
+        selected,
+        onSelect,
+        crossDayDisplay,
+        crossDaySourceDayNumber,
+        crossDayPosition,
+        `${crossDaySourceDayNumber}日目から継続`,
+      )}
+    >
+      <div className="flex items-center gap-2">
+        {selectable ? (
+          <SelectionIndicator checked={!!selected} />
+        ) : reorderable ? (
+          <ReorderControls
+            onMoveUp={onMoveUp}
+            onMoveDown={onMoveDown}
+            isFirst={!!isFirst}
+            isLast={!!isLast}
+          />
+        ) : draggable !== false && !crossDayDisplay ? (
+          <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
+        ) : null}
+        <div className="min-w-0 flex-1">
+          <span className="block min-w-0 truncate text-sm font-medium">{name}</span>
+          <ScheduleTimeLabel
+            crossDayDisplay={crossDayDisplay}
+            crossDayPosition={crossDayPosition}
+            endDayOffset={endDayOffset}
+            category={category}
+            timeStr={timeStr}
+          />
+          {(address || urls.length > 0 || memo) && (
+            <div className={cn("mt-1 space-y-1", selectable && "pointer-events-none")}>
+              {address && (
+                <a
+                  href={buildMapsSearchUrl(address)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                  <span className="truncate">{address}</span>
+                </a>
+              )}
+              <ScheduleLinks urls={urls} memo={memo} />
+            </div>
+          )}
+        </div>
+        {!selectable && (
+          <ScheduleMenu
+            name={name}
+            disabled={disabled}
+            onEdit={() => setEditOpen(true)}
+            onDelete={onDelete}
+            onUnassign={onUnassign}
+            onSaveToBookmark={onSaveToBookmark}
+          />
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      ref={sortable.nodeRef}
+      style={sortable.style}
+      className={cn("flex gap-3 py-1.5", sortable.isDragging && "opacity-50")}
+    >
+      <TimelineNode
+        variant="place"
+        icon={CategoryIcon}
+        isFirst={isFirst}
+        isLast={isLast}
+        isPast={isPast}
+        isCurrent={isCurrent}
+        colorClasses={colorClasses}
+      />
+
+      {cardBody}
+
+      <ScheduleItemDialogs
+        tripId={tripId}
+        dayId={dayId}
+        patternId={patternId}
+        schedule={{
+          id,
+          name,
+          category,
+          address,
+          urls,
+          startTime,
+          endTime,
+          endDayOffset,
+          memo,
+          departurePlace,
+          arrivalPlace,
+          transportMethod,
+          color,
+          updatedAt,
+        }}
+        editOpen={editOpen}
+        onEditOpenChange={setEditOpen}
+        onUpdate={onUpdate}
+        maxEndDayOffset={maxEndDayOffset}
+        shift={shift}
+      />
+    </div>
+  );
+});

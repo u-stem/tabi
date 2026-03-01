@@ -678,6 +678,7 @@ export const pushSubscriptions = pgTable(
     endpoint: text("endpoint").notNull(),
     p256dh: text("p256dh").notNull(),
     auth: text("auth").notNull(),
+    preferences: jsonb("preferences").$type<Record<string, boolean>>().notNull().default({}),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
@@ -694,7 +695,6 @@ export const notificationPreferences = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     type: notificationTypeEnum("type").notNull(),
     inApp: boolean("in_app").notNull().default(true),
-    push: boolean("push").notNull().default(true),
   },
   (table) => [primaryKey({ columns: [table.userId, table.type] })],
 ).enableRLS();

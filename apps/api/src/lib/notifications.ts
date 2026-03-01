@@ -113,16 +113,13 @@ async function createNotificationInternal(params: CreateNotificationParams): Pro
   });
 
   const inAppEnabled = pref?.inApp ?? NOTIFICATION_DEFAULTS[type].inApp;
-  const pushEnabled = pref?.push ?? NOTIFICATION_DEFAULTS[type].push;
 
   if (inAppEnabled) {
     await db.insert(notifications).values({ userId, tripId, type, payload });
     void pruneOldNotifications(userId);
   }
 
-  if (pushEnabled) {
-    void sendPushToUser(userId, type, payload, tripId);
-  }
+  void sendPushToUser(userId, type, payload, tripId);
 }
 
 async function pruneOldNotifications(userId: string): Promise<void> {

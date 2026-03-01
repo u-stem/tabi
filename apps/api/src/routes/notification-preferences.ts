@@ -26,7 +26,6 @@ notificationPreferenceRoutes.get("/", async (c) => {
   const prefs = ALL_TYPES.map((type) => ({
     type,
     inApp: savedMap.get(type)?.inApp ?? NOTIFICATION_DEFAULTS[type].inApp,
-    push: savedMap.get(type)?.push ?? NOTIFICATION_DEFAULTS[type].push,
   }));
 
   return c.json(prefs);
@@ -48,7 +47,6 @@ notificationPreferenceRoutes.put("/", async (c) => {
       userId: user.id,
       type,
       inApp: parsed.data.inApp ?? NOTIFICATION_DEFAULTS[type].inApp,
-      push: NOTIFICATION_DEFAULTS[type].push,
     })
     .onConflictDoUpdate({
       target: [notificationPreferences.userId, notificationPreferences.type],

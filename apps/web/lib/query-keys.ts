@@ -54,5 +54,7 @@ export const queryKeys = {
     all: ["notifications"] as const,
     list: () => [...queryKeys.notifications.all, "list"] as const,
     preferences: () => [...queryKeys.notifications.all, "preferences"] as const,
+    pushPreferences: (endpoint: string) =>
+      [...queryKeys.notifications.all, "push-preferences", endpoint] as const,
   },
 };

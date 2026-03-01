@@ -285,13 +285,9 @@ export default function BookmarksPage() {
             )}
           </div>
           {bookmarkLists.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">
-              まだリストがありません。新規作成からブックマークリストを作成してみましょう
-            </p>
+            <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
           ) : filteredBookmarkLists.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">
-              条件に一致するリストがありません
-            </p>
+            <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST_FILTER}</p>
           ) : (
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredBookmarkLists.map((list) => (

@@ -224,9 +224,7 @@ export default function BookmarkListDetailPage() {
       {/* Bookmark list */}
       <div>
         {localBookmarks.length === 0 ? (
-          <p className="mt-8 text-center text-muted-foreground">
-            まだブックマークがありません。追加からブックマークを登録してみましょう
-          </p>
+          <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_BOOKMARK}</p>
         ) : sel.selectionMode ? (
           <div className="space-y-3">
             {localBookmarks.map((bm) => (

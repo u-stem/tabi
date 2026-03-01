@@ -64,7 +64,6 @@ describe("createNotification", () => {
   it("inApp が false の場合は DB INSERT しない", async () => {
     mockDbQuery.notificationPreferences.findFirst.mockResolvedValue({
       inApp: false,
-      push: false,
     });
     await createNotification(baseParams);
     expect(mockDbInsert).not.toHaveBeenCalled();
@@ -72,23 +71,58 @@ describe("createNotification", () => {
 
   it("push サブスクリプションがある場合は sendNotification を呼ぶ", async () => {
     mockDbQuery.pushSubscriptions.findMany.mockResolvedValue([
-      { endpoint: "https://fcm.example.com/push/1", p256dh: "abc", auth: "xyz" },
+      { endpoint: "https://fcm.example.com/push/1", p256dh: "abc", auth: "xyz", preferences: {} },
     ]);
-    await createNotification(baseParams);
-    // sendNotification は非同期 fire-and-forget なので少し待つ
+    await createNotification(baseParams); // member_added, default push=true
     await new Promise((r) => setTimeout(r, 10));
     expect(mockSendNotification).toHaveBeenCalled();
   });
 
-  it("push が false の場合は sendNotification を呼ばない", async () => {
-    mockDbQuery.notificationPreferences.findFirst.mockResolvedValue({
-      inApp: true,
-      push: false,
-    });
+  it("subscription の preferences[type] が false の場合は sendNotification をスキップする", async () => {
     mockDbQuery.pushSubscriptions.findMany.mockResolvedValue([
-      { endpoint: "https://fcm.example.com/push/1", p256dh: "abc", auth: "xyz" },
+      {
+        endpoint: "https://fcm.example.com/push/1",
+        p256dh: "abc",
+        auth: "xyz",
+        preferences: { member_added: false },
+      },
     ]);
-    await createNotification(baseParams);
+    await createNotification(baseParams); // member_added
+    await new Promise((r) => setTimeout(r, 10));
+    expect(mockSendNotification).not.toHaveBeenCalled();
+  });
+
+  it("複数サブスクリプション: 有効なものだけ sendNotification を呼ぶ", async () => {
+    mockDbQuery.pushSubscriptions.findMany.mockResolvedValue([
+      {
+        endpoint: "https://fcm.example.com/push/1",
+        p256dh: "abc",
+        auth: "xyz",
+        preferences: { member_added: false },
+      },
+      {
+        endpoint: "https://fcm.example.com/push/2",
+        p256dh: "def",
+        auth: "uvw",
+        preferences: {},
+      },
+    ]);
+    await createNotification(baseParams); // member_added, default push=true
+    await new Promise((r) => setTimeout(r, 10));
+    expect(mockSendNotification).toHaveBeenCalledTimes(1);
+  });
+
+  it("preferences が {} で NOTIFICATION_DEFAULTS.push=false の場合は sendNotification をスキップする", async () => {
+    mockDbQuery.pushSubscriptions.findMany.mockResolvedValue([
+      {
+        endpoint: "https://fcm.example.com/push/1",
+        p256dh: "abc",
+        auth: "xyz",
+        preferences: {},
+      },
+    ]);
+    // schedule_created has push=false by default
+    await createNotification({ ...baseParams, type: "schedule_created" });
     await new Promise((r) => setTimeout(r, 10));
     expect(mockSendNotification).not.toHaveBeenCalled();
   });

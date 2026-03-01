@@ -159,9 +159,17 @@ async function sendPushToUser(
   });
   if (subs.length === 0) return;
 
+  // Filter subscriptions by per-device preferences, falling back to global defaults
+  const enabledSubs = subs.filter(
+    (sub) =>
+      ((sub.preferences as Record<string, boolean>)[type] ??
+        NOTIFICATION_DEFAULTS[type].push),
+  );
+  if (enabledSubs.length === 0) return;
+
   const message = buildPushMessage(type, payload, tripId);
   await Promise.allSettled(
-    subs.map((sub) =>
+    enabledSubs.map((sub) =>
       webpush
         .sendNotification(
           { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },

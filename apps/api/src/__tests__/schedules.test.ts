@@ -9,6 +9,7 @@ const {
   mockDbDelete,
   mockDbSelect,
   mockCreateNotification,
+  mockNotifyTripMembersExcluding,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
   mockDbQuery: {
@@ -35,6 +36,7 @@ const {
   mockDbDelete: vi.fn(),
   mockDbSelect: vi.fn(),
   mockCreateNotification: vi.fn(),
+  mockNotifyTripMembersExcluding: vi.fn(),
 }));
 
 vi.mock("../lib/auth", () => ({
@@ -64,6 +66,7 @@ vi.mock("../lib/activity-logger", () => ({
 
 vi.mock("../lib/notifications", () => ({
   createNotification: (...args: unknown[]) => mockCreateNotification(...args),
+  notifyTripMembersExcluding: (...args: unknown[]) => mockNotifyTripMembersExcluding(...args),
 }));
 
 import { MAX_SCHEDULES_PER_TRIP } from "@sugara/shared";
@@ -101,6 +104,7 @@ describe("Schedule routes", () => {
     mockDbQuery.tripMembers.findMany.mockResolvedValue([]);
     mockDbQuery.trips.findFirst.mockResolvedValue({ title: "テスト旅行" });
     mockCreateNotification.mockResolvedValue(undefined);
+    mockNotifyTripMembersExcluding.mockReturnValue(undefined);
   });
 
   describe(`GET ${basePath}`, () => {

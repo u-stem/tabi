@@ -2,7 +2,7 @@ import { NOTIFICATION_DEFAULTS, type NotificationType } from "@sugara/shared";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import webpush from "web-push";
 import { db } from "../db/index";
-import { notificationPreferences, notifications, pushSubscriptions, trips } from "../db/schema";
+import { notificationPreferences, notifications, pushSubscriptions, tripMembers, trips } from "../db/schema";
 import { env } from "./env";
 
 const MAX_NOTIFICATIONS_PER_USER = 100;
@@ -48,8 +48,41 @@ export function notifyUsers(params: {
     .findFirst({ where: eq(trips.id, tripId), columns: { title: true } })
     .then((trip) => {
       const tripName = trip?.title ?? "旅行";
-      void Promise.all(userIds.map((userId) => createNotification({ type, userId, tripId, payload: makePayload(tripName) })));
+      void Promise.all(
+        userIds.map((userId) =>
+          createNotification({ type, userId, tripId, payload: makePayload(tripName) }),
+        ),
+      );
     });
+}
+
+/**
+ * Fire-and-forget: fetch all trip members and trip title in parallel,
+ * then notify all members except the actor.
+ * Use when recipient list = all trip members (e.g. schedule create/update/delete).
+ */
+export function notifyTripMembersExcluding(params: {
+  type: NotificationType;
+  tripId: string;
+  actorId: string;
+  makePayload: (tripName: string) => NotificationPayload;
+}): void {
+  const { type, tripId, actorId, makePayload } = params;
+  void (async () => {
+    const [members, trip] = await Promise.all([
+      db.query.tripMembers.findMany({
+        where: eq(tripMembers.tripId, tripId),
+        columns: { userId: true },
+      }),
+      db.query.trips.findFirst({ where: eq(trips.id, tripId), columns: { title: true } }),
+    ]);
+    const tripName = trip?.title ?? "旅行";
+    await Promise.all(
+      members
+        .filter((m) => m.userId !== actorId)
+        .map((m) => createNotification({ type, userId: m.userId, tripId, payload: makePayload(tripName) })),
+    );
+  })();
 }
 
 /**

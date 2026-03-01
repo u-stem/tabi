@@ -71,7 +71,7 @@ export function NotificationPreferencesSection() {
     navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => sub && setDeviceEndpoint(sub.endpoint))
-      .catch(() => {});
+      .catch((err) => console.warn("[push] failed to resolve subscription endpoint", err));
   }, []);
 
   // User-level: inApp preferences only
@@ -91,13 +91,7 @@ export function NotificationPreferencesSection() {
   });
 
   const updateInAppCategory = useMutation({
-    mutationFn: ({
-      types,
-      value,
-    }: {
-      types: readonly CategoryType[];
-      value: boolean;
-    }) =>
+    mutationFn: ({ types, value }: { types: readonly CategoryType[]; value: boolean }) =>
       Promise.all(
         types.map((type) =>
           api("/api/notification-preferences", {
@@ -116,13 +110,7 @@ export function NotificationPreferencesSection() {
   });
 
   const updatePushCategory = useMutation({
-    mutationFn: ({
-      types,
-      value,
-    }: {
-      types: readonly CategoryType[];
-      value: boolean;
-    }) =>
+    mutationFn: ({ types, value }: { types: readonly CategoryType[]; value: boolean }) =>
       Promise.all(
         types.map((type) =>
           api("/api/push-subscriptions/preferences", {
@@ -152,7 +140,7 @@ export function NotificationPreferencesSection() {
       navigator.serviceWorker.ready
         .then((reg) => reg.pushManager.getSubscription())
         .then((sub) => sub && setDeviceEndpoint(sub.endpoint))
-        .catch(() => {});
+        .catch((err) => console.warn("[push] failed to resolve subscription endpoint", err));
     }
   }
 
@@ -210,9 +198,7 @@ export function NotificationPreferencesSection() {
                 />
                 <Switch
                   checked={isPushCategoryOn(pushPrefsData, cat.types)}
-                  onCheckedChange={(v) =>
-                    updatePushCategory.mutate({ types: cat.types, value: v })
-                  }
+                  onCheckedChange={(v) => updatePushCategory.mutate({ types: cat.types, value: v })}
                   disabled={!pushSwitchesEnabled}
                   aria-label={`${cat.label} プッシュ通知`}
                 />

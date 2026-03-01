@@ -52,4 +52,10 @@ describe("POST /api/auth/sign-up/* (signup interceptor)", () => {
     // Not intercepted, reaches Better Auth mock
     expect(res.status).toBe(200);
   });
+
+  it("returns 403 when DB error occurs (fail-closed)", async () => {
+    mockGetAppSettings.mockRejectedValue(new Error("DB connection failed"));
+    const res = await app.request("/api/auth/sign-up/email", { method: "POST" });
+    expect(res.status).toBe(403);
+  });
 });

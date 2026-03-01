@@ -8,9 +8,9 @@ const authRoutes = new Hono();
 // Anonymous sign-in (/api/auth/sign-in/anonymous) is intentionally not blocked
 // because guest accounts are ephemeral (7-day TTL) and accumulate minimal data.
 authRoutes.post("/api/auth/sign-up/*", async (c, next) => {
-  // Fail-open on DB errors: if settings can't be read, allow signup rather than
-  // blocking all registrations due to a transient DB issue.
-  const { signupEnabled } = await getAppSettings().catch(() => ({ signupEnabled: true }));
+  // Fail-closed on DB errors: a DB failure is a systemic issue that warrants
+  // blocking signup rather than silently allowing registrations.
+  const { signupEnabled } = await getAppSettings().catch(() => ({ signupEnabled: false }));
   if (!signupEnabled) {
     return c.json({ error: "新規利用の受付を停止しています" }, 403);
   }

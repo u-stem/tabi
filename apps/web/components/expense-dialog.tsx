@@ -1,6 +1,6 @@
 "use client";
 
-import type { ExpenseSplitType } from "@sugara/shared";
+import type { ExpenseSplitType, MemberResponse } from "@sugara/shared";
 import { EXPENSE_TITLE_MAX_LENGTH } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus, X } from "lucide-react";
@@ -31,8 +31,7 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
-type Member = { userId: string; name: string; role: string; image: string | null };
-type MembersResponse = Member[];
+type MembersResponse = MemberResponse[];
 
 type Expense = {
   id: string;

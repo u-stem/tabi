@@ -9,10 +9,11 @@ test.describe("Activity Log", () => {
 
     await page.getByRole("tab", { name: "履歴" }).click();
 
-    // Trip creation generates a log entry: "旅行「...」を作成"
-    await expect(page.getByText(/旅行|まだ履歴がありません/).first()).toBeVisible({
-      timeout: 10000,
-    });
+    // Trip creation generates a log entry like "旅行「Activity Log Test」を作成"
+    // Use the bracketed entity name which is unique to activity log entries
+    await expect(
+      page.getByText(/「Activity Log Test」/).or(page.getByText("まだ履歴がありません")),
+    ).toBeVisible({ timeout: 10000 });
   });
 
   test("activity log records schedule creation", async ({ authenticatedPage: page }) => {
@@ -28,8 +29,8 @@ test.describe("Activity Log", () => {
 
     await page.getByRole("tab", { name: "履歴" }).click();
 
-    // Log entry: "予定「道頓堀」を追加"
-    await expect(page.getByText(/道頓堀|予定/).first()).toBeVisible({ timeout: 10000 });
+    // Log entry: "予定「道頓堀」を追加" — check for the bracketed schedule name
+    await expect(page.getByText(/「道頓堀」/)).toBeVisible({ timeout: 10000 });
   });
 
   test("activity tab is accessible and selectable", async ({ authenticatedPage: page }) => {

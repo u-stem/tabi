@@ -1,7 +1,5 @@
 "use client";
 
-import type { FriendRequestResponse, FriendResponse, GroupResponse } from "@sugara/shared";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 import {
   FriendsTab,
@@ -11,13 +9,11 @@ import { GroupsTab } from "@/app/(authenticated)/friends/_components/groups-tab"
 import { FriendRequestsCard } from "@/components/friend-requests-card";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { useFriendsPage } from "@/lib/hooks/use-friends-page";
 import { MSG } from "@/lib/messages";
-import { queryKeys } from "@/lib/query-keys";
 
 function PageSkeleton() {
   return (
@@ -44,31 +40,11 @@ function PageSkeleton() {
 export default function SpFriendsPage() {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
+  const { friends, requests, groups, isLoading, showSkeleton } = useFriendsPage(isGuest);
 
   useEffect(() => {
     document.title = pageTitle("フレンド");
   }, []);
-
-  const friendsQuery = useQuery({
-    queryKey: queryKeys.friends.list(),
-    queryFn: () => api<FriendResponse[]>("/api/friends"),
-    enabled: !isGuest,
-  });
-
-  const requestsQuery = useQuery({
-    queryKey: queryKeys.friends.requests(),
-    queryFn: () => api<FriendRequestResponse[]>("/api/friends/requests"),
-    enabled: !isGuest,
-  });
-
-  const groupsQuery = useQuery({
-    queryKey: queryKeys.groups.list(),
-    queryFn: () => api<GroupResponse[]>("/api/groups"),
-    enabled: !isGuest,
-  });
-
-  const isLoading = friendsQuery.isLoading || requestsQuery.isLoading || groupsQuery.isLoading;
-  const showSkeleton = useDelayedLoading(isLoading);
 
   if (isGuest) {
     return (
@@ -85,9 +61,9 @@ export default function SpFriendsPage() {
 
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-8">
-      <FriendRequestsCard requests={requestsQuery.data ?? []} />
-      <FriendsTab friends={friendsQuery.data ?? []} />
-      <GroupsTab groups={groupsQuery.data ?? []} />
+      <FriendRequestsCard requests={requests} />
+      <FriendsTab friends={friends} />
+      <GroupsTab groups={groups} />
       <SendRequestSection />
     </div>
   );

@@ -127,7 +127,7 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
   if (lists.length === 0) {
     return (
       <div className="py-8 text-center">
-        <p className="text-sm text-muted-foreground">ブックマークリストがありません</p>
+        <p className="text-sm text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
       </div>
     );
   }
@@ -204,7 +204,7 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
           ))}
         </div>
       ) : bookmarks.length === 0 ? (
-        <p className="py-4 text-center text-sm text-muted-foreground">ブックマークがありません</p>
+        <p className="py-4 text-center text-sm text-muted-foreground">{MSG.EMPTY_BOOKMARK}</p>
       ) : (
         <div className="space-y-2">
           {bookmarks.map((bm) => {

@@ -17,6 +17,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type BookmarkListPickerDialogProps = {
@@ -55,7 +56,7 @@ export function BookmarkListPickerDialog({
             </div>
           ) : lists.length === 0 ? (
             <div className="py-6 text-center">
-              <p className="text-sm text-muted-foreground">リストがありません</p>
+              <p className="text-sm text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
               <Link
                 href="/bookmarks"
                 className="mt-2 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"

@@ -14,6 +14,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
+import { MSG } from "@/lib/messages";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
@@ -95,7 +96,7 @@ function BookmarkListCard({ list, userId }: { list: BookmarkListResponse; userId
           )}
 
           {detail && detail.bookmarks.length === 0 && (
-            <p className="text-sm text-muted-foreground">ブックマークがありません</p>
+            <p className="text-sm text-muted-foreground">{MSG.EMPTY_BOOKMARK}</p>
           )}
 
           {detail && detail.bookmarks.length > 0 && (
@@ -158,7 +159,7 @@ function ProfileContent({ profile, userId }: { profile: PublicProfileResponse; u
         </h2>
         {profile.bookmarkLists.length === 0 ? (
           <div className="flex flex-col items-center py-12 text-center">
-            <p className="text-muted-foreground">リストがありません</p>
+            <p className="text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
           </div>
         ) : (
           <div className="space-y-3">

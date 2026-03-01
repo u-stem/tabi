@@ -1,6 +1,6 @@
 "use client";
 
-import type { ExpenseSplitType, TripResponse } from "@sugara/shared";
+import type { ExpensesResponse, TripResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCheck, Download, X } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -51,40 +51,6 @@ const PATTERN_MODE_LABELS: Record<PatternMode, string> = {
 const FORMAT_LABELS: Record<ExportFormat, string> = {
   xlsx: "Excel (.xlsx)",
   csv: "CSV (.csv)",
-};
-
-type ExpenseSplit = {
-  userId: string;
-  amount: number;
-  user: { id: string; name: string };
-};
-
-type Expense = {
-  id: string;
-  title: string;
-  amount: number;
-  splitType: ExpenseSplitType;
-  paidByUserId: string;
-  paidByUser: { id: string; name: string };
-  splits: ExpenseSplit[];
-  createdAt: string;
-};
-
-type Transfer = {
-  from: { id: string; name: string };
-  to: { id: string; name: string };
-  amount: number;
-};
-
-type Settlement = {
-  totalAmount: number;
-  balances: { userId: string; name: string; net: number }[];
-  transfers: Transfer[];
-};
-
-type ExpensesResponse = {
-  expenses: Expense[];
-  settlement: Settlement;
 };
 
 function toExpenseExportData(data: ExpensesResponse): ExpenseExportData {

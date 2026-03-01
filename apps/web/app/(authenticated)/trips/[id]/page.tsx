@@ -16,10 +16,8 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { ActivityLog } from "@/components/activity-log";
 import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dialog";
-import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
-import { ExpensePanel } from "@/components/expense-panel";
 import { Fab } from "@/components/fab";
 import {
   getMobileTabIds,
@@ -28,8 +26,6 @@ import {
   type MobileContentTab,
   MobileContentTabs,
 } from "@/components/mobile-content-tabs";
-import { SouvenirPanel } from "@/components/souvenir-panel";
-
 const EditTripDialog = dynamic(() =>
   import("@/components/edit-trip-dialog").then((mod) => mod.EditTripDialog),
 );
@@ -62,11 +58,14 @@ import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
+import { BookmarkTab } from "./_components/bookmark-tab";
 import { DayMemoEditor } from "./_components/day-memo-editor";
 import { DayTabs } from "./_components/day-tabs";
+import { ExpenseTab } from "./_components/expense-tab";
 import { PatternTabs } from "./_components/pattern-tabs";
 import { PollTab } from "./_components/poll-tab";
 import { RightPanel, type RightPanelTab } from "./_components/right-panel";
+import { SouvenirTab } from "./_components/souvenir-tab";
 import {
   AddPatternDialog,
   BatchDeleteDialog,
@@ -764,47 +763,32 @@ export default function TripDetailPage() {
           </p>
         );
       case "expenses":
-        return tripData.days.length > 0 ? (
-          <div className="rounded-lg border bg-card p-4">
-            <ExpensePanel
-              tripId={tripId}
-              canEdit={canEdit}
-              addOpen={!isLg ? addExpenseOpen : false}
-              onAddOpenChange={!isLg ? setAddExpenseOpen : undefined}
-            />
-          </div>
-        ) : (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            日程が確定すると費用を記録できます
-          </p>
+        return (
+          <ExpenseTab
+            tripId={tripId}
+            canEdit={canEdit}
+            hasDays={tripData.days.length > 0}
+            addOpen={!isLg ? addExpenseOpen : false}
+            onAddOpenChange={setAddExpenseOpen}
+          />
         );
       case "bookmarks":
-        return tripData.days.length > 0 ? (
-          <div className="rounded-lg border bg-card p-4">
-            <BookmarkPanel
-              tripId={tripId}
-              disabled={!online || !canEdit}
-              onCandidateAdded={onMutate}
-            />
-          </div>
-        ) : (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            日程が確定するとブックマークを利用できます
-          </p>
+        return (
+          <BookmarkTab
+            tripId={tripId}
+            disabled={!online || !canEdit}
+            hasDays={tripData.days.length > 0}
+            onCandidateAdded={onMutate}
+          />
         );
       case "souvenirs":
-        return tripData.days.length > 0 ? (
-          <div className="rounded-lg border bg-card p-4">
-            <SouvenirPanel
-              tripId={tripId}
-              addOpen={!isLg ? addSouvenirOpen : false}
-              onAddOpenChange={!isLg ? setAddSouvenirOpen : undefined}
-            />
-          </div>
-        ) : (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            日程が確定するとお土産リストを利用できます
-          </p>
+        return (
+          <SouvenirTab
+            tripId={tripId}
+            hasDays={tripData.days.length > 0}
+            addOpen={!isLg ? addSouvenirOpen : false}
+            onAddOpenChange={setAddSouvenirOpen}
+          />
         );
       case "activity":
         return <ActivityLog tripId={tripId} />;

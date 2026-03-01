@@ -526,6 +526,7 @@ export default function TripDetailPage() {
     selection.exit();
   }, [selectedDay, mobileTab, rightPanelTab]);
 
+  if (isLoading && !showSkeleton) return <div />;
   if (showSkeleton) {
     return (
       <div className="mt-4">
@@ -636,9 +637,6 @@ export default function TripDetailPage() {
       </div>
     );
   }
-
-  // Avoid flashing "not found" during the 200ms skeleton delay
-  if (isLoading || (!!pollId && isPollLoading)) return null;
 
   if (queryError || !trip) {
     return <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>;

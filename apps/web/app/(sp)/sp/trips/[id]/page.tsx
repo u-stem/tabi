@@ -288,6 +288,7 @@ export default function SpTripDetailPage() {
   // Routing guarantees params.id is always a string, but guard defensively
   if (!tripId) return null;
 
+  if (isLoading && !showSkeleton) return <div />;
   // --- Skeleton ---
   if (showSkeleton) {
     return (
@@ -332,8 +333,6 @@ export default function SpTripDetailPage() {
       </div>
     );
   }
-
-  if (isLoading || (!!pollId && isPollLoading)) return null;
 
   if (queryError || !trip) {
     return <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>;

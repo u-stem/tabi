@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { MOBILE_UA_REGEX, SP_PREFIX, SP_ROUTES, VIEW_MODE_COOKIE } from "@/lib/view-mode";
 
-const protectedPaths = ["/home", "/trips", "/bookmarks", "/friends", "/sp", "/admin"];
+const protectedPaths = ["/home", "/trips", "/bookmarks", "/friends", "/settings", "/sp", "/admin"];
 const guestOnlyPaths = ["/", "/auth/login", "/auth/signup"];
 
 export async function proxy(request: NextRequest) {
@@ -82,10 +82,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   } catch (err) {
     console.error("[Proxy] Session check failed:", err);
-    if (isProtected) {
-      return NextResponse.redirect(new URL("/auth/login", request.url));
+    // Treat session check failure as unauthenticated for all routes that require auth.
+    // This includes both explicitly protected paths and any other path in the matcher.
+    if (isGuestOnly) {
+      return NextResponse.next();
     }
-    return NextResponse.next();
+    return NextResponse.redirect(new URL("/auth/login", request.url));
   }
 }
 
@@ -95,6 +97,8 @@ export const config = {
     "/trips/:path*",
     "/bookmarks/:path*",
     "/friends/:path*",
+    "/settings/:path*",
+    "/settings",
     "/sp/:path*",
     "/admin/:path*",
     "/admin",

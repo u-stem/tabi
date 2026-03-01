@@ -81,7 +81,11 @@ export function NotificationPreferencesSection() {
       ),
     onSuccess: () =>
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.preferences() }),
-    onError: () => toast.error(MSG.NOTIFICATION_PREF_UPDATE_FAILED),
+    onError: () => {
+      // Re-fetch to reconcile UI with server state in case of partial failure
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.preferences() });
+      toast.error(MSG.NOTIFICATION_PREF_UPDATE_FAILED);
+    },
   });
 
   async function handleEnablePush() {
@@ -137,12 +141,14 @@ export function NotificationPreferencesSection() {
                   onCheckedChange={(v) =>
                     updateCategory.mutate({ types: cat.types, field: "inApp", value: v })
                   }
+                  aria-label={`${cat.label} アプリ内通知`}
                 />
                 <Switch
                   checked={isCategoryOn(prefs, cat.types, "push")}
                   onCheckedChange={(v) =>
                     updateCategory.mutate({ types: cat.types, field: "push", value: v })
                   }
+                  aria-label={`${cat.label} プッシュ通知`}
                 />
               </div>
             ))}

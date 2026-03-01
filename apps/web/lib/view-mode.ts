@@ -11,7 +11,7 @@ export const VIEW_MODE_COOKIE = "x-view-mode";
 export type ViewMode = "desktop" | "sp";
 
 /** Authenticated routes that have SP counterparts. */
-export const SP_ROUTES = ["/home", "/bookmarks", "/friends", "/trips"] as const;
+export const SP_ROUTES = ["/home", "/bookmarks", "/friends", "/trips", "/settings"] as const;
 
 /** Path prefix for all SP pages. */
 export const SP_PREFIX = "/sp";
@@ -41,9 +41,13 @@ export async function switchViewMode(mode: ViewMode): Promise<void> {
   const { pathname, search, hash } = window.location;
 
   if (mode === "sp") {
-    // Currently on desktop → navigate to SP
+    // Currently on desktop → navigate to SP (only if the route has an SP counterpart)
     if (!pathname.startsWith(SP_PREFIX)) {
-      window.location.href = `${SP_PREFIX}${pathname}${search}${hash}`;
+      const hasSpCounterpart = SP_ROUTES.some(
+        (route) => pathname === route || pathname.startsWith(`${route}/`),
+      );
+      const dest = hasSpCounterpart ? `${SP_PREFIX}${pathname}` : `${SP_PREFIX}/home`;
+      window.location.href = `${dest}${search}${hash}`;
     }
   } else {
     // Currently on SP → navigate to desktop

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -39,6 +40,7 @@ import {
   type PatternMode,
 } from "@/lib/export";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
@@ -134,6 +136,7 @@ export default function TripExportPage() {
   });
 
   useAuthRedirect(error);
+  const showSkeleton = useDelayedLoading(isLoading);
 
   useEffect(() => {
     if (trip) {
@@ -309,10 +312,22 @@ export default function TripExportPage() {
     }
   }
 
-  if (isLoading) {
+  if (isLoading && !showSkeleton) return <div />;
+  if (showSkeleton) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p className="text-muted-foreground">読み込み中...</p>
+        <div className="w-full max-w-5xl space-y-4 p-6">
+          <div className="flex gap-2">
+            {["tab-a", "tab-b", "tab-c", "tab-d"].map((key) => (
+              <Skeleton key={key} className="h-8 w-24 rounded-md" />
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-4">
+            {["f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9"].map((key) => (
+              <Skeleton key={key} className="h-6 w-full" />
+            ))}
+          </div>
+        </div>
       </div>
     );
   }

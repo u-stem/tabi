@@ -1,5 +1,25 @@
 import { vi } from "vitest";
 
+// bun's jsdom integration doesn't provide a complete localStorage implementation
+const localStorageStore: Record<string, string> = {};
+Object.defineProperty(window, "localStorage", {
+  writable: true,
+  value: {
+    getItem: (key: string) => localStorageStore[key] ?? null,
+    setItem: (key: string, value: string) => {
+      localStorageStore[key] = value;
+    },
+    removeItem: (key: string) => {
+      delete localStorageStore[key];
+    },
+    clear: () => {
+      for (const key of Object.keys(localStorageStore)) {
+        delete localStorageStore[key];
+      }
+    },
+  },
+});
+
 // jsdom does not implement matchMedia; provide a minimal stub
 Object.defineProperty(window, "matchMedia", {
   writable: true,

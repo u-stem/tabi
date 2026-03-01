@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import type { TripListItem } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 
@@ -255,14 +256,15 @@ export default function SpHomePage() {
 
     if (baseData.length === 0) {
       return (
-        <p className="mt-8 text-center text-muted-foreground">
-          {targetTab === "shared" ? MSG.EMPTY_TRIP_SHARED : MSG.EMPTY_TRIP}
-        </p>
+        <EmptyState
+          message={targetTab === "shared" ? MSG.EMPTY_TRIP_SHARED : MSG.EMPTY_TRIP}
+          variant="page"
+        />
       );
     }
 
     if (displayTrips.length === 0) {
-      return <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_TRIP_FILTER}</p>;
+      return <EmptyState message={MSG.EMPTY_TRIP_FILTER} variant="page" />;
     }
 
     return (

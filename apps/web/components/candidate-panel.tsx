@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -747,9 +748,7 @@ export function CandidatePanel({
           </SortableContext>
         </div>
       ) : sortedCandidates.length === 0 ? (
-        <div className="flex min-h-24 items-center justify-center rounded-md border border-dashed text-center">
-          <p className="text-sm text-muted-foreground">{MSG.EMPTY_CANDIDATE}</p>
-        </div>
+        <EmptyState message={MSG.EMPTY_CANDIDATE} variant="box" />
       ) : (
         <div className="space-y-1.5">
           {sortedCandidates.map((spot, idx) => {

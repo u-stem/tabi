@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import { MAX_TRIPS_PER_USER, type TripListItem } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
@@ -356,11 +357,12 @@ export default function HomePage() {
             />
           </div>
           {baseTrips.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">
-              {tab === "shared" ? MSG.EMPTY_TRIP_SHARED : MSG.EMPTY_TRIP}
-            </p>
+            <EmptyState
+              message={tab === "shared" ? MSG.EMPTY_TRIP_SHARED : MSG.EMPTY_TRIP}
+              variant="page"
+            />
           ) : filteredTrips.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_TRIP_FILTER}</p>
+            <EmptyState message={MSG.EMPTY_TRIP_FILTER} variant="page" />
           ) : (
             <div className="mt-4 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredTrips.map((trip, index) => (

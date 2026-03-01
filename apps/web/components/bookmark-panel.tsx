@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import type { BookmarkListResponse, BookmarkResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CheckSquare, ExternalLink, Plus, StickyNote, X } from "lucide-react";
@@ -126,9 +127,7 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
 
   if (lists.length === 0) {
     return (
-      <div className="py-8 text-center">
-        <p className="text-sm text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
-      </div>
+      <EmptyState message={MSG.EMPTY_BOOKMARK_LIST} variant="inline" />
     );
   }
 

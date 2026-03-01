@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   closestCenter,
   DndContext,
@@ -224,7 +225,7 @@ export default function BookmarkListDetailPage() {
       {/* Bookmark list */}
       <div>
         {localBookmarks.length === 0 ? (
-          <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_BOOKMARK}</p>
+          <EmptyState message={MSG.EMPTY_BOOKMARK} variant="page" />
         ) : sel.selectionMode ? (
           <div className="space-y-3">
             {localBookmarks.map((bm) => (

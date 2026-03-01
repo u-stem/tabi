@@ -1,6 +1,7 @@
 "use client";
 
 import { SOUVENIR_PRIORITY_LABELS, type SouvenirItem, type SouvenirPriority } from "@sugara/shared";
+import { EmptyState } from "@/components/ui/empty-state";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
@@ -255,9 +256,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
       )}
 
       {items.length === 0 ? (
-        <div className="flex min-h-24 items-center justify-center rounded-md border border-dashed text-center">
-          <p className="text-sm text-muted-foreground">{MSG.EMPTY_SOUVENIR}</p>
-        </div>
+        <EmptyState message={MSG.EMPTY_SOUVENIR} variant="box" />
       ) : (
         <div>
           {remaining.length > 0 && (

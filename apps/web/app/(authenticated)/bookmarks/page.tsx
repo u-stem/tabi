@@ -1,5 +1,6 @@
 "use client";
 
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   type BookmarkListResponse,
   MAX_BOOKMARK_LISTS_PER_USER,
@@ -289,11 +290,9 @@ export default function BookmarksPage() {
             )}
           </div>
           {bookmarkLists.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
+            <EmptyState message={MSG.EMPTY_BOOKMARK_LIST} variant="page" />
           ) : filteredBookmarkLists.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">
-              {MSG.EMPTY_BOOKMARK_LIST_FILTER}
-            </p>
+            <EmptyState message={MSG.EMPTY_BOOKMARK_LIST_FILTER} variant="page" />
           ) : (
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredBookmarkLists.map((list) => (

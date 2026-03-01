@@ -174,6 +174,18 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
     }
   }
 
+  // When only amount changes (no splits provided), verify existing splits still sum correctly.
+  // Without this check, the expense amount and split totals would become inconsistent.
+  if (updateFields.amount !== undefined && !splits) {
+    const existingSplits = await db.query.expenseSplits.findMany({
+      where: eq(expenseSplits.expenseId, expenseId),
+    });
+    const existingTotal = existingSplits.reduce((sum, s) => sum + s.amount, 0);
+    if (existingTotal !== updateFields.amount) {
+      return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_AMOUNT_MISMATCH }, 400);
+    }
+  }
+
   const updated = await db.transaction(async (tx) => {
     const [result] = await tx
       .update(expenses)

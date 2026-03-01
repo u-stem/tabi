@@ -69,6 +69,7 @@ export const ERROR_MSG = {
   EXPENSE_NOT_FOUND: "Expense not found",
   LIMIT_EXPENSES: "Expense limit reached",
   EXPENSE_SPLIT_MISMATCH: "Split amounts must equal total amount",
+  EXPENSE_SPLIT_AMOUNT_MISMATCH: "Split amounts do not match the new total",
   EXPENSE_PAYER_NOT_MEMBER: "Payer must be a trip member",
   EXPENSE_SPLIT_USER_NOT_MEMBER: "Split users must be trip members",
   NOTIFICATION_NOT_FOUND: "Notification not found",

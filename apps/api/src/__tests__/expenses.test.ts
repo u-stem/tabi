@@ -480,6 +480,31 @@ describe("Expense routes", () => {
 
       expect(res.status).toBe(404);
     });
+
+    it("amount のみ更新で既存 splits 合計と不一致の場合 400 を返す", async () => {
+      mockDbQuery.expenses.findFirst.mockResolvedValue({
+        id: "exp-1",
+        tripId,
+        amount: 1000,
+        splitType: "custom",
+      });
+      // biome-ignore lint/suspicious/noExplicitAny: dynamic mock property addition
+      (mockDbQuery as any).expenseSplits = {
+        findMany: vi.fn().mockResolvedValue([
+          { userId: userId1, amount: 600 },
+          { userId: userId2, amount: 400 },
+        ]),
+      };
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses/exp-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        // amount のみ変更, splits なし → 既存 splits 合計 1000 ≠ 新 amount 2000
+        body: JSON.stringify({ amount: 2000 }),
+      });
+
+      expect(res.status).toBe(400);
+    });
   });
 
   describe("DELETE /api/trips/:tripId/expenses/:expenseId", () => {

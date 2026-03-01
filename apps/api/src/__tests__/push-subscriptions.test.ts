@@ -17,15 +17,18 @@ vi.mock("../lib/auth", () => ({
   auth: { api: { getSession: (...args: unknown[]) => mockGetSession(...args) } },
 }));
 
-vi.mock("../db/index", () => ({
-  db: {
+vi.mock("../db/index", () => {
+  const tx = {
     insert: (...args: unknown[]) => mockDbInsert(...args),
     delete: (...args: unknown[]) => mockDbDelete(...args),
     select: (...args: unknown[]) => mockDbSelect(...args),
     query: mockDbQuery,
     update: (...args: unknown[]) => mockDbUpdate(...args),
-  },
-}));
+  };
+  return {
+    db: { ...tx, transaction: (fn: (t: typeof tx) => unknown) => fn(tx) },
+  };
+});
 
 import { pushSubscriptionRoutes } from "../routes/push-subscriptions";
 

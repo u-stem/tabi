@@ -1,6 +1,6 @@
 import {
-  NOTIFICATION_DEFAULTS,
   createPushSubscriptionSchema,
+  NOTIFICATION_DEFAULTS,
   notificationTypeSchema,
   updatePushSubscriptionPreferenceSchema,
 } from "@sugara/shared";
@@ -25,36 +25,38 @@ pushSubscriptionRoutes.post("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  // Count other subscriptions for this user (excluding the incoming endpoint which may already exist)
-  const [{ count: otherCount }] = await db
-    .select({ count: count() })
-    .from(pushSubscriptions)
-    .where(
-      and(
-        eq(pushSubscriptions.userId, user.id),
-        ne(pushSubscriptions.endpoint, parsed.data.endpoint),
-      ),
-    );
+  await db.transaction(async (tx) => {
+    // Count other subscriptions for this user (excluding the incoming endpoint which may already exist)
+    const [{ count: otherCount }] = await tx
+      .select({ count: count() })
+      .from(pushSubscriptions)
+      .where(
+        and(
+          eq(pushSubscriptions.userId, user.id),
+          ne(pushSubscriptions.endpoint, parsed.data.endpoint),
+        ),
+      );
 
-  // Enforce per-user subscription limit: remove the oldest if a new endpoint would exceed it
-  if (Number(otherCount) >= MAX_SUBSCRIPTIONS_PER_USER) {
-    const oldest = await db.query.pushSubscriptions.findFirst({
-      where: and(
-        eq(pushSubscriptions.userId, user.id),
-        ne(pushSubscriptions.endpoint, parsed.data.endpoint),
-      ),
-      orderBy: [asc(pushSubscriptions.createdAt)],
-      columns: { id: true },
-    });
-    if (oldest) {
-      await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, oldest.id));
+    // Enforce per-user subscription limit: remove the oldest if a new endpoint would exceed it
+    if (Number(otherCount) >= MAX_SUBSCRIPTIONS_PER_USER) {
+      const oldest = await tx.query.pushSubscriptions.findFirst({
+        where: and(
+          eq(pushSubscriptions.userId, user.id),
+          ne(pushSubscriptions.endpoint, parsed.data.endpoint),
+        ),
+        orderBy: [asc(pushSubscriptions.createdAt)],
+        columns: { id: true },
+      });
+      if (oldest) {
+        await tx.delete(pushSubscriptions).where(eq(pushSubscriptions.id, oldest.id));
+      }
     }
-  }
 
-  await db
-    .insert(pushSubscriptions)
-    .values({ userId: user.id, ...parsed.data })
-    .onConflictDoNothing();
+    await tx
+      .insert(pushSubscriptions)
+      .values({ userId: user.id, ...parsed.data })
+      .onConflictDoNothing();
+  });
 
   return c.json({ ok: true }, 201);
 });
@@ -84,10 +86,7 @@ pushSubscriptionRoutes.get("/preferences", async (c) => {
   }
 
   const sub = await db.query.pushSubscriptions.findFirst({
-    where: and(
-      eq(pushSubscriptions.userId, user.id),
-      eq(pushSubscriptions.endpoint, endpoint),
-    ),
+    where: and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.endpoint, endpoint)),
   });
   if (!sub) return c.json({ error: "Not found" }, 404);
 
@@ -111,10 +110,7 @@ pushSubscriptionRoutes.put("/preferences", async (c) => {
 
   const { endpoint, type, enabled } = parsed.data;
   const sub = await db.query.pushSubscriptions.findFirst({
-    where: and(
-      eq(pushSubscriptions.userId, user.id),
-      eq(pushSubscriptions.endpoint, endpoint),
-    ),
+    where: and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.endpoint, endpoint)),
   });
   if (!sub) return c.json({ error: "Not found" }, 404);
 
@@ -122,12 +118,7 @@ pushSubscriptionRoutes.put("/preferences", async (c) => {
   await db
     .update(pushSubscriptions)
     .set({ preferences: { ...currentPrefs, [type]: enabled } })
-    .where(
-      and(
-        eq(pushSubscriptions.userId, user.id),
-        eq(pushSubscriptions.endpoint, endpoint),
-      ),
-    );
+    .where(and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.endpoint, endpoint)));
 
   return c.json({ ok: true });
 });

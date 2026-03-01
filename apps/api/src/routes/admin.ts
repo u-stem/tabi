@@ -164,7 +164,14 @@ adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {
     },
     supabase: {
       mau: Number(mauResult[0]?.count ?? 0),
-      dbSizeBytes: Number((dbSizeResult[0] as { size: string }).size),
+      dbSizeBytes: (() => {
+        const row = dbSizeResult[0];
+        if (row !== null && typeof row === "object" && "size" in row) {
+          const n = Number((row as { size: unknown }).size);
+          return Number.isFinite(n) ? n : 0;
+        }
+        return 0;
+      })(),
     },
   });
 });

@@ -277,7 +277,11 @@ candidateRoutes.post(
       where: inArray(bookmarks.id, parsed.data.bookmarkIds),
       with: { list: { columns: { userId: true } } },
     });
-    const owned = found.filter((bm) => bm.list.userId === user.id);
+    // Preserve the order of bookmarkIds in the request (db query order is not guaranteed)
+    const bookmarkById = new Map(found.map((bm) => [bm.id, bm]));
+    const owned = parsed.data.bookmarkIds
+      .map((id) => bookmarkById.get(id))
+      .filter((bm): bm is NonNullable<typeof bm> => bm !== undefined && bm.list.userId === user.id);
     if (owned.length !== parsed.data.bookmarkIds.length) {
       return c.json({ error: ERROR_MSG.BOOKMARK_OWNER_MISMATCH }, 404);
     }

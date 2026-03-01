@@ -257,15 +257,15 @@ export default function SpHomePage() {
       return (
         <p className="mt-8 text-center text-muted-foreground">
           {targetTab === "shared"
-            ? "共有された旅行はありません"
-            : "まだ旅行がありません。旅行を作成してプランを立てましょう"}
+            ? MSG.EMPTY_TRIP_SHARED
+            : MSG.EMPTY_TRIP}
         </p>
       );
     }
 
     if (displayTrips.length === 0) {
       return (
-        <p className="mt-8 text-center text-muted-foreground">条件に一致する旅行がありません</p>
+        <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_TRIP_FILTER}</p>
       );
     }
 

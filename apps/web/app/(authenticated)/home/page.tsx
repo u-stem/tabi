@@ -358,11 +358,11 @@ export default function HomePage() {
           {baseTrips.length === 0 ? (
             <p className="mt-8 text-center text-muted-foreground">
               {tab === "shared"
-                ? "共有された旅行はありません"
-                : "まだ旅行がありません。旅行を作成してプランを立てましょう"}
+                ? MSG.EMPTY_TRIP_SHARED
+                : MSG.EMPTY_TRIP}
             </p>
           ) : filteredTrips.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">条件に一致する旅行がありません</p>
+            <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_TRIP_FILTER}</p>
           ) : (
             <div className="mt-4 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredTrips.map((trip, index) => (

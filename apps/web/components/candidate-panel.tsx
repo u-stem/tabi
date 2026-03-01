@@ -685,7 +685,7 @@ export function CandidatePanel({
                   isOverCandidates && DROP_ZONE_ACTIVE,
                 )}
               >
-                <p className="text-sm text-muted-foreground">候補がありません</p>
+                <p className="text-sm text-muted-foreground">{MSG.EMPTY_CANDIDATE}</p>
               </div>
             ) : (
               <div className="space-y-1.5">
@@ -748,7 +748,7 @@ export function CandidatePanel({
         </div>
       ) : sortedCandidates.length === 0 ? (
         <div className="flex min-h-24 items-center justify-center rounded-md border border-dashed text-center">
-          <p className="text-sm text-muted-foreground">候補がありません</p>
+          <p className="text-sm text-muted-foreground">{MSG.EMPTY_CANDIDATE}</p>
         </div>
       ) : (
         <div className="space-y-1.5">

@@ -133,7 +133,7 @@ function DaySection({
               </p>
             )}
             {merged.length === 0 ? (
-              <p className="py-2 text-center text-xs text-muted-foreground">まだ予定がありません</p>
+              <p className="py-2 text-center text-xs text-muted-foreground">{MSG.EMPTY_SCHEDULE}</p>
             ) : (
               <div className="overflow-x-auto print:overflow-visible">
                 <table className="w-full min-w-[600px] table-fixed border-collapse text-xs print:min-w-0 print:text-[11px]">

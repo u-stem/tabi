@@ -291,7 +291,7 @@ function PatternSection({
         <p className="mb-2 text-sm font-medium text-muted-foreground">{pattern.label}</p>
       )}
       {merged.length === 0 ? (
-        <p className="py-2 text-center text-sm text-muted-foreground">まだ予定がありません</p>
+        <p className="py-2 text-center text-sm text-muted-foreground">{MSG.EMPTY_SCHEDULE}</p>
       ) : (
         <div className="relative space-y-1">
           {/* Vertical timeline line */}

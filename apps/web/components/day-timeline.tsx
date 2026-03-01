@@ -363,7 +363,7 @@ export function DayTimeline({
                 isOverTimeline && DROP_ZONE_ACTIVE,
               )}
             >
-              <p className="text-sm text-muted-foreground">まだ予定がありません</p>
+              <p className="text-sm text-muted-foreground">{MSG.EMPTY_SCHEDULE}</p>
             </div>
           );
         }

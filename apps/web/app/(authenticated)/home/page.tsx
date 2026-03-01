@@ -24,7 +24,6 @@ import { cn } from "@/lib/utils";
 export default function HomePage() {
   const {
     ownedTrips,
-    sharedTrips,
     isLoading,
     showSkeleton,
     error,

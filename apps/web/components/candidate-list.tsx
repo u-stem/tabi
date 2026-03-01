@@ -77,9 +77,7 @@ export const CandidateList = memo(function CandidateList({
                 onSelect={onToggle}
                 reorderable={isReorderable}
                 onMoveUp={isReorderable ? () => onReorderCandidate?.(spot.id, "up") : undefined}
-                onMoveDown={
-                  isReorderable ? () => onReorderCandidate?.(spot.id, "down") : undefined
-                }
+                onMoveDown={isReorderable ? () => onReorderCandidate?.(spot.id, "down") : undefined}
                 isFirst={idx === 0}
                 isLast={idx === candidates.length - 1}
               />

@@ -1,23 +1,9 @@
 "use client";
 
-import { useSortable } from "@dnd-kit/sortable";
-import type {
-  ScheduleCategory,
-  ScheduleColor,
-  ScheduleResponse,
-  TimeDelta,
-} from "@sugara/shared";
+import type { useSortable } from "@dnd-kit/sortable";
+import type { ScheduleCategory, ScheduleColor, ScheduleResponse, TimeDelta } from "@sugara/shared";
 import { shiftTime } from "@sugara/shared";
-import {
-  Bookmark,
-  Clock,
-  ExternalLink,
-  Pencil,
-  StickyNote,
-  Trash2,
-  Undo2,
-  X,
-} from "lucide-react";
+import { Bookmark, Clock, ExternalLink, Pencil, StickyNote, Trash2, Undo2, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import type { CSSProperties } from "react";
 import { useState } from "react";
@@ -37,7 +23,7 @@ import {
   ResponsiveAlertDialogHeader,
   ResponsiveAlertDialogTitle,
 } from "@/components/ui/responsive-alert-dialog";
-import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
+import type { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
 import type { TimeStatus } from "@/lib/format";
 import { isSafeUrl, stripProtocol } from "@/lib/format";

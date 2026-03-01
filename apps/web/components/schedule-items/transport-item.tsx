@@ -14,12 +14,12 @@ import { DragHandle } from "../drag-handle";
 import { ReorderControls } from "../reorder-controls";
 import type { ScheduleItemProps, SortableProps } from "./shared";
 import {
+  cardBodyProps,
   ScheduleItemDialogs,
   ScheduleLinks,
   ScheduleMenu,
   ScheduleTimeLabel,
   TimelineNode,
-  cardBodyProps,
   useShiftProposal,
 } from "./shared";
 

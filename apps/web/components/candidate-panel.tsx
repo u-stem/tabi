@@ -1,11 +1,11 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
-import {
-  type CandidateResponse,
-  type DayResponse,
-  type ScheduleResponse,
-  type TripResponse,
+import type {
+  CandidateResponse,
+  DayResponse,
+  ScheduleResponse,
+  TripResponse,
 } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -415,4 +415,3 @@ export function CandidatePanel({
     </div>
   );
 }
-

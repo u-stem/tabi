@@ -4,8 +4,8 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { CSSProperties } from "react";
 import { memo } from "react";
-import type { ScheduleItemProps, SortableProps } from "./schedule-items/shared";
 import { PlaceItem } from "./schedule-items/place-item";
+import type { ScheduleItemProps, SortableProps } from "./schedule-items/shared";
 import { TransportItem } from "./schedule-items/transport-item";
 
 export type { ScheduleItemProps };

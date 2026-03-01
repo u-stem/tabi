@@ -26,6 +26,7 @@ import {
   type MobileContentTab,
   MobileContentTabs,
 } from "@/components/mobile-content-tabs";
+
 const EditTripDialog = dynamic(() =>
   import("@/components/edit-trip-dialog").then((mod) => mod.EditTripDialog),
 );

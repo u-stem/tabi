@@ -1,6 +1,5 @@
 "use client";
 
-import { EmptyState } from "@/components/ui/empty-state";
 import {
   closestCenter,
   DndContext,
@@ -24,6 +23,7 @@ import { toast } from "sonner";
 import { Fab } from "@/components/fab";
 import { ReorderControls } from "@/components/reorder-controls";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";

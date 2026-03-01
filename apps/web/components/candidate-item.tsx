@@ -1,5 +1,7 @@
 "use client";
 
+import { useSortable } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import {
   CATEGORY_LABELS,
   type CandidateResponse,
@@ -7,8 +9,6 @@ import {
   TRANSPORT_METHOD_LABELS,
   type TransportMethod,
 } from "@sugara/shared";
-import { CSS } from "@dnd-kit/utilities";
-import { useSortable } from "@dnd-kit/sortable";
 import {
   ArrowLeft,
   Bookmark,

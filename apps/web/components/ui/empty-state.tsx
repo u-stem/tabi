@@ -25,11 +25,7 @@ export const EmptyState = memo(function EmptyState({
     );
   }
   if (variant === "page") {
-    return (
-      <p className={cn("mt-8 text-center text-muted-foreground", className)}>
-        {message}
-      </p>
-    );
+    return <p className={cn("mt-8 text-center text-muted-foreground", className)}>{message}</p>;
   }
   return (
     <div className={cn("py-8 text-center", className)}>

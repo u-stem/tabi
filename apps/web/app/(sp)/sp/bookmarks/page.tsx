@@ -14,7 +14,7 @@ import {
   X,
 } from "lucide-react";
 import type React from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
 import { BookmarkListCard } from "@/components/bookmark-list-card";
@@ -39,7 +39,6 @@ import { isGuestUser } from "@/lib/guest";
 import { useBookmarkLists, type VisibilityFilter } from "@/lib/hooks/use-bookmark-lists";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
-import { useState } from "react";
 
 const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.ReactNode }[] = [
   { value: "all", label: "すべて", icon: <ListFilter className="h-4 w-4" /> },

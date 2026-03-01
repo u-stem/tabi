@@ -33,7 +33,6 @@ import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
-
 type ExpensePanelProps = {
   tripId: string;
   canEdit: boolean;

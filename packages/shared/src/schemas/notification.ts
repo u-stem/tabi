@@ -17,13 +17,18 @@ export type NotificationType = z.infer<typeof notificationTypeSchema>;
 export const updateNotificationPreferenceSchema = z.object({
   type: notificationTypeSchema,
   inApp: z.boolean().optional(),
-  push: z.boolean().optional(),
 });
 
 export const createPushSubscriptionSchema = z.object({
   endpoint: z.string().url(),
   p256dh: z.string().min(1),
   auth: z.string().min(1),
+});
+
+export const updatePushSubscriptionPreferenceSchema = z.object({
+  endpoint: z.string().url(),
+  type: notificationTypeSchema,
+  enabled: z.boolean(),
 });
 
 /**

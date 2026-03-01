@@ -48,13 +48,12 @@ notificationPreferenceRoutes.put("/", async (c) => {
       userId: user.id,
       type,
       inApp: parsed.data.inApp ?? NOTIFICATION_DEFAULTS[type].inApp,
-      push: parsed.data.push ?? NOTIFICATION_DEFAULTS[type].push,
+      push: NOTIFICATION_DEFAULTS[type].push,
     })
     .onConflictDoUpdate({
       target: [notificationPreferences.userId, notificationPreferences.type],
       set: {
         ...(parsed.data.inApp !== undefined && { inApp: parsed.data.inApp }),
-        ...(parsed.data.push !== undefined && { push: parsed.data.push }),
       },
     });
 

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ExpenseSplitType } from "@sugara/shared";
+import type { ExpenseItem, ExpensesResponse } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Collapsible as CollapsiblePrimitive } from "radix-ui";
@@ -33,39 +33,6 @@ import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
-type ExpenseSplit = {
-  userId: string;
-  amount: number;
-  user: { id: string; name: string };
-};
-
-type Expense = {
-  id: string;
-  title: string;
-  amount: number;
-  splitType: ExpenseSplitType;
-  paidByUserId: string;
-  paidByUser: { id: string; name: string };
-  splits: ExpenseSplit[];
-  createdAt: string;
-};
-
-type Transfer = {
-  from: { id: string; name: string };
-  to: { id: string; name: string };
-  amount: number;
-};
-
-type Settlement = {
-  totalAmount: number;
-  balances: { userId: string; name: string; net: number }[];
-  transfers: Transfer[];
-};
-
-type ExpensesResponse = {
-  expenses: Expense[];
-  settlement: Settlement;
-};
 
 type ExpensePanelProps = {
   tripId: string;
@@ -85,8 +52,8 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
   const [internalDialogOpen, setInternalDialogOpen] = useState(false);
   const dialogOpen = addOpen ?? internalDialogOpen;
   const setDialogOpen = onAddOpenChange ?? setInternalDialogOpen;
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [deleteTarget, setDeleteTarget] = useState<Expense | null>(null);
+  const [editingExpenseItem, setEditingExpenseItem] = useState<ExpenseItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<ExpenseItem | null>(null);
 
   const deleteMutation = useMutation({
     mutationFn: (expenseId: string) =>
@@ -106,13 +73,13 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
     queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId) });
   };
 
-  const handleEdit = (expense: Expense) => {
-    setEditingExpense(expense);
+  const handleEdit = (expense: ExpenseItem) => {
+    setEditingExpenseItem(expense);
     setDialogOpen(true);
   };
 
   const handleAdd = () => {
-    setEditingExpense(null);
+    setEditingExpenseItem(null);
     setDialogOpen(true);
   };
 
@@ -215,11 +182,11 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
         )}
       </CollapsiblePrimitive.Root>
 
-      {/* Expense list */}
+      {/* ExpenseItem list */}
       {expenses.length > 0 && (
         <div className="space-y-2">
           {expenses.map((expense) => (
-            <ExpenseItem
+            <ExpenseRow
               key={expense.id}
               expense={expense}
               canEdit={canEdit}
@@ -236,7 +203,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
         tripId={tripId}
         open={dialogOpen}
         onOpenChange={setDialogOpen}
-        expense={editingExpense}
+        expense={editingExpenseItem}
         onSaved={handleSaved}
       />
 
@@ -271,18 +238,18 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
   );
 }
 
-function ExpenseItem({
+function ExpenseRow({
   expense,
   canEdit,
   isMobile,
   onEdit,
   onDelete,
 }: {
-  expense: Expense;
+  expense: ExpenseItem;
   canEdit: boolean;
   isMobile: boolean;
-  onEdit: (expense: Expense) => void;
-  onDelete: (expense: Expense) => void;
+  onEdit: (expense: ExpenseItem) => void;
+  onDelete: (expense: ExpenseItem) => void;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
 

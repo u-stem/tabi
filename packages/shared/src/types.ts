@@ -1,4 +1,5 @@
 import type { BookmarkListVisibility } from "./schemas/bookmark";
+import type { ExpenseSplitType } from "./schemas/expense";
 import type { MemberRole } from "./schemas/member";
 import type { PollResponseValue, PollStatus } from "./schemas/poll";
 import type { ReactionType, ScheduleCategory, ScheduleColor } from "./schemas/schedule";
@@ -225,4 +226,40 @@ export type SharedPollResponse = Omit<
   "isOwner" | "myParticipantId" | "tripId" | "ownerId"
 > & {
   shareExpiresAt: string | null;
+};
+
+// Expense API response types
+
+export type ExpenseSplit = {
+  userId: string;
+  amount: number;
+  user: { id: string; name: string };
+};
+
+export type ExpenseItem = {
+  id: string;
+  title: string;
+  amount: number;
+  splitType: ExpenseSplitType;
+  paidByUserId: string;
+  paidByUser: { id: string; name: string };
+  splits: ExpenseSplit[];
+  createdAt: string;
+};
+
+export type Transfer = {
+  from: { id: string; name: string };
+  to: { id: string; name: string };
+  amount: number;
+};
+
+export type Settlement = {
+  totalAmount: number;
+  balances: { userId: string; name: string; net: number }[];
+  transfers: Transfer[];
+};
+
+export type ExpensesResponse = {
+  expenses: ExpenseItem[];
+  settlement: Settlement;
 };

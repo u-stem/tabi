@@ -1,7 +1,6 @@
 "use client";
 
-import type { BookmarkListResponse } from "@sugara/shared";
-import { MAX_BOOKMARKS_PER_LIST } from "@sugara/shared";
+import { MAX_BOOKMARKS_PER_LIST, VISIBILITY_LABELS, type BookmarkListResponse } from "@sugara/shared";
 import {
   CheckSquare,
   Copy,
@@ -84,11 +83,7 @@ export function BookmarkListHeader({
           }
           className="text-xs"
         >
-          {list.visibility === "public"
-            ? "公開"
-            : list.visibility === "friends_only"
-              ? "フレンド限定"
-              : "非公開"}
+          {VISIBILITY_LABELS[list.visibility]}
         </Badge>
         {isMobile ? (
           <div className="ml-auto">

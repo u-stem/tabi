@@ -1,6 +1,10 @@
 "use client";
 
-import { type BookmarkListResponse, MAX_BOOKMARK_LISTS_PER_USER } from "@sugara/shared";
+import {
+  MAX_BOOKMARK_LISTS_PER_USER,
+  VISIBILITY_LABELS,
+  type BookmarkListResponse,
+} from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckSquare, Copy, MoreHorizontal, Plus, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
@@ -54,8 +58,8 @@ type VisibilityFilter = "all" | "public" | "friends_only" | "private";
 const visibilityFilters: { value: VisibilityFilter; label: string }[] = [
   { value: "all", label: "すべて" },
   { value: "public", label: "公開" },
-  { value: "friends_only", label: "フレンド限定" },
-  { value: "private", label: "非公開" },
+  { value: "friends_only", label: VISIBILITY_LABELS.friends_only },
+  { value: "private", label: VISIBILITY_LABELS.private },
 ];
 
 export default function BookmarksPage() {
@@ -287,7 +291,9 @@ export default function BookmarksPage() {
           {bookmarkLists.length === 0 ? (
             <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
           ) : filteredBookmarkLists.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST_FILTER}</p>
+            <p className="mt-8 text-center text-muted-foreground">
+              {MSG.EMPTY_BOOKMARK_LIST_FILTER}
+            </p>
           ) : (
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {filteredBookmarkLists.map((list) => (

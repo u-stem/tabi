@@ -1,6 +1,6 @@
 "use client";
 
-import type { BookmarkListResponse } from "@sugara/shared";
+import { VISIBILITY_LABELS, type BookmarkListResponse } from "@sugara/shared";
 import Link from "next/link";
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
@@ -45,11 +45,7 @@ export const BookmarkListCard = memo(function BookmarkListCard({
             }
             className="text-xs"
           >
-            {visibility === "public"
-              ? "公開"
-              : visibility === "friends_only"
-                ? "フレンド限定"
-                : "非公開"}
+            {VISIBILITY_LABELS[visibility]}
           </Badge>
         </div>
       </CardHeader>

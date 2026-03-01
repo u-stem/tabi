@@ -2,6 +2,7 @@
 
 import {
   BOOKMARK_LIST_NAME_MAX_LENGTH,
+  VISIBILITY_LABELS,
   type BookmarkListResponse,
   type BookmarkListVisibility,
 } from "@sugara/shared";
@@ -110,9 +111,9 @@ export function CreateBookmarkListDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="private">非公開</SelectItem>
-                  <SelectItem value="friends_only">フレンド限定</SelectItem>
-                  <SelectItem value="public">全体公開</SelectItem>
+                  <SelectItem value="private">{VISIBILITY_LABELS.private}</SelectItem>
+                  <SelectItem value="friends_only">{VISIBILITY_LABELS.friends_only}</SelectItem>
+                  <SelectItem value="public">{VISIBILITY_LABELS.public}</SelectItem>
                 </SelectContent>
               </Select>
             </div>

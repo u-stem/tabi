@@ -1,6 +1,10 @@
 "use client";
 
-import { type BookmarkListResponse, MAX_BOOKMARK_LISTS_PER_USER } from "@sugara/shared";
+import {
+  MAX_BOOKMARK_LISTS_PER_USER,
+  VISIBILITY_LABELS,
+  type BookmarkListResponse,
+} from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckSquare,
@@ -50,8 +54,8 @@ type VisibilityFilter = "all" | "public" | "friends_only" | "private";
 const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.ReactNode }[] = [
   { value: "all", label: "すべて", icon: <ListFilter className="h-4 w-4" /> },
   { value: "public", label: "公開", icon: <Globe className="h-4 w-4" /> },
-  { value: "friends_only", label: "フレンド限定", icon: <Users className="h-4 w-4" /> },
-  { value: "private", label: "非公開", icon: <Lock className="h-4 w-4" /> },
+  { value: "friends_only", label: VISIBILITY_LABELS.friends_only, icon: <Users className="h-4 w-4" /> },
+  { value: "private", label: VISIBILITY_LABELS.private, icon: <Lock className="h-4 w-4" /> },
 ];
 
 export default function SpBookmarksPage() {
@@ -255,7 +259,9 @@ export default function SpBookmarksPage() {
           {bookmarkLists.length === 0 ? (
             <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
           ) : filteredBookmarkLists.length === 0 ? (
-            <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST_FILTER}</p>
+            <p className="mt-8 text-center text-muted-foreground">
+              {MSG.EMPTY_BOOKMARK_LIST_FILTER}
+            </p>
           ) : (
             <div className="mt-4 grid gap-4">
               {filteredBookmarkLists.map((list) => (

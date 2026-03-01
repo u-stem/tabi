@@ -263,3 +263,39 @@ export type ExpensesResponse = {
   expenses: ExpenseItem[];
   settlement: Settlement;
 };
+
+// Notification API response types
+
+export type Notification = {
+  id: string;
+  type: string;
+  payload: Record<string, string>;
+  readAt: string | null;
+  createdAt: string;
+  tripId: string | null;
+};
+
+export type NotificationsResponse = {
+  notifications: Notification[];
+  unreadCount: number;
+};
+
+// Shared trip view types
+
+export type SharedTripResponse = {
+  id: string;
+  title: string;
+  destination: string;
+  startDate: string;
+  endDate: string;
+  status: TripStatus;
+  days: DayResponse[];
+  shareExpiresAt: string | null;
+};
+
+// Activity log paginated response
+
+export type LogsResponse = {
+  items: ActivityLogResponse[];
+  nextCursor: string | null;
+};

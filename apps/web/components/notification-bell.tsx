@@ -1,6 +1,10 @@
 "use client";
 
-import { formatNotificationText } from "@sugara/shared";
+import {
+  formatNotificationText,
+  type Notification,
+  type NotificationsResponse,
+} from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -17,20 +21,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-
-type Notification = {
-  id: string;
-  type: string;
-  payload: Record<string, string>;
-  readAt: string | null;
-  createdAt: string;
-  tripId: string | null;
-};
-
-type NotificationsResponse = {
-  notifications: Notification[];
-  unreadCount: number;
-};
 
 export function NotificationBell() {
   const router = useRouter();

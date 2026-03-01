@@ -1,6 +1,11 @@
 "use client";
 
-import { type ActivityLogResponse, type MemberRole, ROLE_LABELS } from "@sugara/shared";
+import {
+  type ActivityLogResponse,
+  type LogsResponse,
+  type MemberRole,
+  ROLE_LABELS,
+} from "@sugara/shared";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRightLeft, Check, Copy, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
@@ -171,11 +176,6 @@ function formatRelativeTime(dateStr: string): string {
   const months = Math.floor(days / 30);
   return `${months}ヶ月前`;
 }
-
-type LogsResponse = {
-  items: ActivityLogResponse[];
-  nextCursor: string | null;
-};
 
 export function ActivityLog({ tripId }: ActivityLogProps) {
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, isError } =

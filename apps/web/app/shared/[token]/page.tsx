@@ -1,8 +1,8 @@
+import type { SharedTripResponse } from "@sugara/shared";
 import type { Metadata } from "next";
 import { pageTitle } from "@/lib/constants";
 import { formatDateRange } from "@/lib/format";
 import { getSeason } from "@/lib/season";
-import type { SharedTripResponse } from "./_components/shared-trip-client";
 import { SharedTripClient } from "./_components/shared-trip-client";
 
 type Props = { params: Promise<{ token: string }> };

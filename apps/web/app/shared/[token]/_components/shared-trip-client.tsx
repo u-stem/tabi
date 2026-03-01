@@ -3,10 +3,9 @@
 import type {
   CrossDayEntry,
   DayPatternResponse,
-  DayResponse,
   ScheduleResponse,
+  SharedTripResponse,
   TransportMethod,
-  TripStatus,
 } from "@sugara/shared";
 import { STATUS_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -37,17 +36,6 @@ import { queryKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
-
-export type SharedTripResponse = {
-  id: string;
-  title: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
-  status: TripStatus;
-  days: DayResponse[];
-  shareExpiresAt: string | null;
-};
 
 function SharedHeader() {
   return (

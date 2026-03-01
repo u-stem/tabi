@@ -13,6 +13,7 @@ const FeedbackDialog = dynamic(() =>
 );
 
 import { GuestBanner } from "@/components/guest-banner";
+import { InstallBanner } from "@/components/install-banner";
 import { Logo } from "@/components/logo";
 import { OfflineBanner } from "@/components/offline-banner";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -66,6 +67,7 @@ export function SpHeader() {
     <header className="sticky top-0 z-30 select-none border-b bg-background">
       <OfflineBanner />
       <GuestBanner />
+      <InstallBanner />
       <nav
         aria-label="メインナビゲーション"
         className="container flex h-14 items-center justify-between"

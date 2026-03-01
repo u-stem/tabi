@@ -81,7 +81,7 @@ function FriendListSection({
         </CardHeader>
         <CardContent>
           {friends.length === 0 ? (
-            <p className="text-sm text-muted-foreground">フレンドがいません</p>
+            <p className="text-sm text-muted-foreground">{MSG.EMPTY_FRIEND}</p>
           ) : (
             <div className="max-h-80 space-y-3 overflow-y-auto">
               {friends.map((friend) => (

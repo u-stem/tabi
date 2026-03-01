@@ -345,14 +345,14 @@ export function MemberDialog({
                       if (friends.length === 0) {
                         return (
                           <p className="py-4 text-center text-sm text-muted-foreground">
-                            フレンドがいません
+                            {MSG.EMPTY_FRIEND}
                           </p>
                         );
                       }
                       if (addable.length === 0) {
                         return (
                           <p className="py-4 text-center text-sm text-muted-foreground">
-                            全員追加済みです
+                            {MSG.MEMBER_ALL_ADDED}
                           </p>
                         );
                       }
@@ -404,7 +404,7 @@ export function MemberDialog({
                   <TabsContent value="groups">
                     {groups.length === 0 ? (
                       <p className="py-4 text-center text-sm text-muted-foreground">
-                        グループがありません
+                        {MSG.EMPTY_GROUP}
                       </p>
                     ) : (
                       <div className="space-y-2">
@@ -440,7 +440,7 @@ export function MemberDialog({
                             if (addable.length === 0) {
                               return (
                                 <p className="py-4 text-center text-sm text-muted-foreground">
-                                  全員追加済みです
+                                  {MSG.MEMBER_ALL_ADDED}
                                 </p>
                               );
                             }

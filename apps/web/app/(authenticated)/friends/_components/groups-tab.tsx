@@ -149,7 +149,7 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
         </CardHeader>
         <CardContent>
           {groups.length === 0 ? (
-            <p className="text-sm text-muted-foreground">グループがありません</p>
+            <p className="text-sm text-muted-foreground">{MSG.EMPTY_GROUP}</p>
           ) : (
             <div className="max-h-80 space-y-3 overflow-y-auto">
               {groups.map((group) => (

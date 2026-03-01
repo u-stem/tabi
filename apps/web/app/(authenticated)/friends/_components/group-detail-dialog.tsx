@@ -222,7 +222,7 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
               </div>
             ) : members.length === 0 ? (
               <p className="py-4 text-center text-sm text-muted-foreground">
-                まだメンバーがいません
+                {MSG.EMPTY_MEMBER}
               </p>
             ) : (
               <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "30vh" }}>
@@ -269,11 +269,11 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
                 <TabsContent value="friends">
                   {friends.length === 0 ? (
                     <p className="py-4 text-center text-sm text-muted-foreground">
-                      フレンドがいません
+                      {MSG.EMPTY_FRIEND}
                     </p>
                   ) : addable.length === 0 ? (
                     <p className="py-4 text-center text-sm text-muted-foreground">
-                      全員追加済みです
+                      {MSG.MEMBER_ALL_ADDED}
                     </p>
                   ) : (
                     <div className="space-y-2">

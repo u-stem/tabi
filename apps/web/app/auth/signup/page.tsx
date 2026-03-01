@@ -1,9 +1,9 @@
 import { getAppSettings } from "@sugara/api/lib/app-settings";
 import Link from "next/link";
-import { MSG } from "@/lib/messages";
 import { Logo } from "@/components/logo";
 import { SignupForm } from "@/components/signup-form";
 import { Button } from "@/components/ui/button";
+import { MSG } from "@/lib/messages";
 
 export default async function SignupPage() {
   const { signupEnabled } = await getAppSettings();

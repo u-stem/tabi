@@ -92,7 +92,9 @@ export function GuestUpgradeDialog({
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle>アカウント登録</ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
-          <p className="px-1 py-2 text-sm text-muted-foreground">{MSG.AUTH_SIGNUP_DISABLED_DETAIL}</p>
+          <p className="px-1 py-2 text-sm text-muted-foreground">
+            {MSG.AUTH_SIGNUP_DISABLED_DETAIL}
+          </p>
           <ResponsiveDialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               閉じる

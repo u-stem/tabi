@@ -1,9 +1,9 @@
 import { getAppSettings } from "@sugara/api/lib/app-settings";
 import { ArrowRight, LogIn } from "lucide-react";
 import Link from "next/link";
-import { MSG } from "@/lib/messages";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
+import { MSG } from "@/lib/messages";
 
 export default async function HomePage() {
   const { signupEnabled } = await getAppSettings();

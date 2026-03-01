@@ -1,4 +1,4 @@
-import { NOTIFICATION_DEFAULTS, type NotificationType } from "@sugara/shared";
+import { NOTIFICATION_DEFAULTS, PUSH_MSG, type NotificationType } from "@sugara/shared";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import webpush from "web-push";
 import { db } from "../db/index";
@@ -108,62 +108,11 @@ function buildPushMessage(
   tripId?: string,
 ): { title: string; body: string; url: string } {
   const tripUrl = tripId ? `/trips/${tripId}` : "/";
-  switch (type) {
-    case "member_added":
-      return {
-        title: payload.tripName ?? "旅行",
-        body: `${payload.actorName}さんがあなたを招待しました`,
-        url: tripUrl,
-      };
-    case "member_removed":
-      return {
-        title: payload.tripName ?? "旅行",
-        body: "旅行メンバーから削除されました",
-        url: "/",
-      };
-    case "role_changed":
-      return {
-        title: payload.tripName ?? "旅行",
-        body: `あなたのロールが「${payload.newRole}」に変更されました`,
-        url: tripUrl,
-      };
-    case "schedule_created":
-      return {
-        title: payload.tripName ?? "旅行",
-        body: `${payload.actorName}さんが予定「${payload.entityName}」を追加しました`,
-        url: tripUrl,
-      };
-    case "schedule_updated":
-      return {
-        title: payload.tripName ?? "旅行",
-        body: `${payload.actorName}さんが予定「${payload.entityName}」を更新しました`,
-        url: tripUrl,
-      };
-    case "schedule_deleted":
-      return {
-        title: payload.tripName ?? "旅行",
-        body: `${payload.actorName}さんが予定を削除しました`,
-        url: tripUrl,
-      };
-    case "poll_started":
-      return {
-        title: payload.tripName ?? "旅行",
-        body: "日程投票が開始されました",
-        url: tripUrl,
-      };
-    case "poll_closed":
-      return {
-        title: payload.tripName ?? "旅行",
-        body: "日程投票が終了しました",
-        url: tripUrl,
-      };
-    case "expense_added":
-      return {
-        title: payload.tripName ?? "旅行",
-        body: `${payload.actorName}さんが費用「${payload.entityName}」を追加しました`,
-        url: tripUrl,
-      };
-  }
+  return {
+    title: payload.tripName ?? "旅行",
+    body: PUSH_MSG[type](payload),
+    url: type === "member_removed" ? "/" : tripUrl,
+  };
 }
 
 async function createNotificationInternal(params: CreateNotificationParams): Promise<void> {

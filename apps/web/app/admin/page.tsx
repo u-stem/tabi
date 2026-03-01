@@ -4,8 +4,10 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
 import { toast } from "sonner";
 import { Logo } from "@/components/logo";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { ApiError, api } from "@/lib/api";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
 
 const SUPABASE_MAU_LIMIT = 50_000;
@@ -129,10 +131,22 @@ export default function AdminPage() {
     },
   });
 
+  const showSkeleton = useDelayedLoading(isLoading);
   const updatedAt = dataUpdatedAt > 0 ? new Date(dataUpdatedAt).toLocaleTimeString() : null;
 
   if (error instanceof ApiError && (error.status === 403 || error.status === 401)) {
     notFound();
+  }
+
+  if (isLoading && !showSkeleton) return <div />;
+  if (showSkeleton) {
+    return (
+      <div className="container py-8 space-y-4">
+        {["row-1", "row-2", "row-3", "row-4", "row-5"].map((key) => (
+          <Skeleton key={key} className="h-12 w-full" />
+        ))}
+      </div>
+    );
   }
 
   return (
@@ -148,8 +162,6 @@ export default function AdminPage() {
       </header>
 
       <main className="container max-w-4xl space-y-8 py-8">
-        {isLoading && <p className="text-center text-sm text-muted-foreground">読み込み中...</p>}
-
         {error &&
           !(error instanceof ApiError && (error.status === 403 || error.status === 401)) && (
             <p className="text-center text-sm text-destructive">

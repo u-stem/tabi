@@ -126,4 +126,44 @@ describe("createNotification", () => {
     await new Promise((r) => setTimeout(r, 10));
     expect(mockSendNotification).not.toHaveBeenCalled();
   });
+
+  it("410 エラーの場合は購読を削除する", async () => {
+    const sub = {
+      endpoint: "https://fcm.example.com/push/1",
+      p256dh: "abc",
+      auth: "xyz",
+      preferences: {},
+    };
+    mockDbQuery.pushSubscriptions.findMany.mockResolvedValue([sub]);
+    mockSendNotification.mockRejectedValue({ statusCode: 410 });
+
+    const mockWhere = vi.fn().mockResolvedValue(undefined);
+    mockDbDelete.mockReturnValue({ where: mockWhere });
+
+    await createNotification({ ...baseParams, userId: "user-1" });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(mockDbDelete).toHaveBeenCalledWith(expect.anything()); // pushSubscriptions テーブルを指定
+    expect(mockWhere).toHaveBeenCalledOnce();
+  });
+
+  it("404 エラーの場合は購読を削除する", async () => {
+    const sub = {
+      endpoint: "https://fcm.example.com/push/2",
+      p256dh: "abc",
+      auth: "xyz",
+      preferences: {},
+    };
+    mockDbQuery.pushSubscriptions.findMany.mockResolvedValue([sub]);
+    mockSendNotification.mockRejectedValue({ statusCode: 404 });
+
+    const mockWhere = vi.fn().mockResolvedValue(undefined);
+    mockDbDelete.mockReturnValue({ where: mockWhere });
+
+    await createNotification({ ...baseParams, userId: "user-1" });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(mockDbDelete).toHaveBeenCalled();
+    expect(mockWhere).toHaveBeenCalledOnce();
+  });
 });

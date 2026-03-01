@@ -161,9 +161,7 @@ async function sendPushToUser(
 
   // Filter subscriptions by per-device preferences, falling back to global defaults
   const enabledSubs = subs.filter(
-    (sub) =>
-      ((sub.preferences as Record<string, boolean>)[type] ??
-        NOTIFICATION_DEFAULTS[type].push),
+    (sub) => (sub.preferences as Record<string, boolean>)[type] ?? NOTIFICATION_DEFAULTS[type].push,
   );
   if (enabledSubs.length === 0) return;
 
@@ -179,7 +177,9 @@ async function sendPushToUser(
           // 410 Gone / 404 Not Found means the subscription has expired; remove it
           const status = (err as { statusCode?: number })?.statusCode;
           if (status === 410 || status === 404) {
-            await db.delete(pushSubscriptions).where(eq(pushSubscriptions.endpoint, sub.endpoint));
+            await db
+              .delete(pushSubscriptions)
+              .where(and(eq(pushSubscriptions.endpoint, sub.endpoint), eq(pushSubscriptions.userId, userId)));
           }
         }),
     ),

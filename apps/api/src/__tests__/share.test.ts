@@ -88,7 +88,7 @@ describe("Share routes", () => {
 
     it("returns existing shareToken with expiresAt if already set", async () => {
       const existingToken = "abc123existingtoken";
-      const expiresAt = new Date("2026-03-01T00:00:00.000Z");
+      const expiresAt = new Date("2099-12-31T00:00:00.000Z");
       mockDbQuery.trips.findFirst.mockResolvedValue({
         shareToken: existingToken,
         shareTokenExpiresAt: expiresAt,

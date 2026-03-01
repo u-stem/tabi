@@ -1,6 +1,3 @@
-import type { MemberRole } from "./schemas/member";
-import type { ScheduleCategory, ScheduleColor, TransportMethod } from "./schemas/schedule";
-import type { TripStatus } from "./schemas/trip";
 import {
   MAX_BOOKMARK_LISTS_PER_USER,
   MAX_BOOKMARKS_PER_LIST,
@@ -14,6 +11,9 @@ import {
   MAX_SCHEDULES_PER_TRIP,
   MAX_TRIPS_PER_USER,
 } from "./limits";
+import type { MemberRole } from "./schemas/member";
+import type { ScheduleCategory, ScheduleColor, TransportMethod } from "./schemas/schedule";
+import type { TripStatus } from "./schemas/trip";
 
 // ─── API error messages (English, used in HTTP responses) ─────────────────────
 
@@ -356,6 +356,28 @@ export const MSG = {
   SHARED_LINK_INVALID: "このリンクは無効か、有効期限が切れています",
   SHARED_TRIP_FETCH_FAILED: "旅行の取得に失敗しました",
   SHARED_TRIP_NOT_FOUND: "旅行が見つかりません",
+
+  // Empty states
+  EMPTY_TRIP: "まだ旅行がありません",
+  EMPTY_TRIP_SHARED: "共有された旅行はありません",
+  EMPTY_TRIP_FILTER: "条件に一致する旅行がありません",
+  EMPTY_SCHEDULE: "まだ予定がありません",
+  EMPTY_CANDIDATE: "候補がありません",
+  EMPTY_BOOKMARK_LIST: "リストがありません",
+  EMPTY_BOOKMARK_LIST_FILTER: "条件に一致するリストがありません",
+  EMPTY_BOOKMARK: "ブックマークがありません",
+  EMPTY_FRIEND: "フレンドがいません",
+  EMPTY_MEMBER: "まだメンバーがいません",
+  EMPTY_GROUP: "グループがありません",
+  EMPTY_NOTIFICATION: "通知はありません",
+  EMPTY_EXPENSE: "費用はまだ記録されていません",
+  EMPTY_SOUVENIR: "お土産リストはまだありません",
+  EMPTY_NEWS: "お知らせはまだありません",
+  EMPTY_EXPORT_SHEET: "このシートにデータがありません",
+
+  // UI status
+  MEMBER_ALL_ADDED: "全員追加済みです",
+  NO_CHANGES: "変更がありません",
 } as const;
 
 // ─── Auth error translations (Better Auth code → Japanese) ───────────────────
@@ -458,3 +480,9 @@ export const SCHEDULE_COLOR_LABELS: Record<ScheduleColor, string> = {
   orange: "オレンジ",
   gray: "グレー",
 };
+
+export const VISIBILITY_LABELS = {
+  private: "非公開",
+  friends_only: "フレンド限定",
+  public: "全体公開",
+} as const;

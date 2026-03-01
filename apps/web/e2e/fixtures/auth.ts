@@ -42,6 +42,39 @@ export const test = base.extend<AuthFixtures>({
 
 export { expect } from "@playwright/test";
 
+export async function createTripWithPollViaUI(
+  page: Page,
+  options: { title: string; destination?: string },
+): Promise<string> {
+  await page.getByRole("button", { name: "新規作成" }).click();
+  const dialog = page.getByRole("dialog", { name: "新しい旅行を作成" });
+  await expect(dialog).toBeVisible();
+
+  await dialog.locator("#create-title").fill(options.title);
+  if (options.destination) {
+    await dialog.locator("#create-destination").fill(options.destination);
+  }
+
+  // Switch to poll mode
+  await dialog.getByRole("tab", { name: "日程を調整する" }).click();
+
+  // Select a date range (10th-12th of the currently displayed month) and add as candidate
+  const firstGrid = dialog.getByRole("grid").first();
+  await firstGrid.getByRole("gridcell", { name: /10/ }).first().click();
+  await firstGrid.getByRole("gridcell", { name: /12/ }).first().click();
+  await dialog.getByRole("button", { name: "日程案に追加" }).click();
+
+  await dialog.getByRole("button", { name: "作成" }).click();
+  await expect(dialog).not.toBeVisible({ timeout: 15000 });
+
+  const tripLink = page.getByRole("link", { name: new RegExp(options.title) }).first();
+  await expect(tripLink).toBeVisible({ timeout: 15000 });
+  await tripLink.click();
+  await expect(page).toHaveURL(/\/trips\/[a-f0-9-]+/, { timeout: 10000 });
+
+  return page.url();
+}
+
 export async function createBookmarkListViaUI(
   page: Page,
   name: string,

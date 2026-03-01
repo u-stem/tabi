@@ -2,7 +2,7 @@ import { NOTIFICATION_DEFAULTS, type NotificationType } from "@sugara/shared";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import webpush from "web-push";
 import { db } from "../db/index";
-import { notificationPreferences, notifications, pushSubscriptions } from "../db/schema";
+import { notificationPreferences, notifications, pushSubscriptions, trips } from "../db/schema";
 import { env } from "./env";
 
 const MAX_NOTIFICATIONS_PER_USER = 100;
@@ -31,6 +31,26 @@ type CreateNotificationParams = {
   tripId?: string;
   payload: NotificationPayload;
 };
+
+/**
+ * Fire-and-forget: fetch trip title then notify multiple users.
+ * Use when recipient userIds are already known (e.g. expense splits, member add/remove).
+ */
+export function notifyUsers(params: {
+  type: NotificationType;
+  tripId: string;
+  userIds: string[];
+  makePayload: (tripName: string) => NotificationPayload;
+}): void {
+  const { type, tripId, userIds, makePayload } = params;
+  if (userIds.length === 0) return;
+  void db.query.trips
+    .findFirst({ where: eq(trips.id, tripId), columns: { title: true } })
+    .then((trip) => {
+      const tripName = trip?.title ?? "旅行";
+      void Promise.all(userIds.map((userId) => createNotification({ type, userId, tripId, payload: makePayload(tripName) })));
+    });
+}
 
 /**
  * Fire-and-forget notification creation. Errors are caught internally.

@@ -8,6 +8,7 @@ const {
   mockDbDelete,
   mockDbSelect,
   mockCreateNotification,
+  mockNotifyUsers,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
   mockDbQuery: {
@@ -28,6 +29,7 @@ const {
   mockDbDelete: vi.fn(),
   mockDbSelect: vi.fn(),
   mockCreateNotification: vi.fn(),
+  mockNotifyUsers: vi.fn(),
 }));
 
 vi.mock("../lib/auth", () => ({
@@ -57,6 +59,7 @@ vi.mock("../lib/activity-logger", () => ({
 
 vi.mock("../lib/notifications", () => ({
   createNotification: (...args: unknown[]) => mockCreateNotification(...args),
+  notifyUsers: (...args: unknown[]) => mockNotifyUsers(...args),
 }));
 
 import { MAX_EXPENSES_PER_TRIP } from "@sugara/shared";
@@ -356,7 +359,7 @@ describe("Expense routes", () => {
         body: JSON.stringify(validBody),
       });
 
-      expect(mockCreateNotification).toHaveBeenCalledWith(
+      expect(mockNotifyUsers).toHaveBeenCalledWith(
         expect.objectContaining({ type: "expense_added" }),
       );
     });

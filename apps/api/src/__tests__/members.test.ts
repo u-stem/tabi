@@ -9,6 +9,7 @@ const {
   mockDbDelete,
   mockDbSelect,
   mockCreateNotification,
+  mockNotifyUsers,
 } = vi.hoisted(() => ({
   mockGetSession: vi.fn(),
   mockDbQuery: {
@@ -28,6 +29,7 @@ const {
   mockDbDelete: vi.fn(),
   mockDbSelect: vi.fn(),
   mockCreateNotification: vi.fn(),
+  mockNotifyUsers: vi.fn(),
 }));
 
 vi.mock("../lib/auth", () => ({
@@ -57,6 +59,7 @@ vi.mock("../lib/activity-logger", () => ({
 
 vi.mock("../lib/notifications", () => ({
   createNotification: (...args: unknown[]) => mockCreateNotification(...args),
+  notifyUsers: (...args: unknown[]) => mockNotifyUsers(...args),
 }));
 
 import { MAX_MEMBERS_PER_TRIP } from "@sugara/shared";
@@ -83,6 +86,7 @@ describe("Member routes", () => {
     });
     mockDbQuery.trips.findFirst.mockResolvedValue({ title: "テスト旅行" });
     mockCreateNotification.mockResolvedValue(undefined);
+    mockNotifyUsers.mockReturnValue(undefined);
     // Default: count query returns 0 (under limit / no expenses)
     const mockWhere = vi.fn().mockResolvedValue([{ count: 0 }]);
     mockDbSelect.mockReturnValue({
@@ -263,7 +267,7 @@ describe("Member routes", () => {
         body: JSON.stringify({ userId: fakeUser2Id, role: "editor" }),
       });
 
-      expect(mockCreateNotification).toHaveBeenCalledWith(
+      expect(mockNotifyUsers).toHaveBeenCalledWith(
         expect.objectContaining({ type: "member_added" }),
       );
     });

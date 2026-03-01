@@ -2,10 +2,10 @@ import { createExpenseSchema, MAX_EXPENSES_PER_TRIP, updateExpenseSchema } from 
 import { count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { expenseSplits, expenses, tripMembers, trips } from "../db/schema";
+import { expenseSplits, expenses, tripMembers } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
-import { createNotification } from "../lib/notifications";
+import { notifyUsers } from "../lib/notifications";
 import { calculateEqualSplit, calculateSettlement } from "../lib/settlement";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
@@ -115,23 +115,12 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     detail: `\u00A5${amount.toLocaleString()}`,
   });
 
-  void db.query.trips
-    .findFirst({ where: eq(trips.id, tripId), columns: { title: true } })
-    .then((trip) => {
-      const tripName = trip?.title ?? "旅行";
-      void Promise.all(
-        splits
-          .filter((s) => s.userId !== user.id)
-          .map((s) =>
-            createNotification({
-              type: "expense_added",
-              userId: s.userId,
-              tripId,
-              payload: { actorName: user.name, tripName, entityName: title },
-            }),
-          ),
-      );
-    });
+  notifyUsers({
+    type: "expense_added",
+    tripId,
+    userIds: splits.filter((s) => s.userId !== user.id).map((s) => s.userId),
+    makePayload: (tripName) => ({ actorName: user.name, tripName, entityName: title }),
+  });
 
   return c.json(result, 201);
 });

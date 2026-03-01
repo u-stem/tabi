@@ -7,10 +7,10 @@ import {
 import { and, count, eq, inArray, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { expenseSplits, expenses, tripMembers, trips, users } from "../db/schema";
+import { expenseSplits, expenses, tripMembers, users } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
-import { createNotification } from "../lib/notifications";
+import { notifyUsers } from "../lib/notifications";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
@@ -119,16 +119,12 @@ memberRoutes.post("/:tripId/members", requireTripAccess("owner"), async (c) => {
     detail: parsed.data.role,
   });
 
-  void db.query.trips
-    .findFirst({ where: eq(trips.id, tripId), columns: { title: true } })
-    .then((trip) => {
-      void createNotification({
-        type: "member_added",
-        userId: targetUser.id,
-        tripId,
-        payload: { actorName: user.name, tripName: trip?.title ?? "旅行" },
-      });
-    });
+  notifyUsers({
+    type: "member_added",
+    tripId,
+    userIds: [targetUser.id],
+    makePayload: (tripName) => ({ actorName: user.name, tripName }),
+  });
 
   return c.json(
     {
@@ -178,20 +174,16 @@ memberRoutes.patch("/:tripId/members/:userId", requireTripAccess("owner"), async
     detail: `${ROLE_LABELS[existing.role]} → ${ROLE_LABELS[parsed.data.role]}`,
   });
 
-  void db.query.trips
-    .findFirst({ where: eq(trips.id, tripId), columns: { title: true } })
-    .then((trip) => {
-      void createNotification({
-        type: "role_changed",
-        userId: targetUserId,
-        tripId,
-        payload: {
-          actorName: user.name,
-          tripName: trip?.title ?? "旅行",
-          newRole: ROLE_LABELS[parsed.data.role],
-        },
-      });
-    });
+  notifyUsers({
+    type: "role_changed",
+    tripId,
+    userIds: [targetUserId],
+    makePayload: (tripName) => ({
+      actorName: user.name,
+      tripName,
+      newRole: ROLE_LABELS[parsed.data.role],
+    }),
+  });
 
   return c.json({ ok: true });
 });
@@ -249,16 +241,12 @@ memberRoutes.delete("/:tripId/members/:userId", requireTripAccess("owner"), asyn
     entityName: existing.user.name,
   });
 
-  void db.query.trips
-    .findFirst({ where: eq(trips.id, tripId), columns: { title: true } })
-    .then((trip) => {
-      void createNotification({
-        type: "member_removed",
-        userId: targetUserId,
-        tripId,
-        payload: { actorName: user.name, tripName: trip?.title ?? "旅行" },
-      });
-    });
+  notifyUsers({
+    type: "member_removed",
+    tripId,
+    userIds: [targetUserId],
+    makePayload: (tripName) => ({ actorName: user.name, tripName }),
+  });
 
   return c.json({ ok: true });
 });

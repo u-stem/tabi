@@ -1,5 +1,5 @@
 import { createPushSubscriptionSchema } from "@sugara/shared";
-import { and, count, eq } from "drizzle-orm";
+import { and, asc, count, eq, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { pushSubscriptions } from "../db/schema";
@@ -20,21 +20,30 @@ pushSubscriptionRoutes.post("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const [{ count: subCount }] = await db
+  // Count other subscriptions for this user (excluding the incoming endpoint which may already exist)
+  const [{ count: otherCount }] = await db
     .select({ count: count() })
     .from(pushSubscriptions)
-    .where(eq(pushSubscriptions.userId, user.id));
+    .where(
+      and(
+        eq(pushSubscriptions.userId, user.id),
+        ne(pushSubscriptions.endpoint, parsed.data.endpoint),
+      ),
+    );
 
-  // Enforce per-user subscription limit (multi-device)
-  if (Number(subCount) >= MAX_SUBSCRIPTIONS_PER_USER) {
-    await db
-      .delete(pushSubscriptions)
-      .where(
-        and(
-          eq(pushSubscriptions.userId, user.id),
-          eq(pushSubscriptions.endpoint, parsed.data.endpoint),
-        ),
-      );
+  // Enforce per-user subscription limit: remove the oldest if a new endpoint would exceed it
+  if (Number(otherCount) >= MAX_SUBSCRIPTIONS_PER_USER) {
+    const oldest = await db.query.pushSubscriptions.findFirst({
+      where: and(
+        eq(pushSubscriptions.userId, user.id),
+        ne(pushSubscriptions.endpoint, parsed.data.endpoint),
+      ),
+      orderBy: [asc(pushSubscriptions.createdAt)],
+      columns: { id: true },
+    });
+    if (oldest) {
+      await db.delete(pushSubscriptions).where(eq(pushSubscriptions.id, oldest.id));
+    }
   }
 
   await db
@@ -56,12 +65,7 @@ pushSubscriptionRoutes.delete("/", async (c) => {
 
   await db
     .delete(pushSubscriptions)
-    .where(
-      and(
-        eq(pushSubscriptions.userId, user.id),
-        eq(pushSubscriptions.endpoint, endpoint),
-      ),
-    );
+    .where(and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.endpoint, endpoint)));
 
   return c.json({ ok: true });
 });

@@ -34,7 +34,9 @@ describe("Push subscription routes", () => {
     vi.clearAllMocks();
     mockGetSession.mockResolvedValue({ user: fakeUser, session: { id: "s1" } });
     mockDbInsert.mockReturnValue({
-      values: vi.fn().mockReturnValue({ onConflictDoNothing: vi.fn().mockResolvedValue(undefined) }),
+      values: vi
+        .fn()
+        .mockReturnValue({ onConflictDoNothing: vi.fn().mockResolvedValue(undefined) }),
     });
     mockDbDelete.mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
     mockDbSelect.mockReturnValue({

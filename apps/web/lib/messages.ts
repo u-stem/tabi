@@ -174,6 +174,11 @@ export const MSG = {
   // Expense
   EXPENSE_DELETE_FAILED: "経費の削除に失敗しました",
 
+  // Notification
+  NOTIFICATION_MARK_READ_FAILED: "既読の更新に失敗しました",
+  NOTIFICATION_MARK_ALL_READ_FAILED: "全て既読の更新に失敗しました",
+  NOTIFICATION_PREF_UPDATE_FAILED: "通知設定の更新に失敗しました",
+
   // Account
   ACCOUNT_DELETED: "アカウントを削除しました",
   ACCOUNT_DELETE_FAILED: "アカウントの削除に失敗しました",

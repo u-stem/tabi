@@ -1,18 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockDbQuery, mockDbInsert, mockSendNotification } = vi.hoisted(() => ({
-  mockDbQuery: {
-    notificationPreferences: { findFirst: vi.fn() },
-    pushSubscriptions: { findMany: vi.fn() },
-  },
-  mockDbInsert: vi.fn(),
-  mockSendNotification: vi.fn(),
-}));
+const { mockDbQuery, mockDbInsert, mockDbSelect, mockDbDelete, mockSendNotification } = vi.hoisted(
+  () => ({
+    mockDbQuery: {
+      notificationPreferences: { findFirst: vi.fn() },
+      pushSubscriptions: { findMany: vi.fn() },
+      notifications: { findMany: vi.fn() },
+    },
+    mockDbInsert: vi.fn(),
+    mockDbSelect: vi.fn(),
+    mockDbDelete: vi.fn(),
+    mockSendNotification: vi.fn(),
+  }),
+);
 
 vi.mock("../db/index", () => ({
   db: {
     query: mockDbQuery,
     insert: (...args: unknown[]) => mockDbInsert(...args),
+    select: (...args: unknown[]) => mockDbSelect(...args),
+    delete: (...args: unknown[]) => mockDbDelete(...args),
   },
 }));
 
@@ -37,7 +44,15 @@ describe("createNotification", () => {
     vi.clearAllMocks();
     mockDbQuery.notificationPreferences.findFirst.mockResolvedValue(null); // no pref = default ON
     mockDbQuery.pushSubscriptions.findMany.mockResolvedValue([]);
+    mockDbQuery.notifications.findMany.mockResolvedValue([]);
     mockDbInsert.mockReturnValue({ values: vi.fn().mockResolvedValue(undefined) });
+    // pruneOldNotifications uses db.select().from().where() chain
+    mockDbSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([{ count: 0 }]),
+      }),
+    });
+    mockDbDelete.mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
     mockSendNotification.mockResolvedValue({});
   });
 

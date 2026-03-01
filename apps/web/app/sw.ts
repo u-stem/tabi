@@ -42,14 +42,32 @@ serwist.addEventListeners();
 // Push notification handlers (separate from serwist)
 self.addEventListener("push", (event) => {
   if (!event.data) return;
-  const data = event.data.json() as { title: string; body: string; url: string };
+
+  let data: unknown;
+  try {
+    data = event.data.json();
+  } catch {
+    return;
+  }
+
+  if (
+    typeof data !== "object" ||
+    data === null ||
+    typeof (data as Record<string, unknown>).title !== "string" ||
+    typeof (data as Record<string, unknown>).body !== "string" ||
+    typeof (data as Record<string, unknown>).url !== "string"
+  ) {
+    return;
+  }
+
+  const { title, body, url } = data as { title: string; body: string; url: string };
 
   event.waitUntil(
-    self.registration.showNotification(data.title, {
-      body: data.body,
+    self.registration.showNotification(title, {
+      body,
       icon: "/icon-192x192.png",
       badge: "/icon-72x72.png",
-      data: { url: data.url },
+      data: { url },
     }),
   );
 });
@@ -59,10 +77,10 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      const url = (event.notification.data as { url: string }).url;
-      const existing = clientList.find((c) => c.url.includes(url));
+      const path = (event.notification.data as { url: string }).url;
+      const existing = clientList.find((c) => new URL(c.url).pathname === path);
       if (existing) return existing.focus();
-      return self.clients.openWindow(url);
+      return self.clients.openWindow(path);
     }),
   );
 });

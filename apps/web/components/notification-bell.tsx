@@ -1,10 +1,14 @@
 "use client";
 
+import { formatNotificationText } from "@sugara/shared";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import useSWR from "swr";
+import { toast } from "sonner";
 import { api } from "../lib/api";
+import { MSG } from "../lib/messages";
+import { queryKeys } from "../lib/query-keys";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -28,29 +32,35 @@ type NotificationsResponse = {
   unreadCount: number;
 };
 
-function fetcher(url: string) {
-  return api<NotificationsResponse>(url);
-}
-
 export function NotificationBell() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
-  const { data, mutate } = useSWR("/api/notifications", fetcher, {
-    refreshInterval: 60_000,
-    revalidateOnFocus: true,
+
+  const { data } = useQuery({
+    queryKey: queryKeys.notifications.list(),
+    queryFn: () => api<NotificationsResponse>("/api/notifications"),
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+  });
+
+  const markAllRead = useMutation({
+    mutationFn: () => api("/api/notifications/read-all", { method: "PUT" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() }),
+    onError: () => toast.error(MSG.NOTIFICATION_MARK_ALL_READ_FAILED),
+  });
+
+  const markRead = useMutation({
+    mutationFn: (id: string) => api(`/api/notifications/${id}/read`, { method: "PUT" }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() }),
+    onError: () => toast.error(MSG.NOTIFICATION_MARK_READ_FAILED),
   });
 
   const unreadCount = data?.unreadCount ?? 0;
 
-  async function handleMarkAllRead() {
-    await api("/api/notifications/read-all", { method: "PUT" });
-    await mutate();
-  }
-
   async function handleClickNotification(n: Notification) {
     if (!n.readAt) {
-      await api(`/api/notifications/${n.id}/read`, { method: "PUT" });
-      await mutate();
+      markRead.mutate(n.id);
     }
     setOpen(false);
     if (n.tripId) router.push(`/trips/${n.tripId}`);
@@ -74,7 +84,7 @@ export function NotificationBell() {
           {unreadCount > 0 && (
             <button
               type="button"
-              onClick={handleMarkAllRead}
+              onClick={() => markAllRead.mutate()}
               className="text-xs text-muted-foreground hover:text-foreground"
             >
               すべて既読
@@ -93,7 +103,7 @@ export function NotificationBell() {
               className={`flex cursor-pointer flex-col items-start gap-0.5 px-3 py-2 ${!n.readAt ? "bg-muted/50" : ""}`}
               onClick={() => handleClickNotification(n)}
             >
-              <span className="text-sm">{formatNotificationText(n)}</span>
+              <span className="text-sm">{formatNotificationText(n.type, n.payload)}</span>
               <span className="text-xs text-muted-foreground">
                 {new Date(n.createdAt).toLocaleString("ja-JP", {
                   month: "numeric",
@@ -108,30 +118,4 @@ export function NotificationBell() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
-
-function formatNotificationText(n: Notification): string {
-  const p = n.payload;
-  switch (n.type) {
-    case "member_added":
-      return `${p.actorName}さんが「${p.tripName}」に招待しました`;
-    case "member_removed":
-      return `「${p.tripName}」のメンバーから削除されました`;
-    case "role_changed":
-      return `「${p.tripName}」でのロールが変更されました`;
-    case "schedule_created":
-      return `${p.actorName}さんが「${p.entityName}」を追加しました`;
-    case "schedule_updated":
-      return `${p.actorName}さんが「${p.entityName}」を更新しました`;
-    case "schedule_deleted":
-      return `${p.actorName}さんがスケジュールを削除しました`;
-    case "poll_started":
-      return `「${p.tripName}」で日程投票が開始されました`;
-    case "poll_closed":
-      return `「${p.tripName}」の日程投票が終了しました`;
-    case "expense_added":
-      return `${p.actorName}さんが経費「${p.entityName}」を追加しました`;
-    default:
-      return "新しい通知があります";
-  }
 }

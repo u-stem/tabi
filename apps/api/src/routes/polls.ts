@@ -22,8 +22,8 @@ import {
 } from "../db/schema";
 import { formatShortDateRange, logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
-import { createNotification } from "../lib/notifications";
 import { hasChanges } from "../lib/has-changes";
+import { createNotification } from "../lib/notifications";
 import { findPollAsEditor, findPollAsOwner, findPollAsParticipant } from "../lib/poll-access";
 import { generateShareToken, shareExpiresAt } from "../lib/share-token";
 import { createInitialTripDays } from "../lib/trip-days";

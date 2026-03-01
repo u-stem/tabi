@@ -1,9 +1,9 @@
 "use client";
 
 import { buildDiceBearUrl, DICEBEAR_STYLES, type DiceBearStyle } from "@sugara/shared";
-import { Check, Copy, ExternalLink, RefreshCw, X } from "lucide-react";
+import { Bell, ExternalLink, RefreshCw, Settings2, User, X } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { NotificationPreferencesSection } from "@/components/notification-preferences-section";
 import { Button } from "@/components/ui/button";
@@ -27,11 +27,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api } from "@/lib/api";
 import { authClient, useSession } from "@/lib/auth-client";
 import { translateAuthError } from "@/lib/auth-error";
-import { copyToClipboard } from "@/lib/clipboard";
 import {
   getPasswordRequirementsText,
   MIN_PASSWORD_LENGTH,
@@ -40,17 +40,82 @@ import {
   validatePassword,
 } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
+import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { MSG } from "@/lib/messages";
+import { cn } from "@/lib/utils";
+
+type Section = "profile" | "notifications" | "account";
+
+const SECTIONS = ["profile", "notifications", "account"] as const satisfies readonly Section[];
+
+const NAV_ITEMS: { id: Section; label: string; Icon: React.ElementType }[] = [
+  { id: "profile", label: "プロフィール", Icon: User },
+  { id: "notifications", label: "通知", Icon: Bell },
+  { id: "account", label: "アカウント", Icon: Settings2 },
+];
 
 export default function SettingsPage() {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
+  const [section, setSection] = useState<Section>("profile");
+  const sectionRef = useRef<Section>("profile");
+  const contentRef = useRef<HTMLDivElement>(null);
+  const swipeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     document.title = pageTitle("設定");
   }, []);
 
   const user = session?.user;
+  const currentSectionIdx = SECTIONS.indexOf(section);
+
+  const changeSection = useCallback((s: Section) => {
+    sectionRef.current = s;
+    setSection(s);
+  }, []);
+
+  const handleSwipe = useCallback(
+    (direction: "left" | "right") => {
+      const idx = SECTIONS.indexOf(sectionRef.current);
+      const nextIdx = direction === "left" ? idx + 1 : idx - 1;
+      if (nextIdx < 0 || nextIdx >= SECTIONS.length) return;
+      changeSection(SECTIONS[nextIdx]);
+    },
+    [changeSection],
+  );
+
+  const swipe = useSwipeTab(contentRef, swipeRef, {
+    onSwipeComplete: handleSwipe,
+    canSwipePrev: currentSectionIdx > 0,
+    canSwipeNext: currentSectionIdx < SECTIONS.length - 1,
+    enabled: !isGuest && !!user,
+  });
+
+  const adjacentSection =
+    swipe.adjacent === "next"
+      ? SECTIONS[currentSectionIdx + 1]
+      : swipe.adjacent === "prev"
+        ? SECTIONS[currentSectionIdx - 1]
+        : undefined;
+
+  function renderSectionContent(s: Section) {
+    switch (s) {
+      case "profile":
+        if (!user) return null;
+        return <ProfileSection name={user.name ?? ""} currentImage={user.image ?? null} />;
+      case "notifications":
+        return <NotificationPreferencesSection />;
+      case "account":
+        if (!user) return null;
+        return (
+          <>
+            <UsernameSection defaultUsername={user.displayUsername ?? user.username ?? ""} />
+            <PasswordSection username={user.username ?? ""} />
+            <DeleteAccountSection username={user.username ?? ""} />
+          </>
+        );
+    }
+  }
 
   if (isGuest) {
     return (
@@ -63,16 +128,61 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="mt-4 mx-auto max-w-2xl space-y-8">
-      {user && (
-        <>
-          <UserIdSection userId={user.id} />
-          <AvatarSection name={user.name ?? ""} currentImage={user.image ?? null} />
-          <ProfileSection defaultName={user.name ?? ""} />
-          <UsernameSection defaultUsername={user.displayUsername ?? user.username ?? ""} />
-          <PasswordSection username={user.username ?? ""} />
-          <NotificationPreferencesSection />
-          <DeleteAccountSection username={user.username ?? ""} />
+    <div className="mt-4 mx-auto max-w-4xl">
+      <div className="flex flex-col gap-6 md:flex-row md:gap-10">
+        {/* Tab nav — pill grid on mobile, sidebar on desktop */}
+        <div
+          role="tablist"
+          aria-orientation="horizontal"
+          className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1 md:flex md:flex-col md:grid-cols-none md:w-48 md:shrink-0 md:rounded-none md:bg-transparent md:p-0"
+        >
+          {NAV_ITEMS.map(({ id, label, Icon }) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={section === id}
+              onClick={() => changeSection(id)}
+              className={cn(
+                "min-h-[36px] rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.97]",
+                "flex items-center justify-center",
+                "md:justify-start md:gap-2 md:px-3 md:py-2 md:whitespace-nowrap md:active:scale-100",
+                section === id
+                  ? "bg-background text-foreground shadow-sm md:bg-muted md:shadow-none"
+                  : "text-muted-foreground hover:text-foreground md:hover:bg-muted/50",
+              )}
+            >
+              <Icon className="hidden md:block h-4 w-4 shrink-0" />
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Content */}
+        <div className="min-w-0 flex-1 space-y-8">
+          {/* Swipe container — px-0.5/-mx-0.5 lets focus rings bleed past the overflow boundary */}
+          <div ref={contentRef} className="overflow-x-hidden touch-pan-y -mx-0.5 px-0.5">
+            <div
+              ref={swipeRef}
+              className="relative touch-pan-y"
+              style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
+            >
+              <div className="space-y-8">{renderSectionContent(section)}</div>
+
+              {swipe.adjacent && adjacentSection && (
+                <div
+                  className="absolute top-0 left-0 w-full space-y-8"
+                  aria-hidden="true"
+                  style={{
+                    transform: swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                  }}
+                >
+                  {renderSectionContent(adjacentSection)}
+                </div>
+              )}
+            </div>
+          </div>
+
           <div className="flex flex-wrap select-none items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <Link
               href="/faq"
@@ -111,73 +221,154 @@ export default function SettingsPage() {
               <ExternalLink className="h-3 w-3" />
             </Link>
           </div>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
 
-function UserIdSection({ userId }: { userId: string }) {
-  const [copied, setCopied] = useState(false);
-
-  async function handleCopy() {
-    await copyToClipboard(userId);
-    setCopied(true);
-    toast.success(MSG.SETTINGS_USER_ID_COPIED);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>ユーザーID</CardTitle>
-        <CardDescription>フレンド申請やメンバー追加時にこのIDを共有してください</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2">
-          <code className="flex-1 rounded-md bg-muted px-3 py-2 text-sm font-mono break-all">
-            {userId}
-          </code>
-          <Button variant="outline" size="icon" onClick={handleCopy} aria-label="コピー">
-            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-function ProfileSection({ defaultName }: { defaultName: string }) {
+function ProfileSection({
+  name: defaultName,
+  currentImage,
+}: {
+  name: string;
+  currentImage: string | null;
+}) {
+  const { refetch } = useSession();
+  const [style, setStyle] = useState<DiceBearStyle>("glass");
+  const [seeds, setSeeds] = useState<string[]>(() => generateSeeds(CANDIDATE_COUNT));
+  const [selectedSeed, setSelectedSeed] = useState<string | null>(null);
+  const [name, setName] = useState(defaultName);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [name, setName] = useState(defaultName);
-  const dirty = name.trim() !== defaultName;
+
+  const avatarChanged = selectedSeed !== null;
+  const nameChanged = name.trim() !== defaultName;
+  const dirty = avatarChanged || nameChanged;
+
+  const shuffle = useCallback(() => {
+    setSeeds(generateSeeds(CANDIDATE_COUNT));
+    setSelectedSeed(null);
+  }, []);
+
+  async function refreshSession() {
+    await refetch({ query: { disableCookieCache: true } });
+  }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const trimmed = name.trim();
-    const result = await authClient.updateUser({ name: trimmed });
+    const updates: { name?: string; image?: string } = {};
+    if (nameChanged) updates.name = name.trim();
+    if (avatarChanged && selectedSeed) updates.image = buildDiceBearUrl(style, selectedSeed);
+
+    const result = await authClient.updateUser(updates);
     if (result.error) {
       setError(translateAuthError(result.error, MSG.SETTINGS_PROFILE_UPDATE_FAILED));
       setLoading(false);
       return;
     }
 
+    await refreshSession();
     toast.success(MSG.SETTINGS_PROFILE_UPDATED);
+    setSelectedSeed(null);
     setLoading(false);
+  }
+
+  async function handleReset() {
+    setLoading(true);
+    try {
+      const result = await authClient.updateUser({ image: null });
+      if (result.error) {
+        toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
+        return;
+      }
+      await refreshSession();
+      toast.success(MSG.SETTINGS_AVATAR_RESET);
+      setSelectedSeed(null);
+    } catch {
+      toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>プロフィール</CardTitle>
-        <CardDescription>表示名を変更します</CardDescription>
+        <CardDescription>アバターと表示名を変更します</CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Avatar */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
+              <UserAvatar name={defaultName} image={currentImage} className="h-16 w-16" />
+              <div className="text-sm text-muted-foreground">
+                {currentImage ? "カスタムアバターを設定中" : "デフォルト（イニシャル）"}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="avatar-style">スタイル</Label>
+              <div className="flex gap-2">
+                <Select
+                  value={style}
+                  onValueChange={(v) => {
+                    setStyle(v as DiceBearStyle);
+                    setSelectedSeed(null);
+                  }}
+                >
+                  <SelectTrigger id="avatar-style" className="flex-1">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {DICEBEAR_STYLES.map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {STYLE_LABELS[s]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button type="button" variant="outline" onClick={shuffle} className="shrink-0">
+                  <RefreshCw className="h-4 w-4" />
+                  シャッフル
+                </Button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+              {seeds.map((seed) => {
+                const url = buildDiceBearUrl(style, seed);
+                const isSelected = selectedSeed === seed;
+                return (
+                  <button
+                    key={seed}
+                    type="button"
+                    onClick={() => setSelectedSeed(isSelected ? null : seed)}
+                    className={`flex items-center justify-center rounded-lg border-2 p-2 transition-colors ${
+                      isSelected
+                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                        : "border-transparent hover:border-border"
+                    }`}
+                  >
+                    <img
+                      src={url}
+                      alt={`${STYLE_LABELS[style]} avatar ${seed}`}
+                      width={48}
+                      height={48}
+                      className="rounded-full"
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Display name */}
           <div className="space-y-2">
             <Label htmlFor="name">
               表示名 <span className="text-destructive">*</span>
@@ -195,6 +386,7 @@ function ProfileSection({ defaultName }: { defaultName: string }) {
               {name.length}/{PROFILE_NAME_MAX_LENGTH}
             </p>
           </div>
+
           {error && (
             <div
               role="alert"
@@ -203,9 +395,36 @@ function ProfileSection({ defaultName }: { defaultName: string }) {
               {error}
             </div>
           )}
-          <Button type="submit" disabled={loading || !dirty}>
-            {loading ? "更新中..." : "更新"}
-          </Button>
+
+          <div className="flex justify-end gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    disabled={loading || !currentImage}
+                    onClick={handleReset}
+                  >
+                    アバターをリセット
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!currentImage && !loading && (
+                <TooltipContent>カスタムアバターが設定されていません</TooltipContent>
+              )}
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button type="submit" disabled={loading || !dirty}>
+                    {loading ? "保存中..." : "保存"}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!dirty && !loading && <TooltipContent>変更がありません</TooltipContent>}
+            </Tooltip>
+          </div>
         </form>
       </CardContent>
     </Card>
@@ -273,9 +492,18 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
               {error}
             </div>
           )}
-          <Button type="submit" disabled={loading || !dirty}>
-            {loading ? "更新中..." : "更新"}
-          </Button>
+          <div className="flex justify-end">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button type="submit" disabled={loading || !dirty}>
+                    {loading ? "更新中..." : "更新"}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!dirty && !loading && <TooltipContent>変更がありません</TooltipContent>}
+            </Tooltip>
+          </div>
         </form>
       </CardContent>
     </Card>
@@ -394,9 +622,20 @@ function PasswordSection({ username }: { username: string }) {
               {error}
             </div>
           )}
-          <Button type="submit" disabled={loading || !filled}>
-            {loading ? "変更中..." : "パスワードを変更"}
-          </Button>
+          <div className="flex justify-end">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="inline-flex">
+                  <Button type="submit" disabled={loading || !filled}>
+                    {loading ? "変更中..." : "パスワードを変更"}
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              {!filled && !loading && (
+                <TooltipContent>パスワードをすべて入力してください</TooltipContent>
+              )}
+            </Tooltip>
+          </div>
         </form>
       </CardContent>
     </Card>
@@ -422,149 +661,6 @@ const CANDIDATE_COUNT = 6;
 
 function generateSeeds(count: number): string[] {
   return Array.from({ length: count }, () => crypto.randomUUID().slice(0, 8));
-}
-
-function AvatarSection({ name, currentImage }: { name: string; currentImage: string | null }) {
-  const { refetch } = useSession();
-  const [style, setStyle] = useState<DiceBearStyle>("glass");
-  const [seeds, setSeeds] = useState<string[]>(() => generateSeeds(CANDIDATE_COUNT));
-  const [selected, setSelected] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  const shuffle = useCallback(() => {
-    setSeeds(generateSeeds(CANDIDATE_COUNT));
-    setSelected(null);
-  }, []);
-
-  async function refreshSession() {
-    // Bypass cookie cache to get fresh user data from DB
-    await refetch({ query: { disableCookieCache: true } });
-  }
-
-  async function handleSave() {
-    if (!selected) return;
-    setLoading(true);
-    try {
-      const image = buildDiceBearUrl(style, selected);
-      const result = await authClient.updateUser({ image });
-      if (result.error) {
-        toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
-        return;
-      }
-      await refreshSession();
-      toast.success(MSG.SETTINGS_AVATAR_UPDATED);
-      setSelected(null);
-    } catch {
-      toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleReset() {
-    setLoading(true);
-    try {
-      const result = await authClient.updateUser({ image: null });
-      if (result.error) {
-        toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
-        return;
-      }
-      await refreshSession();
-      toast.success(MSG.SETTINGS_AVATAR_RESET);
-      setSelected(null);
-    } catch {
-      toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>アバター</CardTitle>
-        <CardDescription>プロフィールに表示されるアバターを設定します</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-center gap-4">
-          <UserAvatar name={name} image={currentImage} className="h-16 w-16" />
-          <div className="text-sm text-muted-foreground">
-            {currentImage ? "カスタムアバターを設定中" : "デフォルト（イニシャル）"}
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="avatar-style">スタイル</Label>
-          <Select
-            value={style}
-            onValueChange={(v) => {
-              setStyle(v as DiceBearStyle);
-              setSelected(null);
-            }}
-          >
-            <SelectTrigger id="avatar-style" className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {DICEBEAR_STYLES.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {STYLE_LABELS[s]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-          {seeds.map((seed) => {
-            const url = buildDiceBearUrl(style, seed);
-            const isSelected = selected === seed;
-            return (
-              <button
-                key={seed}
-                type="button"
-                onClick={() => setSelected(isSelected ? null : seed)}
-                className={`flex items-center justify-center rounded-lg border-2 p-2 transition-colors ${
-                  isSelected
-                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-                    : "border-transparent hover:border-border"
-                }`}
-              >
-                <img
-                  src={url}
-                  alt={`${STYLE_LABELS[style]} avatar ${seed}`}
-                  width={48}
-                  height={48}
-                  className="rounded-full"
-                />
-              </button>
-            );
-          })}
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="sm" onClick={shuffle}>
-            <RefreshCw className="h-4 w-4" />
-            シャッフル
-          </Button>
-          <Button type="button" size="sm" disabled={!selected || loading} onClick={handleSave}>
-            {loading ? "設定中..." : "設定する"}
-          </Button>
-          {currentImage && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              disabled={loading}
-              onClick={handleReset}
-            >
-              リセット
-            </Button>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
 }
 
 function DeleteAccountSection({ username }: { username: string }) {
@@ -618,9 +714,11 @@ function DeleteAccountSection({ username }: { username: string }) {
       </CardHeader>
       <CardContent>
         <ResponsiveAlertDialog open={open} onOpenChange={handleOpenChange}>
-          <ResponsiveAlertDialogTrigger asChild>
-            <Button variant="destructive">アカウントを削除</Button>
-          </ResponsiveAlertDialogTrigger>
+          <div className="flex justify-end">
+            <ResponsiveAlertDialogTrigger asChild>
+              <Button variant="destructive">アカウントを削除</Button>
+            </ResponsiveAlertDialogTrigger>
+          </div>
           <ResponsiveAlertDialogContent>
             <ResponsiveAlertDialogHeader>
               <ResponsiveAlertDialogTitle>

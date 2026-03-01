@@ -50,4 +50,9 @@ export const queryKeys = {
   publicSettings: {
     all: ["public-settings"] as const,
   },
+  notifications: {
+    all: ["notifications"] as const,
+    list: () => [...queryKeys.notifications.all, "list"] as const,
+    preferences: () => [...queryKeys.notifications.all, "preferences"] as const,
+  },
 };

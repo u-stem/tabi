@@ -341,7 +341,9 @@ describe("Expense routes", () => {
       mockDbInsert
         .mockReturnValueOnce({
           values: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValueOnce([{ id: "exp-1", ...validBody, createdAt: new Date() }]),
+            returning: vi
+              .fn()
+              .mockResolvedValueOnce([{ id: "exp-1", ...validBody, createdAt: new Date() }]),
           }),
         })
         .mockReturnValueOnce({

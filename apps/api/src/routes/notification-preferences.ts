@@ -1,4 +1,8 @@
-import { notificationTypeSchema, updateNotificationPreferenceSchema } from "@sugara/shared";
+import {
+  NOTIFICATION_DEFAULTS,
+  notificationTypeSchema,
+  updateNotificationPreferenceSchema,
+} from "@sugara/shared";
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
@@ -21,8 +25,8 @@ notificationPreferenceRoutes.get("/", async (c) => {
   const savedMap = new Map(saved.map((p) => [p.type, p]));
   const prefs = ALL_TYPES.map((type) => ({
     type,
-    inApp: savedMap.get(type)?.inApp ?? true,
-    push: savedMap.get(type)?.push ?? true,
+    inApp: savedMap.get(type)?.inApp ?? NOTIFICATION_DEFAULTS[type].inApp,
+    push: savedMap.get(type)?.push ?? NOTIFICATION_DEFAULTS[type].push,
   }));
 
   return c.json(prefs);
@@ -37,13 +41,14 @@ notificationPreferenceRoutes.put("/", async (c) => {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
+  const type = parsed.data.type;
   await db
     .insert(notificationPreferences)
     .values({
       userId: user.id,
-      type: parsed.data.type,
-      inApp: parsed.data.inApp ?? true,
-      push: parsed.data.push ?? true,
+      type,
+      inApp: parsed.data.inApp ?? NOTIFICATION_DEFAULTS[type].inApp,
+      push: parsed.data.push ?? NOTIFICATION_DEFAULTS[type].push,
     })
     .onConflictDoUpdate({
       target: [notificationPreferences.userId, notificationPreferences.type],

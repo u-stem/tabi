@@ -182,9 +182,11 @@ describe("Poll routes", () => {
       mockDbQuery.schedulePollParticipants.findFirst.mockResolvedValue(undefined);
       mockDbInsert.mockReturnValue({
         values: vi.fn().mockReturnValue({
-          returning: vi.fn().mockResolvedValue([
-            { id: "part-1", pollId: "poll-1", userId: "00000000-0000-0000-0000-000000000002" },
-          ]),
+          returning: vi
+            .fn()
+            .mockResolvedValue([
+              { id: "part-1", pollId: "poll-1", userId: "00000000-0000-0000-0000-000000000002" },
+            ]),
         }),
       });
       mockDbUpdate.mockReturnValue({

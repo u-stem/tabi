@@ -680,7 +680,10 @@ export const pushSubscriptions = pgTable(
     auth: text("auth").notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [index("push_subscriptions_user_id_idx").on(table.userId)],
+  (table) => [
+    index("push_subscriptions_user_id_idx").on(table.userId),
+    uniqueIndex("push_subscriptions_user_endpoint_unique").on(table.userId, table.endpoint),
+  ],
 ).enableRLS();
 
 export const notificationPreferences = pgTable(

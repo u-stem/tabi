@@ -10,32 +10,32 @@ const {
   mockDbSelect,
   mockCreateNotification,
 } = vi.hoisted(() => ({
-    mockGetSession: vi.fn(),
-    mockDbQuery: {
-      schedules: {
-        findMany: vi.fn(),
-        findFirst: vi.fn(),
-      },
-      trips: {
-        findFirst: vi.fn(),
-      },
-      tripDays: {
-        findFirst: vi.fn(),
-      },
-      dayPatterns: {
-        findFirst: vi.fn(),
-      },
-      tripMembers: {
-        findFirst: vi.fn(),
-        findMany: vi.fn(),
-      },
+  mockGetSession: vi.fn(),
+  mockDbQuery: {
+    schedules: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
     },
-    mockDbInsert: vi.fn(),
-    mockDbUpdate: vi.fn(),
-    mockDbDelete: vi.fn(),
-    mockDbSelect: vi.fn(),
-    mockCreateNotification: vi.fn(),
-  }));
+    trips: {
+      findFirst: vi.fn(),
+    },
+    tripDays: {
+      findFirst: vi.fn(),
+    },
+    dayPatterns: {
+      findFirst: vi.fn(),
+    },
+    tripMembers: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+    },
+  },
+  mockDbInsert: vi.fn(),
+  mockDbUpdate: vi.fn(),
+  mockDbDelete: vi.fn(),
+  mockDbSelect: vi.fn(),
+  mockCreateNotification: vi.fn(),
+}));
 
 vi.mock("../lib/auth", () => ({
   auth: {

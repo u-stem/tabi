@@ -42,13 +42,14 @@ notificationRoutes.put("/read-all", async (c) => {
 notificationRoutes.put("/:id/read", async (c) => {
   const user = c.get("user");
   const id = c.req.param("id");
-  const item = await db.query.notifications.findFirst({
-    where: and(eq(notifications.id, id), eq(notifications.userId, user.id)),
-  });
-  if (!item) {
+  const [updated] = await db
+    .update(notifications)
+    .set({ readAt: new Date() })
+    .where(and(eq(notifications.id, id), eq(notifications.userId, user.id)))
+    .returning({ id: notifications.id });
+  if (!updated) {
     return c.json({ error: ERROR_MSG.NOTIFICATION_NOT_FOUND }, 404);
   }
-  await db.update(notifications).set({ readAt: new Date() }).where(eq(notifications.id, id));
   return c.json({ ok: true });
 });
 

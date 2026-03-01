@@ -256,17 +256,13 @@ export default function SpHomePage() {
     if (baseData.length === 0) {
       return (
         <p className="mt-8 text-center text-muted-foreground">
-          {targetTab === "shared"
-            ? MSG.EMPTY_TRIP_SHARED
-            : MSG.EMPTY_TRIP}
+          {targetTab === "shared" ? MSG.EMPTY_TRIP_SHARED : MSG.EMPTY_TRIP}
         </p>
       );
     }
 
     if (displayTrips.length === 0) {
-      return (
-        <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_TRIP_FILTER}</p>
-      );
+      return <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_TRIP_FILTER}</p>;
     }
 
     return (

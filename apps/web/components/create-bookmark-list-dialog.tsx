@@ -2,9 +2,9 @@
 
 import {
   BOOKMARK_LIST_NAME_MAX_LENGTH,
-  VISIBILITY_LABELS,
   type BookmarkListResponse,
   type BookmarkListVisibility,
+  VISIBILITY_LABELS,
 } from "@sugara/shared";
 import { Plus, X } from "lucide-react";
 import { useState } from "react";

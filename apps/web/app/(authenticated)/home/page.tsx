@@ -357,9 +357,7 @@ export default function HomePage() {
           </div>
           {baseTrips.length === 0 ? (
             <p className="mt-8 text-center text-muted-foreground">
-              {tab === "shared"
-                ? MSG.EMPTY_TRIP_SHARED
-                : MSG.EMPTY_TRIP}
+              {tab === "shared" ? MSG.EMPTY_TRIP_SHARED : MSG.EMPTY_TRIP}
             </p>
           ) : filteredTrips.length === 0 ? (
             <p className="mt-8 text-center text-muted-foreground">{MSG.EMPTY_TRIP_FILTER}</p>

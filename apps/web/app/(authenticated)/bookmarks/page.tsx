@@ -1,9 +1,9 @@
 "use client";
 
 import {
+  type BookmarkListResponse,
   MAX_BOOKMARK_LISTS_PER_USER,
   VISIBILITY_LABELS,
-  type BookmarkListResponse,
 } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckSquare, Copy, MoreHorizontal, Plus, Trash2, X } from "lucide-react";

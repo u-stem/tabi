@@ -1,9 +1,9 @@
 "use client";
 
 import {
+  type BookmarkListResponse,
   MAX_BOOKMARK_LISTS_PER_USER,
   VISIBILITY_LABELS,
-  type BookmarkListResponse,
 } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -54,7 +54,11 @@ type VisibilityFilter = "all" | "public" | "friends_only" | "private";
 const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.ReactNode }[] = [
   { value: "all", label: "すべて", icon: <ListFilter className="h-4 w-4" /> },
   { value: "public", label: "公開", icon: <Globe className="h-4 w-4" /> },
-  { value: "friends_only", label: VISIBILITY_LABELS.friends_only, icon: <Users className="h-4 w-4" /> },
+  {
+    value: "friends_only",
+    label: VISIBILITY_LABELS.friends_only,
+    icon: <Users className="h-4 w-4" />,
+  },
   { value: "private", label: VISIBILITY_LABELS.private, icon: <Lock className="h-4 w-4" /> },
 ];
 

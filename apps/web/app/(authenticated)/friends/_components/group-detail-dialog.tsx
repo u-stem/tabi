@@ -221,9 +221,7 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
                 ))}
               </div>
             ) : members.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">
-                {MSG.EMPTY_MEMBER}
-              </p>
+              <p className="py-4 text-center text-sm text-muted-foreground">{MSG.EMPTY_MEMBER}</p>
             ) : (
               <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "30vh" }}>
                 {members.map((member) => (

@@ -1,6 +1,10 @@
 "use client";
 
-import { MAX_BOOKMARKS_PER_LIST, VISIBILITY_LABELS, type BookmarkListResponse } from "@sugara/shared";
+import {
+  type BookmarkListResponse,
+  MAX_BOOKMARKS_PER_LIST,
+  VISIBILITY_LABELS,
+} from "@sugara/shared";
 import {
   CheckSquare,
   Copy,

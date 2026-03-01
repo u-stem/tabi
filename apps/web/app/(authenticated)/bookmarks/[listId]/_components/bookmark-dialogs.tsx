@@ -2,8 +2,8 @@
 
 import {
   BOOKMARK_LIST_NAME_MAX_LENGTH,
-  VISIBILITY_LABELS,
   type BookmarkListVisibility,
+  VISIBILITY_LABELS,
 } from "@sugara/shared";
 import { Check, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";

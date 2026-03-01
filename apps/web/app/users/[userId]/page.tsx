@@ -14,9 +14,9 @@ import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type BookmarkListDetail = BookmarkListResponse & {

@@ -1,6 +1,6 @@
 "use client";
 
-import { VISIBILITY_LABELS, type BookmarkListResponse } from "@sugara/shared";
+import { type BookmarkListResponse, VISIBILITY_LABELS } from "@sugara/shared";
 import Link from "next/link";
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";

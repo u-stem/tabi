@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { ExpensePanel } from "@/components/expense-panel";
 
 type ExpenseTabProps = {
@@ -10,7 +11,7 @@ type ExpenseTabProps = {
   onAddOpenChange: (open: boolean) => void;
 };
 
-export function ExpenseTab({
+export const ExpenseTab = memo(function ExpenseTab({
   tripId,
   canEdit,
   hasDays,
@@ -34,4 +35,4 @@ export function ExpenseTab({
       />
     </div>
   );
-}
+});

@@ -31,8 +31,6 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
-type MembersResponse = MemberResponse[];
-
 type Expense = {
   id: string;
   title: string;
@@ -61,7 +59,7 @@ export function ExpenseDialog({
 
   const { data: members = [] } = useQuery({
     queryKey: queryKeys.trips.members(tripId),
-    queryFn: () => api<MembersResponse>(`/api/trips/${tripId}/members`),
+    queryFn: () => api<MemberResponse[]>(`/api/trips/${tripId}/members`),
     enabled: open,
   });
 

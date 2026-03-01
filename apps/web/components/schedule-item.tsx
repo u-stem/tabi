@@ -5,7 +5,7 @@ import { CSS } from "@dnd-kit/utilities";
 import type { CSSProperties } from "react";
 import { memo } from "react";
 import { PlaceItem } from "./schedule-items/place-item";
-import type { ScheduleItemProps, SortableProps } from "./schedule-items/shared";
+import type { ScheduleItemProps, SortableProps } from "./schedule-items/primitives";
 import { TransportItem } from "./schedule-items/transport-item";
 
 export type { ScheduleItemProps };

@@ -49,6 +49,10 @@ export function useBookmarkListSelection({
     setSelectedIds(new Set());
   }
 
+  function select(ids: string[]) {
+    setSelectedIds(new Set(ids));
+  }
+
   async function handleBatchDelete() {
     const ids = [...selectedIds];
     if (ids.length === 0) return;
@@ -110,6 +114,7 @@ export function useBookmarkListSelection({
     enter,
     exit,
     toggle,
+    select,
     selectAll,
     deselectAll,
     handleBatchDelete,

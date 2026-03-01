@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { BookmarkPanel } from "@/components/bookmark-panel";
 
 type BookmarkTabProps = {
@@ -9,7 +10,12 @@ type BookmarkTabProps = {
   onCandidateAdded: () => void;
 };
 
-export function BookmarkTab({ tripId, disabled, hasDays, onCandidateAdded }: BookmarkTabProps) {
+export const BookmarkTab = memo(function BookmarkTab({
+  tripId,
+  disabled,
+  hasDays,
+  onCandidateAdded,
+}: BookmarkTabProps) {
   if (!hasDays) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
@@ -22,4 +28,4 @@ export function BookmarkTab({ tripId, disabled, hasDays, onCandidateAdded }: Boo
       <BookmarkPanel tripId={tripId} disabled={disabled} onCandidateAdded={onCandidateAdded} />
     </div>
   );
-}
+});

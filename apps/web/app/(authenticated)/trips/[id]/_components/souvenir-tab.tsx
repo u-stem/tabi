@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { SouvenirPanel } from "@/components/souvenir-panel";
 
 type SouvenirTabProps = {
@@ -9,7 +10,12 @@ type SouvenirTabProps = {
   onAddOpenChange: (open: boolean) => void;
 };
 
-export function SouvenirTab({ tripId, hasDays, addOpen, onAddOpenChange }: SouvenirTabProps) {
+export const SouvenirTab = memo(function SouvenirTab({
+  tripId,
+  hasDays,
+  addOpen,
+  onAddOpenChange,
+}: SouvenirTabProps) {
   if (!hasDays) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
@@ -22,4 +28,4 @@ export function SouvenirTab({ tripId, hasDays, addOpen, onAddOpenChange }: Souve
       <SouvenirPanel tripId={tripId} addOpen={addOpen} onAddOpenChange={onAddOpenChange} />
     </div>
   );
-}
+});

@@ -58,13 +58,11 @@ export function useBookmarkLists(isGuest: boolean): UseBookmarkListsReturn {
   useEffect(() => {
     if (!sel.selectionMode) return;
     const visibleIds = new Set(filteredBookmarkLists.map((l) => l.id));
-    const currentIds = [...sel.selectedIds];
-    const pruned = currentIds.filter((id) => visibleIds.has(id));
-    if (pruned.length < currentIds.length) {
-      sel.deselectAll();
-      for (const id of pruned) sel.toggle(id);
+    const pruned = [...sel.selectedIds].filter((id) => visibleIds.has(id));
+    if (pruned.length < sel.selectedIds.size) {
+      sel.select(pruned);
     }
-  }, [filteredBookmarkLists, sel.selectionMode]);
+  }, [filteredBookmarkLists, sel.selectionMode, sel.selectedIds]);
 
   return {
     bookmarkLists,

@@ -437,7 +437,7 @@ export default function TripDetailPage() {
   const canSwipeMobileTabs = currentTabIdx !== -1;
   const swipe = useSwipeTab(mobileContentRef, swipeContainerRef, {
     onSwipeComplete: handleSwipe,
-    enabled: !!trip && canSwipeMobileTabs,
+    enabled: !showSkeleton && !!trip && canSwipeMobileTabs,
     canSwipePrev: canSwipeMobileTabs && currentTabIdx > 0,
     canSwipeNext: canSwipeMobileTabs && currentTabIdx < tabIds.length - 1,
   });

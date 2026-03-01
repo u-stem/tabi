@@ -10,7 +10,7 @@ import { buildMapsSearchUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
 import { DragHandle } from "../drag-handle";
 import { ReorderControls } from "../reorder-controls";
-import type { ScheduleItemProps, SortableProps } from "./shared";
+import type { ScheduleItemProps, SortableProps } from "./primitives";
 import {
   cardBodyProps,
   ScheduleItemDialogs,
@@ -19,7 +19,7 @@ import {
   ScheduleTimeLabel,
   TimelineNode,
   useShiftProposal,
-} from "./shared";
+} from "./primitives";
 
 type PlaceItemProps = ScheduleItemProps & { sortable: SortableProps };
 

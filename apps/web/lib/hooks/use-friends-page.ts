@@ -1,6 +1,7 @@
 import type { FriendRequestResponse, FriendResponse, GroupResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -18,6 +19,7 @@ export function useFriendsPage(isGuest: boolean): UseFriendsPageReturn {
     queryFn: () => api<FriendResponse[]>("/api/friends"),
     enabled: !isGuest,
   });
+  useAuthRedirect(friendsQuery.error);
 
   const requestsQuery = useQuery({
     queryKey: queryKeys.friends.requests(),

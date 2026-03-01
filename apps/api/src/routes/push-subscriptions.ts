@@ -1,4 +1,9 @@
-import { createPushSubscriptionSchema } from "@sugara/shared";
+import {
+  NOTIFICATION_DEFAULTS,
+  createPushSubscriptionSchema,
+  notificationTypeSchema,
+  updatePushSubscriptionPreferenceSchema,
+} from "@sugara/shared";
 import { and, asc, count, eq, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
@@ -66,6 +71,63 @@ pushSubscriptionRoutes.delete("/", async (c) => {
   await db
     .delete(pushSubscriptions)
     .where(and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.endpoint, endpoint)));
+
+  return c.json({ ok: true });
+});
+
+// GET /api/push-subscriptions/preferences?endpoint=<url>
+pushSubscriptionRoutes.get("/preferences", async (c) => {
+  const user = c.get("user");
+  const endpoint = c.req.query("endpoint");
+  if (!endpoint) {
+    return c.json({ error: "endpoint query parameter required" }, 400);
+  }
+
+  const sub = await db.query.pushSubscriptions.findFirst({
+    where: and(
+      eq(pushSubscriptions.userId, user.id),
+      eq(pushSubscriptions.endpoint, endpoint),
+    ),
+  });
+  if (!sub) return c.json({ error: "Not found" }, 404);
+
+  const prefs = sub.preferences as Record<string, boolean>;
+  const ALL_TYPES = notificationTypeSchema.options;
+  const expanded = Object.fromEntries(
+    ALL_TYPES.map((type) => [type, prefs[type] ?? NOTIFICATION_DEFAULTS[type].push]),
+  );
+
+  return c.json(expanded);
+});
+
+// PUT /api/push-subscriptions/preferences
+pushSubscriptionRoutes.put("/preferences", async (c) => {
+  const user = c.get("user");
+  const body = await c.req.json();
+  const parsed = updatePushSubscriptionPreferenceSchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const { endpoint, type, enabled } = parsed.data;
+  const sub = await db.query.pushSubscriptions.findFirst({
+    where: and(
+      eq(pushSubscriptions.userId, user.id),
+      eq(pushSubscriptions.endpoint, endpoint),
+    ),
+  });
+  if (!sub) return c.json({ error: "Not found" }, 404);
+
+  const currentPrefs = sub.preferences as Record<string, boolean>;
+  await db
+    .update(pushSubscriptions)
+    .set({ preferences: { ...currentPrefs, [type]: enabled } })
+    .where(
+      and(
+        eq(pushSubscriptions.userId, user.id),
+        eq(pushSubscriptions.endpoint, endpoint),
+      ),
+    );
 
   return c.json({ ok: true });
 });

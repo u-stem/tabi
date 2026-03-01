@@ -2,7 +2,7 @@ import { and, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { trips } from "../db/schema";
-import { ERROR_MSG } from "../lib/constants";
+import { ERROR_MSG, RATE_LIMIT_PUBLIC_RESOURCE } from "../lib/constants";
 import { generateShareToken, shareExpiresAt } from "../lib/share-token";
 import { requireAuth } from "../middleware/auth";
 import { rateLimitByIp } from "../middleware/rate-limit";
@@ -12,7 +12,7 @@ import type { AppEnv } from "../types";
 
 const shareRoutes = new Hono<AppEnv>();
 
-const sharedTripRateLimit = rateLimitByIp({ window: 60, max: 30 });
+const sharedTripRateLimit = rateLimitByIp(RATE_LIMIT_PUBLIC_RESOURCE);
 
 // Generate or get share link (owner only)
 shareRoutes.post(

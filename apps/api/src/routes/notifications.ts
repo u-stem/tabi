@@ -2,7 +2,7 @@ import { and, count, eq, isNull } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { notifications } from "../db/schema";
-import { ERROR_MSG } from "../lib/constants";
+import { ERROR_MSG, NOTIFICATIONS_LIST_LIMIT } from "../lib/constants";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -17,7 +17,7 @@ notificationRoutes.get("/", async (c) => {
     db.query.notifications.findMany({
       where: eq(notifications.userId, user.id),
       orderBy: (n, { desc }) => [desc(n.createdAt)],
-      limit: 20,
+      limit: NOTIFICATIONS_LIST_LIMIT,
     }),
     db
       .select({ unreadCount: count() })

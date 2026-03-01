@@ -4,14 +4,14 @@ import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { accounts, users } from "../db/schema";
-import { ERROR_MSG } from "../lib/constants";
+import { ERROR_MSG, RATE_LIMIT_ACCOUNT_MUTATION } from "../lib/constants";
 import { requireAuth } from "../middleware/auth";
 import { rateLimitByIp } from "../middleware/rate-limit";
 import type { AppEnv } from "../types";
 
 export const accountRoutes = new Hono<AppEnv>();
 
-const deleteRateLimit = rateLimitByIp({ window: 300, max: 5 });
+const deleteRateLimit = rateLimitByIp(RATE_LIMIT_ACCOUNT_MUTATION);
 
 accountRoutes.delete("/account", deleteRateLimit, requireAuth, async (c) => {
   const json = await c.req.json();

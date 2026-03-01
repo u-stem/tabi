@@ -1,5 +1,5 @@
 import { NOTIFICATION_DEFAULTS, type NotificationType } from "@sugara/shared";
-import { and, asc, count, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import webpush from "web-push";
 import { db } from "../db/index";
 import { notificationPreferences, notifications, pushSubscriptions } from "../db/schema";
@@ -123,28 +123,21 @@ async function createNotificationInternal(params: CreateNotificationParams): Pro
 }
 
 async function pruneOldNotifications(userId: string): Promise<void> {
-  const [{ count: total }] = await db
-    .select({ count: count() })
-    .from(notifications)
-    .where(eq(notifications.userId, userId));
-
-  const excess = Number(total) - MAX_NOTIFICATIONS_PER_USER;
-  if (excess <= 0) return;
-
-  const oldest = await db.query.notifications.findMany({
+  const all = await db.query.notifications.findMany({
     where: eq(notifications.userId, userId),
     orderBy: [asc(notifications.createdAt)],
-    limit: excess,
     columns: { id: true },
   });
-  if (oldest.length > 0) {
-    await db.delete(notifications).where(
-      inArray(
-        notifications.id,
-        oldest.map((n) => n.id),
-      ),
-    );
-  }
+
+  const excess = all.length - MAX_NOTIFICATIONS_PER_USER;
+  if (excess <= 0) return;
+
+  await db.delete(notifications).where(
+    inArray(
+      notifications.id,
+      all.slice(0, excess).map((n) => n.id),
+    ),
+  );
 }
 
 async function sendPushToUser(
@@ -179,7 +172,12 @@ async function sendPushToUser(
           if (status === 410 || status === 404) {
             await db
               .delete(pushSubscriptions)
-              .where(and(eq(pushSubscriptions.endpoint, sub.endpoint), eq(pushSubscriptions.userId, userId)));
+              .where(
+                and(
+                  eq(pushSubscriptions.endpoint, sub.endpoint),
+                  eq(pushSubscriptions.userId, userId),
+                ),
+              );
           }
         }),
     ),

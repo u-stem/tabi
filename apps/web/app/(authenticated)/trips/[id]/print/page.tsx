@@ -14,12 +14,14 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
 import { getCrossDayEntries } from "@/lib/cross-day";
 import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
 import { formatDate, formatDateRange, getDayCount } from "@/lib/format";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { buildMergedTimeline } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -40,6 +42,7 @@ export default function TripPrintPage() {
     enabled: tripId !== null,
   });
   useAuthRedirect(error);
+  const showSkeleton = useDelayedLoading(isLoading);
 
   useEffect(() => {
     if (trip) {
@@ -53,10 +56,20 @@ export default function TripPrintPage() {
     return () => clearTimeout(timer);
   }, [trip, searchParams]);
 
-  if (isLoading) {
+  if (isLoading && !showSkeleton) return <div />;
+  if (showSkeleton) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p className="text-muted-foreground">読み込み中...</p>
+        <div className="w-full max-w-4xl space-y-8 p-8">
+          {["day-1", "day-2", "day-3"].map((key) => (
+            <div key={key} className="space-y-2">
+              <Skeleton className="h-6 w-48" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-full" />
+              <Skeleton className="h-4 w-3/4" />
+            </div>
+          ))}
+        </div>
       </div>
     );
   }

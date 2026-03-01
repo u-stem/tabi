@@ -1,6 +1,6 @@
 import type { MemberRole } from "@sugara/shared";
-import { canEdit } from "@sugara/shared";
-import { and, eq } from "drizzle-orm";
+import { MAX_PARTICIPANTS_PER_POLL, canEdit } from "@sugara/shared";
+import { and, count, eq } from "drizzle-orm";
 import { db } from "../db/index";
 import { schedulePollParticipants, schedulePolls, tripMembers } from "../db/schema";
 
@@ -60,10 +60,19 @@ export async function findPollAsParticipant(pollId: string, userId: string) {
     where: and(eq(tripMembers.tripId, poll.tripId), eq(tripMembers.userId, userId)),
   });
   if (member) {
+    const [{ count: participantCount }] = await db
+      .select({ count: count() })
+      .from(schedulePollParticipants)
+      .where(eq(schedulePollParticipants.pollId, pollId));
+
     // Intentional write side-effect: auto-add trip members as poll participants
     // on first access so they can immediately respond. This is by design because
     // poll participation is tied to trip membership.
-    await db.insert(schedulePollParticipants).values({ pollId, userId }).onConflictDoNothing();
+    // Guard against exceeding the limit (should not happen in practice since
+    // MAX_PARTICIPANTS_PER_POLL === MAX_MEMBERS_PER_TRIP, but defensive check).
+    if (Number(participantCount) < MAX_PARTICIPANTS_PER_POLL) {
+      await db.insert(schedulePollParticipants).values({ pollId, userId }).onConflictDoNothing();
+    }
     return poll;
   }
 

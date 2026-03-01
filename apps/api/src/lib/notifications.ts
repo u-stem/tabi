@@ -2,7 +2,13 @@ import { NOTIFICATION_DEFAULTS, type NotificationType } from "@sugara/shared";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import webpush from "web-push";
 import { db } from "../db/index";
-import { notificationPreferences, notifications, pushSubscriptions, tripMembers, trips } from "../db/schema";
+import {
+  notificationPreferences,
+  notifications,
+  pushSubscriptions,
+  tripMembers,
+  trips,
+} from "../db/schema";
 import { env } from "./env";
 
 const MAX_NOTIFICATIONS_PER_USER = 100;
@@ -80,7 +86,9 @@ export function notifyTripMembersExcluding(params: {
     await Promise.all(
       members
         .filter((m) => m.userId !== actorId)
-        .map((m) => createNotification({ type, userId: m.userId, tripId, payload: makePayload(tripName) })),
+        .map((m) =>
+          createNotification({ type, userId: m.userId, tripId, payload: makePayload(tripName) }),
+        ),
     );
   })();
 }

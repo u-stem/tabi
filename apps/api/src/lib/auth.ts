@@ -6,7 +6,12 @@ import { username } from "better-auth/plugins/username";
 import { eq } from "drizzle-orm";
 import { db } from "../db/index";
 import * as schema from "../db/schema";
-import { GUEST_EMAIL_DOMAIN, SEVEN_DAYS_MS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "./constants";
+import {
+  GUEST_EMAIL_DOMAIN,
+  SEVEN_DAYS_MS,
+  USERNAME_MAX_LENGTH,
+  USERNAME_MIN_LENGTH,
+} from "./constants";
 import { env } from "./env";
 
 const isProduction = process.env.NODE_ENV === "production";

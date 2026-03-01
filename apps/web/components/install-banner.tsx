@@ -80,8 +80,8 @@ export function InstallBanner() {
                 2
               </span>
               <span>
-                メニューをスクロールして{" "}
-                <span className="font-medium">「ホーム画面に追加」</span> をタップ
+                メニューをスクロールして <span className="font-medium">「ホーム画面に追加」</span>{" "}
+                をタップ
               </span>
             </li>
             <li className="flex items-start gap-3">

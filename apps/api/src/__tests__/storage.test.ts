@@ -43,20 +43,16 @@ describe("validateCoverImage", () => {
 
 describe("extractStoragePath", () => {
   it("有効な Supabase URL からパスを抽出する", () => {
-    const url =
-      "https://xxx.supabase.co/storage/v1/object/public/trip-covers/trip-1/123.jpg";
+    const url = "https://xxx.supabase.co/storage/v1/object/public/trip-covers/trip-1/123.jpg";
     expect(extractStoragePath(url)).toBe("trip-1/123.jpg");
   });
 
   it("別オリジンの URL には null を返す", () => {
-    expect(
-      extractStoragePath("https://evil.com/trip-covers/trip-1/123.jpg"),
-    ).toBeNull();
+    expect(extractStoragePath("https://evil.com/trip-covers/trip-1/123.jpg")).toBeNull();
   });
 
   it("パストラバーサルには null を返す", () => {
-    const url =
-      "https://xxx.supabase.co/storage/v1/object/public/trip-covers/../secret";
+    const url = "https://xxx.supabase.co/storage/v1/object/public/trip-covers/../secret";
     expect(extractStoragePath(url)).toBeNull();
   });
 

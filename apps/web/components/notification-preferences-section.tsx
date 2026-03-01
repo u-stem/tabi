@@ -2,7 +2,7 @@
 
 import { NOTIFICATION_DEFAULTS, type NotificationType } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../lib/api";
 import { requestPushPermission } from "../lib/hooks/use-push-subscription";
@@ -12,7 +12,7 @@ import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Switch } from "./ui/switch";
 
-type Pref = { type: string; inApp: boolean; push: boolean };
+type InAppPref = { type: string; inApp: boolean };
 
 const CATEGORIES = [
   {
@@ -39,15 +39,23 @@ const CATEGORIES = [
 
 type CategoryType = (typeof CATEGORIES)[number]["types"][number];
 
-function isCategoryOn(
-  prefs: Pref[],
-  types: readonly CategoryType[],
-  field: "inApp" | "push",
-): boolean {
+function isInAppCategoryOn(prefs: InAppPref[], types: readonly CategoryType[]): boolean {
   return types.every((type) => {
     const pref = prefs.find((p) => p.type === type);
-    return pref ? pref[field] : NOTIFICATION_DEFAULTS[type as NotificationType][field];
+    return pref ? pref.inApp : NOTIFICATION_DEFAULTS[type as NotificationType].inApp;
   });
+}
+
+function isPushCategoryOn(
+  pushPrefs: Record<string, boolean> | undefined,
+  types: readonly CategoryType[],
+): boolean {
+  if (!pushPrefs) {
+    return types.every((type) => NOTIFICATION_DEFAULTS[type as NotificationType].push);
+  }
+  return types.every(
+    (type) => pushPrefs[type] ?? NOTIFICATION_DEFAULTS[type as NotificationType].push,
+  );
 }
 
 export function NotificationPreferencesSection() {
@@ -55,27 +63,46 @@ export function NotificationPreferencesSection() {
   const [pushPermission, setPushPermission] = useState<NotificationPermission>(
     typeof Notification !== "undefined" ? Notification.permission : "default",
   );
+  const [deviceEndpoint, setDeviceEndpoint] = useState<string | null>(null);
 
-  const { data } = useQuery({
+  // Resolve the current device's push subscription endpoint so we can load per-device prefs.
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.ready
+      .then((reg) => reg.pushManager.getSubscription())
+      .then((sub) => sub && setDeviceEndpoint(sub.endpoint))
+      .catch(() => {});
+  }, []);
+
+  // User-level: inApp preferences only
+  const { data: inAppData } = useQuery({
     queryKey: queryKeys.notifications.preferences(),
-    queryFn: () => api<Pref[]>("/api/notification-preferences"),
+    queryFn: () => api<InAppPref[]>("/api/notification-preferences"),
   });
 
-  const updateCategory = useMutation({
+  // Device-level: push preferences for this specific device
+  const { data: pushPrefsData } = useQuery({
+    queryKey: queryKeys.notifications.pushPreferences(deviceEndpoint ?? ""),
+    queryFn: () =>
+      api<Record<string, boolean>>(
+        `/api/push-subscriptions/preferences?endpoint=${encodeURIComponent(deviceEndpoint!)}`,
+      ),
+    enabled: !!deviceEndpoint && pushPermission === "granted",
+  });
+
+  const updateInAppCategory = useMutation({
     mutationFn: ({
       types,
-      field,
       value,
     }: {
       types: readonly CategoryType[];
-      field: "inApp" | "push";
       value: boolean;
     }) =>
       Promise.all(
         types.map((type) =>
           api("/api/notification-preferences", {
             method: "PUT",
-            body: JSON.stringify({ type, [field]: value }),
+            body: JSON.stringify({ type, inApp: value }),
           }),
         ),
       ),
@@ -88,12 +115,50 @@ export function NotificationPreferencesSection() {
     },
   });
 
+  const updatePushCategory = useMutation({
+    mutationFn: ({
+      types,
+      value,
+    }: {
+      types: readonly CategoryType[];
+      value: boolean;
+    }) =>
+      Promise.all(
+        types.map((type) =>
+          api("/api/push-subscriptions/preferences", {
+            method: "PUT",
+            body: JSON.stringify({ endpoint: deviceEndpoint, type, enabled: value }),
+          }),
+        ),
+      ),
+    onSuccess: () =>
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.notifications.pushPreferences(deviceEndpoint ?? ""),
+      }),
+    onError: () => {
+      // Re-fetch to reconcile UI with server state in case of partial failure
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.notifications.pushPreferences(deviceEndpoint ?? ""),
+      });
+      toast.error(MSG.NOTIFICATION_PREF_UPDATE_FAILED);
+    },
+  });
+
   async function handleEnablePush() {
     const result = await requestPushPermission();
     setPushPermission(result);
+    // Reload the subscription endpoint after permission is granted so push prefs become active.
+    if (result === "granted" && typeof navigator !== "undefined" && "serviceWorker" in navigator) {
+      navigator.serviceWorker.ready
+        .then((reg) => reg.pushManager.getSubscription())
+        .then((sub) => sub && setDeviceEndpoint(sub.endpoint))
+        .catch(() => {});
+    }
   }
 
-  const prefs = data ?? [];
+  const inAppPrefs = inAppData ?? [];
+  // Push switches are only interactive when the browser has an active subscription for this device.
+  const pushSwitchesEnabled = pushPermission === "granted" && !!deviceEndpoint;
 
   return (
     <div className="space-y-4">
@@ -137,17 +202,18 @@ export function NotificationPreferencesSection() {
                   <p className="mt-1 text-xs text-muted-foreground">{cat.description}</p>
                 </div>
                 <Switch
-                  checked={isCategoryOn(prefs, cat.types, "inApp")}
+                  checked={isInAppCategoryOn(inAppPrefs, cat.types)}
                   onCheckedChange={(v) =>
-                    updateCategory.mutate({ types: cat.types, field: "inApp", value: v })
+                    updateInAppCategory.mutate({ types: cat.types, value: v })
                   }
                   aria-label={`${cat.label} アプリ内通知`}
                 />
                 <Switch
-                  checked={isCategoryOn(prefs, cat.types, "push")}
+                  checked={isPushCategoryOn(pushPrefsData, cat.types)}
                   onCheckedChange={(v) =>
-                    updateCategory.mutate({ types: cat.types, field: "push", value: v })
+                    updatePushCategory.mutate({ types: cat.types, value: v })
                   }
+                  disabled={!pushSwitchesEnabled}
                   aria-label={`${cat.label} プッシュ通知`}
                 />
               </div>

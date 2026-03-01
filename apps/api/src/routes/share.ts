@@ -42,8 +42,10 @@ shareRoutes.post(
 
     // Generate new token (or replace expired / legacy one)
     const expiresAt = shareExpiresAt();
+    // Use the current token value in WHERE to prevent overwriting a token
+    // that another concurrent request may have already set.
     const whereCondition = trip?.shareToken
-      ? eq(trips.id, tripId)
+      ? and(eq(trips.id, tripId), eq(trips.shareToken, trip.shareToken))
       : and(eq(trips.id, tripId), isNull(trips.shareToken));
     const [updated] = await db
       .update(trips)

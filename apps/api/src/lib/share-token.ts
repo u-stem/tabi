@@ -1,11 +1,10 @@
 import crypto from "node:crypto";
-
-const SHARE_LINK_TTL_MS = 7 * 24 * 60 * 60 * 1000;
+import { SEVEN_DAYS_MS } from "./constants";
 
 export function generateShareToken(): string {
   return crypto.randomBytes(24).toString("base64url");
 }
 
 export function shareExpiresAt(): Date {
-  return new Date(Date.now() + SHARE_LINK_TTL_MS);
+  return new Date(Date.now() + SEVEN_DAYS_MS);
 }

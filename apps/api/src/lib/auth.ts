@@ -6,9 +6,8 @@ import { username } from "better-auth/plugins/username";
 import { eq } from "drizzle-orm";
 import { db } from "../db/index";
 import * as schema from "../db/schema";
+import { GUEST_EMAIL_DOMAIN, SEVEN_DAYS_MS, USERNAME_MAX_LENGTH, USERNAME_MIN_LENGTH } from "./constants";
 import { env } from "./env";
-
-const GUEST_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -66,7 +65,7 @@ export const auth = betterAuth({
             return {
               data: {
                 ...user,
-                guestExpiresAt: new Date(Date.now() + GUEST_TTL_MS),
+                guestExpiresAt: new Date(Date.now() + SEVEN_DAYS_MS),
               },
             };
           }
@@ -84,7 +83,7 @@ export const auth = betterAuth({
   },
   plugins: [
     anonymous({
-      emailDomainName: "guest.sugara.local",
+      emailDomainName: GUEST_EMAIL_DOMAIN,
       generateName: () => "ゲストユーザー",
       onLinkAccount: async ({ anonymousUser, newUser }) => {
         const oldUserId = anonymousUser.user.id;
@@ -134,7 +133,7 @@ export const auth = betterAuth({
         });
       },
     }),
-    username({ minUsernameLength: 3, maxUsernameLength: 20 }),
+    username({ minUsernameLength: USERNAME_MIN_LENGTH, maxUsernameLength: USERNAME_MAX_LENGTH }),
   ],
   trustedOrigins: [env.FRONTEND_URL],
 });

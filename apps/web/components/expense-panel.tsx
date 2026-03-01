@@ -211,7 +211,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
           </>
         )}
         {settlement.totalAmount === 0 && (
-          <p className="px-3 pb-3 text-xs text-muted-foreground">費用はまだ記録されていません</p>
+          <p className="px-3 pb-3 text-xs text-muted-foreground">{MSG.EMPTY_EXPENSE}</p>
         )}
       </CollapsiblePrimitive.Root>
 

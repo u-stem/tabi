@@ -422,7 +422,7 @@ function ProfileSection({
                   </Button>
                 </span>
               </TooltipTrigger>
-              {!dirty && !loading && <TooltipContent>変更がありません</TooltipContent>}
+              {!dirty && !loading && <TooltipContent>{MSG.NO_CHANGES}</TooltipContent>}
             </Tooltip>
           </div>
         </form>
@@ -501,7 +501,7 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
                   </Button>
                 </span>
               </TooltipTrigger>
-              {!dirty && !loading && <TooltipContent>変更がありません</TooltipContent>}
+              {!dirty && !loading && <TooltipContent>{MSG.NO_CHANGES}</TooltipContent>}
             </Tooltip>
           </div>
         </form>

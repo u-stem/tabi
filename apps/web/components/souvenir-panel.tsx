@@ -54,6 +54,7 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { SELECTED_RING } from "@/lib/colors";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
+import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { buildMapsSearchUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
@@ -255,7 +256,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
 
       {items.length === 0 ? (
         <div className="flex min-h-24 items-center justify-center rounded-md border border-dashed text-center">
-          <p className="text-sm text-muted-foreground">お土産リストはまだありません</p>
+          <p className="text-sm text-muted-foreground">{MSG.EMPTY_SOUVENIR}</p>
         </div>
       ) : (
         <div>

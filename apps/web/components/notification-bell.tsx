@@ -94,7 +94,7 @@ export function NotificationBell() {
         <DropdownMenuSeparator />
         {!data?.notifications.length ? (
           <div className="px-3 py-4 text-center text-sm text-muted-foreground">
-            通知はありません
+            {MSG.EMPTY_NOTIFICATION}
           </div>
         ) : (
           data.notifications.map((n: Notification) => (

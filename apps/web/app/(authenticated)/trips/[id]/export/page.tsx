@@ -687,7 +687,7 @@ export default function TripExportPage() {
               <p className="px-3 py-8 text-center text-sm text-muted-foreground">
                 {effectiveFields.length === 0
                   ? "出力する列を選択するとプレビューが表示されます"
-                  : "このシートにデータがありません"}
+                  : MSG.EMPTY_EXPORT_SHEET}
               </p>
             )}
           </div>

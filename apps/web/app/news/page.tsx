@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { pageTitle } from "@/lib/constants";
+import { MSG } from "@/lib/messages";
 import { getAllNews } from "@/lib/news";
 
 export const metadata: Metadata = {
@@ -21,7 +22,7 @@ export default async function NewsPage() {
         <h1 className="text-2xl font-bold">お知らせ</h1>
 
         {articles.length === 0 ? (
-          <p className="mt-8 text-sm text-muted-foreground">お知らせはまだありません。</p>
+          <p className="mt-8 text-sm text-muted-foreground">{MSG.EMPTY_NEWS}</p>
         ) : (
           <ul className="mt-8 space-y-6">
             {articles.map((article) => (

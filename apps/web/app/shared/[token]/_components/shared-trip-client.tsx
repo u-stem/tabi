@@ -239,29 +239,29 @@ export function SharedTripClient({ token }: { token: string }) {
                         const weatherTypeSecondary = day.weatherTypeSecondary as WeatherType | null;
                         const PrimaryIcon = WEATHER_ICON[weatherType];
                         return (
-                          <span className="ml-auto flex items-center gap-1 font-normal">
+                          <span className="ml-auto flex items-center gap-1 font-normal text-xs text-muted-foreground">
                             <PrimaryIcon
                               className={cn("h-4 w-4 shrink-0", WEATHER_ICON_COLOR[weatherType])}
-                              title={WEATHER_LABELS[weatherType]}
                             />
+                            <span>{WEATHER_LABELS[weatherType]}</span>
                             {weatherTypeSecondary != null &&
                               (() => {
                                 const SecondaryIcon = WEATHER_ICON[weatherTypeSecondary];
                                 return (
                                   <>
-                                    <span className="text-xs text-muted-foreground">→</span>
+                                    <span>→</span>
                                     <SecondaryIcon
                                       className={cn(
                                         "h-4 w-4 shrink-0",
                                         WEATHER_ICON_COLOR[weatherTypeSecondary],
                                       )}
-                                      title={WEATHER_LABELS[weatherTypeSecondary]}
                                     />
+                                    <span>{WEATHER_LABELS[weatherTypeSecondary]}</span>
                                   </>
                                 );
                               })()}
                             {(day.tempHigh != null || day.tempLow != null) && (
-                              <span className="text-xs text-muted-foreground">
+                              <span>
                                 {day.tempHigh != null ? `${day.tempHigh}` : "-"}/
                                 {day.tempLow != null ? `${day.tempLow}` : "-"}°
                               </span>

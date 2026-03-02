@@ -305,8 +305,8 @@ export default function SpTripDetailPage() {
           <Skeleton className="h-5 w-36" />
           <Skeleton className="ml-auto h-8 w-8 rounded-md" />
         </div>
-        <div className="my-2 grid grid-cols-3 gap-1 rounded-lg bg-muted p-1">
-          {[1, 2, 3].map((i) => (
+        <div className="my-2 grid grid-cols-4 gap-1 rounded-lg bg-muted p-1">
+          {[1, 2, 3, 4].map((i) => (
             <Skeleton key={i} className="h-9 rounded-md" />
           ))}
         </div>
@@ -317,6 +317,7 @@ export default function SpTripDetailPage() {
             ))}
           </div>
           <div className="p-4">
+            <Skeleton className="mb-3 h-9 w-full rounded-md" />
             <Skeleton className="mb-3 h-9 w-full rounded-md" />
             <div className="mb-2 flex items-center gap-1.5">
               <Skeleton className="h-8 flex-1 rounded-md" />

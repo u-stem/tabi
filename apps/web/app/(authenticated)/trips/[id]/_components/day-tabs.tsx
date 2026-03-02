@@ -1,8 +1,9 @@
 "use client";
 
-import type { TripResponse } from "@sugara/shared";
+import type { TripResponse, WeatherType } from "@sugara/shared";
 import { hashColor } from "@/components/presence-avatars";
 import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
+import { WEATHER_ICON } from "@/lib/weather-icons";
 import { cn } from "@/lib/utils";
 
 const CHIP_BASE =
@@ -58,7 +59,28 @@ export function DayTabs({
             onClick={() => onSelectDay(index)}
             className={cn(CHIP_BASE, selectedDay === index ? CHIP_ACTIVE : CHIP_INACTIVE)}
           >
-            {day.dayNumber}日目
+            <span className="flex items-center gap-1">
+              <span>{day.dayNumber}日目</span>
+              {day.weatherType != null && (() => {
+                const WeatherIconComp = WEATHER_ICON[day.weatherType as WeatherType];
+                return <WeatherIconComp className="h-4 w-4 shrink-0" />;
+              })()}
+              {day.weatherTypeSecondary != null && (() => {
+                const WeatherIconComp = WEATHER_ICON[day.weatherTypeSecondary as WeatherType];
+                return (
+                  <>
+                    <span className="text-xs text-muted-foreground">→</span>
+                    <WeatherIconComp className="h-4 w-4 shrink-0" />
+                  </>
+                );
+              })()}
+              {(day.tempHigh != null || day.tempLow != null) && (
+                <span className="text-xs text-muted-foreground">
+                  {day.tempHigh != null ? `${day.tempHigh}` : "-"}
+                  /{day.tempLow != null ? `${day.tempLow}` : "-"}°
+                </span>
+              )}
+            </span>
             {otherPresence
               .filter((u) => u.dayId === day.id)
               .slice(0, 3)

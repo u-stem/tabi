@@ -22,7 +22,8 @@
     "db:studio": "drizzle-kit studio",
     "db:seed": "bun run src/db/seed.ts",
     "db:seed-user": "bun run src/db/seed-user.ts",
-    "db:cleanup-guests": "bun run src/db/cleanup-guests.ts"
+    "db:cleanup-guests": "bun run src/db/cleanup-guests.ts",
+    "db:seed-faqs": "bun run src/db/seed-faqs.ts"
   },
   "dependencies": {
     "@sugara/shared": "workspace:*",

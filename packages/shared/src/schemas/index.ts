@@ -13,3 +13,4 @@ export * from "./schedule";
 export * from "./souvenir";
 export * from "./trip";
 export * from "./trip-day";
+export * from "./faq";

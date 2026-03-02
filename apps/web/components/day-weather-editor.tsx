@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerContent,
+  DrawerDescription,
   DrawerFooter,
   DrawerHeader,
   DrawerTitle,
@@ -51,7 +52,14 @@ function WeatherTrigger({
   return (
     <button
       type="button"
-      onClick={canEdit && online ? onClick : undefined}
+      onClick={
+        canEdit && online
+          ? (e) => {
+              e.currentTarget.blur();
+              onClick();
+            }
+          : undefined
+      }
       className={cn(
         "flex w-full select-none items-center gap-2 rounded-md border border-dashed px-3 py-2 text-left text-sm transition-colors",
         canEdit && online
@@ -297,6 +305,9 @@ export function DayWeatherEditor({
           <DrawerContent>
             <DrawerHeader>
               <DrawerTitle>天気を設定</DrawerTitle>
+              <DrawerDescription className="sr-only">
+                天気と気温を選択してください
+              </DrawerDescription>
             </DrawerHeader>
             <div className="px-4 pb-2">
               <WeatherPickerForm weatherHook={weatherHook} gridLayout />

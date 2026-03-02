@@ -6,8 +6,9 @@ import type {
   ScheduleResponse,
   SharedTripResponse,
   TransportMethod,
+  WeatherType,
 } from "@sugara/shared";
-import { STATUS_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
+import { STATUS_LABELS, TRANSPORT_METHOD_LABELS, WEATHER_LABELS } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, ExternalLink, MapPin, RefreshCw, Route, StickyNote } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -36,6 +37,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
+import { WEATHER_ICON, WEATHER_ICON_COLOR } from "@/lib/weather-icons";
 
 function SharedHeader() {
   return (
@@ -225,12 +227,48 @@ export function SharedTripClient({ token }: { token: string }) {
                       {day.dayNumber}
                     </span>
                     <span>{formatDate(day.date)}</span>
-                    <span className="text-muted-foreground">
+                    <span className="font-normal text-muted-foreground">
                       {(() => {
                         const d = new Date(day.date);
                         return ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
                       })()}曜日
                     </span>
+                    {day.weatherType != null &&
+                      (() => {
+                        const weatherType = day.weatherType as WeatherType;
+                        const weatherTypeSecondary = day.weatherTypeSecondary as WeatherType | null;
+                        const PrimaryIcon = WEATHER_ICON[weatherType];
+                        return (
+                          <span className="ml-auto flex items-center gap-1 font-normal">
+                            <PrimaryIcon
+                              className={cn("h-4 w-4 shrink-0", WEATHER_ICON_COLOR[weatherType])}
+                              title={WEATHER_LABELS[weatherType]}
+                            />
+                            {weatherTypeSecondary != null &&
+                              (() => {
+                                const SecondaryIcon = WEATHER_ICON[weatherTypeSecondary];
+                                return (
+                                  <>
+                                    <span className="text-xs text-muted-foreground">→</span>
+                                    <SecondaryIcon
+                                      className={cn(
+                                        "h-4 w-4 shrink-0",
+                                        WEATHER_ICON_COLOR[weatherTypeSecondary],
+                                      )}
+                                      title={WEATHER_LABELS[weatherTypeSecondary]}
+                                    />
+                                  </>
+                                );
+                              })()}
+                            {(day.tempHigh != null || day.tempLow != null) && (
+                              <span className="text-xs text-muted-foreground">
+                                {day.tempHigh != null ? `${day.tempHigh}` : "-"}/
+                                {day.tempLow != null ? `${day.tempLow}` : "-"}°
+                              </span>
+                            )}
+                          </span>
+                        );
+                      })()}
                   </h3>
                 </div>
                 <div className="p-4 sm:p-5">

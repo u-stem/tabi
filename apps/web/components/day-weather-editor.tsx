@@ -11,6 +11,7 @@ import {
   DrawerTitle,
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { useDayWeather } from "@/lib/hooks/use-day-weather";
 import { cn } from "@/lib/utils";
 import { WEATHER_ICON } from "@/lib/weather-icons";
@@ -101,17 +102,17 @@ function WeatherPickerForm({
   weatherHook: Weather;
   gridLayout?: boolean;
 }) {
-  const pickerClass = gridLayout ? "grid grid-cols-4 gap-1.5" : "flex flex-wrap gap-1";
+  const pickerClass = gridLayout ? "grid grid-cols-3 gap-2" : "flex flex-wrap gap-1";
 
   const buttonClass = gridLayout
-    ? "flex flex-col items-center justify-center gap-0.5 rounded-md py-2 transition-colors"
+    ? "flex flex-col items-center justify-center gap-1 rounded-md py-3 transition-colors"
     : "flex h-9 w-9 items-center justify-center rounded-md transition-colors";
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       {/* Primary weather picker */}
-      <div>
-        <p className="mb-1.5 text-xs text-muted-foreground">天気</p>
+      <div className="space-y-2">
+        <Label>天気</Label>
         <div className={pickerClass}>
           {WEATHER_TYPES.map((type) => {
             const Icon = WEATHER_ICON[type];
@@ -149,8 +150,8 @@ function WeatherPickerForm({
 
       {/* Secondary weather picker (for "のち" pattern) */}
       {weatherHook.weather.weatherType != null && (
-        <div>
-          <p className="mb-1.5 text-xs text-muted-foreground">のち（省略可）</p>
+        <div className="space-y-2">
+          <Label>のち（省略可）</Label>
           <div className={pickerClass}>
             {WEATHER_TYPES.map((type) => {
               const Icon = WEATHER_ICON[type];
@@ -186,43 +187,45 @@ function WeatherPickerForm({
       )}
 
       {/* Temperature inputs */}
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground">最高</span>
-          <Input
-            type="number"
-            min={-50}
-            max={60}
-            value={weatherHook.weather.tempHigh ?? ""}
-            onChange={(e) =>
-              weatherHook.setWeather((prev) => ({
-                ...prev,
-                tempHigh: e.target.value === "" ? null : Number(e.target.value),
-              }))
-            }
-            placeholder="--"
-            className="h-7 w-16 text-center text-sm"
-          />
-          <span className="text-xs text-muted-foreground">°C</span>
-        </div>
-        <span className="text-xs text-muted-foreground">/</span>
-        <div className="flex items-center gap-1">
-          <span className="text-xs text-muted-foreground">最低</span>
-          <Input
-            type="number"
-            min={-50}
-            max={60}
-            value={weatherHook.weather.tempLow ?? ""}
-            onChange={(e) =>
-              weatherHook.setWeather((prev) => ({
-                ...prev,
-                tempLow: e.target.value === "" ? null : Number(e.target.value),
-              }))
-            }
-            placeholder="--"
-            className="h-7 w-16 text-center text-sm"
-          />
-          <span className="text-xs text-muted-foreground">°C</span>
+      <div className="space-y-2">
+        <Label>気温</Label>
+        <div className="flex items-center gap-3">
+          <div className="flex flex-1 items-center gap-2">
+            <span className="text-sm text-muted-foreground">最高</span>
+            <Input
+              type="number"
+              min={-50}
+              max={60}
+              value={weatherHook.weather.tempHigh ?? ""}
+              onChange={(e) =>
+                weatherHook.setWeather((prev) => ({
+                  ...prev,
+                  tempHigh: e.target.value === "" ? null : Number(e.target.value),
+                }))
+              }
+              placeholder="--"
+              className="text-center"
+            />
+            <span className="text-sm text-muted-foreground">°C</span>
+          </div>
+          <div className="flex flex-1 items-center gap-2">
+            <span className="text-sm text-muted-foreground">最低</span>
+            <Input
+              type="number"
+              min={-50}
+              max={60}
+              value={weatherHook.weather.tempLow ?? ""}
+              onChange={(e) =>
+                weatherHook.setWeather((prev) => ({
+                  ...prev,
+                  tempLow: e.target.value === "" ? null : Number(e.target.value),
+                }))
+              }
+              placeholder="--"
+              className="text-center"
+            />
+            <span className="text-sm text-muted-foreground">°C</span>
+          </div>
         </div>
       </div>
     </div>
@@ -276,19 +279,18 @@ export function DayWeatherEditor({
             <div className="px-4 pb-2">
               <WeatherPickerForm weatherHook={weatherHook} gridLayout />
             </div>
-            <DrawerFooter>
-              <Button className="w-full" onClick={weatherHook.save} disabled={weatherHook.saving}>
-                <Check className="h-4 w-4" />
-                {weatherHook.saving ? "保存中..." : "保存"}
-              </Button>
+            <DrawerFooter className="flex-row [&>*]:flex-1">
               <Button
-                className="w-full"
                 variant="outline"
                 onClick={weatherHook.cancelEdit}
                 disabled={weatherHook.saving}
               >
                 <X className="h-4 w-4" />
                 キャンセル
+              </Button>
+              <Button onClick={weatherHook.save} disabled={weatherHook.saving}>
+                <Check className="h-4 w-4" />
+                {weatherHook.saving ? "保存中..." : "保存"}
               </Button>
             </DrawerFooter>
           </DrawerContent>

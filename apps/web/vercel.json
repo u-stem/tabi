@@ -1,5 +1,5 @@
 {
-  "buildCommand": "next build --webpack",
+  "buildCommand": "bun --cwd ../.. run db:migrate && next build --webpack",
   "framework": "nextjs",
   "fluid": true
 }

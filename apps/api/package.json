@@ -18,7 +18,6 @@
     "check-types": "tsc --noEmit",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "bun run src/db/seed.ts",
     "db:seed-user": "bun run src/db/seed-user.ts",

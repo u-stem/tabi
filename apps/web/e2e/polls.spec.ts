@@ -46,9 +46,7 @@ test.describe("Polls", () => {
 
     await page.getByRole("tab", { name: "日程調整" }).click();
 
-    // The delete button has no aria-label and fails Playwright's visibility check even
-    // though it is rendered; use dispatchEvent to trigger the React onClick directly.
-    await page.locator("button:has(.lucide-trash-2)").first().dispatchEvent("click");
+    await page.getByRole("button", { name: "日程案を削除" }).first().click();
 
     await page.getByRole("button", { name: "削除する" }).click();
     await expect(page.getByText("日程案を削除しました")).toBeVisible();
@@ -68,8 +66,8 @@ test.describe("Polls", () => {
     const selectDialog = page.getByRole("dialog", { name: "日程を確定" });
     await expect(selectDialog).toBeVisible();
 
-    // Step 2: click the first date option (button with date text, no aria-label)
-    await selectDialog.getByRole("button").first().click();
+    // Step 2: click the first date option button (contains month text to distinguish from close button)
+    await selectDialog.getByRole("button").filter({ hasText: /月/ }).first().click();
 
     // Step 3: AlertDialog appears with final confirm button
     await page.getByRole("button", { name: "確定する" }).click();

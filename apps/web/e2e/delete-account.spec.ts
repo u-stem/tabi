@@ -76,7 +76,7 @@ test.describe("Delete Account", () => {
 
     // Get User A's ID
     await pageA.goto("/friends");
-    const userAId = await pageA.locator("code").first().textContent();
+    const userAId = await pageA.locator('[data-testid="user-id"]').textContent();
     expect(userAId).toBeTruthy();
 
     // User B sends friend request to User A
@@ -121,12 +121,12 @@ test.describe("Delete Account", () => {
 
     // Get User B's ID
     await pageB.goto("/friends");
-    const userBId = await pageB.locator("code").first().textContent();
+    const userBId = await pageB.locator('[data-testid="user-id"]').textContent();
     expect(userBId).toBeTruthy();
 
     // Get User A's ID
     await pageA.goto("/friends");
-    const userAId = await pageA.locator("code").first().textContent();
+    const userAId = await pageA.locator('[data-testid="user-id"]').textContent();
     expect(userAId).toBeTruthy();
 
     // User A creates a trip and adds User B

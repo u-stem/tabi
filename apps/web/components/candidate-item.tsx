@@ -234,6 +234,8 @@ export const CandidateItem = memo(function CandidateItem({
           </div>
         )}
       </div>
+      {/* `disabled` is intentionally not checked here: viewers (canEdit=false) should be
+          able to react, and offline failures degrade gracefully via toast. */}
       {!selectable && onReact && (
         <div className="flex select-none items-center gap-0.5">
           <button

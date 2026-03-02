@@ -58,10 +58,10 @@ export async function createTripWithPollViaUI(
   // Switch to poll mode
   await dialog.getByRole("tab", { name: "日程を調整する" }).click();
 
-  // Select a date range (10th-12th of the currently displayed month) and add as candidate
+  // Select a date range (late-month dates to avoid past-date issues) and add as candidate
   const firstGrid = dialog.getByRole("grid").first();
-  await firstGrid.getByRole("gridcell", { name: /10/ }).first().click();
-  await firstGrid.getByRole("gridcell", { name: /12/ }).first().click();
+  await firstGrid.getByRole("gridcell", { name: /20/ }).first().click();
+  await firstGrid.getByRole("gridcell", { name: /22/ }).first().click();
   await dialog.getByRole("button", { name: "日程案に追加" }).click();
 
   await dialog.getByRole("button", { name: "作成" }).click();
@@ -117,10 +117,10 @@ export async function createTripViaUI(
   await dialog.locator("#create-title").fill(options.title);
   await dialog.locator("#create-destination").fill(options.destination);
 
-  // Select date range in the calendar
+  // Select date range in the calendar (use late-month dates to avoid past-date issues)
   const firstGrid = dialog.getByRole("grid").first();
-  await firstGrid.getByRole("gridcell", { name: /10/ }).first().click();
-  await firstGrid.getByRole("gridcell", { name: /12/ }).first().click();
+  await firstGrid.getByRole("gridcell", { name: /20/ }).first().click();
+  await firstGrid.getByRole("gridcell", { name: /22/ }).first().click();
 
   await dialog.getByRole("button", { name: "作成" }).click();
   await expect(dialog).not.toBeVisible({ timeout: 15000 });

@@ -10,10 +10,7 @@ test.describe("Activity Log", () => {
     await page.getByRole("tab", { name: "履歴" }).click();
 
     // Trip creation generates a log entry like "旅行「Activity Log Test」を作成"
-    // Use the bracketed entity name which is unique to activity log entries
-    await expect(
-      page.getByText(/「Activity Log Test」/).or(page.getByText("まだ履歴がありません")),
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.getByText(/「Activity Log Test」/)).toBeVisible({ timeout: 10000 });
   });
 
   test("activity log records schedule creation", async ({ authenticatedPage: page }) => {

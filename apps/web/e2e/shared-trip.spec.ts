@@ -78,7 +78,7 @@ test.describe("Shared Trip", () => {
 
     // Get member's user ID from friends page
     await memberPage.goto("/friends");
-    const memberId = await memberPage.locator("code").first().textContent();
+    const memberId = await memberPage.locator('[data-testid="user-id"]').textContent();
     expect(memberId).toBeTruthy();
 
     // Owner creates a trip

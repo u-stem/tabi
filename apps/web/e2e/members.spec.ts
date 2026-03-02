@@ -15,7 +15,7 @@ test.describe("Members", () => {
 
     // Get member's user ID from settings page
     await memberPage.goto("/friends");
-    const memberId = await memberPage.locator("code").first().textContent();
+    const memberId = await memberPage.locator('[data-testid="user-id"]').textContent();
     expect(memberId).toBeTruthy();
     await memberContext.close();
 
@@ -53,7 +53,7 @@ test.describe("Members", () => {
 
     // Get member's user ID from settings page
     await memberPage.goto("/friends");
-    const memberId = await memberPage.locator("code").first().textContent();
+    const memberId = await memberPage.locator('[data-testid="user-id"]').textContent();
     expect(memberId).toBeTruthy();
     await memberContext.close();
 

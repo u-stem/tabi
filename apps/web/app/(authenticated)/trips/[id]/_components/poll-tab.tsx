@@ -500,6 +500,7 @@ export function PollTab({
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
+                      aria-label="日程案を削除"
                       onClick={() => setDeleteOptionId(opt.id)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />

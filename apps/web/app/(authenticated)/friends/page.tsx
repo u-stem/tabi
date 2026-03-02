@@ -89,7 +89,10 @@ function UserIdSection({ userId }: { userId: string }) {
       </CardHeader>
       <CardContent>
         <div className="flex items-center gap-2">
-          <code className="flex-1 rounded-md bg-muted px-3 py-2 text-sm font-mono break-all">
+          <code
+            data-testid="user-id"
+            className="flex-1 rounded-md bg-muted px-3 py-2 text-sm font-mono break-all"
+          >
             {userId}
           </code>
           <Button variant="outline" size="icon" onClick={handleCopy} aria-label="コピー">

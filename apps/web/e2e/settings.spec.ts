@@ -5,7 +5,7 @@ test.describe("Settings", () => {
     // User ID is displayed on the friends page, not settings
     await page.goto("/friends");
     await expect(page.getByText("あなたのユーザーID")).toBeVisible();
-    const userId = await page.locator("code").first().textContent();
+    const userId = await page.locator('[data-testid="user-id"]').textContent();
     expect(userId).toBeTruthy();
     // UUID format
     expect(userId).toMatch(/^[a-f0-9-]{36}$/);
@@ -21,10 +21,7 @@ test.describe("Settings", () => {
     await expect(page.getByText("プロフィールを更新しました")).toBeVisible();
   });
 
-  test("updates username", async ({
-    authenticatedPage: page,
-    userCredentials,
-  }) => {
+  test("updates username", async ({ authenticatedPage: page }) => {
     await page.goto("/settings");
     await page.getByRole("tab", { name: "アカウント" }).click();
     await expect(page.locator("#username")).toBeVisible();

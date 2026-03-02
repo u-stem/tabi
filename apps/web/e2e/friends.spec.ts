@@ -15,7 +15,7 @@ test.describe("Friends", () => {
 
     // Get user B's ID
     await pageB.goto("/friends");
-    const userBId = await pageB.locator("code").first().textContent();
+    const userBId = await pageB.locator('[data-testid="user-id"]').textContent();
     expect(userBId).toBeTruthy();
 
     // User A sends friend request to user B
@@ -62,7 +62,7 @@ test.describe("Friends", () => {
 
     // Get user A's ID
     await page.goto("/friends");
-    const userAId = await page.locator("code").first().textContent();
+    const userAId = await page.locator('[data-testid="user-id"]').textContent();
     expect(userAId).toBeTruthy();
 
     // User C sends request to user A

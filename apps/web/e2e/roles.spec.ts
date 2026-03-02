@@ -14,7 +14,7 @@ async function setupViewerMember(
   });
 
   await memberPage.goto("/friends");
-  const memberId = await memberPage.locator("code").first().textContent();
+  const memberId = await memberPage.locator('[data-testid="user-id"]').textContent();
 
   await createTripViaUI(page, { title: tripTitle, destination: "Tokyo" });
 
@@ -130,7 +130,7 @@ test.describe("Roles and Permissions", () => {
     });
 
     await memberPage.goto("/friends");
-    const memberId = await memberPage.locator("code").first().textContent();
+    const memberId = await memberPage.locator('[data-testid="user-id"]').textContent();
 
     await page.getByRole("button", { name: "メンバー" }).click();
     await page.getByRole("tab", { name: "IDで追加" }).click();
@@ -177,7 +177,7 @@ test.describe("Roles and Permissions", () => {
     });
 
     await editorPage.goto("/friends");
-    const editorId = await editorPage.locator("code").first().textContent();
+    const editorId = await editorPage.locator('[data-testid="user-id"]').textContent();
 
     await createTripViaUI(page, { title: "Owner Edit Test", destination: "Kobe" });
 

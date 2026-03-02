@@ -31,6 +31,7 @@ const EditTripDialog = dynamic(() =>
   import("@/components/edit-trip-dialog").then((mod) => mod.EditTripDialog),
 );
 
+import { DayWeatherEditor } from "@/components/day-weather-editor";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -45,6 +46,7 @@ import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useAutoStatusTransition } from "@/lib/hooks/use-auto-status-transition";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useDayMemo } from "@/lib/hooks/use-day-memo";
+import { useDayWeather } from "@/lib/hooks/use-day-weather";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useIsLg } from "@/lib/hooks/use-is-lg";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
@@ -502,6 +504,12 @@ export default function TripDetailPage() {
     onDone: onMutate,
   });
 
+  const weather = useDayWeather({
+    tripId,
+    currentDayId: currentDay?.id ?? null,
+    onDone: onMutate,
+  });
+
   const timelineScheduleIds = useMemo(
     () => new Set(currentPattern?.schedules.map((s) => s.id) ?? []),
     [currentPattern?.schedules],
@@ -683,6 +691,16 @@ export default function TripDetailPage() {
               </div>
             ) : currentDay && currentPattern ? (
               <div id={`mobile-day-panel-${currentDay.id}`} role="tabpanel" className="p-4">
+                <DayWeatherEditor
+                  weatherHook={weather}
+                  currentDayId={currentDay.id}
+                  currentWeatherType={currentDay.weatherType}
+                  currentWeatherTypeSecondary={currentDay.weatherTypeSecondary}
+                  currentTempHigh={currentDay.tempHigh}
+                  currentTempLow={currentDay.tempLow}
+                  canEdit={canEdit}
+                  online={online}
+                />
                 <DayMemoEditor
                   memo={memo}
                   currentDayId={currentDay.id}
@@ -920,6 +938,16 @@ export default function TripDetailPage() {
                   role="tabpanel"
                   className="min-h-0 overflow-y-auto overscroll-contain p-4"
                 >
+                  <DayWeatherEditor
+                    weatherHook={weather}
+                    currentDayId={currentDay.id}
+                    currentWeatherType={currentDay.weatherType}
+                    currentWeatherTypeSecondary={currentDay.weatherTypeSecondary}
+                    currentTempHigh={currentDay.tempHigh}
+                    currentTempLow={currentDay.tempLow}
+                    canEdit={canEdit}
+                    online={online}
+                  />
                   <DayMemoEditor
                     memo={memo}
                     currentDayId={currentDay.id}

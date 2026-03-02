@@ -45,6 +45,7 @@ import {
   RenamePatternDialog,
 } from "@/app/(authenticated)/trips/[id]/_components/trip-dialogs";
 import { TripHeader } from "@/app/(authenticated)/trips/[id]/_components/trip-header";
+import { DayWeatherEditor } from "@/components/day-weather-editor";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
@@ -56,6 +57,7 @@ import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useAutoStatusTransition } from "@/lib/hooks/use-auto-status-transition";
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useDayMemo } from "@/lib/hooks/use-day-memo";
+import { useDayWeather } from "@/lib/hooks/use-day-weather";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
@@ -262,6 +264,12 @@ export default function SpTripDetailPage() {
     onDone: onMutate,
   });
 
+  const weather = useDayWeather({
+    tripId: tripId ?? "",
+    currentDayId: currentDay?.id ?? null,
+    onDone: onMutate,
+  });
+
   const timelineScheduleIds = useMemo(
     () => new Set(currentPattern?.schedules.map((s) => s.id) ?? []),
     [currentPattern?.schedules],
@@ -377,6 +385,16 @@ export default function SpTripDetailPage() {
               </div>
             ) : currentDay && currentPattern ? (
               <div id={`mobile-day-panel-${currentDay.id}`} role="tabpanel" className="p-4">
+                <DayWeatherEditor
+                  weatherHook={weather}
+                  currentDayId={currentDay.id}
+                  currentWeatherType={currentDay.weatherType}
+                  currentWeatherTypeSecondary={currentDay.weatherTypeSecondary}
+                  currentTempHigh={currentDay.tempHigh}
+                  currentTempLow={currentDay.tempLow}
+                  canEdit={canEdit}
+                  online={online}
+                />
                 <DayMemoEditor
                   memo={memo}
                   currentDayId={currentDay.id}

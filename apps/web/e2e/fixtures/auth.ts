@@ -59,9 +59,11 @@ export async function createTripWithPollViaUI(
   await dialog.getByRole("tab", { name: "日程を調整する" }).click();
 
   // Select a date range (late-month dates to avoid past-date issues) and add as candidate
+  // NOTE: gridcell aria-labels include the year (e.g. "2026年3月20日"), so /20/ would match
+  // "2026" too. Use hasText to match the visible day number text instead.
   const firstGrid = dialog.getByRole("grid").first();
-  await firstGrid.getByRole("gridcell", { name: /20/ }).first().click();
-  await firstGrid.getByRole("gridcell", { name: /22/ }).first().click();
+  await firstGrid.getByRole("gridcell").filter({ hasText: "20" }).click();
+  await firstGrid.getByRole("gridcell").filter({ hasText: "22" }).click();
   await dialog.getByRole("button", { name: "日程案に追加" }).click();
 
   await dialog.getByRole("button", { name: "作成" }).click();
@@ -118,9 +120,11 @@ export async function createTripViaUI(
   await dialog.locator("#create-destination").fill(options.destination);
 
   // Select date range in the calendar (use late-month dates to avoid past-date issues)
+  // NOTE: gridcell aria-labels include the year (e.g. "2026年3月20日"), so /20/ would match
+  // "2026" too. Use hasText to match the visible day number text instead.
   const firstGrid = dialog.getByRole("grid").first();
-  await firstGrid.getByRole("gridcell", { name: /20/ }).first().click();
-  await firstGrid.getByRole("gridcell", { name: /22/ }).first().click();
+  await firstGrid.getByRole("gridcell").filter({ hasText: "20" }).click();
+  await firstGrid.getByRole("gridcell").filter({ hasText: "22" }).click();
 
   await dialog.getByRole("button", { name: "作成" }).click();
   await expect(dialog).not.toBeVisible({ timeout: 15000 });

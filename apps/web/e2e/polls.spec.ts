@@ -29,10 +29,11 @@ test.describe("Polls", () => {
     const dialog = page.getByRole("dialog", { name: "日程案を追加" });
     await expect(dialog).toBeVisible();
 
-    // Select a different date range than the one already added (10th-12th)
+    // Select a different date range from the existing poll option (20th-22nd)
+    // NOTE: use hasText to match visible day numbers instead of aria-labels that include year
     const grid = dialog.getByRole("grid").first();
-    await grid.getByRole("gridcell", { name: /20/ }).first().click();
-    await grid.getByRole("gridcell", { name: /22/ }).first().click();
+    await grid.getByRole("gridcell").filter({ hasText: "10" }).click();
+    await grid.getByRole("gridcell").filter({ hasText: "12" }).click();
 
     await dialog.getByRole("button", { name: "追加" }).click();
     await expect(page.getByText("日程案を追加しました")).toBeVisible();

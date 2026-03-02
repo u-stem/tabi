@@ -112,7 +112,9 @@
   @media (max-width: 1023px) {
     body {
       overflow-x: hidden;
-      /* Native apps never show persistent scrollbars */
+    }
+    /* scrollbar-width does not inherit, so apply to all elements for native app feel */
+    * {
       scrollbar-width: none;
       &::-webkit-scrollbar {
         display: none;

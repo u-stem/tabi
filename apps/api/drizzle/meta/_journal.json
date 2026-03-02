@@ -120,6 +120,20 @@
       "when": 1772668800000,
       "tag": "0016_push_subscriptions_unique",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1772755200000,
+      "tag": "0017_per_device_push_prefs",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1740960000000,
+      "tag": "0018_trip_day_weather",
+      "breakpoints": true
     }
   ]
 }

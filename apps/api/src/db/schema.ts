@@ -71,6 +71,20 @@ export const pollResponseEnum = pgEnum("poll_response", ["ok", "maybe", "ng"]);
 
 export const souvenirPriorityEnum = pgEnum("souvenir_priority", ["high", "medium"]);
 
+export const weatherTypeEnum = pgEnum("weather_type", [
+  "sunny",
+  "partly_cloudy",
+  "cloudy",
+  "mostly_cloudy",
+  "light_rain",
+  "rainy",
+  "heavy_rain",
+  "thunder",
+  "snowy",
+  "sleet",
+  "foggy",
+]);
+
 // --- Tables ---
 
 export const users = pgTable("users", {
@@ -182,6 +196,10 @@ export const tripDays = pgTable(
     date: date("date").notNull(),
     dayNumber: integer("day_number").notNull(),
     memo: text("memo"),
+    weatherType: weatherTypeEnum("weather_type"),
+    weatherTypeSecondary: weatherTypeEnum("weather_type_secondary"),
+    tempHigh: smallint("temp_high"),
+    tempLow: smallint("temp_low"),
   },
   (table) => [uniqueIndex("trip_days_trip_date_unique").on(table.tripId, table.date)],
 ).enableRLS();

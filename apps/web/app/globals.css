@@ -127,7 +127,9 @@
       display: none;
     }
   }
-  /* Hide body scrollbar when SP layout is present (works regardless of viewport width) */
+  /* Hide body/html scrollbar when SP layout is present (works regardless of viewport width).
+     html is the scroll container on Android Chrome; body on some other browsers. */
+  html:has(.sp-layout),
   body:has(.sp-layout) {
     scrollbar-width: none;
     &::-webkit-scrollbar {

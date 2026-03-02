@@ -394,6 +394,7 @@ export default function SpTripDetailPage() {
                   currentTempLow={currentDay.tempLow}
                   canEdit={canEdit}
                   online={online}
+                  variant="drawer"
                 />
                 <DayMemoEditor
                   memo={memo}

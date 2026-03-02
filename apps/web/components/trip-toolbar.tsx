@@ -6,7 +6,6 @@ import {
   CalendarCheck,
   CalendarClock,
   CheckCircle,
-  ChevronDown,
   Clock,
   Copy,
   ListFilter,
@@ -245,6 +244,76 @@ export function TripToolbar({
     );
   }
 
+  if (isMobile) {
+    return (
+      <div role="toolbar" aria-label="旅行フィルター" className="flex flex-col gap-2">
+        <Input
+          ref={searchInputRef}
+          id="trips-search"
+          name="search"
+          type="search"
+          placeholder="検索..."
+          aria-label="旅行を検索"
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+          className="h-8 w-full"
+        />
+        <div className="flex gap-2">
+          {!hideStatusFilter && (
+            <>
+              <button
+                type="button"
+                aria-label="ステータスで絞り込み"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setStatusSheetOpen(true);
+                }}
+                className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
+              >
+                {statusFilters.find((f) => f.value === statusFilter)?.icon}
+                {currentStatusLabel}
+              </button>
+              <ActionSheet
+                open={statusSheetOpen}
+                onOpenChange={setStatusSheetOpen}
+                actions={statusFilters.map((f) => ({
+                  label: f.label,
+                  icon: f.icon,
+                  onClick: () => onStatusFilterChange(f.value),
+                }))}
+              />
+            </>
+          )}
+          {!hideSortKey && (
+            <button
+              type="button"
+              aria-label="並び替え"
+              onClick={() => onSortKeyChange(sortKey === "updatedAt" ? "startDate" : "updatedAt")}
+              className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
+            >
+              {sortOptions.find((s) => s.value === sortKey)?.icon}
+              {currentSortLabel}
+            </button>
+          )}
+          {onSelectionModeChange && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 flex-1"
+              onClick={() => onSelectionModeChange(true)}
+              disabled={disabled || totalCount === 0}
+              aria-label="選択モード"
+            >
+              <SquareMousePointer className="h-4 w-4" />
+              選択
+            </Button>
+          )}
+          {newTripSlot && <div className="shrink-0">{newTripSlot}</div>}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div role="toolbar" aria-label="旅行フィルター" className="flex items-center gap-2">
       <Input
@@ -258,51 +327,23 @@ export function TripToolbar({
         onChange={(e) => onSearchChange(e.target.value)}
         className="h-8 min-w-0 flex-1 sm:w-40 sm:flex-none"
       />
-      {!hideStatusFilter &&
-        (isMobile ? (
-          <>
-            <button
-              type="button"
-              aria-label="ステータスで絞り込み"
-              onClick={(e) => {
-                e.currentTarget.blur();
-                setStatusSheetOpen(true);
-              }}
-              className="flex h-8 shrink-0 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
-            >
-              {currentStatusLabel}
-              <ChevronDown className="h-3 w-3 text-muted-foreground" />
-            </button>
-            <ActionSheet
-              open={statusSheetOpen}
-              onOpenChange={setStatusSheetOpen}
-              actions={statusFilters.map((f) => ({
-                label: f.label,
-                icon: f.icon,
-                onClick: () => onStatusFilterChange(f.value),
-              }))}
-            />
-          </>
-        ) : (
-          <Select
-            value={statusFilter}
-            onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}
-          >
-            <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusFilters.map((f) => (
-                <SelectItem key={f.value} value={f.value}>
-                  <span className="flex items-center gap-2">
-                    {f.icon}
-                    {f.label}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ))}
+      {!hideStatusFilter && (
+        <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>
+          <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {statusFilters.map((f) => (
+              <SelectItem key={f.value} value={f.value}>
+                <span className="flex items-center gap-2">
+                  {f.icon}
+                  {f.label}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
       {!hideSortKey && (
         <button
           type="button"
@@ -319,13 +360,13 @@ export function TripToolbar({
           <Button
             variant="outline"
             size="sm"
-            className="h-8 w-8 px-0 sm:w-auto sm:px-3"
+            className="h-8 px-3"
             onClick={() => onSelectionModeChange(true)}
             disabled={disabled || totalCount === 0}
             aria-label="選択モード"
           >
             <SquareMousePointer className="h-4 w-4" />
-            <span className="sr-only sm:not-sr-only">選択</span>
+            選択
           </Button>
         </div>
       )}

@@ -267,7 +267,6 @@ export function DayWeatherEditor({
   variant = "inline",
 }: DayWeatherEditorProps) {
   const isEditing = weatherHook.editingDayId === currentDayId;
-  const hasWeather = currentWeatherType != null;
 
   const startEdit = () =>
     weatherHook.startEdit(currentDayId, {

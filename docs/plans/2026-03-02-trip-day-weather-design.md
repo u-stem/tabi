@@ -10,18 +10,19 @@
 - Max temperature: integer (°C), nullable
 - Min temperature: integer (°C), nullable
 - Manual input by users with editor role
-- Display compactly in day tabs: `1日目 ☀️ 24/18°`
+- Display compactly in day tabs: `1日目 ☀️ 24/18°` or `1日目 ☀️→☁️ 24/18°` (when secondary is set)
 - Edit UI in the day panel (above memo editor), similar to the existing `DayMemoEditor` pattern
 
 ---
 
 ## Data Model
 
-Add three columns to `trip_days`:
+Add four columns to `trip_days`:
 
 | Column | Type | Description |
 |--------|------|-------------|
-| `weather_type` | `weather_type` enum, nullable | Weather condition |
+| `weather_type` | `weather_type` enum, nullable | Primary weather condition |
+| `weather_type_secondary` | `weather_type` enum, nullable | Secondary weather (for "→" transitions like "晴れのち曇り") |
 | `temp_high` | `smallint`, nullable | High temperature (°C) |
 | `temp_low` | `smallint`, nullable | Low temperature (°C) |
 
@@ -46,22 +47,23 @@ Emoji and label mappings live in `packages/shared/src/schemas/trip-day.ts`.
 - `WeatherType` type
 - `WEATHER_LABELS: Record<WeatherType, string>` (Japanese labels)
 - `WEATHER_EMOJI: Record<WeatherType, string>` (emoji)
-- Extend `updateTripDaySchema` with `weatherType`, `tempHigh`, `tempLow`
+- Extend `updateTripDaySchema` with `weatherType`, `weatherTypeSecondary`, `tempHigh`, `tempLow`
 
 **`src/types.ts`** — extend `DayResponse`:
 ```typescript
 weatherType?: WeatherType | null;
+weatherTypeSecondary?: WeatherType | null;
 tempHigh?: number | null;
 tempLow?: number | null;
 ```
 
 ### API (`apps/api`)
 
-**`src/db/schema.ts`** — add `weatherTypeEnum` pgEnum, add 3 columns to `tripDays`.
+**`src/db/schema.ts`** — add `weatherTypeEnum` pgEnum, add 4 columns to `tripDays`.
 
 **Migration** — generated via `bun run db:generate`, applied via `bun run db:migrate`.
 
-**`src/routes/trip-days.ts`** — extend PATCH handler to update `weatherType`, `tempHigh`, `tempLow`. Activity log entity: `day_weather`.
+**`src/routes/trip-days.ts`** — extend PATCH handler to update `weatherType`, `weatherTypeSecondary`, `tempHigh`, `tempLow`. Activity log entity: `day_weather`.
 
 **`src/__tests__/trip-days.test.ts`** — add tests for:
 - Updates weather type successfully
@@ -81,11 +83,15 @@ tempLow?: number | null;
 - PATCH `/api/trips/:tripId/days/:dayId`
 
 **`components/day-weather-editor.tsx`** — new component:
-- Display mode: compact row showing emoji + "最高 XX° / 最低 XX°" (or "天気を追加" if unset)
+- Display mode: compact row showing `☀️` or `☀️→☁️` + "XX°/XX°" (or "天気を追加" if unset)
 - Clickable for editors when online
-- Edit mode: row of weather icon buttons (11 types) + two number inputs for high/low temp + Save/Cancel
+- Edit mode:
+  - Primary weather picker row (11 icons)
+  - Optional secondary weather picker row (11 icons + clear button), shown below with "→" indicator
+  - Two number inputs for high/low temp
+  - Save/Cancel buttons
 
-**`_components/day-tabs.tsx`** — when `day.weatherType` is set, append ` {emoji} {high}/{low}°` to the tab label.
+**`_components/day-tabs.tsx`** — when `day.weatherType` is set, append ` {emoji}[→{emoji2}] {high}/{low}°` to the tab label.
 
 **`trips/[id]/page.tsx`** and **`sp/trips/[id]/page.tsx`** — render `DayWeatherEditor` above `DayMemoEditor` in the day panel. Pass the `useDayWeather` hook result as prop.
 

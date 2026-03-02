@@ -14,7 +14,7 @@ test.describe("Friends", () => {
     });
 
     // Get user B's ID
-    await pageB.goto("/settings");
+    await pageB.goto("/friends");
     const userBId = await pageB.locator("code").first().textContent();
     expect(userBId).toBeTruthy();
 
@@ -61,7 +61,7 @@ test.describe("Friends", () => {
     });
 
     // Get user A's ID
-    await page.goto("/settings");
+    await page.goto("/friends");
     const userAId = await page.locator("code").first().textContent();
     expect(userAId).toBeTruthy();
 

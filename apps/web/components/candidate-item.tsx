@@ -234,7 +234,7 @@ export const CandidateItem = memo(function CandidateItem({
           </div>
         )}
       </div>
-      {!disabled && !selectable && onReact && (
+      {!selectable && onReact && (
         <div className="flex select-none items-center gap-0.5">
           <button
             type="button"

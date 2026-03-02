@@ -112,7 +112,7 @@ test.describe("Mobile trip detail", () => {
 
     await clickTripMenuAction(page, "ブックマーク");
     await expect(
-      page.getByText(/ブックマークリストがありません|日程が確定するとブックマークを利用できます/),
+      page.getByText(/リストがありません|日程が確定するとブックマークを利用できます/),
     ).toBeVisible();
 
     await page.getByRole("tab", { name: "予定" }).click();

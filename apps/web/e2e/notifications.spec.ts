@@ -12,7 +12,7 @@ test.describe("Notifications", () => {
       name: "Notif User",
     });
 
-    await memberPage.goto("/settings");
+    await memberPage.goto("/friends");
     const memberId = await memberPage.locator("code").first().textContent();
     expect(memberId).toBeTruthy();
 
@@ -46,7 +46,7 @@ test.describe("Notifications", () => {
       name: "Notif User 2",
     });
 
-    await memberPage.goto("/settings");
+    await memberPage.goto("/friends");
     const memberId = await memberPage.locator("code").first().textContent();
     expect(memberId).toBeTruthy();
 
@@ -78,6 +78,7 @@ test.describe("Notifications", () => {
 
   test("can toggle in-app notification preferences", async ({ authenticatedPage: page }) => {
     await page.goto("/settings");
+    await page.getByRole("tab", { name: "通知" }).click();
 
     // Each category row has an in-app switch with aria-label "{category} アプリ内通知"
     const memberToggle = page.getByRole("switch", { name: "メンバー アプリ内通知" });
@@ -86,8 +87,8 @@ test.describe("Notifications", () => {
     const initialState = await memberToggle.isChecked();
 
     await memberToggle.click();
-    const newState = await memberToggle.isChecked();
-    expect(newState).toBe(!initialState);
+    // Switch state reflects an API mutation, so wait for the update to propagate.
+    await expect(memberToggle).toBeChecked({ checked: !initialState });
 
     // Toggle back to original state
     await memberToggle.click();

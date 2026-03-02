@@ -2,8 +2,9 @@ import { expect, test } from "./fixtures/auth";
 
 test.describe("Settings", () => {
   test("displays user ID", async ({ authenticatedPage: page }) => {
-    await page.goto("/settings");
-    await expect(page.getByText("ユーザーID")).toBeVisible();
+    // User ID is displayed on the friends page, not settings
+    await page.goto("/friends");
+    await expect(page.getByText("あなたのユーザーID")).toBeVisible();
     const userId = await page.locator("code").first().textContent();
     expect(userId).toBeTruthy();
     // UUID format
@@ -14,9 +15,9 @@ test.describe("Settings", () => {
     await page.goto("/settings");
     await expect(page.getByText("プロフィール", { exact: true })).toBeVisible();
 
-    const nameInput = page.getByLabel("表示名");
+    const nameInput = page.locator("#name");
     await nameInput.fill("Updated Name");
-    await page.getByRole("button", { name: "更新" }).first().click();
+    await page.getByRole("button", { name: "保存" }).click();
     await expect(page.getByText("プロフィールを更新しました")).toBeVisible();
   });
 
@@ -25,14 +26,14 @@ test.describe("Settings", () => {
     userCredentials,
   }) => {
     await page.goto("/settings");
-    await expect(page.getByLabel("ユーザー名")).toBeVisible();
+    await page.getByRole("tab", { name: "アカウント" }).click();
+    await expect(page.locator("#username")).toBeVisible();
 
     const newUsername = `renamed_${Date.now()}`;
-    const usernameInput = page.getByLabel("ユーザー名");
-    await usernameInput.fill(newUsername);
+    await page.locator("#username").fill(newUsername);
 
     // The "更新" button inside the username section
-    const usernameSection = page.locator("form", { has: page.getByLabel("ユーザー名") });
+    const usernameSection = page.locator("form:has(#username)");
     await usernameSection.getByRole("button", { name: "更新" }).click();
     await expect(page.getByText("ユーザー名を更新しました")).toBeVisible();
   });
@@ -42,11 +43,12 @@ test.describe("Settings", () => {
     userCredentials,
   }) => {
     await page.goto("/settings");
+    await page.getByRole("tab", { name: "アカウント" }).click();
     await expect(page.getByText("パスワード変更")).toBeVisible();
 
-    await page.getByLabel("現在のパスワード").fill(userCredentials.password);
-    await page.getByLabel("新しいパスワード *", { exact: true }).fill("NewPassword456!");
-    await page.getByLabel("新しいパスワード（確認）").fill("NewPassword456!");
+    await page.locator("#currentPassword").fill(userCredentials.password);
+    await page.locator("#newPassword").fill("NewPassword456!");
+    await page.locator("#confirmPassword").fill("NewPassword456!");
     await page.getByRole("button", { name: "パスワードを変更" }).click();
     await expect(page.getByText("パスワードを変更しました")).toBeVisible({ timeout: 15000 });
   });

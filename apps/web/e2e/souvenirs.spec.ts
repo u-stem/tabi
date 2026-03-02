@@ -10,7 +10,7 @@ test.describe("Souvenirs", () => {
     const dialog = page.getByRole("dialog", { name: "お土産を追加" });
     await expect(dialog).toBeVisible();
     await dialog.locator("#souvenir-name").fill("八つ橋");
-    await dialog.getByRole("button", { name: "追加" }).click();
+    await dialog.getByRole("button", { name: "追加", exact: true }).click();
 
     await expect(dialog).not.toBeVisible({ timeout: 10000 });
     await expect(page.getByText("八つ橋")).toBeVisible();
@@ -27,7 +27,7 @@ test.describe("Souvenirs", () => {
     await dialog.locator("#souvenir-recipient").fill("お母さん");
     await dialog.getByRole("button", { name: "絶対" }).click();
     await dialog.locator("#souvenir-memo").fill("京都限定");
-    await dialog.getByRole("button", { name: "追加" }).click();
+    await dialog.getByRole("button", { name: "追加", exact: true }).click();
 
     await expect(dialog).not.toBeVisible({ timeout: 10000 });
     await expect(page.getByText("抹茶スイーツ")).toBeVisible();
@@ -41,7 +41,7 @@ test.describe("Souvenirs", () => {
 
     const dialog = page.getByRole("dialog", { name: "お土産を追加" });
     // Name is empty by default → add button is disabled
-    await expect(dialog.getByRole("button", { name: "追加" })).toBeDisabled();
+    await expect(dialog.getByRole("button", { name: "追加", exact: true })).toBeDisabled();
   });
 
   test("toggles souvenir purchased status", async ({ authenticatedPage: page }) => {
@@ -52,7 +52,7 @@ test.describe("Souvenirs", () => {
 
     const dialog = page.getByRole("dialog", { name: "お土産を追加" });
     await dialog.locator("#souvenir-name").fill("白い恋人");
-    await dialog.getByRole("button", { name: "追加" }).click();
+    await dialog.getByRole("button", { name: "追加", exact: true }).click();
     await expect(dialog).not.toBeVisible({ timeout: 10000 });
 
     // Toggle to purchased
@@ -74,7 +74,7 @@ test.describe("Souvenirs", () => {
 
     const addDialog = page.getByRole("dialog", { name: "お土産を追加" });
     await addDialog.locator("#souvenir-name").fill("明太子");
-    await addDialog.getByRole("button", { name: "追加" }).click();
+    await addDialog.getByRole("button", { name: "追加", exact: true }).click();
     await expect(addDialog).not.toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "明太子のメニュー" }).click();
@@ -99,7 +99,7 @@ test.describe("Souvenirs", () => {
 
     const addDialog = page.getByRole("dialog", { name: "お土産を追加" });
     await addDialog.locator("#souvenir-name").fill("もみじ饅頭");
-    await addDialog.getByRole("button", { name: "追加" }).click();
+    await addDialog.getByRole("button", { name: "追加", exact: true }).click();
     await expect(addDialog).not.toBeVisible({ timeout: 10000 });
 
     await page.getByRole("button", { name: "もみじ饅頭のメニュー" }).click();
@@ -118,7 +118,7 @@ test.describe("Souvenirs", () => {
       await page.getByRole("button", { name: "お土産を追加" }).click();
       const d = page.getByRole("dialog", { name: "お土産を追加" });
       await d.locator("#souvenir-name").fill(name);
-      await d.getByRole("button", { name: "追加" }).click();
+      await d.getByRole("button", { name: "追加", exact: true }).click();
       await expect(d).not.toBeVisible({ timeout: 10000 });
     }
 
@@ -139,7 +139,7 @@ test.describe("Souvenirs", () => {
     await page.getByRole("button", { name: "お土産を追加" }).click();
     const d1 = page.getByRole("dialog", { name: "お土産を追加" });
     await d1.locator("#souvenir-name").fill("ういろう");
-    await d1.getByRole("button", { name: "追加" }).click();
+    await d1.getByRole("button", { name: "追加", exact: true }).click();
     await expect(d1).not.toBeVisible({ timeout: 10000 });
 
     // Default sort is priority order → button label says "作成順に切り替える"

@@ -34,7 +34,7 @@ test.describe("Expenses", () => {
     await page.getByRole("button", { name: "費用を追加" }).click();
 
     const dialog = page.getByRole("dialog", { name: "費用を追加" });
-    await dialog.locator("#expense-title").fill("お土産");
+    await dialog.locator("#expense-title").fill("スカーフ代");
     await dialog.locator("#expense-amount").fill("2000");
 
     await dialog.locator("#expense-paid-by").click();
@@ -49,7 +49,7 @@ test.describe("Expenses", () => {
 
     await dialog.getByRole("button", { name: "追加" }).click();
     await expect(dialog).not.toBeVisible({ timeout: 10000 });
-    await expect(page.getByText("お土産")).toBeVisible();
+    await expect(page.getByText("スカーフ代")).toBeVisible();
   });
 
   test("shows add button disabled when custom split total mismatches amount", async ({

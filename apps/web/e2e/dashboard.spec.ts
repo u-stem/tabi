@@ -58,13 +58,11 @@ test.describe("Dashboard", () => {
     await page.getByRole("link", { name: "ホーム" }).click();
     await expect(page).toHaveURL(/\/home/);
 
-    // Default sort is by updated date; switch to start date
-    const sortSelect = page
+    // Default sort is by updated date; toggle to start date
+    await page
       .getByRole("toolbar", { name: "旅行フィルター" })
-      .getByRole("combobox")
-      .last();
-    await sortSelect.click();
-    await page.getByRole("option", { name: "出発日" }).click();
+      .getByRole("button", { name: "並び替え" })
+      .click();
 
     // Trip should still be visible after sort change
     await expect(page.getByText("Sort Trip")).toBeVisible();

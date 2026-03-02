@@ -17,6 +17,7 @@ async function assignUniqueClientIp(page: import("@playwright/test").Page, seed?
 
 async function deleteAccount(page: import("@playwright/test").Page) {
   await page.goto("/settings");
+  await page.getByRole("tab", { name: "アカウント" }).click();
   await page.getByRole("button", { name: "アカウントを削除" }).click();
   const dialog = page.getByRole("alertdialog", { name: "本当にアカウントを削除しますか？" });
   await dialog.getByLabel("パスワードを入力して確認").fill(PASSWORD);
@@ -74,7 +75,7 @@ test.describe("Delete Account", () => {
     await signupUser(pageB, { username: userB, name: "User B" });
 
     // Get User A's ID
-    await pageA.goto("/settings");
+    await pageA.goto("/friends");
     const userAId = await pageA.locator("code").first().textContent();
     expect(userAId).toBeTruthy();
 
@@ -119,12 +120,12 @@ test.describe("Delete Account", () => {
     await signupUser(pageB, { username: userB, name: "User B" });
 
     // Get User B's ID
-    await pageB.goto("/settings");
+    await pageB.goto("/friends");
     const userBId = await pageB.locator("code").first().textContent();
     expect(userBId).toBeTruthy();
 
     // Get User A's ID
-    await pageA.goto("/settings");
+    await pageA.goto("/friends");
     const userAId = await pageA.locator("code").first().textContent();
     expect(userAId).toBeTruthy();
 

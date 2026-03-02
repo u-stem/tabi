@@ -13,7 +13,7 @@ async function setupViewerMember(
     name: "Viewer User",
   });
 
-  await memberPage.goto("/settings");
+  await memberPage.goto("/friends");
   const memberId = await memberPage.locator("code").first().textContent();
 
   await createTripViaUI(page, { title: tripTitle, destination: "Tokyo" });
@@ -129,7 +129,7 @@ test.describe("Roles and Permissions", () => {
       name: "Viewer Reactor",
     });
 
-    await memberPage.goto("/settings");
+    await memberPage.goto("/friends");
     const memberId = await memberPage.locator("code").first().textContent();
 
     await page.getByRole("button", { name: "メンバー" }).click();
@@ -148,10 +148,16 @@ test.describe("Roles and Permissions", () => {
     await memberPage.goto(tripUrl);
     await expect(memberPage).toHaveURL(/\/trips\//, { timeout: 10000 });
 
-    // Viewer can still react to candidates
-    await expect(memberPage.getByRole("button", { name: "いいね" })).toBeVisible();
-    await memberPage.getByRole("button", { name: "いいね" }).click();
-    await expect(memberPage.getByRole("button", { name: "いいね" })).toHaveAttribute(
+    // Click the candidates tab to ensure the list is loaded.
+    await memberPage.getByRole("tab", { name: /候補/ }).click();
+    // Wait for the candidate item to appear before checking the reaction button.
+    await expect(memberPage.getByText("金閣寺")).toBeVisible({ timeout: 10000 });
+
+    // Viewer can still react to candidates.
+    // Use aria-label attribute selector as getByRole struggles with these buttons.
+    await expect(memberPage.locator('[aria-label="いいね"]')).toBeVisible({ timeout: 10000 });
+    await memberPage.locator('[aria-label="いいね"]').click();
+    await expect(memberPage.locator('[aria-label="いいね"]')).toHaveAttribute(
       "aria-pressed",
       "true",
     );
@@ -170,7 +176,7 @@ test.describe("Roles and Permissions", () => {
       name: "Editor User",
     });
 
-    await editorPage.goto("/settings");
+    await editorPage.goto("/friends");
     const editorId = await editorPage.locator("code").first().textContent();
 
     await createTripViaUI(page, { title: "Owner Edit Test", destination: "Kobe" });

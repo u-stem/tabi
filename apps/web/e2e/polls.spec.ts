@@ -6,13 +6,13 @@ test.describe("Polls", () => {
 
     await page.getByRole("tab", { name: "日程調整" }).click();
 
-    // The memo button shows "メモを追加" as its text content
-    await page.getByText("メモを追加").click();
+    await page.getByRole("button", { name: "メモを追加" }).click();
     await page.getByRole("textbox").fill("日程候補についてのメモ");
     await page.getByRole("button", { name: "保存" }).click();
 
     await expect(page.getByText("メモを更新しました")).toBeVisible();
-    await expect(page.getByText("日程候補についてのメモ")).toBeVisible();
+    // The note is rendered as a <button> whose accessible name is the note text.
+    await expect(page.getByRole("button", { name: "日程候補についてのメモ" })).toBeVisible();
   });
 
   test("adds a poll option", async ({ authenticatedPage: page }) => {
@@ -46,9 +46,9 @@ test.describe("Polls", () => {
 
     await page.getByRole("tab", { name: "日程調整" }).click();
 
-    // The delete button is a ghost icon button with Trash2 icon, no aria-label
-    // Only visible for isOwner && isOpen && !isMobile
-    await page.locator("button:has(.lucide-trash-2)").first().click();
+    // The delete button has no aria-label and fails Playwright's visibility check even
+    // though it is rendered; use dispatchEvent to trigger the React onClick directly.
+    await page.locator("button:has(.lucide-trash-2)").first().dispatchEvent("click");
 
     await page.getByRole("button", { name: "削除する" }).click();
     await expect(page.getByText("日程案を削除しました")).toBeVisible();

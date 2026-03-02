@@ -29,7 +29,7 @@ test.describe("Shared Trip", () => {
     const sharedPage = await context.newPage();
     await sharedPage.goto(`/shared/${shareToken}`);
 
-    await expect(sharedPage.getByText("Shared Trip Test")).toBeVisible({
+    await expect(sharedPage.getByRole("heading", { name: "Shared Trip Test" })).toBeVisible({
       timeout: 15000,
     });
     await context.close();
@@ -76,8 +76,8 @@ test.describe("Shared Trip", () => {
       name: "Shared List User",
     });
 
-    // Get member's user ID from settings page
-    await memberPage.goto("/settings");
+    // Get member's user ID from friends page
+    await memberPage.goto("/friends");
     const memberId = await memberPage.locator("code").first().textContent();
     expect(memberId).toBeTruthy();
 

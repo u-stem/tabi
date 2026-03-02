@@ -91,12 +91,6 @@ export function DayTabs({
                       </>
                     );
                   })()}
-                {(day.tempHigh != null || day.tempLow != null) && (
-                  <span className="text-xs text-muted-foreground">
-                    {day.tempHigh != null ? `${day.tempHigh}` : "-"}/
-                    {day.tempLow != null ? `${day.tempLow}` : "-"}°
-                  </span>
-                )}
               </span>
               {otherPresence
                 .filter((u) => u.dayId === day.id)

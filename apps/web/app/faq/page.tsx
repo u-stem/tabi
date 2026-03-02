@@ -1,117 +1,17 @@
+import { getFaqs } from "@sugara/api/lib/faqs";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/components/ui/accordion";
 import { pageTitle } from "@/lib/constants";
+import { FaqSearch } from "./_components/faq-search";
 
 export const metadata: Metadata = {
   title: pageTitle("よくある質問"),
 };
 
-const faqItems = [
-  {
-    question: "sugaraで何ができますか？",
-    answer:
-      "旅行計画を作成し、メンバーと共同編集できるWebアプリです。日程・行き先の管理、日程調整の投票、費用管理、お土産リスト、ブックマークの保存、Excel/CSV出力、印刷に対応しています。スマートフォンからのアクセスにも対応しています。",
-  },
-  {
-    question: "「パターン」とは何ですか？",
-    answer:
-      "1日の行程に対して最大3つの代替プランを作成できる機能です。「晴れの日プラン」「雨の日プラン」のように、状況に応じた候補を並行して管理できます。",
-  },
-  {
-    question: "「候補」と「予定」は何が違いますか？",
-    answer:
-      "「候補」はまだ日程に割り当てていない行き先のストックです。気になる場所をとりあえず追加しておき、後からドラッグ&ドロップで日程に配置すると「予定」になります。",
-  },
-  {
-    question: "旅行のステータスが自動で変わるのはなぜですか？",
-    answer:
-      "旅行の開始日・終了日に基づいて、ステータスが自動的に「計画済み → 進行中 → 完了」と遷移します。手動で変更することもできます。",
-  },
-  {
-    question: "「日程調整」とは何ですか？",
-    answer:
-      "旅行の日程をメンバーと投票で決められる機能です。複数の日程案を提示し、参加者が「OK / たぶん / NG」で回答します。結果を見てオーナーが日程を確定すると、旅行の日付が自動設定されます。",
-  },
-  {
-    question: "日程調整に参加者を招待するにはどうすればよいですか？",
-    answer:
-      "通常の旅行と同じように、メンバー管理からユーザーを追加します。旅行のメンバーは日程調整にアクセスすると自動的に回答できるようになります。共有リンクを発行すると回答状況を外部に公開できますが、リンク経由では投票できません（閲覧専用）。日程確定後、投票参加者は自動的に旅行のメンバー（編集者）に追加されます。",
-  },
-  {
-    question: "メンバーの「編集者」と「閲覧者」は何が違いますか？",
-    answer:
-      "「編集者」は予定の追加・編集・削除ができます。「閲覧者」は旅行の内容を見ることだけできます。メンバーの管理（追加・削除・ロール変更）はオーナーのみ行えます。",
-  },
-  {
-    question: "メンバーを追加するにはどうすればよいですか？",
-    answer:
-      "旅行の詳細画面からメンバー管理を開き、相手の「ユーザーID」を入力して追加します。ユーザーIDは設定画面で確認できます。フレンド登録済みの相手は、フレンドリストやグループからまとめて追加できます。",
-  },
-  {
-    question: "共有リンクとメンバー招待はどう使い分けますか？",
-    answer:
-      "共有リンクは、リンクを知っている人なら誰でも旅行の内容を閲覧できます（読み取り専用）。メンバー招待は、特定のユーザーに編集権限を含むロールを付与できます。一緒に計画を作るならメンバー招待、完成した計画を見せるだけなら共有リンクが便利です。",
-  },
-  {
-    question: "複数人で同時に編集できますか？",
-    answer:
-      "はい。メンバーが同時にアクセスしている場合、他のメンバーの変更がリアルタイムで反映されます。誰がどの日程を閲覧中かも表示されます。",
-  },
-  {
-    question: "「フレンド」とは何ですか？",
-    answer:
-      "よく一緒に旅行する相手をフレンド登録しておける機能です。フレンドリストから旅行へ直接メンバーを追加できます。追加するには相手の「ユーザーID」を検索してリクエストを送り、承認されるとフレンドになります。ユーザーIDはお互いの設定画面で確認できます。",
-  },
-  {
-    question: "「グループ」は何に使いますか？",
-    answer:
-      "よく一緒に旅行するメンバーをグループにまとめておくと、旅行にメンバーを追加する際にグループから一括追加できます。",
-  },
-  {
-    question: "「ブックマーク」とは何ですか？",
-    answer:
-      "行き先をリストにまとめて保存・共有できる機能です。気になる場所をブックマークに保存しておき、旅行の候補として一括追加できます。リストの公開範囲は「非公開」「フレンドのみ」「公開」から選べます。",
-  },
-  {
-    question: "「費用」タブとは何ですか？",
-    answer:
-      "旅行中の支出を記録し、メンバー間の精算を自動計算する機能です。誰がいくら支払ったかを入力すると、誰が誰にいくら返せばよいかが一覧で表示されます。費用は旅行のメンバー全員に共有されます。",
-  },
-  {
-    question: "「お土産」リストとは何ですか？",
-    answer:
-      "旅行ごとに購入したいお土産を管理できる機能です。品名・対象・購入場所・URLなどを記録し、チェックボックスで購入済みにマークできます。お土産リストは自分だけに表示され、他のメンバーとは共有されません。",
-  },
-  {
-    question: "旅行の計画を書き出せますか？",
-    answer:
-      "Excel (.xlsx) または CSV 形式でエクスポートできます。CSVは区切り文字や改行コードをカスタマイズ可能です。また、印刷用レイアウトでブラウザから印刷・PDF保存もできます。",
-  },
-  {
-    question: "スマートフォンでも使えますか？",
-    answer:
-      "はい。スマートフォンのブラウザからアクセスすると、タッチ操作に最適化された専用画面に自動で切り替わります。ボトムナビゲーションで主要ページにすばやくアクセスでき、旅行詳細ではスワイプでタブを切り替えられます。ヘッダーのメニューから「PC版で表示」を選ぶと、いつでもデスクトップ向け画面に切り替えられます。",
-  },
-  {
-    question: "キーボードショートカットはありますか？",
-    answer:
-      "はい。「?」キーでショートカット一覧を表示できます。日程の切り替え（数字キー・[ ]キー）、予定の追加（aキー）、候補の追加（cキー）などが使えます。",
-  },
-  {
-    question: "旅行や予定に上限はありますか？",
-    answer:
-      "旅行は1ユーザーあたり10件、予定は1旅行あたり300件、メンバーは1旅行あたり20人、パターンは1日あたり3つ、ブックマークリストは5件、フレンドは100人、グループは10件、お土産は1旅行あたり100件までです。",
-  },
-];
+export default async function FaqPage() {
+  const faqs = await getFaqs();
 
-export default function FaqPage() {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="container flex h-14 items-center">
@@ -120,17 +20,7 @@ export default function FaqPage() {
 
       <main className="container max-w-3xl flex-1 px-4 py-8">
         <h1 className="text-2xl font-bold">よくある質問</h1>
-
-        <Accordion type="single" collapsible className="mt-8">
-          {faqItems.map((item) => (
-            <AccordionItem key={item.question} value={item.question}>
-              <AccordionTrigger className="hover:no-underline">{item.question}</AccordionTrigger>
-              <AccordionContent>
-                <p className="text-muted-foreground leading-relaxed">{item.answer}</p>
-              </AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <FaqSearch faqs={faqs} />
       </main>
 
       <footer className="container flex flex-wrap items-center justify-center gap-x-4 gap-y-1 py-4 text-sm text-muted-foreground">

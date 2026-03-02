@@ -3,8 +3,8 @@
 import type { TripResponse, WeatherType } from "@sugara/shared";
 import { hashColor } from "@/components/presence-avatars";
 import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
-import { WEATHER_ICON } from "@/lib/weather-icons";
 import { cn } from "@/lib/utils";
+import { WEATHER_ICON } from "@/lib/weather-icons";
 
 const CHIP_BASE =
   "relative shrink-0 flex items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-medium transition-[colors,transform] min-h-[44px] lg:min-h-0 active:scale-[0.95]";
@@ -61,23 +61,25 @@ export function DayTabs({
           >
             <span className="flex items-center gap-1">
               <span>{day.dayNumber}日目</span>
-              {day.weatherType != null && (() => {
-                const WeatherIconComp = WEATHER_ICON[day.weatherType as WeatherType];
-                return <WeatherIconComp className="h-4 w-4 shrink-0" />;
-              })()}
-              {day.weatherTypeSecondary != null && (() => {
-                const WeatherIconComp = WEATHER_ICON[day.weatherTypeSecondary as WeatherType];
-                return (
-                  <>
-                    <span className="text-xs text-muted-foreground">→</span>
-                    <WeatherIconComp className="h-4 w-4 shrink-0" />
-                  </>
-                );
-              })()}
+              {day.weatherType != null &&
+                (() => {
+                  const WeatherIconComp = WEATHER_ICON[day.weatherType as WeatherType];
+                  return <WeatherIconComp className="h-4 w-4 shrink-0" />;
+                })()}
+              {day.weatherTypeSecondary != null &&
+                (() => {
+                  const WeatherIconComp = WEATHER_ICON[day.weatherTypeSecondary as WeatherType];
+                  return (
+                    <>
+                      <span className="text-xs text-muted-foreground">→</span>
+                      <WeatherIconComp className="h-4 w-4 shrink-0" />
+                    </>
+                  );
+                })()}
               {(day.tempHigh != null || day.tempLow != null) && (
                 <span className="text-xs text-muted-foreground">
-                  {day.tempHigh != null ? `${day.tempHigh}` : "-"}
-                  /{day.tempLow != null ? `${day.tempLow}` : "-"}°
+                  {day.tempHigh != null ? `${day.tempHigh}` : "-"}/
+                  {day.tempLow != null ? `${day.tempLow}` : "-"}°
                 </span>
               )}
             </span>

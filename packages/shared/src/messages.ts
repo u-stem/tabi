@@ -251,6 +251,10 @@ export const MSG = {
   DAY_MEMO_UPDATED: "メモを更新しました",
   DAY_MEMO_UPDATE_FAILED: "メモの更新に失敗しました",
 
+  // Day weather
+  DAY_WEATHER_UPDATED: "天気を更新しました",
+  DAY_WEATHER_UPDATE_FAILED: "天気の更新に失敗しました",
+
   // Poll note
   POLL_NOTE_UPDATED: "メモを更新しました",
   POLL_NOTE_UPDATE_FAILED: "メモの更新に失敗しました",

@@ -4,6 +4,7 @@ import type { MemberRole } from "./schemas/member";
 import type { PollResponseValue, PollStatus } from "./schemas/poll";
 import type { ReactionType, ScheduleCategory, ScheduleColor } from "./schemas/schedule";
 import type { TripStatus } from "./schemas/trip";
+import type { WeatherType } from "./schemas/trip-day";
 
 export type ScheduleResponse = {
   id: string;
@@ -42,6 +43,10 @@ export type DayResponse = {
   dayNumber: number;
   date: string;
   memo?: string | null;
+  weatherType?: WeatherType | null;
+  weatherTypeSecondary?: WeatherType | null;
+  tempHigh?: number | null;
+  tempLow?: number | null;
   patterns: DayPatternResponse[];
 };
 

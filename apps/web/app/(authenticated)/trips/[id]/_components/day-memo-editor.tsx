@@ -1,7 +1,7 @@
 "use client";
 
 import { DAY_MEMO_MAX_LENGTH } from "@sugara/shared";
-import { Check, MessageSquare } from "lucide-react";
+import { Check, MessageSquare, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { useDayMemo } from "@/lib/hooks/use-day-memo";
@@ -41,6 +41,7 @@ export function DayMemoEditor({
             </span>
             <div className="flex gap-1.5">
               <Button variant="ghost" size="sm" onClick={memo.cancelEdit} disabled={memo.saving}>
+                <X className="h-3.5 w-3.5" />
                 キャンセル
               </Button>
               <Button size="sm" onClick={memo.save} disabled={memo.saving}>

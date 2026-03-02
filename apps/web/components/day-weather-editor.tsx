@@ -1,7 +1,7 @@
 "use client";
 
 import { WEATHER_LABELS, WEATHER_TYPES, type WeatherType } from "@sugara/shared";
-import { Check, Cloud } from "lucide-react";
+import { Check, Cloud, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -286,6 +286,7 @@ export function DayWeatherEditor({
                 onClick={weatherHook.cancelEdit}
                 disabled={weatherHook.saving}
               >
+                <X className="h-4 w-4" />
                 キャンセル
               </Button>
             </DrawerFooter>
@@ -309,6 +310,7 @@ export function DayWeatherEditor({
               onClick={weatherHook.cancelEdit}
               disabled={weatherHook.saving}
             >
+              <X className="h-3.5 w-3.5" />
               キャンセル
             </Button>
             <Button size="sm" onClick={weatherHook.save} disabled={weatherHook.saving}>

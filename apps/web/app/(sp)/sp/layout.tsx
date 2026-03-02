@@ -9,7 +9,7 @@ export default function SpLayout({ children }: { children: React.ReactNode }) {
     <TooltipProvider>
       <ShortcutHelpProvider>
         <SpMobileProvider>
-          <div className="min-h-screen">
+          <div className="sp-layout min-h-screen">
             <SpHeader />
             <main className="container py-4 pb-16">{children}</main>
             <SpBottomNav />

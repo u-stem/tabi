@@ -112,13 +112,19 @@
   @media (max-width: 1023px) {
     body {
       overflow-x: hidden;
-    }
-    /* scrollbar-width does not inherit, so apply to all elements for native app feel */
-    * {
+      /* Native apps never show persistent scrollbars */
       scrollbar-width: none;
       &::-webkit-scrollbar {
         display: none;
       }
+    }
+  }
+  /* scrollbar-width does not inherit, so apply to all children of SP layout.
+     Scoped to .sp-layout to avoid affecting the desktop authenticated pages. */
+  .sp-layout * {
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
     }
   }
   button,

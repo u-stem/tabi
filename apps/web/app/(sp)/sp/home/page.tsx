@@ -155,13 +155,11 @@ export default function SpHomePage() {
             <Skeleton className="h-9 rounded-md" />
           </div>
           <div className="mt-4 flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-8 w-[120px]" />
-              <Skeleton className="h-8 w-[100px]" />
-            </div>
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-8 w-16" />
-              <Skeleton className="h-8 w-24" />
+            <Skeleton className="h-8 w-full" />
+            <div className="flex gap-2">
+              <Skeleton className="h-8 flex-1" />
+              <Skeleton className="h-8 flex-1" />
+              <Skeleton className="h-8 flex-1" />
             </div>
           </div>
           <div className="mt-4 grid gap-4">

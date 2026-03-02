@@ -127,6 +127,13 @@
       display: none;
     }
   }
+  /* Hide body scrollbar when SP layout is present (works regardless of viewport width) */
+  body:has(.sp-layout) {
+    scrollbar-width: none;
+    &::-webkit-scrollbar {
+      display: none;
+    }
+  }
   button,
   [role="button"] {
     cursor: pointer;

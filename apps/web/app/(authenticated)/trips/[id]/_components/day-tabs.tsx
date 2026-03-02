@@ -53,63 +53,60 @@ export function DayTabs({
           const weatherType = day.weatherType as WeatherType | null;
           const weatherTypeSecondary = day.weatherTypeSecondary as WeatherType | null;
           return (
-          <button
-            key={day.id}
-            type="button"
-            role="tab"
-            aria-selected={selectedDay === index}
-            aria-controls={`day-panel-${day.id}`}
-            onClick={() => onSelectDay(index)}
-            className={cn(CHIP_BASE, selectedDay === index ? CHIP_ACTIVE : CHIP_INACTIVE)}
-          >
-            <span className="flex items-center gap-1">
-              <span>{day.dayNumber}日目</span>
-              {weatherType != null &&
-                (() => {
-                  const WeatherIconComp = WEATHER_ICON[weatherType];
-                  return (
-                    <WeatherIconComp
-                      className={cn(
-                        "h-4 w-4 shrink-0",
-                        WEATHER_ICON_COLOR[weatherType],
-                      )}
-                    />
-                  );
-                })()}
-              {weatherTypeSecondary != null &&
-                (() => {
-                  const WeatherIconComp = WEATHER_ICON[weatherTypeSecondary];
-                  return (
-                    <>
-                      <span className="text-xs text-muted-foreground">→</span>
+            <button
+              key={day.id}
+              type="button"
+              role="tab"
+              aria-selected={selectedDay === index}
+              aria-controls={`day-panel-${day.id}`}
+              onClick={() => onSelectDay(index)}
+              className={cn(CHIP_BASE, selectedDay === index ? CHIP_ACTIVE : CHIP_INACTIVE)}
+            >
+              <span className="flex items-center gap-1">
+                <span>{day.dayNumber}日目</span>
+                {weatherType != null &&
+                  (() => {
+                    const WeatherIconComp = WEATHER_ICON[weatherType];
+                    return (
                       <WeatherIconComp
-                        className={cn(
-                          "h-4 w-4 shrink-0",
-                          WEATHER_ICON_COLOR[weatherTypeSecondary],
-                        )}
+                        className={cn("h-4 w-4 shrink-0", WEATHER_ICON_COLOR[weatherType])}
                       />
-                    </>
-                  );
-                })()}
-              {(day.tempHigh != null || day.tempLow != null) && (
-                <span className="text-xs text-muted-foreground">
-                  {day.tempHigh != null ? `${day.tempHigh}` : "-"}/
-                  {day.tempLow != null ? `${day.tempLow}` : "-"}°
-                </span>
-              )}
-            </span>
-            {otherPresence
-              .filter((u) => u.dayId === day.id)
-              .slice(0, 3)
-              .map((u, i) => (
-                <span
-                  key={u.userId}
-                  className={cn("absolute top-0.5 h-1.5 w-1.5 rounded-full", hashColor(u.userId))}
-                  style={{ right: `${4 + i * 6}px` }}
-                />
-              ))}
-          </button>
-        );
+                    );
+                  })()}
+                {weatherTypeSecondary != null &&
+                  (() => {
+                    const WeatherIconComp = WEATHER_ICON[weatherTypeSecondary];
+                    return (
+                      <>
+                        <span className="text-xs text-muted-foreground">→</span>
+                        <WeatherIconComp
+                          className={cn(
+                            "h-4 w-4 shrink-0",
+                            WEATHER_ICON_COLOR[weatherTypeSecondary],
+                          )}
+                        />
+                      </>
+                    );
+                  })()}
+                {(day.tempHigh != null || day.tempLow != null) && (
+                  <span className="text-xs text-muted-foreground">
+                    {day.tempHigh != null ? `${day.tempHigh}` : "-"}/
+                    {day.tempLow != null ? `${day.tempLow}` : "-"}°
+                  </span>
+                )}
+              </span>
+              {otherPresence
+                .filter((u) => u.dayId === day.id)
+                .slice(0, 3)
+                .map((u, i) => (
+                  <span
+                    key={u.userId}
+                    className={cn("absolute top-0.5 h-1.5 w-1.5 rounded-full", hashColor(u.userId))}
+                    style={{ right: `${4 + i * 6}px` }}
+                  />
+                ))}
+            </button>
+          );
         })}
       </div>
     </div>

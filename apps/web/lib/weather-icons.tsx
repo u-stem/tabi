@@ -14,16 +14,16 @@ import {
 } from "react-icons/wi";
 
 export const WEATHER_ICON_COLOR: Record<WeatherType, string> = {
-  sunny: "text-amber-400",
-  partly_cloudy: "text-amber-400",
+  sunny: "text-amber-500 dark:text-amber-400",
+  partly_cloudy: "text-amber-500 dark:text-amber-400",
   cloudy: "text-slate-400",
   mostly_cloudy: "text-slate-400",
-  light_rain: "text-blue-400",
-  rainy: "text-blue-400",
-  heavy_rain: "text-blue-500",
-  thunder: "text-yellow-400",
-  snowy: "text-sky-300",
-  sleet: "text-sky-400",
+  light_rain: "text-blue-500 dark:text-blue-400",
+  rainy: "text-blue-500 dark:text-blue-400",
+  heavy_rain: "text-blue-600 dark:text-blue-500",
+  thunder: "text-yellow-600 dark:text-yellow-400",
+  snowy: "text-sky-500 dark:text-sky-300",
+  sleet: "text-sky-500 dark:text-sky-400",
   foggy: "text-slate-400",
 };
 

@@ -249,7 +249,10 @@ export function MemberDialog({
           {membersLoading && !showSkeleton ? null : showSkeleton ? (
             <div className="space-y-2">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                <div
+                  key={i}
+                  className="flex items-center justify-between gap-2 rounded-md border p-2"
+                >
                   <div className="flex flex-1 items-center gap-2">
                     <Skeleton className="h-6 w-6 shrink-0 rounded-full" />
                     <Skeleton className="h-4 w-24" />

@@ -320,9 +320,9 @@ export default function SpTripDetailPage() {
             <Skeleton className="mb-3 h-9 w-full rounded-md" />
             <Skeleton className="mb-3 h-9 w-full rounded-md" />
             <div className="mb-2 flex items-center gap-1.5">
-              <Skeleton className="h-8 flex-1 rounded-md" />
-              <Skeleton className="h-8 flex-1 rounded-md" />
-              <Skeleton className="h-8 flex-1 rounded-md" />
+              <Skeleton className="h-8 flex-1 rounded-full" />
+              <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+              <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
             </div>
             <div className="mb-2 flex items-center gap-1.5">
               <Skeleton className="h-7 w-24 rounded-full" />

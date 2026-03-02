@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { describe, expect, it, vi } from "vitest";
 
-const { mockOrderBy, mockFrom, mockSelect } = vi.hoisted(() => {
+const { mockOrderBy, mockSelect } = vi.hoisted(() => {
   const mockOrderBy = vi.fn();
   const mockFrom = vi.fn(() => ({ orderBy: mockOrderBy }));
   const mockSelect = vi.fn(() => ({ from: mockFrom }));
-  return { mockOrderBy, mockFrom, mockSelect };
+  return { mockOrderBy, mockSelect };
 });
 
 vi.mock("../db/index", () => ({

@@ -26,10 +26,10 @@ const souvenirAddressesSchema = z
 
 export const createSouvenirSchema = z.object({
   name: z.string().min(1).max(SOUVENIR_NAME_MAX_LENGTH),
-  recipient: z.string().max(SOUVENIR_RECIPIENT_MAX_LENGTH).optional(),
+  recipient: z.string().max(SOUVENIR_RECIPIENT_MAX_LENGTH).nullable().optional(),
   urls: souvenirUrlsSchema,
   addresses: souvenirAddressesSchema,
-  memo: z.string().optional(),
+  memo: z.string().nullable().optional(),
   priority: z.enum(SOUVENIR_PRIORITY_VALUES).nullable().optional(),
 });
 

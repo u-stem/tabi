@@ -127,16 +127,17 @@ export default function HomePage() {
     <>
       {showSkeleton ? (
         <>
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center">
-            <Skeleton className="h-8 w-full sm:w-40" />
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-8 w-[120px]" />
-              <Skeleton className="h-8 w-[100px]" />
-            </div>
-            <div className="flex items-center gap-2 sm:ml-auto">
-              <Skeleton className="h-8 w-16" />
-              <Skeleton className="h-8 w-24" />
-            </div>
+          {/* Tab pills */}
+          <div className="mt-4 flex gap-1.5">
+            <Skeleton className="h-8 w-24 rounded-full" />
+            <Skeleton className="h-8 w-28 rounded-full" />
+          </div>
+          {/* TripToolbar (desktop: single row) */}
+          <div className="mt-4 flex items-center gap-2">
+            <Skeleton className="h-8 w-40" />
+            <Skeleton className="h-8 w-[120px]" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="ml-auto h-8 w-16" />
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (

@@ -248,18 +248,15 @@ export function MemberDialog({
         <div className="flex min-h-0 flex-col gap-4">
           {membersLoading && !showSkeleton ? null : showSkeleton ? (
             <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2 rounded-md border p-2">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-7 w-[100px]" />
-              </div>
-              <div className="flex items-center justify-between gap-2 rounded-md border p-2">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-7 w-[100px]" />
-              </div>
-              <div className="flex items-center justify-between gap-2 rounded-md border p-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-7 w-[100px]" />
-              </div>
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-center justify-between gap-2 rounded-md border p-2">
+                  <div className="flex flex-1 items-center gap-2">
+                    <Skeleton className="h-6 w-6 shrink-0 rounded-full" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
+                  <Skeleton className="h-7 w-[100px]" />
+                </div>
+              ))}
             </div>
           ) : (
             <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "40vh" }}>

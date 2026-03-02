@@ -155,6 +155,10 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
   if (showSkeleton) {
     return (
       <div className="space-y-2">
+        <div className="mb-2 flex items-center gap-1.5">
+          <Skeleton className="h-8 w-20 rounded-md" />
+          <Skeleton className="h-8 w-16 rounded-md" />
+        </div>
         <Skeleton className="h-12 w-full rounded-md" />
         <Skeleton className="h-12 w-full rounded-md" />
       </div>

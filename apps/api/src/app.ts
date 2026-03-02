@@ -10,6 +10,7 @@ import { bookmarkListRoutes } from "./routes/bookmark-lists";
 import { bookmarkRoutes } from "./routes/bookmarks";
 import { candidateRoutes } from "./routes/candidates";
 import { expenseRoutes } from "./routes/expenses";
+import { faqRoutes } from "./routes/faqs";
 import { feedbackRoutes } from "./routes/feedback";
 import { friendRoutes } from "./routes/friends";
 import { groupRoutes } from "./routes/groups";
@@ -80,5 +81,6 @@ app.route("/", shareRoutes);
 app.route("/", pollShareRoutes);
 app.route("/", publicSettingsRoutes);
 app.route("/", adminRoutes);
+app.route("/", faqRoutes);
 
 export { app };

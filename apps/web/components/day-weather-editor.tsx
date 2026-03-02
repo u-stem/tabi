@@ -277,11 +277,12 @@ export function DayWeatherEditor({
               <WeatherPickerForm weatherHook={weatherHook} gridLayout />
             </div>
             <DrawerFooter>
-              <Button onClick={weatherHook.save} disabled={weatherHook.saving}>
+              <Button className="w-full" onClick={weatherHook.save} disabled={weatherHook.saving}>
                 <Check className="h-4 w-4" />
                 {weatherHook.saving ? "保存中..." : "保存"}
               </Button>
               <Button
+                className="w-full"
                 variant="outline"
                 onClick={weatherHook.cancelEdit}
                 disabled={weatherHook.saving}

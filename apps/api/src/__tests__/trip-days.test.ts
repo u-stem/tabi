@@ -58,6 +58,10 @@ describe("Trip day routes", () => {
       date: "2025-01-01",
       dayNumber: 1,
       memo: null,
+      weatherType: null,
+      weatherTypeSecondary: null,
+      tempHigh: null,
+      tempLow: null,
     });
   });
 
@@ -154,6 +158,166 @@ describe("Trip day routes", () => {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ memo: "a".repeat(501) }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("updates weather type successfully", async () => {
+      const existing = {
+        id: dayId,
+        tripId,
+        date: "2025-01-01",
+        dayNumber: 1,
+        memo: null,
+        weatherType: null,
+        weatherTypeSecondary: null,
+        tempHigh: null,
+        tempLow: null,
+      };
+      mockDbQuery.tripDays.findFirst.mockResolvedValue(existing);
+      const updated = { ...existing, weatherType: "sunny" };
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+
+      const app = createTestApp(tripDayRoutes, "/api/trips");
+      const res = await app.request(basePath, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memo: null, weatherType: "sunny" }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.weatherType).toBe("sunny");
+    });
+
+    it("updates secondary weather type for 'nochi' pattern", async () => {
+      const existing = {
+        id: dayId,
+        tripId,
+        date: "2025-01-01",
+        dayNumber: 1,
+        memo: null,
+        weatherType: "sunny",
+        weatherTypeSecondary: null,
+        tempHigh: null,
+        tempLow: null,
+      };
+      mockDbQuery.tripDays.findFirst.mockResolvedValue(existing);
+      const updated = { ...existing, weatherTypeSecondary: "cloudy" };
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+
+      const app = createTestApp(tripDayRoutes, "/api/trips");
+      const res = await app.request(basePath, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memo: null, weatherType: "sunny", weatherTypeSecondary: "cloudy" }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.weatherTypeSecondary).toBe("cloudy");
+    });
+
+    it("clears weather with null", async () => {
+      const existing = {
+        id: dayId,
+        tripId,
+        date: "2025-01-01",
+        dayNumber: 1,
+        memo: null,
+        weatherType: "sunny",
+        weatherTypeSecondary: "cloudy",
+        tempHigh: 25,
+        tempLow: 15,
+      };
+      mockDbQuery.tripDays.findFirst.mockResolvedValue(existing);
+      const updated = {
+        ...existing,
+        weatherType: null,
+        weatherTypeSecondary: null,
+        tempHigh: null,
+        tempLow: null,
+      };
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+
+      const app = createTestApp(tripDayRoutes, "/api/trips");
+      const res = await app.request(basePath, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          memo: null,
+          weatherType: null,
+          weatherTypeSecondary: null,
+          tempHigh: null,
+          tempLow: null,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.weatherType).toBeNull();
+    });
+
+    it("updates temperatures successfully", async () => {
+      const existing = {
+        id: dayId,
+        tripId,
+        date: "2025-01-01",
+        dayNumber: 1,
+        memo: null,
+        weatherType: "sunny",
+        weatherTypeSecondary: null,
+        tempHigh: null,
+        tempLow: null,
+      };
+      mockDbQuery.tripDays.findFirst.mockResolvedValue(existing);
+      const updated = { ...existing, tempHigh: 30, tempLow: 20 };
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updated]),
+          }),
+        }),
+      });
+
+      const app = createTestApp(tripDayRoutes, "/api/trips");
+      const res = await app.request(basePath, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memo: null, weatherType: "sunny", tempHigh: 30, tempLow: 20 }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.tempHigh).toBe(30);
+      expect(body.tempLow).toBe(20);
+    });
+
+    it("returns 400 for invalid weather type", async () => {
+      const app = createTestApp(tripDayRoutes, "/api/trips");
+      const res = await app.request(basePath, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ memo: null, weatherType: "hurricane" }),
       });
 
       expect(res.status).toBe(400);

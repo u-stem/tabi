@@ -38,7 +38,15 @@ tripDayRoutes.patch("/:tripId/days/:dayId", requireTripAccess("editor"), async (
 
   const [updated] = await db
     .update(tripDays)
-    .set({ memo: parsed.data.memo })
+    .set({
+      memo: parsed.data.memo,
+      ...(parsed.data.weatherType !== undefined && { weatherType: parsed.data.weatherType }),
+      ...(parsed.data.weatherTypeSecondary !== undefined && {
+        weatherTypeSecondary: parsed.data.weatherTypeSecondary,
+      }),
+      ...(parsed.data.tempHigh !== undefined && { tempHigh: parsed.data.tempHigh }),
+      ...(parsed.data.tempLow !== undefined && { tempLow: parsed.data.tempLow }),
+    })
     .where(eq(tripDays.id, dayId))
     .returning();
 
@@ -46,7 +54,7 @@ tripDayRoutes.patch("/:tripId/days/:dayId", requireTripAccess("editor"), async (
     tripId,
     userId: user.id,
     action: "updated",
-    entityType: "day_memo",
+    entityType: "day_weather",
     detail: `${existing.dayNumber}日目`,
   });
 

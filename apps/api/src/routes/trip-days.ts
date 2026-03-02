@@ -13,7 +13,7 @@ import type { AppEnv } from "../types";
 const tripDayRoutes = new Hono<AppEnv>();
 tripDayRoutes.use("*", requireAuth);
 
-// Update trip day (memo)
+// Update trip day (memo / weather / temperature)
 tripDayRoutes.patch("/:tripId/days/:dayId", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
   const tripId = c.req.param("tripId");
@@ -50,11 +50,17 @@ tripDayRoutes.patch("/:tripId/days/:dayId", requireTripAccess("editor"), async (
     .where(eq(tripDays.id, dayId))
     .returning();
 
+  const hasWeatherUpdate =
+    parsed.data.weatherType !== undefined ||
+    parsed.data.weatherTypeSecondary !== undefined ||
+    parsed.data.tempHigh !== undefined ||
+    parsed.data.tempLow !== undefined;
+
   logActivity({
     tripId,
     userId: user.id,
     action: "updated",
-    entityType: "day_weather",
+    entityType: hasWeatherUpdate ? "day_weather" : "day_memo",
     detail: `${existing.dayNumber}日目`,
   });
 

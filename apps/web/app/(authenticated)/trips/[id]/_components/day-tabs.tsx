@@ -4,7 +4,7 @@ import type { TripResponse, WeatherType } from "@sugara/shared";
 import { hashColor } from "@/components/presence-avatars";
 import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
 import { cn } from "@/lib/utils";
-import { WEATHER_ICON } from "@/lib/weather-icons";
+import { WEATHER_ICON, WEATHER_ICON_COLOR } from "@/lib/weather-icons";
 
 const CHIP_BASE =
   "relative shrink-0 flex items-center justify-center rounded-full px-3.5 py-1.5 text-sm font-medium transition-[colors,transform] min-h-[44px] lg:min-h-0 active:scale-[0.95]";
@@ -49,7 +49,10 @@ export function DayTabs({
               ))}
           </button>
         )}
-        {days.map((day, index) => (
+        {days.map((day, index) => {
+          const weatherType = day.weatherType as WeatherType | null;
+          const weatherTypeSecondary = day.weatherTypeSecondary as WeatherType | null;
+          return (
           <button
             key={day.id}
             type="button"
@@ -61,18 +64,30 @@ export function DayTabs({
           >
             <span className="flex items-center gap-1">
               <span>{day.dayNumber}日目</span>
-              {day.weatherType != null &&
+              {weatherType != null &&
                 (() => {
-                  const WeatherIconComp = WEATHER_ICON[day.weatherType as WeatherType];
-                  return <WeatherIconComp className="h-4 w-4 shrink-0" />;
+                  const WeatherIconComp = WEATHER_ICON[weatherType];
+                  return (
+                    <WeatherIconComp
+                      className={cn(
+                        "h-4 w-4 shrink-0",
+                        WEATHER_ICON_COLOR[weatherType],
+                      )}
+                    />
+                  );
                 })()}
-              {day.weatherTypeSecondary != null &&
+              {weatherTypeSecondary != null &&
                 (() => {
-                  const WeatherIconComp = WEATHER_ICON[day.weatherTypeSecondary as WeatherType];
+                  const WeatherIconComp = WEATHER_ICON[weatherTypeSecondary];
                   return (
                     <>
                       <span className="text-xs text-muted-foreground">→</span>
-                      <WeatherIconComp className="h-4 w-4 shrink-0" />
+                      <WeatherIconComp
+                        className={cn(
+                          "h-4 w-4 shrink-0",
+                          WEATHER_ICON_COLOR[weatherTypeSecondary],
+                        )}
+                      />
                     </>
                   );
                 })()}
@@ -94,7 +109,8 @@ export function DayTabs({
                 />
               ))}
           </button>
-        ))}
+        );
+        })}
       </div>
     </div>
   );

@@ -21,9 +21,7 @@ export function InstallBanner() {
     <>
       <div className="border-b bg-blue-50 dark:bg-blue-950/30">
         <div className="container flex items-center justify-between gap-2 px-4 py-1.5 text-sm">
-          <span className="text-blue-900 dark:text-blue-200">
-            このアプリをホーム画面に追加できます
-          </span>
+          <span className="text-blue-900 dark:text-blue-200">アプリをホーム画面に追加できます</span>
           <div className="flex shrink-0 items-center gap-2">
             {isIos ? (
               <button

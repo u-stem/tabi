@@ -9,7 +9,7 @@ export default function SpLayout({ children }: { children: React.ReactNode }) {
     <TooltipProvider>
       <ShortcutHelpProvider>
         <SpMobileProvider>
-          <div className="sp-layout min-h-screen">
+          <div className="sp-layout h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <SpHeader />
             <main className="container py-4 pb-16">{children}</main>
             <SpBottomNav />

@@ -127,14 +127,13 @@
       display: none;
     }
   }
-  /* Hide body/html scrollbar when SP layout is present (works regardless of viewport width).
-     html is the scroll container on Android Chrome; body on some other browsers. */
+  /* When SP layout is present, disable body/html scroll and let .sp-layout scroll instead.
+     CSS overflow elements hide scrollbars reliably on iOS Safari PWA;
+     native body scroll cannot be hidden with CSS on iOS. */
   html:has(.sp-layout),
   body:has(.sp-layout) {
-    scrollbar-width: none;
-    &::-webkit-scrollbar {
-      display: none;
-    }
+    height: 100%;
+    overflow: hidden;
   }
   button,
   [role="button"] {

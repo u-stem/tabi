@@ -27,7 +27,10 @@ export function DayTabs({
 }) {
   return (
     <div className="flex shrink-0 select-none" role="tablist" aria-label="日程タブ">
-      <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-3 pb-0 pt-3">
+      <div
+        className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-3 pb-0 pt-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        data-swipe-ignore="true"
+      >
         {hasPoll && (
           <button
             type="button"

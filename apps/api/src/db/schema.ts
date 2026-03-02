@@ -729,3 +729,12 @@ export const pushSubscriptionsRelations = relations(pushSubscriptions, ({ one })
 export const notificationPreferencesRelations = relations(notificationPreferences, ({ one }) => ({
   user: one(users, { fields: [notificationPreferences.userId], references: [users.id] }),
 }));
+
+export const faqs = pgTable("faqs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});

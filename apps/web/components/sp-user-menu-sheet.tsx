@@ -27,6 +27,16 @@ const FeedbackDialog = dynamic(() =>
 );
 
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Drawer,
   DrawerContent,
   DrawerDescription,
@@ -53,6 +63,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
   const { canInstall, promptInstall } = useInstallPrompt();
   const { theme, setTheme } = useTheme();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [signOutOpen, setSignOutOpen] = useState(false);
   const isGuest = isGuestUser(session);
 
   async function handleSignOut() {
@@ -196,10 +207,10 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
             <button
               type="button"
               onClick={() => {
-                handleSignOut();
                 onOpenChange(false);
+                setSignOutOpen(true);
               }}
-              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
+              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm text-destructive hover:bg-accent"
             >
               <LogOut className="h-4 w-4" />
               ログアウト
@@ -208,6 +219,25 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
         </DrawerContent>
       </Drawer>
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+      <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>ログアウトしますか？</AlertDialogTitle>
+            <AlertDialogDescription>
+              ログアウトするとこのデバイスからサインアウトされます。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>キャンセル</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSignOut}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              ログアウト
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

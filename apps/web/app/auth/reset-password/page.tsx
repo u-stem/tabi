@@ -1,25 +1,27 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
-import { useState } from "react"
-import { toast } from "sonner"
-import { Logo } from "@/components/logo"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { authClient } from "@/lib/auth-client"
-import { validatePassword } from "@/lib/constants"
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Logo } from "@/components/logo";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/auth-client";
+import { validatePassword } from "@/lib/constants";
 
 export default function ResetPasswordPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const token = searchParams.get("token")
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
 
-  const [newPassword, setNewPassword] = useState("")
-  const [confirmPassword, setConfirmPassword] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const tokenValue = token ?? "";
 
   if (!token) {
     return (
@@ -31,43 +33,43 @@ export default function ResetPasswordPage() {
           </Link>
         </div>
       </div>
-    )
+    );
   }
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
-    const { valid, errors } = validatePassword(newPassword)
+    const { valid, errors } = validatePassword(newPassword);
     if (!valid) {
-      setError(`パスワードの要件を満たしていません: ${errors.join("、")}`)
-      return
+      setError(`パスワードの要件を満たしていません: ${errors.join("、")}`);
+      return;
     }
     if (newPassword !== confirmPassword) {
-      setError("パスワードが一致しません。")
-      return
+      setError("パスワードが一致しません。");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       const result = await authClient.resetPassword({
         newPassword,
-        token: token!,
-      })
+        token: tokenValue,
+      });
       if (result.error) {
         if (result.error.status === 400) {
-          setError("リンクが無効または期限切れです。もう一度リセットをお試しください。")
+          setError("リンクが無効または期限切れです。もう一度リセットをお試しください。");
         } else {
-          setError("パスワードのリセットに失敗しました。")
+          setError("パスワードのリセットに失敗しました。");
         }
-        return
+        return;
       }
-      toast.success("パスワードを変更しました。")
-      router.push("/auth/login")
+      toast.success("パスワードを変更しました。");
+      router.push("/auth/login");
     } catch {
-      setError("パスワードのリセットに失敗しました。")
+      setError("パスワードのリセットに失敗しました。");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -106,7 +108,9 @@ export default function ResetPasswordPage() {
               />
             </div>
             {error && (
-              <p className="text-sm text-destructive" role="alert">{error}</p>
+              <p className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
             )}
             <Button
               type="submit"
@@ -119,5 +123,5 @@ export default function ResetPasswordPage() {
         </div>
       </main>
     </div>
-  )
+  );
 }

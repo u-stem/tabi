@@ -7,12 +7,7 @@ import { toast } from "sonner";
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { ApiError, api } from "@/lib/api";
@@ -155,23 +150,24 @@ export default function AdminPage() {
   });
 
   const { data: usersData } = useQuery({
-    queryKey: ["admin", "users"],
+    queryKey: queryKeys.admin.users(),
     queryFn: () => api<AdminUsersResponse>("/api/admin/users"),
     staleTime: 60 * 1000,
     retry: false,
   });
 
-  async function handleIssueTempPassword(userId: string, username: string) {
-    try {
-      const result = await api<{ tempPassword: string }>(
-        `/api/admin/users/${userId}/temp-password`,
-        { method: "POST" },
-      );
-      setTempPasswordInfo({ username, tempPassword: result.tempPassword });
-    } catch {
+  const issueTempPassword = useMutation({
+    mutationFn: (variables: { userId: string; username: string }) =>
+      api<{ tempPassword: string }>(`/api/admin/users/${variables.userId}/temp-password`, {
+        method: "POST",
+      }),
+    onSuccess: (result, variables) => {
+      setTempPasswordInfo({ username: variables.username, tempPassword: result.tempPassword });
+    },
+    onError: () => {
       toast.error("一時パスワードの発行に失敗しました。");
-    }
-  }
+    },
+  });
 
   const showSkeleton = useDelayedLoading(isLoading);
   const updatedAt = dataUpdatedAt > 0 ? new Date(dataUpdatedAt).toLocaleTimeString() : null;
@@ -316,9 +312,12 @@ export default function AdminPage() {
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => handleIssueTempPassword(u.id, u.username)}
+                          disabled={issueTempPassword.isPending}
+                          onClick={() =>
+                            issueTempPassword.mutate({ userId: u.id, username: u.username })
+                          }
                         >
-                          一時PW発行
+                          {issueTempPassword.isPending ? "発行中..." : "一時PW発行"}
                         </Button>
                       </td>
                     </tr>
@@ -342,9 +341,7 @@ export default function AdminPage() {
                 このパスワードをユーザーに伝えてください。
               </p>
               <div className="flex items-center gap-2 rounded-lg border bg-muted p-3">
-                <code className="flex-1 font-mono text-lg">
-                  {tempPasswordInfo.tempPassword}
-                </code>
+                <code className="flex-1 font-mono text-lg">{tempPasswordInfo.tempPassword}</code>
                 <Button
                   size="sm"
                   variant="ghost"
@@ -356,9 +353,7 @@ export default function AdminPage() {
                   コピー
                 </Button>
               </div>
-              <p className="text-xs text-destructive">
-                このパスワードは一度しか表示されません。
-              </p>
+              <p className="text-xs text-destructive">このパスワードは一度しか表示されません。</p>
             </div>
           </DialogContent>
         </Dialog>

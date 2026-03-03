@@ -17,13 +17,16 @@ import { env } from "./env";
 
 const isProduction = process.env.NODE_ENV === "production";
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.GMAIL_USER,
-    pass: process.env.GMAIL_APP_PASSWORD,
-  },
-});
+// Lazily created so tests that don't use email can import auth without GMAIL_USER set
+function getTransporter() {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: env.GMAIL_USER,
+      pass: env.GMAIL_APP_PASSWORD,
+    },
+  });
+}
 
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_BASE_URL,
@@ -62,8 +65,8 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     sendResetPassword: async ({ user, url }) => {
-      await transporter.sendMail({
-        from: `"sugara" <${process.env.GMAIL_USER}>`,
+      await getTransporter().sendMail({
+        from: `"sugara" <${env.GMAIL_USER}>`,
         to: user.email,
         subject: "【sugara】パスワードのリセット",
         html: `
@@ -76,8 +79,8 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
-      await transporter.sendMail({
-        from: `"sugara" <${process.env.GMAIL_USER}>`,
+      await getTransporter().sendMail({
+        from: `"sugara" <${env.GMAIL_USER}>`,
         to: user.email,
         subject: "【sugara】メールアドレスの確認",
         html: `
@@ -92,8 +95,8 @@ export const auth = betterAuth({
     changeEmail: {
       enabled: true,
       sendChangeEmailVerification: async ({ newEmail, url }) => {
-        await transporter.sendMail({
-          from: `"sugara" <${process.env.GMAIL_USER}>`,
+        await getTransporter().sendMail({
+          from: `"sugara" <${env.GMAIL_USER}>`,
           to: newEmail,
           subject: "【sugara】メールアドレス変更の確認",
           html: `

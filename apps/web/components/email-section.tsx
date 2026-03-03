@@ -1,64 +1,62 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { authClient } from "@/lib/auth-client"
+import { DUMMY_EMAIL_DOMAIN } from "@sugara/shared";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/auth-client";
 
 type Props = {
-  currentEmail: string
-  emailVerified: boolean
-}
-
-// Emails ending with this domain are dummy addresses set at account creation
-const DUMMY_EMAIL_DOMAIN = "sugara.local"
+  currentEmail: string;
+  emailVerified: boolean;
+};
 
 function maskEmail(email: string): string {
-  const [local, domain] = email.split("@")
-  const masked = local[0] + "*".repeat(Math.max(local.length - 1, 2))
-  return `${masked}@${domain}`
+  const [local, domain] = email.split("@");
+  const masked = local[0] + "*".repeat(Math.max(local.length - 1, 2));
+  return `${masked}@${domain}`;
 }
 
 function isRealEmail(email: string): boolean {
-  return !email.endsWith(`@${DUMMY_EMAIL_DOMAIN}`)
+  return !email.endsWith(`@${DUMMY_EMAIL_DOMAIN}`);
 }
 
 export function EmailSection({ currentEmail, emailVerified }: Props) {
-  const [newEmail, setNewEmail] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [sent, setSent] = useState(false)
+  const [newEmail, setNewEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
 
-  const hasRealEmail = isRealEmail(currentEmail)
+  const hasRealEmail = isRealEmail(currentEmail);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setError(null)
+    e.preventDefault();
+    setError(null);
 
-    if (!newEmail.trim()) return
+    if (!newEmail.trim()) return;
     if (newEmail === currentEmail) {
-      setError("現在のメールアドレスと同じです。")
-      return
+      setError("現在のメールアドレスと同じです。");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
       const result = await authClient.changeEmail({
         newEmail: newEmail.trim(),
         callbackURL: "/settings?emailVerified=1",
-      })
+      });
       if (result.error) {
-        setError(result.error.message ?? "メールアドレスの変更に失敗しました。")
-        return
+        setError(result.error.message ?? "メールアドレスの変更に失敗しました。");
+        return;
       }
-      setSent(true)
-      setNewEmail("")
+      setSent(true);
+      setNewEmail("");
     } catch {
-      setError("メールアドレスの変更に失敗しました。")
+      setError("メールアドレスの変更に失敗しました。");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }
 
@@ -66,18 +64,14 @@ export function EmailSection({ currentEmail, emailVerified }: Props) {
     <section className="space-y-4 rounded-lg border p-4">
       <div>
         <h3 className="font-medium">メールアドレス</h3>
-        <p className="text-sm text-muted-foreground">
-          パスワードリセット時に使用します。
-        </p>
+        <p className="text-sm text-muted-foreground">パスワードリセット時に使用します。</p>
       </div>
 
       <div className="flex items-center gap-2">
         {hasRealEmail ? (
           <>
             <span className="text-sm">{maskEmail(currentEmail)}</span>
-            {!emailVerified && (
-              <Badge variant="secondary">未確認</Badge>
-            )}
+            {!emailVerified && <Badge variant="secondary">未確認</Badge>}
           </>
         ) : (
           <span className="text-sm text-muted-foreground">未設定</span>
@@ -105,7 +99,9 @@ export function EmailSection({ currentEmail, emailVerified }: Props) {
             />
           </div>
           {error && (
-            <p className="text-sm text-destructive" role="alert">{error}</p>
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
           )}
           <Button type="submit" disabled={loading || !newEmail.trim()}>
             {loading ? "送信中..." : "確認メールを送信"}
@@ -113,5 +109,5 @@ export function EmailSection({ currentEmail, emailVerified }: Props) {
         </form>
       )}
     </section>
-  )
+  );
 }

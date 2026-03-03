@@ -156,7 +156,6 @@ describe("POST /api/admin/users/:userId/temp-password", () => {
     });
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(typeof body.tempPassword).toBe("string");
-    expect(body.tempPassword.length).toBeGreaterThan(0);
+    expect(body.tempPassword).toMatch(/^[A-Za-z0-9]{12}$/);
   });
 });

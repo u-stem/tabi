@@ -7,7 +7,6 @@ import { InstallBanner } from "@/components/install-banner";
 import { Logo } from "@/components/logo";
 import { NotificationBell } from "@/components/notification-bell";
 import { OfflineBanner } from "@/components/offline-banner";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { useSession } from "@/lib/auth-client";
 import { isGuestUser } from "@/lib/guest";
 
@@ -37,7 +36,6 @@ export function SpHeader() {
         <Logo href="/sp/home" />
         <div className="flex items-center gap-1">
           {mounted && session?.user && !isGuest && <NotificationBell />}
-          <ThemeToggle />
         </div>
       </nav>
     </header>

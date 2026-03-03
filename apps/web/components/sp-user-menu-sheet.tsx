@@ -2,19 +2,23 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  Check,
   Download,
   FileText,
   HelpCircle,
   LogOut,
   MessageSquare,
   Monitor,
+  Moon,
   Newspaper,
   Settings,
   Shield,
+  Sun,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "next-themes";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -47,6 +51,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const { canInstall, promptInstall } = useInstallPrompt();
+  const { theme, setTheme } = useTheme();
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const isGuest = isGuestUser(session);
 
@@ -88,6 +93,33 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
                 設定
               </Link>
             )}
+            <div className="my-1 border-t" />
+            <div className="flex rounded-md overflow-hidden">
+              {(
+                [
+                  { value: "light", label: "ライト", icon: Sun },
+                  { value: "dark", label: "ダーク", icon: Moon },
+                  { value: "system", label: "システム", icon: Monitor },
+                ] as const
+              ).map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setTheme(value)}
+                  className={cn(
+                    "flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors",
+                    theme === value
+                      ? "bg-accent font-medium"
+                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  {label}
+                  {theme === value && <Check className="h-3 w-3" />}
+                </button>
+              ))}
+            </div>
+            <div className="my-1 border-t" />
             <button
               type="button"
               onClick={() => {

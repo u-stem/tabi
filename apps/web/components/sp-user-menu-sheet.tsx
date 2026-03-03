@@ -216,28 +216,26 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>ログアウトしますか？</DrawerTitle>
-            <DrawerDescription>
-              このデバイスからサインアウトされます。
-            </DrawerDescription>
+            <DrawerDescription>このデバイスからサインアウトされます。</DrawerDescription>
           </DrawerHeader>
-          <DrawerFooter>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-destructive px-3 py-3 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
-            >
-              <LogOut className="h-4 w-4" />
-              ログアウト
-            </button>
+          <DrawerFooter className="flex-row gap-2">
             <DrawerClose asChild>
               <button
                 type="button"
-                className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md px-3 py-3 text-sm hover:bg-accent"
+                className="flex flex-1 min-h-[44px] items-center justify-center gap-2 rounded-md px-3 py-3 text-sm hover:bg-accent"
               >
                 <X className="h-4 w-4" />
                 キャンセル
               </button>
             </DrawerClose>
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="flex flex-1 min-h-[44px] items-center justify-center gap-2 rounded-md bg-destructive px-3 py-3 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
+            >
+              <LogOut className="h-4 w-4" />
+              ログアウト
+            </button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>

@@ -1,31 +1,31 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Logo } from "@/components/logo"
-import { authClient } from "@/lib/auth-client"
+import Link from "next/link";
+import { useState } from "react";
+import { Logo } from "@/components/logo";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/auth-client";
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState("")
-  const [loading, setLoading] = useState(false)
-  const [sent, setSent] = useState(false)
+  const [email, setEmail] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [sent, setSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     try {
       await authClient.requestPasswordReset({
         email: email.trim(),
         redirectTo: "/auth/reset-password",
-      })
+      });
     } catch {
       // Show success regardless to prevent email enumeration
     } finally {
-      setLoading(false)
-      setSent(true)
+      setLoading(false);
+      setSent(true);
     }
   }
 
@@ -44,14 +44,15 @@ export default function ForgotPasswordPage() {
           </div>
 
           {sent ? (
-            <div className="space-y-4 rounded-lg border p-4 text-center">
-              <p className="text-sm">
-                送信しました。メールをご確認ください。
-              </p>
-              <p className="text-xs text-muted-foreground">
+            <output
+              aria-live="polite"
+              className="block space-y-1 rounded-md bg-green-50 px-3 py-3 text-sm text-green-700 dark:bg-green-950/20 dark:text-green-400"
+            >
+              <p>送信しました。メールをご確認ください。</p>
+              <p className="text-xs opacity-80">
                 メールが届かない場合は迷惑メールフォルダをご確認ください。
               </p>
-            </div>
+            </output>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -66,11 +67,7 @@ export default function ForgotPasswordPage() {
                   required
                 />
               </div>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={loading || !email.trim()}
-              >
+              <Button type="submit" className="w-full" disabled={loading || !email.trim()}>
                 {loading ? "送信中..." : "送信する"}
               </Button>
             </form>
@@ -81,15 +78,12 @@ export default function ForgotPasswordPage() {
           </p>
 
           <div className="text-center">
-            <Link
-              href="/auth/login"
-              className="text-sm text-muted-foreground hover:underline"
-            >
+            <Link href="/auth/login" className="text-sm text-muted-foreground hover:underline">
               ログインに戻る
             </Link>
           </div>
         </div>
       </main>
     </div>
-  )
+  );
 }

@@ -282,8 +282,8 @@ export default function AdminPage() {
 
         {usersData && (
           <Section title="ユーザー管理">
-            <div className="rounded-lg border">
-              <table className="w-full text-sm">
+            <div className="rounded-lg border overflow-x-auto">
+              <table className="w-full min-w-[480px] text-sm">
                 <thead>
                   <tr className="border-b bg-muted/50">
                     <th className="px-4 py-2 text-left font-medium">ユーザー名</th>

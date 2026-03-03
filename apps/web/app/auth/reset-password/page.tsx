@@ -27,7 +27,12 @@ export default function ResetPasswordPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center px-4">
         <div className="space-y-4 text-center">
-          <p>無効なリンクです。</p>
+          <div
+            role="alert"
+            className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+          >
+            無効なリンクです。
+          </div>
           <Link href="/auth/forgot-password" className="text-sm underline">
             パスワードリセットをやり直す
           </Link>
@@ -108,16 +113,19 @@ export default function ResetPasswordPage() {
               />
             </div>
             {error && (
-              <p className="text-sm text-destructive" role="alert">
+              <div
+                role="alert"
+                className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+              >
                 {error}
-              </p>
+              </div>
             )}
             <Button
               type="submit"
               className="w-full"
               disabled={loading || !newPassword || !confirmPassword}
             >
-              {loading ? "保存中..." : "保存する"}
+              {loading ? "設定中..." : "設定する"}
             </Button>
           </form>
         </div>

@@ -141,6 +141,13 @@
       "when": 1772465904856,
       "tag": "0019_mighty_red_shift",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1772552400000,
+      "tag": "0020_recreate_faqs_if_missing",
+      "breakpoints": true
     }
   ]
 }

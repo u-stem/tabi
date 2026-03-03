@@ -14,6 +14,7 @@ import {
   Settings,
   Shield,
   Sun,
+  X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -27,19 +28,11 @@ const FeedbackDialog = dynamic(() =>
 );
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
   Drawer,
+  DrawerClose,
   DrawerContent,
   DrawerDescription,
+  DrawerFooter,
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
@@ -219,25 +212,35 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
         </DrawerContent>
       </Drawer>
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
-      <AlertDialog open={signOutOpen} onOpenChange={setSignOutOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>ログアウトしますか？</AlertDialogTitle>
-            <AlertDialogDescription>
-              ログアウトするとこのデバイスからサインアウトされます。
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>キャンセル</AlertDialogCancel>
-            <AlertDialogAction
+      <Drawer open={signOutOpen} onOpenChange={setSignOutOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>ログアウトしますか？</DrawerTitle>
+            <DrawerDescription>
+              このデバイスからサインアウトされます。
+            </DrawerDescription>
+          </DrawerHeader>
+          <DrawerFooter>
+            <button
+              type="button"
               onClick={handleSignOut}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md bg-destructive px-3 py-3 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
             >
+              <LogOut className="h-4 w-4" />
               ログアウト
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            </button>
+            <DrawerClose asChild>
+              <button
+                type="button"
+                className="flex min-h-[44px] w-full items-center justify-center gap-2 rounded-md px-3 py-3 text-sm hover:bg-accent"
+              >
+                <X className="h-4 w-4" />
+                キャンセル
+              </button>
+            </DrawerClose>
+          </DrawerFooter>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }

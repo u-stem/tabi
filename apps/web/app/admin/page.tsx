@@ -2,8 +2,17 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { notFound } from "next/navigation";
+import { useState } from "react";
 import { toast } from "sonner";
 import { Logo } from "@/components/logo";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { ApiError, api } from "@/lib/api";
@@ -95,8 +104,22 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 
 type AdminSettingsResponse = { signupEnabled: boolean };
 
+type AdminUser = {
+  id: string;
+  username: string;
+  hasRealEmail: boolean;
+  emailVerified: boolean;
+  createdAt: string;
+};
+
+type AdminUsersResponse = { users: AdminUser[] };
+
 export default function AdminPage() {
   const queryClient = useQueryClient();
+  const [tempPasswordInfo, setTempPasswordInfo] = useState<{
+    username: string;
+    tempPassword: string;
+  } | null>(null);
 
   const { data, isLoading, error, dataUpdatedAt } = useQuery({
     queryKey: queryKeys.admin.stats(),
@@ -130,6 +153,25 @@ export default function AdminPage() {
       toast.error("設定の変更に失敗しました");
     },
   });
+
+  const { data: usersData } = useQuery({
+    queryKey: ["admin", "users"],
+    queryFn: () => api<AdminUsersResponse>("/api/admin/users"),
+    staleTime: 60 * 1000,
+    retry: false,
+  });
+
+  async function handleIssueTempPassword(userId: string, username: string) {
+    try {
+      const result = await api<{ tempPassword: string }>(
+        `/api/admin/users/${userId}/temp-password`,
+        { method: "POST" },
+      );
+      setTempPasswordInfo({ username, tempPassword: result.tempPassword });
+    } catch {
+      toast.error("一時パスワードの発行に失敗しました。");
+    }
+  }
 
   const showSkeleton = useDelayedLoading(isLoading);
   const updatedAt = dataUpdatedAt > 0 ? new Date(dataUpdatedAt).toLocaleTimeString() : null;
@@ -241,7 +283,86 @@ export default function AdminPage() {
             </Section>
           </>
         )}
+
+        {usersData && (
+          <Section title="ユーザー管理">
+            <div className="rounded-lg border">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-muted/50">
+                    <th className="px-4 py-2 text-left font-medium">ユーザー名</th>
+                    <th className="px-4 py-2 text-left font-medium">登録日</th>
+                    <th className="px-4 py-2 text-left font-medium">メール</th>
+                    <th className="px-4 py-2 text-right font-medium">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {usersData.users.map((u) => (
+                    <tr key={u.id} className="border-b last:border-0">
+                      <td className="px-4 py-2">{u.username}</td>
+                      <td className="px-4 py-2 text-muted-foreground">
+                        {new Date(u.createdAt).toLocaleDateString("ja-JP")}
+                      </td>
+                      <td className="px-4 py-2">
+                        {u.hasRealEmail ? (
+                          <Badge variant="secondary">
+                            {u.emailVerified ? "設定済み" : "未確認"}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground">未設定</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-2 text-right">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleIssueTempPassword(u.id, u.username)}
+                        >
+                          一時PW発行
+                        </Button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Section>
+        )}
       </main>
+
+      {tempPasswordInfo && (
+        <Dialog open onOpenChange={() => setTempPasswordInfo(null)}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>一時パスワードを発行しました</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                {tempPasswordInfo.username} さんの一時パスワードです。
+                このパスワードをユーザーに伝えてください。
+              </p>
+              <div className="flex items-center gap-2 rounded-lg border bg-muted p-3">
+                <code className="flex-1 font-mono text-lg">
+                  {tempPasswordInfo.tempPassword}
+                </code>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    navigator.clipboard.writeText(tempPasswordInfo.tempPassword);
+                    toast.success("コピーしました");
+                  }}
+                >
+                  コピー
+                </Button>
+              </div>
+              <p className="text-xs text-destructive">
+                このパスワードは一度しか表示されません。
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

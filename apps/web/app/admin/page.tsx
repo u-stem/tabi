@@ -3,7 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, KeyRound } from "lucide-react";
 import { notFound } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
@@ -91,6 +91,73 @@ function UsageBar({
         />
       </div>
       <p className="text-right text-xs text-muted-foreground">{pct.toFixed(1)}%</p>
+    </div>
+  );
+}
+
+function AnnouncementSection() {
+  const queryClient = useQueryClient();
+  const [draft, setDraft] = useState("");
+
+  const { data } = useQuery({
+    queryKey: queryKeys.admin.announcement(),
+    queryFn: () => api<{ message: string | null }>("/api/announcement"),
+    staleTime: 10_000,
+  });
+
+  useEffect(() => {
+    if (data !== undefined) {
+      setDraft(data.message ?? "");
+    }
+  }, [data]);
+
+  const save = useMutation({
+    mutationFn: (message: string) =>
+      api<{ message: string | null }>("/api/admin/announcement", {
+        method: "POST",
+        body: JSON.stringify({ message }),
+      }),
+    onSuccess: (updated) => {
+      queryClient.setQueryData(queryKeys.admin.announcement(), updated);
+      toast.success(updated.message ? "アナウンスを設定しました" : "アナウンスをクリアしました");
+    },
+    onError: () => toast.error("アナウンスの更新に失敗しました"),
+  });
+
+  return (
+    <div className="rounded-lg border bg-card p-4 space-y-3">
+      <div>
+        <p className="font-medium text-sm">アナウンス</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          全ユーザーに表示されるバナーメッセージです。空にすると非表示になります。
+        </p>
+      </div>
+      <textarea
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        maxLength={200}
+        rows={3}
+        className="w-full rounded-md border bg-background px-3 py-2 text-sm resize-none focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        placeholder="例: メンテナンス中のため一部機能が利用できません"
+      />
+      <p className="text-right text-xs text-muted-foreground">{draft.length}/200</p>
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          disabled={save.isPending || !draft}
+          onClick={() => save.mutate("")}
+        >
+          クリア
+        </Button>
+        <Button
+          size="sm"
+          disabled={save.isPending}
+          onClick={() => save.mutate(draft)}
+        >
+          {save.isPending ? "保存中..." : "保存"}
+        </Button>
+      </div>
     </div>
   );
 }
@@ -336,7 +403,7 @@ export default function AdminPage() {
             )}
           </TabsContent>
 
-          <TabsContent value="settings">
+          <TabsContent value="settings" className="space-y-4">
             {settings !== undefined && (
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center justify-between gap-4">
@@ -356,6 +423,7 @@ export default function AdminPage() {
                 </div>
               </div>
             )}
+            <AnnouncementSection />
           </TabsContent>
         </Tabs>
       </main>

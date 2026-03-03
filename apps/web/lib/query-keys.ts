@@ -47,6 +47,7 @@ export const queryKeys = {
     stats: () => ["admin", "stats"] as const,
     settings: () => ["admin", "settings"] as const,
     users: () => ["admin", "users"] as const,
+    announcement: () => ["admin", "announcement"] as const,
   },
   publicSettings: {
     all: ["public-settings"] as const,

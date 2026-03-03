@@ -3,7 +3,6 @@ import { createTestApp, TEST_USER } from "./test-helpers";
 
 const mockGetSession = vi.fn();
 const mockFetch = vi.fn();
-const mockGet = vi.fn();
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -23,10 +22,6 @@ vi.mock("../db/index", () => ({
       }),
     }),
   },
-}));
-
-vi.mock("@vercel/edge-config", () => ({
-  get: (...args: unknown[]) => mockGet(...args),
 }));
 
 vi.stubGlobal("fetch", mockFetch);
@@ -51,7 +46,6 @@ describe("POST /api/admin/announcement", () => {
     process.env.ADMIN_USERNAME = "adminuser";
     delete process.env.VERCEL_API_TOKEN;
     delete process.env.EDGE_CONFIG_ID;
-    mockGet.mockReset();
     mockFetch.mockReset();
   });
 

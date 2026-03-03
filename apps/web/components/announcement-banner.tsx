@@ -9,7 +9,7 @@ export function AnnouncementBanner() {
     fetch("/api/announcement")
       .then((r) => r.json() as Promise<{ message: string | null }>)
       .then((data) => {
-        setMessage(data.message || null);
+        setMessage(data?.message || null);
       })
       .catch(() => {
         // Non-critical — silently ignore fetch errors

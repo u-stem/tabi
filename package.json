@@ -16,6 +16,7 @@
     "db:migrate": "bun run --filter @sugara/api db:migrate",
     "db:studio": "bun run --filter @sugara/api db:studio",
     "db:seed": "bun run --filter @sugara/api db:seed",
+    "db:seed-faqs": "bun run --filter @sugara/api db:seed-faqs",
     "db:seed-user": "bun run --filter @sugara/api db:seed-user",
     "db:cleanup-guests": "bun run --filter @sugara/api db:cleanup-guests",
     "postinstall": "command -v git >/dev/null 2>&1 && lefthook install || true"

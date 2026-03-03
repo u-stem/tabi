@@ -11,6 +11,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { isGuestUser } from "@/lib/guest";
+import { useScrollDirection } from "@/lib/hooks/use-scroll-direction";
 import { SP_NAV_LINKS } from "@/lib/nav-links";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ export function SpBottomNav() {
   const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const navHidden = useScrollDirection();
 
   useEffect(() => setMounted(true), []);
 
@@ -44,7 +46,10 @@ export function SpBottomNav() {
     <>
       <nav
         aria-label="ボトムナビゲーション"
-        className="fixed inset-x-0 bottom-0 z-40 select-none border-t bg-background print:hidden"
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-40 select-none border-t bg-background print:hidden transition-transform duration-300",
+          navHidden && "translate-y-full",
+        )}
         style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
       >
         <div className="flex h-16 items-stretch">

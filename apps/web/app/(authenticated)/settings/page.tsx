@@ -4,7 +4,9 @@ import { buildDiceBearUrl, DICEBEAR_STYLES, type DiceBearStyle } from "@sugara/s
 import { Bell, ExternalLink, RefreshCw, Settings2, User, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import { EmailSection } from "@/components/email-section";
 import { NotificationPreferencesSection } from "@/components/notification-preferences-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -58,6 +60,8 @@ export default function SettingsPage() {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
   const [section, setSection] = useState<Section>("profile");
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const sectionRef = useRef<Section>("profile");
   const contentRef = useRef<HTMLDivElement>(null);
   const swipeRef = useRef<HTMLDivElement>(null);
@@ -65,6 +69,13 @@ export default function SettingsPage() {
   useEffect(() => {
     document.title = pageTitle("設定");
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("emailVerified") === "1") {
+      toast.success("メールアドレスを設定しました。");
+      router.replace("/settings");
+    }
+  }, [searchParams, router]);
 
   const user = session?.user;
   const currentSectionIdx = SECTIONS.indexOf(section);
@@ -109,6 +120,10 @@ export default function SettingsPage() {
         if (!user) return null;
         return (
           <>
+            <EmailSection
+              currentEmail={user.email ?? ""}
+              emailVerified={user.emailVerified ?? false}
+            />
             <UsernameSection defaultUsername={user.displayUsername ?? user.username ?? ""} />
             <PasswordSection username={user.username ?? ""} />
             <DeleteAccountSection username={user.username ?? ""} />

@@ -20,8 +20,8 @@ export function ThemeToggle() {
 
   const icon = (
     <>
-      <Sun className="h-4 w-4 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
-      <Moon className="absolute h-4 w-4 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
+      <Sun className="h-6 w-6 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+      <Moon className="absolute h-6 w-6 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
       <span className="sr-only">テーマ切替</span>
     </>
   );
@@ -38,17 +38,17 @@ export function ThemeToggle() {
           actions={[
             {
               label: "ライト",
-              icon: <Sun className="h-4 w-4" />,
+              icon: <Sun className="h-6 w-6" />,
               onClick: () => setTheme("light"),
             },
             {
               label: "ダーク",
-              icon: <Moon className="h-4 w-4" />,
+              icon: <Moon className="h-6 w-6" />,
               onClick: () => setTheme("dark"),
             },
             {
               label: "システム",
-              icon: <Monitor className="h-4 w-4" />,
+              icon: <Monitor className="h-6 w-6" />,
               onClick: () => setTheme("system"),
             },
           ]}
@@ -66,15 +66,15 @@ export function ThemeToggle() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => setTheme("light")}>
-          <Sun className="h-4 w-4" />
+          <Sun className="h-6 w-6" />
           ライト
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("dark")}>
-          <Moon className="h-4 w-4" />
+          <Moon className="h-6 w-6" />
           ダーク
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => setTheme("system")}>
-          <Monitor className="h-4 w-4" />
+          <Monitor className="h-6 w-6" />
           システム
         </DropdownMenuItem>
       </DropdownMenuContent>

@@ -250,4 +250,34 @@ adminRoutes.post("/api/admin/users/:userId/temp-password", requireAuth, requireA
   return c.json({ tempPassword });
 });
 
+adminRoutes.post("/api/admin/announcement", requireAuth, requireAdmin, async (c) => {
+  const apiToken = process.env.VERCEL_API_TOKEN;
+  const configId = process.env.EDGE_CONFIG_ID;
+  if (!apiToken || !configId) {
+    return c.json({ error: "Edge Config not configured" }, 503);
+  }
+
+  const body = await c.req.json<{ message: unknown }>();
+  if (typeof body.message !== "string") {
+    return c.json({ error: "message must be a string" }, 400);
+  }
+
+  const res = await fetch(`https://api.vercel.com/v1/edge-config/${configId}/items`, {
+    method: "PATCH",
+    headers: {
+      Authorization: `Bearer ${apiToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      items: [{ operation: "upsert", key: "announcement", value: body.message }],
+    }),
+  });
+
+  if (!res.ok) {
+    return c.json({ error: "Failed to update Edge Config" }, 502);
+  }
+
+  return c.json({ message: body.message || null });
+});
+
 export { adminRoutes };

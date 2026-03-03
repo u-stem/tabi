@@ -36,7 +36,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
@@ -141,10 +140,10 @@ export function Header() {
                   <span className="sr-only">ユーザーメニュー</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
+              <DropdownMenuContent align="end" className="w-56">
                 {/* Nav links: shown only below md breakpoint where header links are hidden */}
                 {visibleNavLinks.map((link) => (
-                  <DropdownMenuItem key={link.href} asChild className="md:hidden">
+                  <DropdownMenuItem key={link.href} asChild className="md:hidden py-2">
                     <Link href={link.href} className={cn(pathname === link.href && "font-medium")}>
                       <link.icon className="h-4 w-4" />
                       {link.label}
@@ -157,17 +156,33 @@ export function Header() {
                   </DropdownMenuItem>
                 ))}
                 <DropdownMenuSeparator className="md:hidden" />
-                <DropdownMenuLabel className="truncate">{session.user.name}</DropdownMenuLabel>
+                <div className="flex items-center gap-3 px-2 py-2">
+                  <UserAvatar
+                    name={session.user.name ?? ""}
+                    image={session.user.image}
+                    className="h-9 w-9 shrink-0"
+                  />
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium leading-none">{session.user.name}</p>
+                    <p className="mt-1 truncate text-xs text-muted-foreground">
+                      {session.user.displayUsername
+                        ? `@${session.user.displayUsername}`
+                        : session.user.username
+                          ? `@${session.user.username}`
+                          : ""}
+                    </p>
+                  </div>
+                </div>
                 <DropdownMenuSeparator />
                 {!isGuest && (
                   <>
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild className="py-2">
                       <Link href={`/users/${session.user.id}`}>
                         <User className="h-4 w-4" />
                         プロフィール
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
+                    <DropdownMenuItem asChild className="py-2">
                       <Link href="/settings">
                         <Settings className="h-4 w-4" />
                         設定
@@ -175,43 +190,43 @@ export function Header() {
                     </DropdownMenuItem>
                   </>
                 )}
-                <DropdownMenuItem onClick={openShortcutHelp}>
+                <DropdownMenuItem onClick={openShortcutHelp} className="py-2">
                   <Keyboard className="h-4 w-4" />
                   ショートカット
                   <kbd className="ml-auto rounded border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground">
                     ?
                   </kbd>
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setFeedbackOpen(true)}>
+                <DropdownMenuItem onClick={() => setFeedbackOpen(true)} className="py-2">
                   <MessageSquare className="h-4 w-4" />
                   フィードバック
                 </DropdownMenuItem>
                 {canInstall && (
-                  <DropdownMenuItem onClick={promptInstall}>
+                  <DropdownMenuItem onClick={promptInstall} className="py-2">
                     <Download className="h-4 w-4" />
                     アプリをインストール
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="py-2">
                   <Link href="/faq" target="_blank" rel="noopener noreferrer">
                     <HelpCircle className="h-4 w-4" />
                     よくある質問
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="py-2">
                   <Link href="/news" target="_blank" rel="noopener noreferrer">
                     <Newspaper className="h-4 w-4" />
                     お知らせ
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="py-2">
                   <Link href="/terms" target="_blank" rel="noopener noreferrer">
                     <FileText className="h-4 w-4" />
                     利用規約
                   </Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
+                <DropdownMenuItem asChild className="py-2">
                   <Link href="/privacy" target="_blank" rel="noopener noreferrer">
                     <Shield className="h-4 w-4" />
                     プライバシーポリシー
@@ -219,12 +234,12 @@ export function Header() {
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {!/\/(print|export)(\/|$)/.test(pathname) && (
-                  <DropdownMenuItem onClick={() => void switchViewMode("sp")}>
+                  <DropdownMenuItem onClick={() => void switchViewMode("sp")} className="py-2">
                     <Smartphone className="h-4 w-4" />
                     SP版で表示
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={handleSignOut}>
+                <DropdownMenuItem onClick={handleSignOut} className="py-2">
                   <LogOut className="h-4 w-4" />
                   ログアウト
                 </DropdownMenuItem>

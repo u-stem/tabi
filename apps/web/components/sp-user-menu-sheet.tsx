@@ -74,16 +74,14 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
                   : ""}
             </DrawerDescription>
           </DrawerHeader>
-          <nav className="flex flex-col gap-1 pb-4" aria-label="モバイルメニュー">
+          <nav className="flex flex-col pb-4" aria-label="モバイルメニュー">
             {!isGuest && (
               <Link
                 href="/sp/settings"
                 onClick={() => onOpenChange(false)}
                 className={cn(
-                  "flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                  pathname === "/sp/settings"
-                    ? "bg-muted font-medium text-foreground"
-                    : "text-muted-foreground hover:text-foreground",
+                  "flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm",
+                  pathname === "/sp/settings" ? "bg-accent font-medium" : "hover:bg-accent",
                 )}
               >
                 <Settings className="h-4 w-4" />
@@ -96,7 +94,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
                 setFeedbackOpen(true);
                 onOpenChange(false);
               }}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
             >
               <MessageSquare className="h-4 w-4" />
               フィードバック
@@ -108,19 +106,19 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
                   promptInstall();
                   onOpenChange(false);
                 }}
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
               >
                 <Download className="h-4 w-4" />
                 アプリをインストール
               </button>
             )}
-            <div className="my-2 border-t" />
+            <div className="my-1 border-t" />
             <Link
               href="/faq"
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => onOpenChange(false)}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
             >
               <HelpCircle className="h-4 w-4" />
               よくある質問
@@ -130,7 +128,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => onOpenChange(false)}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
             >
               <Newspaper className="h-4 w-4" />
               お知らせ
@@ -140,7 +138,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => onOpenChange(false)}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
             >
               <FileText className="h-4 w-4" />
               利用規約
@@ -150,19 +148,19 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => onOpenChange(false)}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
             >
               <Shield className="h-4 w-4" />
               プライバシーポリシー
             </Link>
-            <div className="my-2 border-t" />
+            <div className="my-1 border-t" />
             <button
               type="button"
               onClick={() => {
                 onOpenChange(false);
                 void switchViewMode("desktop");
               }}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
             >
               <Monitor className="h-4 w-4" />
               PC版で表示
@@ -173,7 +171,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
                 handleSignOut();
                 onOpenChange(false);
               }}
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
             >
               <LogOut className="h-4 w-4" />
               ログアウト

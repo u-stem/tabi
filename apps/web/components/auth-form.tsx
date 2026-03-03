@@ -91,6 +91,14 @@ export function AuthForm() {
             <LogIn className="h-4 w-4" />
             {loading ? "ログイン中..." : "ログイン"}
           </Button>
+          <div className="text-right">
+            <Link
+              href="/auth/forgot-password"
+              className="text-xs text-muted-foreground hover:underline"
+            >
+              パスワードを忘れた方
+            </Link>
+          </div>
           <p className="text-center text-sm text-muted-foreground">
             アカウントをお持ちでない方は{" "}
             <Link href="/auth/signup" className="text-foreground underline underline-offset-4">

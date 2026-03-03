@@ -94,7 +94,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
               </Link>
             )}
             <div className="my-1 border-t" />
-            <div className="flex rounded-md overflow-hidden">
+            <div className="mx-3 flex overflow-hidden rounded-md border">
               {(
                 [
                   { value: "light", label: "ライト", icon: Sun },

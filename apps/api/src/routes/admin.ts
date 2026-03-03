@@ -1,8 +1,10 @@
-import { and, count, countDistinct, eq, gte, sql } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
+import { and, count, countDistinct, desc, eq, gte, sql } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { appSettings, schedules, sessions, souvenirItems, trips, users } from "../db/schema";
+import { accounts, appSettings, schedules, sessions, souvenirItems, trips, users } from "../db/schema";
 import { getAppSettings } from "../lib/app-settings";
+import { hashPassword } from "../lib/password";
 import { requireAuth } from "../middleware/auth";
 import { requireAdmin } from "../middleware/require-admin";
 import type { AppEnv } from "../types";
@@ -175,5 +177,76 @@ adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {
     },
   });
 });
+
+// Dummy email domain for accounts created without a real email
+const DUMMY_EMAIL_DOMAIN = "sugara.local";
+
+// Exclude ambiguous characters (I, l, 0, O, 1) for readability
+const TEMP_PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789";
+const TEMP_PASSWORD_LENGTH = 12;
+
+function generateTempPassword(): string {
+  return Array.from(
+    { length: TEMP_PASSWORD_LENGTH },
+    () => TEMP_PASSWORD_CHARS[randomBytes(1)[0] % TEMP_PASSWORD_CHARS.length],
+  ).join("");
+}
+
+// GET /api/admin/users — ユーザー一覧（管理者専用）
+adminRoutes.get("/api/admin/users", requireAuth, requireAdmin, async (c) => {
+  const userList = await db
+    .select({
+      id: users.id,
+      username: users.username,
+      displayUsername: users.displayUsername,
+      email: users.email,
+      emailVerified: users.emailVerified,
+      isAnonymous: users.isAnonymous,
+      createdAt: users.createdAt,
+    })
+    .from(users)
+    .where(eq(users.isAnonymous, false))
+    .orderBy(desc(users.createdAt));
+
+  return c.json({
+    users: userList.map((u) => ({
+      id: u.id,
+      username: u.username ?? u.displayUsername ?? "不明",
+      hasRealEmail: !!u.email && !u.email.endsWith(`@${DUMMY_EMAIL_DOMAIN}`),
+      emailVerified: u.emailVerified,
+      createdAt: u.createdAt,
+    })),
+  });
+});
+
+// POST /api/admin/users/:userId/temp-password — 一時パスワード発行
+adminRoutes.post(
+  "/api/admin/users/:userId/temp-password",
+  requireAuth,
+  requireAdmin,
+  async (c) => {
+    const { userId } = c.req.param();
+
+    const [user] = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.id, userId), eq(users.isAnonymous, false)))
+      .limit(1);
+
+    if (!user) {
+      return c.json({ error: "User not found" }, 404);
+    }
+
+    const tempPassword = generateTempPassword();
+    const passwordHash = await hashPassword(tempPassword);
+
+    await db
+      .update(accounts)
+      .set({ password: passwordHash, updatedAt: new Date() })
+      .where(and(eq(accounts.userId, userId), eq(accounts.providerId, "credential")));
+
+    return c.json({ tempPassword });
+  },
+);
 
 export { adminRoutes };

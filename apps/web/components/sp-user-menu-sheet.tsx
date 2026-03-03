@@ -27,6 +27,7 @@ const FeedbackDialog = dynamic(() =>
   import("@/components/feedback-dialog").then((mod) => mod.FeedbackDialog),
 );
 
+import { Button } from "@/components/ui/button";
 import {
   Drawer,
   DrawerClose,
@@ -218,24 +219,17 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
             <DrawerTitle>ログアウトしますか？</DrawerTitle>
             <DrawerDescription>このデバイスからサインアウトされます。</DrawerDescription>
           </DrawerHeader>
-          <DrawerFooter className="flex-row gap-2">
+          <DrawerFooter className="flex-row [&>*]:flex-1">
             <DrawerClose asChild>
-              <button
-                type="button"
-                className="flex flex-1 min-h-[44px] items-center justify-center gap-2 rounded-md px-3 py-3 text-sm hover:bg-accent"
-              >
+              <Button variant="outline">
                 <X className="h-4 w-4" />
                 キャンセル
-              </button>
+              </Button>
             </DrawerClose>
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="flex flex-1 min-h-[44px] items-center justify-center gap-2 rounded-md bg-destructive px-3 py-3 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
-            >
+            <Button variant="destructive" onClick={handleSignOut}>
               <LogOut className="h-4 w-4" />
               ログアウト
-            </button>
+            </Button>
           </DrawerFooter>
         </DrawerContent>
       </Drawer>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, KeyRound } from "lucide-react";
+import { Check, Copy, KeyRound, Save, X } from "lucide-react";
 import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -148,13 +148,11 @@ function AnnouncementSection() {
           disabled={save.isPending || !draft}
           onClick={() => save.mutate("")}
         >
+          <X className="h-3.5 w-3.5" />
           クリア
         </Button>
-        <Button
-          size="sm"
-          disabled={save.isPending}
-          onClick={() => save.mutate(draft)}
-        >
+        <Button size="sm" disabled={save.isPending} onClick={() => save.mutate(draft)}>
+          <Save className="h-3.5 w-3.5" />
           {save.isPending ? "保存中..." : "保存"}
         </Button>
       </div>

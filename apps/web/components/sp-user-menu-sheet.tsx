@@ -94,31 +94,27 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
               </Link>
             )}
             <div className="my-1 border-t" />
-            <div className="mx-3 flex overflow-hidden rounded-md border">
-              {(
-                [
-                  { value: "light", label: "ライト", icon: Sun },
-                  { value: "dark", label: "ダーク", icon: Moon },
-                  { value: "system", label: "システム", icon: Monitor },
-                ] as const
-              ).map(({ value, label, icon: Icon }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setTheme(value)}
-                  className={cn(
-                    "flex flex-1 flex-col items-center gap-1 py-3 text-xs transition-colors",
-                    theme === value
-                      ? "bg-accent font-medium"
-                      : "text-muted-foreground hover:bg-accent hover:text-foreground",
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  {label}
-                  {theme === value && <Check className="h-3 w-3" />}
-                </button>
-              ))}
-            </div>
+            {(
+              [
+                { value: "light", label: "ライト", icon: Sun },
+                { value: "dark", label: "ダーク", icon: Moon },
+                { value: "system", label: "システム", icon: Monitor },
+              ] as const
+            ).map(({ value, label, icon: Icon }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setTheme(value)}
+                className={cn(
+                  "flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent",
+                  theme === value && "font-medium",
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                {label}
+                {theme === value && <Check className="ml-auto h-4 w-4" />}
+              </button>
+            ))}
             <div className="my-1 border-t" />
             <button
               type="button"

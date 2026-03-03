@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Download,
   FileText,
@@ -16,19 +17,18 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 
 const FeedbackDialog = dynamic(() =>
   import("@/components/feedback-dialog").then((mod) => mod.FeedbackDialog),
 );
 
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { signOut, useSession } from "@/lib/auth-client";
 import { isGuestUser } from "@/lib/guest";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
@@ -62,19 +62,19 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
 
   return (
     <>
-      <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent side="bottom">
-          <SheetHeader>
-            <SheetTitle className="truncate">{session?.user?.name}</SheetTitle>
-            <SheetDescription>
+      <Drawer open={open} onOpenChange={onOpenChange}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle className="truncate">{session?.user?.name}</DrawerTitle>
+            <DrawerDescription>
               {session?.user?.displayUsername
                 ? `@${session.user.displayUsername}`
                 : session?.user?.username
                   ? `@${session.user.username}`
                   : ""}
-            </SheetDescription>
-          </SheetHeader>
-          <nav className="mt-6 flex flex-col gap-1" aria-label="モバイルメニュー">
+            </DrawerDescription>
+          </DrawerHeader>
+          <nav className="flex flex-col gap-1 pb-4" aria-label="モバイルメニュー">
             {!isGuest && (
               <Link
                 href="/sp/settings"
@@ -179,8 +179,8 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
               ログアウト
             </button>
           </nav>
-        </SheetContent>
-      </Sheet>
+        </DrawerContent>
+      </Drawer>
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
     </>
   );

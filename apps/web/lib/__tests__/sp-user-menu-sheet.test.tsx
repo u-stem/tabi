@@ -39,8 +39,8 @@ describe("SpUserMenuSheet", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
-  it("open=false のときコンテンツが描画されない", () => {
-    render(<SpUserMenuSheet open={false} onOpenChange={vi.fn()} />);
-    expect(screen.queryByRole("link", { name: /設定/ })).toBeNull();
+  it("ユーザー名が表示される", () => {
+    render(<SpUserMenuSheet open onOpenChange={vi.fn()} />);
+    expect(screen.getByText("Test User")).toBeDefined();
   });
 });

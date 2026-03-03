@@ -25,6 +25,7 @@ const FeedbackDialog = dynamic(() =>
   import("@/components/feedback-dialog").then((mod) => mod.FeedbackDialog),
 );
 
+import { AnnouncementBanner } from "@/components/announcement-banner";
 import { GuestBanner } from "@/components/guest-banner";
 import { Logo } from "@/components/logo";
 import { NotificationBell } from "@/components/notification-bell";
@@ -94,6 +95,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-30 select-none border-b bg-background">
+      <AnnouncementBanner />
       <OfflineBanner />
       <GuestBanner />
       <nav

@@ -1,10 +1,10 @@
 import { isValidAvatarUrl } from "@sugara/shared";
 import { betterAuth } from "better-auth";
-import nodemailer from "nodemailer";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { anonymous } from "better-auth/plugins";
 import { username } from "better-auth/plugins/username";
 import { eq } from "drizzle-orm";
+import nodemailer from "nodemailer";
 import { db } from "../db/index";
 import * as schema from "../db/schema";
 import {
@@ -89,6 +89,21 @@ export const auth = betterAuth({
     },
   },
   user: {
+    changeEmail: {
+      enabled: true,
+      sendChangeEmailVerification: async ({ newEmail, url }) => {
+        await transporter.sendMail({
+          from: `"sugara" <${process.env.GMAIL_USER}>`,
+          to: newEmail,
+          subject: "【sugara】メールアドレス変更の確認",
+          html: `
+            <p>メールアドレスの変更リクエストを受け付けました。</p>
+            <p><a href="${url}">こちらをクリックして新しいメールアドレスを確認してください</a></p>
+            <p>このリンクは1時間有効です。リクエストに心当たりがない場合は無視してください。</p>
+          `,
+        });
+      },
+    },
     additionalFields: {
       guestExpiresAt: {
         type: "date",

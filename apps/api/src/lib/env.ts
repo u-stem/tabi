@@ -39,4 +39,10 @@ export const env = {
   get VAPID_SUBJECT() {
     return withDefault("VAPID_SUBJECT", "mailto:admin@sugara.app");
   },
+  get GMAIL_USER() {
+    return required("GMAIL_USER");
+  },
+  get GMAIL_APP_PASSWORD() {
+    return required("GMAIL_APP_PASSWORD");
+  },
 };

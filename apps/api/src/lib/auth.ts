@@ -1,5 +1,6 @@
 import { isValidAvatarUrl } from "@sugara/shared";
 import { betterAuth } from "better-auth";
+import nodemailer from "nodemailer";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { anonymous } from "better-auth/plugins";
 import { username } from "better-auth/plugins/username";
@@ -15,6 +16,14 @@ import {
 import { env } from "./env";
 
 const isProduction = process.env.NODE_ENV === "production";
+
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.GMAIL_USER,
+    pass: process.env.GMAIL_APP_PASSWORD,
+  },
+});
 
 export const auth = betterAuth({
   baseURL: env.BETTER_AUTH_BASE_URL,
@@ -52,6 +61,32 @@ export const auth = betterAuth({
   }),
   emailAndPassword: {
     enabled: true,
+    sendResetPassword: async ({ user, url }) => {
+      await transporter.sendMail({
+        from: `"sugara" <${process.env.GMAIL_USER}>`,
+        to: user.email,
+        subject: "【sugara】パスワードのリセット",
+        html: `
+          <p>パスワードリセットのリクエストを受け付けました。</p>
+          <p><a href="${url}">こちらをクリックしてパスワードをリセットしてください</a></p>
+          <p>このリンクは1時間有効です。リクエストに心当たりがない場合は無視してください。</p>
+        `,
+      });
+    },
+  },
+  emailVerification: {
+    sendVerificationEmail: async ({ user, url }) => {
+      await transporter.sendMail({
+        from: `"sugara" <${process.env.GMAIL_USER}>`,
+        to: user.email,
+        subject: "【sugara】メールアドレスの確認",
+        html: `
+          <p>メールアドレスの確認リクエストを受け付けました。</p>
+          <p><a href="${url}">こちらをクリックしてメールアドレスを確認してください</a></p>
+          <p>このリンクは1時間有効です。</p>
+        `,
+      });
+    },
   },
   user: {
     additionalFields: {

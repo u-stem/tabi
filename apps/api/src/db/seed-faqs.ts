@@ -188,9 +188,11 @@ const FAQ_ITEMS = [
 async function main() {
   console.log("Seeding FAQs...");
 
-  // Delete all existing FAQs and re-insert to reflect latest content
-  await db.delete(faqs);
-  await db.insert(faqs).values(FAQ_ITEMS);
+  // Wrap in a transaction so readers never see an empty FAQ table
+  await db.transaction(async (tx) => {
+    await tx.delete(faqs);
+    await tx.insert(faqs).values(FAQ_ITEMS);
+  });
 
   console.log(`Inserted ${FAQ_ITEMS.length} FAQ items.`);
   process.exit(0);

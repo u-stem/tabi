@@ -104,6 +104,9 @@ const ACTION_TEMPLATES: Record<string, Record<string, string>> = {
   day_memo: {
     updated: "日程メモを更新",
   },
+  day_weather: {
+    updated: "天気を更新",
+  },
   expense: {
     created: "費用{name}を追加",
     updated: "費用{name}を更新",

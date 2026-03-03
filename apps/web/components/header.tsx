@@ -4,10 +4,14 @@ import type { FriendRequestResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Download,
+  FileText,
+  HelpCircle,
   Keyboard,
   LogOut,
   MessageSquare,
+  Newspaper,
   Settings,
+  Shield,
   Smartphone,
   User,
 } from "lucide-react";
@@ -186,6 +190,31 @@ export function Header() {
                     アプリをインストール
                   </DropdownMenuItem>
                 )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link href="/faq" target="_blank" rel="noopener noreferrer">
+                    <HelpCircle className="h-4 w-4" />
+                    よくある質問
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/news" target="_blank" rel="noopener noreferrer">
+                    <Newspaper className="h-4 w-4" />
+                    お知らせ
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/terms" target="_blank" rel="noopener noreferrer">
+                    <FileText className="h-4 w-4" />
+                    利用規約
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/privacy" target="_blank" rel="noopener noreferrer">
+                    <Shield className="h-4 w-4" />
+                    プライバシーポリシー
+                  </Link>
+                </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 {!/\/(print|export)(\/|$)/.test(pathname) && (
                   <DropdownMenuItem onClick={() => void switchViewMode("sp")}>

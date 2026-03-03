@@ -1,8 +1,7 @@
 "use client";
 
 import { buildDiceBearUrl, DICEBEAR_STYLES, type DiceBearStyle } from "@sugara/shared";
-import { Bell, ExternalLink, RefreshCw, Settings2, User, X } from "lucide-react";
-import Link from "next/link";
+import { Bell, RefreshCw, Settings2, User, X } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -177,11 +176,7 @@ export default function SettingsPage() {
         <div className="min-w-0 flex-1 space-y-8">
           {/* Swipe container — px-0.5/-mx-0.5 lets focus rings bleed past the overflow boundary */}
           <div ref={contentRef} className="overflow-x-hidden touch-pan-y -mx-0.5 px-0.5">
-            <div
-              ref={swipeRef}
-              className="relative touch-pan-y"
-              style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
-            >
+            <div ref={swipeRef} className="relative touch-pan-y will-change-transform">
               <div className="space-y-8">{renderSectionContent(section)}</div>
 
               {swipe.adjacent && adjacentSection && (
@@ -196,45 +191,6 @@ export default function SettingsPage() {
                 </div>
               )}
             </div>
-          </div>
-
-          <div className="flex flex-wrap select-none items-center justify-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-            <Link
-              href="/faq"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
-            >
-              よくある質問
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-            <Link
-              href="/news"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
-            >
-              お知らせ
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-            <Link
-              href="/terms"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
-            >
-              利用規約
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-            <Link
-              href="/privacy"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 underline underline-offset-4 hover:text-foreground"
-            >
-              プライバシーポリシー
-              <ExternalLink className="h-3 w-3" />
-            </Link>
           </div>
         </div>
       </div>

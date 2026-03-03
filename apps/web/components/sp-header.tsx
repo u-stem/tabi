@@ -1,7 +1,17 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { Download, LogOut, MessageSquare, Monitor, Settings } from "lucide-react";
+import {
+  Download,
+  FileText,
+  HelpCircle,
+  LogOut,
+  MessageSquare,
+  Monitor,
+  Newspaper,
+  Settings,
+  Shield,
+} from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -149,6 +159,47 @@ export function SpHeader() {
                         アプリをインストール
                       </button>
                     )}
+                    <div className="my-2 border-t" />
+                    <Link
+                      href="/faq"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <HelpCircle className="h-4 w-4" />
+                      よくある質問
+                    </Link>
+                    <Link
+                      href="/news"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <Newspaper className="h-4 w-4" />
+                      お知らせ
+                    </Link>
+                    <Link
+                      href="/terms"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <FileText className="h-4 w-4" />
+                      利用規約
+                    </Link>
+                    <Link
+                      href="/privacy"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <Shield className="h-4 w-4" />
+                      プライバシーポリシー
+                    </Link>
                     <div className="my-2 border-t" />
                     <button
                       type="button"

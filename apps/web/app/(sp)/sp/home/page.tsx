@@ -91,7 +91,11 @@ export default function SpHomePage() {
     onSwipeComplete: handleSwipe,
     canSwipePrev: currentTabIdx > 0,
     canSwipeNext: currentTabIdx < HOME_TABS.length - 1,
-    enabled: !showSkeleton && !error,
+    // isLoading is included so the effect re-runs when data loads fast enough
+    // that showSkeleton stays false — in that case enabled would never flip
+    // false→true and the container ref (null during the loading placeholder)
+    // would never be re-checked.
+    enabled: !isLoading && !showSkeleton && !error,
   });
 
   const adjacentTab =
@@ -256,11 +260,7 @@ export default function SpHomePage() {
             ref={contentRef}
             className="mt-2 min-h-[60vh] overflow-x-hidden px-0.5 -mx-0.5 touch-pan-y"
           >
-            <div
-              ref={swipeRef}
-              className="relative touch-pan-y"
-              style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
-            >
+            <div ref={swipeRef} className="relative touch-pan-y will-change-transform">
               {/* Current tab - pt-0.5 prevents the top of the focus ring from being clipped */}
               <div className="pt-0.5">{renderCardList(tab)}</div>
 

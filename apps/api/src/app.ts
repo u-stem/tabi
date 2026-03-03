@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { ERROR_MSG } from "./lib/constants";
 import { env } from "./lib/env";
 import { accountRoutes } from "./routes/account";
+import { announcementRoutes } from "./routes/announcement";
 import { activityLogRoutes } from "./routes/activity-logs";
 import { adminRoutes } from "./routes/admin";
 import { authRoutes } from "./routes/auth";
@@ -82,5 +83,6 @@ app.route("/", pollShareRoutes);
 app.route("/", publicSettingsRoutes);
 app.route("/", adminRoutes);
 app.route("/", faqRoutes);
+app.route("/", announcementRoutes);
 
 export { app };

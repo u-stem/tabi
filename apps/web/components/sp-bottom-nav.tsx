@@ -85,7 +85,7 @@ export function SpBottomNav() {
             ) : (
               <User className="h-6 w-6" />
             )}
-            <span className="text-[10px] leading-none">アカウント</span>
+            <span className="text-[10px] leading-none">マイページ</span>
           </button>
         </div>
       </nav>

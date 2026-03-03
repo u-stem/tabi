@@ -85,7 +85,7 @@ export default function TermsPage() {
           <div>
             <h2 className="text-lg font-semibold">第7条（アカウント削除）</h2>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-              ユーザーは、設定画面からアカウントを削除できます。アカウント削除後、当該ユーザーに関連するデータは速やかに削除されます。
+              ユーザーは、設定画面からアカウントを削除できます。アカウント削除後、当該ユーザーが作成した旅行（他のメンバーが参加中のものを含む）およびすべての関連データは削除されます。この操作は取り消せません。
             </p>
           </div>
 
@@ -109,6 +109,8 @@ export default function TermsPage() {
               2026年2月12日 制定
               <br />
               2026年2月15日 改定
+              <br />
+              2026年3月3日 改定
             </p>
           </div>
         </section>

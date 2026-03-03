@@ -90,7 +90,8 @@ export function EmailSection({ currentEmail, emailVerified }: Props) {
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-1">
               <Label htmlFor="new-email">
-                {hasRealEmail ? "新しいメールアドレス" : "メールアドレスを登録"}
+                {hasRealEmail ? "新しいメールアドレス" : "メールアドレス"}{" "}
+                <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="new-email"
@@ -110,9 +111,11 @@ export function EmailSection({ currentEmail, emailVerified }: Props) {
                 {error}
               </div>
             )}
-            <Button type="submit" disabled={loading || !newEmail.trim()}>
-              {loading ? "送信中..." : "確認メールを送信"}
-            </Button>
+            <div className="flex justify-end">
+              <Button type="submit" disabled={loading || !newEmail.trim()}>
+                {loading ? "送信中..." : "確認メールを送信"}
+              </Button>
+            </div>
           </form>
         )}
       </CardContent>

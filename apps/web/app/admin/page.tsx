@@ -1,17 +1,25 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, Copy, KeyRound } from "lucide-react";
 import { notFound } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+} from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiError, api } from "@/lib/api";
+import { copyToClipboard } from "@/lib/clipboard";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -117,6 +125,7 @@ export default function AdminPage() {
     username: string;
     tempPassword: string;
   } | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const { data, isLoading, error, dataUpdatedAt } = useQuery({
     queryKey: queryKeys.admin.stats(),
@@ -211,10 +220,16 @@ export default function AdminPage() {
           )}
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList className="mb-6">
-            <TabsTrigger value="overview">概要</TabsTrigger>
-            <TabsTrigger value="users">ユーザー管理</TabsTrigger>
-            <TabsTrigger value="settings">設定</TabsTrigger>
+          <TabsList className="mb-6 w-full">
+            <TabsTrigger value="overview" className="flex-1">
+              概要
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex-1">
+              ユーザー管理
+            </TabsTrigger>
+            <TabsTrigger value="settings" className="flex-1">
+              設定
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-8">
@@ -279,7 +294,7 @@ export default function AdminPage() {
                       <th className="px-4 py-2 text-left font-medium">ユーザー名</th>
                       <th className="px-4 py-2 text-left font-medium">登録日</th>
                       <th className="px-4 py-2 text-left font-medium">メール</th>
-                      <th className="px-4 py-2 text-right font-medium">操作</th>
+                      <th className="px-4 py-2 text-left font-medium">操作</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -290,15 +305,11 @@ export default function AdminPage() {
                           {new Date(u.createdAt).toLocaleDateString("ja-JP")}
                         </td>
                         <td className="px-4 py-2">
-                          {u.hasRealEmail ? (
-                            <Badge variant="secondary">
-                              {u.emailVerified ? "設定済み" : "未確認"}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">未設定</span>
-                          )}
+                          <Badge variant="secondary">
+                            {u.hasRealEmail ? (u.emailVerified ? "設定済み" : "未確認") : "未設定"}
+                          </Badge>
                         </td>
-                        <td className="px-4 py-2 text-right">
+                        <td className="px-4 py-2">
                           <Button
                             size="sm"
                             variant="outline"
@@ -307,6 +318,7 @@ export default function AdminPage() {
                               issueTempPassword.mutate({ userId: u.id, username: u.username })
                             }
                           >
+                            <KeyRound className="h-3.5 w-3.5" />
                             {issueTempPassword.isPending ? "発行中..." : "一時PW発行"}
                           </Button>
                         </td>
@@ -326,7 +338,7 @@ export default function AdminPage() {
 
           <TabsContent value="settings">
             {settings !== undefined && (
-              <div className="rounded-lg border bg-card p-4 max-w-md">
+              <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="font-medium text-sm">新規利用受付</p>
@@ -349,33 +361,45 @@ export default function AdminPage() {
       </main>
 
       {tempPasswordInfo && (
-        <Dialog open onOpenChange={() => setTempPasswordInfo(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>一時パスワードを発行しました</DialogTitle>
-            </DialogHeader>
+        <ResponsiveDialog
+          open
+          onOpenChange={() => {
+            setTempPasswordInfo(null);
+            setCopied(false);
+          }}
+        >
+          <ResponsiveDialogContent className="sm:max-w-md">
+            <ResponsiveDialogHeader>
+              <ResponsiveDialogTitle>一時パスワードを発行しました</ResponsiveDialogTitle>
+              <ResponsiveDialogDescription>
+                {tempPasswordInfo.username}{" "}
+                さんの一時パスワードです。このパスワードをユーザーに伝えてください。
+              </ResponsiveDialogDescription>
+            </ResponsiveDialogHeader>
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                {tempPasswordInfo.username} さんの一時パスワードです。
-                このパスワードをユーザーに伝えてください。
-              </p>
-              <div className="flex items-center gap-2 rounded-lg border bg-muted p-3">
-                <code className="flex-1 font-mono text-lg">{tempPasswordInfo.tempPassword}</code>
+              <div className="flex items-center gap-2">
+                <code className="min-w-0 flex-1 rounded-md border bg-muted px-3 py-2 font-mono text-sm">
+                  {tempPasswordInfo.tempPassword}
+                </code>
                 <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => {
-                    navigator.clipboard.writeText(tempPasswordInfo.tempPassword);
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  aria-label={copied ? "コピー完了" : "パスワードをコピー"}
+                  onClick={async () => {
+                    await copyToClipboard(tempPasswordInfo.tempPassword);
+                    setCopied(true);
                     toast.success("コピーしました");
+                    setTimeout(() => setCopied(false), 2000);
                   }}
                 >
-                  コピー
+                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
                 </Button>
               </div>
               <p className="text-xs text-destructive">このパスワードは一度しか表示されません。</p>
             </div>
-          </DialogContent>
-        </Dialog>
+          </ResponsiveDialogContent>
+        </ResponsiveDialog>
       )}
     </div>
   );

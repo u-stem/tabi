@@ -38,7 +38,10 @@ export default function PrivacyPage() {
               本サービスでは、以下の情報を収集します。
             </p>
             <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
-              <li>アカウント情報: ユーザー名、表示名、パスワード（ハッシュ値として保存）</li>
+              <li>
+                アカウント情報:
+                ユーザー名、表示名、パスワード（ハッシュ値として保存）、メールアドレス（任意設定）
+              </li>
               <li>
                 旅行計画データ:
                 旅行タイトル、目的地、日程、スケジュール、メモなどユーザーが入力した情報
@@ -57,6 +60,7 @@ export default function PrivacyPage() {
             <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-muted-foreground">
               <li>旅行計画の作成・共有機能の提供</li>
               <li>ユーザー認証およびセッション管理</li>
+              <li>パスワードリセットメールの送信（メールアドレスを設定したユーザー）</li>
               <li>不正アクセスの防止およびセキュリティの確保</li>
               <li>サービスの改善および新機能の開発</li>
             </ul>
@@ -71,6 +75,10 @@ export default function PrivacyPage() {
               <li>Supabase, Inc. - データベースおよびリアルタイム通信の提供</li>
               <li>Vercel Inc. - アプリケーションのホスティング</li>
               <li>GitHub, Inc. - フィードバック機能における情報の保存</li>
+              <li>
+                Google LLC - パスワードリセットメールおよびメールアドレス確認メールの送信（Gmail
+                SMTP）
+              </li>
             </ul>
           </div>
 
@@ -111,6 +119,8 @@ export default function PrivacyPage() {
               2026年2月12日 制定
               <br />
               2026年2月15日 改定
+              <br />
+              2026年3月3日 改定（メールアドレス収集に伴う更新）
             </p>
           </div>
         </section>

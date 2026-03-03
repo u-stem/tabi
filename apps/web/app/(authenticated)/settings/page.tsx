@@ -3,8 +3,8 @@
 import { buildDiceBearUrl, DICEBEAR_STYLES, type DiceBearStyle } from "@sugara/shared";
 import { Bell, ExternalLink, RefreshCw, Settings2, User, X } from "lucide-react";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EmailSection } from "@/components/email-section";
 import { NotificationPreferencesSection } from "@/components/notification-preferences-section";

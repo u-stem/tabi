@@ -106,7 +106,7 @@ export function AuthForm() {
             </Link>
           </p>
           <p className="text-center text-xs text-muted-foreground">
-            ユーザー名・パスワードを忘れてしまうと
+            ユーザー名を忘れてしまうと
             <br />
             ログインができなくなりますのでご注意ください。
           </p>

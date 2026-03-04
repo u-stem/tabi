@@ -41,6 +41,7 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
+import { cn } from "@/lib/utils";
 import { CreateGroupDialog } from "./create-group-dialog";
 import { GroupMembersDialog } from "./group-detail-dialog";
 
@@ -151,7 +152,7 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
           {groups.length === 0 ? (
             <p className="text-sm text-muted-foreground">{MSG.EMPTY_GROUP}</p>
           ) : (
-            <div className="max-h-80 space-y-3 overflow-y-auto">
+            <div className={cn("space-y-3", !isMobile && "max-h-80 overflow-y-auto")}>
               {groups.map((group) => (
                 <div key={group.id} className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">

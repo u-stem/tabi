@@ -18,6 +18,7 @@ const SWIPE_IGNORE_SELECTOR = [
   "textarea",
   "select",
   "[role='combobox']",
+  "[role='switch']",
   "[contenteditable='true']",
   "[data-swipe-ignore='true']",
 ].join(", ");

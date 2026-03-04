@@ -22,8 +22,10 @@ import {
 } from "@/components/ui/responsive-alert-dialog";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
+import { cn } from "@/lib/utils";
 
 export { SendRequestSection };
 
@@ -55,6 +57,7 @@ function FriendListSection({
   onRemoved: () => void;
 }) {
   const queryClient = useQueryClient();
+  const isMobile = useMobile();
   const [removingFriend, setRemovingFriend] = useState<FriendResponse | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -92,7 +95,7 @@ function FriendListSection({
           {friends.length === 0 ? (
             <p className="text-sm text-muted-foreground">{MSG.EMPTY_FRIEND}</p>
           ) : (
-            <div className="max-h-80 space-y-3 overflow-y-auto">
+            <div className={cn("space-y-3", !isMobile && "max-h-80 overflow-y-auto")}>
               {friends.map((friend) => (
                 <div key={friend.friendId} className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0">

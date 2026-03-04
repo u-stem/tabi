@@ -10,6 +10,7 @@ import { MSG } from "../lib/messages";
 import { queryKeys } from "../lib/query-keys";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
+import { Skeleton } from "./ui/skeleton";
 import { Switch } from "./ui/switch";
 
 type InAppPref = { type: string; inApp: boolean };
@@ -75,7 +76,7 @@ export function NotificationPreferencesSection() {
   }, []);
 
   // User-level: inApp preferences only
-  const { data: inAppData } = useQuery({
+  const { data: inAppData, isLoading: inAppLoading } = useQuery({
     queryKey: queryKeys.notifications.preferences(),
     queryFn: () => api<InAppPref[]>("/api/notification-preferences"),
   });
@@ -189,13 +190,17 @@ export function NotificationPreferencesSection() {
                   <p className="text-sm font-medium leading-none">{cat.label}</p>
                   <p className="mt-1 text-xs text-muted-foreground">{cat.description}</p>
                 </div>
-                <Switch
-                  checked={isInAppCategoryOn(inAppPrefs, cat.types)}
-                  onCheckedChange={(v) =>
-                    updateInAppCategory.mutate({ types: cat.types, value: v })
-                  }
-                  aria-label={`${cat.label} アプリ内通知`}
-                />
+                {inAppLoading ? (
+                  <Skeleton className="h-5 w-9 rounded-full" />
+                ) : (
+                  <Switch
+                    checked={isInAppCategoryOn(inAppPrefs, cat.types)}
+                    onCheckedChange={(v) =>
+                      updateInAppCategory.mutate({ types: cat.types, value: v })
+                    }
+                    aria-label={`${cat.label} アプリ内通知`}
+                  />
+                )}
                 <Switch
                   checked={isPushCategoryOn(pushPrefsData, cat.types)}
                   onCheckedChange={(v) => updatePushCategory.mutate({ types: cat.types, value: v })}

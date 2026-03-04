@@ -1,16 +1,7 @@
 "use client";
 
 import { MAX_BOOKMARK_LISTS_PER_USER, VISIBILITY_LABELS } from "@sugara/shared";
-import {
-  Copy,
-  Globe,
-  ListFilter,
-  Lock,
-  SquareMousePointer,
-  Trash2,
-  Users,
-  X,
-} from "lucide-react";
+import { Copy, Globe, ListFilter, Lock, SquareMousePointer, Trash2, Users, X } from "lucide-react";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";

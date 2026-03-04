@@ -56,9 +56,7 @@ export function InstallBanner() {
         <DrawerContent>
           <DrawerHeader>
             <DrawerTitle>ホーム画面に追加する方法</DrawerTitle>
-            <DrawerDescription>
-              Safari でこのページを開き、以下の手順で追加してください
-            </DrawerDescription>
+            <DrawerDescription>以下の手順でホーム画面に追加できます</DrawerDescription>
           </DrawerHeader>
           <ol className="px-4 pb-8 space-y-3 text-sm">
             <li className="flex items-start gap-3">
@@ -66,7 +64,7 @@ export function InstallBanner() {
                 1
               </span>
               <span>
-                画面下部の{" "}
+                ブラウザの{" "}
                 <span className="inline-flex items-center rounded bg-muted px-1 font-mono text-xs">
                   共有
                 </span>{" "}

@@ -12,7 +12,7 @@ export default function SpLayout({ children }: { children: React.ReactNode }) {
         <SpMobileProvider>
           <SpScrollContainer>
             <SpHeader />
-            <main className="container py-4 pb-16">{children}</main>
+            <main className="container py-4 pb-[calc(4rem+env(safe-area-inset-bottom,0px))]">{children}</main>
             <SpBottomNav />
           </SpScrollContainer>
         </SpMobileProvider>

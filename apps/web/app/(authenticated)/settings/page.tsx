@@ -209,7 +209,7 @@ export default function SettingsPage({
         {/* Content */}
         <div className="min-w-0 flex-1 space-y-8">
           {/* Swipe container — px-0.5/-mx-0.5 lets focus rings bleed past the overflow boundary */}
-          <div ref={contentRef} className="overflow-x-hidden touch-pan-y -mx-0.5 px-0.5">
+          <div ref={contentRef} className="overflow-x-hidden touch-pan-y -mx-0.5 px-0.5 min-h-[60vh]">
             <div ref={swipeRef} className="relative touch-pan-y will-change-transform">
               <div className="space-y-8">{renderSectionContent(section)}</div>
 

@@ -278,7 +278,7 @@ export function MemberDialog({
                     <p className="truncate text-sm font-medium">{member.name}</p>
                   </div>
                   {member.role === "owner" ? (
-                    <span className="shrink-0 select-none text-xs text-muted-foreground">
+                    <span className="shrink-0 select-none text-sm text-muted-foreground">
                       オーナー
                     </span>
                   ) : isOwner ? (
@@ -287,7 +287,7 @@ export function MemberDialog({
                         value={member.role}
                         onValueChange={(v) => handleRoleChange(member.userId, v)}
                       >
-                        <SelectTrigger className="h-7 w-[100px] text-xs">
+                        <SelectTrigger className="h-8 w-[100px] text-sm">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -296,13 +296,13 @@ export function MemberDialog({
                         </SelectContent>
                       </Select>
                       {member.hasExpenses ? (
-                        <span className="cursor-not-allowed select-none text-xs text-muted-foreground/50">
+                        <span className="cursor-not-allowed select-none text-sm text-muted-foreground/50">
                           削除
                         </span>
                       ) : (
                         <button
                           type="button"
-                          className="select-none text-xs text-muted-foreground hover:text-destructive"
+                          className="select-none text-sm text-muted-foreground hover:text-destructive"
                           aria-label={`${member.name}を削除`}
                           onClick={() => setRemoveMember(member)}
                         >
@@ -311,7 +311,7 @@ export function MemberDialog({
                       )}
                     </div>
                   ) : (
-                    <span className="shrink-0 select-none text-xs text-muted-foreground">
+                    <span className="shrink-0 select-none text-sm text-muted-foreground">
                       {member.role === "editor" ? "編集者" : "閲覧者"}
                     </span>
                   )}
@@ -359,9 +359,9 @@ export function MemberDialog({
                       return (
                         <div className="space-y-2">
                           <div className="flex select-none items-center justify-end gap-2 py-1">
-                            <span className="text-xs text-muted-foreground">ロール:</span>
+                            <span className="text-sm text-muted-foreground">ロール:</span>
                             <Select value={friendRole} onValueChange={setFriendRole}>
-                              <SelectTrigger className="h-7 w-[100px] text-xs">
+                              <SelectTrigger className="h-8 w-[100px] text-sm">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
@@ -410,7 +410,7 @@ export function MemberDialog({
                       <div className="space-y-2">
                         <div className="flex select-none items-center justify-between gap-2 py-1">
                           <Select value={selectedGroupId ?? ""} onValueChange={setSelectedGroupId}>
-                            <SelectTrigger className="h-7 flex-1 text-xs">
+                            <SelectTrigger className="h-8 flex-1 text-sm">
                               <SelectValue placeholder="グループを選択" />
                             </SelectTrigger>
                             <SelectContent>
@@ -421,9 +421,9 @@ export function MemberDialog({
                               ))}
                             </SelectContent>
                           </Select>
-                          <span className="text-xs text-muted-foreground">ロール:</span>
+                          <span className="text-sm text-muted-foreground">ロール:</span>
                           <Select value={groupRole} onValueChange={setGroupRole}>
-                            <SelectTrigger className="h-7 w-[100px] text-xs">
+                            <SelectTrigger className="h-8 w-[100px] text-sm">
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -495,14 +495,14 @@ export function MemberDialog({
                           />
                           <Label
                             htmlFor="send-friend-request"
-                            className="text-xs text-muted-foreground"
+                            className="text-sm text-muted-foreground"
                           >
                             フレンド申請も送る
                           </Label>
                         </div>
-                        <span className="text-xs text-muted-foreground">ロール:</span>
+                        <span className="text-sm text-muted-foreground">ロール:</span>
                         <Select value={role} onValueChange={setRole}>
-                          <SelectTrigger className="h-7 w-[100px] text-xs">
+                          <SelectTrigger className="h-8 w-[100px] text-sm">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -527,10 +527,8 @@ export function MemberDialog({
                           {adding ? "追加中..." : "追加"}
                         </Button>
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        ユーザーIDは相手のプロフィールページで
-                        <br />
-                        確認できます。
+                      <p className="text-sm text-muted-foreground">
+                        ユーザーIDは相手のプロフィールページで確認できます。
                       </p>
                     </form>
                   </TabsContent>

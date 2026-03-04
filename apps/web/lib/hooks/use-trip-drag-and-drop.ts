@@ -161,8 +161,20 @@ export function useTripDragAndDrop({
       const activeId = String(active.id);
       const oldIndex = mergedIds.indexOf(activeId);
       // When over is null (dropped below last item), move to end
-      const overIndex = over ? mergedIds.indexOf(String(over.id)) : merged.length - 1;
+      let overIndex = over ? mergedIds.indexOf(String(over.id)) : merged.length - 1;
       if (oldIndex === -1 || overIndex === -1) return;
+
+      // When dropping onto a cross-day entry, treat it as dropping after the
+      // first schedule that follows it so the schedule ends up after the
+      // cross-day entry in the merged timeline.
+      if (over && merged[overIndex]?.type === "crossDay") {
+        let nextScheduleIdx = overIndex + 1;
+        while (nextScheduleIdx < merged.length && merged[nextScheduleIdx].type !== "schedule") {
+          nextScheduleIdx++;
+        }
+        overIndex = nextScheduleIdx < merged.length ? nextScheduleIdx : merged.length - 1;
+      }
+
       if (oldIndex === overIndex) return;
 
       const reorderedMerged = arrayMove(merged, oldIndex, overIndex);
@@ -260,18 +272,38 @@ export function useTripDragAndDrop({
         const mergedIds = timelineSortableIds(merged);
         const overIdx = mergedIds.indexOf(String(over.id));
         if (overIdx !== -1) {
-          let insertBeforeId: string | null = null;
-          for (let k = overIdx; k < merged.length; k++) {
-            const item = merged[k];
-            if (item.type === "schedule") {
-              insertBeforeId = item.schedule.id;
-              break;
+          if (merged[overIdx]?.type === "crossDay") {
+            // Dropping onto a cross-day entry: insert after the first schedule
+            // following it, matching the same behaviour as schedule reorder.
+            let nextScheduleIdx = overIdx + 1;
+            while (
+              nextScheduleIdx < merged.length &&
+              merged[nextScheduleIdx].type !== "schedule"
+            ) {
+              nextScheduleIdx++;
             }
+            if (nextScheduleIdx < merged.length) {
+              const nextItem = merged[nextScheduleIdx];
+              if (nextItem.type === "schedule") {
+                const idx = localSchedules.findIndex((s) => s.id === nextItem.schedule.id);
+                if (idx !== -1) insertIdx = idx + 1;
+              }
+            }
+            // else: insertIdx stays at localSchedules.length (end of list)
+          } else {
+            let insertBeforeId: string | null = null;
+            for (let k = overIdx; k < merged.length; k++) {
+              const item = merged[k];
+              if (item.type === "schedule") {
+                insertBeforeId = item.schedule.id;
+                break;
+              }
+            }
+            const idx = insertBeforeId
+              ? localSchedules.findIndex((s) => s.id === insertBeforeId)
+              : -1;
+            if (idx !== -1) insertIdx = idx;
           }
-          const idx = insertBeforeId
-            ? localSchedules.findIndex((s) => s.id === insertBeforeId)
-            : -1;
-          if (idx !== -1) insertIdx = idx;
         }
       }
 

@@ -13,12 +13,14 @@ export type { ScheduleItemProps };
 export const ScheduleItem = memo(function ScheduleItem(props: ScheduleItemProps) {
   const { id, category, disabled, selectable, crossDayDisplay, draggable, reorderable } = props;
   // Cross-day entries use a prefixed ID so they don't collide with same-day
-  // schedule IDs in SortableContext. They register as drop targets but can't
-  // be dragged (disabled: true).
+  // schedule IDs in SortableContext. They act as drop targets but cannot be
+  // dragged (listeners are omitted below).
   const sortableId = crossDayDisplay ? `cross-${id}` : id;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: sortableId,
-    disabled: disabled || selectable || reorderable || draggable === false || crossDayDisplay,
+    // crossDayDisplay is excluded from disabled so it acts as a drop target,
+    // but listeners are omitted below to prevent dragging cross-day entries.
+    disabled: disabled || selectable || reorderable || draggable === false,
     data: { type: "schedule" },
   });
 
@@ -31,7 +33,7 @@ export const ScheduleItem = memo(function ScheduleItem(props: ScheduleItemProps)
     nodeRef: setNodeRef,
     style,
     attributes,
-    listeners,
+    listeners: crossDayDisplay ? undefined : listeners,
     isDragging,
   };
 

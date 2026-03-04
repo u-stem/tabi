@@ -3,17 +3,17 @@
 import { X } from "lucide-react";
 import { useState } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Drawer,
+  DrawerContent,
+  DrawerDescription,
+  DrawerHeader,
+  DrawerTitle,
+} from "@/components/ui/drawer";
 import { useInstallBanner } from "@/lib/hooks/use-install-banner";
 
 export function InstallBanner() {
   const { showBanner, isIos, promptInstall, dismiss } = useInstallBanner();
-  const [iosDialogOpen, setIosDialogOpen] = useState(false);
+  const [iosDrawerOpen, setIosDrawerOpen] = useState(false);
 
   if (!showBanner) return null;
 
@@ -27,7 +27,7 @@ export function InstallBanner() {
               <button
                 type="button"
                 className="rounded-full bg-blue-600 px-3 py-0.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:text-blue-950 dark:hover:bg-blue-400"
-                onClick={() => setIosDialogOpen(true)}
+                onClick={() => setIosDrawerOpen(true)}
               >
                 追加方法を見る
               </button>
@@ -52,15 +52,15 @@ export function InstallBanner() {
         </div>
       </div>
 
-      <Dialog open={iosDialogOpen} onOpenChange={setIosDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>ホーム画面に追加する方法</DialogTitle>
-            <DialogDescription>
+      <Drawer open={iosDrawerOpen} onOpenChange={setIosDrawerOpen}>
+        <DrawerContent>
+          <DrawerHeader>
+            <DrawerTitle>ホーム画面に追加する方法</DrawerTitle>
+            <DrawerDescription>
               Safari でこのページを開き、以下の手順で追加してください
-            </DialogDescription>
-          </DialogHeader>
-          <ol className="mt-2 space-y-3 text-sm">
+            </DrawerDescription>
+          </DrawerHeader>
+          <ol className="px-4 pb-8 space-y-3 text-sm">
             <li className="flex items-start gap-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700 dark:bg-blue-900 dark:text-blue-300">
                 1
@@ -91,8 +91,8 @@ export function InstallBanner() {
               </span>
             </li>
           </ol>
-        </DialogContent>
-      </Dialog>
+        </DrawerContent>
+      </Drawer>
     </>
   );
 }

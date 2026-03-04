@@ -1,24 +1,12 @@
 "use client";
 
-import {
-  Check,
-  ChevronRight,
-  Download,
-  LogOut,
-  MessageSquare,
-  Monitor,
-  Moon,
-  Settings,
-  Sun,
-  X,
-} from "lucide-react";
-import dynamic from "next/dynamic";
+import { useQueryClient } from "@tanstack/react-query";
+import { Check, ChevronRight, LogOut, Monitor, Moon, Pencil, Settings, Sun, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -32,14 +20,9 @@ import {
 import { UserAvatar } from "@/components/user-avatar";
 import { signOut, useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
-import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 import { switchViewMode } from "@/lib/view-mode";
-
-const FeedbackDialog = dynamic(() =>
-  import("@/components/feedback-dialog").then((mod) => mod.FeedbackDialog),
-);
 
 const THEME_OPTIONS = [
   { value: "light", label: "ライト", icon: Sun },
@@ -52,9 +35,7 @@ export default function SpMyPage() {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const { theme, setTheme } = useTheme();
-  const { canInstall, promptInstall } = useInstallPrompt();
   const [mounted, setMounted] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [signOutOpen, setSignOutOpen] = useState(false);
 
   useEffect(() => {
@@ -87,18 +68,20 @@ export default function SpMyPage() {
         />
         <div className="text-center">
           <h1 className="text-lg font-semibold">{user?.name}</h1>
-          {displayUsername && (
-            <p className="text-sm text-muted-foreground">@{displayUsername}</p>
-          )}
+          {displayUsername && <p className="text-sm text-muted-foreground">@{displayUsername}</p>}
         </div>
+        <Link
+          href="/sp/settings"
+          className="inline-flex h-8 items-center gap-1.5 rounded-full border px-4 text-sm hover:bg-accent"
+        >
+          <Pencil className="h-3 w-3" />
+          プロフィールを編集
+        </Link>
       </div>
 
       {/* Settings link */}
       <div className="overflow-hidden rounded-lg border">
-        <Link
-          href="/sp/settings"
-          className="flex h-12 items-center gap-3 px-4 hover:bg-accent"
-        >
+        <Link href="/sp/settings" className="flex h-12 items-center gap-3 px-4 hover:bg-accent">
           <Settings className="h-4 w-4" />
           <span className="flex-1">設定</span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
@@ -124,9 +107,7 @@ export default function SpMyPage() {
               >
                 <Icon className="h-4 w-4" />
                 {label}
-                {mounted && theme === value && (
-                  <Check className="h-3 w-3 text-primary" />
-                )}
+                {mounted && theme === value && <Check className="h-3 w-3 text-primary" />}
               </button>
             ))}
           </div>
@@ -134,25 +115,7 @@ export default function SpMyPage() {
       </div>
 
       {/* Other actions */}
-      <div className="overflow-hidden rounded-lg border divide-y">
-        {canInstall && (
-          <button
-            type="button"
-            onClick={() => void promptInstall()}
-            className="flex h-12 w-full items-center gap-3 px-4 hover:bg-accent"
-          >
-            <Download className="h-4 w-4" />
-            アプリをインストール
-          </button>
-        )}
-        <button
-          type="button"
-          onClick={() => setFeedbackOpen(true)}
-          className="flex h-12 w-full items-center gap-3 px-4 hover:bg-accent"
-        >
-          <MessageSquare className="h-4 w-4" />
-          フィードバック
-        </button>
+      <div className="overflow-hidden rounded-lg border">
         <button
           type="button"
           onClick={() => void switchViewMode("desktop")}
@@ -174,8 +137,6 @@ export default function SpMyPage() {
           ログアウト
         </button>
       </div>
-
-      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
 
       {/* Logout confirmation drawer */}
       <Drawer open={signOutOpen} onOpenChange={setSignOutOpen}>

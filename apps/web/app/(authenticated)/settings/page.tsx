@@ -3,6 +3,7 @@
 import { buildDiceBearUrl, DICEBEAR_STYLES, type DiceBearStyle } from "@sugara/shared";
 import {
   Bell,
+  Download,
   FileText,
   HelpCircle,
   MessageSquare,
@@ -54,6 +55,7 @@ import {
   validatePassword,
 } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
+import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
@@ -769,10 +771,21 @@ function DeleteAccountSection({ username }: { username: string }) {
 
 function OtherSection() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const { canInstall, promptInstall } = useInstallPrompt();
 
   return (
     <>
       <div className="overflow-hidden rounded-lg border divide-y">
+        {canInstall && (
+          <button
+            type="button"
+            onClick={() => void promptInstall()}
+            className="flex h-12 w-full items-center gap-3 px-4 hover:bg-accent"
+          >
+            <Download className="h-4 w-4" />
+            アプリをインストール
+          </button>
+        )}
         <a
           href="/faq"
           target="_blank"

@@ -2,8 +2,8 @@
 
 import type { UserProfileResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
-import { useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,12 +14,15 @@ import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 export default function FriendsAddPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+
+  const isSelf = !!currentUserId && currentUserId === userId;
 
   const {
     data: profile,
@@ -28,9 +31,15 @@ export default function FriendsAddPage() {
   } = useQuery({
     queryKey: queryKeys.users.profile(userId ?? ""),
     queryFn: () => api<UserProfileResponse>(`/api/users/${userId}/profile`),
-    enabled: !!userId,
+    enabled: !!userId && !isSelf,
     retry: false,
   });
+
+  useEffect(() => {
+    if (isSelf) router.replace("/my");
+  }, [isSelf, router]);
+
+  if (isSelf) return null;
 
   if (!userId) {
     return (
@@ -59,8 +68,6 @@ export default function FriendsAddPage() {
       </div>
     );
   }
-
-  const isSelf = currentUserId === userId;
 
   async function handleSend() {
     setLoading(true);
@@ -94,9 +101,7 @@ export default function FriendsAddPage() {
         <div className="text-center">
           <h1 className="text-lg font-semibold">{profile.name}</h1>
         </div>
-        {isSelf ? (
-          <p className="text-sm text-muted-foreground">自分自身にはフレンド申請できません</p>
-        ) : sent ? (
+        {sent ? (
           <p className="text-sm text-muted-foreground">フレンド申請を送りました</p>
         ) : (
           <Button onClick={handleSend} disabled={loading} className="w-full">

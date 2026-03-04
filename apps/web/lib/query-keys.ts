@@ -22,6 +22,10 @@ export const queryKeys = {
     lists: () => [...queryKeys.bookmarks.all, "lists"] as const,
     list: (listId: string) => [...queryKeys.bookmarks.all, "list", listId] as const,
   },
+  users: {
+    all: ["users"] as const,
+    profile: (userId: string) => ["users", "profile", userId] as const,
+  },
   profile: {
     bookmarkLists: (userId: string) => ["profile", userId, "bookmark-lists"] as const,
     bookmarkList: (userId: string, listId: string) =>

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookmarkListCard } from "@/app/users/[userId]/page";
+import { MyQrDialog } from "@/components/my-qr-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
@@ -74,6 +75,7 @@ export default function MyPage() {
           <Pencil className="h-3 w-3" />
           プロフィールを編集
         </Link>
+        {userId && user?.name && <MyQrDialog userId={userId} userName={user.name} />}
       </div>
 
       {/* Bookmark lists */}

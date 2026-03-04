@@ -712,7 +712,7 @@ function SignOutSection() {
         <ResponsiveAlertDialogTrigger asChild>
           <button
             type="button"
-            className="flex h-12 w-full items-center gap-3 px-4 text-destructive hover:bg-accent"
+            className="flex h-12 w-full items-center gap-3 px-4 hover:bg-accent"
           >
             <LogOut className="h-4 w-4" />
             ログアウト
@@ -731,7 +731,7 @@ function SignOutSection() {
             <X className="h-4 w-4" />
             キャンセル
           </ResponsiveAlertDialogCancel>
-          <Button variant="destructive" disabled={loading} onClick={handleSignOut}>
+          <Button disabled={loading} onClick={handleSignOut}>
             <LogOut className="h-4 w-4" />
             {loading ? "ログアウト中..." : "ログアウト"}
           </Button>

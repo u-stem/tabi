@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
+import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -17,7 +18,7 @@ export default function FriendsAddPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
-  const { data: session } = useSession();
+  const { data: session, isPending: sessionLoading } = useSession();
   const currentUserId = session?.user?.id;
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -31,9 +32,13 @@ export default function FriendsAddPage() {
   } = useQuery({
     queryKey: queryKeys.users.profile(userId ?? ""),
     queryFn: () => api<UserProfileResponse>(`/api/users/${userId}/profile`),
-    enabled: !!userId && !isSelf,
+    enabled: !!userId && !sessionLoading && !isSelf,
     retry: false,
   });
+
+  useEffect(() => {
+    document.title = pageTitle("フレンド申請");
+  }, []);
 
   useEffect(() => {
     if (isSelf) router.replace("/my");

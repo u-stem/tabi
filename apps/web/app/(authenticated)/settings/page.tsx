@@ -192,7 +192,7 @@ export default function SettingsPage({
               aria-selected={section === id}
               onClick={() => changeSection(id)}
               className={cn(
-                "min-h-[36px] rounded-md px-1 py-1.5 text-[11px] font-medium transition-[colors,transform] active:scale-[0.97]",
+                "min-h-[36px] rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.97]",
                 "flex items-center justify-center",
                 "md:justify-start md:gap-2 md:px-3 md:py-2 md:text-sm md:whitespace-nowrap md:active:scale-100",
                 section === id
@@ -209,7 +209,10 @@ export default function SettingsPage({
         {/* Content */}
         <div className="min-w-0 flex-1 space-y-8">
           {/* Swipe container — px-0.5/-mx-0.5 lets focus rings bleed past the overflow boundary */}
-          <div ref={contentRef} className="overflow-x-hidden touch-pan-y -mx-0.5 px-0.5 min-h-[60vh]">
+          <div
+            ref={contentRef}
+            className="overflow-x-hidden touch-pan-y -mx-0.5 px-0.5 min-h-[60vh]"
+          >
             <div ref={swipeRef} className="relative touch-pan-y will-change-transform">
               <div className="space-y-8">{renderSectionContent(section)}</div>
 

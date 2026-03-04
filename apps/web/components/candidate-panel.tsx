@@ -12,11 +12,11 @@ import {
   ArrowLeft,
   ArrowUpDown,
   Bookmark,
-  CheckSquare,
   Copy,
   GripVertical,
   MoreHorizontal,
   Plus,
+  SquareMousePointer,
   Trash2,
   X,
 } from "lucide-react";
@@ -305,7 +305,7 @@ export function CandidatePanel({
                   sel.enter("candidates");
                 }}
               >
-                <CheckSquare className="h-4 w-4" />
+                <SquareMousePointer className="h-4 w-4" />
                 選択
               </Button>
             )}

@@ -7,11 +7,11 @@ import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
   Bookmark,
-  CheckSquare,
   Copy,
   GripVertical,
   MoreHorizontal,
   Plus,
+  SquareMousePointer,
   Trash2,
   Undo2,
   X,
@@ -317,7 +317,7 @@ export function DayTimeline({
                   sel.enter("timeline");
                 }}
               >
-                <CheckSquare className="h-4 w-4" />
+                <SquareMousePointer className="h-4 w-4" />
                 選択
               </Button>
             )}

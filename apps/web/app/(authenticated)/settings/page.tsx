@@ -7,7 +7,6 @@ import {
   Download,
   FileText,
   HelpCircle,
-  Keyboard,
   LogOut,
   MessageSquare,
   MoreHorizontal,
@@ -62,7 +61,6 @@ import { isGuestUser } from "@/lib/guest";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { MSG } from "@/lib/messages";
-import { useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
 
 const FeedbackDialog = dynamic(() =>
@@ -845,8 +843,6 @@ function DeleteAccountSection({ username }: { username: string }) {
 function OtherSection() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { canInstall, promptInstall } = useInstallPrompt();
-  const { open: openShortcutHelp } = useShortcutHelp();
-
   return (
     <>
       <div className="overflow-hidden rounded-lg border divide-y">
@@ -860,17 +856,6 @@ function OtherSection() {
             アプリをインストール
           </button>
         )}
-        <button
-          type="button"
-          onClick={openShortcutHelp}
-          className="flex h-12 w-full items-center gap-3 px-4 hover:bg-accent"
-        >
-          <Keyboard className="h-4 w-4" />
-          キーボードショートカット
-          <kbd className="ml-auto rounded border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground">
-            ?
-          </kbd>
-        </button>
         <a
           href="/faq"
           target="_blank"

@@ -4,13 +4,13 @@ import { SOUVENIR_PRIORITY_LABELS, type SouvenirItem, type SouvenirPriority } fr
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
-  CheckSquare,
   ChevronDown,
   ExternalLink,
   Flame,
   MapPin,
   Pencil,
   Plus,
+  SquareMousePointer,
   Star,
   StickyNote,
   Trash2,
@@ -240,7 +240,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
                 className={cn(isMobile && "flex-1 h-9")}
                 onClick={() => setSelectMode(true)}
               >
-                <CheckSquare className="h-4 w-4" />
+                <SquareMousePointer className="h-4 w-4" />
                 選択
               </Button>
             </>

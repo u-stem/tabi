@@ -12,13 +12,15 @@ export default function SpLayout({ children }: { children: React.ReactNode }) {
       <ShortcutHelpProvider>
         <GlobalShortcutHotkey />
         <SpMobileProvider>
-          <SpScrollContainer>
+          <div className="flex h-full flex-col">
             <SpHeader />
-            <main className="container py-4 pb-[calc(4rem+env(safe-area-inset-bottom,0px))]">
-              {children}
-            </main>
-            <SpBottomNav />
-          </SpScrollContainer>
+            <SpScrollContainer>
+              <main className="container py-4 pb-[calc(4rem+env(safe-area-inset-bottom,0px))]">
+                {children}
+              </main>
+              <SpBottomNav />
+            </SpScrollContainer>
+          </div>
         </SpMobileProvider>
       </ShortcutHelpProvider>
     </TooltipProvider>

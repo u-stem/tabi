@@ -18,7 +18,7 @@ import { switchViewMode } from "@/lib/view-mode";
 export function SpHeader() {
   const router = useRouter();
   return (
-    <header className="sticky top-0 z-30 select-none border-b bg-background">
+    <header className="shrink-0 z-30 select-none border-b bg-background">
       <AnnouncementBanner />
       <OfflineBanner />
       <GuestBanner />

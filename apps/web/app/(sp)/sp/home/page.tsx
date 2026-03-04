@@ -197,9 +197,8 @@ export default function SpHomePage() {
         error={error}
         errorFallback={errorFallback}
       >
-        <>
-          {/* Tab bar */}
-          <div
+        {/* Tab bar */}
+        <div
             role="tablist"
             aria-orientation="horizontal"
             className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
@@ -283,7 +282,6 @@ export default function SpHomePage() {
               )}
             </div>
           </div>
-        </>
       </LoadingBoundary>
       <CreateTripDialog
         open={createTripOpen}

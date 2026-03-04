@@ -173,71 +173,69 @@ export default function HomePage() {
         error={error}
         errorFallback={errorFallback}
       >
-        <>
-          <div className="mt-4 flex gap-1.5">
-            {tabs.map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => handleTabChange(value)}
-                className={cn(
-                  "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.95]",
-                  tab === value
-                    ? "bg-muted text-foreground"
-                    : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground",
-                )}
-              >
-                {label}
-              </button>
+        <div className="mt-4 flex gap-1.5">
+          {tabs.map(({ value, label }) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => handleTabChange(value)}
+              className={cn(
+                "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.95]",
+                tab === value
+                  ? "bg-muted text-foreground"
+                  : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4">
+          <TripToolbar
+            searchInputRef={searchInputRef}
+            search={search}
+            onSearchChange={setSearch}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            sortKey={sortKey}
+            onSortKeyChange={setSortKey}
+            selectionMode={selectionMode}
+            onSelectionModeChange={setSelectionMode}
+            selectedCount={selectedIds.size}
+            totalCount={filteredTrips.length}
+            onSelectAll={handleSelectAll}
+            onDeselectAll={handleDeselectAll}
+            onDeleteSelected={handleDeleteSelected}
+            onDuplicateSelected={handleDuplicateSelected}
+            deleting={deleting}
+            duplicating={duplicating}
+            disabled={!online}
+            hideDelete={tab === "shared"}
+            newTripSlot={tab !== "shared" ? newTripButton : undefined}
+          />
+        </div>
+        {baseTrips.length === 0 ? (
+          <EmptyState
+            message={tab === "shared" ? MSG.EMPTY_TRIP_SHARED : MSG.EMPTY_TRIP}
+            variant="page"
+          />
+        ) : filteredTrips.length === 0 ? (
+          <EmptyState message={MSG.EMPTY_TRIP_FILTER} variant="page" />
+        ) : (
+          <div className="mt-4 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredTrips.map((trip, index) => (
+              <TripCard
+                key={trip.id}
+                {...trip}
+                priority={index === 0}
+                selectable={selectionMode}
+                selected={selectedIds.has(trip.id)}
+                onSelect={handleSelect}
+              />
             ))}
           </div>
-
-          <div className="mt-4">
-            <TripToolbar
-              searchInputRef={searchInputRef}
-              search={search}
-              onSearchChange={setSearch}
-              statusFilter={statusFilter}
-              onStatusFilterChange={setStatusFilter}
-              sortKey={sortKey}
-              onSortKeyChange={setSortKey}
-              selectionMode={selectionMode}
-              onSelectionModeChange={setSelectionMode}
-              selectedCount={selectedIds.size}
-              totalCount={filteredTrips.length}
-              onSelectAll={handleSelectAll}
-              onDeselectAll={handleDeselectAll}
-              onDeleteSelected={handleDeleteSelected}
-              onDuplicateSelected={handleDuplicateSelected}
-              deleting={deleting}
-              duplicating={duplicating}
-              disabled={!online}
-              hideDelete={tab === "shared"}
-              newTripSlot={tab !== "shared" ? newTripButton : undefined}
-            />
-          </div>
-          {baseTrips.length === 0 ? (
-            <EmptyState
-              message={tab === "shared" ? MSG.EMPTY_TRIP_SHARED : MSG.EMPTY_TRIP}
-              variant="page"
-            />
-          ) : filteredTrips.length === 0 ? (
-            <EmptyState message={MSG.EMPTY_TRIP_FILTER} variant="page" />
-          ) : (
-            <div className="mt-4 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredTrips.map((trip, index) => (
-                <TripCard
-                  key={trip.id}
-                  {...trip}
-                  priority={index === 0}
-                  selectable={selectionMode}
-                  selected={selectedIds.has(trip.id)}
-                  onSelect={handleSelect}
-                />
-              ))}
-            </div>
-          )}
-        </>
+        )}
       </LoadingBoundary>
       <CreateTripDialog
         open={createTripOpen}

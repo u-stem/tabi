@@ -239,7 +239,7 @@ export function MemberDialog({
             旅行メンバーの招待と権限を管理します
           </ResponsiveDialogDescription>
           {members.some((m) => m.hasExpenses) && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-sm text-muted-foreground">
               費用が紐づいているメンバーは削除できません
             </p>
           )}

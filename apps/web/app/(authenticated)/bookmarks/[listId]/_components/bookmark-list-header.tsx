@@ -188,14 +188,14 @@ export function BookmarkListHeader({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={sel.handleBatchDuplicate}>
-                    <Copy />
+                    <Copy className="h-4 w-4" />
                     複製
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-destructive"
                     onClick={() => sel.setBatchDeleteOpen(true)}
                   >
-                    <Trash2 />
+                    <Trash2 className="h-4 w-4" />
                     削除
                   </DropdownMenuItem>
                 </DropdownMenuContent>

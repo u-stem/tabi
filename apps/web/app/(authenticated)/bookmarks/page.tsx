@@ -1,7 +1,19 @@
 "use client";
 
 import { MAX_BOOKMARK_LISTS_PER_USER, VISIBILITY_LABELS } from "@sugara/shared";
-import { Copy, MoreHorizontal, Plus, SquareMousePointer, Trash2, X } from "lucide-react";
+import {
+  Copy,
+  Globe,
+  ListFilter,
+  Lock,
+  MoreHorizontal,
+  Plus,
+  SquareMousePointer,
+  Trash2,
+  Users,
+  X,
+} from "lucide-react";
+import type React from "react";
 import { useEffect, useMemo } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { BookmarkListCard } from "@/components/bookmark-list-card";
@@ -44,11 +56,15 @@ import { isDialogOpen } from "@/lib/hotkeys";
 import { MSG } from "@/lib/messages";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 
-const visibilityFilters: { value: VisibilityFilter; label: string }[] = [
-  { value: "all", label: "すべて" },
-  { value: "public", label: "公開" },
-  { value: "friends_only", label: VISIBILITY_LABELS.friends_only },
-  { value: "private", label: VISIBILITY_LABELS.private },
+const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.ReactNode }[] = [
+  { value: "all", label: "すべて", icon: <ListFilter className="h-4 w-4" /> },
+  { value: "public", label: "公開", icon: <Globe className="h-4 w-4" /> },
+  {
+    value: "friends_only",
+    label: VISIBILITY_LABELS.friends_only,
+    icon: <Users className="h-4 w-4" />,
+  },
+  { value: "private", label: VISIBILITY_LABELS.private, icon: <Lock className="h-4 w-4" /> },
 ];
 
 export default function BookmarksPage() {
@@ -190,14 +206,14 @@ export default function BookmarksPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={sel.handleBatchDuplicate}>
-                        <Copy />
+                        <Copy className="h-4 w-4" />
                         複製
                       </DropdownMenuItem>
                       <DropdownMenuItem
                         className="text-destructive"
                         onClick={() => sel.setBatchDeleteOpen(true)}
                       >
-                        <Trash2 />
+                        <Trash2 className="h-4 w-4" />
                         削除
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -210,13 +226,16 @@ export default function BookmarksPage() {
                   value={visibilityFilter}
                   onValueChange={(v) => setVisibilityFilter(v as VisibilityFilter)}
                 >
-                  <SelectTrigger className="h-8 w-[100px] text-xs" aria-label="公開状態で絞り込み">
+                  <SelectTrigger className="h-8 w-[130px] text-xs" aria-label="公開状態で絞り込み">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     {visibilityFilters.map((f) => (
                       <SelectItem key={f.value} value={f.value}>
-                        {f.label}
+                        <span className="flex items-center gap-2">
+                          {f.icon}
+                          {f.label}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>

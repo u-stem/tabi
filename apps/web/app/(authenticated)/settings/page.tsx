@@ -1,6 +1,7 @@
 "use client";
 
 import { buildDiceBearUrl, DICEBEAR_STYLES, type DiceBearStyle } from "@sugara/shared";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Bell,
   Download,
@@ -18,7 +19,6 @@ import {
   User,
   X,
 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -141,7 +141,9 @@ export default function SettingsPage({
         ? availableSections[currentSectionIdx - 1]
         : undefined;
 
-  const visibleNavItems = NAV_ITEMS.filter((item) => availableSections.includes(item.id));
+  const visibleNavItems = availableSections
+    .map((id) => NAV_ITEMS.find((item) => item.id === id))
+    .filter((item): item is (typeof NAV_ITEMS)[number] => item !== undefined);
   const gridColsClass = availableSections.length === 3 ? "grid-cols-3" : "grid-cols-4";
 
   function renderSectionContent(s: Section) {

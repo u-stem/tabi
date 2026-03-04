@@ -71,6 +71,23 @@ profileRoutes.get("/:userId/bookmark-lists", optionalAuth, async (c) => {
   });
 });
 
+// Minimal public profile for friend request confirmation
+profileRoutes.get("/:userId/profile", optionalAuth, async (c) => {
+  const viewer = c.get("user");
+  if (!viewer) return c.json({ error: "Unauthorized" }, 401);
+
+  const userId = c.req.param("userId");
+
+  const user = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    columns: { id: true, name: true, image: true },
+  });
+
+  if (!user) return c.json({ error: ERROR_MSG.USER_NOT_FOUND }, 404);
+
+  return c.json({ id: user.id, name: user.name, image: user.image });
+});
+
 // Public: single list with bookmarks (access check by visibility)
 profileRoutes.get("/:userId/bookmark-lists/:listId", optionalAuth, async (c) => {
   const userId = c.req.param("userId");

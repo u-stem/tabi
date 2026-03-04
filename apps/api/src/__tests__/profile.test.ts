@@ -200,6 +200,50 @@ describe("Profile routes", () => {
     });
   });
 
+  // --- GET /api/users/:userId/profile ---
+  describe("GET /api/users/:userId/profile", () => {
+    it("認証済みユーザーがプロフィールを取得できる", async () => {
+      mockDbQuery.users.findFirst.mockResolvedValue({
+        id: ownerId,
+        name: "Alice",
+        image: null,
+      });
+
+      const res = await requestWithSession(`/api/users/${ownerId}/profile`, viewerId);
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body).toEqual({ id: ownerId, name: "Alice", image: null });
+    });
+
+    it("未認証の場合 401 を返す", async () => {
+      const res = await app.request(`/api/users/${ownerId}/profile`);
+
+      expect(res.status).toBe(401);
+    });
+
+    it("存在しないユーザーの場合 404 を返す", async () => {
+      mockDbQuery.users.findFirst.mockResolvedValue(undefined);
+
+      const res = await requestWithSession(`/api/users/${ownerId}/profile`, viewerId);
+
+      expect(res.status).toBe(404);
+    });
+
+    it("レスポンスにメールアドレスが含まれない", async () => {
+      mockDbQuery.users.findFirst.mockResolvedValue({
+        id: ownerId,
+        name: "Alice",
+        image: null,
+      });
+
+      const res = await requestWithSession(`/api/users/${ownerId}/profile`, viewerId);
+      const body = await res.json();
+
+      expect(body).not.toHaveProperty("email");
+    });
+  });
+
   // --- GET /api/users/:userId/bookmark-lists/:listId ---
   describe("GET /api/users/:userId/bookmark-lists/:listId", () => {
     it("returns public list with bookmarks", async () => {

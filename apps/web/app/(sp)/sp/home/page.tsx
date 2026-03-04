@@ -7,6 +7,7 @@ import { TripCard } from "@/components/trip-card";
 import { TripToolbar } from "@/components/trip-toolbar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { pageTitle } from "@/lib/constants";
 import { type HomeTab, useHomeTrips } from "@/lib/hooks/use-home-trips";
@@ -17,12 +18,47 @@ import { cn } from "@/lib/utils";
 
 const HOME_TABS = ["owned", "shared"] as const satisfies readonly HomeTab[];
 
+function SpHomeSkeleton() {
+  return (
+    <>
+      <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
+        <Skeleton className="h-9 rounded-md" />
+        <Skeleton className="h-9 rounded-md" />
+      </div>
+      <div className="mt-4 flex flex-col gap-2">
+        <Skeleton className="h-8 w-full" />
+        <div className="flex gap-2">
+          <Skeleton className="h-8 flex-1" />
+          <Skeleton className="h-8 flex-1" />
+          <Skeleton className="h-8 flex-1" />
+        </div>
+      </div>
+      <div className="mt-4 grid gap-4">
+        {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
+          <div key={key} className="rounded-lg border bg-card shadow-sm">
+            <div className="flex flex-col space-y-1.5 p-6">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <div className="p-6 pt-0">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="mt-1 h-3 w-20" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export default function SpHomePage() {
   const {
     ownedTrips,
     sharedTrips,
     isLoading,
-    showSkeleton,
     error,
     tab,
     setTab,
@@ -91,11 +127,8 @@ export default function SpHomePage() {
     onSwipeComplete: handleSwipe,
     canSwipePrev: currentTabIdx > 0,
     canSwipeNext: currentTabIdx < HOME_TABS.length - 1,
-    // isLoading is included so the effect re-runs when data loads fast enough
-    // that showSkeleton stays false — in that case enabled would never flip
-    // false→true and the container ref (null during the loading placeholder)
-    // would never be re-checked.
-    enabled: !isLoading && !showSkeleton && !error,
+    // isLoading is included so the effect re-runs when data loads
+    enabled: !isLoading && !error,
   });
 
   const adjacentTab =
@@ -142,56 +175,28 @@ export default function SpHomePage() {
     );
   }
 
-  // Avoid flashing empty state during the 200ms skeleton delay
-  if (isLoading && !showSkeleton) return <div />;
-
   const tabs = [
     { value: "owned", label: "自分の旅行" },
     { value: "shared", label: "共有された旅行" },
   ] as const;
 
+  const errorFallback = error ? (
+    <div className="mt-8 text-center">
+      <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+      <Button variant="outline" size="sm" className="mt-4" onClick={() => invalidateAll()}>
+        再試行
+      </Button>
+    </div>
+  ) : undefined;
+
   return (
     <>
-      {showSkeleton ? (
-        <>
-          <div className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
-            <Skeleton className="h-9 rounded-md" />
-            <Skeleton className="h-9 rounded-md" />
-          </div>
-          <div className="mt-4 flex flex-col gap-2">
-            <Skeleton className="h-8 w-full" />
-            <div className="flex gap-2">
-              <Skeleton className="h-8 flex-1" />
-              <Skeleton className="h-8 flex-1" />
-              <Skeleton className="h-8 flex-1" />
-            </div>
-          </div>
-          <div className="mt-4 grid gap-4">
-            {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
-              <div key={key} className="rounded-lg border bg-card shadow-sm">
-                <div className="flex flex-col space-y-1.5 p-6">
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-5 w-32" />
-                    <Skeleton className="h-5 w-16 rounded-full" />
-                  </div>
-                  <Skeleton className="h-4 w-24" />
-                </div>
-                <div className="p-6 pt-0">
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="mt-1 h-3 w-20" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      ) : error ? (
-        <div className="mt-8 text-center">
-          <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => invalidateAll()}>
-            再試行
-          </Button>
-        </div>
-      ) : (
+      <LoadingBoundary
+        isLoading={isLoading}
+        skeleton={<SpHomeSkeleton />}
+        error={error}
+        errorFallback={errorFallback}
+      >
         <>
           {/* Tab bar */}
           <div
@@ -279,7 +284,7 @@ export default function SpHomePage() {
             </div>
           </div>
         </>
-      )}
+      </LoadingBoundary>
       <CreateTripDialog
         open={createTripOpen}
         onOpenChange={setCreateTripOpen}

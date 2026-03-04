@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import type { SortKey, StatusFilter } from "@/components/trip-toolbar";
 import { api } from "@/lib/api";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -15,7 +14,6 @@ export type UseHomeTripsReturn = {
   ownedTrips: TripListItem[];
   sharedTrips: TripListItem[];
   isLoading: boolean;
-  showSkeleton: boolean;
   error: Error | null;
   tab: HomeTab;
   setTab: (tab: HomeTab) => void;
@@ -68,7 +66,6 @@ export function useHomeTrips(): UseHomeTripsReturn {
 
   const isLoading = ownedLoading || sharedLoading;
   const error = ownedError || sharedError;
-  const showSkeleton = useDelayedLoading(isLoading);
 
   const [tab, setTab] = useState<HomeTab>("owned");
   const [search, setSearch] = useState("");
@@ -216,7 +213,6 @@ export function useHomeTrips(): UseHomeTripsReturn {
     ownedTrips,
     sharedTrips,
     isLoading,
-    showSkeleton,
     error,
     tab,
     setTab,

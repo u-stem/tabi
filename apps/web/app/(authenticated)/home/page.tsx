@@ -11,6 +11,7 @@ import { TripCard } from "@/components/trip-card";
 import { TripToolbar } from "@/components/trip-toolbar";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { pageTitle } from "@/lib/constants";
@@ -21,11 +22,46 @@ import { MSG } from "@/lib/messages";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
 
+function HomeSkeleton() {
+  return (
+    <>
+      {/* Tab pills */}
+      <div className="mt-4 flex gap-1.5">
+        <Skeleton className="h-8 w-24 rounded-full" />
+        <Skeleton className="h-8 w-28 rounded-full" />
+      </div>
+      {/* TripToolbar */}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <Skeleton className="h-8 w-full sm:w-40 sm:flex-none" />
+        <Skeleton className="h-8 flex-1 sm:w-[120px] sm:flex-none" />
+        <Skeleton className="h-8 flex-1 sm:w-20 sm:flex-none" />
+        <Skeleton className="h-8 w-16 sm:ml-auto" />
+      </div>
+      <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
+          <div key={key} className="rounded-lg border bg-card shadow-sm">
+            <div className="flex flex-col space-y-1.5 p-6">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <div className="p-6 pt-0">
+              <Skeleton className="h-4 w-40" />
+              <Skeleton className="mt-1 h-3 w-20" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export default function HomePage() {
   const {
     ownedTrips,
     isLoading,
-    showSkeleton,
     error,
     tab,
     setTab,
@@ -99,9 +135,6 @@ export default function HomePage() {
     setSelectionMode(false);
   }
 
-  // Avoid flashing empty state during the 200ms skeleton delay
-  if (isLoading && !showSkeleton) return <div />;
-
   const newTripButton = (
     <Tooltip>
       <TooltipTrigger asChild>
@@ -123,48 +156,23 @@ export default function HomePage() {
     { value: "shared", label: "共有された旅行" },
   ] as const;
 
+  const errorFallback = error ? (
+    <div className="mt-8 text-center">
+      <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+      <Button variant="outline" size="sm" className="mt-4" onClick={() => invalidateAll()}>
+        再試行
+      </Button>
+    </div>
+  ) : undefined;
+
   return (
     <>
-      {showSkeleton ? (
-        <>
-          {/* Tab pills */}
-          <div className="mt-4 flex gap-1.5">
-            <Skeleton className="h-8 w-24 rounded-full" />
-            <Skeleton className="h-8 w-28 rounded-full" />
-          </div>
-          {/* TripToolbar */}
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Skeleton className="h-8 w-full sm:w-40 sm:flex-none" />
-            <Skeleton className="h-8 flex-1 sm:w-[120px] sm:flex-none" />
-            <Skeleton className="h-8 flex-1 sm:w-20 sm:flex-none" />
-            <Skeleton className="h-8 w-16 sm:ml-auto" />
-          </div>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
-              <div key={key} className="rounded-lg border bg-card shadow-sm">
-                <div className="flex flex-col space-y-1.5 p-6">
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-5 w-32" />
-                    <Skeleton className="h-5 w-16 rounded-full" />
-                  </div>
-                  <Skeleton className="h-4 w-24" />
-                </div>
-                <div className="p-6 pt-0">
-                  <Skeleton className="h-4 w-40" />
-                  <Skeleton className="mt-1 h-3 w-20" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      ) : error ? (
-        <div className="mt-8 text-center">
-          <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
-          <Button variant="outline" size="sm" className="mt-4" onClick={() => invalidateAll()}>
-            再試行
-          </Button>
-        </div>
-      ) : (
+      <LoadingBoundary
+        isLoading={isLoading}
+        skeleton={<HomeSkeleton />}
+        error={error}
+        errorFallback={errorFallback}
+      >
         <>
           <div className="mt-4 flex gap-1.5">
             {tabs.map(({ value, label }) => (
@@ -230,7 +238,7 @@ export default function HomePage() {
             </div>
           )}
         </>
-      )}
+      </LoadingBoundary>
       <CreateTripDialog
         open={createTripOpen}
         onOpenChange={setCreateTripOpen}

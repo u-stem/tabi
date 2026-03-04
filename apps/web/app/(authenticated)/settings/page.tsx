@@ -259,6 +259,7 @@ export function ProfileSection({
   const avatarChanged = selectedSeed !== null;
   const nameChanged = name.trim() !== defaultName;
   const dirty = avatarChanged || nameChanged;
+  const previewImage = selectedSeed ? buildDiceBearUrl(style, selectedSeed) : currentImage;
 
   const shuffle = useCallback(() => {
     setSeeds(generateSeeds(CANDIDATE_COUNT));
@@ -315,9 +316,13 @@ export function ProfileSection({
       {/* Avatar */}
       <div className="space-y-4">
         <div className="flex items-center gap-4">
-          <UserAvatar name={defaultName} image={currentImage} className="h-16 w-16" />
+          <UserAvatar name={defaultName} image={previewImage} className="h-16 w-16" />
           <div className="text-sm text-muted-foreground">
-            {currentImage ? "カスタムアバターを設定中" : "デフォルト（イニシャル）"}
+            {selectedSeed
+              ? "新しいアバターをプレビュー中"
+              : currentImage
+                ? "カスタムアバターを設定中"
+                : "デフォルト（イニシャル）"}
           </div>
         </div>
 
@@ -405,29 +410,23 @@ export function ProfileSection({
         </div>
       )}
 
-      <div className="flex justify-end gap-2">
+      <div className="flex gap-2">
+        {currentImage && (
+          <Button
+            type="button"
+            variant="outline"
+            className="flex-1"
+            disabled={loading}
+            onClick={handleReset}
+          >
+            <RotateCcw className="h-4 w-4" />
+            アバターをリセット
+          </Button>
+        )}
         <Tooltip>
           <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <Button
-                type="button"
-                variant="outline"
-                disabled={loading || !currentImage}
-                onClick={handleReset}
-              >
-                <RotateCcw className="h-4 w-4" />
-                アバターをリセット
-              </Button>
-            </span>
-          </TooltipTrigger>
-          {!currentImage && !loading && (
-            <TooltipContent>カスタムアバターが設定されていません</TooltipContent>
-          )}
-        </Tooltip>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className="inline-flex">
-              <Button type="submit" disabled={loading || !dirty}>
+            <span className="inline-flex flex-1">
+              <Button type="submit" className="w-full" disabled={loading || !dirty}>
                 <Save className="h-4 w-4" />
                 {loading ? "保存中..." : "保存"}
               </Button>

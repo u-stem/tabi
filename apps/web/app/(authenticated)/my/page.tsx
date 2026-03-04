@@ -58,7 +58,7 @@ export default function MyPage() {
             <button
               type="button"
               onClick={handleCopyId}
-              className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="mt-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
               aria-label="ユーザーIDをコピー"
             >
               <span>ユーザーID:</span>

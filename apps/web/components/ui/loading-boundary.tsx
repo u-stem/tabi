@@ -29,7 +29,7 @@ export function LoadingBoundary({
 
   if (isLoading && !showSkeleton) return null;
   if (showSkeleton) return <>{skeleton}</>;
-  if (error) return errorFallback ? <>{errorFallback}</> : null;
+  if (error) return errorFallback ?? null;
 
   return <div className={cn("animate-in fade-in duration-150", className)}>{children}</div>;
 }

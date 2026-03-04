@@ -64,6 +64,7 @@ export default function MyPage() {
               className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
               aria-label="ユーザーIDをコピー"
             >
+              <span>ID:</span>
               <code className="font-mono">{userId.slice(0, 8)}...</code>
               {idCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
             </button>

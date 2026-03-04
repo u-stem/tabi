@@ -46,7 +46,7 @@ export default function MyPage() {
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-4">
       {/* Profile header */}
-      <div className="flex flex-col items-center gap-5 py-6">
+      <div className="flex flex-col items-center gap-3 py-4">
         <UserAvatar
           name={user?.name ?? ""}
           image={user?.image}
@@ -59,23 +59,25 @@ export default function MyPage() {
             <button
               type="button"
               onClick={handleCopyId}
-              className="mt-2 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="mt-1 mx-auto flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               aria-label="ユーザーIDをコピー"
             >
               <span>ユーザーID:</span>
               <code className="font-mono">{userId.slice(0, 8)}...</code>
-              {idCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+              {idCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             </button>
           )}
         </div>
-        <Link
-          href="/my/edit"
-          className="inline-flex h-8 items-center gap-1.5 rounded-full border px-4 text-sm hover:bg-accent"
-        >
-          <Pencil className="h-3 w-3" />
-          プロフィールを編集
-        </Link>
-        {userId && <MyQrDialog userId={userId} />}
+        <div className="flex items-center gap-2">
+          <Link
+            href="/my/edit"
+            className="inline-flex h-8 items-center gap-1.5 rounded-full border px-4 text-sm hover:bg-accent"
+          >
+            <Pencil className="h-3 w-3" />
+            プロフィールを編集
+          </Link>
+          {userId && <MyQrDialog userId={userId} />}
+        </div>
       </div>
 
       {/* Bookmark lists */}

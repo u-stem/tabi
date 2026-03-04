@@ -26,7 +26,7 @@ export function MyQrDialog({ userId }: MyQrDialogProps) {
   return (
     <ResponsiveDialog>
       <ResponsiveDialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5">
+        <Button variant="outline" size="sm" className="gap-1.5 rounded-full">
           <QrCode className="h-3.5 w-3.5" />
           QRコード
         </Button>

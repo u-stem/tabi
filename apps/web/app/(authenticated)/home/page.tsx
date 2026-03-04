@@ -132,12 +132,12 @@ export default function HomePage() {
             <Skeleton className="h-8 w-24 rounded-full" />
             <Skeleton className="h-8 w-28 rounded-full" />
           </div>
-          {/* TripToolbar (desktop: single row) */}
-          <div className="mt-4 flex items-center gap-2">
-            <Skeleton className="h-8 w-40" />
-            <Skeleton className="h-8 w-[120px]" />
-            <Skeleton className="h-8 w-20" />
-            <Skeleton className="ml-auto h-8 w-16" />
+          {/* TripToolbar */}
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Skeleton className="h-8 w-full sm:w-40 sm:flex-none" />
+            <Skeleton className="h-8 flex-1 sm:w-[120px] sm:flex-none" />
+            <Skeleton className="h-8 flex-1 sm:w-20 sm:flex-none" />
+            <Skeleton className="h-8 w-16 sm:ml-auto" />
           </div>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (

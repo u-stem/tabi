@@ -315,7 +315,8 @@ export function TripToolbar({
   }
 
   return (
-    <div role="toolbar" aria-label="旅行フィルター" className="flex items-center gap-2">
+    <div role="toolbar" aria-label="旅行フィルター" className="flex flex-wrap items-center gap-2">
+      {/* Takes full row on narrow viewports, fixed width on sm+ */}
       <Input
         ref={searchInputRef}
         id="trips-search"
@@ -325,11 +326,11 @@ export function TripToolbar({
         aria-label="旅行を検索"
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
-        className="h-8 min-w-0 flex-1 sm:w-40 sm:flex-none"
+        className="h-8 w-full min-w-0 sm:w-40 sm:flex-none"
       />
       {!hideStatusFilter && (
         <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>
-          <SelectTrigger className="h-8 w-[120px] text-xs" aria-label="ステータスで絞り込み">
+          <SelectTrigger className="h-8 flex-1 text-xs sm:w-[120px] sm:flex-none" aria-label="ステータスで絞り込み">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -349,14 +350,14 @@ export function TripToolbar({
           type="button"
           aria-label="並び替え"
           onClick={() => onSortKeyChange(sortKey === "updatedAt" ? "startDate" : "updatedAt")}
-          className="flex h-8 shrink-0 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
+          className="flex h-8 flex-1 items-center justify-center gap-1 rounded-md border bg-background px-2.5 text-xs sm:flex-none"
         >
           {sortOptions.find((s) => s.value === sortKey)?.icon}
           {currentSortLabel}
         </button>
       )}
       {onSelectionModeChange && (
-        <div className="ml-auto shrink-0">
+        <div className="shrink-0 sm:ml-auto">
           <Button
             variant="outline"
             size="sm"

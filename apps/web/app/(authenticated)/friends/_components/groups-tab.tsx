@@ -45,10 +45,20 @@ import { cn } from "@/lib/utils";
 import { CreateGroupDialog } from "./create-group-dialog";
 import { GroupMembersDialog } from "./group-detail-dialog";
 
-export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
+export function GroupsTab({
+  groups,
+  createOpen: externalCreateOpen,
+  onCreateOpenChange,
+}: {
+  groups: GroupResponse[];
+  createOpen?: boolean;
+  onCreateOpenChange?: (v: boolean) => void;
+}) {
   const queryClient = useQueryClient();
   const isMobile = useMobile();
-  const [createOpen, setCreateOpen] = useState(false);
+  const [internalCreateOpen, setInternalCreateOpen] = useState(false);
+  const createOpen = externalCreateOpen ?? internalCreateOpen;
+  const setCreateOpen = onCreateOpenChange ?? setInternalCreateOpen;
   const [membersGroupId, setMembersGroupId] = useState<string | null>(null);
   const [editGroup, setEditGroup] = useState<GroupResponse | null>(null);
   const [editName, setEditName] = useState("");
@@ -139,15 +149,15 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
   return (
     <div className="space-y-4">
       <Card className="border-0 shadow-none sm:border sm:shadow-sm">
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle>グループ</CardTitle>
-          {!isMobile && (
+        {!isMobile && (
+          <CardHeader className="flex-row items-center justify-between space-y-0">
+            <CardTitle>グループ</CardTitle>
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               <Plus className="mr-1 h-4 w-4" />
               新規作成
             </Button>
-          )}
-        </CardHeader>
+          </CardHeader>
+        )}
         <CardContent>
           {groups.length === 0 ? (
             <p className="text-sm text-muted-foreground">{MSG.EMPTY_GROUP}</p>
@@ -287,7 +297,10 @@ export function GroupsTab({ groups }: { groups: GroupResponse[] }) {
         actions={sheetActions}
       />
 
-      <Fab onClick={() => setCreateOpen(true)} label="グループを作成" hidden={!isMobile} />
+      {/* Only show internal FAB when page doesn't control the state externally */}
+      {!onCreateOpenChange && (
+        <Fab onClick={() => setCreateOpen(true)} label="グループを作成" hidden={!isMobile} />
+      )}
     </div>
   );
 }

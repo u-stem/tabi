@@ -88,9 +88,11 @@ function FriendListSection({
   return (
     <>
       <Card className="border-0 shadow-none sm:border sm:shadow-sm">
-        <CardHeader>
-          <CardTitle>フレンド一覧</CardTitle>
-        </CardHeader>
+        {!isMobile && (
+          <CardHeader>
+            <CardTitle>フレンド一覧</CardTitle>
+          </CardHeader>
+        )}
         <CardContent>
           {friends.length === 0 ? (
             <p className="text-sm text-muted-foreground">{MSG.EMPTY_FRIEND}</p>

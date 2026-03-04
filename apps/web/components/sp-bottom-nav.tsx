@@ -6,7 +6,6 @@ import { Bell, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { SpUserMenuSheet } from "@/components/sp-user-menu-sheet";
 import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
@@ -20,7 +19,6 @@ export function SpBottomNav() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
   const navHidden = useScrollDirection();
 
   useEffect(() => setMounted(true), []);
@@ -52,79 +50,78 @@ export function SpBottomNav() {
   );
 
   return (
-    <>
-      <nav
-        aria-label="ボトムナビゲーション"
-        className={cn(
-          "fixed inset-x-0 bottom-0 z-40 select-none border-t bg-background print:hidden transition-transform duration-300",
-          navHidden && "translate-y-full",
-        )}
-        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      >
-        <div className="flex h-16 items-stretch">
-          {visibleLinks.map((link) => {
-            const active = pathname === link.href;
-            return (
-              <Link
-                key={link.href}
-                href={link.href}
-                className={cn(
-                  "relative flex flex-1 flex-col items-center justify-center gap-1 transition-[colors,transform] active:bg-accent active:scale-[0.90]",
-                  active ? "font-medium text-primary" : "text-muted-foreground",
-                )}
-              >
-                <link.icon className="h-6 w-6" />
-                <span className="text-[10px] leading-none">{link.label}</span>
-                {link.href === friendHref && friendRequestCount > 0 && (
-                  <span className="absolute top-2 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
-                    {friendRequestCount}
-                  </span>
-                )}
-              </Link>
-            );
-          })}
-          {/* Notification tab: shown only for authenticated non-guest users */}
-          {mounted && session?.user && !isGuest && (
+    <nav
+      aria-label="ボトムナビゲーション"
+      className={cn(
+        "fixed inset-x-0 bottom-0 z-40 select-none border-t bg-background print:hidden transition-transform duration-300",
+        navHidden && "translate-y-full",
+      )}
+      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+    >
+      <div className="flex h-16 items-stretch">
+        {visibleLinks.map((link) => {
+          const active = pathname === link.href;
+          return (
             <Link
-              href="/sp/notifications"
+              key={link.href}
+              href={link.href}
               className={cn(
                 "relative flex flex-1 flex-col items-center justify-center gap-1 transition-[colors,transform] active:bg-accent active:scale-[0.90]",
-                pathname === "/sp/notifications"
-                  ? "font-medium text-primary"
-                  : "text-muted-foreground",
+                active ? "font-medium text-primary" : "text-muted-foreground",
               )}
-              aria-label="通知"
             >
-              <Bell className="h-6 w-6" />
-              <span className="text-[10px] leading-none">通知</span>
-              {unreadCount > 0 && (
+              <link.icon className="h-6 w-6" />
+              <span className="text-[10px] leading-none">{link.label}</span>
+              {link.href === friendHref && friendRequestCount > 0 && (
                 <span className="absolute top-2 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
-                  {unreadCount > 9 ? "9+" : unreadCount}
+                  {friendRequestCount}
                 </span>
               )}
             </Link>
-          )}
-          {/* Account tab: always rendered to keep layout stable, content conditional on session */}
-          <button
-            type="button"
-            onClick={() => setMenuOpen(true)}
-            className="flex flex-1 flex-col items-center justify-center gap-1 text-muted-foreground transition-[colors,transform] active:bg-accent active:scale-[0.90]"
-            aria-label="ユーザーメニュー"
-          >
-            {mounted && session?.user ? (
-              <UserAvatar
-                name={session.user.name ?? ""}
-                image={session.user.image}
-                className="h-6 w-6"
-              />
-            ) : (
-              <User className="h-6 w-6" />
+          );
+        })}
+        {/* Notification tab: shown only for authenticated non-guest users */}
+        {mounted && session?.user && !isGuest && (
+          <Link
+            href="/sp/notifications"
+            className={cn(
+              "relative flex flex-1 flex-col items-center justify-center gap-1 transition-[colors,transform] active:bg-accent active:scale-[0.90]",
+              pathname === "/sp/notifications"
+                ? "font-medium text-primary"
+                : "text-muted-foreground",
             )}
-            <span className="text-[10px] leading-none">マイページ</span>
-          </button>
-        </div>
-      </nav>
-      <SpUserMenuSheet open={menuOpen} onOpenChange={setMenuOpen} />
-    </>
+            aria-label="通知"
+          >
+            <Bell className="h-6 w-6" />
+            <span className="text-[10px] leading-none">通知</span>
+            {unreadCount > 0 && (
+              <span className="absolute top-2 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
+                {unreadCount > 9 ? "9+" : unreadCount}
+              </span>
+            )}
+          </Link>
+        )}
+        {/* Account tab: always rendered to keep layout stable, content conditional on session */}
+        <Link
+          href="/sp/my"
+          className={cn(
+            "flex flex-1 flex-col items-center justify-center gap-1 transition-[colors,transform] active:bg-accent active:scale-[0.90]",
+            pathname === "/sp/my" ? "font-medium text-primary" : "text-muted-foreground",
+          )}
+          aria-label="プロフィール"
+        >
+          {mounted && session?.user ? (
+            <UserAvatar
+              name={session.user.name ?? ""}
+              image={session.user.image}
+              className="h-6 w-6"
+            />
+          ) : (
+            <User className="h-6 w-6" />
+          )}
+          <span className="text-[10px] leading-none">プロフィール</span>
+        </Link>
+      </div>
+    </nav>
   );
 }

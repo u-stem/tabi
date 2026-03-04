@@ -22,9 +22,6 @@ export const SP_ROUTES = [
   "/my",
 ] as const;
 
-/** SP-only routes that have no desktop counterpart. */
-const SP_ONLY_PATHS = ["/sp/my"] as const;
-
 /** Path prefix for all SP pages. */
 export const SP_PREFIX = "/sp";
 
@@ -64,10 +61,7 @@ export async function switchViewMode(mode: ViewMode): Promise<void> {
   } else {
     // Currently on SP → navigate to desktop
     if (pathname.startsWith(SP_PREFIX)) {
-      const isSpOnly = SP_ONLY_PATHS.some(
-        (p) => pathname === p || pathname.startsWith(`${p}/`),
-      );
-      const desktopPath = isSpOnly ? "/home" : pathname.slice(SP_PREFIX.length) || "/home";
+      const desktopPath = pathname.slice(SP_PREFIX.length) || "/home";
       window.location.href = `${desktopPath}${search}${hash}`;
     }
   }

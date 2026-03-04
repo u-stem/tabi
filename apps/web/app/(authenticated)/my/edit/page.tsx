@@ -1,0 +1,31 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { ProfileSection } from "@/app/(authenticated)/settings/page";
+import { useSession } from "@/lib/auth-client";
+import { pageTitle } from "@/lib/constants";
+
+export default function MyEditPage() {
+  const router = useRouter();
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    document.title = pageTitle("プロフィールを編集");
+  }, []);
+
+  const user = session?.user;
+
+  return (
+    <div className="mt-4 mx-auto max-w-2xl">
+      {user && (
+        <ProfileSection
+          name={user.name ?? ""}
+          currentImage={user.image ?? null}
+          onSuccess={() => router.push("/my")}
+          noCard
+        />
+      )}
+    </div>
+  );
+}

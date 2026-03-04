@@ -1,14 +1,13 @@
 "use client";
 
-import { Monitor, Moon, Settings, Sun } from "lucide-react";
+import { Monitor, Settings } from "lucide-react";
 import Link from "next/link";
-import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 import { AnnouncementBanner } from "@/components/announcement-banner";
 import { GuestBanner } from "@/components/guest-banner";
 import { InstallBanner } from "@/components/install-banner";
 import { Logo } from "@/components/logo";
 import { OfflineBanner } from "@/components/offline-banner";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { switchViewMode } from "@/lib/view-mode";
 
 /**
@@ -16,13 +15,6 @@ import { switchViewMode } from "@/lib/view-mode";
  * Navigation is handled by SpBottomNav (including notification and account menu).
  */
 export function SpHeader() {
-  const { resolvedTheme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
-
-  const isDark = resolvedTheme === "dark";
-
   return (
     <header className="sticky top-0 z-30 select-none border-b bg-background">
       <AnnouncementBanner />
@@ -40,16 +32,7 @@ export function SpHeader() {
           >
             <Monitor className="h-5 w-5" />
           </button>
-          {mounted && (
-            <button
-              type="button"
-              aria-label={isDark ? "ライトモードに切り替え" : "ダークモードに切り替え"}
-              onClick={() => setTheme(isDark ? "light" : "dark")}
-              className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent"
-            >
-              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            </button>
-          )}
+          <ThemeToggle />
           <Link
             href="/sp/settings"
             aria-label="設定"

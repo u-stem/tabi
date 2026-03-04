@@ -7,6 +7,7 @@ import {
   Download,
   FileText,
   HelpCircle,
+  Keyboard,
   LogOut,
   MessageSquare,
   MoreHorizontal,
@@ -16,7 +17,6 @@ import {
   Save,
   Settings2,
   Shield,
-  User,
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -62,25 +62,20 @@ import { isGuestUser } from "@/lib/guest";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { MSG } from "@/lib/messages";
+import { useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
 
 const FeedbackDialog = dynamic(() =>
   import("@/components/feedback-dialog").then((mod) => mod.FeedbackDialog),
 );
 
-type Section = "profile" | "notifications" | "account" | "other";
+type Section = "notifications" | "account" | "other";
 
-const SECTIONS = [
-  "profile",
-  "notifications",
-  "account",
-  "other",
-] as const satisfies readonly Section[];
+const SECTIONS = ["account", "notifications", "other"] as const satisfies readonly Section[];
 
 const NAV_ITEMS: { id: Section; label: string; Icon: React.ElementType }[] = [
-  { id: "profile", label: "プロフィール", Icon: User },
-  { id: "notifications", label: "通知", Icon: Bell },
   { id: "account", label: "アカウント", Icon: Settings2 },
+  { id: "notifications", label: "通知", Icon: Bell },
   { id: "other", label: "その他", Icon: MoreHorizontal },
 ];
 
@@ -144,13 +139,10 @@ export default function SettingsPage({
   const visibleNavItems = availableSections
     .map((id) => NAV_ITEMS.find((item) => item.id === id))
     .filter((item): item is (typeof NAV_ITEMS)[number] => item !== undefined);
-  const gridColsClass = availableSections.length === 3 ? "grid-cols-3" : "grid-cols-4";
+  const gridColsClass = "grid-cols-3";
 
   function renderSectionContent(s: Section) {
     switch (s) {
-      case "profile":
-        if (!user) return null;
-        return <ProfileSection name={user.name ?? ""} currentImage={user.image ?? null} />;
       case "notifications":
         return <NotificationPreferencesSection />;
       case "account":
@@ -852,6 +844,7 @@ function DeleteAccountSection({ username }: { username: string }) {
 function OtherSection() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { canInstall, promptInstall } = useInstallPrompt();
+  const { open: openShortcutHelp } = useShortcutHelp();
 
   return (
     <>
@@ -866,6 +859,17 @@ function OtherSection() {
             アプリをインストール
           </button>
         )}
+        <button
+          type="button"
+          onClick={openShortcutHelp}
+          className="flex h-12 w-full items-center gap-3 px-4 hover:bg-accent"
+        >
+          <Keyboard className="h-4 w-4" />
+          キーボードショートカット
+          <kbd className="ml-auto rounded border bg-muted px-1.5 font-mono text-[10px] text-muted-foreground">
+            ?
+          </kbd>
+        </button>
         <a
           href="/faq"
           target="_blank"

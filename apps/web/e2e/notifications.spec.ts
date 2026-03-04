@@ -12,7 +12,7 @@ test.describe("Notifications", () => {
       name: "Notif User",
     });
 
-    await memberPage.goto("/friends");
+    await memberPage.goto("/my");
     const memberId = await memberPage.locator('[data-testid="user-id"]').textContent();
     expect(memberId).toBeTruthy();
 
@@ -46,7 +46,7 @@ test.describe("Notifications", () => {
       name: "Notif User 2",
     });
 
-    await memberPage.goto("/friends");
+    await memberPage.goto("/my");
     const memberId = await memberPage.locator('[data-testid="user-id"]').textContent();
     expect(memberId).toBeTruthy();
 
@@ -64,7 +64,7 @@ test.describe("Notifications", () => {
     // Member opens notification dropdown and marks all as read
     await memberPage.reload();
     await memberPage.locator("button:has(.lucide-bell)").click();
-    await expect(memberPage.getByText("通知")).toBeVisible();
+    await expect(memberPage.getByText("すべて既読")).toBeVisible({ timeout: 5000 });
 
     await memberPage.getByText("すべて既読").click();
 

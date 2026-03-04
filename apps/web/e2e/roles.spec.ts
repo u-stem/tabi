@@ -13,7 +13,7 @@ async function setupViewerMember(
     name: "Viewer User",
   });
 
-  await memberPage.goto("/friends");
+  await memberPage.goto("/my");
   const memberId = await memberPage.locator('[data-testid="user-id"]').textContent();
 
   await createTripViaUI(page, { title: tripTitle, destination: "Tokyo" });
@@ -129,7 +129,7 @@ test.describe("Roles and Permissions", () => {
       name: "Viewer Reactor",
     });
 
-    await memberPage.goto("/friends");
+    await memberPage.goto("/my");
     const memberId = await memberPage.locator('[data-testid="user-id"]').textContent();
 
     await page.getByRole("button", { name: "メンバー" }).click();
@@ -176,7 +176,7 @@ test.describe("Roles and Permissions", () => {
       name: "Editor User",
     });
 
-    await editorPage.goto("/friends");
+    await editorPage.goto("/my");
     const editorId = await editorPage.locator('[data-testid="user-id"]').textContent();
 
     await createTripViaUI(page, { title: "Owner Edit Test", destination: "Kobe" });

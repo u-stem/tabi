@@ -16,9 +16,10 @@ test.describe("Authentication", () => {
     await page.getByRole("button", { name: "新規登録" }).click();
     await expect(page).toHaveURL(/\/home/, { timeout: 10000 });
 
-    // Log out via header dropdown (button text is "X ユーザーメニュー")
-    await page.getByRole("button", { name: /ユーザーメニュー/ }).click();
-    await page.getByRole("menuitem", { name: "ログアウト" }).click();
+    // Log out via settings page
+    await page.goto("/settings");
+    await page.getByRole("button", { name: "ログアウト" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "ログアウト" }).click();
     await expect(page).toHaveURL("/", { timeout: 10000 });
 
     // Log in

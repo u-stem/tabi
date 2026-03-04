@@ -2,9 +2,7 @@ import { expect, test } from "./fixtures/auth";
 
 test.describe("Settings", () => {
   test("displays user ID", async ({ authenticatedPage: page }) => {
-    // User ID is displayed on the friends page, not settings
-    await page.goto("/friends");
-    await expect(page.getByText("あなたのユーザーID")).toBeVisible();
+    await page.goto("/my");
     const userId = await page.locator('[data-testid="user-id"]').textContent();
     expect(userId).toBeTruthy();
     // UUID format
@@ -12,8 +10,7 @@ test.describe("Settings", () => {
   });
 
   test("updates display name", async ({ authenticatedPage: page }) => {
-    await page.goto("/settings");
-    await expect(page.getByText("プロフィール", { exact: true })).toBeVisible();
+    await page.goto("/my/edit");
 
     const nameInput = page.locator("#name");
     await nameInput.fill("Updated Name");

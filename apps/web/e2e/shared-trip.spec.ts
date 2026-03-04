@@ -76,8 +76,8 @@ test.describe("Shared Trip", () => {
       name: "Shared List User",
     });
 
-    // Get member's user ID from friends page
-    await memberPage.goto("/friends");
+    // Get member's user ID from my page
+    await memberPage.goto("/my");
     const memberId = await memberPage.locator('[data-testid="user-id"]').textContent();
     expect(memberId).toBeTruthy();
 

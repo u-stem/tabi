@@ -75,7 +75,7 @@ test.describe("Delete Account", () => {
     await signupUser(pageB, { username: userB, name: "User B" });
 
     // Get User A's ID
-    await pageA.goto("/friends");
+    await pageA.goto("/my");
     const userAId = await pageA.locator('[data-testid="user-id"]').textContent();
     expect(userAId).toBeTruthy();
 
@@ -120,12 +120,12 @@ test.describe("Delete Account", () => {
     await signupUser(pageB, { username: userB, name: "User B" });
 
     // Get User B's ID
-    await pageB.goto("/friends");
+    await pageB.goto("/my");
     const userBId = await pageB.locator('[data-testid="user-id"]').textContent();
     expect(userBId).toBeTruthy();
 
     // Get User A's ID
-    await pageA.goto("/friends");
+    await pageA.goto("/my");
     const userAId = await pageA.locator('[data-testid="user-id"]').textContent();
     expect(userAId).toBeTruthy();
 

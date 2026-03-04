@@ -1,15 +1,17 @@
 import { expect, test } from "./fixtures/auth";
 
 test.describe("Mobile layout", () => {
-  test("BottomNav is visible with 3 nav links", async ({ authenticatedPage: page }) => {
+  test("BottomNav is visible with 5 nav links", async ({ authenticatedPage: page }) => {
     const bottomNav = page.locator("nav[aria-label='ボトムナビゲーション']");
     await expect(bottomNav).toBeVisible();
 
     const links = bottomNav.getByRole("link");
-    await expect(links).toHaveCount(3);
+    await expect(links).toHaveCount(5);
     await expect(bottomNav.getByRole("link", { name: "ホーム" })).toBeVisible();
     await expect(bottomNav.getByRole("link", { name: "ブックマーク" })).toBeVisible();
     await expect(bottomNav.getByRole("link", { name: "フレンド" })).toBeVisible();
+    await expect(bottomNav.getByRole("link", { name: "通知" })).toBeVisible();
+    await expect(bottomNav.getByRole("link", { name: "プロフィール" })).toBeVisible();
   });
 
   test("BottomNav links navigate to correct pages", async ({ authenticatedPage: page }) => {
@@ -30,26 +32,18 @@ test.describe("Mobile layout", () => {
     await expect(headerNav.getByRole("link", { name: "フレンド" })).toBeHidden();
   });
 
-  test("Mobile Sheet menu opens with settings and logout", async ({
-    authenticatedPage: page,
-  }) => {
-    // Mobile menu button (sm:hidden variant)
-    const menuButton = page.locator("header").getByRole("button", { name: "ユーザーメニュー" });
-    await menuButton.click();
-
-    const mobileMenu = page.locator("nav[aria-label='モバイルメニュー']");
-    await expect(mobileMenu).toBeVisible();
-    await expect(mobileMenu.getByRole("link", { name: "設定" })).toBeVisible();
-    await expect(mobileMenu.getByRole("button", { name: "ログアウト" })).toBeVisible();
+  test("SP header shows settings link", async ({ authenticatedPage: page }) => {
+    const settingsLink = page.locator("header").getByRole("link", { name: "設定" });
+    await expect(settingsLink).toBeVisible();
+    await settingsLink.click();
+    await expect(page).toHaveURL(/\/settings/);
+    await expect(page.getByRole("button", { name: "ログアウト" })).toBeVisible();
   });
 
-  test("Logout via Sheet navigates to landing page", async ({ authenticatedPage: page }) => {
-    const menuButton = page.locator("header").getByRole("button", { name: "ユーザーメニュー" });
-    await menuButton.click();
-
-    const mobileMenu = page.locator("nav[aria-label='モバイルメニュー']");
-    await mobileMenu.getByRole("button", { name: "ログアウト" }).click();
-
+  test("Logout via settings navigates to landing page", async ({ authenticatedPage: page }) => {
+    await page.goto("/sp/settings");
+    await page.getByRole("button", { name: "ログアウト" }).click();
+    await page.getByRole("button", { name: "ログアウト" }).last().click();
     await expect(page).toHaveURL("/", { timeout: 10000 });
   });
 });

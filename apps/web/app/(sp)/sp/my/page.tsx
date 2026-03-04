@@ -62,6 +62,7 @@ export default function SpMyPage() {
               className="mt-1 mx-auto flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
               aria-label="ユーザーIDをコピー"
             >
+              <span className="sr-only" data-testid="user-id">{userId}</span>
               <span>ユーザーID:</span>
               <code className="font-mono">{userId.slice(0, 8)}...</code>
               {idCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}

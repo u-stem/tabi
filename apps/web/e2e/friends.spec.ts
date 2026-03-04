@@ -14,7 +14,7 @@ test.describe("Friends", () => {
     });
 
     // Get user B's ID
-    await pageB.goto("/friends");
+    await pageB.goto("/my");
     const userBId = await pageB.locator('[data-testid="user-id"]').textContent();
     expect(userBId).toBeTruthy();
 
@@ -61,7 +61,7 @@ test.describe("Friends", () => {
     });
 
     // Get user A's ID
-    await page.goto("/friends");
+    await page.goto("/my");
     const userAId = await page.locator('[data-testid="user-id"]').textContent();
     expect(userAId).toBeTruthy();
 
@@ -104,12 +104,12 @@ test.describe("Friends", () => {
       name: "QR Target User",
     });
 
-    await pageB.goto("/friends");
+    await pageB.goto("/my");
     const userBId = await pageB.locator('[data-testid="user-id"]').textContent();
     expect(userBId).toBeTruthy();
 
     await page.goto(`/friends/add?userId=${userBId}`);
-    await expect(page.getByText("QR Target User")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "QR Target User" })).toBeVisible();
     await expect(page.getByRole("button", { name: /フレンド申請を送る/ })).toBeVisible();
 
     await contextB.close();
@@ -125,7 +125,7 @@ test.describe("Friends", () => {
   test("friend add page redirects to my page for own userId", async ({
     authenticatedPage: page,
   }) => {
-    await page.goto("/friends");
+    await page.goto("/my");
     const ownId = await page.locator('[data-testid="user-id"]').textContent();
     expect(ownId).toBeTruthy();
 

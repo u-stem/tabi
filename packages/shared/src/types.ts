@@ -285,7 +285,6 @@ export type NotificationsResponse = {
   unreadCount: number;
 };
 
-
 // Shared trip view types
 
 export type SharedTripResponse = {

@@ -285,6 +285,12 @@ export type NotificationsResponse = {
   unreadCount: number;
 };
 
+export type UserProfileResponse = {
+  id: string;
+  name: string;
+  image?: string | null;
+};
+
 // Shared trip view types
 
 export type SharedTripResponse = {

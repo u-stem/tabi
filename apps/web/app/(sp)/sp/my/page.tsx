@@ -71,7 +71,7 @@ export default function SpMyPage() {
           {displayUsername && <p className="text-sm text-muted-foreground">@{displayUsername}</p>}
         </div>
         <Link
-          href="/sp/settings"
+          href="/sp/my/edit"
           className="inline-flex h-8 items-center gap-1.5 rounded-full border px-4 text-sm hover:bg-accent"
         >
           <Pencil className="h-3 w-3" />

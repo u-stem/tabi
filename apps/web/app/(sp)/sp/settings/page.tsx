@@ -1,5 +1,10 @@
 /**
- * SP Settings page — re-exports the desktop settings page directly.
- * The settings page has no mobile-specific logic (no useIsMobile, no responsive breakpoints).
+ * SP Settings page — excludes the profile tab (handled by /sp/my/edit instead).
  */
-export { default } from "@/app/(authenticated)/settings/page";
+import SettingsPage from "@/app/(authenticated)/settings/page";
+
+const SP_SECTIONS = ["notifications", "account", "other"] as const;
+
+export default function SpSettingsPage() {
+  return <SettingsPage availableSections={SP_SECTIONS} />;
+}

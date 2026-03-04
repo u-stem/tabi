@@ -80,13 +80,17 @@ const NAV_ITEMS: { id: Section; label: string; Icon: React.ElementType }[] = [
   { id: "other", label: "その他", Icon: MoreHorizontal },
 ];
 
-export default function SettingsPage() {
+export default function SettingsPage({
+  availableSections = SECTIONS,
+}: {
+  availableSections?: readonly Section[];
+} = {}) {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
-  const [section, setSection] = useState<Section>("profile");
+  const [section, setSection] = useState<Section>(availableSections[0]);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const sectionRef = useRef<Section>("profile");
+  const sectionRef = useRef<Section>(availableSections[0]);
   const contentRef = useRef<HTMLDivElement>(null);
   const swipeRef = useRef<HTMLDivElement>(null);
 
@@ -102,7 +106,7 @@ export default function SettingsPage() {
   }, [searchParams, router]);
 
   const user = session?.user;
-  const currentSectionIdx = SECTIONS.indexOf(section);
+  const currentSectionIdx = availableSections.indexOf(section);
 
   const changeSection = useCallback((s: Section) => {
     sectionRef.current = s;
@@ -111,27 +115,30 @@ export default function SettingsPage() {
 
   const handleSwipe = useCallback(
     (direction: "left" | "right") => {
-      const idx = SECTIONS.indexOf(sectionRef.current);
+      const idx = availableSections.indexOf(sectionRef.current);
       const nextIdx = direction === "left" ? idx + 1 : idx - 1;
-      if (nextIdx < 0 || nextIdx >= SECTIONS.length) return;
-      changeSection(SECTIONS[nextIdx]);
+      if (nextIdx < 0 || nextIdx >= availableSections.length) return;
+      changeSection(availableSections[nextIdx]);
     },
-    [changeSection],
+    [changeSection, availableSections],
   );
 
   const swipe = useSwipeTab(contentRef, swipeRef, {
     onSwipeComplete: handleSwipe,
     canSwipePrev: currentSectionIdx > 0,
-    canSwipeNext: currentSectionIdx < SECTIONS.length - 1,
+    canSwipeNext: currentSectionIdx < availableSections.length - 1,
     enabled: !isGuest && !!user,
   });
 
   const adjacentSection =
     swipe.adjacent === "next"
-      ? SECTIONS[currentSectionIdx + 1]
+      ? availableSections[currentSectionIdx + 1]
       : swipe.adjacent === "prev"
-        ? SECTIONS[currentSectionIdx - 1]
+        ? availableSections[currentSectionIdx - 1]
         : undefined;
+
+  const visibleNavItems = NAV_ITEMS.filter((item) => availableSections.includes(item.id));
+  const gridColsClass = availableSections.length === 3 ? "grid-cols-3" : "grid-cols-4";
 
   function renderSectionContent(s: Section) {
     switch (s) {
@@ -175,9 +182,12 @@ export default function SettingsPage() {
         <div
           role="tablist"
           aria-orientation="horizontal"
-          className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-1 md:flex md:flex-col md:grid-cols-none md:w-48 md:shrink-0 md:rounded-none md:bg-transparent md:p-0"
+          className={cn(
+            gridColsClass,
+            "grid gap-1 rounded-lg bg-muted p-1 md:flex md:flex-col md:grid-cols-none md:w-48 md:shrink-0 md:rounded-none md:bg-transparent md:p-0",
+          )}
         >
-          {NAV_ITEMS.map(({ id, label, Icon }) => (
+          {visibleNavItems.map(({ id, label, Icon }) => (
             <button
               key={id}
               type="button"
@@ -225,12 +235,14 @@ export default function SettingsPage() {
   );
 }
 
-function ProfileSection({
+export function ProfileSection({
   name: defaultName,
   currentImage,
+  onSuccess,
 }: {
   name: string;
   currentImage: string | null;
+  onSuccess?: () => void;
 }) {
   const { refetch } = useSession();
   const [style, setStyle] = useState<DiceBearStyle>("glass");
@@ -273,6 +285,7 @@ function ProfileSection({
     toast.success(MSG.SETTINGS_PROFILE_UPDATED);
     setSelectedSeed(null);
     setLoading(false);
+    onSuccess?.();
   }
 
   async function handleReset() {

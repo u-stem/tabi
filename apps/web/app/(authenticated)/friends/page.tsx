@@ -37,10 +37,13 @@ function PageSkeleton() {
             {[1, 2].map((j) => (
               <div key={j} className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                  <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+                  <Skeleton className="h-6 w-6 shrink-0 rounded-full" />
                   <Skeleton className="h-4 w-24" />
                 </div>
-                <Skeleton className="h-8 w-14" />
+                <div className="flex gap-2 shrink-0">
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-8 w-14" />
+                </div>
               </div>
             ))}
           </CardContent>

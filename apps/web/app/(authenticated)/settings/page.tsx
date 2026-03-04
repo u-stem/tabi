@@ -6,6 +6,7 @@ import {
   Download,
   FileText,
   HelpCircle,
+  LogOut,
   MessageSquare,
   MoreHorizontal,
   Newspaper,
@@ -17,6 +18,7 @@ import {
   User,
   X,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -159,6 +161,7 @@ export default function SettingsPage({
             />
             <UsernameSection defaultUsername={user.displayUsername ?? user.username ?? ""} />
             <PasswordSection username={user.username ?? ""} />
+            <SignOutSection />
             <DeleteAccountSection username={user.username ?? ""} />
           </>
         );
@@ -681,6 +684,59 @@ const CANDIDATE_COUNT = 6;
 
 function generateSeeds(count: number): string[] {
   return Array.from({ length: count }, () => crypto.randomUUID().slice(0, 8));
+}
+
+function SignOutSection() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  async function handleSignOut() {
+    setLoading(true);
+    try {
+      await authClient.signOut();
+      queryClient.clear();
+      router.push("/");
+    } catch {
+      toast.error(MSG.AUTH_LOGOUT_FAILED);
+      setLoading(false);
+    }
+  }
+
+  return (
+    <ResponsiveAlertDialog open={open} onOpenChange={setOpen}>
+      <div className="overflow-hidden rounded-lg border">
+        <ResponsiveAlertDialogTrigger asChild>
+          <button
+            type="button"
+            className="flex h-12 w-full items-center gap-3 px-4 text-destructive hover:bg-accent"
+          >
+            <LogOut className="h-4 w-4" />
+            ログアウト
+          </button>
+        </ResponsiveAlertDialogTrigger>
+      </div>
+      <ResponsiveAlertDialogContent>
+        <ResponsiveAlertDialogHeader>
+          <ResponsiveAlertDialogTitle>ログアウトしますか？</ResponsiveAlertDialogTitle>
+          <ResponsiveAlertDialogDescription>
+            このデバイスからサインアウトされます。
+          </ResponsiveAlertDialogDescription>
+        </ResponsiveAlertDialogHeader>
+        <ResponsiveAlertDialogFooter>
+          <ResponsiveAlertDialogCancel disabled={loading}>
+            <X className="h-4 w-4" />
+            キャンセル
+          </ResponsiveAlertDialogCancel>
+          <Button variant="destructive" disabled={loading} onClick={handleSignOut}>
+            <LogOut className="h-4 w-4" />
+            {loading ? "ログアウト中..." : "ログアウト"}
+          </Button>
+        </ResponsiveAlertDialogFooter>
+      </ResponsiveAlertDialogContent>
+    </ResponsiveAlertDialog>
+  );
 }
 
 function DeleteAccountSection({ username }: { username: string }) {

@@ -1,36 +1,20 @@
 "use client";
 
 import type { PublicProfileResponse } from "@sugara/shared";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { LogOut, Pencil, X } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Pencil } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
+import { useEffect } from "react";
 import { BookmarkListCard } from "@/app/users/[userId]/page";
-import { Button } from "@/components/ui/button";
-import {
-  Drawer,
-  DrawerClose,
-  DrawerContent,
-  DrawerDescription,
-  DrawerFooter,
-  DrawerHeader,
-  DrawerTitle,
-} from "@/components/ui/drawer";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
-import { signOut, useSession } from "@/lib/auth-client";
+import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 export default function SpMyPage() {
-  const router = useRouter();
   const { data: session } = useSession();
-  const queryClient = useQueryClient();
-  const [signOutOpen, setSignOutOpen] = useState(false);
 
   useEffect(() => {
     document.title = pageTitle("マイページ");
@@ -45,16 +29,6 @@ export default function SpMyPage() {
     queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
     enabled: !!userId,
   });
-
-  async function handleSignOut() {
-    try {
-      await signOut();
-      queryClient.clear();
-      router.push("/");
-    } catch {
-      toast.error(MSG.AUTH_LOGOUT_FAILED);
-    }
-  }
 
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-4">
@@ -94,40 +68,6 @@ export default function SpMyPage() {
           ))}
         </div>
       )}
-
-      {/* Logout */}
-      <div className="overflow-hidden rounded-lg border">
-        <button
-          type="button"
-          onClick={() => setSignOutOpen(true)}
-          className="flex h-12 w-full items-center gap-3 px-4 text-destructive hover:bg-accent"
-        >
-          <LogOut className="h-4 w-4" />
-          ログアウト
-        </button>
-      </div>
-
-      {/* Logout confirmation drawer */}
-      <Drawer open={signOutOpen} onOpenChange={setSignOutOpen}>
-        <DrawerContent>
-          <DrawerHeader>
-            <DrawerTitle>ログアウトしますか？</DrawerTitle>
-            <DrawerDescription>このデバイスからサインアウトされます。</DrawerDescription>
-          </DrawerHeader>
-          <DrawerFooter className="flex-row [&>*]:flex-1">
-            <DrawerClose asChild>
-              <Button variant="outline">
-                <X className="h-4 w-4" />
-                キャンセル
-              </Button>
-            </DrawerClose>
-            <Button variant="destructive" onClick={handleSignOut}>
-              <LogOut className="h-4 w-4" />
-              ログアウト
-            </Button>
-          </DrawerFooter>
-        </DrawerContent>
-      </Drawer>
     </div>
   );
 }

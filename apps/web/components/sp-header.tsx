@@ -2,6 +2,7 @@
 
 import { Monitor, Settings } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { AnnouncementBanner } from "@/components/announcement-banner";
 import { GuestBanner } from "@/components/guest-banner";
 import { InstallBanner } from "@/components/install-banner";
@@ -15,6 +16,7 @@ import { switchViewMode } from "@/lib/view-mode";
  * Navigation is handled by SpBottomNav (including notification and account menu).
  */
 export function SpHeader() {
+  const router = useRouter();
   return (
     <header className="sticky top-0 z-30 select-none border-b bg-background">
       <AnnouncementBanner />
@@ -27,16 +29,16 @@ export function SpHeader() {
           <button
             type="button"
             aria-label="PC版で表示"
-            onClick={() => void switchViewMode("desktop")}
-            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent"
+            onClick={() => void switchViewMode("desktop", (url) => router.push(url))}
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <Monitor className="h-6 w-6" />
           </button>
-          <ThemeToggle />
+          <ThemeToggle iconClassName="h-6 w-6" />
           <Link
             href="/sp/settings"
             aria-label="設定"
-            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent"
+            className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
           >
             <Settings className="h-6 w-6" />
           </Link>

@@ -3,8 +3,9 @@
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-export function ThemeToggle() {
+export function ThemeToggle({ iconClassName = "h-5 w-5" }: { iconClassName?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
@@ -15,15 +16,23 @@ export function ThemeToggle() {
   }
 
   const isDark = resolvedTheme === "dark";
+  const label = isDark ? "ライトモードに切り替え" : "ダークモードに切り替え";
 
   return (
-    <button
-      type="button"
-      className="flex h-9 w-9 items-center justify-center rounded-md hover:bg-accent transition-colors"
-      aria-label={isDark ? "ライトモードに切り替え" : "ダークモードに切り替え"}
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-    >
-      {isDark ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
-    </button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+            aria-label={label}
+            onClick={() => setTheme(isDark ? "light" : "dark")}
+          >
+            {isDark ? <Sun className={iconClassName} /> : <Moon className={iconClassName} />}
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>{label}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }

@@ -13,7 +13,6 @@ import { toast } from "sonner";
 import { api } from "../lib/api";
 import { MSG } from "../lib/messages";
 import { queryKeys } from "../lib/query-keys";
-import { Button } from "./ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,6 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 export function NotificationBell() {
   const router = useRouter();
@@ -57,55 +57,66 @@ export function NotificationBell() {
   }
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-6 w-6" />
+    <TooltipProvider>
+      <DropdownMenu open={open} onOpenChange={setOpen}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="relative flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>通知</TooltipContent>
+        </Tooltip>
+        <DropdownMenuContent align="end" className="w-80">
           {unreadCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
-              {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
+            <>
+              <div className="flex justify-end px-3 py-2">
+                <button
+                  type="button"
+                  onClick={() => markAllRead.mutate()}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  すべて既読
+                </button>
+              </div>
+              <DropdownMenuSeparator />
+            </>
           )}
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
-        <div className="flex items-center justify-between px-3 py-2">
-          <span className="text-sm font-medium">通知</span>
-          {unreadCount > 0 && (
-            <button
-              type="button"
-              onClick={() => markAllRead.mutate()}
-              className="text-xs text-muted-foreground hover:text-foreground"
-            >
-              すべて既読
-            </button>
+          {!data?.notifications.length ? (
+            <div className="px-3 py-4 text-center text-sm text-muted-foreground">
+              {MSG.EMPTY_NOTIFICATION}
+            </div>
+          ) : (
+            data.notifications.map((n: Notification) => (
+              <DropdownMenuItem
+                key={n.id}
+                className={`flex cursor-pointer flex-col items-start gap-0.5 px-3 py-2 ${!n.readAt ? "bg-muted/50" : ""}`}
+                onClick={() => handleClickNotification(n)}
+              >
+                <span className="text-sm">{formatNotificationText(n.type, n.payload)}</span>
+                <span className="text-xs text-muted-foreground">
+                  {new Date(n.createdAt).toLocaleString("ja-JP", {
+                    month: "numeric",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </span>
+              </DropdownMenuItem>
+            ))
           )}
-        </div>
-        <DropdownMenuSeparator />
-        {!data?.notifications.length ? (
-          <div className="px-3 py-4 text-center text-sm text-muted-foreground">
-            {MSG.EMPTY_NOTIFICATION}
-          </div>
-        ) : (
-          data.notifications.map((n: Notification) => (
-            <DropdownMenuItem
-              key={n.id}
-              className={`flex cursor-pointer flex-col items-start gap-0.5 px-3 py-2 ${!n.readAt ? "bg-muted/50" : ""}`}
-              onClick={() => handleClickNotification(n)}
-            >
-              <span className="text-sm">{formatNotificationText(n.type, n.payload)}</span>
-              <span className="text-xs text-muted-foreground">
-                {new Date(n.createdAt).toLocaleString("ja-JP", {
-                  month: "numeric",
-                  day: "numeric",
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
-              </span>
-            </DropdownMenuItem>
-          ))
-        )}
-      </DropdownMenuContent>
-    </DropdownMenu>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </TooltipProvider>
   );
 }

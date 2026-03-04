@@ -330,7 +330,10 @@ export function TripToolbar({
       />
       {!hideStatusFilter && (
         <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>
-          <SelectTrigger className="h-8 flex-1 text-xs sm:w-[120px] sm:flex-none" aria-label="ステータスで絞り込み">
+          <SelectTrigger
+            className="h-8 flex-1 text-xs sm:w-[120px] sm:flex-none"
+            aria-label="ステータスで絞り込み"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>

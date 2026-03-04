@@ -32,7 +32,12 @@ export const SP_PREFIX = "/sp";
  * Prefers the Cookie Store API (Baseline 2025) when available,
  * falling back to document.cookie for older browsers.
  */
-export async function switchViewMode(mode: ViewMode): Promise<void> {
+export async function switchViewMode(
+  mode: ViewMode,
+  navigate: (url: string) => void = (url) => {
+    window.location.href = url;
+  },
+): Promise<void> {
   const maxAge = 60 * 60 * 24 * 365;
 
   if ("cookieStore" in window) {
@@ -56,13 +61,13 @@ export async function switchViewMode(mode: ViewMode): Promise<void> {
         (route) => pathname === route || pathname.startsWith(`${route}/`),
       );
       const dest = hasSpCounterpart ? `${SP_PREFIX}${pathname}` : `${SP_PREFIX}/home`;
-      window.location.href = `${dest}${search}${hash}`;
+      navigate(`${dest}${search}${hash}`);
     }
   } else {
     // Currently on SP → navigate to desktop
     if (pathname.startsWith(SP_PREFIX)) {
       const desktopPath = pathname.slice(SP_PREFIX.length) || "/home";
-      window.location.href = `${desktopPath}${search}${hash}`;
+      navigate(`${desktopPath}${search}${hash}`);
     }
   }
 }

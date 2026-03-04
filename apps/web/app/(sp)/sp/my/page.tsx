@@ -14,7 +14,6 @@ import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { copyToClipboard } from "@/lib/clipboard";
 import { pageTitle } from "@/lib/constants";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -41,7 +40,6 @@ export default function SpMyPage() {
     queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
     enabled: !!userId,
   });
-  const showSkeleton = useDelayedLoading(isLoading);
 
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-4">
@@ -83,15 +81,16 @@ export default function SpMyPage() {
         </div>
       </div>
 
-      {/* Bookmark lists */}
-      {showSkeleton && (
+      {/* Bookmark lists — no delayed skeleton: header is always visible so we show skeleton
+          immediately to avoid layout shift when the section mounts below the header */}
+      {isLoading && (
         <div className="overflow-hidden rounded-lg border divide-y">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-12 w-full rounded-none" />
           ))}
         </div>
       )}
-      {!showSkeleton && profile && profile.bookmarkLists.length > 0 && (
+      {!isLoading && profile && profile.bookmarkLists.length > 0 && (
         <div className="overflow-hidden rounded-lg border divide-y">
           {profile.bookmarkLists.map((list) => (
             <BookmarkListCard key={list.id} list={list} userId={userId ?? ""} />

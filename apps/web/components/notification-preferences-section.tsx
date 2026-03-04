@@ -101,12 +101,26 @@ export function NotificationPreferencesSection() {
           }),
         ),
       ),
-    onSuccess: () =>
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.preferences() }),
-    onError: () => {
-      // Re-fetch to reconcile UI with server state in case of partial failure
-      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.preferences() });
+    onMutate: async ({ types, value }) => {
+      const key = queryKeys.notifications.preferences();
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<InAppPref[]>(key);
+      queryClient.setQueryData<InAppPref[]>(key, (old) =>
+        old?.map((pref) =>
+          types.includes(pref.type as CategoryType) ? { ...pref, inApp: value } : pref,
+        ),
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(queryKeys.notifications.preferences(), context.previous);
+      }
       toast.error(MSG.NOTIFICATION_PREF_UPDATE_FAILED);
+    },
+    onSettled: () => {
+      // Re-fetch to confirm server state after partial-failure recovery
+      queryClient.invalidateQueries({ queryKey: queryKeys.notifications.preferences() });
     },
   });
 
@@ -120,16 +134,31 @@ export function NotificationPreferencesSection() {
           }),
         ),
       ),
-    onSuccess: () =>
-      queryClient.invalidateQueries({
-        queryKey: queryKeys.notifications.pushPreferences(deviceEndpoint ?? ""),
-      }),
-    onError: () => {
-      // Re-fetch to reconcile UI with server state in case of partial failure
+    onMutate: async ({ types, value }) => {
+      const key = queryKeys.notifications.pushPreferences(deviceEndpoint ?? "");
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<Record<string, boolean>>(key);
+      queryClient.setQueryData<Record<string, boolean>>(key, (old) => {
+        const updated = { ...(old ?? {}) };
+        for (const type of types) updated[type] = value;
+        return updated;
+      });
+      return { previous };
+    },
+    onError: (_err, _vars, context) => {
+      if (context?.previous !== undefined) {
+        queryClient.setQueryData(
+          queryKeys.notifications.pushPreferences(deviceEndpoint ?? ""),
+          context.previous,
+        );
+      }
+      toast.error(MSG.NOTIFICATION_PREF_UPDATE_FAILED);
+    },
+    onSettled: () => {
+      // Re-fetch to confirm server state after partial-failure recovery
       queryClient.invalidateQueries({
         queryKey: queryKeys.notifications.pushPreferences(deviceEndpoint ?? ""),
       });
-      toast.error(MSG.NOTIFICATION_PREF_UPDATE_FAILED);
     },
   });
 

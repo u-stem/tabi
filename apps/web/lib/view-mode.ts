@@ -18,6 +18,7 @@ export const SP_ROUTES = [
   "/trips",
   "/settings",
   "/users",
+  "/notifications",
 ] as const;
 
 /** Path prefix for all SP pages. */

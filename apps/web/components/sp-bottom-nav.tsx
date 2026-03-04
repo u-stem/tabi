@@ -1,8 +1,8 @@
 "use client";
 
-import type { FriendRequestResponse } from "@sugara/shared";
+import type { FriendRequestResponse, NotificationsResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
-import { User } from "lucide-react";
+import { Bell, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -35,6 +35,15 @@ export function SpBottomNav() {
     retry: false,
   });
   const friendRequestCount = friendRequests?.length ?? 0;
+
+  const { data: notifications } = useQuery({
+    queryKey: queryKeys.notifications.list(),
+    queryFn: () => api<NotificationsResponse>("/api/notifications"),
+    enabled: !!session?.user && !isGuest,
+    refetchInterval: 60_000,
+    retry: false,
+  });
+  const unreadCount = notifications?.unreadCount ?? 0;
 
   const friendHref = "/sp/friends";
   const bookmarkHref = "/sp/bookmarks";
@@ -74,6 +83,27 @@ export function SpBottomNav() {
               </Link>
             );
           })}
+          {/* Notification tab: shown only for authenticated non-guest users */}
+          {mounted && session?.user && !isGuest && (
+            <Link
+              href="/sp/notifications"
+              className={cn(
+                "relative flex flex-1 flex-col items-center justify-center gap-1 transition-[colors,transform] active:bg-accent active:scale-[0.90]",
+                pathname === "/sp/notifications"
+                  ? "font-medium text-primary"
+                  : "text-muted-foreground",
+              )}
+              aria-label="通知"
+            >
+              <Bell className="h-6 w-6" />
+              <span className="text-[10px] leading-none">通知</span>
+              {unreadCount > 0 && (
+                <span className="absolute top-2 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </Link>
+          )}
           {/* Account tab: always rendered to keep layout stable, content conditional on session */}
           <button
             type="button"

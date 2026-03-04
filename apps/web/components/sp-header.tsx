@@ -30,7 +30,7 @@ export function SpHeader() {
             onClick={() => void switchViewMode("desktop")}
             className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent"
           >
-            <Monitor className="h-5 w-5" />
+            <Monitor className="h-6 w-6" />
           </button>
           <ThemeToggle />
           <Link
@@ -38,7 +38,7 @@ export function SpHeader() {
             aria-label="設定"
             className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent"
           >
-            <Settings className="h-5 w-5" />
+            <Settings className="h-6 w-6" />
           </Link>
         </div>
       </nav>

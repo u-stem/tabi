@@ -11,6 +11,7 @@ import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
+import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
 
 export default function MyPage() {
@@ -29,6 +30,7 @@ export default function MyPage() {
     queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
     enabled: !!userId,
   });
+  const showSkeleton = useDelayedLoading(isLoading);
 
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-4">
@@ -54,14 +56,14 @@ export default function MyPage() {
       </div>
 
       {/* Bookmark lists */}
-      {isLoading && (
+      {showSkeleton && (
         <div className="overflow-hidden rounded-lg border divide-y">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-12 w-full rounded-none" />
           ))}
         </div>
       )}
-      {!isLoading && profile && profile.bookmarkLists.length > 0 && (
+      {!showSkeleton && profile && profile.bookmarkLists.length > 0 && (
         <div className="overflow-hidden rounded-lg border divide-y">
           {profile.bookmarkLists.map((list) => (
             <BookmarkListCard key={list.id} list={list} userId={userId ?? ""} />

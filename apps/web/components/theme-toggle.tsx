@@ -24,7 +24,7 @@ export function ThemeToggle() {
       aria-label={isDark ? "ライトモードに切り替え" : "ダークモードに切り替え"}
       onClick={() => setTheme(isDark ? "light" : "dark")}
     >
-      {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+      {isDark ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
     </Button>
   );
 }

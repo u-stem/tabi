@@ -2,7 +2,6 @@
 
 import { MAX_BOOKMARK_LISTS_PER_USER, VISIBILITY_LABELS } from "@sugara/shared";
 import {
-  ChevronDown,
   Copy,
   Globe,
   ListFilter,
@@ -188,8 +187,8 @@ export default function SpBookmarksPage() {
                   }}
                   className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
                 >
+                  {visibilityFilters.find((f) => f.value === visibilityFilter)?.icon}
                   {visibilityFilters.find((f) => f.value === visibilityFilter)?.label ?? "すべて"}
-                  <ChevronDown className="h-3 w-3 text-muted-foreground" />
                 </button>
                 <ActionSheet
                   open={visibilitySheetOpen}

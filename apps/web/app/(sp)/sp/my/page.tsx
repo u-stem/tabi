@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, Monitor, Pencil, X } from "lucide-react";
+import { LogOut, Pencil, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -20,7 +20,6 @@ import { UserAvatar } from "@/components/user-avatar";
 import { signOut, useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
-import { switchViewMode } from "@/lib/view-mode";
 
 export default function SpMyPage() {
   const router = useRouter();
@@ -66,18 +65,6 @@ export default function SpMyPage() {
           <Pencil className="h-3 w-3" />
           プロフィールを編集
         </Link>
-      </div>
-
-      {/* Other actions */}
-      <div className="overflow-hidden rounded-lg border">
-        <button
-          type="button"
-          onClick={() => void switchViewMode("desktop")}
-          className="flex h-12 w-full items-center gap-3 px-4 hover:bg-accent"
-        >
-          <Monitor className="h-4 w-4" />
-          PC版で表示
-        </button>
       </div>
 
       {/* Logout */}

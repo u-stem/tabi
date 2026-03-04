@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Settings, Sun } from "lucide-react";
+import { Monitor, Moon, Settings, Sun } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
@@ -9,6 +9,7 @@ import { GuestBanner } from "@/components/guest-banner";
 import { InstallBanner } from "@/components/install-banner";
 import { Logo } from "@/components/logo";
 import { OfflineBanner } from "@/components/offline-banner";
+import { switchViewMode } from "@/lib/view-mode";
 
 /**
  * SP-specific header: simplified for mobile.
@@ -31,6 +32,14 @@ export function SpHeader() {
       <nav aria-label="メインナビゲーション" className="container flex h-14 items-center">
         <Logo href="/sp/home" />
         <div className="ml-auto flex items-center gap-1">
+          <button
+            type="button"
+            aria-label="PC版で表示"
+            onClick={() => void switchViewMode("desktop")}
+            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent"
+          >
+            <Monitor className="h-5 w-5" />
+          </button>
           {mounted && (
             <button
               type="button"

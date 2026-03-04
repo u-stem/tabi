@@ -35,7 +35,9 @@ export function SpHeader() {
       >
         <Logo href="/sp/home" />
         <div className="flex items-center gap-1">
-          {mounted && session?.user && !isGuest && <NotificationBell />}
+          {mounted && session?.user && !isGuest && (
+            <NotificationBell buttonClassName="h-6 w-6 p-0 [&_svg]:size-6" />
+          )}
         </div>
       </nav>
     </header>

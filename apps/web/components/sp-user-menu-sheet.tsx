@@ -14,6 +14,7 @@ import {
   Settings,
   Shield,
   Sun,
+  User,
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
@@ -86,17 +87,27 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
           </DrawerHeader>
           <nav className="flex flex-col pb-4" aria-label="モバイルメニュー">
             {!isGuest && (
-              <Link
-                href="/sp/settings"
-                onClick={() => onOpenChange(false)}
-                className={cn(
-                  "flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm",
-                  pathname === "/sp/settings" ? "bg-accent font-medium" : "hover:bg-accent",
-                )}
-              >
-                <Settings className="h-4 w-4" />
-                設定
-              </Link>
+              <>
+                <Link
+                  href={`/sp/users/${session?.user?.id}`}
+                  onClick={() => onOpenChange(false)}
+                  className="flex h-12 items-center gap-3 rounded-md px-3 text-base hover:bg-accent"
+                >
+                  <User className="h-4 w-4" />
+                  プロフィール
+                </Link>
+                <Link
+                  href="/sp/settings"
+                  onClick={() => onOpenChange(false)}
+                  className={cn(
+                    "flex h-12 items-center gap-3 rounded-md px-3 text-base",
+                    pathname === "/sp/settings" ? "bg-accent font-medium" : "hover:bg-accent",
+                  )}
+                >
+                  <Settings className="h-4 w-4" />
+                  設定
+                </Link>
+              </>
             )}
             <div className="my-1 border-t" />
             {(
@@ -111,7 +122,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
                 type="button"
                 onClick={() => setTheme(value)}
                 className={cn(
-                  "flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent",
+                  "flex h-12 items-center gap-3 rounded-md px-3 text-base hover:bg-accent",
                   theme === value && "font-medium",
                 )}
               >
@@ -127,7 +138,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
                 setFeedbackOpen(true);
                 onOpenChange(false);
               }}
-              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
+              className="flex h-12 items-center gap-3 rounded-md px-3 text-base hover:bg-accent"
             >
               <MessageSquare className="h-4 w-4" />
               フィードバック
@@ -139,7 +150,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
                   promptInstall();
                   onOpenChange(false);
                 }}
-                className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
+                className="flex h-12 items-center gap-3 rounded-md px-3 text-base hover:bg-accent"
               >
                 <Download className="h-4 w-4" />
                 アプリをインストール
@@ -151,7 +162,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => onOpenChange(false)}
-              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
+              className="flex h-12 items-center gap-3 rounded-md px-3 text-base hover:bg-accent"
             >
               <HelpCircle className="h-4 w-4" />
               よくある質問
@@ -161,7 +172,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => onOpenChange(false)}
-              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
+              className="flex h-12 items-center gap-3 rounded-md px-3 text-base hover:bg-accent"
             >
               <Newspaper className="h-4 w-4" />
               お知らせ
@@ -171,7 +182,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => onOpenChange(false)}
-              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
+              className="flex h-12 items-center gap-3 rounded-md px-3 text-base hover:bg-accent"
             >
               <FileText className="h-4 w-4" />
               利用規約
@@ -181,7 +192,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
               target="_blank"
               rel="noopener noreferrer"
               onClick={() => onOpenChange(false)}
-              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
+              className="flex h-12 items-center gap-3 rounded-md px-3 text-base hover:bg-accent"
             >
               <Shield className="h-4 w-4" />
               プライバシーポリシー
@@ -193,7 +204,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
                 onOpenChange(false);
                 void switchViewMode("desktop");
               }}
-              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm hover:bg-accent"
+              className="flex h-12 items-center gap-3 rounded-md px-3 text-base hover:bg-accent"
             >
               <Monitor className="h-4 w-4" />
               PC版で表示
@@ -204,7 +215,7 @@ export function SpUserMenuSheet({ open, onOpenChange }: Props) {
                 onOpenChange(false);
                 setSignOutOpen(true);
               }}
-              className="flex min-h-[44px] items-center gap-3 rounded-md px-3 py-3 text-sm text-destructive hover:bg-accent"
+              className="flex h-12 items-center gap-3 rounded-md px-3 text-base text-destructive hover:bg-accent"
             >
               <LogOut className="h-4 w-4" />
               ログアウト

@@ -12,7 +12,13 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
-export function FriendRequestsCard({ requests }: { requests?: FriendRequestResponse[] }) {
+export function FriendRequestsCard({
+  requests,
+  profileHrefPrefix = "/users",
+}: {
+  requests?: FriendRequestResponse[];
+  profileHrefPrefix?: string;
+}) {
   const queryClient = useQueryClient();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -100,7 +106,7 @@ export function FriendRequestsCard({ requests }: { requests?: FriendRequestRespo
             </div>
             <div className="flex gap-2 shrink-0">
               <Button size="sm" variant="outline" asChild>
-                <Link href={`/users/${req.requesterId}`}>プロフィール</Link>
+                <Link href={`${profileHrefPrefix}/${req.requesterId}`}>プロフィール</Link>
               </Button>
               <Button
                 size="sm"

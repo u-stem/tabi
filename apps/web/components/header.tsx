@@ -239,7 +239,10 @@ export function Header() {
                     SP版で表示
                   </DropdownMenuItem>
                 )}
-                <DropdownMenuItem onClick={handleSignOut} className="py-2 text-destructive focus:text-destructive">
+                <DropdownMenuItem
+                  onClick={handleSignOut}
+                  className="py-2 text-destructive focus:text-destructive"
+                >
                   <LogOut className="h-4 w-4" />
                   ログアウト
                 </DropdownMenuItem>

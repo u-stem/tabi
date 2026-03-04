@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { api } from "../lib/api";
 import { MSG } from "../lib/messages";
 import { queryKeys } from "../lib/query-keys";
+import { cn } from "../lib/utils";
 import { Button } from "./ui/button";
 import {
   DropdownMenu,
@@ -22,7 +23,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 
-export function NotificationBell() {
+export function NotificationBell({ buttonClassName }: { buttonClassName?: string }) {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -59,7 +60,7 @@ export function NotificationBell() {
   return (
     <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className={cn("relative", buttonClassName)}>
           <Bell className="h-6 w-6" />
           {unreadCount > 0 && (
             <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">

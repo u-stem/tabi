@@ -34,7 +34,7 @@ function ProfileHeader() {
   );
 }
 
-function ProfileSkeletonContent() {
+export function ProfileSkeletonContent() {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-8 flex items-center gap-4">
@@ -50,7 +50,7 @@ function ProfileSkeletonContent() {
   );
 }
 
-function BookmarkListCard({ list, userId }: { list: BookmarkListResponse; userId: string }) {
+export function BookmarkListCard({ list, userId }: { list: BookmarkListResponse; userId: string }) {
   const [expanded, setExpanded] = useState(false);
 
   const {
@@ -139,7 +139,13 @@ function BookmarkListCard({ list, userId }: { list: BookmarkListResponse; userId
   );
 }
 
-function ProfileContent({ profile, userId }: { profile: PublicProfileResponse; userId: string }) {
+export function ProfileContent({
+  profile,
+  userId,
+}: {
+  profile: PublicProfileResponse;
+  userId: string;
+}) {
   return (
     <>
       <div className="mb-8 flex items-center gap-4">
@@ -173,7 +179,7 @@ function ProfileContent({ profile, userId }: { profile: PublicProfileResponse; u
   );
 }
 
-function ErrorMessage({ message }: { message: string }) {
+export function ErrorMessage({ message }: { message: string }) {
   return (
     <div className="flex flex-col items-center py-16 text-center">
       <List className="mb-4 h-12 w-12 text-muted-foreground" />

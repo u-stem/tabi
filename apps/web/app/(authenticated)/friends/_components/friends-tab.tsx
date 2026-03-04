@@ -27,12 +27,19 @@ import { queryKeys } from "@/lib/query-keys";
 
 export { SendRequestSection };
 
-export function FriendsTab({ friends }: { friends: FriendResponse[] }) {
+export function FriendsTab({
+  friends,
+  profileHrefPrefix = "/users",
+}: {
+  friends: FriendResponse[];
+  profileHrefPrefix?: string;
+}) {
   const queryClient = useQueryClient();
 
   return (
     <FriendListSection
       friends={friends}
+      profileHrefPrefix={profileHrefPrefix}
       onRemoved={() => queryClient.invalidateQueries({ queryKey: queryKeys.friends.list() })}
     />
   );
@@ -40,9 +47,11 @@ export function FriendsTab({ friends }: { friends: FriendResponse[] }) {
 
 function FriendListSection({
   friends,
+  profileHrefPrefix,
   onRemoved,
 }: {
   friends: FriendResponse[];
+  profileHrefPrefix: string;
   onRemoved: () => void;
 }) {
   const queryClient = useQueryClient();
@@ -97,7 +106,7 @@ function FriendListSection({
                   </div>
                   <div className="flex gap-2 shrink-0">
                     <Button size="sm" variant="outline" asChild>
-                      <Link href={`/users/${friend.userId}`}>プロフィール</Link>
+                      <Link href={`${profileHrefPrefix}/${friend.userId}`}>プロフィール</Link>
                     </Button>
                     <Button
                       size="sm"

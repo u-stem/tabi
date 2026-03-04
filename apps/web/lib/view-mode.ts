@@ -11,7 +11,14 @@ export const VIEW_MODE_COOKIE = "x-view-mode";
 export type ViewMode = "desktop" | "sp";
 
 /** Authenticated routes that have SP counterparts. */
-export const SP_ROUTES = ["/home", "/bookmarks", "/friends", "/trips", "/settings"] as const;
+export const SP_ROUTES = [
+  "/home",
+  "/bookmarks",
+  "/friends",
+  "/trips",
+  "/settings",
+  "/users",
+] as const;
 
 /** Path prefix for all SP pages. */
 export const SP_PREFIX = "/sp";

@@ -1,6 +1,7 @@
 import { SpBottomNav } from "@/components/sp-bottom-nav";
 import { SpHeader } from "@/components/sp-header";
 import { SpMobileProvider } from "@/components/sp-mobile-provider";
+import { SpScrollContainer } from "@/components/sp-scroll-container";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ShortcutHelpProvider } from "@/lib/shortcut-help-context";
 
@@ -9,11 +10,11 @@ export default function SpLayout({ children }: { children: React.ReactNode }) {
     <TooltipProvider>
       <ShortcutHelpProvider>
         <SpMobileProvider>
-          <div className="sp-layout h-full overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          <SpScrollContainer>
             <SpHeader />
             <main className="container py-4 pb-16">{children}</main>
             <SpBottomNav />
-          </div>
+          </SpScrollContainer>
         </SpMobileProvider>
       </ShortcutHelpProvider>
     </TooltipProvider>

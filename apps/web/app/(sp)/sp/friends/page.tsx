@@ -61,8 +61,8 @@ export default function SpFriendsPage() {
 
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-8">
-      <FriendRequestsCard requests={requests} />
-      <FriendsTab friends={friends} />
+      <FriendRequestsCard requests={requests} profileHrefPrefix="/sp/users" />
+      <FriendsTab friends={friends} profileHrefPrefix="/sp/users" />
       <GroupsTab groups={groups} />
       <SendRequestSection />
     </div>

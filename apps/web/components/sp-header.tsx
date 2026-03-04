@@ -31,13 +31,6 @@ export function SpHeader() {
       <nav aria-label="メインナビゲーション" className="container flex h-14 items-center">
         <Logo href="/sp/home" />
         <div className="ml-auto flex items-center gap-1">
-          <Link
-            href="/sp/settings"
-            aria-label="設定"
-            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent"
-          >
-            <Settings className="h-5 w-5" />
-          </Link>
           {mounted && (
             <button
               type="button"
@@ -48,6 +41,13 @@ export function SpHeader() {
               {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
             </button>
           )}
+          <Link
+            href="/sp/settings"
+            aria-label="設定"
+            className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent"
+          >
+            <Settings className="h-5 w-5" />
+          </Link>
         </div>
       </nav>
     </header>

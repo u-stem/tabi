@@ -1,7 +1,20 @@
 "use client";
 
 import { buildDiceBearUrl, DICEBEAR_STYLES, type DiceBearStyle } from "@sugara/shared";
-import { Bell, RefreshCw, Settings2, User, X } from "lucide-react";
+import {
+  Bell,
+  FileText,
+  HelpCircle,
+  MessageSquare,
+  MoreHorizontal,
+  Newspaper,
+  RefreshCw,
+  Settings2,
+  Shield,
+  User,
+  X,
+} from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -45,14 +58,24 @@ import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
-type Section = "profile" | "notifications" | "account";
+const FeedbackDialog = dynamic(() =>
+  import("@/components/feedback-dialog").then((mod) => mod.FeedbackDialog),
+);
 
-const SECTIONS = ["profile", "notifications", "account"] as const satisfies readonly Section[];
+type Section = "profile" | "notifications" | "account" | "other";
+
+const SECTIONS = [
+  "profile",
+  "notifications",
+  "account",
+  "other",
+] as const satisfies readonly Section[];
 
 const NAV_ITEMS: { id: Section; label: string; Icon: React.ElementType }[] = [
   { id: "profile", label: "プロフィール", Icon: User },
   { id: "notifications", label: "通知", Icon: Bell },
   { id: "account", label: "アカウント", Icon: Settings2 },
+  { id: "other", label: "その他", Icon: MoreHorizontal },
 ];
 
 export default function SettingsPage() {
@@ -128,6 +151,8 @@ export default function SettingsPage() {
             <DeleteAccountSection username={user.username ?? ""} />
           </>
         );
+      case "other":
+        return <OtherSection />;
     }
   }
 
@@ -148,7 +173,7 @@ export default function SettingsPage() {
         <div
           role="tablist"
           aria-orientation="horizontal"
-          className="grid grid-cols-3 gap-1 rounded-lg bg-muted p-1 md:flex md:flex-col md:grid-cols-none md:w-48 md:shrink-0 md:rounded-none md:bg-transparent md:p-0"
+          className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-1 md:flex md:flex-col md:grid-cols-none md:w-48 md:shrink-0 md:rounded-none md:bg-transparent md:p-0"
         >
           {NAV_ITEMS.map(({ id, label, Icon }) => (
             <button
@@ -158,9 +183,9 @@ export default function SettingsPage() {
               aria-selected={section === id}
               onClick={() => changeSection(id)}
               className={cn(
-                "min-h-[36px] rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.97]",
+                "min-h-[36px] rounded-md px-1 py-1.5 text-[11px] font-medium transition-[colors,transform] active:scale-[0.97]",
                 "flex items-center justify-center",
-                "md:justify-start md:gap-2 md:px-3 md:py-2 md:whitespace-nowrap md:active:scale-100",
+                "md:justify-start md:gap-2 md:px-3 md:py-2 md:text-sm md:whitespace-nowrap md:active:scale-100",
                 section === id
                   ? "bg-background text-foreground shadow-sm md:bg-muted md:shadow-none"
                   : "text-muted-foreground hover:text-foreground md:hover:bg-muted/50",
@@ -739,5 +764,61 @@ function DeleteAccountSection({ username }: { username: string }) {
         </ResponsiveAlertDialog>
       </CardContent>
     </Card>
+  );
+}
+
+function OtherSection() {
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+  return (
+    <>
+      <div className="overflow-hidden rounded-lg border divide-y">
+        <a
+          href="/faq"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex h-12 items-center gap-3 px-4 hover:bg-accent"
+        >
+          <HelpCircle className="h-4 w-4" />
+          よくある質問
+        </a>
+        <a
+          href="/news"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex h-12 items-center gap-3 px-4 hover:bg-accent"
+        >
+          <Newspaper className="h-4 w-4" />
+          お知らせ
+        </a>
+        <button
+          type="button"
+          onClick={() => setFeedbackOpen(true)}
+          className="flex h-12 w-full items-center gap-3 px-4 hover:bg-accent"
+        >
+          <MessageSquare className="h-4 w-4" />
+          フィードバック
+        </button>
+        <a
+          href="/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex h-12 items-center gap-3 px-4 hover:bg-accent"
+        >
+          <FileText className="h-4 w-4" />
+          利用規約
+        </a>
+        <a
+          href="/privacy"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex h-12 items-center gap-3 px-4 hover:bg-accent"
+        >
+          <Shield className="h-4 w-4" />
+          プライバシーポリシー
+        </a>
+      </div>
+      <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />
+    </>
   );
 }

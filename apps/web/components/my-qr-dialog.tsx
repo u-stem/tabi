@@ -4,12 +4,12 @@ import { QrCode } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  ResponsiveDialog,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
+} from "@/components/ui/responsive-dialog";
 
 interface MyQrDialogProps {
   userId: string;
@@ -24,17 +24,17 @@ export function MyQrDialog({ userId }: MyQrDialogProps) {
       : `/friends/add?userId=${userId}`;
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
+    <ResponsiveDialog>
+      <ResponsiveDialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5">
           <QrCode className="h-3.5 w-3.5" />
           QRコード
         </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-xs">
-        <DialogHeader>
-          <DialogTitle>フレンド追加用QRコード</DialogTitle>
-        </DialogHeader>
+      </ResponsiveDialogTrigger>
+      <ResponsiveDialogContent className="sm:max-w-xs">
+        <ResponsiveDialogHeader>
+          <ResponsiveDialogTitle>フレンド追加用QRコード</ResponsiveDialogTitle>
+        </ResponsiveDialogHeader>
         <div className="flex flex-col items-center gap-4 py-4">
           <div className="rounded-lg border p-4 bg-white">
             <QRCodeSVG value={url} size={200} level="M" />
@@ -45,7 +45,7 @@ export function MyQrDialog({ userId }: MyQrDialogProps) {
             あなたにフレンド申請を送れます
           </p>
         </div>
-      </DialogContent>
-    </Dialog>
+      </ResponsiveDialogContent>
+    </ResponsiveDialog>
   );
 }

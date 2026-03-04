@@ -34,6 +34,7 @@ const EditTripDialog = dynamic(() =>
 import { DayWeatherEditor } from "@/components/day-weather-editor";
 import { ScrollToTop } from "@/components/scroll-to-top";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
@@ -47,7 +48,6 @@ import { useAutoStatusTransition } from "@/lib/hooks/use-auto-status-transition"
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useDayMemo } from "@/lib/hooks/use-day-memo";
 import { useDayWeather } from "@/lib/hooks/use-day-weather";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useIsLg } from "@/lib/hooks/use-is-lg";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
@@ -95,6 +95,117 @@ const dndAnnouncements: Announcements = {
   },
 };
 
+function TripDetailSkeleton() {
+  return (
+    <div className="mt-4">
+      {/* Mobile skeleton */}
+      <div className="lg:hidden">
+        <div className="flex h-11 items-center gap-2">
+          <Skeleton className="h-5 w-36" />
+          <Skeleton className="ml-auto h-8 w-8 rounded-md" />
+        </div>
+        <div className="flex shrink-0">
+          {(["w-12", "w-16", "w-12"] as const).map((w, i) => (
+            <div key={w + String(i)} className="flex flex-1 items-center justify-center py-2.5">
+              <Skeleton className={`h-4 ${w}`} />
+            </div>
+          ))}
+        </div>
+        <div className="rounded-lg border bg-card">
+          <div className="flex gap-1.5 px-3 pt-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-[44px] w-14 rounded-full" />
+            ))}
+          </div>
+          <div className="p-4">
+            <Skeleton className="mb-3 h-9 w-full rounded-md" />
+            <div className="mb-2 flex items-center gap-1.5">
+              <Skeleton className="h-8 flex-1 rounded-md" />
+              <Skeleton className="h-8 flex-1 rounded-md" />
+              <Skeleton className="h-8 flex-1 rounded-md" />
+            </div>
+            <div className="mb-2 flex items-center gap-1.5">
+              <Skeleton className="h-7 w-24 rounded-full" />
+              <Skeleton className="h-7 w-7 rounded-md" />
+              <Skeleton className="h-7 w-7 rounded-md" />
+            </div>
+            <div className="space-y-1.5">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex gap-3 py-1.5">
+                  <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
+                  <Skeleton className="h-20 flex-1 rounded-md" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop skeleton */}
+      <div className="hidden lg:block">
+        <div className="mb-6">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="mt-2 h-4 w-64" />
+          <div className="mt-3 flex items-center gap-2">
+            <Skeleton className="h-8 w-20 rounded-md" />
+            <Skeleton className="h-8 w-20 rounded-md" />
+          </div>
+        </div>
+        <div className="flex gap-4">
+          <div className="flex min-w-0 max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
+            <div className="flex shrink-0 gap-1.5 px-3 pt-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-7 w-14 rounded-full" />
+              ))}
+            </div>
+            <div className="p-4">
+              <Skeleton className="mb-3 h-9 w-full rounded-md" />
+              <div className="mb-2 flex items-center gap-1.5">
+                <Skeleton className="h-4 w-20" />
+                <div className="ml-auto flex items-center gap-1.5">
+                  <Skeleton className="h-8 w-24 rounded-md" />
+                  <Skeleton className="h-8 w-16 rounded-md" />
+                  <Skeleton className="h-8 w-16 rounded-md" />
+                </div>
+              </div>
+              <div className="mb-2 flex items-center gap-1.5">
+                <Skeleton className="h-7 w-24 rounded-full" />
+                <Skeleton className="h-7 w-7 rounded-md" />
+                <Skeleton className="h-7 w-7 rounded-md" />
+              </div>
+              <div className="space-y-1.5">
+                {[1, 2, 3].map((i) => (
+                  <div key={i} className="flex gap-3 py-1.5">
+                    <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
+                    <Skeleton className="h-24 flex-1 rounded-md" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="flex-[2] self-start sticky top-4 rounded-lg border border-dashed bg-card p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <Skeleton className="h-5 w-20" />
+              <Skeleton className="h-8 w-20 rounded-md" />
+            </div>
+            <div className="space-y-2">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-2 py-1">
+                  <Skeleton className="h-2.5 w-2.5 shrink-0 rounded-full" />
+                  <div className="flex-1 space-y-1">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-3 w-16" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function TripDetailPage() {
   const params = useParams();
   const tripId = params.id as string;
@@ -119,7 +230,6 @@ export default function TripDetailPage() {
     queryFn: () => api<PollDetailResponse>(`/api/polls/${pollId}`),
     enabled: !!pollId,
   });
-  const showSkeleton = useDelayedLoading(isLoading || (!!pollId && isPollLoading));
 
   // Prefetch bookmark lists so BookmarkPanel renders instantly on tab switch
   useQuery({
@@ -439,7 +549,7 @@ export default function TripDetailPage() {
   const canSwipeMobileTabs = currentTabIdx !== -1;
   const swipe = useSwipeTab(mobileContentRef, swipeContainerRef, {
     onSwipeComplete: handleSwipe,
-    enabled: !showSkeleton && !!trip && canSwipeMobileTabs,
+    enabled: !isLoading && !!trip && canSwipeMobileTabs,
     canSwipePrev: canSwipeMobileTabs && currentTabIdx > 0,
     canSwipeNext: canSwipeMobileTabs && currentTabIdx < tabIds.length - 1,
   });
@@ -534,127 +644,11 @@ export default function TripDetailPage() {
     selection.exit();
   }, [selectedDay, mobileTab, rightPanelTab]);
 
-  if (isLoading && !showSkeleton) return <div />;
-  if (showSkeleton) {
-    return (
-      <div className="mt-4">
-        {/* Mobile skeleton */}
-        <div className="lg:hidden">
-          <div className="flex h-11 items-center gap-2">
-            <Skeleton className="h-5 w-36" />
-            <Skeleton className="ml-auto h-8 w-8 rounded-md" />
-          </div>
-          <div className="flex shrink-0">
-            {(["w-12", "w-16", "w-12"] as const).map((w, i) => (
-              <div key={w + String(i)} className="flex flex-1 items-center justify-center py-2.5">
-                <Skeleton className={`h-4 ${w}`} />
-              </div>
-            ))}
-          </div>
-          <div className="rounded-lg border bg-card">
-            <div className="flex gap-1.5 px-3 pt-3">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-[44px] w-14 rounded-full" />
-              ))}
-            </div>
-            <div className="p-4">
-              <Skeleton className="mb-3 h-9 w-full rounded-md" />
-              <div className="mb-2 flex items-center gap-1.5">
-                <Skeleton className="h-8 flex-1 rounded-md" />
-                <Skeleton className="h-8 flex-1 rounded-md" />
-                <Skeleton className="h-8 flex-1 rounded-md" />
-              </div>
-              <div className="mb-2 flex items-center gap-1.5">
-                <Skeleton className="h-7 w-24 rounded-full" />
-                <Skeleton className="h-7 w-7 rounded-md" />
-                <Skeleton className="h-7 w-7 rounded-md" />
-              </div>
-              <div className="space-y-1.5">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="flex gap-3 py-1.5">
-                    <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
-                    <Skeleton className="h-20 flex-1 rounded-md" />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Desktop skeleton */}
-        <div className="hidden lg:block">
-          <div className="mb-6">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="mt-2 h-4 w-64" />
-            <div className="mt-3 flex items-center gap-2">
-              <Skeleton className="h-8 w-20 rounded-md" />
-              <Skeleton className="h-8 w-20 rounded-md" />
-            </div>
-          </div>
-          <div className="flex gap-4">
-            <div className="flex min-w-0 max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
-              <div className="flex shrink-0 gap-1.5 px-3 pt-3">
-                {[1, 2, 3].map((i) => (
-                  <Skeleton key={i} className="h-7 w-14 rounded-full" />
-                ))}
-              </div>
-              <div className="p-4">
-                <Skeleton className="mb-3 h-9 w-full rounded-md" />
-                <div className="mb-2 flex items-center gap-1.5">
-                  <Skeleton className="h-4 w-20" />
-                  <div className="ml-auto flex items-center gap-1.5">
-                    <Skeleton className="h-8 w-24 rounded-md" />
-                    <Skeleton className="h-8 w-16 rounded-md" />
-                    <Skeleton className="h-8 w-16 rounded-md" />
-                  </div>
-                </div>
-                <div className="mb-2 flex items-center gap-1.5">
-                  <Skeleton className="h-7 w-24 rounded-full" />
-                  <Skeleton className="h-7 w-7 rounded-md" />
-                  <Skeleton className="h-7 w-7 rounded-md" />
-                </div>
-                <div className="space-y-1.5">
-                  {[1, 2, 3].map((i) => (
-                    <div key={i} className="flex gap-3 py-1.5">
-                      <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
-                      <Skeleton className="h-24 flex-1 rounded-md" />
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="flex-[2] self-start sticky top-4 rounded-lg border border-dashed bg-card p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <Skeleton className="h-5 w-20" />
-                <Skeleton className="h-8 w-20 rounded-md" />
-              </div>
-              <div className="space-y-2">
-                {[1, 2].map((i) => (
-                  <div key={i} className="flex items-center gap-2 py-1">
-                    <Skeleton className="h-2.5 w-2.5 shrink-0 rounded-full" />
-                    <div className="flex-1 space-y-1">
-                      <Skeleton className="h-4 w-24" />
-                      <Skeleton className="h-3 w-16" />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (queryError || !trip) {
-    return <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>;
-  }
-
-  const canEdit = canEditRole(trip.role);
+  const canEdit = trip ? canEditRole(trip.role) : false;
   canEditRef.current = canEdit;
   const isGuest = isGuestUser(session);
 
-  const scheduleLimitReached = trip.scheduleCount >= MAX_SCHEDULES_PER_TRIP;
+  const scheduleLimitReached = (trip?.scheduleCount ?? 0) >= MAX_SCHEDULES_PER_TRIP;
   const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
   const selectionValue = { ...selection, canEnter: canEdit && online };
 
@@ -664,10 +658,10 @@ export default function TripDetailPage() {
     : null;
 
   // Capture narrowed trip for use in renderTabContent closure
-  // (TypeScript loses narrowing in nested functions)
   const tripData = trip;
 
   function renderTabContent(tabId: MobileContentTab) {
+    if (!tripData) return null;
     switch (tabId) {
       case "schedule":
         return (
@@ -813,281 +807,292 @@ export default function TripDetailPage() {
   }
 
   return (
-    <SelectionProvider value={selectionValue}>
-      <div className="mt-4">
-        <TripHeader
-          trip={trip}
-          tripId={tripId}
-          otherPresence={otherPresence}
-          isConnected={isConnected}
-          online={online}
-          canEdit={canEdit}
-          onMutate={onMutate}
-          onEditOpen={() => setEditOpen(true)}
-          onOpenBookmarks={
-            isGuest
-              ? undefined
-              : () => {
-                  handleMobileTabChange("bookmarks", "tap");
-                }
-          }
-          onOpenActivity={() => {
-            handleMobileTabChange("activity", "tap");
-          }}
-        />
-        <EditTripDialog
-          tripId={tripId}
-          title={trip.title}
-          destination={trip.destination}
-          startDate={trip.startDate}
-          endDate={trip.endDate}
-          coverImageUrl={trip.coverImageUrl}
-          coverImagePosition={trip.coverImagePosition}
-          open={editOpen}
-          onOpenChange={setEditOpen}
-          onUpdate={onMutate}
-        />
-        <DndContext
-          sensors={dnd.sensors}
-          collisionDetection={dnd.collisionDetection}
-          onDragStart={dnd.handleDragStart}
-          onDragOver={dnd.handleDragOver}
-          onDragEnd={dnd.handleDragEnd}
-          accessibility={{ announcements: dndAnnouncements }}
-        >
-          {/* Mobile layout */}
-          <div className="lg:hidden" inert={isLg || undefined}>
-            <MobileContentTabs
-              activeTab={mobileTab}
-              onTabChange={handleMobileTabChange}
-              candidateCount={dnd.localCandidates.length}
-            />
-            <div
-              ref={mobileContentRef}
-              className={
-                isActivelySwiping
-                  ? "min-h-0 overflow-hidden"
-                  : "min-h-0 overflow-y-auto overscroll-contain pb-20"
+    <LoadingBoundary
+      isLoading={isLoading || (!!pollId && isPollLoading)}
+      skeleton={<TripDetailSkeleton />}
+    >
+      {queryError || !trip ? (
+        <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+      ) : (
+        <SelectionProvider value={selectionValue}>
+          <div className="mt-4">
+            <TripHeader
+              trip={trip}
+              tripId={tripId}
+              otherPresence={otherPresence}
+              isConnected={isConnected}
+              online={online}
+              canEdit={canEdit}
+              onMutate={onMutate}
+              onEditOpen={() => setEditOpen(true)}
+              onOpenBookmarks={
+                isGuest
+                  ? undefined
+                  : () => {
+                      handleMobileTabChange("bookmarks", "tap");
+                    }
               }
+              onOpenActivity={() => {
+                handleMobileTabChange("activity", "tap");
+              }}
+            />
+            <EditTripDialog
+              tripId={tripId}
+              title={trip.title}
+              destination={trip.destination}
+              startDate={trip.startDate}
+              endDate={trip.endDate}
+              coverImageUrl={trip.coverImageUrl}
+              coverImagePosition={trip.coverImagePosition}
+              open={editOpen}
+              onOpenChange={setEditOpen}
+              onUpdate={onMutate}
+            />
+            <DndContext
+              sensors={dnd.sensors}
+              collisionDetection={dnd.collisionDetection}
+              onDragStart={dnd.handleDragStart}
+              onDragOver={dnd.handleDragOver}
+              onDragEnd={dnd.handleDragEnd}
+              accessibility={{ announcements: dndAnnouncements }}
             >
-              <div
-                ref={swipeContainerRef}
-                className="relative touch-pan-y"
-                style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
-              >
-                {/* Current tab */}
+              {/* Mobile layout */}
+              <div className="lg:hidden" inert={isLg || undefined}>
+                <MobileContentTabs
+                  activeTab={mobileTab}
+                  onTabChange={handleMobileTabChange}
+                  candidateCount={dnd.localCandidates.length}
+                />
                 <div
+                  ref={mobileContentRef}
                   className={
-                    tapTransitionRef.current ? "animate-[tab-fade-in_150ms_ease-out]" : undefined
+                    isActivelySwiping
+                      ? "min-h-0 overflow-hidden"
+                      : "min-h-0 overflow-y-auto overscroll-contain pb-20"
                   }
-                  ref={() => {
-                    tapTransitionRef.current = false;
-                  }}
                 >
                   <div
-                    id={getMobileTabPanelId(mobileTab)}
-                    role="tabpanel"
-                    aria-labelledby={getMobileTabTriggerId(mobileTab)}
+                    ref={swipeContainerRef}
+                    className="relative touch-pan-y"
+                    style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
                   >
-                    {renderTabContent(mobileTab)}
+                    {/* Current tab */}
+                    <div
+                      className={
+                        tapTransitionRef.current
+                          ? "animate-[tab-fade-in_150ms_ease-out]"
+                          : undefined
+                      }
+                      ref={() => {
+                        tapTransitionRef.current = false;
+                      }}
+                    >
+                      <div
+                        id={getMobileTabPanelId(mobileTab)}
+                        role="tabpanel"
+                        aria-labelledby={getMobileTabTriggerId(mobileTab)}
+                      >
+                        {renderTabContent(mobileTab)}
+                      </div>
+                    </div>
+
+                    {/* Adjacent tab (rendered only during swipe) */}
+                    {swipe.adjacent && adjacentTabId && (
+                      <div
+                        className="absolute top-0 left-0 w-full"
+                        aria-hidden="true"
+                        style={{
+                          transform:
+                            swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                        }}
+                      >
+                        {renderTabContent(adjacentTabId)}
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                {/* Adjacent tab (rendered only during swipe) */}
-                {swipe.adjacent && adjacentTabId && (
-                  <div
-                    className="absolute top-0 left-0 w-full"
-                    aria-hidden="true"
-                    style={{
-                      transform:
-                        swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
-                    }}
-                  >
-                    {renderTabContent(adjacentTabId)}
-                  </div>
-                )}
               </div>
-            </div>
-          </div>
 
-          {/* Desktop layout */}
-          <div className="hidden lg:flex items-start gap-4">
-            {/* Left panel */}
-            <div className="flex min-w-0 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
-              <DayTabs
-                days={trip.days}
-                selectedDay={selectedDay}
-                onSelectDay={setSelectedDay}
-                otherPresence={otherPresence}
-                hasPoll={!!trip.poll}
-              />
-              {selectedDay === -1 && trip.poll ? (
-                <div className="min-h-0 overflow-y-auto overscroll-contain">
-                  <PollTab
-                    pollId={trip.poll.id}
-                    isOwner={isOwnerRole(trip.role)}
-                    canEdit={canEdit}
-                    onMutate={onMutate}
-                    onConfirmed={() => setSelectedDay(0)}
+              {/* Desktop layout */}
+              <div className="hidden lg:flex items-start gap-4">
+                {/* Left panel */}
+                <div className="flex min-w-0 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
+                  <DayTabs
+                    days={trip.days}
+                    selectedDay={selectedDay}
+                    onSelectDay={setSelectedDay}
+                    otherPresence={otherPresence}
+                    hasPoll={!!trip.poll}
                   />
-                </div>
-              ) : currentDay && currentPattern ? (
-                <div
-                  ref={timelinePanelRef}
-                  id={`day-panel-${currentDay.id}`}
-                  role="tabpanel"
-                  className="min-h-0 overflow-y-auto overscroll-contain p-4"
-                >
-                  <DayWeatherEditor
-                    weatherHook={weather}
-                    currentDayId={currentDay.id}
-                    currentWeatherType={currentDay.weatherType}
-                    currentWeatherTypeSecondary={currentDay.weatherTypeSecondary}
-                    currentTempHigh={currentDay.tempHigh}
-                    currentTempLow={currentDay.tempLow}
-                    canEdit={canEdit}
-                    online={online}
-                  />
-                  <DayMemoEditor
-                    memo={memo}
-                    currentDayId={currentDay.id}
-                    currentDayMemo={currentDay.memo}
-                    canEdit={canEdit}
-                    online={online}
-                  />
-
-                  <DayTimeline
-                    key={currentPattern.id}
-                    tripId={tripId}
-                    dayId={currentDay.id}
-                    patternId={currentPattern.id}
-                    date={currentDay.date}
-                    schedules={dnd.localSchedules}
-                    onRefresh={onMutate}
-                    disabled={!online || !canEdit}
-                    addScheduleOpen={isLg ? addScheduleOpen : false}
-                    onAddScheduleOpenChange={isLg ? setAddScheduleOpen : undefined}
-                    maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
-                    totalDays={trip.days.length}
-                    crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
-                    overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
-                    scheduleLimitReached={scheduleLimitReached}
-                    scheduleLimitMessage={scheduleLimitMessage}
-                    onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
-                    onReorderSchedule={dnd.reorderSchedule}
-                    headerContent={
-                      <PatternTabs
-                        patterns={currentDay.patterns}
+                  {selectedDay === -1 && trip.poll ? (
+                    <div className="min-h-0 overflow-y-auto overscroll-contain">
+                      <PollTab
+                        pollId={trip.poll.id}
+                        isOwner={isOwnerRole(trip.role)}
+                        canEdit={canEdit}
+                        onMutate={onMutate}
+                        onConfirmed={() => setSelectedDay(0)}
+                      />
+                    </div>
+                  ) : currentDay && currentPattern ? (
+                    <div
+                      ref={timelinePanelRef}
+                      id={`day-panel-${currentDay.id}`}
+                      role="tabpanel"
+                      className="min-h-0 overflow-y-auto overscroll-contain p-4"
+                    >
+                      <DayWeatherEditor
+                        weatherHook={weather}
                         currentDayId={currentDay.id}
-                        currentPatternIndex={currentPatternIndex}
+                        currentWeatherType={currentDay.weatherType}
+                        currentWeatherTypeSecondary={currentDay.weatherTypeSecondary}
+                        currentTempHigh={currentDay.tempHigh}
+                        currentTempLow={currentDay.tempLow}
                         canEdit={canEdit}
                         online={online}
-                        patternOps={patternOps}
-                        onSelectPattern={(dayId, index) =>
-                          setSelectedPattern((prev) => ({ ...prev, [dayId]: index }))
+                      />
+                      <DayMemoEditor
+                        memo={memo}
+                        currentDayId={currentDay.id}
+                        currentDayMemo={currentDay.memo}
+                        canEdit={canEdit}
+                        online={online}
+                      />
+
+                      <DayTimeline
+                        key={currentPattern.id}
+                        tripId={tripId}
+                        dayId={currentDay.id}
+                        patternId={currentPattern.id}
+                        date={currentDay.date}
+                        schedules={dnd.localSchedules}
+                        onRefresh={onMutate}
+                        disabled={!online || !canEdit}
+                        addScheduleOpen={isLg ? addScheduleOpen : false}
+                        onAddScheduleOpenChange={isLg ? setAddScheduleOpen : undefined}
+                        maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
+                        totalDays={trip.days.length}
+                        crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
+                        overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
+                        scheduleLimitReached={scheduleLimitReached}
+                        scheduleLimitMessage={scheduleLimitMessage}
+                        onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                        onReorderSchedule={dnd.reorderSchedule}
+                        headerContent={
+                          <PatternTabs
+                            patterns={currentDay.patterns}
+                            currentDayId={currentDay.id}
+                            currentPatternIndex={currentPatternIndex}
+                            canEdit={canEdit}
+                            online={online}
+                            patternOps={patternOps}
+                            onSelectPattern={(dayId, index) =>
+                              setSelectedPattern((prev) => ({ ...prev, [dayId]: index }))
+                            }
+                          />
                         }
                       />
-                    }
-                  />
-                  <ScrollToTop containerRef={timelinePanelRef} />
+                      <ScrollToTop containerRef={timelinePanelRef} />
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center justify-center py-16 text-center">
+                      <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        {MSG.SCHEDULING_STATUS_DESCRIPTION}
+                      </p>
+                    </div>
+                  )}
                 </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-16 text-center">
-                  <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {MSG.SCHEDULING_STATUS_DESCRIPTION}
-                  </p>
-                </div>
-              )}
-            </div>
 
-            {/* Right panel */}
-            <RightPanel
-              tripId={tripId}
-              rightPanelTab={rightPanelTab}
-              setRightPanelTab={setRightPanelTab}
-              candidates={dnd.localCandidates}
-              currentDayId={currentDay?.id ?? null}
-              currentPatternId={currentPattern?.id ?? null}
-              onRefresh={onMutate}
-              disabled={!online || !canEdit}
-              canEdit={canEdit}
-              online={online}
-              addCandidateOpen={isLg ? addCandidateOpen : false}
-              onAddCandidateOpenChange={setAddCandidateOpen}
-              addSouvenirOpen={isLg ? addSouvenirOpen : false}
-              onAddSouvenirOpenChange={setAddSouvenirOpen}
-              scheduleLimitReached={scheduleLimitReached}
-              scheduleLimitMessage={scheduleLimitMessage}
-              overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
-              hasDays={trip.days.length > 0}
-              maxEndDayOffset={Math.max(0, trip.days.length - 1)}
-              onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                {/* Right panel */}
+                <RightPanel
+                  tripId={tripId}
+                  rightPanelTab={rightPanelTab}
+                  setRightPanelTab={setRightPanelTab}
+                  candidates={dnd.localCandidates}
+                  currentDayId={currentDay?.id ?? null}
+                  currentPatternId={currentPattern?.id ?? null}
+                  onRefresh={onMutate}
+                  disabled={!online || !canEdit}
+                  canEdit={canEdit}
+                  online={online}
+                  addCandidateOpen={isLg ? addCandidateOpen : false}
+                  onAddCandidateOpenChange={setAddCandidateOpen}
+                  addSouvenirOpen={isLg ? addSouvenirOpen : false}
+                  onAddSouvenirOpenChange={setAddSouvenirOpen}
+                  scheduleLimitReached={scheduleLimitReached}
+                  scheduleLimitMessage={scheduleLimitMessage}
+                  overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
+                  hasDays={trip.days.length > 0}
+                  maxEndDayOffset={Math.max(0, trip.days.length - 1)}
+                  onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                />
+              </div>
+              {mounted &&
+                createPortal(
+                  <DragOverlay>
+                    {dnd.activeDragItem &&
+                      (() => {
+                        const Icon = CATEGORY_ICONS[dnd.activeDragItem.category];
+                        const colorClasses = SCHEDULE_COLOR_CLASSES[dnd.activeDragItem.color];
+                        return (
+                          <div className="flex w-max items-center gap-2 rounded-md border bg-card p-2 shadow-lg opacity-90">
+                            <div
+                              className={cn(
+                                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white",
+                                colorClasses.bg,
+                              )}
+                            >
+                              <Icon className="h-3 w-3" />
+                            </div>
+                            <span className="whitespace-nowrap text-sm font-medium">
+                              {dnd.activeDragItem.name}
+                            </span>
+                          </div>
+                        );
+                      })()}
+                  </DragOverlay>,
+                  document.body,
+                )}
+            </DndContext>
+
+            <Fab
+              onClick={() => {
+                if (mobileTab === "schedule") {
+                  if (scheduleLimitReached) {
+                    toast.error(scheduleLimitMessage);
+                    return;
+                  }
+                  setAddScheduleOpen(true);
+                } else if (mobileTab === "candidates") setAddCandidateOpen(true);
+                else if (mobileTab === "expenses") setAddExpenseOpen(true);
+                else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
+              }}
+              label={
+                mobileTab === "schedule"
+                  ? "予定を追加"
+                  : mobileTab === "candidates"
+                    ? "候補を追加"
+                    : mobileTab === "expenses"
+                      ? "費用を追加"
+                      : "お土産を追加"
+              }
+              hidden={!canEdit || !online || mobileTab === "bookmarks" || mobileTab === "activity"}
+            />
+
+            <AddPatternDialog patternOps={patternOps} />
+            <RenamePatternDialog patternOps={patternOps} />
+            <BatchDeleteDialog selection={selection} />
+            <DeletePatternDialog patternOps={patternOps} />
+            <OverwritePatternDialog patternOps={patternOps} patterns={currentDay?.patterns ?? []} />
+            <BookmarkListPickerDialog
+              open={bookmarkPickerOpen}
+              onOpenChange={setBookmarkPickerOpen}
+              onSelect={handleBookmarkListSelected}
             />
           </div>
-          {mounted &&
-            createPortal(
-              <DragOverlay>
-                {dnd.activeDragItem &&
-                  (() => {
-                    const Icon = CATEGORY_ICONS[dnd.activeDragItem.category];
-                    const colorClasses = SCHEDULE_COLOR_CLASSES[dnd.activeDragItem.color];
-                    return (
-                      <div className="flex w-max items-center gap-2 rounded-md border bg-card p-2 shadow-lg opacity-90">
-                        <div
-                          className={cn(
-                            "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white",
-                            colorClasses.bg,
-                          )}
-                        >
-                          <Icon className="h-3 w-3" />
-                        </div>
-                        <span className="whitespace-nowrap text-sm font-medium">
-                          {dnd.activeDragItem.name}
-                        </span>
-                      </div>
-                    );
-                  })()}
-              </DragOverlay>,
-              document.body,
-            )}
-        </DndContext>
-
-        <Fab
-          onClick={() => {
-            if (mobileTab === "schedule") {
-              if (scheduleLimitReached) {
-                toast.error(scheduleLimitMessage);
-                return;
-              }
-              setAddScheduleOpen(true);
-            } else if (mobileTab === "candidates") setAddCandidateOpen(true);
-            else if (mobileTab === "expenses") setAddExpenseOpen(true);
-            else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
-          }}
-          label={
-            mobileTab === "schedule"
-              ? "予定を追加"
-              : mobileTab === "candidates"
-                ? "候補を追加"
-                : mobileTab === "expenses"
-                  ? "費用を追加"
-                  : "お土産を追加"
-          }
-          hidden={!canEdit || !online || mobileTab === "bookmarks" || mobileTab === "activity"}
-        />
-
-        <AddPatternDialog patternOps={patternOps} />
-        <RenamePatternDialog patternOps={patternOps} />
-        <BatchDeleteDialog selection={selection} />
-        <DeletePatternDialog patternOps={patternOps} />
-        <OverwritePatternDialog patternOps={patternOps} patterns={currentDay?.patterns ?? []} />
-        <BookmarkListPickerDialog
-          open={bookmarkPickerOpen}
-          onOpenChange={setBookmarkPickerOpen}
-          onSelect={handleBookmarkListSelected}
-        />
-      </div>
-    </SelectionProvider>
+        </SelectionProvider>
+      )}
+    </LoadingBoundary>
   );
 }

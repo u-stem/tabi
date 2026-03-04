@@ -6,6 +6,7 @@ import { GuestUpgradeDialog } from "@/components/guest-upgrade-dialog";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { getGuestDaysRemaining, isGuestUser } from "@/lib/guest";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
 export function GuestBanner() {
@@ -18,7 +19,7 @@ export function GuestBanner() {
       api<{ signupEnabled: boolean }>("/api/public/settings").catch(() => ({
         signupEnabled: true,
       })),
-    staleTime: 5 * 60 * 1000,
+    ...QUERY_CONFIG.static,
   });
 
   if (!isGuestUser(session)) return null;

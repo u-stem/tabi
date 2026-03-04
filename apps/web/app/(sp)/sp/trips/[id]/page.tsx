@@ -66,6 +66,7 @@ import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
 import { MSG } from "@/lib/messages";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
 export default function SpTripDetailPage() {
@@ -98,7 +99,7 @@ export default function SpTripDetailPage() {
   useQuery({
     queryKey: queryKeys.bookmarks.lists(),
     queryFn: () => api<BookmarkListResponse[]>("/api/bookmark-lists"),
-    staleTime: 60_000,
+    ...QUERY_CONFIG.stable,
   });
 
   const [editOpen, setEditOpen] = useState(false);

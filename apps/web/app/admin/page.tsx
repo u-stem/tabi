@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiError, api } from "@/lib/api";
 import { copyToClipboard } from "@/lib/clipboard";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
 const SUPABASE_MAU_LIMIT = 50_000;
@@ -102,7 +103,7 @@ function AnnouncementSection() {
   const { data } = useQuery({
     queryKey: queryKeys.admin.announcement(),
     queryFn: () => api<{ message: string | null }>("/api/announcement"),
-    staleTime: 10_000,
+    ...QUERY_CONFIG.dynamic,
   });
 
   useEffect(() => {
@@ -205,7 +206,7 @@ export default function AdminPage() {
   const { data, isLoading, error, dataUpdatedAt } = useQuery({
     queryKey: queryKeys.admin.stats(),
     queryFn: () => api<AdminStatsResponse>("/api/admin/stats"),
-    staleTime: 5 * 60 * 1000,
+    ...QUERY_CONFIG.static,
     retry: (failureCount, err) => {
       if (err instanceof ApiError && (err.status === 403 || err.status === 401)) return false;
       return failureCount < 3;
@@ -215,7 +216,7 @@ export default function AdminPage() {
   const { data: settings } = useQuery({
     queryKey: queryKeys.admin.settings(),
     queryFn: () => api<AdminSettingsResponse>("/api/admin/settings"),
-    staleTime: 30 * 1000,
+    ...QUERY_CONFIG.stable,
   });
 
   const toggleSignup = useMutation({
@@ -238,7 +239,7 @@ export default function AdminPage() {
   const { data: usersData } = useQuery({
     queryKey: queryKeys.admin.users(),
     queryFn: () => api<AdminUsersResponse>("/api/admin/users"),
-    staleTime: 60 * 1000,
+    ...QUERY_CONFIG.stable,
     retry: false,
     enabled: activeTab === "users",
   });

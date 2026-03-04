@@ -58,6 +58,7 @@ import { useTripSync } from "@/lib/hooks/use-trip-sync";
 import { isDialogOpen } from "@/lib/hotkeys";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { MSG } from "@/lib/messages";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
@@ -235,7 +236,7 @@ export default function TripDetailPage() {
   useQuery({
     queryKey: queryKeys.bookmarks.lists(),
     queryFn: () => api<BookmarkListResponse[]>("/api/bookmark-lists"),
-    staleTime: 60_000,
+    ...QUERY_CONFIG.stable,
   });
 
   const [editOpen, setEditOpen] = useState(false);

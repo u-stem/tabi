@@ -199,89 +199,89 @@ export default function SpHomePage() {
       >
         {/* Tab bar */}
         <div
-            role="tablist"
-            aria-orientation="horizontal"
-            className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
-          >
-            {tabs.map(({ value, label }, index) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={tab === value}
-                tabIndex={tab === value ? 0 : -1}
-                onClick={() => handleTabChange(value)}
-                onKeyDown={(e) => {
-                  if (e.key === "ArrowRight") {
-                    e.preventDefault();
-                    handleTabChange(tabs[(index + 1) % tabs.length].value);
-                  } else if (e.key === "ArrowLeft") {
-                    e.preventDefault();
-                    handleTabChange(tabs[(index - 1 + tabs.length) % tabs.length].value);
-                  }
-                }}
-                className={cn(
-                  "min-h-[36px] rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.97]",
-                  tab === value
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Toolbar is outside the swipe container so the search <input> never
-              blocks swipe initiation. Only card content goes inside. */}
-          <div className="mt-4">
-            <TripToolbar
-              searchInputRef={searchInputRef}
-              search={search}
-              onSearchChange={setSearch}
-              statusFilter={statusFilter}
-              onStatusFilterChange={setStatusFilter}
-              sortKey={sortKey}
-              onSortKeyChange={setSortKey}
-              selectionMode={selectionMode}
-              onSelectionModeChange={setSelectionMode}
-              selectedCount={selectedIds.size}
-              totalCount={filteredTrips.length}
-              onSelectAll={handleSelectAll}
-              onDeselectAll={handleDeselectAll}
-              onDeleteSelected={handleDeleteSelected}
-              onDuplicateSelected={handleDuplicateSelected}
-              deleting={deleting}
-              duplicating={duplicating}
-              disabled={!online}
-              hideDelete={tab === "shared"}
-            />
-          </div>
-
-          {/* Swipe area - px-0.5/-mx-0.5 allows focus rings to bleed past overflow-x-hidden boundary.
-              min-h-[60vh] ensures a large touch target even when the card list is empty. */}
-          <div
-            ref={contentRef}
-            className="mt-2 min-h-[60vh] overflow-x-hidden px-0.5 -mx-0.5 touch-pan-y"
-          >
-            <div ref={swipeRef} className="relative touch-pan-y will-change-transform">
-              {/* Current tab - pt-0.5 prevents the top of the focus ring from being clipped */}
-              <div className="pt-0.5">{renderCardList(tab)}</div>
-
-              {/* Adjacent tab (rendered only during swipe) */}
-              {swipe.adjacent && adjacentTab && (
-                <div
-                  className="absolute top-0 left-0 w-full pt-0.5"
-                  aria-hidden="true"
-                  style={{
-                    transform: swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
-                  }}
-                >
-                  {renderCardList(adjacentTab)}
-                </div>
+          role="tablist"
+          aria-orientation="horizontal"
+          className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+        >
+          {tabs.map(({ value, label }, index) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={tab === value}
+              tabIndex={tab === value ? 0 : -1}
+              onClick={() => handleTabChange(value)}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowRight") {
+                  e.preventDefault();
+                  handleTabChange(tabs[(index + 1) % tabs.length].value);
+                } else if (e.key === "ArrowLeft") {
+                  e.preventDefault();
+                  handleTabChange(tabs[(index - 1 + tabs.length) % tabs.length].value);
+                }
+              }}
+              className={cn(
+                "min-h-[36px] rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.97]",
+                tab === value
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
               )}
-            </div>
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {/* Toolbar is outside the swipe container so the search <input> never
+              blocks swipe initiation. Only card content goes inside. */}
+        <div className="mt-4">
+          <TripToolbar
+            searchInputRef={searchInputRef}
+            search={search}
+            onSearchChange={setSearch}
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            sortKey={sortKey}
+            onSortKeyChange={setSortKey}
+            selectionMode={selectionMode}
+            onSelectionModeChange={setSelectionMode}
+            selectedCount={selectedIds.size}
+            totalCount={filteredTrips.length}
+            onSelectAll={handleSelectAll}
+            onDeselectAll={handleDeselectAll}
+            onDeleteSelected={handleDeleteSelected}
+            onDuplicateSelected={handleDuplicateSelected}
+            deleting={deleting}
+            duplicating={duplicating}
+            disabled={!online}
+            hideDelete={tab === "shared"}
+          />
+        </div>
+
+        {/* Swipe area - px-0.5/-mx-0.5 allows focus rings to bleed past overflow-x-hidden boundary.
+              min-h-[60vh] ensures a large touch target even when the card list is empty. */}
+        <div
+          ref={contentRef}
+          className="mt-2 min-h-[60vh] overflow-x-hidden px-0.5 -mx-0.5 touch-pan-y"
+        >
+          <div ref={swipeRef} className="relative touch-pan-y will-change-transform">
+            {/* Current tab - pt-0.5 prevents the top of the focus ring from being clipped */}
+            <div className="pt-0.5">{renderCardList(tab)}</div>
+
+            {/* Adjacent tab (rendered only during swipe) */}
+            {swipe.adjacent && adjacentTab && (
+              <div
+                className="absolute top-0 left-0 w-full pt-0.5"
+                aria-hidden="true"
+                style={{
+                  transform: swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                }}
+              >
+                {renderCardList(adjacentTab)}
+              </div>
+            )}
           </div>
+        </div>
       </LoadingBoundary>
       <CreateTripDialog
         open={createTripOpen}

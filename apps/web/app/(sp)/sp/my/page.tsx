@@ -35,8 +35,6 @@ export default function SpMyPage() {
     toast.success(MSG.SETTINGS_USER_ID_COPIED);
     setTimeout(() => setIdCopied(false), 2000);
   }
-  const displayUsername = user?.displayUsername ?? user?.username;
-
   const { data: profile, isLoading } = useQuery({
     queryKey: queryKeys.profile.bookmarkLists(userId ?? ""),
     queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
@@ -56,7 +54,6 @@ export default function SpMyPage() {
         />
         <div className="text-center">
           <h1 className="text-lg font-semibold">{user?.name}</h1>
-          {displayUsername && <p className="text-sm text-muted-foreground">@{displayUsername}</p>}
           {userId && (
             <button
               type="button"
@@ -64,7 +61,7 @@ export default function SpMyPage() {
               className="mt-0.5 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
               aria-label="ユーザーIDをコピー"
             >
-              <span>ID:</span>
+              <span>ユーザーID:</span>
               <code className="font-mono">{userId.slice(0, 8)}...</code>
               {idCopied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
             </button>

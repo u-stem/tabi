@@ -16,6 +16,7 @@ import { useEffect, useState } from "react";
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
 import { SCHEDULE_COLOR_CLASSES, STATUS_COLORS } from "@/lib/colors";
@@ -29,7 +30,6 @@ import {
   isSafeUrl,
   stripProtocol,
 } from "@/lib/format";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { buildMergedTimeline } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
@@ -50,6 +50,46 @@ function SharedHeader() {
   );
 }
 
+function SharedTripBodySkeleton() {
+  return (
+    <div className="container max-w-3xl py-8">
+      {/* Hero skeleton */}
+      <div className="mb-8 rounded-xl border bg-card px-6 py-6 shadow-sm">
+        <Skeleton className="mb-3 h-5 w-16 rounded-full" />
+        <Skeleton className="h-8 w-56" />
+        <div className="mt-3 flex items-center gap-4">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-36" />
+        </div>
+      </div>
+      {/* Day card skeletons */}
+      <div className="space-y-6">
+        {[1, 2].map((day) => (
+          <div key={day} className="overflow-hidden rounded-xl border bg-card shadow-sm">
+            <div className="border-b bg-muted/40 px-4 py-3 sm:px-5">
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-6 w-6 rounded-full" />
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
+            <div className="space-y-2 p-4 sm:p-5">
+              {[1, 2].map((s) => (
+                <div key={s} className="flex items-start gap-3 rounded-lg px-3 py-2.5">
+                  <Skeleton className="h-5 w-5 rounded-md" />
+                  <div className="flex-1 space-y-1.5">
+                    <Skeleton className="h-4 w-40" />
+                    <Skeleton className="h-3 w-28" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function SharedTripClient({ token }: { token: string }) {
   const queryClient = useQueryClient();
   const [hasUpdate, setHasUpdate] = useState(false);
@@ -63,8 +103,6 @@ export function SharedTripClient({ token }: { token: string }) {
     queryFn: () => api<SharedTripResponse>(`/api/shared/${token}`),
     enabled: true,
   });
-
-  const showSkeleton = useDelayedLoading(isLoading);
 
   // Derive error message from query error
   const error =
@@ -94,205 +132,152 @@ export function SharedTripClient({ token }: { token: string }) {
     };
   }, [trip?.id]);
 
-  if (showSkeleton) {
-    return (
-      <div className="min-h-screen">
-        <SharedHeader />
-        <div className="container max-w-3xl py-8">
-          {/* Hero skeleton */}
-          <div className="mb-8 rounded-xl border bg-card px-6 py-6 shadow-sm">
-            <Skeleton className="mb-3 h-5 w-16 rounded-full" />
-            <Skeleton className="h-8 w-56" />
-            <div className="mt-3 flex items-center gap-4">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-36" />
-            </div>
-          </div>
-          {/* Day card skeletons */}
-          <div className="space-y-6">
-            {[1, 2].map((day) => (
-              <div key={day} className="overflow-hidden rounded-xl border bg-card shadow-sm">
-                <div className="border-b bg-muted/40 px-4 py-3 sm:px-5">
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-6 w-6 rounded-full" />
-                    <Skeleton className="h-4 w-24" />
-                  </div>
-                </div>
-                <div className="space-y-2 p-4 sm:p-5">
-                  {[1, 2].map((s) => (
-                    <div key={s} className="flex items-start gap-3 rounded-lg px-3 py-2.5">
-                      <Skeleton className="h-5 w-5 rounded-md" />
-                      <div className="flex-1 space-y-1.5">
-                        <Skeleton className="h-4 w-40" />
-                        <Skeleton className="h-3 w-28" />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Avoid flashing error/not-found during the 200ms skeleton delay
-  if (isLoading) {
-    return (
-      <div className="min-h-screen">
-        <SharedHeader />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen">
-        <SharedHeader />
-        <div className="container flex max-w-3xl flex-col items-center py-16 text-center">
-          <Calendar className="mb-4 h-12 w-12 text-muted-foreground" />
-          <p className="text-lg font-medium text-destructive">{error}</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            リンクが正しいか確認するか、共有元に問い合わせてください
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  if (!trip) {
-    return (
-      <div className="min-h-screen">
-        <SharedHeader />
-        <div className="container flex max-w-3xl flex-col items-center py-16 text-center">
-          <p className="text-lg font-medium text-destructive">{MSG.SHARED_TRIP_NOT_FOUND}</p>
-        </div>
-      </div>
-    );
-  }
-
-  const dayCount = getDayCount(trip.startDate, trip.endDate);
+  const dayCount = trip ? getDayCount(trip.startDate, trip.endDate) : 0;
 
   return (
     <div className="min-h-screen">
       <SharedHeader />
-      {hasUpdate && (
-        <div className="sticky top-0 z-10 border-b bg-blue-50 px-4 py-2 text-center dark:bg-blue-950">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="gap-1.5 text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
-            onClick={handleRefresh}
-          >
-            <RefreshCw className="h-3.5 w-3.5" />
-            内容が更新されました。タップして最新を表示
-          </Button>
-        </div>
-      )}
-      <div className="container max-w-3xl py-8">
-        {/* Hero */}
-        <div className="mb-8 rounded-xl border bg-card px-6 py-6 shadow-sm">
-          <Badge variant="outline" className={cn("mb-3 w-fit", STATUS_COLORS[trip.status])}>
-            {STATUS_LABELS[trip.status]}
-          </Badge>
-          <h1 className="break-words text-2xl font-bold sm:text-3xl">{trip.title}</h1>
-          <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-            {trip.destination && (
-              <span className="flex items-center gap-1.5">
-                <MapPin className="h-4 w-4 shrink-0" />
-                {trip.destination}
-              </span>
-            )}
-            <span className="flex items-center gap-1.5">
-              <Calendar className="h-4 w-4 shrink-0" />
-              {formatDateRange(trip.startDate, trip.endDate)}
-              <span className="text-xs">（{dayCount}日間）</span>
-            </span>
-          </div>
-          {trip.shareExpiresAt && (
-            <p className="mt-3 text-xs text-muted-foreground">
-              共有リンクの有効期限: {formatDateFromISO(trip.shareExpiresAt)}
+      <LoadingBoundary isLoading={isLoading} skeleton={<SharedTripBodySkeleton />}>
+        {error ? (
+          <div className="container flex max-w-3xl flex-col items-center py-16 text-center">
+            <Calendar className="mb-4 h-12 w-12 text-muted-foreground" />
+            <p className="text-lg font-medium text-destructive">{error}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              リンクが正しいか確認するか、共有元に問い合わせてください
             </p>
-          )}
-        </div>
-        <div className="space-y-6">
-          {(trip.days ?? []).map((day) => {
-            const crossDayEntries = getCrossDayEntries(trip.days ?? [], day.dayNumber);
-            return (
-              <section key={day.id} className="overflow-hidden rounded-xl border bg-card shadow-sm">
-                <div className="border-b bg-muted/40 px-4 py-3 sm:px-5">
-                  <h3 className="flex items-center gap-2 text-sm font-semibold">
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-bold text-background">
-                      {day.dayNumber}
+          </div>
+        ) : !trip ? (
+          <div className="container flex max-w-3xl flex-col items-center py-16 text-center">
+            <p className="text-lg font-medium text-destructive">{MSG.SHARED_TRIP_NOT_FOUND}</p>
+          </div>
+        ) : (
+          <>
+            {hasUpdate && (
+              <div className="sticky top-0 z-10 border-b bg-blue-50 px-4 py-2 text-center dark:bg-blue-950">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
+                  onClick={handleRefresh}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  内容が更新されました。タップして最新を表示
+                </Button>
+              </div>
+            )}
+            <div className="container max-w-3xl py-8">
+              {/* Hero */}
+              <div className="mb-8 rounded-xl border bg-card px-6 py-6 shadow-sm">
+                <Badge variant="outline" className={cn("mb-3 w-fit", STATUS_COLORS[trip.status])}>
+                  {STATUS_LABELS[trip.status]}
+                </Badge>
+                <h1 className="break-words text-2xl font-bold sm:text-3xl">{trip.title}</h1>
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+                  {trip.destination && (
+                    <span className="flex items-center gap-1.5">
+                      <MapPin className="h-4 w-4 shrink-0" />
+                      {trip.destination}
                     </span>
-                    <span>{formatDate(day.date)}</span>
-                    <span className="font-normal text-muted-foreground">
-                      {(() => {
-                        const d = new Date(day.date);
-                        return ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
-                      })()}曜日
-                    </span>
-                    {day.weatherType != null &&
-                      (() => {
-                        const weatherType = day.weatherType as WeatherType;
-                        const weatherTypeSecondary = day.weatherTypeSecondary as WeatherType | null;
-                        const PrimaryIcon = WEATHER_ICON[weatherType];
-                        return (
-                          <span className="ml-auto flex items-center gap-1 font-normal text-xs text-muted-foreground">
-                            <PrimaryIcon
-                              className={cn("h-4 w-4 shrink-0", WEATHER_ICON_COLOR[weatherType])}
-                            />
-                            <span>{WEATHER_LABELS[weatherType]}</span>
-                            {weatherTypeSecondary != null &&
-                              (() => {
-                                const SecondaryIcon = WEATHER_ICON[weatherTypeSecondary];
-                                return (
-                                  <>
-                                    <span>→</span>
-                                    <SecondaryIcon
-                                      className={cn(
-                                        "h-4 w-4 shrink-0",
-                                        WEATHER_ICON_COLOR[weatherTypeSecondary],
-                                      )}
-                                    />
-                                    <span>{WEATHER_LABELS[weatherTypeSecondary]}</span>
-                                  </>
-                                );
-                              })()}
-                            {(day.tempHigh != null || day.tempLow != null) && (
-                              <span>
-                                {day.tempHigh != null ? `${day.tempHigh}` : "-"}/
-                                {day.tempLow != null ? `${day.tempLow}` : "-"}°
-                              </span>
-                            )}
-                          </span>
-                        );
-                      })()}
-                  </h3>
-                </div>
-                <div className="p-4 sm:p-5">
-                  {(day.patterns ?? []).map((pattern, i) => (
-                    <PatternSection
-                      key={pattern.id}
-                      pattern={pattern}
-                      dayDate={day.date}
-                      showLabel={(day.patterns ?? []).length > 1}
-                      crossDayEntries={i === 0 ? crossDayEntries : undefined}
-                    />
-                  ))}
-                  {day.memo && (
-                    <div className="mt-3 flex items-start gap-2 border-t pt-3 text-sm text-muted-foreground">
-                      <StickyNote className="mt-0.5 h-4 w-4 shrink-0" />
-                      <p className="whitespace-pre-line">{day.memo}</p>
-                    </div>
                   )}
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4 shrink-0" />
+                    {formatDateRange(trip.startDate, trip.endDate)}
+                    <span className="text-xs">（{dayCount}日間）</span>
+                  </span>
                 </div>
-              </section>
-            );
-          })}
-        </div>
-      </div>
+                {trip.shareExpiresAt && (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    共有リンクの有効期限: {formatDateFromISO(trip.shareExpiresAt)}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-6">
+                {(trip.days ?? []).map((day) => {
+                  const crossDayEntries = getCrossDayEntries(trip.days ?? [], day.dayNumber);
+                  return (
+                    <section
+                      key={day.id}
+                      className="overflow-hidden rounded-xl border bg-card shadow-sm"
+                    >
+                      <div className="border-b bg-muted/40 px-4 py-3 sm:px-5">
+                        <h3 className="flex items-center gap-2 text-sm font-semibold">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-bold text-background">
+                            {day.dayNumber}
+                          </span>
+                          <span>{formatDate(day.date)}</span>
+                          <span className="font-normal text-muted-foreground">
+                            {(() => {
+                              const d = new Date(day.date);
+                              return ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+                            })()}曜日
+                          </span>
+                          {day.weatherType != null &&
+                            (() => {
+                              const weatherType = day.weatherType as WeatherType;
+                              const weatherTypeSecondary =
+                                day.weatherTypeSecondary as WeatherType | null;
+                              const PrimaryIcon = WEATHER_ICON[weatherType];
+                              return (
+                                <span className="ml-auto flex items-center gap-1 font-normal text-xs text-muted-foreground">
+                                  <PrimaryIcon
+                                    className={cn(
+                                      "h-4 w-4 shrink-0",
+                                      WEATHER_ICON_COLOR[weatherType],
+                                    )}
+                                  />
+                                  <span>{WEATHER_LABELS[weatherType]}</span>
+                                  {weatherTypeSecondary != null &&
+                                    (() => {
+                                      const SecondaryIcon = WEATHER_ICON[weatherTypeSecondary];
+                                      return (
+                                        <>
+                                          <span>→</span>
+                                          <SecondaryIcon
+                                            className={cn(
+                                              "h-4 w-4 shrink-0",
+                                              WEATHER_ICON_COLOR[weatherTypeSecondary],
+                                            )}
+                                          />
+                                          <span>{WEATHER_LABELS[weatherTypeSecondary]}</span>
+                                        </>
+                                      );
+                                    })()}
+                                  {(day.tempHigh != null || day.tempLow != null) && (
+                                    <span>
+                                      {day.tempHigh != null ? `${day.tempHigh}` : "-"}/
+                                      {day.tempLow != null ? `${day.tempLow}` : "-"}°
+                                    </span>
+                                  )}
+                                </span>
+                              );
+                            })()}
+                        </h3>
+                      </div>
+                      <div className="p-4 sm:p-5">
+                        {(day.patterns ?? []).map((pattern, i) => (
+                          <PatternSection
+                            key={pattern.id}
+                            pattern={pattern}
+                            dayDate={day.date}
+                            showLabel={(day.patterns ?? []).length > 1}
+                            crossDayEntries={i === 0 ? crossDayEntries : undefined}
+                          />
+                        ))}
+                        {day.memo && (
+                          <div className="mt-3 flex items-start gap-2 border-t pt-3 text-sm text-muted-foreground">
+                            <StickyNote className="mt-0.5 h-4 w-4 shrink-0" />
+                            <p className="whitespace-pre-line">{day.memo}</p>
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
+            </div>
+          </>
+        )}
+      </LoadingBoundary>
     </div>
   );
 }

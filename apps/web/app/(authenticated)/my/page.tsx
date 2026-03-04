@@ -8,13 +8,13 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookmarkListCard } from "@/app/users/[userId]/page";
 import { MyQrDialog } from "@/components/my-qr-dialog";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { copyToClipboard } from "@/lib/clipboard";
 import { pageTitle } from "@/lib/constants";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -41,7 +41,13 @@ export default function MyPage() {
     queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
     enabled: !!userId,
   });
-  const showSkeleton = useDelayedLoading(isLoading);
+  const bookmarkListsSkeleton = (
+    <div className="overflow-hidden rounded-lg border divide-y">
+      {[1, 2, 3].map((i) => (
+        <Skeleton key={i} className="h-12 w-full rounded-none" />
+      ))}
+    </div>
+  );
 
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-4">
@@ -84,20 +90,15 @@ export default function MyPage() {
       </div>
 
       {/* Bookmark lists */}
-      {showSkeleton && (
-        <div className="overflow-hidden rounded-lg border divide-y">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-none" />
-          ))}
-        </div>
-      )}
-      {!showSkeleton && profile && profile.bookmarkLists.length > 0 && (
-        <div className="overflow-hidden rounded-lg border divide-y">
-          {profile.bookmarkLists.map((list) => (
-            <BookmarkListCard key={list.id} list={list} userId={userId ?? ""} />
-          ))}
-        </div>
-      )}
+      <LoadingBoundary isLoading={isLoading} skeleton={bookmarkListsSkeleton}>
+        {profile && profile.bookmarkLists.length > 0 && (
+          <div className="overflow-hidden rounded-lg border divide-y">
+            {profile.bookmarkLists.map((list) => (
+              <BookmarkListCard key={list.id} list={list} userId={userId ?? ""} />
+            ))}
+          </div>
+        )}
+      </LoadingBoundary>
     </div>
   );
 }

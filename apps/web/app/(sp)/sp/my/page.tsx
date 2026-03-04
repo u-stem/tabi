@@ -1,11 +1,13 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
+import type { PublicProfileResponse } from "@sugara/shared";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LogOut, Pencil, X } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { BookmarkListCard } from "@/app/users/[userId]/page";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -16,10 +18,13 @@ import {
   DrawerHeader,
   DrawerTitle,
 } from "@/components/ui/drawer";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
+import { api } from "@/lib/api";
 import { signOut, useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function SpMyPage() {
   const router = useRouter();
@@ -31,6 +36,16 @@ export default function SpMyPage() {
     document.title = pageTitle("マイページ");
   }, []);
 
+  const user = session?.user;
+  const userId = user?.id;
+  const displayUsername = user?.displayUsername ?? user?.username;
+
+  const { data: profile, isLoading } = useQuery({
+    queryKey: queryKeys.profile.bookmarkLists(userId ?? ""),
+    queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
+    enabled: !!userId,
+  });
+
   async function handleSignOut() {
     try {
       await signOut();
@@ -40,9 +55,6 @@ export default function SpMyPage() {
       toast.error(MSG.AUTH_LOGOUT_FAILED);
     }
   }
-
-  const user = session?.user;
-  const displayUsername = user?.displayUsername ?? user?.username;
 
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-4">
@@ -66,6 +78,22 @@ export default function SpMyPage() {
           プロフィールを編集
         </Link>
       </div>
+
+      {/* Bookmark lists */}
+      {isLoading && (
+        <div className="overflow-hidden rounded-lg border divide-y">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-12 w-full rounded-none" />
+          ))}
+        </div>
+      )}
+      {!isLoading && profile && profile.bookmarkLists.length > 0 && (
+        <div className="overflow-hidden rounded-lg border divide-y">
+          {profile.bookmarkLists.map((list) => (
+            <BookmarkListCard key={list.id} list={list} userId={userId ?? ""} />
+          ))}
+        </div>
+      )}
 
       {/* Logout */}
       <div className="overflow-hidden rounded-lg border">

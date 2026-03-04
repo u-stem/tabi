@@ -7,10 +7,10 @@ import { ja } from "date-fns/locale";
 import { Calendar, Circle, MapPin, MessageSquare, Triangle, X } from "lucide-react";
 import { useParams } from "next/navigation";
 import { Logo } from "@/components/logo";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { formatDateFromISO, formatDateRangeShort } from "@/lib/format";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -37,6 +37,18 @@ function SharedPollHeader() {
   );
 }
 
+function SharedPollBodySkeleton() {
+  return (
+    <div className="container max-w-3xl py-8">
+      <div className="mb-6">
+        <Skeleton className="h-7 w-48" />
+        <Skeleton className="mt-2 h-4 w-24" />
+      </div>
+      <Skeleton className="h-40 w-full" />
+    </div>
+  );
+}
+
 export default function SharedPollPage() {
   const params = useParams();
   const token = typeof params.token === "string" ? params.token : null;
@@ -52,92 +64,64 @@ export default function SharedPollPage() {
     retry: false,
   });
 
-  const showSkeleton = useDelayedLoading(isLoading);
-
-  if (isLoading && !showSkeleton) {
-    return (
-      <div className="min-h-screen">
-        <SharedPollHeader />
-      </div>
-    );
-  }
-
-  if (showSkeleton) {
-    return (
-      <div className="min-h-screen">
-        <SharedPollHeader />
-        <div className="container max-w-3xl py-8">
-          <div className="mb-6">
-            <Skeleton className="h-7 w-48" />
-            <Skeleton className="mt-2 h-4 w-24" />
-          </div>
-          <Skeleton className="h-40 w-full" />
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !poll) {
-    return (
-      <div className="min-h-screen">
-        <SharedPollHeader />
-        <div className="container flex max-w-3xl flex-col items-center py-16 text-center">
-          <Calendar className="mb-4 h-12 w-12 text-muted-foreground" />
-          <p className="text-lg font-medium text-destructive">{MSG.POLL_SHARED_NOT_FOUND}</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            リンクが正しいか確認するか、共有元に問い合わせてください
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen">
       <SharedPollHeader />
-      <div className="container max-w-3xl py-8 space-y-6">
-        <div>
-          <h1 className="break-words text-xl font-bold sm:text-2xl">{poll.title}</h1>
-          {poll.destination && (
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1">
-                <MapPin className="h-3.5 w-3.5" />
-                {poll.destination}
-              </span>
+      <LoadingBoundary isLoading={isLoading} skeleton={<SharedPollBodySkeleton />}>
+        {error || !poll ? (
+          <div className="container flex max-w-3xl flex-col items-center py-16 text-center">
+            <Calendar className="mb-4 h-12 w-12 text-muted-foreground" />
+            <p className="text-lg font-medium text-destructive">{MSG.POLL_SHARED_NOT_FOUND}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              リンクが正しいか確認するか、共有元に問い合わせてください
+            </p>
+          </div>
+        ) : (
+          <div className="container max-w-3xl py-8 space-y-6">
+            <div>
+              <h1 className="break-words text-xl font-bold sm:text-2xl">{poll.title}</h1>
+              {poll.destination && (
+                <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {poll.destination}
+                  </span>
+                </div>
+              )}
             </div>
-          )}
-        </div>
 
-        {poll.note && (
-          <div className="flex items-start gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm">
-            <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <span className="whitespace-pre-wrap">{poll.note}</span>
+            {poll.note && (
+              <div className="flex items-start gap-2 rounded-md border border-dashed border-border px-3 py-2 text-sm">
+                <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                <span className="whitespace-pre-wrap">{poll.note}</span>
+              </div>
+            )}
+
+            {poll.deadline && (
+              <p className="text-xs text-muted-foreground">
+                回答期限: {format(new Date(poll.deadline), "yyyy/MM/dd HH:mm", { locale: ja })}
+              </p>
+            )}
+
+            {poll.shareExpiresAt && (
+              <p className="text-xs text-muted-foreground">
+                共有リンクの有効期限: {formatDateFromISO(poll.shareExpiresAt)}
+              </p>
+            )}
+
+            <div className="space-y-2">
+              <h3 className="text-sm font-semibold">回答状況</h3>
+              <OptionList poll={poll} />
+            </div>
+
+            {poll.status !== "open" && (
+              <p className="text-sm text-muted-foreground text-center">
+                この日程調整は{poll.status === "confirmed" ? "確定済み" : "終了"}です
+              </p>
+            )}
           </div>
         )}
-
-        {poll.deadline && (
-          <p className="text-xs text-muted-foreground">
-            回答期限: {format(new Date(poll.deadline), "yyyy/MM/dd HH:mm", { locale: ja })}
-          </p>
-        )}
-
-        {poll.shareExpiresAt && (
-          <p className="text-xs text-muted-foreground">
-            共有リンクの有効期限: {formatDateFromISO(poll.shareExpiresAt)}
-          </p>
-        )}
-
-        <div className="space-y-2">
-          <h3 className="text-sm font-semibold">回答状況</h3>
-          <OptionList poll={poll} />
-        </div>
-
-        {poll.status !== "open" && (
-          <p className="text-sm text-muted-foreground text-center">
-            この日程調整は{poll.status === "confirmed" ? "確定済み" : "終了"}です
-          </p>
-        )}
-      </div>
+      </LoadingBoundary>
     </div>
   );
 }

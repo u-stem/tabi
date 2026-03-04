@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -20,7 +21,6 @@ import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiError, api } from "@/lib/api";
 import { copyToClipboard } from "@/lib/clipboard";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
 
 const SUPABASE_MAU_LIMIT = 50_000;
@@ -183,6 +183,16 @@ type AdminUser = {
 
 type AdminUsersResponse = { users: AdminUser[] };
 
+function AdminSkeleton() {
+  return (
+    <div className="container py-8 space-y-4">
+      {["row-1", "row-2", "row-3", "row-4", "row-5"].map((key) => (
+        <Skeleton key={key} className="h-12 w-full" />
+      ))}
+    </div>
+  );
+}
+
 export default function AdminPage() {
   const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState<"overview" | "users" | "settings">("overview");
@@ -246,227 +256,221 @@ export default function AdminPage() {
     },
   });
 
-  const showSkeleton = useDelayedLoading(isLoading);
   const updatedAt = dataUpdatedAt > 0 ? new Date(dataUpdatedAt).toLocaleTimeString() : null;
 
   if (error instanceof ApiError && (error.status === 403 || error.status === 401)) {
     notFound();
   }
 
-  if (isLoading && !showSkeleton) return <div />;
-  if (showSkeleton) {
-    return (
-      <div className="container py-8 space-y-4">
-        {["row-1", "row-2", "row-3", "row-4", "row-5"].map((key) => (
-          <Skeleton key={key} className="h-12 w-full" />
-        ))}
-      </div>
-    );
-  }
-
   return (
-    <div className="min-h-screen">
-      <header className="border-b">
-        <div className="container flex h-14 items-center gap-3">
-          <Logo />
-          <span className="text-sm font-medium text-muted-foreground">管理ダッシュボード</span>
-          {updatedAt && (
-            <span className="ml-auto text-xs text-muted-foreground">最終更新: {updatedAt}</span>
-          )}
-        </div>
-      </header>
-
-      <main className="container max-w-4xl py-8">
-        {error &&
-          !(error instanceof ApiError && (error.status === 403 || error.status === 401)) && (
-            <p className="mb-6 text-center text-sm text-destructive">
-              エラー: {error instanceof Error ? error.message : "不明なエラー"}
-            </p>
-          )}
-
-        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-          <TabsList className="mb-6 w-full">
-            <TabsTrigger value="overview" className="flex-1">
-              概要
-            </TabsTrigger>
-            <TabsTrigger value="users" className="flex-1">
-              ユーザー管理
-            </TabsTrigger>
-            <TabsTrigger value="settings" className="flex-1">
-              設定
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-8">
-            {data && (
-              <>
-                <Section title="ユーザー">
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <StatCard label="総ユーザー" value={data.users.total} />
-                    <StatCard label="ゲスト" value={data.users.guest} />
-                    <StatCard label="7日以内 新規" value={data.users.newLast7Days} />
-                    <StatCard label="30日以内 新規" value={data.users.newLast30Days} />
-                  </div>
-                </Section>
-
-                <Section title="旅行">
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-                    <StatCard label="総数" value={data.trips.total} />
-                    <StatCard label="日程調整" value={data.trips.byStatus.scheduling} />
-                    <StatCard label="下書き" value={data.trips.byStatus.draft} />
-                    <StatCard label="計画済" value={data.trips.byStatus.planned} />
-                    <StatCard label="旅行中" value={data.trips.byStatus.active} />
-                    <StatCard label="完了" value={data.trips.byStatus.completed} />
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    7日以内作成: {data.trips.newLast7Days.toLocaleString()}件
-                  </p>
-                </Section>
-
-                <Section title="コンテンツ">
-                  <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                    <StatCard label="スポット" value={data.content.schedules} />
-                    <StatCard label="お土産" value={data.content.souvenirs} />
-                  </div>
-                </Section>
-
-                <Section title="Supabase 無料プラン使用状況">
-                  <div className="rounded-lg border bg-card space-y-4 p-5">
-                    <UsageBar
-                      label="MAU（月間アクティブユーザー）"
-                      value={data.supabase.mau}
-                      limit={SUPABASE_MAU_LIMIT}
-                      formatValue={(v) => v.toLocaleString()}
-                    />
-                    <UsageBar
-                      label="DB サイズ"
-                      value={data.supabase.dbSizeBytes}
-                      limit={SUPABASE_DB_SIZE_LIMIT_BYTES}
-                      formatValue={(v) => `${(v / 1024 / 1024).toFixed(1)} MB`}
-                    />
-                  </div>
-                </Section>
-              </>
+    <LoadingBoundary isLoading={isLoading} skeleton={<AdminSkeleton />}>
+      <div className="min-h-screen">
+        <header className="border-b">
+          <div className="container flex h-14 items-center gap-3">
+            <Logo />
+            <span className="text-sm font-medium text-muted-foreground">管理ダッシュボード</span>
+            {updatedAt && (
+              <span className="ml-auto text-xs text-muted-foreground">最終更新: {updatedAt}</span>
             )}
-          </TabsContent>
+          </div>
+        </header>
 
-          <TabsContent value="users">
-            {usersData ? (
-              <div className="rounded-lg border overflow-x-auto">
-                <table className="w-full min-w-[480px] text-sm">
-                  <thead>
-                    <tr className="border-b bg-muted/50">
-                      <th className="px-4 py-2 text-left font-medium">ユーザー名</th>
-                      <th className="px-4 py-2 text-left font-medium">登録日</th>
-                      <th className="px-4 py-2 text-left font-medium">メール</th>
-                      <th className="px-4 py-2 text-left font-medium">操作</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {usersData.users.map((u) => (
-                      <tr key={u.id} className="border-b last:border-0">
-                        <td className="px-4 py-2">{u.username}</td>
-                        <td className="px-4 py-2 text-muted-foreground">
-                          {new Date(u.createdAt).toLocaleDateString("ja-JP")}
-                        </td>
-                        <td className="px-4 py-2">
-                          <Badge variant="secondary">
-                            {u.hasRealEmail ? (u.emailVerified ? "設定済み" : "未確認") : "未設定"}
-                          </Badge>
-                        </td>
-                        <td className="px-4 py-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            disabled={issueTempPassword.isPending}
-                            onClick={() =>
-                              issueTempPassword.mutate({ userId: u.id, username: u.username })
-                            }
-                          >
-                            <KeyRound className="h-3.5 w-3.5" />
-                            {issueTempPassword.isPending ? "発行中..." : "一時PW発行"}
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            ) : (
-              <div className="space-y-2">
-                {["u1", "u2", "u3"].map((key) => (
-                  <Skeleton key={key} className="h-10 w-full" />
-                ))}
-              </div>
+        <main className="container max-w-4xl py-8">
+          {error &&
+            !(error instanceof ApiError && (error.status === 403 || error.status === 401)) && (
+              <p className="mb-6 text-center text-sm text-destructive">
+                エラー: {error instanceof Error ? error.message : "不明なエラー"}
+              </p>
             )}
-          </TabsContent>
 
-          <TabsContent value="settings" className="space-y-4">
-            {settings !== undefined && (
-              <div className="rounded-lg border bg-card p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <p className="font-medium text-sm">新規利用受付</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {settings.signupEnabled
-                        ? "新規アカウントの作成を受け付けています"
-                        : "新規アカウントの作成を停止しています"}
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
+            <TabsList className="mb-6 w-full">
+              <TabsTrigger value="overview" className="flex-1">
+                概要
+              </TabsTrigger>
+              <TabsTrigger value="users" className="flex-1">
+                ユーザー管理
+              </TabsTrigger>
+              <TabsTrigger value="settings" className="flex-1">
+                設定
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="overview" className="space-y-8">
+              {data && (
+                <>
+                  <Section title="ユーザー">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      <StatCard label="総ユーザー" value={data.users.total} />
+                      <StatCard label="ゲスト" value={data.users.guest} />
+                      <StatCard label="7日以内 新規" value={data.users.newLast7Days} />
+                      <StatCard label="30日以内 新規" value={data.users.newLast30Days} />
+                    </div>
+                  </Section>
+
+                  <Section title="旅行">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                      <StatCard label="総数" value={data.trips.total} />
+                      <StatCard label="日程調整" value={data.trips.byStatus.scheduling} />
+                      <StatCard label="下書き" value={data.trips.byStatus.draft} />
+                      <StatCard label="計画済" value={data.trips.byStatus.planned} />
+                      <StatCard label="旅行中" value={data.trips.byStatus.active} />
+                      <StatCard label="完了" value={data.trips.byStatus.completed} />
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      7日以内作成: {data.trips.newLast7Days.toLocaleString()}件
                     </p>
-                  </div>
-                  <Switch
-                    checked={settings.signupEnabled}
-                    disabled={toggleSignup.isPending}
-                    onCheckedChange={(checked) => toggleSignup.mutate(checked)}
-                  />
-                </div>
-              </div>
-            )}
-            <AnnouncementSection />
-          </TabsContent>
-        </Tabs>
-      </main>
+                  </Section>
 
-      {tempPasswordInfo && (
-        <ResponsiveDialog
-          open
-          onOpenChange={() => {
-            setTempPasswordInfo(null);
-            setCopied(false);
-          }}
-        >
-          <ResponsiveDialogContent className="sm:max-w-md">
-            <ResponsiveDialogHeader>
-              <ResponsiveDialogTitle>一時パスワードを発行しました</ResponsiveDialogTitle>
-              <ResponsiveDialogDescription>
-                {tempPasswordInfo.username}{" "}
-                さんの一時パスワードです。このパスワードをユーザーに伝えてください。
-              </ResponsiveDialogDescription>
-            </ResponsiveDialogHeader>
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <code className="min-w-0 flex-1 rounded-md border bg-muted px-3 py-2 font-mono text-sm">
-                  {tempPasswordInfo.tempPassword}
-                </code>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0"
-                  aria-label={copied ? "コピー完了" : "パスワードをコピー"}
-                  onClick={async () => {
-                    await copyToClipboard(tempPasswordInfo.tempPassword);
-                    setCopied(true);
-                    toast.success("コピーしました");
-                    setTimeout(() => setCopied(false), 2000);
-                  }}
-                >
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
+                  <Section title="コンテンツ">
+                    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                      <StatCard label="スポット" value={data.content.schedules} />
+                      <StatCard label="お土産" value={data.content.souvenirs} />
+                    </div>
+                  </Section>
+
+                  <Section title="Supabase 無料プラン使用状況">
+                    <div className="rounded-lg border bg-card space-y-4 p-5">
+                      <UsageBar
+                        label="MAU（月間アクティブユーザー）"
+                        value={data.supabase.mau}
+                        limit={SUPABASE_MAU_LIMIT}
+                        formatValue={(v) => v.toLocaleString()}
+                      />
+                      <UsageBar
+                        label="DB サイズ"
+                        value={data.supabase.dbSizeBytes}
+                        limit={SUPABASE_DB_SIZE_LIMIT_BYTES}
+                        formatValue={(v) => `${(v / 1024 / 1024).toFixed(1)} MB`}
+                      />
+                    </div>
+                  </Section>
+                </>
+              )}
+            </TabsContent>
+
+            <TabsContent value="users">
+              {usersData ? (
+                <div className="rounded-lg border overflow-x-auto">
+                  <table className="w-full min-w-[480px] text-sm">
+                    <thead>
+                      <tr className="border-b bg-muted/50">
+                        <th className="px-4 py-2 text-left font-medium">ユーザー名</th>
+                        <th className="px-4 py-2 text-left font-medium">登録日</th>
+                        <th className="px-4 py-2 text-left font-medium">メール</th>
+                        <th className="px-4 py-2 text-left font-medium">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {usersData.users.map((u) => (
+                        <tr key={u.id} className="border-b last:border-0">
+                          <td className="px-4 py-2">{u.username}</td>
+                          <td className="px-4 py-2 text-muted-foreground">
+                            {new Date(u.createdAt).toLocaleDateString("ja-JP")}
+                          </td>
+                          <td className="px-4 py-2">
+                            <Badge variant="secondary">
+                              {u.hasRealEmail
+                                ? u.emailVerified
+                                  ? "設定済み"
+                                  : "未確認"
+                                : "未設定"}
+                            </Badge>
+                          </td>
+                          <td className="px-4 py-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              disabled={issueTempPassword.isPending}
+                              onClick={() =>
+                                issueTempPassword.mutate({ userId: u.id, username: u.username })
+                              }
+                            >
+                              <KeyRound className="h-3.5 w-3.5" />
+                              {issueTempPassword.isPending ? "発行中..." : "一時PW発行"}
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {["u1", "u2", "u3"].map((key) => (
+                    <Skeleton key={key} className="h-10 w-full" />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-4">
+              {settings !== undefined && (
+                <div className="rounded-lg border bg-card p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="font-medium text-sm">新規利用受付</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {settings.signupEnabled
+                          ? "新規アカウントの作成を受け付けています"
+                          : "新規アカウントの作成を停止しています"}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={settings.signupEnabled}
+                      disabled={toggleSignup.isPending}
+                      onCheckedChange={(checked) => toggleSignup.mutate(checked)}
+                    />
+                  </div>
+                </div>
+              )}
+              <AnnouncementSection />
+            </TabsContent>
+          </Tabs>
+        </main>
+
+        {tempPasswordInfo && (
+          <ResponsiveDialog
+            open
+            onOpenChange={() => {
+              setTempPasswordInfo(null);
+              setCopied(false);
+            }}
+          >
+            <ResponsiveDialogContent className="sm:max-w-md">
+              <ResponsiveDialogHeader>
+                <ResponsiveDialogTitle>一時パスワードを発行しました</ResponsiveDialogTitle>
+                <ResponsiveDialogDescription>
+                  {tempPasswordInfo.username}{" "}
+                  さんの一時パスワードです。このパスワードをユーザーに伝えてください。
+                </ResponsiveDialogDescription>
+              </ResponsiveDialogHeader>
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <code className="min-w-0 flex-1 rounded-md border bg-muted px-3 py-2 font-mono text-sm">
+                    {tempPasswordInfo.tempPassword}
+                  </code>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    aria-label={copied ? "コピー完了" : "パスワードをコピー"}
+                    onClick={async () => {
+                      await copyToClipboard(tempPasswordInfo.tempPassword);
+                      setCopied(true);
+                      toast.success("コピーしました");
+                      setTimeout(() => setCopied(false), 2000);
+                    }}
+                  >
+                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                  </Button>
+                </div>
+                <p className="text-xs text-destructive">このパスワードは一度しか表示されません。</p>
               </div>
-              <p className="text-xs text-destructive">このパスワードは一度しか表示されません。</p>
-            </div>
-          </ResponsiveDialogContent>
-        </ResponsiveDialog>
-      )}
-    </div>
+            </ResponsiveDialogContent>
+          </ResponsiveDialog>
+        )}
+      </div>
+    </LoadingBoundary>
   );
 }

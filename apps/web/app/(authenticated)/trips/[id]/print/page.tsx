@@ -14,6 +14,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
@@ -21,11 +22,27 @@ import { getCrossDayEntries } from "@/lib/cross-day";
 import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
 import { formatDate, formatDateRange, getDayCount } from "@/lib/format";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { buildMergedTimeline } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
+
+function PrintSkeleton() {
+  return (
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="w-full max-w-4xl space-y-8 p-8">
+        {["day-1", "day-2", "day-3"].map((key) => (
+          <div key={key} className="space-y-2">
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function TripPrintPage() {
   const params = useParams();
@@ -42,7 +59,6 @@ export default function TripPrintPage() {
     enabled: tripId !== null,
   });
   useAuthRedirect(error);
-  const showSkeleton = useDelayedLoading(isLoading);
 
   useEffect(() => {
     if (trip) {
@@ -56,60 +72,42 @@ export default function TripPrintPage() {
     return () => clearTimeout(timer);
   }, [trip, searchParams]);
 
-  if (isLoading && !showSkeleton) return <div />;
-  if (showSkeleton) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="w-full max-w-4xl space-y-8 p-8">
-          {["day-1", "day-2", "day-3"].map((key) => (
-            <div key={key} className="space-y-2">
-              <Skeleton className="h-6 w-48" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-4 w-3/4" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (error || !trip) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="mx-auto max-w-3xl px-6 py-8 print:max-w-none print:px-0 print:py-0">
-      <header className="mb-6 print:mb-4">
-        <div className="flex items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold print:text-xl print:font-semibold">{trip.title}</h1>
-          <Button size="sm" className="shrink-0 print:hidden" onClick={() => window.print()}>
-            <Printer className="h-4 w-4" />
-            印刷 / PDF保存
-          </Button>
+    <LoadingBoundary isLoading={isLoading} skeleton={<PrintSkeleton />}>
+      {error || !trip ? (
+        <div className="flex min-h-screen items-center justify-center">
+          <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          <span className="mr-3">{trip.destination}</span>
-          {trip.startDate && trip.endDate && (
-            <>
-              {formatDateRange(trip.startDate, trip.endDate)}
-              <span className="ml-1">({getDayCount(trip.startDate, trip.endDate)}日間)</span>
-            </>
-          )}
-        </p>
-      </header>
+      ) : (
+        <div className="mx-auto max-w-3xl px-6 py-8 print:max-w-none print:px-0 print:py-0">
+          <header className="mb-6 print:mb-4">
+            <div className="flex items-center justify-between gap-4">
+              <h1 className="text-2xl font-bold print:text-xl print:font-semibold">{trip.title}</h1>
+              <Button size="sm" className="shrink-0 print:hidden" onClick={() => window.print()}>
+                <Printer className="h-4 w-4" />
+                印刷 / PDF保存
+              </Button>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              <span className="mr-3">{trip.destination}</span>
+              {trip.startDate && trip.endDate && (
+                <>
+                  {formatDateRange(trip.startDate, trip.endDate)}
+                  <span className="ml-1">({getDayCount(trip.startDate, trip.endDate)}日間)</span>
+                </>
+              )}
+            </p>
+          </header>
 
-      <div className="space-y-5 print:space-y-3">
-        {trip.days.map((day) => {
-          const crossDayEntries = getCrossDayEntries(trip.days, day.dayNumber);
-          return <DaySection key={day.id} day={day} crossDayEntries={crossDayEntries} />;
-        })}
-      </div>
-    </div>
+          <div className="space-y-5 print:space-y-3">
+            {trip.days.map((day) => {
+              const crossDayEntries = getCrossDayEntries(trip.days, day.dayNumber);
+              return <DaySection key={day.id} day={day} crossDayEntries={crossDayEntries} />;
+            })}
+          </div>
+        </div>
+      )}
+    </LoadingBoundary>
   );
 }
 

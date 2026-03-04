@@ -8,13 +8,13 @@ import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -195,8 +195,6 @@ export default function PublicProfilePage() {
     enabled: userId !== null,
   });
 
-  const showSkeleton = useDelayedLoading(isLoading);
-
   // Set document title when profile is loaded
   useEffect(() => {
     if (profile) {
@@ -213,80 +211,35 @@ export default function PublicProfilePage() {
 
   // Authenticated: layout provides Header + BottomNav + container
   if (isAuthenticated) {
-    if (showSkeleton) {
-      return <ProfileSkeletonContent />;
-    }
-    if (isLoading) {
-      return null;
-    }
-    if (error) {
-      return (
-        <div className="mx-auto max-w-2xl">
-          <ErrorMessage message={error} />
-        </div>
-      );
-    }
-    if (!profile) {
-      return (
-        <div className="mx-auto max-w-2xl">
-          <ErrorMessage message="ユーザーが見つかりません" />
-        </div>
-      );
-    }
     return (
       <div className="mx-auto max-w-2xl">
-        <ProfileContent profile={profile} userId={userId ?? ""} />
+        <LoadingBoundary isLoading={isLoading} skeleton={<ProfileSkeletonContent />}>
+          {error ? (
+            <ErrorMessage message={error} />
+          ) : !profile ? (
+            <ErrorMessage message="ユーザーが見つかりません" />
+          ) : (
+            <ProfileContent profile={profile} userId={userId ?? ""} />
+          )}
+        </LoadingBoundary>
       </div>
     );
   }
 
   // Public: page handles full layout with ProfileHeader
-  if (showSkeleton) {
-    return (
-      <div className="min-h-screen">
-        <ProfileHeader />
-        <div className="container max-w-2xl py-8">
-          <ProfileSkeletonContent />
-        </div>
-      </div>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen">
-        <ProfileHeader />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen">
-        <ProfileHeader />
-        <div className="container max-w-2xl">
-          <ErrorMessage message={error} />
-        </div>
-      </div>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <div className="min-h-screen">
-        <ProfileHeader />
-        <div className="container max-w-2xl">
-          <ErrorMessage message="ユーザーが見つかりません" />
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen">
       <ProfileHeader />
       <div className="container max-w-2xl py-8">
-        <ProfileContent profile={profile} userId={userId ?? ""} />
+        <LoadingBoundary isLoading={isLoading} skeleton={<ProfileSkeletonContent />}>
+          {error ? (
+            <ErrorMessage message={error} />
+          ) : !profile ? (
+            <ErrorMessage message="ユーザーが見つかりません" />
+          ) : (
+            <ProfileContent profile={profile} userId={userId ?? ""} />
+          )}
+        </LoadingBoundary>
       </div>
     </div>
   );

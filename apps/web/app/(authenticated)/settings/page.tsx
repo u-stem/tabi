@@ -10,6 +10,8 @@ import {
   MoreHorizontal,
   Newspaper,
   RefreshCw,
+  RotateCcw,
+  Save,
   Settings2,
   Shield,
   User,
@@ -239,10 +241,12 @@ export function ProfileSection({
   name: defaultName,
   currentImage,
   onSuccess,
+  noCard = false,
 }: {
   name: string;
   currentImage: string | null;
   onSuccess?: () => void;
+  noCard?: boolean;
 }) {
   const { refetch } = useSession();
   const [style, setStyle] = useState<DiceBearStyle>("glass");
@@ -306,138 +310,144 @@ export function ProfileSection({
     }
   }
 
+  const form = (
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Avatar */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <UserAvatar name={defaultName} image={currentImage} className="h-16 w-16" />
+          <div className="text-sm text-muted-foreground">
+            {currentImage ? "カスタムアバターを設定中" : "デフォルト（イニシャル）"}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="avatar-style">スタイル</Label>
+          <div className="flex gap-2">
+            <Select
+              value={style}
+              onValueChange={(v) => {
+                setStyle(v as DiceBearStyle);
+                setSelectedSeed(null);
+              }}
+            >
+              <SelectTrigger id="avatar-style" className="flex-1">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DICEBEAR_STYLES.map((s) => (
+                  <SelectItem key={s} value={s}>
+                    {STYLE_LABELS[s]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button type="button" variant="outline" onClick={shuffle} className="shrink-0">
+              <RefreshCw className="h-4 w-4" />
+              シャッフル
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+          {seeds.map((seed) => {
+            const url = buildDiceBearUrl(style, seed);
+            const isSelected = selectedSeed === seed;
+            return (
+              <button
+                key={seed}
+                type="button"
+                onClick={() => setSelectedSeed(isSelected ? null : seed)}
+                className={`flex items-center justify-center rounded-lg border-2 p-2 transition-colors ${
+                  isSelected
+                    ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
+                    : "border-transparent hover:border-border"
+                }`}
+              >
+                <img
+                  src={url}
+                  alt={`${STYLE_LABELS[style]} avatar ${seed}`}
+                  width={48}
+                  height={48}
+                  className="rounded-full"
+                />
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Display name */}
+      <div className="space-y-2">
+        <Label htmlFor="name">
+          表示名 <span className="text-destructive">*</span>
+        </Label>
+        <Input
+          id="name"
+          name="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+          minLength={1}
+          maxLength={PROFILE_NAME_MAX_LENGTH}
+        />
+        <p className="text-right text-xs text-muted-foreground">
+          {name.length}/{PROFILE_NAME_MAX_LENGTH}
+        </p>
+      </div>
+
+      {error && (
+        <div
+          role="alert"
+          className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
+        >
+          {error}
+        </div>
+      )}
+
+      <div className="flex justify-end gap-2">
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={loading || !currentImage}
+                onClick={handleReset}
+              >
+                <RotateCcw className="h-4 w-4" />
+                アバターをリセット
+              </Button>
+            </span>
+          </TooltipTrigger>
+          {!currentImage && !loading && (
+            <TooltipContent>カスタムアバターが設定されていません</TooltipContent>
+          )}
+        </Tooltip>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <span className="inline-flex">
+              <Button type="submit" disabled={loading || !dirty}>
+                <Save className="h-4 w-4" />
+                {loading ? "保存中..." : "保存"}
+              </Button>
+            </span>
+          </TooltipTrigger>
+          {!dirty && !loading && <TooltipContent>{MSG.NO_CHANGES}</TooltipContent>}
+        </Tooltip>
+      </div>
+    </form>
+  );
+
+  if (noCard) return form;
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>プロフィール</CardTitle>
         <CardDescription>アバターと表示名を変更します</CardDescription>
       </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          {/* Avatar */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-4">
-              <UserAvatar name={defaultName} image={currentImage} className="h-16 w-16" />
-              <div className="text-sm text-muted-foreground">
-                {currentImage ? "カスタムアバターを設定中" : "デフォルト（イニシャル）"}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="avatar-style">スタイル</Label>
-              <div className="flex gap-2">
-                <Select
-                  value={style}
-                  onValueChange={(v) => {
-                    setStyle(v as DiceBearStyle);
-                    setSelectedSeed(null);
-                  }}
-                >
-                  <SelectTrigger id="avatar-style" className="flex-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DICEBEAR_STYLES.map((s) => (
-                      <SelectItem key={s} value={s}>
-                        {STYLE_LABELS[s]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button type="button" variant="outline" onClick={shuffle} className="shrink-0">
-                  <RefreshCw className="h-4 w-4" />
-                  シャッフル
-                </Button>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
-              {seeds.map((seed) => {
-                const url = buildDiceBearUrl(style, seed);
-                const isSelected = selectedSeed === seed;
-                return (
-                  <button
-                    key={seed}
-                    type="button"
-                    onClick={() => setSelectedSeed(isSelected ? null : seed)}
-                    className={`flex items-center justify-center rounded-lg border-2 p-2 transition-colors ${
-                      isSelected
-                        ? "border-blue-500 bg-blue-50 dark:bg-blue-950"
-                        : "border-transparent hover:border-border"
-                    }`}
-                  >
-                    <img
-                      src={url}
-                      alt={`${STYLE_LABELS[style]} avatar ${seed}`}
-                      width={48}
-                      height={48}
-                      className="rounded-full"
-                    />
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Display name */}
-          <div className="space-y-2">
-            <Label htmlFor="name">
-              表示名 <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="name"
-              name="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-              minLength={1}
-              maxLength={PROFILE_NAME_MAX_LENGTH}
-            />
-            <p className="text-right text-xs text-muted-foreground">
-              {name.length}/{PROFILE_NAME_MAX_LENGTH}
-            </p>
-          </div>
-
-          {error && (
-            <div
-              role="alert"
-              className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive"
-            >
-              {error}
-            </div>
-          )}
-
-          <div className="flex justify-end gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={loading || !currentImage}
-                    onClick={handleReset}
-                  >
-                    アバターをリセット
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              {!currentImage && !loading && (
-                <TooltipContent>カスタムアバターが設定されていません</TooltipContent>
-              )}
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span className="inline-flex">
-                  <Button type="submit" disabled={loading || !dirty}>
-                    {loading ? "保存中..." : "保存"}
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              {!dirty && !loading && <TooltipContent>{MSG.NO_CHANGES}</TooltipContent>}
-            </Tooltip>
-          </div>
-        </form>
-      </CardContent>
+      <CardContent>{form}</CardContent>
     </Card>
   );
 }

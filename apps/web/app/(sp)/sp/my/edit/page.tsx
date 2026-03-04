@@ -23,6 +23,7 @@ export default function SpMyEditPage() {
           name={user.name ?? ""}
           currentImage={user.image ?? null}
           onSuccess={() => router.push("/sp/my")}
+          noCard
         />
       )}
     </div>

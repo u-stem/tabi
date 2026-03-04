@@ -1,7 +1,7 @@
 "use client";
 
 import { QrCode } from "lucide-react";
-import QRCode from "react-qr-code";
+import { QRCodeSVG } from "qrcode.react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -38,7 +38,7 @@ export function MyQrDialog({ userId, userName }: MyQrDialogProps) {
         </DialogHeader>
         <div className="flex flex-col items-center gap-4 py-4">
           <div className="rounded-lg border p-4 bg-white">
-            <QRCode value={url} size={200} />
+            <QRCodeSVG value={url} size={200} level="M" />
           </div>
           <p className="text-sm text-muted-foreground text-center">
             このQRコードをスキャンすると

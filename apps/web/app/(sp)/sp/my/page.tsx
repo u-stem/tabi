@@ -75,7 +75,7 @@ export default function SpMyPage() {
           <Pencil className="h-3 w-3" />
           プロフィールを編集
         </Link>
-        {userId && user?.name && <MyQrDialog userId={userId} userName={user.name} />}
+        {userId && <MyQrDialog userId={userId} />}
       </div>
 
       {/* Bookmark lists */}

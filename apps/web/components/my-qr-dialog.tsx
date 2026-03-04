@@ -13,10 +13,9 @@ import {
 
 interface MyQrDialogProps {
   userId: string;
-  userName: string;
 }
 
-export function MyQrDialog({ userId, userName }: MyQrDialogProps) {
+export function MyQrDialog({ userId }: MyQrDialogProps) {
   // window.location.origin is safe here because this is a Client Component
   // and only rendered in the browser
   const url =
@@ -41,9 +40,9 @@ export function MyQrDialog({ userId, userName }: MyQrDialogProps) {
             <QRCodeSVG value={url} size={200} level="M" />
           </div>
           <p className="text-sm text-muted-foreground text-center">
-            このQRコードをスキャンすると
+            相手がスキャンすると
             <br />
-            {userName} さんにフレンド申請できます
+            あなたにフレンド申請を送れます
           </p>
         </div>
       </DialogContent>

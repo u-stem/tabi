@@ -1,3 +1,4 @@
+import { GlobalShortcutHotkey } from "@/components/global-shortcut-hotkey";
 import { Header } from "@/components/header";
 import { DesktopMobileProvider } from "@/components/sp-mobile-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -8,6 +9,7 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
     <DesktopMobileProvider>
       <TooltipProvider>
         <ShortcutHelpProvider>
+          <GlobalShortcutHotkey />
           <div className="min-h-screen">
             <Header />
             <main className="container py-4 sm:py-8">{children}</main>

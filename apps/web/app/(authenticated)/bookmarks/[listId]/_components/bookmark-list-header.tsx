@@ -6,12 +6,12 @@ import {
   VISIBILITY_LABELS,
 } from "@sugara/shared";
 import {
-  CheckSquare,
   Copy,
   GripVertical,
   MoreHorizontal,
   Pencil,
   Plus,
+  SquareMousePointer,
   Trash2,
   X,
 } from "lucide-react";
@@ -129,57 +129,89 @@ export function BookmarkListHeader({
       </div>
       <p className="text-sm text-muted-foreground">{list.bookmarkCount}件のブックマーク</p>
       {sel.selectionMode ? (
-        <div className="mt-3 flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={sel.exit}>
-            <X className="h-3.5 w-3.5" />
+        <div className="mt-3 flex h-8 select-none items-center gap-1.5 rounded-lg bg-muted px-1.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8"
+            onClick={sel.exit}
+            aria-label="選択を終了"
+          >
+            <X className="h-4 w-4" />
           </Button>
           <span className="text-xs font-medium">{sel.selectedIds.size}件選択中</span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2 text-xs"
+            className="h-8 px-2 text-xs"
             onClick={sel.selectedIds.size === bookmarkCount ? sel.deselectAll : sel.selectAll}
             disabled={sel.batchLoading}
           >
             {sel.selectedIds.size === bookmarkCount ? "全解除" : "全選択"}
           </Button>
           <div className="ml-auto flex items-center gap-1">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+            {isMobile ? (
+              <>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
+                  size="sm"
+                  className="h-8 px-2 text-xs"
                   disabled={sel.selectedIds.size === 0 || sel.batchLoading}
+                  onClick={sel.handleBatchDuplicate}
                 >
-                  <MoreHorizontal className="h-3.5 w-3.5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={sel.handleBatchDuplicate}>
-                  <Copy />
+                  <Copy className="h-4 w-4" />
                   複製
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive"
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs text-destructive"
+                  disabled={sel.selectedIds.size === 0 || sel.batchLoading}
                   onClick={() => sel.setBatchDeleteOpen(true)}
                 >
-                  <Trash2 />
+                  <Trash2 className="h-4 w-4" />
                   削除
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </Button>
+              </>
+            ) : (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    disabled={sel.selectedIds.size === 0 || sel.batchLoading}
+                    aria-label="選択操作メニュー"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={sel.handleBatchDuplicate}>
+                    <Copy />
+                    複製
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => sel.setBatchDeleteOpen(true)}
+                  >
+                    <Trash2 />
+                    削除
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       ) : reorderMode ? (
-        <div className="mt-3 flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+        <div className="mt-3 flex h-8 select-none items-center gap-1.5 rounded-lg bg-muted px-1.5">
           <GripVertical className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
           <span className="text-xs font-medium">並び替え中</span>
           <div className="ml-auto">
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs"
+              className="h-8 px-2 text-xs"
               onClick={() => onReorderModeChange?.(false)}
             >
               完了
@@ -197,7 +229,7 @@ export function BookmarkListHeader({
                 sel.enter();
               }}
             >
-              <CheckSquare className="h-4 w-4" />
+              <SquareMousePointer className="h-4 w-4" />
               選択
             </Button>
           )}

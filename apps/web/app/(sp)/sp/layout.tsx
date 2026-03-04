@@ -1,3 +1,4 @@
+import { GlobalShortcutHotkey } from "@/components/global-shortcut-hotkey";
 import { SpBottomNav } from "@/components/sp-bottom-nav";
 import { SpHeader } from "@/components/sp-header";
 import { SpMobileProvider } from "@/components/sp-mobile-provider";
@@ -9,6 +10,7 @@ export default function SpLayout({ children }: { children: React.ReactNode }) {
   return (
     <TooltipProvider>
       <ShortcutHelpProvider>
+        <GlobalShortcutHotkey />
         <SpMobileProvider>
           <SpScrollContainer>
             <SpHeader />

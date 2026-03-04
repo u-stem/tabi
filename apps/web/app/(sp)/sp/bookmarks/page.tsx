@@ -2,13 +2,12 @@
 
 import { MAX_BOOKMARK_LISTS_PER_USER, VISIBILITY_LABELS } from "@sugara/shared";
 import {
-  CheckSquare,
   ChevronDown,
   Copy,
   Globe,
   ListFilter,
   Lock,
-  MoreHorizontal,
+  SquareMousePointer,
   Trash2,
   Users,
   X,
@@ -71,7 +70,6 @@ export default function SpBookmarksPage() {
   } = useBookmarkLists(isGuest);
 
   const [visibilitySheetOpen, setVisibilitySheetOpen] = useState(false);
-  const [actionSheetOpen, setActionSheetOpen] = useState(false);
 
   useEffect(() => {
     document.title = pageTitle("ブックマーク");
@@ -131,21 +129,22 @@ export default function SpBookmarksPage() {
         <>
           <div className="mt-4">
             {sel.selectionMode ? (
-              <div className="flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+              <div className="flex h-8 select-none items-center gap-1.5 rounded-lg bg-muted px-1.5">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-8 w-8"
                   onClick={sel.exit}
                   disabled={sel.batchLoading}
+                  aria-label="選択を終了"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                 </Button>
                 <span className="text-xs font-medium">{sel.selectedIds.size}件選択中</span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs"
+                  className="h-8 px-2 text-xs"
                   onClick={
                     sel.selectedIds.size === filteredBookmarkLists.length
                       ? sel.deselectAll
@@ -158,37 +157,28 @@ export default function SpBookmarksPage() {
                 <div className="ml-auto flex items-center gap-1">
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="h-7 w-7"
+                    size="sm"
+                    className="h-8 px-2 text-xs"
                     disabled={sel.selectedIds.size === 0 || sel.batchLoading}
-                    onClick={(e) => {
-                      e.currentTarget.blur();
-                      setActionSheetOpen(true);
-                    }}
+                    onClick={sel.handleBatchDuplicate}
                   >
-                    <MoreHorizontal className="h-3.5 w-3.5" />
+                    <Copy className="h-4 w-4" />
+                    複製
                   </Button>
-                  <ActionSheet
-                    open={actionSheetOpen}
-                    onOpenChange={setActionSheetOpen}
-                    actions={[
-                      {
-                        label: "複製",
-                        icon: <Copy className="h-4 w-4" />,
-                        onClick: sel.handleBatchDuplicate,
-                      },
-                      {
-                        label: "削除",
-                        icon: <Trash2 className="h-4 w-4" />,
-                        onClick: () => sel.setBatchDeleteOpen(true),
-                        variant: "destructive",
-                      },
-                    ]}
-                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs text-destructive"
+                    disabled={sel.selectedIds.size === 0 || sel.batchLoading}
+                    onClick={() => sel.setBatchDeleteOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    削除
+                  </Button>
                 </div>
               </div>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex gap-2">
                 <button
                   type="button"
                   aria-label="公開状態で絞り込み"
@@ -196,7 +186,7 @@ export default function SpBookmarksPage() {
                     e.currentTarget.blur();
                     setVisibilitySheetOpen(true);
                   }}
-                  className="flex h-9 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
+                  className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
                 >
                   {visibilityFilters.find((f) => f.value === visibilityFilter)?.label ?? "すべて"}
                   <ChevronDown className="h-3 w-3 text-muted-foreground" />
@@ -210,17 +200,17 @@ export default function SpBookmarksPage() {
                     onClick: () => setVisibilityFilter(f.value),
                   }))}
                 />
-                <div className="flex items-center gap-2 ml-auto">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={sel.enter}
-                    disabled={!online || filteredBookmarkLists.length === 0}
-                  >
-                    <CheckSquare className="h-4 w-4" />
-                    選択
-                  </Button>
-                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 flex-1"
+                  onClick={sel.enter}
+                  disabled={!online || filteredBookmarkLists.length === 0}
+                  aria-label="選択モード"
+                >
+                  <SquareMousePointer className="h-4 w-4" />
+                  選択
+                </Button>
               </div>
             )}
           </div>

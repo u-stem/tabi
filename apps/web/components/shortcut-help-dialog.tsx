@@ -55,19 +55,25 @@ export function ShortcutHelpDialog({ open, onOpenChange, shortcuts }: ShortcutHe
           <DialogDescription>このページで使えるショートカット一覧</DialogDescription>
         </DialogHeader>
         <div className="select-none space-y-4">
-          {shortcuts.map((group) => (
-            <div key={group.group}>
-              <h3 className="mb-2 text-sm font-medium text-muted-foreground">{group.group}</h3>
-              <div className="space-y-1">
-                {group.items.map((item) => (
-                  <div key={item.key} className="flex items-center justify-between py-1">
-                    <span className="text-sm">{item.description}</span>
-                    <ShortcutKeys keys={item.key} />
-                  </div>
-                ))}
+          {shortcuts.length === 0 ? (
+            <p className="py-4 text-center text-sm text-muted-foreground">
+              このページにはショートカットがありません
+            </p>
+          ) : (
+            shortcuts.map((group) => (
+              <div key={group.group}>
+                <h3 className="mb-2 text-sm font-medium text-muted-foreground">{group.group}</h3>
+                <div className="space-y-1">
+                  {group.items.map((item) => (
+                    <div key={item.key} className="flex items-center justify-between py-1">
+                      <span className="text-sm">{item.description}</span>
+                      <ShortcutKeys keys={item.key} />
+                    </div>
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </DialogContent>
     </Dialog>

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { ApiError, api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
@@ -22,6 +22,7 @@ export default function FriendsAddPage() {
   const currentUserId = session?.user?.id;
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
+  const [alreadyFriend, setAlreadyFriend] = useState(false);
 
   const isSelf = !!currentUserId && currentUserId === userId;
 
@@ -45,6 +46,18 @@ export default function FriendsAddPage() {
   }, [isSelf, router]);
 
   if (isSelf) return null;
+
+  if (sessionLoading) {
+    return (
+      <div className="mt-4 mx-auto max-w-sm px-4">
+        <div className="flex flex-col items-center gap-6 rounded-lg border p-8">
+          <Skeleton className="h-16 w-16 rounded-full" />
+          <Skeleton className="h-5 w-32" />
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   if (!userId) {
     return (
@@ -84,6 +97,9 @@ export default function FriendsAddPage() {
       setSent(true);
       toast.success(MSG.FRIEND_REQUEST_SENT);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setAlreadyFriend(true);
+      }
       toast.error(
         getApiErrorMessage(err, MSG.FRIEND_REQUEST_SEND_FAILED, {
           conflict: "すでにフレンドか申請済みです",
@@ -106,7 +122,9 @@ export default function FriendsAddPage() {
         <div className="text-center">
           <h1 className="text-lg font-semibold">{profile.name}</h1>
         </div>
-        {sent ? (
+        {alreadyFriend ? (
+          <p className="text-sm text-muted-foreground">すでにフレンドか申請済みです</p>
+        ) : sent ? (
           <p className="text-sm text-muted-foreground">フレンド申請を送りました</p>
         ) : (
           <Button onClick={handleSend} disabled={loading} className="w-full">

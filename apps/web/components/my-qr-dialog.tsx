@@ -20,8 +20,8 @@ export function MyQrDialog({ userId }: MyQrDialogProps) {
   // and only rendered in the browser
   const url =
     typeof window !== "undefined"
-      ? `${window.location.origin}/friends/add?userId=${userId}`
-      : `/friends/add?userId=${userId}`;
+      ? `${window.location.origin}/friends/add?userId=${encodeURIComponent(userId)}`
+      : `/friends/add?userId=${encodeURIComponent(userId)}`;
 
   return (
     <ResponsiveDialog>

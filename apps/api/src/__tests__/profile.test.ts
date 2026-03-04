@@ -202,7 +202,7 @@ describe("Profile routes", () => {
 
   // --- GET /api/users/:userId/profile ---
   describe("GET /api/users/:userId/profile", () => {
-    it("認証済みユーザーがプロフィールを取得できる", async () => {
+    it("returns profile for authenticated user", async () => {
       mockDbQuery.users.findFirst.mockResolvedValue({
         id: ownerId,
         name: "Alice",
@@ -216,13 +216,13 @@ describe("Profile routes", () => {
       expect(body).toEqual({ id: ownerId, name: "Alice", image: null });
     });
 
-    it("未認証の場合 401 を返す", async () => {
+    it("returns 401 for unauthenticated request", async () => {
       const res = await app.request(`/api/users/${ownerId}/profile`);
 
       expect(res.status).toBe(401);
     });
 
-    it("存在しないユーザーの場合 404 を返す", async () => {
+    it("returns 404 for non-existent user", async () => {
       mockDbQuery.users.findFirst.mockResolvedValue(undefined);
 
       const res = await requestWithSession(`/api/users/${ownerId}/profile`, viewerId);
@@ -230,7 +230,7 @@ describe("Profile routes", () => {
       expect(res.status).toBe(404);
     });
 
-    it("レスポンスにメールアドレスが含まれない", async () => {
+    it("does not include email in response", async () => {
       mockDbQuery.users.findFirst.mockResolvedValue({
         id: ownerId,
         name: "Alice",

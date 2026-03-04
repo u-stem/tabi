@@ -5,3 +5,5 @@ export const userProfileResponseSchema = z.object({
   name: z.string(),
   image: z.string().nullable().optional(),
 });
+
+export type UserProfileResponse = z.infer<typeof userProfileResponseSchema>;

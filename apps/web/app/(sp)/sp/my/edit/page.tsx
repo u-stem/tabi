@@ -1,7 +1,5 @@
 "use client";
 
-import { ArrowLeft } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { ProfileSection } from "@/app/(authenticated)/settings/page";
@@ -20,17 +18,6 @@ export default function SpMyEditPage() {
 
   return (
     <div className="mt-4 mx-auto max-w-2xl">
-      <div className="mb-4 flex items-center gap-2">
-        <Link
-          href="/sp/my"
-          className="flex h-8 w-8 items-center justify-center rounded-full hover:bg-accent"
-          aria-label="戻る"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-        <h1 className="text-base font-semibold">プロフィールを編集</h1>
-      </div>
-
       {user && (
         <ProfileSection
           name={user.name ?? ""}

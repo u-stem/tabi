@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api } from "@/lib/api";
@@ -37,15 +36,15 @@ function ProfileHeader() {
 export function ProfileSkeletonContent() {
   return (
     <div className="mx-auto max-w-2xl">
-      <div className="mb-8 flex items-center gap-4">
-        <Skeleton className="h-16 w-16 rounded-full" />
+      <div className="mb-8 flex flex-col items-center gap-3 py-6">
+        <Skeleton className="h-20 w-20 rounded-full" />
         <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-4 w-16" />
       </div>
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-16 w-full rounded-lg" />
-        ))}
-      </div>
+      <Skeleton className="h-px w-full mb-0" />
+      {[1, 2, 3].map((i) => (
+        <Skeleton key={i} className="h-12 w-full rounded-none border-b last:border-b-0" />
+      ))}
     </div>
   );
 }
@@ -65,24 +64,21 @@ export function BookmarkListCard({ list, userId }: { list: BookmarkListResponse;
   });
 
   return (
-    <Card>
-      <CardHeader
-        className="cursor-pointer select-none transition-colors hover:bg-accent/50"
+    <div>
+      <button
+        type="button"
+        className="flex w-full cursor-pointer select-none items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/50"
         onClick={() => setExpanded((prev) => !prev)}
       >
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex min-w-0 items-center gap-2 text-base">
-            <ChevronRight
-              className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}`}
-            />
-            <span className="truncate">{list.name}</span>
-          </CardTitle>
-          <Badge variant="secondary">{list.bookmarkCount}</Badge>
-        </div>
-      </CardHeader>
+        <ChevronRight
+          className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}`}
+        />
+        <span className="min-w-0 flex-1 truncate font-medium">{list.name}</span>
+        <Badge variant="secondary">{list.bookmarkCount}</Badge>
+      </button>
 
       {expanded && (
-        <CardContent className="pt-0">
+        <div className="border-t bg-muted/30 px-4 pb-3 pt-2">
           {isLoading && (
             <div className="space-y-2">
               {[1, 2].map((i) => (
@@ -133,9 +129,9 @@ export function BookmarkListCard({ list, userId }: { list: BookmarkListResponse;
               ))}
             </ul>
           )}
-        </CardContent>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -148,33 +144,28 @@ export function ProfileContent({
 }) {
   return (
     <>
-      <div className="mb-8 flex items-center gap-4">
+      <div className="mb-6 flex flex-col items-center gap-3 py-6">
         <UserAvatar
           name={profile.name}
           image={profile.image}
-          className="h-16 w-16"
-          fallbackClassName="text-2xl"
+          className="h-20 w-20"
+          fallbackClassName="text-3xl"
         />
-        <h1 className="min-w-0 truncate text-xl font-bold">{profile.name}</h1>
+        <h1 className="text-xl font-bold">{profile.name}</h1>
+        <p className="text-sm text-muted-foreground">{profile.bookmarkLists.length} リスト</p>
       </div>
 
-      <div>
-        <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold">
-          <Bookmark className="h-5 w-5 text-muted-foreground" />
-          ブックマークリスト
-        </h2>
-        {profile.bookmarkLists.length === 0 ? (
-          <div className="flex flex-col items-center py-12 text-center">
-            <p className="text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {profile.bookmarkLists.map((list) => (
-              <BookmarkListCard key={list.id} list={list} userId={userId} />
-            ))}
-          </div>
-        )}
-      </div>
+      {profile.bookmarkLists.length === 0 ? (
+        <div className="flex flex-col items-center py-12 text-center">
+          <p className="text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
+        </div>
+      ) : (
+        <div className="overflow-hidden rounded-lg border divide-y">
+          {profile.bookmarkLists.map((list) => (
+            <BookmarkListCard key={list.id} list={list} userId={userId} />
+          ))}
+        </div>
+      )}
     </>
   );
 }

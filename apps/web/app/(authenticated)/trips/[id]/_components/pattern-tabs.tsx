@@ -228,7 +228,7 @@ function MobilePatternTabs({
         type="button"
         onClick={() => multiplePatterns && setPickerOpen(true)}
         disabled={!multiplePatterns}
-        className="flex min-w-0 flex-1 items-center gap-1 rounded-full border border-transparent bg-muted px-3 py-1.5 text-xs font-medium disabled:pointer-events-none"
+        className="flex min-h-[36px] min-w-0 flex-1 items-center gap-1 rounded-full border border-transparent bg-muted px-3 py-1.5 text-xs font-medium disabled:pointer-events-none"
       >
         <span className="truncate">{currentPattern?.label}</span>
         {multiplePatterns && <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />}
@@ -241,7 +241,7 @@ function MobilePatternTabs({
             type="button"
             aria-label={`${currentPattern.label}のメニュー`}
             onClick={() => setActionSheetOpen(true)}
-            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted"
           >
             <MoreHorizontal className="h-4 w-4" />
           </button>
@@ -260,7 +260,7 @@ function MobilePatternTabs({
           aria-label="パターン追加"
           disabled={patterns.length >= MAX_PATTERNS_PER_DAY}
           onClick={() => patternOps.add.setOpen(true)}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground transition-colors disabled:pointer-events-none disabled:opacity-50"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground transition-colors disabled:pointer-events-none disabled:opacity-50"
         >
           <Plus className="h-4 w-4" />
         </button>

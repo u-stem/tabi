@@ -196,7 +196,7 @@ export default function SpBookmarksPage() {
                     e.currentTarget.blur();
                     setVisibilitySheetOpen(true);
                   }}
-                  className="flex h-8 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
+                  className="flex h-9 items-center gap-1 rounded-md border bg-background px-2.5 text-xs"
                 >
                   {visibilityFilters.find((f) => f.value === visibilityFilter)?.label ?? "すべて"}
                   <ChevronDown className="h-3 w-3 text-muted-foreground" />

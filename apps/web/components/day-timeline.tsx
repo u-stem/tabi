@@ -193,14 +193,14 @@ export function DayTimeline({
     <div>
       {selectionMode ? (
         <div className="mb-2 flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={sel.exit}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={sel.exit}>
             <X className="h-3.5 w-3.5" />
           </Button>
           <span className="text-xs font-medium">{selectedCount}件選択中</span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2 text-xs"
+            className="h-8 px-2 text-xs"
             onClick={selectedCount === schedules.length ? sel.deselectAll : sel.selectAll}
           >
             {selectedCount === schedules.length ? "全解除" : "全選択"}
@@ -209,7 +209,7 @@ export function DayTimeline({
             <Button
               variant="outline"
               size="sm"
-              className="h-7 px-2 text-xs"
+              className="h-8 px-2 text-xs"
               onClick={sel.batchUnassign}
               disabled={selectedCount === 0 || sel.batchLoading}
             >
@@ -221,7 +221,7 @@ export function DayTimeline({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-8 w-8"
                   disabled={selectedCount === 0 || sel.batchLoading}
                 >
                   <MoreHorizontal className="h-3.5 w-3.5" />
@@ -257,7 +257,7 @@ export function DayTimeline({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs"
+              className="h-8 px-2 text-xs"
               onClick={() => setReorderMode(false)}
             >
               完了
@@ -311,6 +311,7 @@ export function DayTimeline({
               <Button
                 variant="outline"
                 size="sm"
+                className="h-9"
                 onClick={() => {
                   setReorderMode(false);
                   sel.enter("timeline");
@@ -324,6 +325,7 @@ export function DayTimeline({
               <Button
                 variant="outline"
                 size="sm"
+                className="h-9"
                 disabled={schedules.length <= 1}
                 onClick={() => {
                   sel.exit();
@@ -338,6 +340,7 @@ export function DayTimeline({
               <Button
                 variant="outline"
                 size="sm"
+                className="h-9"
                 onClick={handleSortByTime}
                 disabled={disabled || isSorted}
               >

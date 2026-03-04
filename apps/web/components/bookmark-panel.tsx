@@ -135,14 +135,14 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
     <div className="space-y-3">
       {selectionMode ? (
         <div className="flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={exitSelection}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={exitSelection}>
             <X className="h-3.5 w-3.5" />
           </Button>
           <span className="text-xs font-medium">{selectedCount}件選択中</span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2 text-xs"
+            className="h-8 px-2 text-xs"
             onClick={selectedCount === bookmarks.length ? deselectAll : selectAll}
           >
             {selectedCount === bookmarks.length ? "全解除" : "全選択"}
@@ -151,7 +151,7 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
             <Button
               variant="outline"
               size="sm"
-              className="h-7 px-2 text-xs"
+              className="h-8 px-2 text-xs"
               onClick={() => setConfirmIds(Array.from(selectedIds))}
               disabled={selectedCount === 0 || loading}
             >

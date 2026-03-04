@@ -256,7 +256,7 @@ export function TripToolbar({
           aria-label="旅行を検索"
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="h-8 w-full"
+          className="h-10 w-full"
         />
         <div className="flex gap-2">
           {!hideStatusFilter && (
@@ -268,7 +268,7 @@ export function TripToolbar({
                   e.currentTarget.blur();
                   setStatusSheetOpen(true);
                 }}
-                className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
+                className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
               >
                 {statusFilters.find((f) => f.value === statusFilter)?.icon}
                 {currentStatusLabel}
@@ -289,7 +289,7 @@ export function TripToolbar({
               type="button"
               aria-label="並び替え"
               onClick={() => onSortKeyChange(sortKey === "updatedAt" ? "startDate" : "updatedAt")}
-              className="flex h-8 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
+              className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
             >
               {sortOptions.find((s) => s.value === sortKey)?.icon}
               {currentSortLabel}
@@ -299,7 +299,7 @@ export function TripToolbar({
             <Button
               variant="outline"
               size="sm"
-              className="h-8 flex-1"
+              className="h-9 flex-1"
               onClick={() => onSelectionModeChange(true)}
               disabled={disabled || totalCount === 0}
               aria-label="選択モード"

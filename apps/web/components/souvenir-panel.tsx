@@ -190,14 +190,14 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
     <div>
       {selectMode ? (
         <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={exitSelectMode}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={exitSelectMode}>
             <X className="h-3.5 w-3.5" />
           </Button>
           <span className="text-xs font-medium">{selectedCount}件選択中</span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2 text-xs"
+            className="h-8 px-2 text-xs"
             onClick={() =>
               selectedCount === items.length
                 ? setSelectedIds(new Set())
@@ -210,7 +210,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+              className="h-8 px-2 text-xs text-destructive hover:text-destructive"
               disabled={selectedCount === 0 || bulkDeleteMutation.isPending}
               onClick={() => setBulkDeleteOpen(true)}
             >
@@ -226,7 +226,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
               <Button
                 variant="outline"
                 size="sm"
-                className={cn(isMobile && "flex-1")}
+                className={cn(isMobile && "flex-1 h-9")}
                 aria-pressed={sortBy === "priority"}
                 aria-label={sortBy === "priority" ? "作成順に切り替える" : "優先度順に切り替える"}
                 onClick={() => setSortBy(sortBy === "priority" ? "created" : "priority")}
@@ -237,7 +237,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
               <Button
                 variant="outline"
                 size="sm"
-                className={cn(isMobile && "flex-1")}
+                className={cn(isMobile && "flex-1 h-9")}
                 onClick={() => setSelectMode(true)}
               >
                 <CheckSquare className="h-4 w-4" />

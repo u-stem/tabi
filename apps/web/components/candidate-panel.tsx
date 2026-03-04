@@ -201,14 +201,14 @@ export function CandidatePanel({
     <div>
       {selectionMode ? (
         <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
-          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={sel.exit}>
+          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={sel.exit}>
             <X className="h-3.5 w-3.5" />
           </Button>
           <span className="text-xs font-medium">{selectedCount}件選択中</span>
           <Button
             variant="ghost"
             size="sm"
-            className="h-7 px-2 text-xs"
+            className="h-8 px-2 text-xs"
             onClick={selectedCount === candidates.length ? sel.deselectAll : sel.selectAll}
           >
             {selectedCount === candidates.length ? "全解除" : "全選択"}
@@ -217,7 +217,7 @@ export function CandidatePanel({
             <Button
               variant="outline"
               size="sm"
-              className="h-7 px-2 text-xs"
+              className="h-8 px-2 text-xs"
               onClick={sel.batchAssign}
               disabled={selectedCount === 0 || sel.batchLoading}
             >
@@ -229,7 +229,7 @@ export function CandidatePanel({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-8 w-8"
                   disabled={selectedCount === 0 || sel.batchLoading}
                 >
                   <MoreHorizontal className="h-3.5 w-3.5" />
@@ -265,7 +265,7 @@ export function CandidatePanel({
             <Button
               variant="ghost"
               size="sm"
-              className="h-7 px-2 text-xs"
+              className="h-8 px-2 text-xs"
               onClick={() => setReorderMode(false)}
             >
               完了
@@ -299,6 +299,7 @@ export function CandidatePanel({
               <Button
                 variant="outline"
                 size="sm"
+                className="h-9"
                 onClick={() => {
                   setReorderMode(false);
                   sel.enter("candidates");
@@ -312,6 +313,7 @@ export function CandidatePanel({
               <Button
                 variant="outline"
                 size="sm"
+                className="h-9"
                 onClick={() => {
                   sel.exit();
                   setSortBy("order");
@@ -326,6 +328,7 @@ export function CandidatePanel({
               <Button
                 variant="outline"
                 size="sm"
+                className="h-9"
                 onClick={() => setSortBy(sortBy === "popular" ? "order" : "popular")}
               >
                 <ArrowUpDown className="h-4 w-4" />

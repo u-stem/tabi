@@ -11,7 +11,6 @@ import { useFriendsPage } from "@/lib/hooks/use-friends-page";
 import { MSG } from "@/lib/messages";
 import { FriendsTab, SendRequestSection } from "./_components/friends-tab";
 import { GroupsTab } from "./_components/groups-tab";
-import { UserIdSection } from "./_components/user-id-section";
 
 function PageSkeleton() {
   return (
@@ -75,7 +74,6 @@ export default function FriendsPage() {
 
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-8">
-      <UserIdSection userId={session?.user.id ?? ""} />
       <FriendRequestsCard requests={requests} />
       <FriendsTab friends={friends} />
       <GroupsTab groups={groups} />

@@ -6,7 +6,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { FriendsTab } from "@/app/(authenticated)/friends/_components/friends-tab";
 import { GroupsTab } from "@/app/(authenticated)/friends/_components/groups-tab";
-import { UserIdSection } from "@/app/(authenticated)/friends/_components/user-id-section";
 import { Fab } from "@/components/fab";
 import { FriendRequestsCard } from "@/components/friend-requests-card";
 import { Button } from "@/components/ui/button";
@@ -175,10 +174,6 @@ export default function SpFriendsPage() {
 
   return (
     <>
-      <div className="mt-4">
-        <UserIdSection userId={session?.user.id ?? ""} />
-      </div>
-
       {/* Tab bar */}
       <div
         role="tablist"

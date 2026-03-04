@@ -45,7 +45,7 @@ export default function SpMyPage() {
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-4">
       {/* Profile header */}
-      <div className="flex flex-col items-center gap-3 py-6">
+      <div className="flex flex-col items-center gap-5 py-6">
         <UserAvatar
           name={user?.name ?? ""}
           image={user?.image}

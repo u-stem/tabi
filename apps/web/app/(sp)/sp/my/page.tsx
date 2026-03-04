@@ -23,7 +23,7 @@ export default function SpMyPage() {
   const [idCopied, setIdCopied] = useState(false);
 
   useEffect(() => {
-    document.title = pageTitle("マイページ");
+    document.title = pageTitle("プロフィール");
   }, []);
 
   const user = session?.user;

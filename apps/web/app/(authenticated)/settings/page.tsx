@@ -139,8 +139,6 @@ export default function SettingsPage({
   const visibleNavItems = availableSections
     .map((id) => NAV_ITEMS.find((item) => item.id === id))
     .filter((item): item is (typeof NAV_ITEMS)[number] => item !== undefined);
-  const gridColsClass = "grid-cols-3";
-
   function renderSectionContent(s: Section) {
     switch (s) {
       case "notifications":
@@ -182,7 +180,7 @@ export default function SettingsPage({
           role="tablist"
           aria-orientation="horizontal"
           className={cn(
-            gridColsClass,
+            "grid-cols-3",
             "grid gap-1 rounded-lg bg-muted p-1 md:flex md:flex-col md:grid-cols-none md:w-48 md:shrink-0 md:rounded-none md:bg-transparent md:p-0",
           )}
         >

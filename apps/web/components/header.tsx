@@ -96,7 +96,7 @@ export function Header() {
               <Settings className="h-5 w-5" />
             </Link>
           </Button>
-          {!mounted || !session?.user ? (
+          {!mounted || !session?.user || isGuest ? (
             <Skeleton className="h-8 w-8 rounded-full" />
           ) : (
             <Link href="/my" aria-label="マイページ">

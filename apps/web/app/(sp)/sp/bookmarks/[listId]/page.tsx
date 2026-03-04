@@ -36,6 +36,7 @@ import { Fab } from "@/components/fab";
 import { ReorderControls } from "@/components/reorder-controls";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
@@ -45,11 +46,39 @@ import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useBookmarkListOperations } from "@/lib/hooks/use-bookmark-list-operations";
 import { useBookmarkOperations } from "@/lib/hooks/use-bookmark-operations";
 import { useBookmarkSelection } from "@/lib/hooks/use-bookmark-selection";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
+
+function SpBookmarkDetailSkeleton() {
+  return (
+    <div className="mt-4 mx-auto max-w-2xl">
+      <div className="mb-6">
+        <div className="flex items-center gap-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="ml-auto h-8 w-8 rounded-md" />
+        </div>
+        <Skeleton className="mt-2 h-4 w-32" />
+        <div className="mt-3 flex items-center justify-end gap-1.5">
+          <Skeleton className="h-8 w-16 rounded-md" />
+          <Skeleton className="h-8 w-20 rounded-md" />
+        </div>
+      </div>
+      <div className="space-y-3">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
+            <div className="min-w-0 flex-1">
+              <Skeleton className="h-4 w-32" />
+            </div>
+            <Skeleton className="h-8 w-8 rounded-md" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function SpBookmarkListDetailPage() {
   const { listId } = useParams<{ listId: string }>();
@@ -83,7 +112,6 @@ export default function SpBookmarkListDetailPage() {
   });
 
   const isLoading = listsLoading || bookmarksLoading;
-  const showSkeleton = useDelayedLoading(isLoading);
 
   useEffect(() => {
     setLocalBookmarks((prev) => {
@@ -171,140 +199,109 @@ export default function SpBookmarkListDetailPage() {
     }
   }
 
-  if (isLoading && !showSkeleton) return <div />;
-
-  if (showSkeleton) {
-    return (
-      <div className="mt-4 mx-auto max-w-2xl">
-        <div className="mb-6">
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-5 w-16 rounded-full" />
-            <Skeleton className="ml-auto h-8 w-8 rounded-md" />
-          </div>
-          <Skeleton className="mt-2 h-4 w-32" />
-          <div className="mt-3 flex items-center justify-end gap-1.5">
-            <Skeleton className="h-8 w-16 rounded-md" />
-            <Skeleton className="h-8 w-20 rounded-md" />
-          </div>
-        </div>
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
-              <div className="min-w-0 flex-1">
-                <Skeleton className="h-4 w-32" />
-              </div>
-              <Skeleton className="h-8 w-8 rounded-md" />
-            </div>
-          ))}
-        </div>
-      </div>
-    );
-  }
-
-  if (!list) {
-    return (
-      <div className="mt-8 text-center">
-        <p className="text-muted-foreground">リストが見つかりません</p>
-        <Button variant="outline" size="sm" className="mt-4" asChild>
-          <Link href="/sp/bookmarks">ブックマーク一覧に戻る</Link>
-        </Button>
-      </div>
-    );
-  }
-
   return (
-    <div className="mt-4 mx-auto max-w-2xl">
-      <BookmarkListHeader
-        list={list}
-        bookmarkCount={bookmarks.length}
-        online={online}
-        sel={sel}
-        listOps={listOps}
-        bmOps={bmOps}
-        reorderMode={reorderMode}
-        onReorderModeChange={setReorderMode}
-      />
+    <LoadingBoundary isLoading={isLoading} skeleton={<SpBookmarkDetailSkeleton />}>
+      {!list ? (
+        <div className="mt-8 text-center">
+          <p className="text-muted-foreground">リストが見つかりません</p>
+          <Button variant="outline" size="sm" className="mt-4" asChild>
+            <Link href="/sp/bookmarks">ブックマーク一覧に戻る</Link>
+          </Button>
+        </div>
+      ) : (
+        <div className="mt-4 mx-auto max-w-2xl">
+          <BookmarkListHeader
+            list={list}
+            bookmarkCount={bookmarks.length}
+            online={online}
+            sel={sel}
+            listOps={listOps}
+            bmOps={bmOps}
+            reorderMode={reorderMode}
+            onReorderModeChange={setReorderMode}
+          />
 
-      <div>
-        {localBookmarks.length === 0 ? (
-          <EmptyState message={MSG.EMPTY_BOOKMARK} variant="page" />
-        ) : sel.selectionMode ? (
-          <div className="space-y-3">
-            {localBookmarks.map((bm) => (
-              <button
-                key={bm.id}
-                type="button"
-                onClick={() => sel.toggle(bm.id)}
-                className={cn(
-                  "flex w-full items-start gap-3 rounded-lg border bg-card px-3 py-2 text-left shadow-sm",
-                  sel.selectedIds.has(bm.id) && SELECTED_RING,
-                )}
-              >
-                <div className="flex shrink-0 items-center pt-0.5">
-                  <SelectionIndicator checked={sel.selectedIds.has(bm.id)} />
-                </div>
-                <BookmarkItemContent bm={bm} />
-              </button>
-            ))}
-          </div>
-        ) : reorderMode ? (
-          <div className="space-y-3">
-            {localBookmarks.map((bm, idx) => (
-              <div
-                key={bm.id}
-                className="flex items-start gap-2 rounded-lg border bg-card px-3 py-2 shadow-sm"
-              >
-                <div className="flex h-5 shrink-0 items-center">
-                  <ReorderControls
-                    onMoveUp={() => moveBookmark(bm.id, "up")}
-                    onMoveDown={() => moveBookmark(bm.id, "down")}
-                    isFirst={idx === 0}
-                    isLast={idx === localBookmarks.length - 1}
-                  />
-                </div>
-                <BookmarkItemContent bm={bm} asLink />
-              </div>
-            ))}
-          </div>
-        ) : (
-          // SP: always treat as mobile — disable drag-and-drop, use touch-friendly reorder
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={localBookmarks.map((bm) => bm.id)}
-              strategy={verticalListSortingStrategy}
-            >
+          <div>
+            {localBookmarks.length === 0 ? (
+              <EmptyState message={MSG.EMPTY_BOOKMARK} variant="page" />
+            ) : sel.selectionMode ? (
               <div className="space-y-3">
                 {localBookmarks.map((bm) => (
-                  <SortableBookmarkItem
+                  <button
                     key={bm.id}
-                    bm={bm}
-                    onEdit={bmOps.openEdit}
-                    onDelete={bmOps.setDeletingBookmark}
-                    draggable={false}
-                  />
+                    type="button"
+                    onClick={() => sel.toggle(bm.id)}
+                    className={cn(
+                      "flex w-full items-start gap-3 rounded-lg border bg-card px-3 py-2 text-left shadow-sm",
+                      sel.selectedIds.has(bm.id) && SELECTED_RING,
+                    )}
+                  >
+                    <div className="flex shrink-0 items-center pt-0.5">
+                      <SelectionIndicator checked={sel.selectedIds.has(bm.id)} />
+                    </div>
+                    <BookmarkItemContent bm={bm} />
+                  </button>
                 ))}
               </div>
-            </SortableContext>
-          </DndContext>
-        )}
-      </div>
+            ) : reorderMode ? (
+              <div className="space-y-3">
+                {localBookmarks.map((bm, idx) => (
+                  <div
+                    key={bm.id}
+                    className="flex items-start gap-2 rounded-lg border bg-card px-3 py-2 shadow-sm"
+                  >
+                    <div className="flex h-5 shrink-0 items-center">
+                      <ReorderControls
+                        onMoveUp={() => moveBookmark(bm.id, "up")}
+                        onMoveDown={() => moveBookmark(bm.id, "down")}
+                        isFirst={idx === 0}
+                        isLast={idx === localBookmarks.length - 1}
+                      />
+                    </div>
+                    <BookmarkItemContent bm={bm} asLink />
+                  </div>
+                ))}
+              </div>
+            ) : (
+              // SP: always treat as mobile — disable drag-and-drop, use touch-friendly reorder
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={localBookmarks.map((bm) => bm.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <div className="space-y-3">
+                    {localBookmarks.map((bm) => (
+                      <SortableBookmarkItem
+                        key={bm.id}
+                        bm={bm}
+                        onEdit={bmOps.openEdit}
+                        onDelete={bmOps.setDeletingBookmark}
+                        draggable={false}
+                      />
+                    ))}
+                  </div>
+                </SortableContext>
+              </DndContext>
+            )}
+          </div>
 
-      <EditListDialog listOps={listOps} />
-      <AddBookmarkDialog bmOps={bmOps} listName={list.name} />
-      <EditBookmarkDialog bmOps={bmOps} />
-      <DeleteListDialog listOps={listOps} listName={list.name} />
-      <DeleteBookmarkDialog bmOps={bmOps} />
-      <BatchDeleteDialog sel={sel} />
-      <Fab
-        onClick={bmOps.openAdd}
-        label="ブックマークを追加"
-        hidden={!online || sel.selectionMode}
-      />
-    </div>
+          <EditListDialog listOps={listOps} />
+          <AddBookmarkDialog bmOps={bmOps} listName={list.name} />
+          <EditBookmarkDialog bmOps={bmOps} />
+          <DeleteListDialog listOps={listOps} listName={list.name} />
+          <DeleteBookmarkDialog bmOps={bmOps} />
+          <BatchDeleteDialog sel={sel} />
+          <Fab
+            onClick={bmOps.openAdd}
+            label="ブックマークを追加"
+            hidden={!online || sel.selectionMode}
+          />
+        </div>
+      )}
+    </LoadingBoundary>
   );
 }

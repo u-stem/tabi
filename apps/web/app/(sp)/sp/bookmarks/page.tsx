@@ -11,6 +11,7 @@ import { CreateBookmarkListDialog } from "@/components/create-bookmark-list-dial
 import { Fab } from "@/components/fab";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import {
   ResponsiveAlertDialog,
   ResponsiveAlertDialogCancel,
@@ -40,6 +41,34 @@ const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.R
   { value: "private", label: VISIBILITY_LABELS.private, icon: <Lock className="h-4 w-4" /> },
 ];
 
+function SpBookmarksSkeleton() {
+  return (
+    <>
+      <div className="mt-4 flex items-center gap-2">
+        <Skeleton className="h-8 w-[100px]" />
+        <div className="flex items-center gap-2 ml-auto">
+          <Skeleton className="h-8 w-24" />
+        </div>
+      </div>
+      <div className="mt-4 grid gap-4">
+        {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
+          <div key={key} className="rounded-lg border bg-card shadow-sm">
+            <div className="flex flex-col space-y-1.5 p-6">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-32" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+            </div>
+            <div className="p-6 pt-0">
+              <Skeleton className="h-4 w-40" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export default function SpBookmarksPage() {
   const online = useOnlineStatus();
   const { data: session } = useSession();
@@ -49,7 +78,6 @@ export default function SpBookmarksPage() {
     bookmarkLists,
     filteredBookmarkLists,
     isLoading,
-    showSkeleton,
     error,
     visibilityFilter,
     setVisibilityFilter,
@@ -75,155 +103,134 @@ export default function SpBookmarksPage() {
     );
   }
 
-  if (isLoading && !showSkeleton) return <div />;
+  const errorFallback = error ? (
+    <div className="mt-8 text-center">
+      <p className="text-destructive">{MSG.BOOKMARK_LIST_FETCH_FAILED}</p>
+      <Button
+        variant="outline"
+        size="sm"
+        className="mt-4"
+        onClick={() => invalidateBookmarkLists()}
+      >
+        再試行
+      </Button>
+    </div>
+  ) : undefined;
 
   return (
     <>
-      {showSkeleton ? (
-        <>
-          <div className="mt-4 flex items-center gap-2">
-            <Skeleton className="h-8 w-[100px]" />
-            <div className="flex items-center gap-2 ml-auto">
-              <Skeleton className="h-8 w-24" />
-            </div>
-          </div>
-          <div className="mt-4 grid gap-4">
-            {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
-              <div key={key} className="rounded-lg border bg-card shadow-sm">
-                <div className="flex flex-col space-y-1.5 p-6">
-                  <div className="flex items-center justify-between">
-                    <Skeleton className="h-5 w-32" />
-                    <Skeleton className="h-5 w-16 rounded-full" />
-                  </div>
-                </div>
-                <div className="p-6 pt-0">
-                  <Skeleton className="h-4 w-40" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      ) : error ? (
-        <div className="mt-8 text-center">
-          <p className="text-destructive">{MSG.BOOKMARK_LIST_FETCH_FAILED}</p>
-          <Button
-            variant="outline"
-            size="sm"
-            className="mt-4"
-            onClick={() => invalidateBookmarkLists()}
-          >
-            再試行
-          </Button>
-        </div>
-      ) : (
-        <>
-          <div className="mt-4">
-            {sel.selectionMode ? (
-              <div className="flex h-8 select-none items-center gap-1.5 rounded-lg bg-muted px-1.5">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={sel.exit}
-                  disabled={sel.batchLoading}
-                  aria-label="選択を終了"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-                <span className="text-xs font-medium">{sel.selectedIds.size}件選択中</span>
+      <LoadingBoundary
+        isLoading={isLoading}
+        skeleton={<SpBookmarksSkeleton />}
+        error={error}
+        errorFallback={errorFallback}
+      >
+        <div className="mt-4">
+          {sel.selectionMode ? (
+            <div className="flex h-8 select-none items-center gap-1.5 rounded-lg bg-muted px-1.5">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={sel.exit}
+                disabled={sel.batchLoading}
+                aria-label="選択を終了"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <span className="text-xs font-medium">{sel.selectedIds.size}件選択中</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs"
+                onClick={
+                  sel.selectedIds.size === filteredBookmarkLists.length
+                    ? sel.deselectAll
+                    : sel.selectAll
+                }
+                disabled={sel.batchLoading}
+              >
+                {sel.selectedIds.size === filteredBookmarkLists.length ? "全解除" : "全選択"}
+              </Button>
+              <div className="ml-auto flex items-center gap-1">
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-8 px-2 text-xs"
-                  onClick={
-                    sel.selectedIds.size === filteredBookmarkLists.length
-                      ? sel.deselectAll
-                      : sel.selectAll
-                  }
-                  disabled={sel.batchLoading}
+                  disabled={sel.selectedIds.size === 0 || sel.batchLoading}
+                  onClick={sel.handleBatchDuplicate}
                 >
-                  {sel.selectedIds.size === filteredBookmarkLists.length ? "全解除" : "全選択"}
+                  <Copy className="h-4 w-4" />
+                  複製
                 </Button>
-                <div className="ml-auto flex items-center gap-1">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-xs"
-                    disabled={sel.selectedIds.size === 0 || sel.batchLoading}
-                    onClick={sel.handleBatchDuplicate}
-                  >
-                    <Copy className="h-4 w-4" />
-                    複製
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-xs text-destructive"
-                    disabled={sel.selectedIds.size === 0 || sel.batchLoading}
-                    onClick={() => sel.setBatchDeleteOpen(true)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    削除
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  aria-label="公開状態で絞り込み"
-                  onClick={(e) => {
-                    e.currentTarget.blur();
-                    setVisibilitySheetOpen(true);
-                  }}
-                  className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
-                >
-                  {visibilityFilters.find((f) => f.value === visibilityFilter)?.icon}
-                  {visibilityFilters.find((f) => f.value === visibilityFilter)?.label ?? "すべて"}
-                </button>
-                <ActionSheet
-                  open={visibilitySheetOpen}
-                  onOpenChange={setVisibilitySheetOpen}
-                  actions={visibilityFilters.map((f) => ({
-                    label: f.label,
-                    icon: f.icon,
-                    onClick: () => setVisibilityFilter(f.value),
-                  }))}
-                />
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
-                  className="h-9 flex-1"
-                  onClick={sel.enter}
-                  disabled={!online || filteredBookmarkLists.length === 0}
-                  aria-label="選択モード"
+                  className="h-8 px-2 text-xs text-destructive"
+                  disabled={sel.selectedIds.size === 0 || sel.batchLoading}
+                  onClick={() => sel.setBatchDeleteOpen(true)}
                 >
-                  <SquareMousePointer className="h-4 w-4" />
-                  選択
+                  <Trash2 className="h-4 w-4" />
+                  削除
                 </Button>
               </div>
-            )}
-          </div>
-          {bookmarkLists.length === 0 ? (
-            <EmptyState message={MSG.EMPTY_BOOKMARK_LIST} variant="page" />
-          ) : filteredBookmarkLists.length === 0 ? (
-            <EmptyState message={MSG.EMPTY_BOOKMARK_LIST_FILTER} variant="page" />
+            </div>
           ) : (
-            <div className="mt-4 grid gap-4">
-              {filteredBookmarkLists.map((list) => (
-                <BookmarkListCard
-                  key={list.id}
-                  {...list}
-                  hrefPrefix="/sp/bookmarks"
-                  selectable={sel.selectionMode}
-                  selected={sel.selectedIds.has(list.id)}
-                  onSelect={sel.toggle}
-                />
-              ))}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                aria-label="公開状態で絞り込み"
+                onClick={(e) => {
+                  e.currentTarget.blur();
+                  setVisibilitySheetOpen(true);
+                }}
+                className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
+              >
+                {visibilityFilters.find((f) => f.value === visibilityFilter)?.icon}
+                {visibilityFilters.find((f) => f.value === visibilityFilter)?.label ?? "すべて"}
+              </button>
+              <ActionSheet
+                open={visibilitySheetOpen}
+                onOpenChange={setVisibilitySheetOpen}
+                actions={visibilityFilters.map((f) => ({
+                  label: f.label,
+                  icon: f.icon,
+                  onClick: () => setVisibilityFilter(f.value),
+                }))}
+              />
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-9 flex-1"
+                onClick={sel.enter}
+                disabled={!online || filteredBookmarkLists.length === 0}
+                aria-label="選択モード"
+              >
+                <SquareMousePointer className="h-4 w-4" />
+                選択
+              </Button>
             </div>
           )}
-        </>
-      )}
+        </div>
+        {bookmarkLists.length === 0 ? (
+          <EmptyState message={MSG.EMPTY_BOOKMARK_LIST} variant="page" />
+        ) : filteredBookmarkLists.length === 0 ? (
+          <EmptyState message={MSG.EMPTY_BOOKMARK_LIST_FILTER} variant="page" />
+        ) : (
+          <div className="mt-4 grid gap-4">
+            {filteredBookmarkLists.map((list) => (
+              <BookmarkListCard
+                key={list.id}
+                {...list}
+                hrefPrefix="/sp/bookmarks"
+                selectable={sel.selectionMode}
+                selected={sel.selectedIds.has(list.id)}
+                onSelect={sel.toggle}
+              />
+            ))}
+          </div>
+        )}
+      </LoadingBoundary>
       <ResponsiveAlertDialog open={sel.batchDeleteOpen} onOpenChange={sel.setBatchDeleteOpen}>
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "@/lib/api";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { useBookmarkListSelection } from "@/lib/hooks/use-bookmark-list-selection";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
 
 export type VisibilityFilter = "all" | "public" | "friends_only" | "private";
@@ -13,7 +12,6 @@ export type UseBookmarkListsReturn = {
   bookmarkLists: BookmarkListResponse[];
   filteredBookmarkLists: BookmarkListResponse[];
   isLoading: boolean;
-  showSkeleton: boolean;
   error: Error | null;
   visibilityFilter: VisibilityFilter;
   setVisibilityFilter: (filter: VisibilityFilter) => void;
@@ -39,7 +37,6 @@ export function useBookmarkLists(isGuest: boolean): UseBookmarkListsReturn {
 
   const [visibilityFilter, setVisibilityFilter] = useState<VisibilityFilter>("all");
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const showSkeleton = useDelayedLoading(isLoading);
 
   const invalidateBookmarkLists = () =>
     queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.lists() });
@@ -68,7 +65,6 @@ export function useBookmarkLists(isGuest: boolean): UseBookmarkListsReturn {
     bookmarkLists,
     filteredBookmarkLists,
     isLoading,
-    showSkeleton,
     error,
     visibilityFilter,
     setVisibilityFilter,

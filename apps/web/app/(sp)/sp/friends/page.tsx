@@ -54,8 +54,14 @@ function PageSkeleton() {
           <CardContent className="space-y-3">
             {[1, 2, 3].map((j) => (
               <div key={j} className="flex items-center justify-between gap-2">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-8 w-14" />
+                <div className="flex items-center gap-2 min-w-0">
+                  <Skeleton className="h-6 w-6 shrink-0 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+                <div className="flex gap-2 shrink-0">
+                  <Skeleton className="h-8 w-20" />
+                  <Skeleton className="h-8 w-14" />
+                </div>
               </div>
             ))}
           </CardContent>

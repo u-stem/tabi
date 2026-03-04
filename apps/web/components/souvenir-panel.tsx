@@ -153,16 +153,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
   const showSkeleton = useDelayedLoading(isLoading);
 
   if (showSkeleton) {
-    return (
-      <div className="space-y-2">
-        <div className="mb-2 flex items-center gap-1.5">
-          <Skeleton className="h-8 w-20 rounded-md" />
-          <Skeleton className="h-8 w-16 rounded-md" />
-        </div>
-        <Skeleton className="h-12 w-full rounded-md" />
-        <Skeleton className="h-12 w-full rounded-md" />
-      </div>
-    );
+    return <Skeleton className="min-h-24 w-full rounded-md" />;
   }
 
   if (isLoading) return null;

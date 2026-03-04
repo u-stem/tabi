@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { FriendRequestsCard } from "@/components/friend-requests-card";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
@@ -12,7 +13,7 @@ import { MSG } from "@/lib/messages";
 import { FriendsTab, SendRequestSection } from "./_components/friends-tab";
 import { GroupsTab } from "./_components/groups-tab";
 
-function PageSkeleton() {
+function FriendsSkeleton() {
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-8">
       {/* UserIdSection */}
@@ -56,7 +57,7 @@ function PageSkeleton() {
 export default function FriendsPage() {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
-  const { friends, requests, groups, isLoading, showSkeleton } = useFriendsPage(isGuest);
+  const { friends, requests, groups, isLoading } = useFriendsPage(isGuest);
 
   useEffect(() => {
     document.title = pageTitle("フレンド");
@@ -72,15 +73,14 @@ export default function FriendsPage() {
     );
   }
 
-  if (isLoading && !showSkeleton) return <div />;
-  if (showSkeleton) return <PageSkeleton />;
-
   return (
-    <div className="mt-4 mx-auto max-w-2xl space-y-8">
-      <FriendRequestsCard requests={requests} />
-      <FriendsTab friends={friends} />
-      <GroupsTab groups={groups} />
-      <SendRequestSection />
-    </div>
+    <LoadingBoundary isLoading={isLoading} skeleton={<FriendsSkeleton />}>
+      <div className="mt-4 mx-auto max-w-2xl space-y-8">
+        <FriendRequestsCard requests={requests} />
+        <FriendsTab friends={friends} />
+        <GroupsTab groups={groups} />
+        <SendRequestSection />
+      </div>
+    </LoadingBoundary>
   );
 }

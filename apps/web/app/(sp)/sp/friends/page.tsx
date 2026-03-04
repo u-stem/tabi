@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
@@ -39,7 +40,7 @@ const TAB_LABELS: Record<Tab, string> = {
   groups: "グループ",
 };
 
-function PageSkeleton() {
+function SpFriendsSkeleton() {
   return (
     <div className="mt-4 space-y-4">
       <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
@@ -75,7 +76,7 @@ export default function SpFriendsPage() {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
   const queryClient = useQueryClient();
-  const { friends, requests, groups, isLoading, showSkeleton } = useFriendsPage(isGuest);
+  const { friends, requests, groups, isLoading } = useFriendsPage(isGuest);
 
   const [tab, setTab] = useState<Tab>("friends");
   const tabRef = useRef<Tab>("friends");
@@ -112,7 +113,7 @@ export default function SpFriendsPage() {
     onSwipeComplete: handleSwipe,
     canSwipePrev: currentTabIdx > 0,
     canSwipeNext: currentTabIdx < TABS.length - 1,
-    enabled: !isLoading && !showSkeleton && !isGuest,
+    enabled: !isLoading && !isGuest,
   });
 
   const adjacentTab =
@@ -173,69 +174,68 @@ export default function SpFriendsPage() {
     );
   }
 
-  if (isLoading && !showSkeleton) return <div />;
-  if (showSkeleton) return <PageSkeleton />;
-
   const tabItems = TABS.map((t, i) => ({ value: t, label: TAB_LABELS[t], index: i }));
 
   return (
     <>
-      {/* Tab bar */}
-      <div
-        role="tablist"
-        aria-orientation="horizontal"
-        className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
-      >
-        {tabItems.map(({ value, label, index }) => (
-          <button
-            key={value}
-            type="button"
-            role="tab"
-            aria-selected={tab === value}
-            tabIndex={tab === value ? 0 : -1}
-            onClick={() => changeTab(value)}
-            onKeyDown={(e) => {
-              if (e.key === "ArrowRight") {
-                e.preventDefault();
-                changeTab(tabItems[(index + 1) % tabItems.length].value);
-              } else if (e.key === "ArrowLeft") {
-                e.preventDefault();
-                changeTab(tabItems[(index - 1 + tabItems.length) % tabItems.length].value);
-              }
-            }}
-            className={cn(
-              "min-h-[36px] rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.97]",
-              tab === value
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* Swipe container */}
-      <div
-        ref={contentRef}
-        className="mt-4 min-h-[60vh] overflow-x-hidden px-0.5 -mx-0.5 touch-pan-y"
-      >
-        <div ref={swipeRef} className="relative touch-pan-y will-change-transform">
-          <div className="pt-0.5">{renderTab(tab)}</div>
-
-          {swipe.adjacent && adjacentTab && (
-            <div
-              className="absolute top-0 left-0 w-full pt-0.5"
-              aria-hidden="true"
-              style={{
-                transform: swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+      <LoadingBoundary isLoading={isLoading} skeleton={<SpFriendsSkeleton />}>
+        {/* Tab bar */}
+        <div
+          role="tablist"
+          aria-orientation="horizontal"
+          className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
+        >
+          {tabItems.map(({ value, label, index }) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={tab === value}
+              tabIndex={tab === value ? 0 : -1}
+              onClick={() => changeTab(value)}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowRight") {
+                  e.preventDefault();
+                  changeTab(tabItems[(index + 1) % tabItems.length].value);
+                } else if (e.key === "ArrowLeft") {
+                  e.preventDefault();
+                  changeTab(tabItems[(index - 1 + tabItems.length) % tabItems.length].value);
+                }
               }}
+              className={cn(
+                "min-h-[36px] rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.97]",
+                tab === value
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
             >
-              {renderTab(adjacentTab)}
-            </div>
-          )}
+              {label}
+            </button>
+          ))}
         </div>
-      </div>
+
+        {/* Swipe container */}
+        <div
+          ref={contentRef}
+          className="mt-4 min-h-[60vh] overflow-x-hidden px-0.5 -mx-0.5 touch-pan-y"
+        >
+          <div ref={swipeRef} className="relative touch-pan-y will-change-transform">
+            <div className="pt-0.5">{renderTab(tab)}</div>
+
+            {swipe.adjacent && adjacentTab && (
+              <div
+                className="absolute top-0 left-0 w-full pt-0.5"
+                aria-hidden="true"
+                style={{
+                  transform: swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                }}
+              >
+                {renderTab(adjacentTab)}
+              </div>
+            )}
+          </div>
+        </div>
+      </LoadingBoundary>
 
       {/* FABs are rendered outside the swipe container to avoid will-change-transform breaking fixed positioning */}
       <Fab onClick={() => setSendOpen(true)} label="フレンド申請" hidden={tab !== "friends"} />

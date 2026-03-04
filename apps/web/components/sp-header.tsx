@@ -30,7 +30,7 @@ export function SpHeader() {
             onClick={() => void switchViewMode("desktop")}
             className="flex h-9 w-9 items-center justify-center rounded-full hover:bg-accent"
           >
-            <Monitor className="h-7 w-7" />
+            <Monitor className="h-6 w-6" />
           </button>
           <ThemeToggle />
           <Link

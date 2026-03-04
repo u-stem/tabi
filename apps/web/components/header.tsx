@@ -87,13 +87,13 @@ export function Header() {
               aria-label="SP版で表示"
               onClick={() => void switchViewMode("sp")}
             >
-              <Smartphone className="h-5 w-5" />
+              <Smartphone className="h-6 w-6" />
             </Button>
           )}
           <ThemeToggle />
           <Button variant="ghost" size="icon" aria-label="設定" asChild>
             <Link href="/settings">
-              <Settings className="h-5 w-5" />
+              <Settings className="h-6 w-6" />
             </Link>
           </Button>
           {!mounted || !session?.user || isGuest ? (

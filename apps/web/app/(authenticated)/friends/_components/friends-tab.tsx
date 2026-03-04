@@ -207,6 +207,11 @@ function SendRequestSection() {
               placeholder="550e8400-e29b-41d4-..."
               required
             />
+            <p className="text-xs text-muted-foreground">
+              ユーザーIDは相手のプロフィールページで
+              <br />
+              確認できます。
+            </p>
           </div>
         </CardContent>
       </form>

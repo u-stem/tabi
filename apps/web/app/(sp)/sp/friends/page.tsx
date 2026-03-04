@@ -253,7 +253,9 @@ export default function SpFriendsPage() {
           <ResponsiveDialogHeader>
             <ResponsiveDialogTitle>フレンド申請</ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
-              申請したいユーザーのIDを入力してください
+              申請したいユーザーのIDを入力してください。
+              <br />
+              ユーザーIDは相手のプロフィールページで確認できます。
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
           <form onSubmit={handleSendRequest}>

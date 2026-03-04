@@ -527,6 +527,11 @@ export function MemberDialog({
                           {adding ? "追加中..." : "追加"}
                         </Button>
                       </div>
+                      <p className="text-xs text-muted-foreground">
+                        ユーザーIDは相手のプロフィールページで
+                        <br />
+                        確認できます。
+                      </p>
                     </form>
                   </TabsContent>
                 </Tabs>

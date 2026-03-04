@@ -39,6 +39,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import {
   ResponsiveAlertDialog,
   ResponsiveAlertDialogCancel,
@@ -54,7 +55,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { SELECTED_RING } from "@/lib/colors";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { buildMapsSearchUrl } from "@/lib/transport-link";
@@ -150,18 +150,6 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
     });
   };
 
-  const showSkeleton = useDelayedLoading(isLoading);
-
-  if (showSkeleton) {
-    return <Skeleton className="min-h-24 w-full rounded-md" />;
-  }
-
-  if (isLoading) return null;
-
-  if (isError) {
-    return <p className="py-8 text-center text-sm text-muted-foreground">読み込みに失敗しました</p>;
-  }
-
   const items = data?.items ?? [];
 
   const sortItems = (list: SouvenirItem[]) => {
@@ -178,118 +166,94 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
   const selectedCount = selectedIds.size;
 
   return (
-    <div>
-      {selectMode ? (
-        <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
-          <Button variant="ghost" size="icon" className="h-8 w-8" onClick={exitSelectMode}>
-            <X className="h-3.5 w-3.5" />
-          </Button>
-          <span className="text-xs font-medium">{selectedCount}件選択中</span>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-8 px-2 text-xs"
-            onClick={() =>
-              selectedCount === items.length
-                ? setSelectedIds(new Set())
-                : setSelectedIds(new Set(items.map((i) => i.id)))
-            }
-          >
-            {selectedCount === items.length ? "全解除" : "全選択"}
-          </Button>
-          <div className="ml-auto">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-8 px-2 text-xs text-destructive hover:text-destructive"
-              disabled={selectedCount === 0 || bulkDeleteMutation.isPending}
-              onClick={() => setBulkDeleteOpen(true)}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-              削除
-            </Button>
-          </div>
-        </div>
-      ) : (
-        <div className="mb-2 flex items-center gap-1.5">
-          {items.length > 0 && (
-            <>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(isMobile && "flex-1 h-9")}
-                aria-pressed={sortBy === "priority"}
-                aria-label={sortBy === "priority" ? "作成順に切り替える" : "優先度順に切り替える"}
-                onClick={() => setSortBy(sortBy === "priority" ? "created" : "priority")}
-              >
-                <ArrowUpDown className="h-4 w-4" />
-                {sortBy === "priority" ? "優先度順" : "作成順"}
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(isMobile && "flex-1 h-9")}
-                onClick={() => setSelectMode(true)}
-              >
-                <SquareMousePointer className="h-4 w-4" />
-                選択
-              </Button>
-            </>
-          )}
-          {!isMobile && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="ml-auto"
-              onClick={() => setDialogOpen(true)}
-            >
-              <Plus className="h-4 w-4" />
-              お土産を追加
-            </Button>
-          )}
-        </div>
-      )}
-
-      {items.length === 0 ? (
-        <EmptyState message={MSG.EMPTY_SOUVENIR} variant="box" />
+    <LoadingBoundary
+      isLoading={isLoading}
+      skeleton={<Skeleton className="min-h-24 w-full rounded-md" />}
+    >
+      {isError ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">読み込みに失敗しました</p>
       ) : (
         <div>
-          {remaining.length > 0 && (
-            <div className="space-y-1">
-              {remaining.map((item) => (
-                <SouvenirItemRow
-                  key={item.id}
-                  item={item}
-                  isMobile={isMobile}
-                  selectMode={selectMode}
-                  selected={selectedIds.has(item.id)}
-                  onSelect={() => toggleSelect(item.id)}
-                  onToggle={(isPurchased) => toggleMutation.mutate({ id: item.id, isPurchased })}
-                  onEdit={() => {
-                    setEditingItem(item);
-                    setDialogOpen(true);
-                  }}
-                  onDelete={() => setDeleteTarget(item)}
-                />
-              ))}
+          {selectMode ? (
+            <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={exitSelectMode}>
+                <X className="h-3.5 w-3.5" />
+              </Button>
+              <span className="text-xs font-medium">{selectedCount}件選択中</span>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 px-2 text-xs"
+                onClick={() =>
+                  selectedCount === items.length
+                    ? setSelectedIds(new Set())
+                    : setSelectedIds(new Set(items.map((i) => i.id)))
+                }
+              >
+                {selectedCount === items.length ? "全解除" : "全選択"}
+              </Button>
+              <div className="ml-auto">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2 text-xs text-destructive hover:text-destructive"
+                  disabled={selectedCount === 0 || bulkDeleteMutation.isPending}
+                  onClick={() => setBulkDeleteOpen(true)}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  削除
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="mb-2 flex items-center gap-1.5">
+              {items.length > 0 && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(isMobile && "flex-1 h-9")}
+                    aria-pressed={sortBy === "priority"}
+                    aria-label={
+                      sortBy === "priority" ? "作成順に切り替える" : "優先度順に切り替える"
+                    }
+                    onClick={() => setSortBy(sortBy === "priority" ? "created" : "priority")}
+                  >
+                    <ArrowUpDown className="h-4 w-4" />
+                    {sortBy === "priority" ? "優先度順" : "作成順"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className={cn(isMobile && "flex-1 h-9")}
+                    onClick={() => setSelectMode(true)}
+                  >
+                    <SquareMousePointer className="h-4 w-4" />
+                    選択
+                  </Button>
+                </>
+              )}
+              {!isMobile && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="ml-auto"
+                  onClick={() => setDialogOpen(true)}
+                >
+                  <Plus className="h-4 w-4" />
+                  お土産を追加
+                </Button>
+              )}
             </div>
           )}
-          {purchased.length > 0 && (
-            <CollapsiblePrimitive.Root
-              open={purchasedOpen || selectMode}
-              onOpenChange={(open) => !selectMode && setPurchasedOpen(open)}
-              className={cn("rounded-md border bg-muted/50", remaining.length > 0 && "mt-2")}
-            >
-              <CollapsiblePrimitive.Trigger
-                disabled={selectMode}
-                className="flex w-full items-center gap-1 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/80 disabled:pointer-events-none [&[data-state=open]>svg]:rotate-180"
-              >
-                <ChevronDown className="h-3 w-3 transition-transform duration-200" />
-                購入済み ({purchased.length}件)
-              </CollapsiblePrimitive.Trigger>
-              <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
-                <div className="space-y-1 border-t p-2">
-                  {purchased.map((item) => (
+
+          {items.length === 0 ? (
+            <EmptyState message={MSG.EMPTY_SOUVENIR} variant="box" />
+          ) : (
+            <div>
+              {remaining.length > 0 && (
+                <div className="space-y-1">
+                  {remaining.map((item) => (
                     <SouvenirItemRow
                       key={item.id}
                       item={item}
@@ -308,75 +272,112 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
                     />
                   ))}
                 </div>
-              </CollapsiblePrimitive.Content>
-            </CollapsiblePrimitive.Root>
+              )}
+              {purchased.length > 0 && (
+                <CollapsiblePrimitive.Root
+                  open={purchasedOpen || selectMode}
+                  onOpenChange={(open) => !selectMode && setPurchasedOpen(open)}
+                  className={cn("rounded-md border bg-muted/50", remaining.length > 0 && "mt-2")}
+                >
+                  <CollapsiblePrimitive.Trigger
+                    disabled={selectMode}
+                    className="flex w-full items-center gap-1 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/80 disabled:pointer-events-none [&[data-state=open]>svg]:rotate-180"
+                  >
+                    <ChevronDown className="h-3 w-3 transition-transform duration-200" />
+                    購入済み ({purchased.length}件)
+                  </CollapsiblePrimitive.Trigger>
+                  <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
+                    <div className="space-y-1 border-t p-2">
+                      {purchased.map((item) => (
+                        <SouvenirItemRow
+                          key={item.id}
+                          item={item}
+                          isMobile={isMobile}
+                          selectMode={selectMode}
+                          selected={selectedIds.has(item.id)}
+                          onSelect={() => toggleSelect(item.id)}
+                          onToggle={(isPurchased) =>
+                            toggleMutation.mutate({ id: item.id, isPurchased })
+                          }
+                          onEdit={() => {
+                            setEditingItem(item);
+                            setDialogOpen(true);
+                          }}
+                          onDelete={() => setDeleteTarget(item)}
+                        />
+                      ))}
+                    </div>
+                  </CollapsiblePrimitive.Content>
+                </CollapsiblePrimitive.Root>
+              )}
+            </div>
           )}
+
+          <SouvenirDialog
+            tripId={tripId}
+            open={dialogOpen}
+            onOpenChange={(open) => {
+              setDialogOpen(open);
+              if (!open) setEditingItem(null);
+            }}
+            item={editingItem}
+            onSaved={handleSaved}
+          />
+
+          <ResponsiveAlertDialog
+            open={deleteTarget !== null}
+            onOpenChange={(v) => !v && setDeleteTarget(null)}
+          >
+            <ResponsiveAlertDialogContent>
+              <ResponsiveAlertDialogHeader>
+                <ResponsiveAlertDialogTitle>削除しますか？</ResponsiveAlertDialogTitle>
+                <ResponsiveAlertDialogDescription>
+                  「{deleteTarget?.name}」を削除します。この操作は取り消せません。
+                </ResponsiveAlertDialogDescription>
+              </ResponsiveAlertDialogHeader>
+              <ResponsiveAlertDialogFooter>
+                <ResponsiveAlertDialogCancel>
+                  <X className="h-4 w-4" />
+                  キャンセル
+                </ResponsiveAlertDialogCancel>
+                <ResponsiveAlertDialogDestructiveAction
+                  onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+                  disabled={deleteMutation.isPending}
+                >
+                  削除する
+                </ResponsiveAlertDialogDestructiveAction>
+              </ResponsiveAlertDialogFooter>
+            </ResponsiveAlertDialogContent>
+          </ResponsiveAlertDialog>
+
+          <ResponsiveAlertDialog
+            open={bulkDeleteOpen}
+            onOpenChange={(v) => !v && setBulkDeleteOpen(false)}
+          >
+            <ResponsiveAlertDialogContent>
+              <ResponsiveAlertDialogHeader>
+                <ResponsiveAlertDialogTitle>まとめて削除しますか？</ResponsiveAlertDialogTitle>
+                <ResponsiveAlertDialogDescription>
+                  選択した{selectedCount}件を削除します。この操作は取り消せません。
+                </ResponsiveAlertDialogDescription>
+              </ResponsiveAlertDialogHeader>
+              <ResponsiveAlertDialogFooter>
+                <ResponsiveAlertDialogCancel>
+                  <X className="h-4 w-4" />
+                  キャンセル
+                </ResponsiveAlertDialogCancel>
+                <ResponsiveAlertDialogDestructiveAction
+                  onClick={() => bulkDeleteMutation.mutate([...selectedIds])}
+                  disabled={bulkDeleteMutation.isPending}
+                >
+                  削除する
+                </ResponsiveAlertDialogDestructiveAction>
+              </ResponsiveAlertDialogFooter>
+            </ResponsiveAlertDialogContent>
+          </ResponsiveAlertDialog>
         </div>
       )}
-
-      <SouvenirDialog
-        tripId={tripId}
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setEditingItem(null);
-        }}
-        item={editingItem}
-        onSaved={handleSaved}
-      />
-
-      <ResponsiveAlertDialog
-        open={deleteTarget !== null}
-        onOpenChange={(v) => !v && setDeleteTarget(null)}
-      >
-        <ResponsiveAlertDialogContent>
-          <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>削除しますか？</ResponsiveAlertDialogTitle>
-            <ResponsiveAlertDialogDescription>
-              「{deleteTarget?.name}」を削除します。この操作は取り消せません。
-            </ResponsiveAlertDialogDescription>
-          </ResponsiveAlertDialogHeader>
-          <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>
-              <X className="h-4 w-4" />
-              キャンセル
-            </ResponsiveAlertDialogCancel>
-            <ResponsiveAlertDialogDestructiveAction
-              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-              disabled={deleteMutation.isPending}
-            >
-              削除する
-            </ResponsiveAlertDialogDestructiveAction>
-          </ResponsiveAlertDialogFooter>
-        </ResponsiveAlertDialogContent>
-      </ResponsiveAlertDialog>
-
-      <ResponsiveAlertDialog
-        open={bulkDeleteOpen}
-        onOpenChange={(v) => !v && setBulkDeleteOpen(false)}
-      >
-        <ResponsiveAlertDialogContent>
-          <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>まとめて削除しますか？</ResponsiveAlertDialogTitle>
-            <ResponsiveAlertDialogDescription>
-              選択した{selectedCount}件を削除します。この操作は取り消せません。
-            </ResponsiveAlertDialogDescription>
-          </ResponsiveAlertDialogHeader>
-          <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>
-              <X className="h-4 w-4" />
-              キャンセル
-            </ResponsiveAlertDialogCancel>
-            <ResponsiveAlertDialogDestructiveAction
-              onClick={() => bulkDeleteMutation.mutate([...selectedIds])}
-              disabled={bulkDeleteMutation.isPending}
-            >
-              削除する
-            </ResponsiveAlertDialogDestructiveAction>
-          </ResponsiveAlertDialogFooter>
-        </ResponsiveAlertDialogContent>
-      </ResponsiveAlertDialog>
-    </div>
+    </LoadingBoundary>
   );
 }
 

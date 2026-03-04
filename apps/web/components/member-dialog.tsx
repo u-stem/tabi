@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import {
   ResponsiveAlertDialog,
   ResponsiveAlertDialogCancel,
@@ -43,7 +44,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -77,7 +77,6 @@ export function MemberDialog({
     queryFn: () => api<MemberResponse[]>(`/api/trips/${tripId}/members`),
     enabled: open,
   });
-  const showSkeleton = useDelayedLoading(membersLoading);
 
   const { data: friends = [] } = useQuery({
     queryKey: queryKeys.friends.list(),
@@ -246,22 +245,25 @@ export function MemberDialog({
         </ResponsiveDialogHeader>
 
         <div className="flex min-h-0 flex-col gap-4">
-          {membersLoading && !showSkeleton ? null : showSkeleton ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between gap-2 rounded-md border p-2"
-                >
-                  <div className="flex flex-1 items-center gap-2">
-                    <Skeleton className="h-6 w-6 shrink-0 rounded-full" />
-                    <Skeleton className="h-4 w-24" />
+          <LoadingBoundary
+            isLoading={membersLoading}
+            skeleton={
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="flex items-center justify-between gap-2 rounded-md border p-2"
+                  >
+                    <div className="flex flex-1 items-center gap-2">
+                      <Skeleton className="h-6 w-6 shrink-0 rounded-full" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                    <Skeleton className="h-7 w-[100px]" />
                   </div>
-                  <Skeleton className="h-7 w-[100px]" />
-                </div>
-              ))}
-            </div>
-          ) : (
+                ))}
+              </div>
+            }
+          >
             <div className="space-y-2 overflow-y-auto" style={{ maxHeight: "40vh" }}>
               {members.map((member) => (
                 <div
@@ -318,7 +320,7 @@ export function MemberDialog({
                 </div>
               ))}
             </div>
-          )}
+          </LoadingBoundary>
 
           {isOwner && (
             <div className="space-y-3 border-t pt-3">

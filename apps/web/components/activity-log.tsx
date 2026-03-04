@@ -10,10 +10,10 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRightLeft, Check, Copy, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { MAX_LOGS_PER_TRIP } from "@/lib/constants";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
@@ -194,97 +194,88 @@ export function ActivityLog({ tripId }: ActivityLogProps) {
     });
 
   const logs = data?.pages.flatMap((page) => page.items) ?? [];
-  const showSkeleton = useDelayedLoading(isLoading);
-
-  if (showSkeleton) {
-    return (
-      <div className="space-y-0">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <div key={i} className="flex gap-3 py-2">
-            <Skeleton className="mt-0.5 h-6 w-6 shrink-0 rounded-full" />
-            <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2 leading-6">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-4 w-36" />
-                <Skeleton className="h-3 w-12" />
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
-
-  // Avoid flashing empty state during the 200ms skeleton delay
-  if (isLoading) return null;
-
-  if (isError) {
-    return (
-      <p className="py-4 text-center text-sm text-destructive">{MSG.ACTIVITY_LOG_FETCH_FAILED}</p>
-    );
-  }
-
-  if (logs.length === 0) {
-    return (
-      <p className="py-8 text-center text-sm text-muted-foreground">{MSG.ACTIVITY_LOG_EMPTY}</p>
-    );
-  }
 
   return (
-    <div className="space-y-0">
-      {logs.map((log) => {
-        const style = ACTION_STYLES[log.action] ?? DEFAULT_STYLE;
-        const Icon = style.icon;
-        const parts = parseAction(log);
+    <LoadingBoundary
+      isLoading={isLoading}
+      skeleton={
+        <div className="space-y-0">
+          {[1, 2, 3, 4, 5].map((i) => (
+            <div key={i} className="flex gap-3 py-2">
+              <Skeleton className="mt-0.5 h-6 w-6 shrink-0 rounded-full" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 leading-6">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-4 w-36" />
+                  <Skeleton className="h-3 w-12" />
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      }
+    >
+      {isError ? (
+        <p className="py-4 text-center text-sm text-destructive">{MSG.ACTIVITY_LOG_FETCH_FAILED}</p>
+      ) : logs.length === 0 ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">{MSG.ACTIVITY_LOG_EMPTY}</p>
+      ) : (
+        <div className="space-y-0">
+          {logs.map((log) => {
+            const style = ACTION_STYLES[log.action] ?? DEFAULT_STYLE;
+            const Icon = style.icon;
+            const parts = parseAction(log);
 
-        return (
-          <div key={log.id} className="flex gap-3 py-2">
-            <div
-              className={cn(
-                "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                style.color,
-              )}
-            >
-              <Icon className="h-3 w-3" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="break-words text-sm leading-6">
-                <span className="font-medium">{log.userName}</span>
-                <span className="ml-1 text-muted-foreground">
-                  {parts.before}
-                  {parts.entityName && (
-                    <span className="font-medium text-foreground">{parts.entityName}</span>
+            return (
+              <div key={log.id} className="flex gap-3 py-2">
+                <div
+                  className={cn(
+                    "mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
+                    style.color,
                   )}
-                  {parts.after}
-                  {parts.detail && <span className="ml-1">{parts.detail}</span>}
-                </span>
-                <span className="ml-2 text-xs text-muted-foreground/60">
-                  {formatRelativeTime(log.createdAt)}
-                </span>
-              </p>
+                >
+                  <Icon className="h-3 w-3" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="break-words text-sm leading-6">
+                    <span className="font-medium">{log.userName}</span>
+                    <span className="ml-1 text-muted-foreground">
+                      {parts.before}
+                      {parts.entityName && (
+                        <span className="font-medium text-foreground">{parts.entityName}</span>
+                      )}
+                      {parts.after}
+                      {parts.detail && <span className="ml-1">{parts.detail}</span>}
+                    </span>
+                    <span className="ml-2 text-xs text-muted-foreground/60">
+                      {formatRelativeTime(log.createdAt)}
+                    </span>
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+          {hasNextPage && (
+            <div className="pt-2 text-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    読み込み中...
+                  </>
+                ) : (
+                  "さらに読み込む"
+                )}
+              </Button>
             </div>
-          </div>
-        );
-      })}
-      {hasNextPage && (
-        <div className="pt-2 text-center">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => fetchNextPage()}
-            disabled={isFetchingNextPage}
-          >
-            {isFetchingNextPage ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                読み込み中...
-              </>
-            ) : (
-              "さらに読み込む"
-            )}
-          </Button>
+          )}
         </div>
       )}
-    </div>
+    </LoadingBoundary>
   );
 }

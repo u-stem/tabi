@@ -46,6 +46,7 @@ import {
 } from "@/app/(authenticated)/trips/[id]/_components/trip-dialogs";
 import { TripHeader } from "@/app/(authenticated)/trips/[id]/_components/trip-header";
 import { DayWeatherEditor } from "@/components/day-weather-editor";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
@@ -58,7 +59,6 @@ import { useAutoStatusTransition } from "@/lib/hooks/use-auto-status-transition"
 import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useDayMemo } from "@/lib/hooks/use-day-memo";
 import { useDayWeather } from "@/lib/hooks/use-day-weather";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
 import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
@@ -93,8 +93,6 @@ export default function SpTripDetailPage() {
     queryFn: () => api<PollDetailResponse>(`/api/polls/${pollId}`),
     enabled: !!pollId,
   });
-  const showSkeleton = useDelayedLoading(isLoading || (!!pollId && isPollLoading));
-
   // Prefetch bookmark lists
   useQuery({
     queryKey: queryKeys.bookmarks.lists(),
@@ -199,10 +197,10 @@ export default function SpTripDetailPage() {
   const canSwipeMobileTabs = currentTabIdx !== -1;
   const swipe = useSwipeTab(mobileContentRef, swipeContainerRef, {
     onSwipeComplete: handleSwipe,
-    // !showSkeleton ensures refs are populated before listeners are registered.
+    // !isLoading ensures refs are populated before listeners are registered.
     // Without this, enabled can flip true while skeleton is still mounted (refs null),
     // and then stays true when content renders — so the effect never re-runs.
-    enabled: !showSkeleton && !!trip && canSwipeMobileTabs,
+    enabled: !isLoading && !!trip && canSwipeMobileTabs,
     canSwipePrev: canSwipeMobileTabs && currentTabIdx > 0,
     canSwipeNext: canSwipeMobileTabs && currentTabIdx < tabIds.length - 1,
   });
@@ -297,60 +295,9 @@ export default function SpTripDetailPage() {
   // Routing guarantees params.id is always a string, but guard defensively
   if (!tripId) return null;
 
-  if (isLoading && !showSkeleton) return <div />;
-  // --- Skeleton ---
-  if (showSkeleton) {
-    return (
-      <div className="mt-4">
-        <div className="flex h-11 items-center gap-2">
-          <Skeleton className="h-5 w-36" />
-          <Skeleton className="ml-auto h-8 w-8 rounded-md" />
-        </div>
-        <div className="my-2 grid grid-cols-4 gap-1 rounded-lg bg-muted p-1">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-9 rounded-md" />
-          ))}
-        </div>
-        <div className="rounded-lg border bg-card">
-          <div className="flex gap-1.5 px-3 pt-3">
-            {[1, 2, 3].map((i) => (
-              <Skeleton key={i} className="h-[44px] w-14 rounded-full" />
-            ))}
-          </div>
-          <div className="p-4">
-            <Skeleton className="mb-3 h-9 w-full rounded-md" />
-            <Skeleton className="mb-3 h-9 w-full rounded-md" />
-            <div className="mb-2 flex items-center gap-1.5">
-              <Skeleton className="h-8 flex-1 rounded-full" />
-              <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
-              <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
-            </div>
-            <div className="mb-2 flex items-center gap-1.5">
-              <Skeleton className="h-7 w-24 rounded-full" />
-              <Skeleton className="h-7 w-7 rounded-md" />
-              <Skeleton className="h-7 w-7 rounded-md" />
-            </div>
-            <div className="space-y-1.5">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex gap-3 py-1.5">
-                  <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
-                  <Skeleton className="h-20 flex-1 rounded-md" />
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (queryError || !trip) {
-    return <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>;
-  }
-
-  const canEdit = canEditRole(trip.role);
+  const canEdit = trip ? canEditRole(trip.role) : false;
   const isGuest = isGuestUser(session);
-  const scheduleLimitReached = trip.scheduleCount >= MAX_SCHEDULES_PER_TRIP;
+  const scheduleLimitReached = trip ? trip.scheduleCount >= MAX_SCHEDULES_PER_TRIP : false;
   const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
   const selectionValue = { ...selection, canEnter: canEdit && online };
 
@@ -359,25 +306,24 @@ export default function SpTripDetailPage() {
     ? (tabIds[currentTabIdx + (swipe.adjacent === "next" ? 1 : -1)] ?? null)
     : null;
 
-  const tripData = trip;
-
   function renderTabContent(tabId: MobileContentTab) {
+    if (!trip) return null;
     switch (tabId) {
       case "schedule":
         return (
           <div className="flex min-w-0 flex-col rounded-lg border bg-card">
             <DayTabs
-              days={tripData.days}
+              days={trip.days}
               selectedDay={selectedDay}
               onSelectDay={setSelectedDay}
               otherPresence={otherPresence}
-              hasPoll={!!tripData.poll}
+              hasPoll={!!trip.poll}
             />
-            {selectedDay === -1 && tripData.poll ? (
+            {selectedDay === -1 && trip.poll ? (
               <div>
                 <PollTab
-                  pollId={tripData.poll.id}
-                  isOwner={isOwnerRole(tripData.role)}
+                  pollId={trip.poll.id}
+                  isOwner={isOwnerRole(trip.role)}
                   canEdit={canEdit}
                   onMutate={onMutate}
                   onConfirmed={() => setSelectedDay(0)}
@@ -416,9 +362,9 @@ export default function SpTripDetailPage() {
                   disabled={!online || !canEdit}
                   addScheduleOpen={addScheduleOpen}
                   onAddScheduleOpenChange={setAddScheduleOpen}
-                  maxEndDayOffset={Math.max(1, tripData.days.length - 1 - selectedDay)}
-                  totalDays={tripData.days.length}
-                  crossDayEntries={getCrossDayEntries(tripData.days, currentDay.dayNumber)}
+                  maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
+                  totalDays={trip.days.length}
+                  crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
                   overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
                   scheduleLimitReached={scheduleLimitReached}
                   scheduleLimitMessage={scheduleLimitMessage}
@@ -464,21 +410,21 @@ export default function SpTripDetailPage() {
               onAddDialogOpenChange={setAddCandidateOpen}
               scheduleLimitReached={scheduleLimitReached}
               scheduleLimitMessage={scheduleLimitMessage}
-              maxEndDayOffset={Math.max(0, tripData.days.length - 1)}
+              maxEndDayOffset={Math.max(0, trip.days.length - 1)}
               onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
               onReorderCandidate={dnd.reorderCandidate}
-              days={tripData.days}
+              days={trip.days}
             />
           </div>
         ) : (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            {tripData.days.length > 0
+            {trip.days.length > 0
               ? "日タブを選択すると候補を追加できます"
               : "日程が確定すると候補を追加できます"}
           </p>
         );
       case "expenses":
-        return tripData.days.length > 0 ? (
+        return trip.days.length > 0 ? (
           <div className="rounded-lg border bg-card p-4">
             <ExpensePanel
               tripId={tripId ?? ""}
@@ -493,7 +439,7 @@ export default function SpTripDetailPage() {
           </p>
         );
       case "bookmarks":
-        return tripData.days.length > 0 ? (
+        return trip.days.length > 0 ? (
           <div className="rounded-lg border bg-card p-4">
             <BookmarkPanel
               tripId={tripId ?? ""}
@@ -507,7 +453,7 @@ export default function SpTripDetailPage() {
           </p>
         );
       case "souvenirs":
-        return tripData.days.length > 0 ? (
+        return trip.days.length > 0 ? (
           <div className="rounded-lg border bg-card p-4">
             <SouvenirPanel
               tripId={tripId ?? ""}
@@ -525,154 +471,205 @@ export default function SpTripDetailPage() {
     }
   }
 
+  const skeleton = (
+    <div className="mt-4">
+      <div className="flex h-11 items-center gap-2">
+        <Skeleton className="h-5 w-36" />
+        <Skeleton className="ml-auto h-8 w-8 rounded-md" />
+      </div>
+      <div className="my-2 grid grid-cols-4 gap-1 rounded-lg bg-muted p-1">
+        {[1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-9 rounded-md" />
+        ))}
+      </div>
+      <div className="rounded-lg border bg-card">
+        <div className="flex gap-1.5 px-3 pt-3">
+          {[1, 2, 3].map((i) => (
+            <Skeleton key={i} className="h-[44px] w-14 rounded-full" />
+          ))}
+        </div>
+        <div className="p-4">
+          <Skeleton className="mb-3 h-9 w-full rounded-md" />
+          <Skeleton className="mb-3 h-9 w-full rounded-md" />
+          <div className="mb-2 flex items-center gap-1.5">
+            <Skeleton className="h-8 flex-1 rounded-full" />
+            <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+            <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+          </div>
+          <div className="mb-2 flex items-center gap-1.5">
+            <Skeleton className="h-7 w-24 rounded-full" />
+            <Skeleton className="h-7 w-7 rounded-md" />
+            <Skeleton className="h-7 w-7 rounded-md" />
+          </div>
+          <div className="space-y-1.5">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex gap-3 py-1.5">
+                <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
+                <Skeleton className="h-20 flex-1 rounded-md" />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <SelectionProvider value={selectionValue}>
-      <div className="mt-4">
-        <TripHeader
-          trip={trip}
-          tripId={tripId}
-          otherPresence={otherPresence}
-          isConnected={isConnected}
-          online={online}
-          canEdit={canEdit}
-          onMutate={onMutate}
-          onEditOpen={() => setEditOpen(true)}
-          onOpenBookmarks={
-            isGuest
-              ? undefined
-              : () => {
-                  handleMobileTabChange("bookmarks", "tap");
-                }
-          }
-          onOpenActivity={() => {
-            handleMobileTabChange("activity", "tap");
-          }}
-        />
-        <EditTripDialog
-          tripId={tripId}
-          title={trip.title}
-          destination={trip.destination}
-          startDate={trip.startDate}
-          endDate={trip.endDate}
-          coverImageUrl={trip.coverImageUrl}
-          coverImagePosition={trip.coverImagePosition}
-          open={editOpen}
-          onOpenChange={setEditOpen}
-          onUpdate={onMutate}
-        />
-        <DndContext
-          sensors={dnd.sensors}
-          collisionDetection={dnd.collisionDetection}
-          onDragStart={dnd.handleDragStart}
-          onDragOver={dnd.handleDragOver}
-          onDragEnd={dnd.handleDragEnd}
-          accessibility={{ announcements: undefined }}
-        >
-          {/* SP mobile layout — always visible, no lg:hidden */}
-          <div>
-            <MobileContentTabs
-              activeTab={mobileTab}
-              onTabChange={handleMobileTabChange}
-              candidateCount={dnd.localCandidates.length}
-            />
-            <div
-              ref={mobileContentRef}
-              className={
-                isActivelySwiping
-                  ? "overflow-hidden pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
-                  : "overflow-y-auto overscroll-contain pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
+    <LoadingBoundary isLoading={isLoading || (!!pollId && isPollLoading)} skeleton={skeleton}>
+      {queryError || !trip ? (
+        <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+      ) : (
+        <SelectionProvider value={selectionValue}>
+          <div className="mt-4">
+            <TripHeader
+              trip={trip}
+              tripId={tripId}
+              otherPresence={otherPresence}
+              isConnected={isConnected}
+              online={online}
+              canEdit={canEdit}
+              onMutate={onMutate}
+              onEditOpen={() => setEditOpen(true)}
+              onOpenBookmarks={
+                isGuest
+                  ? undefined
+                  : () => {
+                      handleMobileTabChange("bookmarks", "tap");
+                    }
               }
+              onOpenActivity={() => {
+                handleMobileTabChange("activity", "tap");
+              }}
+            />
+            <EditTripDialog
+              tripId={tripId}
+              title={trip.title}
+              destination={trip.destination}
+              startDate={trip.startDate}
+              endDate={trip.endDate}
+              coverImageUrl={trip.coverImageUrl}
+              coverImagePosition={trip.coverImagePosition}
+              open={editOpen}
+              onOpenChange={setEditOpen}
+              onUpdate={onMutate}
+            />
+            <DndContext
+              sensors={dnd.sensors}
+              collisionDetection={dnd.collisionDetection}
+              onDragStart={dnd.handleDragStart}
+              onDragOver={dnd.handleDragOver}
+              onDragEnd={dnd.handleDragEnd}
+              accessibility={{ announcements: undefined }}
             >
-              <div
-                ref={swipeContainerRef}
-                className="relative touch-pan-y"
-                style={{ willChange: isActivelySwiping ? "transform" : "auto" }}
-              >
-                {/* Current tab */}
+              {/* SP mobile layout — always visible, no lg:hidden */}
+              <div>
+                <MobileContentTabs
+                  activeTab={mobileTab}
+                  onTabChange={handleMobileTabChange}
+                  candidateCount={dnd.localCandidates.length}
+                />
                 <div
+                  ref={mobileContentRef}
                   className={
-                    tapTransitionRef.current ? "animate-[tab-fade-in_150ms_ease-out]" : undefined
+                    isActivelySwiping
+                      ? "overflow-hidden pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
+                      : "overflow-y-auto overscroll-contain pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
                   }
-                  ref={() => {
-                    tapTransitionRef.current = false;
-                  }}
                 >
                   <div
-                    id={getMobileTabPanelId(mobileTab)}
-                    role="tabpanel"
-                    aria-labelledby={getMobileTabTriggerId(mobileTab)}
+                    ref={swipeContainerRef}
+                    className="relative touch-pan-y"
+                    style={{ willChange: isActivelySwiping ? "transform" : "auto" }}
                   >
-                    {renderTabContent(mobileTab)}
+                    {/* Current tab */}
+                    <div
+                      className={
+                        tapTransitionRef.current
+                          ? "animate-[tab-fade-in_150ms_ease-out]"
+                          : undefined
+                      }
+                      ref={() => {
+                        tapTransitionRef.current = false;
+                      }}
+                    >
+                      <div
+                        id={getMobileTabPanelId(mobileTab)}
+                        role="tabpanel"
+                        aria-labelledby={getMobileTabTriggerId(mobileTab)}
+                      >
+                        {renderTabContent(mobileTab)}
+                      </div>
+                    </div>
+
+                    {/* Adjacent tab (rendered only during swipe) */}
+                    {swipe.adjacent && adjacentTabId && (
+                      <div
+                        className="absolute top-0 left-0 w-full"
+                        aria-hidden="true"
+                        style={{
+                          transform:
+                            swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                        }}
+                      >
+                        {renderTabContent(adjacentTabId)}
+                      </div>
+                    )}
                   </div>
                 </div>
-
-                {/* Adjacent tab (rendered only during swipe) */}
-                {swipe.adjacent && adjacentTabId && (
-                  <div
-                    className="absolute top-0 left-0 w-full"
-                    aria-hidden="true"
-                    style={{
-                      transform:
-                        swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
-                    }}
-                  >
-                    {renderTabContent(adjacentTabId)}
-                  </div>
-                )}
               </div>
-            </div>
-          </div>
-        </DndContext>
+            </DndContext>
 
-        <Fab
-          onClick={() => {
-            if (mobileTab === "schedule") {
-              if (selectedDay === -1) {
-                setAddPollOptionOpen(true);
-              } else {
-                if (scheduleLimitReached) {
-                  toast.error(scheduleLimitMessage);
-                  return;
-                }
-                setAddScheduleOpen(true);
+            <Fab
+              onClick={() => {
+                if (mobileTab === "schedule") {
+                  if (selectedDay === -1) {
+                    setAddPollOptionOpen(true);
+                  } else {
+                    if (scheduleLimitReached) {
+                      toast.error(scheduleLimitMessage);
+                      return;
+                    }
+                    setAddScheduleOpen(true);
+                  }
+                } else if (mobileTab === "candidates") setAddCandidateOpen(true);
+                else if (mobileTab === "expenses") setAddExpenseOpen(true);
+                else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
+              }}
+              label={
+                mobileTab === "schedule"
+                  ? selectedDay === -1
+                    ? "日程案追加"
+                    : "予定を追加"
+                  : mobileTab === "candidates"
+                    ? "候補を追加"
+                    : mobileTab === "souvenirs"
+                      ? "お土産を追加"
+                      : "費用を追加"
               }
-            } else if (mobileTab === "candidates") setAddCandidateOpen(true);
-            else if (mobileTab === "expenses") setAddExpenseOpen(true);
-            else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
-          }}
-          label={
-            mobileTab === "schedule"
-              ? selectedDay === -1
-                ? "日程案追加"
-                : "予定を追加"
-              : mobileTab === "candidates"
-                ? "候補を追加"
-                : mobileTab === "souvenirs"
-                  ? "お土産を追加"
-                  : "費用を追加"
-          }
-          hidden={
-            !canEdit ||
-            !online ||
-            mobileTab === "bookmarks" ||
-            mobileTab === "activity" ||
-            (mobileTab === "schedule" &&
-              selectedDay === -1 &&
-              (!isOwnerRole(tripData.role) || pollData?.status !== "open"))
-          }
-        />
+              hidden={
+                !canEdit ||
+                !online ||
+                mobileTab === "bookmarks" ||
+                mobileTab === "activity" ||
+                (mobileTab === "schedule" &&
+                  selectedDay === -1 &&
+                  (!isOwnerRole(trip.role) || pollData?.status !== "open"))
+              }
+            />
 
-        <AddPatternDialog patternOps={patternOps} />
-        <RenamePatternDialog patternOps={patternOps} />
-        <BatchDeleteDialog selection={selection} />
-        <DeletePatternDialog patternOps={patternOps} />
-        <OverwritePatternDialog patternOps={patternOps} patterns={currentDay?.patterns ?? []} />
-        <BookmarkListPickerDialog
-          open={bookmarkPickerOpen}
-          onOpenChange={setBookmarkPickerOpen}
-          onSelect={handleBookmarkListSelected}
-        />
-      </div>
-    </SelectionProvider>
+            <AddPatternDialog patternOps={patternOps} />
+            <RenamePatternDialog patternOps={patternOps} />
+            <BatchDeleteDialog selection={selection} />
+            <DeletePatternDialog patternOps={patternOps} />
+            <OverwritePatternDialog patternOps={patternOps} patterns={currentDay?.patterns ?? []} />
+            <BookmarkListPickerDialog
+              open={bookmarkPickerOpen}
+              onOpenChange={setBookmarkPickerOpen}
+              onSelect={handleBookmarkListSelected}
+            />
+          </div>
+        </SelectionProvider>
+      )}
+    </LoadingBoundary>
   );
 }

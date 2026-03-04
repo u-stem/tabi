@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import {
   ResponsiveAlertDialog,
   ResponsiveAlertDialogCancel,
@@ -28,7 +29,6 @@ import {
 } from "@/components/ui/responsive-alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -82,158 +82,156 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
     setDialogOpen(true);
   };
 
-  const showSkeleton = useDelayedLoading(isLoading);
-
-  if (showSkeleton) {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-16 w-full rounded-md" />
-        <Skeleton className="h-12 w-full rounded-md" />
-        <Skeleton className="h-12 w-full rounded-md" />
-      </div>
-    );
-  }
-
-  if (isLoading) return null;
-
-  if (isError) {
-    return (
-      <p className="py-4 text-center text-sm text-destructive">費用データの取得に失敗しました</p>
-    );
-  }
-
   const { expenses, settlement } = data ?? {
     expenses: [],
     settlement: { totalAmount: 0, balances: [], transfers: [] },
   };
 
   return (
-    <div className="space-y-4">
-      {/* Toolbar (hidden on mobile where FAB is used) */}
-      {canEdit && !isMobile && (
-        <div className="flex justify-end">
-          <Button variant="outline" size="sm" onClick={handleAdd}>
-            <Plus className="h-4 w-4" />
-            費用を追加
-          </Button>
+    <LoadingBoundary
+      isLoading={isLoading}
+      skeleton={
+        <div className="space-y-3">
+          <Skeleton className="h-16 w-full rounded-md" />
+          <Skeleton className="h-12 w-full rounded-md" />
+          <Skeleton className="h-12 w-full rounded-md" />
+        </div>
+      }
+    >
+      {isError ? (
+        <p className="py-4 text-center text-sm text-destructive">費用データの取得に失敗しました</p>
+      ) : (
+        <div className="space-y-4">
+          {/* Toolbar (hidden on mobile where FAB is used) */}
+          {canEdit && !isMobile && (
+            <div className="flex justify-end">
+              <Button variant="outline" size="sm" onClick={handleAdd}>
+                <Plus className="h-4 w-4" />
+                費用を追加
+              </Button>
+            </div>
+          )}
+
+          {/* Settlement summary */}
+          <CollapsiblePrimitive.Root className="rounded-md border bg-muted/50">
+            <div className="flex items-center justify-between p-3">
+              <span className="text-sm font-medium">合計支出</span>
+              <span className="text-sm font-bold">{settlement.totalAmount.toLocaleString()}円</span>
+            </div>
+            {settlement.transfers.length > 0 && (
+              <>
+                <CollapsiblePrimitive.Trigger className="flex w-full items-center gap-1 border-t px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/80 transition-colors [&[data-state=open]>svg]:rotate-180">
+                  <ChevronDown className="h-3 w-3 transition-transform duration-200" />
+                  明細を表示
+                </CollapsiblePrimitive.Trigger>
+                <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
+                  <div className="space-y-1 border-t px-3 pt-2 pb-3">
+                    <p className="text-xs text-muted-foreground">立替状況</p>
+                    {[...settlement.balances]
+                      .filter((b) => b.net !== 0)
+                      .sort((a, b) => b.net - a.net)
+                      .map((b) => (
+                        <div
+                          key={b.userId}
+                          className="flex items-center justify-between pl-2 text-sm"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                            {b.name}
+                          </span>
+                          <span
+                            className={
+                              b.net > 0
+                                ? "font-medium text-emerald-600 dark:text-emerald-400"
+                                : "font-medium text-destructive"
+                            }
+                          >
+                            {b.net > 0 ? "+" : ""}
+                            {b.net.toLocaleString()}円
+                          </span>
+                        </div>
+                      ))}
+                  </div>
+                  <div className="space-y-1 border-t px-3 pt-2 pb-3">
+                    <p className="text-xs text-muted-foreground">精算</p>
+                    {[...settlement.transfers]
+                      .sort((a, b) => b.amount - a.amount)
+                      .map((t, i) => (
+                        <div
+                          key={`${t.from.id}-${t.to.id}-${i}`}
+                          className="flex items-center gap-1.5 pl-2 text-sm"
+                        >
+                          <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                          <span>{t.from.name}</span>
+                          <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                          <span>{t.to.name}</span>
+                          <span className="ml-auto font-medium">{t.amount.toLocaleString()}円</span>
+                        </div>
+                      ))}
+                  </div>
+                </CollapsiblePrimitive.Content>
+              </>
+            )}
+            {settlement.totalAmount === 0 && (
+              <p className="px-3 pb-3 text-xs text-muted-foreground">{MSG.EMPTY_EXPENSE}</p>
+            )}
+          </CollapsiblePrimitive.Root>
+
+          {/* ExpenseItem list */}
+          {expenses.length > 0 && (
+            <div className="space-y-2">
+              {expenses.map((expense) => (
+                <ExpenseRow
+                  key={expense.id}
+                  expense={expense}
+                  canEdit={canEdit}
+                  isMobile={isMobile}
+                  onEdit={handleEdit}
+                  onDelete={setDeleteTarget}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Dialogs */}
+          <ExpenseDialog
+            tripId={tripId}
+            open={dialogOpen}
+            onOpenChange={setDialogOpen}
+            expense={editingExpenseItem}
+            onSaved={handleSaved}
+          />
+
+          <ResponsiveAlertDialog
+            open={!!deleteTarget}
+            onOpenChange={(v) => !v && setDeleteTarget(null)}
+          >
+            <ResponsiveAlertDialogContent>
+              <ResponsiveAlertDialogHeader>
+                <ResponsiveAlertDialogTitle>費用を削除しますか?</ResponsiveAlertDialogTitle>
+                <ResponsiveAlertDialogDescription>
+                  「{deleteTarget?.title}」({deleteTarget?.amount.toLocaleString()}円)
+                  を削除します。この操作は取り消せません。
+                </ResponsiveAlertDialogDescription>
+              </ResponsiveAlertDialogHeader>
+              <ResponsiveAlertDialogFooter>
+                <ResponsiveAlertDialogCancel>
+                  <X className="h-4 w-4" />
+                  キャンセル
+                </ResponsiveAlertDialogCancel>
+                <ResponsiveAlertDialogDestructiveAction
+                  onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
+                  disabled={deleteMutation.isPending}
+                >
+                  <Trash2 className="h-4 w-4" />
+                  削除する
+                </ResponsiveAlertDialogDestructiveAction>
+              </ResponsiveAlertDialogFooter>
+            </ResponsiveAlertDialogContent>
+          </ResponsiveAlertDialog>
         </div>
       )}
-
-      {/* Settlement summary */}
-      <CollapsiblePrimitive.Root className="rounded-md border bg-muted/50">
-        <div className="flex items-center justify-between p-3">
-          <span className="text-sm font-medium">合計支出</span>
-          <span className="text-sm font-bold">{settlement.totalAmount.toLocaleString()}円</span>
-        </div>
-        {settlement.transfers.length > 0 && (
-          <>
-            <CollapsiblePrimitive.Trigger className="flex w-full items-center gap-1 border-t px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/80 transition-colors [&[data-state=open]>svg]:rotate-180">
-              <ChevronDown className="h-3 w-3 transition-transform duration-200" />
-              明細を表示
-            </CollapsiblePrimitive.Trigger>
-            <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
-              <div className="space-y-1 border-t px-3 pt-2 pb-3">
-                <p className="text-xs text-muted-foreground">立替状況</p>
-                {[...settlement.balances]
-                  .filter((b) => b.net !== 0)
-                  .sort((a, b) => b.net - a.net)
-                  .map((b) => (
-                    <div key={b.userId} className="flex items-center justify-between pl-2 text-sm">
-                      <span className="flex items-center gap-1.5">
-                        <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
-                        {b.name}
-                      </span>
-                      <span
-                        className={
-                          b.net > 0
-                            ? "font-medium text-emerald-600 dark:text-emerald-400"
-                            : "font-medium text-destructive"
-                        }
-                      >
-                        {b.net > 0 ? "+" : ""}
-                        {b.net.toLocaleString()}円
-                      </span>
-                    </div>
-                  ))}
-              </div>
-              <div className="space-y-1 border-t px-3 pt-2 pb-3">
-                <p className="text-xs text-muted-foreground">精算</p>
-                {[...settlement.transfers]
-                  .sort((a, b) => b.amount - a.amount)
-                  .map((t, i) => (
-                    <div
-                      key={`${t.from.id}-${t.to.id}-${i}`}
-                      className="flex items-center gap-1.5 pl-2 text-sm"
-                    >
-                      <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
-                      <span>{t.from.name}</span>
-                      <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" />
-                      <span>{t.to.name}</span>
-                      <span className="ml-auto font-medium">{t.amount.toLocaleString()}円</span>
-                    </div>
-                  ))}
-              </div>
-            </CollapsiblePrimitive.Content>
-          </>
-        )}
-        {settlement.totalAmount === 0 && (
-          <p className="px-3 pb-3 text-xs text-muted-foreground">{MSG.EMPTY_EXPENSE}</p>
-        )}
-      </CollapsiblePrimitive.Root>
-
-      {/* ExpenseItem list */}
-      {expenses.length > 0 && (
-        <div className="space-y-2">
-          {expenses.map((expense) => (
-            <ExpenseRow
-              key={expense.id}
-              expense={expense}
-              canEdit={canEdit}
-              isMobile={isMobile}
-              onEdit={handleEdit}
-              onDelete={setDeleteTarget}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* Dialogs */}
-      <ExpenseDialog
-        tripId={tripId}
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        expense={editingExpenseItem}
-        onSaved={handleSaved}
-      />
-
-      <ResponsiveAlertDialog
-        open={!!deleteTarget}
-        onOpenChange={(v) => !v && setDeleteTarget(null)}
-      >
-        <ResponsiveAlertDialogContent>
-          <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>費用を削除しますか?</ResponsiveAlertDialogTitle>
-            <ResponsiveAlertDialogDescription>
-              「{deleteTarget?.title}」({deleteTarget?.amount.toLocaleString()}円)
-              を削除します。この操作は取り消せません。
-            </ResponsiveAlertDialogDescription>
-          </ResponsiveAlertDialogHeader>
-          <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>
-              <X className="h-4 w-4" />
-              キャンセル
-            </ResponsiveAlertDialogCancel>
-            <ResponsiveAlertDialogDestructiveAction
-              onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
-              disabled={deleteMutation.isPending}
-            >
-              <Trash2 className="h-4 w-4" />
-              削除する
-            </ResponsiveAlertDialogDestructiveAction>
-          </ResponsiveAlertDialogFooter>
-        </ResponsiveAlertDialogContent>
-      </ResponsiveAlertDialog>
-    </div>
+    </LoadingBoundary>
   );
 }
 

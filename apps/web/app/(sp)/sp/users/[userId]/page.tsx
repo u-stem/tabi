@@ -6,9 +6,9 @@ import { useParams } from "next/navigation";
 import { useEffect } from "react";
 
 import { ErrorMessage, ProfileContent, ProfileSkeletonContent } from "@/app/users/[userId]/page";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { ApiError, api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { queryKeys } from "@/lib/query-keys";
 
 export default function SpProfilePage() {
@@ -25,8 +25,6 @@ export default function SpProfilePage() {
     enabled: userId !== null,
   });
 
-  const showSkeleton = useDelayedLoading(isLoading);
-
   useEffect(() => {
     if (profile) {
       document.title = pageTitle(`${profile.name} のプロフィール`);
@@ -40,35 +38,22 @@ export default function SpProfilePage() {
         ? "プロフィールの読み込みに失敗しました"
         : null;
 
-  if (showSkeleton) {
-    return (
-      <div className="mt-4 mx-auto max-w-2xl">
-        <ProfileSkeletonContent />
-      </div>
-    );
-  }
-
-  if (isLoading) return null;
-
-  if (error) {
-    return (
-      <div className="mt-4 mx-auto max-w-2xl">
-        <ErrorMessage message={error} />
-      </div>
-    );
-  }
-
-  if (!profile) {
-    return (
-      <div className="mt-4 mx-auto max-w-2xl">
-        <ErrorMessage message="ユーザーが見つかりません" />
-      </div>
-    );
-  }
-
   return (
-    <div className="mt-4 mx-auto max-w-2xl">
-      <ProfileContent profile={profile} userId={userId ?? ""} />
-    </div>
+    <LoadingBoundary
+      isLoading={isLoading}
+      skeleton={
+        <div className="mx-auto mt-4 max-w-2xl">
+          <ProfileSkeletonContent />
+        </div>
+      }
+    >
+      <div className="mx-auto mt-4 max-w-2xl">
+        {error || !profile ? (
+          <ErrorMessage message={error ?? "ユーザーが見つかりません"} />
+        ) : (
+          <ProfileContent profile={profile} userId={userId ?? ""} />
+        )}
+      </div>
+    </LoadingBoundary>
   );
 }

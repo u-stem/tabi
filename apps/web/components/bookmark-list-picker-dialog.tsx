@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Bookmark, X } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import {
   ResponsiveDialog,
   ResponsiveDialogClose,
@@ -16,7 +17,6 @@ import {
 } from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
-import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -36,8 +36,6 @@ export function BookmarkListPickerDialog({
     queryFn: () => api<BookmarkListResponse[]>("/api/bookmark-lists"),
     enabled: open,
   });
-  const showSkeleton = useDelayedLoading(isLoading);
-
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="sm:max-w-sm">
@@ -48,43 +46,48 @@ export function BookmarkListPickerDialog({
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <div className="max-h-60 overflow-y-auto">
-          {isLoading && !showSkeleton ? null : showSkeleton ? (
-            <div className="space-y-2">
-              {[1, 2, 3].map((i) => (
-                <Skeleton key={i} className="h-10 w-full rounded-md" />
-              ))}
-            </div>
-          ) : lists.length === 0 ? (
-            <div className="py-6 text-center">
-              <p className="text-sm text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
-              <Link
-                href="/bookmarks"
-                className="mt-2 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"
-              >
-                ブックマークページで作成
-              </Link>
-            </div>
-          ) : (
-            <div className="space-y-1">
-              {lists.map((list) => (
-                <button
-                  key={list.id}
-                  type="button"
-                  onClick={() => {
-                    onSelect(list.id);
-                    onOpenChange(false);
-                  }}
-                  className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+          <LoadingBoundary
+            isLoading={isLoading}
+            skeleton={
+              <div className="space-y-2">
+                {[1, 2, 3].map((i) => (
+                  <Skeleton key={i} className="h-10 w-full rounded-md" />
+                ))}
+              </div>
+            }
+          >
+            {lists.length === 0 ? (
+              <div className="py-6 text-center">
+                <p className="text-sm text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
+                <Link
+                  href="/bookmarks"
+                  className="mt-2 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"
                 >
-                  <Bookmark className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate">{list.name}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {list.bookmarkCount}件
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+                  ブックマークページで作成
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-1">
+                {lists.map((list) => (
+                  <button
+                    key={list.id}
+                    type="button"
+                    onClick={() => {
+                      onSelect(list.id);
+                      onOpenChange(false);
+                    }}
+                    className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-accent"
+                  >
+                    <Bookmark className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate">{list.name}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">
+                      {list.bookmarkCount}件
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </LoadingBoundary>
         </div>
         <ResponsiveDialogFooter>
           <ResponsiveDialogClose asChild>

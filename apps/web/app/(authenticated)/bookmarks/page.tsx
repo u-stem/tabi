@@ -1,7 +1,7 @@
 "use client";
 
 import { MAX_BOOKMARK_LISTS_PER_USER, VISIBILITY_LABELS } from "@sugara/shared";
-import { CheckSquare, Copy, MoreHorizontal, Plus, Trash2, X } from "lucide-react";
+import { Copy, MoreHorizontal, Plus, SquareMousePointer, Trash2, X } from "lucide-react";
 import { useEffect, useMemo } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { BookmarkListCard } from "@/components/bookmark-list-card";
@@ -150,21 +150,22 @@ export default function BookmarksPage() {
         <>
           <div className="mt-4">
             {sel.selectionMode ? (
-              <div className="flex select-none items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
+              <div className="flex h-8 select-none items-center gap-1.5 rounded-lg bg-muted px-1.5">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-7 w-7"
+                  className="h-8 w-8"
                   onClick={sel.exit}
                   disabled={sel.batchLoading}
+                  aria-label="選択を終了"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                 </Button>
                 <span className="text-xs font-medium">{sel.selectedIds.size}件選択中</span>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-7 px-2 text-xs"
+                  className="h-8 px-2 text-xs"
                   onClick={
                     sel.selectedIds.size === filteredBookmarkLists.length
                       ? sel.deselectAll
@@ -180,10 +181,11 @@ export default function BookmarksPage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7"
+                        className="h-8 w-8"
                         disabled={sel.selectedIds.size === 0 || sel.batchLoading}
+                        aria-label="選択操作メニュー"
                       >
-                        <MoreHorizontal className="h-3.5 w-3.5" />
+                        <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -226,7 +228,7 @@ export default function BookmarksPage() {
                     onClick={sel.enter}
                     disabled={!online || filteredBookmarkLists.length === 0}
                   >
-                    <CheckSquare className="h-4 w-4" />
+                    <SquareMousePointer className="h-4 w-4" />
                     選択
                   </Button>
                   <Tooltip>

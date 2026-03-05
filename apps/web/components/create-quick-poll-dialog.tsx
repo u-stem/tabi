@@ -66,15 +66,6 @@ export function CreateQuickPollDialog({
     if (!isOpen) resetAll();
   }
 
-  function setYesNo() {
-    const id1 = nextId.current++;
-    const id2 = nextId.current++;
-    setOptions([
-      { id: id1, label: "はい" },
-      { id: id2, label: "いいえ" },
-    ]);
-  }
-
   function addOption() {
     if (options.length >= 10) return;
     const id = nextId.current++;
@@ -191,14 +182,9 @@ export function CreateQuickPollDialog({
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>
-                  選択肢 <span className="text-destructive">*</span>
-                </Label>
-                <Button type="button" variant="ghost" size="sm" onClick={setYesNo}>
-                  Yes/No
-                </Button>
-              </div>
+              <Label>
+                選択肢 <span className="text-destructive">*</span>
+              </Label>
               {options.map((opt, i) => (
                 <div key={opt.id} className="flex gap-2">
                   <Input

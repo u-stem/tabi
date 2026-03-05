@@ -316,12 +316,13 @@ export default function TripDetailPage() {
                 { key: "g s", description: "お土産" },
                 { key: "g l", description: "履歴" },
                 ...(!isGuestEarly ? [{ key: "g b", description: "ブックマーク" }] : []),
+                ...(trip?.mapsEnabled ? [{ key: "g m", description: "地図" }] : []),
               ],
             },
           ]
         : []),
     ],
-    [trip?.poll, isLg, canEditEarly, isGuestEarly],
+    [trip?.poll, trip?.mapsEnabled, isLg, canEditEarly, isGuestEarly],
   );
   useRegisterShortcuts(tripShortcuts);
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
@@ -432,6 +433,13 @@ export default function TripDetailPage() {
       if (!isDialogOpen()) setRightPanelTab("bookmarks");
     },
     { enabled: isLg && !isGuestEarly },
+  );
+  useHotkeys(
+    "g>m",
+    () => {
+      if (!isDialogOpen()) setRightPanelTab("map");
+    },
+    { enabled: isLg && !!trip?.mapsEnabled },
   );
   useHotkeys(
     "a",

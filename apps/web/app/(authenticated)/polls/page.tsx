@@ -1,13 +1,16 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Plus, Trash2, Vote, XCircle } from "lucide-react";
+import { Copy, Plus, Trash2, XCircle } from "lucide-react";
 import Link from "next/link";
+import { useEffect } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
+import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -23,8 +26,40 @@ type PollListItem = {
   totalVotes: number;
 };
 
+function PollsSkeleton() {
+  return (
+    <>
+      <div className="flex items-center justify-end">
+        <Skeleton className="h-8 w-24" />
+      </div>
+      <div className="mt-4 space-y-3">
+        {["skeleton-1", "skeleton-2"].map((key) => (
+          <div key={key} className="rounded-lg border p-4 space-y-3">
+            <div className="flex items-start justify-between gap-2">
+              <div className="space-y-1.5">
+                <Skeleton className="h-5 w-40" />
+                <Skeleton className="h-3 w-12" />
+              </div>
+              <Skeleton className="h-5 w-14 rounded-full" />
+            </div>
+            <div className="flex gap-1">
+              <Skeleton className="h-8 w-20" />
+              <Skeleton className="h-8 w-16" />
+              <Skeleton className="h-8 w-16" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+}
+
 export default function PollsPage() {
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    document.title = pageTitle("かんたん投票");
+  }, []);
 
   const { data: polls, isLoading } = useQuery({
     queryKey: queryKeys.quickPolls.list(),
@@ -63,44 +98,26 @@ export default function PollsPage() {
   }
 
   return (
-    <div className="container max-w-lg py-8">
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-bold">かんたん投票</h1>
-        <Button asChild size="sm">
-          <Link href="/polls/new">
-            <Plus className="mr-1 h-4 w-4" />
-            作成
-          </Link>
-        </Button>
-      </div>
-
-      <LoadingBoundary
-        isLoading={isLoading}
-        skeleton={
-          <div className="space-y-3">
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-24 w-full" />
-          </div>
-        }
-      >
+    <div className="mt-4 mx-auto max-w-2xl">
+      <LoadingBoundary isLoading={isLoading} skeleton={<PollsSkeleton />}>
+        <div className="flex items-center justify-end">
+          <Button asChild size="sm">
+            <Link href="/polls/new">
+              <Plus className="h-4 w-4" />
+              新規作成
+            </Link>
+          </Button>
+        </div>
         {!polls?.length ? (
-          <div className="flex flex-col items-center py-16 text-center">
-            <Vote className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-muted-foreground">{MSG.EMPTY_QUICK_POLL}</p>
-            <Button asChild className="mt-4" variant="outline">
-              <Link href="/polls/new">投票を作成</Link>
-            </Button>
-          </div>
+          <EmptyState message={MSG.EMPTY_QUICK_POLL} variant="page" />
         ) : (
-          <div className="space-y-3">
+          <div className="mt-4 space-y-3">
             {polls.map((poll) => (
               <div key={poll.id} className="rounded-lg border p-4 space-y-3">
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{poll.question}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {poll.totalVotes}票 / {poll.status === "open" ? "受付中" : "終了"}
-                    </p>
+                    <p className="text-xs text-muted-foreground">{poll.totalVotes}票</p>
                   </div>
                   <div
                     className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${

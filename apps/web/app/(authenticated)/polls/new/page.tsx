@@ -8,13 +8,14 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
+import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
 
 export default function NewQuickPollPage() {
@@ -28,6 +29,10 @@ export default function NewQuickPollPage() {
   const [allowMultiple, setAllowMultiple] = useState(false);
   const [showResultsBeforeVote, setShowResultsBeforeVote] = useState(true);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.title = pageTitle("投票を作成");
+  }, []);
 
   const createMutation = useMutation({
     mutationFn: (data: {
@@ -101,8 +106,8 @@ export default function NewQuickPollPage() {
 
   if (shareUrl) {
     return (
-      <div className="container max-w-lg py-8 space-y-6">
-        <h1 className="text-xl font-bold">投票を作成しました</h1>
+      <div className="mt-4 mx-auto max-w-2xl space-y-6">
+        <h1 className="text-lg font-semibold">投票を作成しました</h1>
         <div className="space-y-3">
           <p className="text-sm text-muted-foreground">以下のリンクを共有してください</p>
           <div className="flex gap-2">
@@ -123,8 +128,7 @@ export default function NewQuickPollPage() {
   }
 
   return (
-    <div className="container max-w-lg py-8">
-      <h1 className="mb-6 text-xl font-bold">投票を作成</h1>
+    <div className="mt-4 mx-auto max-w-2xl">
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="space-y-2">
           <Label htmlFor="question">質問</Label>

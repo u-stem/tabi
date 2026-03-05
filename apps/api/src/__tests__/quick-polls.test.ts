@@ -42,10 +42,15 @@ vi.mock("../db/index", () => {
   };
 });
 
+import { Hono } from "hono";
+import { quickPollShareRoutes } from "../routes/quick-poll-share";
 import { quickPollRoutes } from "../routes/quick-polls";
 
 const fakeUser = TEST_USER;
 const app = createTestApp(quickPollRoutes, "/api/quick-polls");
+
+const shareApp = new Hono();
+shareApp.route("/", quickPollShareRoutes);
 
 describe("Quick Poll routes", () => {
   beforeEach(() => {
@@ -175,6 +180,136 @@ describe("Quick Poll routes", () => {
       });
 
       expect(res.status).toBe(204);
+    });
+  });
+});
+
+describe("Quick Poll Share routes", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("GET /api/quick-polls/s/:shareToken", () => {
+    it("should return poll by share token", async () => {
+      const now = new Date();
+      mockDbQuery.quickPolls.findFirst.mockResolvedValue({
+        id: "poll-1",
+        creatorId: "user-1",
+        question: "A or B?",
+        allowMultiple: false,
+        showResultsBeforeVote: true,
+        status: "open",
+        expiresAt: new Date(Date.now() + 86400000),
+        createdAt: now,
+        options: [
+          { id: "o1", label: "A", sortOrder: 0 },
+          { id: "o2", label: "B", sortOrder: 1 },
+        ],
+        votes: [],
+      });
+
+      const res = await shareApp.request("/api/quick-polls/s/abc123");
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.question).toBe("A or B?");
+      expect(body.options).toHaveLength(2);
+    });
+
+    it("should return 404 for expired poll", async () => {
+      mockDbQuery.quickPolls.findFirst.mockResolvedValue({
+        id: "poll-1",
+        status: "open",
+        expiresAt: new Date(Date.now() - 1000),
+        options: [],
+        votes: [],
+      });
+
+      const res = await shareApp.request("/api/quick-polls/s/expired");
+
+      expect(res.status).toBe(404);
+    });
+
+    it("should return 404 for non-existent token", async () => {
+      mockDbQuery.quickPolls.findFirst.mockResolvedValue(null);
+
+      const res = await shareApp.request("/api/quick-polls/s/nonexistent");
+
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("POST /api/quick-polls/s/:shareToken/vote", () => {
+    const OPT_ID_1 = "11111111-1111-4111-8111-111111111111";
+    const OPT_ID_2 = "22222222-2222-4222-8222-222222222222";
+    const ANON_ID = "00000000-0000-4000-8000-000000000001";
+
+    it("should accept a vote from anonymous user", async () => {
+      mockDbQuery.quickPolls.findFirst.mockResolvedValue({
+        id: "poll-1",
+        status: "open",
+        allowMultiple: false,
+        expiresAt: new Date(Date.now() + 86400000),
+        options: [{ id: OPT_ID_1 }, { id: OPT_ID_2 }],
+      });
+      const mockWhere = vi.fn().mockResolvedValue(undefined);
+      mockDbDelete.mockReturnValue({ where: mockWhere });
+      const mockReturning = vi.fn().mockResolvedValue([{ id: "vote-1" }]);
+      const mockValues = vi.fn().mockReturnValue({ returning: mockReturning });
+      mockDbInsert.mockReturnValue({ values: mockValues });
+
+      const res = await shareApp.request("/api/quick-polls/s/abc123/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          optionIds: [OPT_ID_1],
+          anonymousId: ANON_ID,
+        }),
+      });
+
+      expect(res.status).toBe(200);
+    });
+
+    it("should reject vote on closed poll", async () => {
+      mockDbQuery.quickPolls.findFirst.mockResolvedValue({
+        id: "poll-1",
+        status: "closed",
+        allowMultiple: false,
+        expiresAt: new Date(Date.now() + 86400000),
+        options: [{ id: OPT_ID_1 }],
+      });
+
+      const res = await shareApp.request("/api/quick-polls/s/abc123/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          optionIds: [OPT_ID_1],
+          anonymousId: ANON_ID,
+        }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("should reject multiple options when allowMultiple is false", async () => {
+      mockDbQuery.quickPolls.findFirst.mockResolvedValue({
+        id: "poll-1",
+        status: "open",
+        allowMultiple: false,
+        expiresAt: new Date(Date.now() + 86400000),
+        options: [{ id: OPT_ID_1 }, { id: OPT_ID_2 }],
+      });
+
+      const res = await shareApp.request("/api/quick-polls/s/abc123/vote", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          optionIds: [OPT_ID_1, OPT_ID_2],
+          anonymousId: ANON_ID,
+        }),
+      });
+
+      expect(res.status).toBe(400);
     });
   });
 });

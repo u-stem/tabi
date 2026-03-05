@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +49,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { moveScheduleToCandidate, removeScheduleFromPattern } from "@/lib/trip-cache";
 import { cn } from "@/lib/utils";
 import { DndInsertIndicator } from "./dnd-insert-indicator";
+import { TravelTimeSeparator } from "./travel-time-separator";
 
 const AddScheduleDialog = dynamic(() =>
   import("./add-schedule-dialog").then((mod) => mod.AddScheduleDialog),
@@ -75,6 +76,7 @@ type DayTimelineProps = {
   overScheduleId?: string | null;
   onSaveToBookmark?: (scheduleIds: string[]) => void;
   onReorderSchedule?: (id: string, direction: "up" | "down") => void;
+  mapsEnabled?: boolean;
 };
 
 export function DayTimeline({
@@ -96,6 +98,7 @@ export function DayTimeline({
   overScheduleId,
   onSaveToBookmark,
   onReorderSchedule,
+  mapsEnabled = false,
 }: DayTimelineProps) {
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
@@ -466,7 +469,37 @@ export function DayTimeline({
         <div ref={setDroppableRef}>
           <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
             <div className="space-y-1.5">
-              {merged.map((item, i) => renderItem(item, i))}
+              {merged.map((item, i) => {
+                const next = merged[i + 1];
+                const showSeparator =
+                  mapsEnabled &&
+                  item.type === "schedule" &&
+                  next?.type === "schedule" &&
+                  item.schedule.category !== "transport" &&
+                  next.schedule.category !== "transport" &&
+                  item.schedule.latitude != null &&
+                  item.schedule.longitude != null &&
+                  next.schedule.latitude != null &&
+                  next.schedule.longitude != null;
+                const itemKey =
+                  item.type === "crossDay" ? `cross-${item.entry.schedule.id}` : item.schedule.id;
+                return (
+                  <Fragment key={itemKey}>
+                    {renderItem(item, i)}
+                    {showSeparator && item.type === "schedule" && next?.type === "schedule" && (
+                      <TravelTimeSeparator
+                        tripId={tripId}
+                        originLat={item.schedule.latitude as number}
+                        originLng={item.schedule.longitude as number}
+                        originPlaceId={item.schedule.placeId}
+                        destLat={next.schedule.latitude as number}
+                        destLng={next.schedule.longitude as number}
+                        destPlaceId={next.schedule.placeId}
+                      />
+                    )}
+                  </Fragment>
+                );
+              })}
               {isOverTimeline && overScheduleId === null && inlineIndicator}
             </div>
           </SortableContext>

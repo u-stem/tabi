@@ -25,6 +25,17 @@ export const ROLE_COLORS: Record<MemberRole, string> = {
     "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-700 dark:text-slate-200 dark:border-slate-600",
 };
 
+export const SCHEDULE_COLOR_HEX: Record<ScheduleColor, string> = {
+  blue: "#3b82f6",
+  red: "#ef4444",
+  green: "#22c55e",
+  yellow: "#eab308",
+  purple: "#a855f7",
+  pink: "#ec4899",
+  orange: "#f97316",
+  gray: "#6b7280",
+};
+
 export const SCHEDULE_COLOR_CLASSES: Record<
   ScheduleColor,
   { bg: string; border: string; text: string; ring: string }

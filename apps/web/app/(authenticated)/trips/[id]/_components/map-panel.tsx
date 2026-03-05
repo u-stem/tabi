@@ -11,6 +11,7 @@ import {
 } from "@vis.gl/react-google-maps";
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
+import { SCHEDULE_COLOR_HEX } from "@/lib/colors";
 
 // Day color palette (cycles when more than 10 days)
 const DAY_COLORS = [
@@ -168,7 +169,7 @@ export function MapPanel({ tripId, currentDaySchedules, allSchedules, online }: 
             const color =
               mode === "all" && "dayIndex" in schedule
                 ? DAY_COLORS[(schedule as MappableScheduleWithDay).dayIndex % DAY_COLORS.length]
-                : "#3b82f6";
+                : (SCHEDULE_COLOR_HEX[schedule.color] ?? "#3b82f6");
             return (
               <AdvancedMarker
                 key={schedule.id}

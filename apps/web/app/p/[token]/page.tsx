@@ -10,7 +10,6 @@ import { Logo } from "@/components/logo";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
-import { useQuickPollSync } from "@/lib/hooks/use-quick-poll-sync";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -30,7 +29,6 @@ export default function QuickPollPage() {
   const params = useParams();
   const token = typeof params.token === "string" ? params.token : null;
   const queryClient = useQueryClient();
-  const { broadcastVote } = useQuickPollSync(token);
 
   const anonymousId = useMemo(() => getAnonymousId(), []);
 
@@ -53,7 +51,7 @@ export default function QuickPollPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.shared(token ?? "") });
-      broadcastVote();
+
       toast.success(MSG.QUICK_POLL_VOTED);
     },
     onError: () => toast.error(MSG.QUICK_POLL_VOTE_FAILED),
@@ -67,7 +65,7 @@ export default function QuickPollPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.shared(token ?? "") });
-      broadcastVote();
+
       toast.success(MSG.QUICK_POLL_VOTE_CANCELLED);
     },
     onError: () => toast.error(MSG.QUICK_POLL_VOTE_CANCEL_FAILED),

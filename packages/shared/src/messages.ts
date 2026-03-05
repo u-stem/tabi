@@ -8,6 +8,7 @@ import {
   MAX_OPTIONS_PER_POLL,
   MAX_PARTICIPANTS_PER_POLL,
   MAX_PATTERNS_PER_DAY,
+  MAX_QUICK_POLLS_PER_USER,
   MAX_SCHEDULES_PER_TRIP,
   MAX_TRIPS_PER_USER,
 } from "./limits";
@@ -92,6 +93,12 @@ export const ERROR_MSG = {
   GUEST_NOT_ALLOWED: "This feature is not available for guest accounts",
   GUEST_TRIP_LIMIT: "Guest accounts can only create 1 trip",
   GUEST_EXPIRED: "Guest account has expired",
+  QUICK_POLL_NOT_FOUND: "Quick poll not found",
+  QUICK_POLL_NOT_OPEN: "Quick poll is not open",
+  QUICK_POLL_ALREADY_VOTED: "Already voted",
+  QUICK_POLL_SINGLE_VOTE_ONLY: "Only one option allowed",
+  QUICK_POLL_INVALID_OPTION: "Some options do not belong to this poll",
+  LIMIT_QUICK_POLLS: "Quick poll limit reached",
 } as const;
 
 // ─── UI messages (Japanese, used in toasts and UI feedback) ───────────────────
@@ -360,6 +367,23 @@ export const MSG = {
   SHARED_LINK_INVALID: "このリンクは無効か、有効期限が切れています",
   SHARED_TRIP_FETCH_FAILED: "旅行の取得に失敗しました",
   SHARED_TRIP_NOT_FOUND: "旅行が見つかりません",
+
+  // Quick Poll
+  QUICK_POLL_CREATED: "投票を作成しました",
+  QUICK_POLL_CREATE_FAILED: "投票の作成に失敗しました",
+  QUICK_POLL_CLOSED: "投票を終了しました",
+  QUICK_POLL_CLOSE_FAILED: "投票の終了に失敗しました",
+  QUICK_POLL_DELETED: "投票を削除しました",
+  QUICK_POLL_DELETE_FAILED: "投票の削除に失敗しました",
+  QUICK_POLL_VOTED: "投票しました",
+  QUICK_POLL_VOTE_FAILED: "投票に失敗しました",
+  QUICK_POLL_VOTE_CANCELLED: "投票を取り消しました",
+  QUICK_POLL_VOTE_CANCEL_FAILED: "投票の取り消しに失敗しました",
+  QUICK_POLL_LINK_COPIED: "投票リンクをコピーしました",
+  QUICK_POLL_NOT_FOUND: "この投票は存在しないか、有効期限が切れています",
+  QUICK_POLL_FETCH_FAILED: "投票の取得に失敗しました",
+  EMPTY_QUICK_POLL: "投票がありません",
+  LIMIT_QUICK_POLLS: `投票は最大${MAX_QUICK_POLLS_PER_USER}件まで作成できます`,
 
   // Empty states
   EMPTY_TRIP: "まだ旅行がありません",

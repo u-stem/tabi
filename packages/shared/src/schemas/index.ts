@@ -10,6 +10,7 @@ export * from "./group";
 export * from "./member";
 export * from "./notification";
 export * from "./poll";
+export * from "./quick-poll";
 export * from "./schedule";
 export * from "./souvenir";
 export * from "./trip";

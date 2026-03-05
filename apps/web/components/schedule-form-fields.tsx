@@ -139,6 +139,8 @@ export function ScheduleFormFields({
       displayName: string;
     }) => {
       setAddress(formattedAddress);
+      // Auto-fill name only when empty
+      if (name === "") setName(displayName);
       onLocationSelected?.({
         address: formattedAddress,
         latitude: lat,
@@ -147,7 +149,7 @@ export function ScheduleFormFields({
         name: displayName,
       });
     },
-    [onLocationSelected],
+    [name, onLocationSelected],
   );
 
   return (

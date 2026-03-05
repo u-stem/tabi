@@ -10,8 +10,7 @@ export const directionsRoutes = new Hono<AppEnv>();
 
 directionsRoutes.get("/", requireAuth, async (c) => {
   const user = c.get("user");
-  const { tripId, originLat, originLng, destLat, destLng, originPlaceId, destPlaceId } =
-    c.req.query();
+  const { tripId, originLat, originLng, destLat, destLng } = c.req.query();
 
   if (!tripId || !originLat || !originLng || !destLat || !destLng) {
     return c.json({ error: "Missing required query parameters" }, 400);

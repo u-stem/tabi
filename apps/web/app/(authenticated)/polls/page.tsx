@@ -2,9 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Copy, Plus, Trash2, XCircle } from "lucide-react";
-import Link from "next/link";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { CreateQuickPollDialog } from "@/components/create-quick-poll-dialog";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
@@ -56,6 +56,7 @@ function PollsSkeleton() {
 
 export default function PollsPage() {
   const queryClient = useQueryClient();
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
 
   useEffect(() => {
     document.title = pageTitle("かんたん投票");
@@ -88,6 +89,10 @@ export default function PollsPage() {
     onError: () => toast.error(MSG.QUICK_POLL_DELETE_FAILED),
   });
 
+  function invalidateList() {
+    queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.list() });
+  }
+
   async function copyLink(shareToken: string) {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/p/${shareToken}`);
@@ -101,11 +106,9 @@ export default function PollsPage() {
     <div className="mt-4 mx-auto max-w-2xl">
       <LoadingBoundary isLoading={isLoading} skeleton={<PollsSkeleton />}>
         <div className="flex items-center justify-end">
-          <Button asChild size="sm">
-            <Link href="/polls/new">
-              <Plus className="h-4 w-4" />
-              新規作成
-            </Link>
+          <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
+            <Plus className="h-4 w-4" />
+            新規作成
           </Button>
         </div>
         {!polls?.length ? (
@@ -162,6 +165,11 @@ export default function PollsPage() {
           </div>
         )}
       </LoadingBoundary>
+      <CreateQuickPollDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onCreated={invalidateList}
+      />
     </div>
   );
 }

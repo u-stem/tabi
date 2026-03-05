@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookmarkListCard } from "@/app/users/[userId]/page";
 import { MyQrDialog } from "@/components/my-qr-dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
@@ -18,6 +19,14 @@ import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
+
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      {children}
+    </h2>
+  );
+}
 
 function BookmarkListsSkeleton() {
   return (
@@ -53,66 +62,75 @@ export default function MyPage() {
     enabled: !!userId,
     ...QUERY_CONFIG.stable,
   });
+
   return (
-    <div className="mt-4 mx-auto max-w-2xl space-y-4">
+    <div className="mt-4 mx-auto max-w-2xl space-y-6">
       {/* Profile header */}
-      <div className="flex flex-col items-center gap-3 py-4">
+      <div className="flex items-center gap-4">
         <UserAvatar
           name={user?.name ?? ""}
           image={user?.image}
-          className="h-16 w-16"
-          fallbackClassName="text-2xl"
+          className="h-14 w-14 shrink-0"
+          fallbackClassName="text-xl"
         />
-        <div className="text-center">
-          <h1 className="text-lg font-semibold">{user?.name}</h1>
+        <div className="min-w-0 flex-1">
+          <h1 className="truncate text-lg font-semibold">{user?.name}</h1>
           {userId && (
             <button
               type="button"
               onClick={handleCopyId}
-              className="mt-1 mx-auto flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
+              className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               aria-label="ユーザーIDをコピー"
             >
               <span className="sr-only" data-testid="user-id">
                 {userId}
               </span>
-              <span>ユーザーID:</span>
+              <span>ID:</span>
               <code className="font-mono">{userId.slice(0, 8)}...</code>
               {idCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Link
             href="/my/edit"
             className="inline-flex h-8 items-center gap-1.5 rounded-full border px-4 text-sm hover:bg-accent"
           >
             <Pencil className="h-3 w-3" />
-            プロフィールを編集
+            編集
           </Link>
           {userId && <MyQrDialog userId={userId} />}
         </div>
       </div>
 
       {/* Bookmark lists */}
-      <LoadingBoundary isLoading={isLoading} skeleton={<BookmarkListsSkeleton />}>
-        {profile && profile.bookmarkLists.length > 0 && (
-          <div className="overflow-hidden rounded-lg border divide-y">
-            {profile.bookmarkLists.map((list) => (
-              <BookmarkListCard key={list.id} list={list} userId={userId ?? ""} />
-            ))}
-          </div>
-        )}
-      </LoadingBoundary>
+      <div className="space-y-2">
+        <SectionHeading>ブックマーク</SectionHeading>
+        <LoadingBoundary isLoading={isLoading} skeleton={<BookmarkListsSkeleton />}>
+          {profile && profile.bookmarkLists.length > 0 ? (
+            <div className="overflow-hidden rounded-lg border divide-y">
+              {profile.bookmarkLists.map((list) => (
+                <BookmarkListCard key={list.id} list={list} userId={userId ?? ""} />
+              ))}
+            </div>
+          ) : (
+            <EmptyState message={MSG.EMPTY_BOOKMARK_LIST} variant="box" />
+          )}
+        </LoadingBoundary>
+      </div>
 
-      {/* Quick polls link */}
-      <Link
-        href="/polls"
-        className="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm hover:bg-accent transition-colors"
-      >
-        <Vote className="h-5 w-5 text-muted-foreground" />
-        <span className="flex-1 font-medium">かんたん投票</span>
-        <ChevronRight className="h-4 w-4 text-muted-foreground" />
-      </Link>
+      {/* Tools */}
+      <div className="space-y-2">
+        <SectionHeading>ツール</SectionHeading>
+        <Link
+          href="/polls"
+          className="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm hover:bg-accent transition-colors"
+        >
+          <Vote className="h-5 w-5 text-muted-foreground" />
+          <span className="flex-1 font-medium">かんたん投票</span>
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </Link>
+      </div>
     </div>
   );
 }

@@ -95,7 +95,7 @@ function ResponsiveDialogContent({
     );
   }
   return (
-    <DialogContent className={className} {...props}>
+    <DialogContent className={className} onOpenAutoFocus={(e) => e.preventDefault()} {...props}>
       {children}
     </DialogContent>
   );

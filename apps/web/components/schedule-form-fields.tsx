@@ -13,6 +13,7 @@ import {
 } from "@sugara/shared";
 import { Minus, Plus } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { PlacesAutocompleteInput } from "@/components/places-autocomplete-input";
 import { TimeInput } from "@/components/time-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,14 @@ import {
   TRANSPORT_METHOD_OPTIONS,
 } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
+
+type LocationSelectedParams = {
+  address: string;
+  latitude: number;
+  longitude: number;
+  placeId: string;
+  name: string;
+};
 
 type ScheduleFormFieldsProps = {
   category: ScheduleCategory;
@@ -59,6 +68,8 @@ type ScheduleFormFieldsProps = {
     memo?: string;
   };
   idPrefix?: string;
+  mapsEnabled?: boolean;
+  onLocationSelected?: (params: LocationSelectedParams) => void;
 };
 
 export function ScheduleFormFields({
@@ -80,6 +91,8 @@ export function ScheduleFormFields({
   onUrlsChange,
   defaultValues,
   idPrefix = "",
+  mapsEnabled = false,
+  onLocationSelected,
 }: ScheduleFormFieldsProps) {
   // Controlled state for text fields (Dialog unmounts on close, so these re-init correctly)
   const [name, setName] = useState(defaultValues?.name ?? "");
@@ -169,22 +182,41 @@ export function ScheduleFormFields({
           ))}
         </div>
       </div>
-      {category !== "transport" && (
-        <div className="space-y-2">
-          <Label htmlFor={`${idPrefix}address`}>住所</Label>
-          <Input
-            id={`${idPrefix}address`}
-            name="address"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            placeholder="京都市北区金閣寺町1"
-            maxLength={SCHEDULE_ADDRESS_MAX_LENGTH}
-          />
-          <p className="text-right text-xs text-muted-foreground">
-            {address.length}/{SCHEDULE_ADDRESS_MAX_LENGTH}
-          </p>
-        </div>
-      )}
+      {category !== "transport" &&
+        (mapsEnabled ? (
+          <div className="space-y-2" data-testid="places-autocomplete">
+            <Label htmlFor={`${idPrefix}address`}>住所</Label>
+            <PlacesAutocompleteInput
+              id={`${idPrefix}address`}
+              defaultValue={defaultValues?.address ?? ""}
+              onPlaceSelect={({ formattedAddress, lat, lng, placeId, displayName }) => {
+                setAddress(formattedAddress);
+                onLocationSelected?.({
+                  address: formattedAddress,
+                  latitude: lat,
+                  longitude: lng,
+                  placeId,
+                  name: displayName,
+                });
+              }}
+            />
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <Label htmlFor={`${idPrefix}address`}>住所</Label>
+            <Input
+              id={`${idPrefix}address`}
+              name="address"
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              placeholder="京都市北区金閣寺町1"
+              maxLength={SCHEDULE_ADDRESS_MAX_LENGTH}
+            />
+            <p className="text-right text-xs text-muted-foreground">
+              {address.length}/{SCHEDULE_ADDRESS_MAX_LENGTH}
+            </p>
+          </div>
+        ))}
       {category === "transport" && (
         <>
           <div className="space-y-2">

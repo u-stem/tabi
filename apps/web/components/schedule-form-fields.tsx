@@ -96,6 +96,10 @@ export function ScheduleFormFields({
 }: ScheduleFormFieldsProps) {
   // Controlled state for text fields (Dialog unmounts on close, so these re-init correctly)
   const [name, setName] = useState(defaultValues?.name ?? "");
+  // Ref to read current name inside handlePlaceSelect without adding name to deps
+  // (which would cause PlacesAutocompleteInput to re-create its Autocomplete instance)
+  const nameRef = useRef(name);
+  nameRef.current = name;
   const [address, setAddress] = useState(defaultValues?.address ?? "");
   const [departurePlace, setDeparturePlace] = useState(defaultValues?.departurePlace ?? "");
   const [arrivalPlace, setArrivalPlace] = useState(defaultValues?.arrivalPlace ?? "");
@@ -139,8 +143,8 @@ export function ScheduleFormFields({
       displayName: string;
     }) => {
       setAddress(formattedAddress);
-      // Auto-fill name only when empty
-      if (name === "") setName(displayName);
+      // Auto-fill name only when empty (read via ref to avoid adding name to deps)
+      if (nameRef.current === "") setName(displayName);
       onLocationSelected?.({
         address: formattedAddress,
         latitude: lat,
@@ -149,7 +153,7 @@ export function ScheduleFormFields({
         name: displayName,
       });
     },
-    [name, onLocationSelected],
+    [onLocationSelected],
   );
 
   return (

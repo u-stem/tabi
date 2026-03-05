@@ -2,7 +2,7 @@
 
 import type { PublicProfileResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Copy, Pencil } from "lucide-react";
+import { Check, ChevronRight, Copy, Pencil, Vote } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -103,6 +103,16 @@ export default function MyPage() {
           </div>
         )}
       </LoadingBoundary>
+
+      {/* Quick polls link */}
+      <Link
+        href="/polls"
+        className="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm hover:bg-accent transition-colors"
+      >
+        <Vote className="h-5 w-5 text-muted-foreground" />
+        <span className="flex-1 font-medium">かんたん投票</span>
+        <ChevronRight className="h-4 w-4 text-muted-foreground" />
+      </Link>
     </div>
   );
 }

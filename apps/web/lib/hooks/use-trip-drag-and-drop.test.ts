@@ -1,5 +1,6 @@
 import { act, renderHook } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { api } from "@/lib/api";
 import { useTripDragAndDrop } from "./use-trip-drag-and-drop";
 
 vi.mock("@/lib/api", () => ({
@@ -144,5 +145,56 @@ describe("useTripDragAndDrop — localSchedules sync guard", () => {
     // After drag ends, sync resumes on next prop change
     rerender({ schedules: [s1, s2, s3] });
     expect(result.current.localSchedules).toHaveLength(3);
+  });
+
+  it("does not snap back to old order while API call is pending", () => {
+    // Give the API a never-resolving promise so we can inspect mid-flight state
+    vi.mocked(api).mockImplementationOnce(() => new Promise(() => {}));
+
+    const { result } = renderHook(() =>
+      useTripDragAndDrop({
+        tripId: "trip1",
+        currentDayId: "day1",
+        currentPatternId: "pattern1",
+        schedules: [s1, s2],
+        candidates: [],
+        onDone: vi.fn(),
+      }),
+    );
+
+    act(() => {
+      result.current.handleDragStart({
+        active: {
+          id: "s1",
+          data: { current: { type: "schedule" } },
+          rect: { current: { initial: null, translated: null } },
+        },
+        activatorEvent: new PointerEvent("pointerdown"),
+      } as Parameters<typeof result.current.handleDragStart>[0]);
+    });
+
+    // Trigger drag end (non-awaited — API hangs)
+    act(() => {
+      result.current.handleDragEnd({
+        active: {
+          id: "s1",
+          data: { current: { type: "schedule" } },
+          rect: { current: { initial: null, translated: null } },
+        },
+        over: {
+          id: "s2",
+          data: { current: { type: "schedule" } },
+          rect: { width: 0, height: 0, top: 0, left: 0, bottom: 0, right: 0 },
+          disabled: false,
+        },
+        delta: { x: 0, y: 0 },
+        activatorEvent: new PointerEvent("pointerup"),
+        collisions: null,
+      } as Parameters<typeof result.current.handleDragEnd>[0]);
+    });
+
+    // Optimistic reorder should be visible while the API call is in-flight
+    expect(result.current.localSchedules[0].id).toBe("s2");
+    expect(result.current.localSchedules[1].id).toBe("s1");
   });
 });

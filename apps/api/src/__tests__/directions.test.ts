@@ -1,14 +1,21 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestApp, TEST_USER } from "./test-helpers";
 
-const { mockGetSession, mockCheckTripAccess, mockDbQuery, mockFetch, mockGetAppSettings } =
-  vi.hoisted(() => ({
-    mockGetSession: vi.fn(),
-    mockCheckTripAccess: vi.fn(),
-    mockDbQuery: { trips: { findFirst: vi.fn() } },
-    mockFetch: vi.fn(),
-    mockGetAppSettings: vi.fn(),
-  }));
+const {
+  mockGetSession,
+  mockCheckTripAccess,
+  mockDbQuery,
+  mockFetch,
+  mockGetAppSettings,
+  mockGetAdminUserId,
+} = vi.hoisted(() => ({
+  mockGetSession: vi.fn(),
+  mockCheckTripAccess: vi.fn(),
+  mockDbQuery: { trips: { findFirst: vi.fn() } },
+  mockFetch: vi.fn(),
+  mockGetAppSettings: vi.fn(),
+  mockGetAdminUserId: vi.fn(),
+}));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -24,6 +31,10 @@ vi.mock("../lib/permissions", () => ({
 
 vi.mock("../lib/app-settings", () => ({
   getAppSettings: (...args: unknown[]) => mockGetAppSettings(...args),
+}));
+
+vi.mock("../lib/resolve-is-admin", () => ({
+  getAdminUserId: (...args: unknown[]) => mockGetAdminUserId(...args),
 }));
 
 vi.mock("../db/index", () => ({
@@ -45,7 +56,8 @@ function setupMapsEnabled() {
     signupEnabled: true,
     mapsMode: "admin_only",
   });
-  mockDbQuery.trips.findFirst.mockResolvedValue({ mapsEnabled: true });
+  mockGetAdminUserId.mockResolvedValue("admin-user-id");
+  mockDbQuery.trips.findFirst.mockResolvedValue({ ownerId: "admin-user-id" });
 }
 
 describe("GET /api/directions", () => {
@@ -88,25 +100,25 @@ describe("GET /api/directions", () => {
     expect(res.status).toBe(403);
   });
 
-  it("returns 403 when mapsMode=admin_only and trip.mapsEnabled=false", async () => {
+  it("returns 403 when mapsMode=admin_only and trip owner is not admin", async () => {
     mockCheckTripAccess.mockResolvedValue("viewer");
     mockGetAppSettings.mockResolvedValue({
       signupEnabled: true,
       mapsMode: "admin_only",
     });
-    mockDbQuery.trips.findFirst.mockResolvedValue({ mapsEnabled: false });
+    mockGetAdminUserId.mockResolvedValue("admin-user-id");
+    mockDbQuery.trips.findFirst.mockResolvedValue({ ownerId: "other-user-id" });
     const app = createTestApp(directionsRoutes, "/api/directions");
     const res = await app.request(BASE_URL);
     expect(res.status).toBe(403);
   });
 
-  it("allows request when mapsMode=public regardless of trip.mapsEnabled", async () => {
+  it("allows request when mapsMode=public regardless of trip owner", async () => {
     mockCheckTripAccess.mockResolvedValue("viewer");
     mockGetAppSettings.mockResolvedValue({
       signupEnabled: true,
       mapsMode: "public",
     });
-    mockDbQuery.trips.findFirst.mockResolvedValue({ mapsEnabled: false });
     process.env.GOOGLE_MAPS_API_KEY = "test-key";
     mockFetch.mockResolvedValue({
       ok: true,

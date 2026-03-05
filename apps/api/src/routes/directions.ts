@@ -4,6 +4,7 @@ import { db } from "../db/index";
 import { trips } from "../db/schema";
 import { getAppSettings } from "../lib/app-settings";
 import { checkTripAccess } from "../lib/permissions";
+import { getAdminUserId } from "../lib/resolve-is-admin";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -37,9 +38,10 @@ directionsRoutes.get("/", requireAuth, async (c) => {
   if (settings.mapsMode === "admin_only") {
     const trip = await db.query.trips.findFirst({
       where: eq(trips.id, tripId),
-      columns: { mapsEnabled: true },
+      columns: { ownerId: true },
     });
-    if (!trip?.mapsEnabled) {
+    const adminUserId = await getAdminUserId();
+    if (!trip || trip.ownerId !== adminUserId) {
       return c.json({ error: "Forbidden" }, 403);
     }
   }

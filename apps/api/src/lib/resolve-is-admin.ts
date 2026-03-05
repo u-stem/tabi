@@ -25,3 +25,18 @@ export async function resolveIsAdmin(user: UserLike): Promise<boolean> {
 
   return username === adminUsername;
 }
+
+/**
+ * Get the admin user's ID (or null if ADMIN_USERNAME is unset / not found).
+ */
+export async function getAdminUserId(): Promise<string | null> {
+  const adminUsername = process.env.ADMIN_USERNAME;
+  if (!adminUsername) return null;
+
+  const row = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(eq(users.username, adminUsername))
+    .limit(1);
+  return row[0]?.id ?? null;
+}

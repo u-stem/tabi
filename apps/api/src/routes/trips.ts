@@ -23,7 +23,7 @@ import type { MapsMode } from "../lib/app-settings";
 import { getAppSettings } from "../lib/app-settings";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
-import { resolveIsAdmin } from "../lib/resolve-is-admin";
+import { getAdminUserId } from "../lib/resolve-is-admin";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
 import {
   copyCoverImage,
@@ -36,10 +36,10 @@ import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
 
-function resolveMapsEnabled(mapsMode: MapsMode, storedValue: boolean): boolean {
+function resolveMapsEnabled(mapsMode: MapsMode, isAdminTrip: boolean): boolean {
   if (mapsMode === "off") return false;
   if (mapsMode === "public") return true;
-  return storedValue;
+  return isAdminTrip;
 }
 
 const tripRoutes = new Hono<AppEnv>();
@@ -77,11 +77,12 @@ tripRoutes.get("/", async (c) => {
     .orderBy(desc(trips.updatedAt));
 
   const listSettings = await getAppSettings();
+  const adminUserId = listSettings.mapsMode === "admin_only" ? await getAdminUserId() : null;
 
   return c.json(
     result.map((t) => ({
       ...t,
-      mapsEnabled: resolveMapsEnabled(listSettings.mapsMode, t.mapsEnabled),
+      mapsEnabled: resolveMapsEnabled(listSettings.mapsMode, t.ownerId === adminUserId),
     })),
   );
 });
@@ -104,10 +105,6 @@ tripRoutes.post("/", async (c) => {
       return c.json({ error: ERROR_MSG.GUEST_TRIP_LIMIT }, 403);
     }
   }
-
-  const settings = await getAppSettings();
-  const isAdmin = await resolveIsAdmin(user);
-  const mapsEnabled = resolveMapsEnabled(settings.mapsMode, isAdmin);
 
   const body = await c.req.json();
   const isPollMode = "pollOptions" in body;
@@ -147,7 +144,6 @@ tripRoutes.post("/", async (c) => {
           status: "scheduling",
           coverImageUrl: coverImageUrl ?? null,
           coverImagePosition: coverImagePosition ?? 50,
-          mapsEnabled,
         })
         .returning();
 
@@ -247,7 +243,6 @@ tripRoutes.post("/", async (c) => {
         endDate,
         coverImageUrl: coverImageUrl ?? null,
         coverImagePosition: coverImagePosition ?? 50,
-        mapsEnabled,
       })
       .returning();
 
@@ -343,7 +338,10 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
 
   return c.json({
     ...trip,
-    mapsEnabled: resolveMapsEnabled(detailSettings.mapsMode, trip.mapsEnabled),
+    mapsEnabled: resolveMapsEnabled(
+      detailSettings.mapsMode,
+      detailSettings.mapsMode === "admin_only" ? trip.ownerId === (await getAdminUserId()) : false,
+    ),
     role,
     candidates,
     scheduleCount,

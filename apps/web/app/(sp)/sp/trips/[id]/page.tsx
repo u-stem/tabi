@@ -391,6 +391,7 @@ export default function SpTripDetailPage() {
                   scheduleLimitMessage={scheduleLimitMessage}
                   onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
                   onReorderSchedule={dnd.reorderSchedule}
+                  mapsEnabled={trip.mapsEnabled}
                   headerContent={
                     <PatternTabs
                       patterns={currentDay.patterns}

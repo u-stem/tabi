@@ -22,6 +22,25 @@ export function PlacesAutocompleteInput({ id, defaultValue, onPlaceSelect }: Pro
   const inputRef = useRef<HTMLInputElement>(null);
   const placesLib = useMapsLibrary("places");
 
+  // When the dialog scrolls, .pac-container (appended to <body>) doesn't follow the input.
+  // Blur the input on scroll so the dropdown closes instead of floating at a stale position.
+  useEffect(() => {
+    const input = inputRef.current;
+    if (!input) return;
+
+    let el: HTMLElement | null = input.parentElement;
+    while (el) {
+      const { overflow, overflowY } = getComputedStyle(el);
+      if (/auto|scroll/.test(overflow + overflowY)) break;
+      el = el.parentElement;
+    }
+    if (!el) return;
+
+    const handleScroll = () => input.blur();
+    el.addEventListener("scroll", handleScroll, { passive: true });
+    return () => el.removeEventListener("scroll", handleScroll);
+  }, []);
+
   useEffect(() => {
     if (!placesLib || !inputRef.current) return;
 

@@ -36,6 +36,11 @@ export const queryKeys = {
     detail: (pollId: string) => [...queryKeys.polls.all, pollId] as const,
     shared: (token: string) => [...queryKeys.polls.all, "shared", token] as const,
   },
+  quickPolls: {
+    all: ["quick-polls"] as const,
+    list: () => [...queryKeys.quickPolls.all, "list"] as const,
+    shared: (token: string) => [...queryKeys.quickPolls.all, "shared", token] as const,
+  },
   expenses: {
     all: ["expenses"] as const,
     list: (tripId: string) => [...queryKeys.expenses.all, tripId] as const,

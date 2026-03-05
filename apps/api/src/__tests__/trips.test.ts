@@ -332,6 +332,76 @@ describe("Trip routes", () => {
 
       expect(res.status).toBe(409);
     });
+
+    it("sets mapsEnabled=true when created by admin", async () => {
+      process.env.ADMIN_USERNAME = "adminuser";
+      const adminUser = { ...fakeUser, username: "adminuser" };
+      mockGetSession.mockResolvedValue({
+        user: adminUser,
+        session: { id: "session-1" },
+      });
+
+      const createdTrip = {
+        id: "trip-admin",
+        ownerId: adminUser.id,
+        title: "Admin Trip",
+        mapsEnabled: true,
+      };
+      const tripValuesMock = vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([createdTrip]),
+      });
+      mockDbInsert.mockReturnValueOnce({ values: tripValuesMock }).mockReturnValue({
+        values: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([]) }),
+      });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      await app.request("/api/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Admin Trip",
+          startDate: "2025-07-01",
+          endDate: "2025-07-03",
+        }),
+      });
+
+      expect(tripValuesMock).toHaveBeenCalledWith(expect.objectContaining({ mapsEnabled: true }));
+      delete process.env.ADMIN_USERNAME;
+    });
+
+    it("sets mapsEnabled=false when created by non-admin", async () => {
+      const regularUser = { ...fakeUser, username: "regularuser" };
+      mockGetSession.mockResolvedValue({
+        user: regularUser,
+        session: { id: "session-1" },
+      });
+
+      const createdTrip = {
+        id: "trip-regular",
+        ownerId: regularUser.id,
+        title: "Regular Trip",
+        mapsEnabled: false,
+      };
+      const tripValuesMock = vi.fn().mockReturnValue({
+        returning: vi.fn().mockResolvedValue([createdTrip]),
+      });
+      mockDbInsert.mockReturnValueOnce({ values: tripValuesMock }).mockReturnValue({
+        values: vi.fn().mockReturnValue({ returning: vi.fn().mockResolvedValue([]) }),
+      });
+
+      const app = createTestApp(tripRoutes, "/api/trips");
+      await app.request("/api/trips", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "Regular Trip",
+          startDate: "2025-07-01",
+          endDate: "2025-07-03",
+        }),
+      });
+
+      expect(tripValuesMock).toHaveBeenCalledWith(expect.objectContaining({ mapsEnabled: false }));
+    });
   });
 
   describe("GET /api/trips", () => {

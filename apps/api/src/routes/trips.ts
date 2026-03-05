@@ -21,6 +21,7 @@ import {
 import { logActivity } from "../lib/activity-logger";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
+import { resolveIsAdmin } from "../lib/resolve-is-admin";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
 import {
   copyCoverImage,
@@ -88,6 +89,8 @@ tripRoutes.post("/", async (c) => {
     }
   }
 
+  const mapsEnabled = await resolveIsAdmin(user);
+
   const body = await c.req.json();
   const isPollMode = "pollOptions" in body;
 
@@ -126,6 +129,7 @@ tripRoutes.post("/", async (c) => {
           status: "scheduling",
           coverImageUrl: coverImageUrl ?? null,
           coverImagePosition: coverImagePosition ?? 50,
+          mapsEnabled,
         })
         .returning();
 
@@ -225,6 +229,7 @@ tripRoutes.post("/", async (c) => {
         endDate,
         coverImageUrl: coverImageUrl ?? null,
         coverImagePosition: coverImagePosition ?? 50,
+        mapsEnabled,
       })
       .returning();
 

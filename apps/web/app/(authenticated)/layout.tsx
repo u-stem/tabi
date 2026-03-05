@@ -10,9 +10,9 @@ export default function AuthenticatedLayout({ children }: { children: React.Reac
       <TooltipProvider>
         <ShortcutHelpProvider>
           <GlobalShortcutHotkey />
-          <div className="min-h-screen">
+          <div className="flex min-h-screen flex-col">
             <Header />
-            <main className="container py-4 sm:py-8">{children}</main>
+            <main className="container flex-1 py-4 sm:py-8">{children}</main>
           </div>
         </ShortcutHelpProvider>
       </TooltipProvider>

@@ -11,11 +11,16 @@ const Drawer = ({
   // an input is focused, but after the keyboard dismisses the drawer can end up
   // at the wrong height, showing only a partial view of its content.
   repositionInputs = false,
+  // Disable vaul's body style manipulation (position: fixed, top: -scrollY).
+  // This app uses a custom scroll container (SpScrollContainer) instead of body scroll,
+  // so vaul's scroll lock incorrectly shifts the page upward when the drawer opens.
+  noBodyStyles = true,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Root>) => (
   <DrawerPrimitive.Root
     shouldScaleBackground={shouldScaleBackground}
     repositionInputs={repositionInputs}
+    noBodyStyles={noBodyStyles}
     {...props}
   />
 );

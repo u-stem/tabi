@@ -38,7 +38,10 @@ const DialogContent = React.forwardRef<
         // Google Places Autocomplete appends .pac-container to <body>, outside the Dialog DOM.
         // Without this guard, clicking a suggestion triggers Radix's outside-click handler,
         // closing the dialog and resetting all form state before place_changed fires.
-        if ((e.target as Element).closest?.(".pac-container")) {
+        // Note: e.target is the DismissableLayer itself; the actual clicked element is in e.detail.originalEvent.target.
+        const originalTarget = (e as CustomEvent<{ originalEvent: Event }>).detail?.originalEvent
+          ?.target;
+        if ((originalTarget as Element | null)?.closest?.(".pac-container")) {
           e.preventDefault();
           return;
         }

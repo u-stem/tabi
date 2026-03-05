@@ -1,12 +1,18 @@
 import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { trips } from "../db/schema";
+import { routeCache, trips } from "../db/schema";
 import { getAppSettings } from "../lib/app-settings";
 import { checkTripAccess } from "../lib/permissions";
 import { getAdminUserId } from "../lib/resolve-is-admin";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
+
+// Round to 4 decimal places (~11m accuracy) for cache key
+function buildCacheKey(oLat: number, oLng: number, dLat: number, dLng: number): string {
+  const r = (n: number) => n.toFixed(4);
+  return `${r(oLat)},${r(oLng)}:${r(dLat)},${r(dLng)}`;
+}
 
 export const directionsRoutes = new Hono<AppEnv>();
 
@@ -51,6 +57,21 @@ directionsRoutes.get("/", requireAuth, async (c) => {
     return c.json({ error: "Maps not configured" }, 503);
   }
 
+  const cacheKey = buildCacheKey(oLat, oLng, dLat, dLng);
+
+  // Check cache
+  const cached = await db
+    .select({
+      durationSeconds: routeCache.durationSeconds,
+      encodedPolyline: routeCache.encodedPolyline,
+    })
+    .from(routeCache)
+    .where(eq(routeCache.cacheKey, cacheKey));
+
+  if (cached.length > 0) {
+    return c.json(cached[0]);
+  }
+
   const body = {
     origin: {
       location: {
@@ -89,9 +110,16 @@ directionsRoutes.get("/", requireAuth, async (c) => {
   }
 
   const durationSeconds = route.duration ? Number.parseInt(route.duration.replace("s", ""), 10) : 0;
+  const encodedPolyline = route.polyline?.encodedPolyline ?? null;
 
-  return c.json({
-    durationSeconds,
-    encodedPolyline: route.polyline?.encodedPolyline ?? null,
-  });
+  // Store in cache (fire-and-forget, ignore conflicts)
+  db.insert(routeCache)
+    .values({ cacheKey, durationSeconds, encodedPolyline })
+    .onConflictDoNothing()
+    .then(
+      () => {},
+      () => {},
+    );
+
+  return c.json({ durationSeconds, encodedPolyline });
 });

@@ -5,6 +5,8 @@ const {
   mockGetSession,
   mockCheckTripAccess,
   mockDbQuery,
+  mockDbSelect,
+  mockDbInsert,
   mockFetch,
   mockGetAppSettings,
   mockGetAdminUserId,
@@ -12,6 +14,8 @@ const {
   mockGetSession: vi.fn(),
   mockCheckTripAccess: vi.fn(),
   mockDbQuery: { trips: { findFirst: vi.fn() } },
+  mockDbSelect: vi.fn(),
+  mockDbInsert: vi.fn(),
   mockFetch: vi.fn(),
   mockGetAppSettings: vi.fn(),
   mockGetAdminUserId: vi.fn(),
@@ -40,6 +44,8 @@ vi.mock("../lib/resolve-is-admin", () => ({
 vi.mock("../db/index", () => ({
   db: {
     query: mockDbQuery,
+    select: (...args: unknown[]) => mockDbSelect(...args),
+    insert: (...args: unknown[]) => mockDbInsert(...args),
   },
 }));
 
@@ -58,6 +64,18 @@ function setupMapsEnabled() {
   });
   mockGetAdminUserId.mockResolvedValue("admin-user-id");
   mockDbQuery.trips.findFirst.mockResolvedValue({ ownerId: "admin-user-id" });
+  // No cache hit by default
+  mockDbSelect.mockReturnValue({
+    from: vi.fn().mockReturnValue({
+      where: vi.fn().mockResolvedValue([]),
+    }),
+  });
+  // Insert cache (ignore)
+  mockDbInsert.mockReturnValue({
+    values: vi.fn().mockReturnValue({
+      onConflictDoNothing: vi.fn().mockResolvedValue(undefined),
+    }),
+  });
 }
 
 describe("GET /api/directions", () => {
@@ -119,6 +137,16 @@ describe("GET /api/directions", () => {
       signupEnabled: true,
       mapsMode: "public",
     });
+    mockDbSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi.fn().mockResolvedValue([]),
+      }),
+    });
+    mockDbInsert.mockReturnValue({
+      values: vi.fn().mockReturnValue({
+        onConflictDoNothing: vi.fn().mockResolvedValue(undefined),
+      }),
+    });
     process.env.GOOGLE_MAPS_API_KEY = "test-key";
     mockFetch.mockResolvedValue({
       ok: true,
@@ -156,6 +184,42 @@ describe("GET /api/directions", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toEqual({ durationSeconds: 900, encodedPolyline: "abc123" });
+    delete process.env.GOOGLE_MAPS_API_KEY;
+  });
+
+  it("returns cached result without calling Routes API", async () => {
+    setupMapsEnabled();
+    process.env.GOOGLE_MAPS_API_KEY = "test-key";
+    mockDbSelect.mockReturnValue({
+      from: vi.fn().mockReturnValue({
+        where: vi
+          .fn()
+          .mockResolvedValue([{ durationSeconds: 600, encodedPolyline: "cached-poly" }]),
+      }),
+    });
+
+    const app = createTestApp(directionsRoutes, "/api/directions");
+    const res = await app.request(BASE_URL);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ durationSeconds: 600, encodedPolyline: "cached-poly" });
+    expect(mockFetch).not.toHaveBeenCalled();
+    delete process.env.GOOGLE_MAPS_API_KEY;
+  });
+
+  it("stores result in cache after successful API call", async () => {
+    setupMapsEnabled();
+    process.env.GOOGLE_MAPS_API_KEY = "test-key";
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        routes: [{ duration: "300s", polyline: { encodedPolyline: "new-poly" } }],
+      }),
+    });
+
+    const app = createTestApp(directionsRoutes, "/api/directions");
+    await app.request(BASE_URL);
+    expect(mockDbInsert).toHaveBeenCalled();
     delete process.env.GOOGLE_MAPS_API_KEY;
   });
 });

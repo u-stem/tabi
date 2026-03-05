@@ -1,12 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestApp, TEST_USER } from "./test-helpers";
 
-const { mockGetSession, mockCheckTripAccess, mockDbQuery, mockFetch } = vi.hoisted(() => ({
-  mockGetSession: vi.fn(),
-  mockCheckTripAccess: vi.fn(),
-  mockDbQuery: { trips: { findFirst: vi.fn() } },
-  mockFetch: vi.fn(),
-}));
+const { mockGetSession, mockCheckTripAccess, mockDbQuery, mockFetch, mockGetAppSettings } =
+  vi.hoisted(() => ({
+    mockGetSession: vi.fn(),
+    mockCheckTripAccess: vi.fn(),
+    mockDbQuery: { trips: { findFirst: vi.fn() } },
+    mockFetch: vi.fn(),
+    mockGetAppSettings: vi.fn(),
+  }));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -18,6 +20,10 @@ vi.mock("../lib/auth", () => ({
 
 vi.mock("../lib/permissions", () => ({
   checkTripAccess: (...args: unknown[]) => mockCheckTripAccess(...args),
+}));
+
+vi.mock("../lib/app-settings", () => ({
+  getAppSettings: (...args: unknown[]) => mockGetAppSettings(...args),
 }));
 
 vi.mock("../db/index", () => ({
@@ -32,6 +38,15 @@ import { directionsRoutes } from "../routes/directions";
 
 const BASE_URL =
   "/api/directions?tripId=trip-1&originLat=35&originLng=139&destLat=35.1&destLng=139.1";
+
+function setupMapsEnabled() {
+  mockCheckTripAccess.mockResolvedValue("viewer");
+  mockGetAppSettings.mockResolvedValue({
+    signupEnabled: true,
+    mapsMode: "admin_only",
+  });
+  mockDbQuery.trips.findFirst.mockResolvedValue({ mapsEnabled: true });
+}
 
 describe("GET /api/directions", () => {
   beforeEach(() => {
@@ -62,17 +77,52 @@ describe("GET /api/directions", () => {
     expect(res.status).toBe(403);
   });
 
-  it("returns 403 when mapsEnabled=false", async () => {
+  it("returns 403 when global mapsMode is off", async () => {
     mockCheckTripAccess.mockResolvedValue("viewer");
+    mockGetAppSettings.mockResolvedValue({
+      signupEnabled: true,
+      mapsMode: "off",
+    });
+    const app = createTestApp(directionsRoutes, "/api/directions");
+    const res = await app.request(BASE_URL);
+    expect(res.status).toBe(403);
+  });
+
+  it("returns 403 when mapsMode=admin_only and trip.mapsEnabled=false", async () => {
+    mockCheckTripAccess.mockResolvedValue("viewer");
+    mockGetAppSettings.mockResolvedValue({
+      signupEnabled: true,
+      mapsMode: "admin_only",
+    });
     mockDbQuery.trips.findFirst.mockResolvedValue({ mapsEnabled: false });
     const app = createTestApp(directionsRoutes, "/api/directions");
     const res = await app.request(BASE_URL);
     expect(res.status).toBe(403);
   });
 
-  it("returns 503 when GOOGLE_MAPS_API_KEY is not set", async () => {
+  it("allows request when mapsMode=public regardless of trip.mapsEnabled", async () => {
     mockCheckTripAccess.mockResolvedValue("viewer");
-    mockDbQuery.trips.findFirst.mockResolvedValue({ mapsEnabled: true });
+    mockGetAppSettings.mockResolvedValue({
+      signupEnabled: true,
+      mapsMode: "public",
+    });
+    mockDbQuery.trips.findFirst.mockResolvedValue({ mapsEnabled: false });
+    process.env.GOOGLE_MAPS_API_KEY = "test-key";
+    mockFetch.mockResolvedValue({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        routes: [{ duration: "600s", polyline: { encodedPolyline: "xyz" } }],
+      }),
+    });
+
+    const app = createTestApp(directionsRoutes, "/api/directions");
+    const res = await app.request(BASE_URL);
+    expect(res.status).toBe(200);
+    delete process.env.GOOGLE_MAPS_API_KEY;
+  });
+
+  it("returns 503 when GOOGLE_MAPS_API_KEY is not set", async () => {
+    setupMapsEnabled();
     delete process.env.GOOGLE_MAPS_API_KEY;
     const app = createTestApp(directionsRoutes, "/api/directions");
     const res = await app.request(BASE_URL);
@@ -80,8 +130,7 @@ describe("GET /api/directions", () => {
   });
 
   it("returns durationSeconds and encodedPolyline on success", async () => {
-    mockCheckTripAccess.mockResolvedValue("viewer");
-    mockDbQuery.trips.findFirst.mockResolvedValue({ mapsEnabled: true });
+    setupMapsEnabled();
     process.env.GOOGLE_MAPS_API_KEY = "test-key";
     mockFetch.mockResolvedValue({
       ok: true,

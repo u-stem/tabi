@@ -1,30 +1,38 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createTestApp, TEST_USER } from "./test-helpers";
 
-const { mockGetSession, mockDbQuery, mockDbInsert, mockDbUpdate, mockDbDelete, mockDbSelect } =
-  vi.hoisted(() => ({
-    mockGetSession: vi.fn(),
-    mockDbQuery: {
-      trips: {
-        findMany: vi.fn(),
-        findFirst: vi.fn(),
-      },
-      tripMembers: {
-        findFirst: vi.fn(),
-        findMany: vi.fn(),
-      },
-      schedules: {
-        findMany: vi.fn(),
-      },
-      schedulePolls: {
-        findFirst: vi.fn(),
-      },
+const {
+  mockGetSession,
+  mockDbQuery,
+  mockDbInsert,
+  mockDbUpdate,
+  mockDbDelete,
+  mockDbSelect,
+  mockGetAppSettings,
+} = vi.hoisted(() => ({
+  mockGetSession: vi.fn(),
+  mockGetAppSettings: vi.fn(),
+  mockDbQuery: {
+    trips: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
     },
-    mockDbInsert: vi.fn(),
-    mockDbUpdate: vi.fn(),
-    mockDbDelete: vi.fn(),
-    mockDbSelect: vi.fn(),
-  }));
+    tripMembers: {
+      findFirst: vi.fn(),
+      findMany: vi.fn(),
+    },
+    schedules: {
+      findMany: vi.fn(),
+    },
+    schedulePolls: {
+      findFirst: vi.fn(),
+    },
+  },
+  mockDbInsert: vi.fn(),
+  mockDbUpdate: vi.fn(),
+  mockDbDelete: vi.fn(),
+  mockDbSelect: vi.fn(),
+}));
 
 vi.mock("../lib/auth", () => ({
   auth: {
@@ -49,6 +57,10 @@ vi.mock("../db/index", () => {
 
 vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("../lib/app-settings", () => ({
+  getAppSettings: (...args: unknown[]) => mockGetAppSettings(...args),
 }));
 
 const mockValidateCoverImage = vi.fn();
@@ -82,6 +94,10 @@ describe("Trip routes", () => {
     });
     mockDbQuery.schedules.findMany.mockResolvedValue([]);
     mockDbQuery.schedulePolls.findFirst.mockResolvedValue(undefined);
+    mockGetAppSettings.mockResolvedValue({
+      signupEnabled: true,
+      mapsMode: "admin_only",
+    });
     // Default: select queries (trip count, trip list, member count, candidate query)
     const mockWhere = vi.fn().mockImplementation(() => {
       const result = Promise.resolve([{ count: 0 }]);

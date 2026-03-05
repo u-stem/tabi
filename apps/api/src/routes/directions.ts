@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { trips } from "../db/schema";
+import { getAppSettings } from "../lib/app-settings";
 import { checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -27,12 +28,20 @@ directionsRoutes.get("/", requireAuth, async (c) => {
     return c.json({ error: "Forbidden" }, 403);
   }
 
-  const trip = await db.query.trips.findFirst({
-    where: eq(trips.id, tripId),
-    columns: { mapsEnabled: true },
-  });
-  if (!trip?.mapsEnabled) {
+  const settings = await getAppSettings();
+
+  if (settings.mapsMode === "off") {
     return c.json({ error: "Forbidden" }, 403);
+  }
+
+  if (settings.mapsMode === "admin_only") {
+    const trip = await db.query.trips.findFirst({
+      where: eq(trips.id, tripId),
+      columns: { mapsEnabled: true },
+    });
+    if (!trip?.mapsEnabled) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
   }
 
   const apiKey = process.env.GOOGLE_MAPS_API_KEY;

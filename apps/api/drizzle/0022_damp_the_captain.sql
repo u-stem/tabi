@@ -1,0 +1,1 @@
+ALTER TABLE "app_settings" ADD COLUMN "maps_mode" text DEFAULT 'admin_only' NOT NULL;

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, KeyRound, Save, X } from "lucide-react";
+import { Check, Copy, ExternalLink, KeyRound, Save, X } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -16,6 +17,13 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -172,7 +180,18 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-type AdminSettingsResponse = { signupEnabled: boolean };
+type MapsMode = "off" | "admin_only" | "public";
+
+type AdminSettingsResponse = {
+  signupEnabled: boolean;
+  mapsMode: MapsMode;
+};
+
+const MAPS_MODE_LABELS: Record<MapsMode, { label: string; description: string }> = {
+  off: { label: "OFF", description: "全旅行で地図を無効化" },
+  admin_only: { label: "管理者のみ", description: "管理者作成の旅行のみ地図を有効化" },
+  public: { label: "全体公開", description: "全旅行で地図を有効化" },
+};
 
 type AdminUser = {
   id: string;
@@ -249,17 +268,15 @@ export default function AdminPage() {
     ...QUERY_CONFIG.stable,
   });
 
-  const toggleSignup = useMutation({
-    mutationFn: (signupEnabled: boolean) =>
+  const updateSettings = useMutation({
+    mutationFn: (patch: Partial<Pick<AdminSettingsResponse, "signupEnabled" | "mapsMode">>) =>
       api<AdminSettingsResponse>("/api/admin/settings", {
         method: "PATCH",
-        body: JSON.stringify({ signupEnabled }),
+        body: JSON.stringify(patch),
       }),
     onSuccess: (updated) => {
       queryClient.setQueryData(queryKeys.admin.settings(), updated);
-      toast.success(
-        updated.signupEnabled ? "新規利用受付を再開しました" : "新規利用受付を停止しました",
-      );
+      toast.success("設定を更新しました");
     },
     onError: () => {
       toast.error("設定の変更に失敗しました");
@@ -298,7 +315,9 @@ export default function AdminPage() {
       <div className="min-h-screen">
         <header className="border-b">
           <div className="container flex h-14 items-center gap-3">
-            <Logo />
+            <Link href="/home">
+              <Logo />
+            </Link>
             <span className="text-sm font-medium text-muted-foreground">管理ダッシュボード</span>
             {updatedAt && (
               <span className="ml-auto text-xs text-muted-foreground">最終更新: {updatedAt}</span>
@@ -360,7 +379,7 @@ export default function AdminPage() {
                     </div>
                   </Section>
 
-                  <Section title="Supabase 無料プラン使用状況">
+                  <Section title="無料プラン使用状況">
                     <div className="rounded-lg border bg-card space-y-4 p-5">
                       <UsageBar
                         label="MAU（月間アクティブユーザー）"
@@ -374,6 +393,25 @@ export default function AdminPage() {
                         limit={SUPABASE_DB_SIZE_LIMIT_BYTES}
                         formatValue={(v) => `${(v / 1024 / 1024).toFixed(1)} MB`}
                       />
+                    </div>
+                  </Section>
+
+                  <Section title="Google Maps API">
+                    <div className="rounded-lg border bg-card p-4">
+                      <div className="flex items-center justify-between">
+                        <p className="text-sm text-muted-foreground">
+                          使用量は Google Cloud Console で確認できます（$200/月 無料枠）
+                        </p>
+                        <a
+                          href="https://console.cloud.google.com/google/maps-apis/metrics"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline shrink-0"
+                        >
+                          ダッシュボード
+                          <ExternalLink className="h-3.5 w-3.5" />
+                        </a>
+                      </div>
                     </div>
                   </Section>
                 </>
@@ -427,9 +465,23 @@ export default function AdminPage() {
                   </table>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {["u1", "u2", "u3"].map((key) => (
-                    <Skeleton key={key} className="h-10 w-full" />
+                <div className="rounded-lg border overflow-hidden">
+                  <div className="border-b bg-muted/50 px-4 py-2 flex gap-4">
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-4 w-16" />
+                    <Skeleton className="h-4 w-12" />
+                    <Skeleton className="h-4 w-16 ml-auto" />
+                  </div>
+                  {[1, 2, 3].map((i) => (
+                    <div
+                      key={i}
+                      className="border-b last:border-0 px-4 py-2.5 flex items-center gap-4"
+                    >
+                      <Skeleton className="h-4 w-20" />
+                      <Skeleton className="h-4 w-24" />
+                      <Skeleton className="h-5 w-14 rounded-full" />
+                      <Skeleton className="h-8 w-24 ml-auto rounded-md" />
+                    </div>
                   ))}
                 </div>
               )}
@@ -437,23 +489,54 @@ export default function AdminPage() {
 
             <TabsContent value="settings" className="space-y-4">
               {settings !== undefined && (
-                <div className="rounded-lg border bg-card p-4">
-                  <div className="flex items-center justify-between gap-4">
-                    <div>
-                      <p className="font-medium text-sm">新規利用受付</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {settings.signupEnabled
-                          ? "新規アカウントの作成を受け付けています"
-                          : "新規アカウントの作成を停止しています"}
-                      </p>
+                <>
+                  <div className="rounded-lg border bg-card p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-medium text-sm">新規利用受付</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {settings.signupEnabled
+                            ? "新規アカウントの作成を受け付けています"
+                            : "新規アカウントの作成を停止しています"}
+                        </p>
+                      </div>
+                      <Switch
+                        checked={settings.signupEnabled}
+                        disabled={updateSettings.isPending}
+                        onCheckedChange={(checked) =>
+                          updateSettings.mutate({ signupEnabled: checked })
+                        }
+                      />
                     </div>
-                    <Switch
-                      checked={settings.signupEnabled}
-                      disabled={toggleSignup.isPending}
-                      onCheckedChange={(checked) => toggleSignup.mutate(checked)}
-                    />
                   </div>
-                </div>
+
+                  <div className="rounded-lg border bg-card p-4">
+                    <div className="flex items-center justify-between gap-4">
+                      <div>
+                        <p className="font-medium text-sm">地図機能</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {MAPS_MODE_LABELS[settings.mapsMode].description}
+                        </p>
+                      </div>
+                      <Select
+                        value={settings.mapsMode}
+                        disabled={updateSettings.isPending}
+                        onValueChange={(v) => updateSettings.mutate({ mapsMode: v as MapsMode })}
+                      >
+                        <SelectTrigger className="w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(["off", "admin_only", "public"] as const).map((mode) => (
+                            <SelectItem key={mode} value={mode}>
+                              {MAPS_MODE_LABELS[mode].label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </>
               )}
               <AnnouncementSection />
             </TabsContent>

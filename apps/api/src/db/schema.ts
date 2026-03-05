@@ -668,6 +668,7 @@ export const appSettings = pgTable(
   {
     id: smallint("id").primaryKey().default(1),
     signupEnabled: boolean("signup_enabled").notNull().default(true),
+    mapsMode: text("maps_mode").notNull().default("admin_only"),
   },
   (table) => [check("app_settings_single_row", sql`${table.id} = 1`)],
 );

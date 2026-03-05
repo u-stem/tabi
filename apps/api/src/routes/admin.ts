@@ -12,7 +12,7 @@ import {
   trips,
   users,
 } from "../db/schema";
-import { getAppSettings } from "../lib/app-settings";
+import { getAppSettings, isValidMapsMode } from "../lib/app-settings";
 import { hashPassword } from "../lib/password";
 import { requireAuth } from "../middleware/auth";
 import { requireAdmin } from "../middleware/require-admin";
@@ -97,22 +97,42 @@ async function fetchStats(sevenDaysAgo: Date, thirtyDaysAgo: Date) {
 
 adminRoutes.get("/api/admin/settings", requireAuth, requireAdmin, async (c) => {
   const settings = await getAppSettings();
-  return c.json({ signupEnabled: settings.signupEnabled });
+  return c.json({
+    signupEnabled: settings.signupEnabled,
+    mapsMode: settings.mapsMode,
+  });
 });
 
 adminRoutes.patch("/api/admin/settings", requireAuth, requireAdmin, async (c) => {
-  const body = await c.req.json<{ signupEnabled: unknown }>();
+  const body = await c.req.json<{ signupEnabled?: unknown; mapsMode?: unknown }>();
 
-  if (typeof body.signupEnabled !== "boolean") {
-    return c.json({ error: "signupEnabled must be a boolean" }, 400);
+  const updates: Record<string, unknown> = {};
+
+  if (body.signupEnabled !== undefined) {
+    if (typeof body.signupEnabled !== "boolean") {
+      return c.json({ error: "signupEnabled must be a boolean" }, 400);
+    }
+    updates.signupEnabled = body.signupEnabled;
   }
 
-  await db
-    .update(appSettings)
-    .set({ signupEnabled: body.signupEnabled })
-    .where(eq(appSettings.id, 1));
+  if (body.mapsMode !== undefined) {
+    if (!isValidMapsMode(body.mapsMode)) {
+      return c.json({ error: "mapsMode must be one of: off, admin_only, public" }, 400);
+    }
+    updates.mapsMode = body.mapsMode;
+  }
 
-  return c.json({ signupEnabled: body.signupEnabled });
+  if (Object.keys(updates).length === 0) {
+    return c.json({ error: "No valid fields to update" }, 400);
+  }
+
+  await db.update(appSettings).set(updates).where(eq(appSettings.id, 1));
+
+  const updated = await getAppSettings();
+  return c.json({
+    signupEnabled: updated.signupEnabled,
+    mapsMode: updated.mapsMode,
+  });
 });
 
 adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {

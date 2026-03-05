@@ -14,9 +14,13 @@ vi.mock("../lib/auth", () => ({
   },
 }));
 
-vi.mock("../lib/app-settings", () => ({
-  getAppSettings: (...args: unknown[]) => mockGetAppSettings(...args),
-}));
+vi.mock("../lib/app-settings", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../lib/app-settings")>();
+  return {
+    ...actual,
+    getAppSettings: (...args: unknown[]) => mockGetAppSettings(...args),
+  };
+});
 
 vi.mock("../db/index", () => ({
   db: {
@@ -43,7 +47,10 @@ describe("GET /api/admin/settings", () => {
 
   beforeEach(() => {
     process.env.ADMIN_USERNAME = "adminuser";
-    mockGetAppSettings.mockResolvedValue({ signupEnabled: true });
+    mockGetAppSettings.mockResolvedValue({
+      signupEnabled: true,
+      mapsMode: "admin_only",
+    });
   });
 
   it("returns 401 when not authenticated", async () => {
@@ -69,7 +76,10 @@ describe("GET /api/admin/settings", () => {
     const res = await app.request("/api/admin/settings");
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ signupEnabled: true });
+    expect(body).toEqual({
+      signupEnabled: true,
+      mapsMode: "admin_only",
+    });
   });
 
   it("returns signupEnabled: false when signup is disabled", async () => {
@@ -77,11 +87,17 @@ describe("GET /api/admin/settings", () => {
       user: ADMIN_USER,
       session: { id: "session-1" },
     });
-    mockGetAppSettings.mockResolvedValue({ signupEnabled: false });
+    mockGetAppSettings.mockResolvedValue({
+      signupEnabled: false,
+      mapsMode: "off",
+    });
     const res = await app.request("/api/admin/settings");
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ signupEnabled: false });
+    expect(body).toEqual({
+      signupEnabled: false,
+      mapsMode: "off",
+    });
   });
 });
 
@@ -89,12 +105,17 @@ describe("PATCH /api/admin/settings", () => {
   const app = createApp();
 
   beforeEach(() => {
+    vi.clearAllMocks();
     process.env.ADMIN_USERNAME = "adminuser";
     // Chain: db.update(table).set(values).where(cond) → resolves void
     mockDbUpdate.mockReturnValue({
       set: vi.fn().mockReturnValue({
         where: vi.fn().mockResolvedValue(undefined),
       }),
+    });
+    mockGetAppSettings.mockResolvedValue({
+      signupEnabled: true,
+      mapsMode: "admin_only",
     });
   });
 
@@ -121,10 +142,28 @@ describe("PATCH /api/admin/settings", () => {
     expect(res.status).toBe(400);
   });
 
-  it("updates setting and returns new value", async () => {
+  it("returns 400 for invalid mapsMode", async () => {
     mockGetSession.mockResolvedValue({
       user: ADMIN_USER,
       session: { id: "session-1" },
+    });
+    const res = await app.request("/api/admin/settings", {
+      method: "PATCH",
+      body: JSON.stringify({ mapsMode: "invalid" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it("updates signupEnabled and returns new value", async () => {
+    mockGetSession.mockResolvedValue({
+      user: ADMIN_USER,
+      session: { id: "session-1" },
+    });
+    // After update, getAppSettings reflects the new value
+    mockGetAppSettings.mockResolvedValueOnce({
+      signupEnabled: false,
+      mapsMode: "admin_only",
     });
     const res = await app.request("/api/admin/settings", {
       method: "PATCH",
@@ -133,7 +172,28 @@ describe("PATCH /api/admin/settings", () => {
     });
     expect(res.status).toBe(200);
     const body = await res.json();
-    expect(body).toEqual({ signupEnabled: false });
+    expect(body.signupEnabled).toBe(false);
+    expect(mockDbUpdate).toHaveBeenCalledOnce();
+  });
+
+  it("updates mapsMode and returns new value", async () => {
+    mockGetSession.mockResolvedValue({
+      user: ADMIN_USER,
+      session: { id: "session-1" },
+    });
+    // After update, getAppSettings returns updated value
+    mockGetAppSettings.mockResolvedValueOnce({
+      signupEnabled: true,
+      mapsMode: "public",
+    });
+    const res = await app.request("/api/admin/settings", {
+      method: "PATCH",
+      body: JSON.stringify({ mapsMode: "public" }),
+      headers: { "Content-Type": "application/json" },
+    });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.mapsMode).toBe("public");
     expect(mockDbUpdate).toHaveBeenCalledOnce();
   });
 });

@@ -19,6 +19,8 @@ import {
   trips,
 } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
+import type { MapsMode } from "../lib/app-settings";
+import { getAppSettings } from "../lib/app-settings";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
 import { resolveIsAdmin } from "../lib/resolve-is-admin";
@@ -33,6 +35,12 @@ import { createInitialTripDays, generateDateRange, syncTripDays } from "../lib/t
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
+
+function resolveMapsEnabled(mapsMode: MapsMode, storedValue: boolean): boolean {
+  if (mapsMode === "off") return false;
+  if (mapsMode === "public") return true;
+  return storedValue;
+}
 
 const tripRoutes = new Hono<AppEnv>();
 tripRoutes.use("*", requireAuth);
@@ -54,6 +62,7 @@ tripRoutes.get("/", async (c) => {
 
   const tripColumns = getTableColumns(trips);
 
+  // Run sequentially to avoid Supavisor pipeline stalls (see admin.ts fetchStats)
   const result = await db
     .select({
       ...tripColumns,
@@ -67,7 +76,14 @@ tripRoutes.get("/", async (c) => {
     .groupBy(trips.id, tripMembers.role)
     .orderBy(desc(trips.updatedAt));
 
-  return c.json(result);
+  const listSettings = await getAppSettings();
+
+  return c.json(
+    result.map((t) => ({
+      ...t,
+      mapsEnabled: resolveMapsEnabled(listSettings.mapsMode, t.mapsEnabled),
+    })),
+  );
 });
 
 // Create a trip (direct dates or poll mode)
@@ -89,7 +105,9 @@ tripRoutes.post("/", async (c) => {
     }
   }
 
-  const mapsEnabled = await resolveIsAdmin(user);
+  const settings = await getAppSettings();
+  const isAdmin = await resolveIsAdmin(user);
+  const mapsEnabled = resolveMapsEnabled(settings.mapsMode, isAdmin);
 
   const body = await c.req.json();
   const isPollMode = "pollOptions" in body;
@@ -269,37 +287,40 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
   const tripId = c.req.param("id");
   const role = c.get("tripRole");
 
-  const [tripWithPoll, candidates, [{ count: memberCount }]] = await Promise.all([
-    db.query.trips.findFirst({
-      where: eq(trips.id, tripId),
-      with: {
-        days: {
-          orderBy: (days, { asc }) => [asc(days.dayNumber)],
-          with: {
-            patterns: {
-              orderBy: (patterns, { asc }) => [asc(patterns.sortOrder)],
-              with: {
-                schedules: {
-                  orderBy: (schedules, { asc }) => [asc(schedules.sortOrder)],
-                },
+  // Run sequentially to avoid Supavisor pipeline stalls (see admin.ts fetchStats)
+  const tripWithPoll = await db.query.trips.findFirst({
+    where: eq(trips.id, tripId),
+    with: {
+      days: {
+        orderBy: (days, { asc }) => [asc(days.dayNumber)],
+        with: {
+          patterns: {
+            orderBy: (patterns, { asc }) => [asc(patterns.sortOrder)],
+            with: {
+              schedules: {
+                orderBy: (schedules, { asc }) => [asc(schedules.sortOrder)],
               },
             },
           },
         },
-        poll: {
-          columns: { id: true, status: true },
-          with: {
-            participants: {
-              columns: { id: true },
-              with: { responses: { columns: { participantId: true } } },
-            },
+      },
+      poll: {
+        columns: { id: true, status: true },
+        with: {
+          participants: {
+            columns: { id: true },
+            with: { responses: { columns: { participantId: true } } },
           },
         },
       },
-    }),
-    queryCandidatesWithReactions(tripId, user.id),
-    db.select({ count: count() }).from(tripMembers).where(eq(tripMembers.tripId, tripId)),
-  ]);
+    },
+  });
+  const candidates = await queryCandidatesWithReactions(tripId, user.id);
+  const [{ count: memberCount }] = await db
+    .select({ count: count() })
+    .from(tripMembers)
+    .where(eq(tripMembers.tripId, tripId));
+  const detailSettings = await getAppSettings();
 
   if (!tripWithPoll) {
     return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
@@ -322,6 +343,7 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
 
   return c.json({
     ...trip,
+    mapsEnabled: resolveMapsEnabled(detailSettings.mapsMode, trip.mapsEnabled),
     role,
     candidates,
     scheduleCount,

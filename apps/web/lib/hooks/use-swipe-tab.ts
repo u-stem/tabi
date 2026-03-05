@@ -260,15 +260,17 @@ export function useSwipeTab(
     }
 
     function handleTouchMove(e: TouchEvent) {
+      // Prevent browser vertical scroll when horizontal axis is locked,
+      // regardless of tracking source. Pointer events fire before touch events
+      // on mobile, so trackingSource is typically "pointer" — but the browser
+      // uses touch events (not pointer events) for scroll decisions.
+      if (axis === "horizontal") {
+        e.preventDefault();
+      }
       if (trackingSource !== "touch") return;
       const point = Array.from(e.touches).find((t) => t.identifier === activeTouchId);
       if (!point) return;
       moveSwipe(point.clientX, point.clientY);
-      // Once horizontal axis is locked, prevent browser vertical scroll so the
-      // swipe takes full ownership of the gesture — same as native UIScrollView.
-      if (axis === "horizontal") {
-        e.preventDefault();
-      }
     }
 
     function handleTouchEnd(e: TouchEvent) {

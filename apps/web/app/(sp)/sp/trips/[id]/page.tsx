@@ -56,6 +56,7 @@ import {
 } from "@/app/(authenticated)/trips/[id]/_components/trip-dialogs";
 import { TripHeader } from "@/app/(authenticated)/trips/[id]/_components/trip-header";
 import { DayWeatherEditor } from "@/components/day-weather-editor";
+import { useSpScrollContainer } from "@/components/sp-scroll-container";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
@@ -86,6 +87,7 @@ export default function SpTripDetailPage() {
   const now = useCurrentTime();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
+  const spScrollRef = useSpScrollContainer();
 
   const {
     data: trip = null,
@@ -180,18 +182,24 @@ export default function SpTripDetailPage() {
 
   // Restore scroll position synchronously before paint to avoid a one-frame flicker
   // where the new tab content is momentarily shown at the previous tab's scroll position.
+  // On SP, the actual scroll container is SpScrollContainer (outer), not mobileContentRef.
   useLayoutEffect(() => {
-    mobileContentRef.current?.scrollTo(0, scrollPositions.current[mobileTab] ?? 0);
+    const scrollEl = spScrollRef?.current ?? mobileContentRef.current;
+    scrollEl?.scrollTo(0, scrollPositions.current[mobileTab] ?? 0);
   }, [mobileTab]);
 
-  const handleMobileTabChange = useCallback((tab: MobileContentTab, source?: "tap") => {
-    if (mobileContentRef.current) {
-      scrollPositions.current[mobileTabRef.current] = mobileContentRef.current.scrollTop;
-    }
-    tapTransitionRef.current = source === "tap";
-    mobileTabRef.current = tab;
-    setMobileTab(tab);
-  }, []);
+  const handleMobileTabChange = useCallback(
+    (tab: MobileContentTab, source?: "tap") => {
+      const scrollEl = spScrollRef?.current ?? mobileContentRef.current;
+      if (scrollEl) {
+        scrollPositions.current[mobileTabRef.current] = scrollEl.scrollTop;
+      }
+      tapTransitionRef.current = source === "tap";
+      mobileTabRef.current = tab;
+      setMobileTab(tab);
+    },
+    [spScrollRef],
+  );
 
   const handleSwipe = useCallback(
     (direction: "left" | "right") => {
@@ -313,6 +321,17 @@ export default function SpTripDetailPage() {
     selection.exit();
   }, [selectedDay, mobileTab]);
 
+  // Prevent outer SpScrollContainer from scrolling during swipe
+  const isActivelySwiping = swipe.adjacent !== null || swipe.isAnimating;
+  useEffect(() => {
+    const el = spScrollRef?.current;
+    if (!el || !isActivelySwiping) return;
+    el.style.overflow = "hidden";
+    return () => {
+      el.style.overflow = "";
+    };
+  }, [isActivelySwiping, spScrollRef]);
+
   // Routing guarantees params.id is always a string, but guard defensively
   if (!tripId) return null;
 
@@ -322,7 +341,6 @@ export default function SpTripDetailPage() {
   const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
   const selectionValue = { ...selection, canEnter: canEdit && online };
 
-  const isActivelySwiping = swipe.adjacent !== null || swipe.isAnimating;
   const adjacentTabId = swipe.adjacent
     ? (tabIds[currentTabIdx + (swipe.adjacent === "next" ? 1 : -1)] ?? null)
     : null;
@@ -603,18 +621,11 @@ export default function SpTripDetailPage() {
                     onTabChange={handleMobileTabChange}
                     candidateCount={dnd.localCandidates.length}
                   />
-                  <div
-                    ref={mobileContentRef}
-                    className={
-                      isActivelySwiping
-                        ? "overflow-hidden pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
-                        : "overflow-y-auto overscroll-contain pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
-                    }
-                  >
+                  <div ref={mobileContentRef} className="pb-20 min-h-[calc(100svh-12rem)]">
                     <div
                       ref={swipeContainerRef}
                       className="relative touch-pan-y"
-                      style={{ willChange: isActivelySwiping ? "transform" : "auto" }}
+                      style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
                     >
                       {/* Current tab */}
                       <div

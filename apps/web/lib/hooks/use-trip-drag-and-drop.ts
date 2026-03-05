@@ -264,7 +264,10 @@ export function useTripDragAndDrop({
               // Dropping onto a cross-day entry: insert after the first schedule
               // following it, matching the same behaviour as schedule reorder.
               let nextScheduleIdx = overIdx + 1;
-              while (nextScheduleIdx < merged.length && merged[nextScheduleIdx].type !== "schedule") {
+              while (
+                nextScheduleIdx < merged.length &&
+                merged[nextScheduleIdx].type !== "schedule"
+              ) {
                 nextScheduleIdx++;
               }
               if (nextScheduleIdx < merged.length) {

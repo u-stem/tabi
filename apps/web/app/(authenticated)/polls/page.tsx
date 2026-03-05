@@ -103,7 +103,7 @@ export default function PollsPage() {
   }
 
   return (
-    <div className="mt-4 mx-auto max-w-2xl">
+    <div className="mt-4">
       <LoadingBoundary isLoading={isLoading} skeleton={<PollsSkeleton />}>
         <div className="flex items-center justify-end">
           <Button size="sm" onClick={() => setCreateDialogOpen(true)}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { type Announcements, defaultDropAnimation, DndContext, DragOverlay } from "@dnd-kit/core";
+import { type Announcements, DndContext, DragOverlay, defaultDropAnimation } from "@dnd-kit/core";
 import type { BookmarkListResponse, PollDetailResponse, TripResponse } from "@sugara/shared";
 import {
   canEdit as canEditRole,

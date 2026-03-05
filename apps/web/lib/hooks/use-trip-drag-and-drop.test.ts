@@ -198,6 +198,139 @@ describe("useTripDragAndDrop — null-based snapshot isolation", () => {
     expect(result.current.localSchedules[1].id).toBe("s1");
   });
 
+  it("keeps overScheduleId when pointer moves to timeline gap between items", () => {
+    const { result } = renderHook(() =>
+      useTripDragAndDrop({
+        tripId: "trip1",
+        currentDayId: "day1",
+        currentPatternId: "pattern1",
+        schedules: [s1, s2],
+        candidates: [],
+        onDone: vi.fn(),
+      }),
+    );
+
+    act(() => {
+      result.current.handleDragStart({
+        active: {
+          id: "s1",
+          data: { current: { type: "schedule" } },
+          rect: { current: { initial: null, translated: null } },
+        },
+        activatorEvent: new PointerEvent("pointerdown"),
+      } as Parameters<typeof result.current.handleDragStart>[0]);
+    });
+
+    // Hover over s2
+    act(() => {
+      result.current.handleDragOver({
+        active: {
+          id: "s1",
+          data: { current: { type: "schedule" } },
+          rect: { current: { initial: null, translated: null } },
+        },
+        over: {
+          id: "s2",
+          data: { current: { type: "schedule" } },
+          rect: { width: 0, height: 0, top: 0, left: 0, bottom: 0, right: 0 },
+          disabled: false,
+        },
+        collisions: null,
+        delta: { x: 0, y: 0 },
+        activatorEvent: new PointerEvent("pointermove"),
+      } as Parameters<typeof result.current.handleDragOver>[0]);
+    });
+
+    expect(result.current.overScheduleId).toBe("s2");
+
+    // Pointer moves to timeline droppable (gap between items)
+    act(() => {
+      result.current.handleDragOver({
+        active: {
+          id: "s1",
+          data: { current: { type: "schedule" } },
+          rect: { current: { initial: null, translated: null } },
+        },
+        over: {
+          id: "timeline",
+          data: { current: { type: "timeline" } },
+          rect: { width: 0, height: 0, top: 0, left: 0, bottom: 0, right: 0 },
+          disabled: false,
+        },
+        collisions: null,
+        delta: { x: 0, y: 0 },
+        activatorEvent: new PointerEvent("pointermove"),
+      } as Parameters<typeof result.current.handleDragOver>[0]);
+    });
+
+    // overScheduleId should still be "s2" (not reset to null)
+    expect(result.current.overScheduleId).toBe("s2");
+  });
+
+  it("keeps overScheduleId when over becomes null during drag", () => {
+    const { result } = renderHook(() =>
+      useTripDragAndDrop({
+        tripId: "trip1",
+        currentDayId: "day1",
+        currentPatternId: "pattern1",
+        schedules: [s1, s2],
+        candidates: [],
+        onDone: vi.fn(),
+      }),
+    );
+
+    act(() => {
+      result.current.handleDragStart({
+        active: {
+          id: "s1",
+          data: { current: { type: "schedule" } },
+          rect: { current: { initial: null, translated: null } },
+        },
+        activatorEvent: new PointerEvent("pointerdown"),
+      } as Parameters<typeof result.current.handleDragStart>[0]);
+    });
+
+    // Hover over s2
+    act(() => {
+      result.current.handleDragOver({
+        active: {
+          id: "s1",
+          data: { current: { type: "schedule" } },
+          rect: { current: { initial: null, translated: null } },
+        },
+        over: {
+          id: "s2",
+          data: { current: { type: "schedule" } },
+          rect: { width: 0, height: 0, top: 0, left: 0, bottom: 0, right: 0 },
+          disabled: false,
+        },
+        collisions: null,
+        delta: { x: 0, y: 0 },
+        activatorEvent: new PointerEvent("pointermove"),
+      } as Parameters<typeof result.current.handleDragOver>[0]);
+    });
+
+    expect(result.current.overScheduleId).toBe("s2");
+
+    // over becomes null (pointer briefly leaves all drop targets)
+    act(() => {
+      result.current.handleDragOver({
+        active: {
+          id: "s1",
+          data: { current: { type: "schedule" } },
+          rect: { current: { initial: null, translated: null } },
+        },
+        over: null,
+        collisions: null,
+        delta: { x: 0, y: 0 },
+        activatorEvent: new PointerEvent("pointermove"),
+      } as Parameters<typeof result.current.handleDragOver>[0]);
+    });
+
+    // overScheduleId should still be "s2" (not reset to null)
+    expect(result.current.overScheduleId).toBe("s2");
+  });
+
   it("falls back to server data after the API call resolves", async () => {
     // Default mock resolves immediately (mockResolvedValue(undefined))
     const { result } = renderHook(() =>

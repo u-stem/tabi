@@ -104,17 +104,26 @@ export function useTripDragAndDrop({
   function handleDragOver(event: DragOverEvent) {
     const { over } = event;
     if (!over) {
-      setOverScheduleId(null);
-      setOverCandidateId(null);
+      // Keep overScheduleId so the insert indicator doesn't jump to the
+      // bottom when the pointer briefly leaves all drop targets.
+      // It will be reset in handleDragEnd.
       return;
     }
     const overType = over.data.current?.type as string | undefined;
     if (overType === "schedule" || overType === "timeline") {
-      setOverScheduleId(overType === "schedule" ? String(over.id) : null);
+      // Only update overScheduleId when hovering a specific schedule.
+      // When hovering the timeline droppable (gap between items), keep the
+      // previous value so the insert indicator doesn't briefly jump to the
+      // bottom of the list.
+      if (overType === "schedule") {
+        setOverScheduleId(String(over.id));
+      }
       setOverCandidateId(null);
       setLastOverZone("timeline");
     } else if (overType === "candidate" || overType === "candidates") {
-      setOverCandidateId(overType === "candidate" ? String(over.id) : null);
+      if (overType === "candidate") {
+        setOverCandidateId(String(over.id));
+      }
       setOverScheduleId(null);
       setLastOverZone("candidates");
     } else {

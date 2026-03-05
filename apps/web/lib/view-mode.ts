@@ -20,6 +20,7 @@ export const SP_ROUTES = [
   "/users",
   "/notifications",
   "/my",
+  "/polls",
 ] as const;
 
 /** Path prefix for all SP pages. */

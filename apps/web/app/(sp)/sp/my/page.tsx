@@ -107,7 +107,7 @@ export default function SpMyPage() {
 
       {/* Quick polls link */}
       <Link
-        href="/polls"
+        href="/sp/polls"
         className="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm hover:bg-accent transition-colors"
       >
         <Vote className="h-5 w-5 text-muted-foreground" />

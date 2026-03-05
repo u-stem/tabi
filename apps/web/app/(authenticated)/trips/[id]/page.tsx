@@ -8,6 +8,7 @@ import {
   MAX_SCHEDULES_PER_TRIP,
 } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { APIProvider } from "@vis.gl/react-google-maps";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -815,285 +816,304 @@ export default function TripDetailPage() {
       {queryError || !trip ? (
         <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
       ) : (
-        <SelectionProvider value={selectionValue}>
-          <div className="mt-4">
-            <TripHeader
-              trip={trip}
-              tripId={tripId}
-              otherPresence={otherPresence}
-              isConnected={isConnected}
-              online={online}
-              canEdit={canEdit}
-              onMutate={onMutate}
-              onEditOpen={() => setEditOpen(true)}
-              onOpenBookmarks={
-                isGuest
-                  ? undefined
-                  : () => {
-                      handleMobileTabChange("bookmarks", "tap");
-                    }
-              }
-              onOpenActivity={() => {
-                handleMobileTabChange("activity", "tap");
-              }}
-            />
-            <EditTripDialog
-              tripId={tripId}
-              title={trip.title}
-              destination={trip.destination}
-              startDate={trip.startDate}
-              endDate={trip.endDate}
-              coverImageUrl={trip.coverImageUrl}
-              coverImagePosition={trip.coverImagePosition}
-              open={editOpen}
-              onOpenChange={setEditOpen}
-              onUpdate={onMutate}
-            />
-            <DndContext
-              sensors={dnd.sensors}
-              collisionDetection={dnd.collisionDetection}
-              onDragStart={dnd.handleDragStart}
-              onDragOver={dnd.handleDragOver}
-              onDragEnd={dnd.handleDragEnd}
-              accessibility={{ announcements: dndAnnouncements }}
-            >
-              {/* Mobile layout */}
-              <div className="lg:hidden" inert={isLg || undefined}>
-                <MobileContentTabs
-                  activeTab={mobileTab}
-                  onTabChange={handleMobileTabChange}
-                  candidateCount={dnd.localCandidates.length}
-                />
-                <div
-                  ref={mobileContentRef}
-                  className={
-                    isActivelySwiping
-                      ? "min-h-0 overflow-hidden"
-                      : "min-h-0 overflow-y-auto overscroll-contain pb-20"
-                  }
-                >
-                  <div
-                    ref={swipeContainerRef}
-                    className="relative touch-pan-y"
-                    style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
-                  >
-                    {/* Current tab */}
-                    <div
-                      className={
-                        tapTransitionRef.current
-                          ? "animate-[tab-fade-in_150ms_ease-out]"
-                          : undefined
+        <MapsProvider enabled={trip.mapsEnabled}>
+          <SelectionProvider value={selectionValue}>
+            <div className="mt-4">
+              <TripHeader
+                trip={trip}
+                tripId={tripId}
+                otherPresence={otherPresence}
+                isConnected={isConnected}
+                online={online}
+                canEdit={canEdit}
+                onMutate={onMutate}
+                onEditOpen={() => setEditOpen(true)}
+                onOpenBookmarks={
+                  isGuest
+                    ? undefined
+                    : () => {
+                        handleMobileTabChange("bookmarks", "tap");
                       }
-                      ref={() => {
-                        tapTransitionRef.current = false;
-                      }}
+                }
+                onOpenActivity={() => {
+                  handleMobileTabChange("activity", "tap");
+                }}
+              />
+              <EditTripDialog
+                tripId={tripId}
+                title={trip.title}
+                destination={trip.destination}
+                startDate={trip.startDate}
+                endDate={trip.endDate}
+                coverImageUrl={trip.coverImageUrl}
+                coverImagePosition={trip.coverImagePosition}
+                open={editOpen}
+                onOpenChange={setEditOpen}
+                onUpdate={onMutate}
+              />
+              <DndContext
+                sensors={dnd.sensors}
+                collisionDetection={dnd.collisionDetection}
+                onDragStart={dnd.handleDragStart}
+                onDragOver={dnd.handleDragOver}
+                onDragEnd={dnd.handleDragEnd}
+                accessibility={{ announcements: dndAnnouncements }}
+              >
+                {/* Mobile layout */}
+                <div className="lg:hidden" inert={isLg || undefined}>
+                  <MobileContentTabs
+                    activeTab={mobileTab}
+                    onTabChange={handleMobileTabChange}
+                    candidateCount={dnd.localCandidates.length}
+                  />
+                  <div
+                    ref={mobileContentRef}
+                    className={
+                      isActivelySwiping
+                        ? "min-h-0 overflow-hidden"
+                        : "min-h-0 overflow-y-auto overscroll-contain pb-20"
+                    }
+                  >
+                    <div
+                      ref={swipeContainerRef}
+                      className="relative touch-pan-y"
+                      style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
                     >
+                      {/* Current tab */}
                       <div
-                        id={getMobileTabPanelId(mobileTab)}
-                        role="tabpanel"
-                        aria-labelledby={getMobileTabTriggerId(mobileTab)}
-                      >
-                        {renderTabContent(mobileTab)}
-                      </div>
-                    </div>
-
-                    {/* Adjacent tab (rendered only during swipe) */}
-                    {swipe.adjacent && adjacentTabId && (
-                      <div
-                        className="absolute top-0 left-0 w-full"
-                        aria-hidden="true"
-                        style={{
-                          transform:
-                            swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                        className={
+                          tapTransitionRef.current
+                            ? "animate-[tab-fade-in_150ms_ease-out]"
+                            : undefined
+                        }
+                        ref={() => {
+                          tapTransitionRef.current = false;
                         }}
                       >
-                        {renderTabContent(adjacentTabId)}
+                        <div
+                          id={getMobileTabPanelId(mobileTab)}
+                          role="tabpanel"
+                          aria-labelledby={getMobileTabTriggerId(mobileTab)}
+                        >
+                          {renderTabContent(mobileTab)}
+                        </div>
+                      </div>
+
+                      {/* Adjacent tab (rendered only during swipe) */}
+                      {swipe.adjacent && adjacentTabId && (
+                        <div
+                          className="absolute top-0 left-0 w-full"
+                          aria-hidden="true"
+                          style={{
+                            transform:
+                              swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                          }}
+                        >
+                          {renderTabContent(adjacentTabId)}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop layout */}
+                <div className="hidden lg:flex items-start gap-4">
+                  {/* Left panel */}
+                  <div className="flex min-w-0 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
+                    <DayTabs
+                      days={trip.days}
+                      selectedDay={selectedDay}
+                      onSelectDay={setSelectedDay}
+                      otherPresence={otherPresence}
+                      hasPoll={!!trip.poll}
+                    />
+                    {selectedDay === -1 && trip.poll ? (
+                      <div className="min-h-0 overflow-y-auto overscroll-contain">
+                        <PollTab
+                          pollId={trip.poll.id}
+                          isOwner={isOwnerRole(trip.role)}
+                          canEdit={canEdit}
+                          onMutate={onMutate}
+                          onConfirmed={() => setSelectedDay(0)}
+                        />
+                      </div>
+                    ) : currentDay && currentPattern ? (
+                      <div
+                        ref={timelinePanelRef}
+                        id={`day-panel-${currentDay.id}`}
+                        role="tabpanel"
+                        className="min-h-0 overflow-y-auto overscroll-contain p-4"
+                      >
+                        <DayWeatherEditor
+                          weatherHook={weather}
+                          currentDayId={currentDay.id}
+                          currentWeatherType={currentDay.weatherType}
+                          currentWeatherTypeSecondary={currentDay.weatherTypeSecondary}
+                          currentTempHigh={currentDay.tempHigh}
+                          currentTempLow={currentDay.tempLow}
+                          canEdit={canEdit}
+                          online={online}
+                        />
+                        <DayMemoEditor
+                          memo={memo}
+                          currentDayId={currentDay.id}
+                          currentDayMemo={currentDay.memo}
+                          canEdit={canEdit}
+                          online={online}
+                        />
+
+                        <DayTimeline
+                          key={currentPattern.id}
+                          tripId={tripId}
+                          dayId={currentDay.id}
+                          patternId={currentPattern.id}
+                          date={currentDay.date}
+                          schedules={dnd.localSchedules}
+                          onRefresh={onMutate}
+                          disabled={!online || !canEdit}
+                          addScheduleOpen={isLg ? addScheduleOpen : false}
+                          onAddScheduleOpenChange={isLg ? setAddScheduleOpen : undefined}
+                          maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
+                          totalDays={trip.days.length}
+                          crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
+                          overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
+                          scheduleLimitReached={scheduleLimitReached}
+                          scheduleLimitMessage={scheduleLimitMessage}
+                          onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                          onReorderSchedule={dnd.reorderSchedule}
+                          headerContent={
+                            <PatternTabs
+                              patterns={currentDay.patterns}
+                              currentDayId={currentDay.id}
+                              currentPatternIndex={currentPatternIndex}
+                              canEdit={canEdit}
+                              online={online}
+                              patternOps={patternOps}
+                              onSelectPattern={(dayId, index) =>
+                                setSelectedPattern((prev) => ({ ...prev, [dayId]: index }))
+                              }
+                            />
+                          }
+                        />
+                        <ScrollToTop containerRef={timelinePanelRef} />
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {MSG.SCHEDULING_STATUS_DESCRIPTION}
+                        </p>
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
 
-              {/* Desktop layout */}
-              <div className="hidden lg:flex items-start gap-4">
-                {/* Left panel */}
-                <div className="flex min-w-0 max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] flex-[3] flex-col rounded-lg border bg-card">
-                  <DayTabs
-                    days={trip.days}
-                    selectedDay={selectedDay}
-                    onSelectDay={setSelectedDay}
-                    otherPresence={otherPresence}
-                    hasPoll={!!trip.poll}
+                  {/* Right panel */}
+                  <RightPanel
+                    tripId={tripId}
+                    rightPanelTab={rightPanelTab}
+                    setRightPanelTab={setRightPanelTab}
+                    candidates={dnd.localCandidates}
+                    currentDayId={currentDay?.id ?? null}
+                    currentPatternId={currentPattern?.id ?? null}
+                    onRefresh={onMutate}
+                    disabled={!online || !canEdit}
+                    canEdit={canEdit}
+                    online={online}
+                    addCandidateOpen={isLg ? addCandidateOpen : false}
+                    onAddCandidateOpenChange={setAddCandidateOpen}
+                    addSouvenirOpen={isLg ? addSouvenirOpen : false}
+                    onAddSouvenirOpenChange={setAddSouvenirOpen}
+                    scheduleLimitReached={scheduleLimitReached}
+                    scheduleLimitMessage={scheduleLimitMessage}
+                    overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
+                    hasDays={trip.days.length > 0}
+                    maxEndDayOffset={Math.max(0, trip.days.length - 1)}
+                    onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
                   />
-                  {selectedDay === -1 && trip.poll ? (
-                    <div className="min-h-0 overflow-y-auto overscroll-contain">
-                      <PollTab
-                        pollId={trip.poll.id}
-                        isOwner={isOwnerRole(trip.role)}
-                        canEdit={canEdit}
-                        onMutate={onMutate}
-                        onConfirmed={() => setSelectedDay(0)}
-                      />
-                    </div>
-                  ) : currentDay && currentPattern ? (
-                    <div
-                      ref={timelinePanelRef}
-                      id={`day-panel-${currentDay.id}`}
-                      role="tabpanel"
-                      className="min-h-0 overflow-y-auto overscroll-contain p-4"
-                    >
-                      <DayWeatherEditor
-                        weatherHook={weather}
-                        currentDayId={currentDay.id}
-                        currentWeatherType={currentDay.weatherType}
-                        currentWeatherTypeSecondary={currentDay.weatherTypeSecondary}
-                        currentTempHigh={currentDay.tempHigh}
-                        currentTempLow={currentDay.tempLow}
-                        canEdit={canEdit}
-                        online={online}
-                      />
-                      <DayMemoEditor
-                        memo={memo}
-                        currentDayId={currentDay.id}
-                        currentDayMemo={currentDay.memo}
-                        canEdit={canEdit}
-                        online={online}
-                      />
-
-                      <DayTimeline
-                        key={currentPattern.id}
-                        tripId={tripId}
-                        dayId={currentDay.id}
-                        patternId={currentPattern.id}
-                        date={currentDay.date}
-                        schedules={dnd.localSchedules}
-                        onRefresh={onMutate}
-                        disabled={!online || !canEdit}
-                        addScheduleOpen={isLg ? addScheduleOpen : false}
-                        onAddScheduleOpenChange={isLg ? setAddScheduleOpen : undefined}
-                        maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
-                        totalDays={trip.days.length}
-                        crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
-                        overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
-                        scheduleLimitReached={scheduleLimitReached}
-                        scheduleLimitMessage={scheduleLimitMessage}
-                        onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
-                        onReorderSchedule={dnd.reorderSchedule}
-                        headerContent={
-                          <PatternTabs
-                            patterns={currentDay.patterns}
-                            currentDayId={currentDay.id}
-                            currentPatternIndex={currentPatternIndex}
-                            canEdit={canEdit}
-                            online={online}
-                            patternOps={patternOps}
-                            onSelectPattern={(dayId, index) =>
-                              setSelectedPattern((prev) => ({ ...prev, [dayId]: index }))
-                            }
-                          />
-                        }
-                      />
-                      <ScrollToTop containerRef={timelinePanelRef} />
-                    </div>
-                  ) : (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {MSG.SCHEDULING_STATUS_DESCRIPTION}
-                      </p>
-                    </div>
-                  )}
                 </div>
-
-                {/* Right panel */}
-                <RightPanel
-                  tripId={tripId}
-                  rightPanelTab={rightPanelTab}
-                  setRightPanelTab={setRightPanelTab}
-                  candidates={dnd.localCandidates}
-                  currentDayId={currentDay?.id ?? null}
-                  currentPatternId={currentPattern?.id ?? null}
-                  onRefresh={onMutate}
-                  disabled={!online || !canEdit}
-                  canEdit={canEdit}
-                  online={online}
-                  addCandidateOpen={isLg ? addCandidateOpen : false}
-                  onAddCandidateOpenChange={setAddCandidateOpen}
-                  addSouvenirOpen={isLg ? addSouvenirOpen : false}
-                  onAddSouvenirOpenChange={setAddSouvenirOpen}
-                  scheduleLimitReached={scheduleLimitReached}
-                  scheduleLimitMessage={scheduleLimitMessage}
-                  overCandidateId={dnd.activeDragItem ? dnd.overCandidateId : null}
-                  hasDays={trip.days.length > 0}
-                  maxEndDayOffset={Math.max(0, trip.days.length - 1)}
-                  onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
-                />
-              </div>
-              {mounted &&
-                createPortal(
-                  <DragOverlay dropAnimation={defaultDropAnimation}>
-                    {dnd.activeDragItem &&
-                      (() => {
-                        const Icon = CATEGORY_ICONS[dnd.activeDragItem.category];
-                        const colorClasses = SCHEDULE_COLOR_CLASSES[dnd.activeDragItem.color];
-                        return (
-                          <div className="flex w-max items-center gap-2 rounded-md border bg-card p-2 shadow-lg opacity-90">
-                            <div
-                              className={cn(
-                                "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white",
-                                colorClasses.bg,
-                              )}
-                            >
-                              <Icon className="h-3 w-3" />
+                {mounted &&
+                  createPortal(
+                    <DragOverlay dropAnimation={defaultDropAnimation}>
+                      {dnd.activeDragItem &&
+                        (() => {
+                          const Icon = CATEGORY_ICONS[dnd.activeDragItem.category];
+                          const colorClasses = SCHEDULE_COLOR_CLASSES[dnd.activeDragItem.color];
+                          return (
+                            <div className="flex w-max items-center gap-2 rounded-md border bg-card p-2 shadow-lg opacity-90">
+                              <div
+                                className={cn(
+                                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-white",
+                                  colorClasses.bg,
+                                )}
+                              >
+                                <Icon className="h-3 w-3" />
+                              </div>
+                              <span className="whitespace-nowrap text-sm font-medium">
+                                {dnd.activeDragItem.name}
+                              </span>
                             </div>
-                            <span className="whitespace-nowrap text-sm font-medium">
-                              {dnd.activeDragItem.name}
-                            </span>
-                          </div>
-                        );
-                      })()}
-                  </DragOverlay>,
-                  document.body,
-                )}
-            </DndContext>
+                          );
+                        })()}
+                    </DragOverlay>,
+                    document.body,
+                  )}
+              </DndContext>
 
-            <Fab
-              onClick={() => {
-                if (mobileTab === "schedule") {
-                  if (scheduleLimitReached) {
-                    toast.error(scheduleLimitMessage);
-                    return;
-                  }
-                  setAddScheduleOpen(true);
-                } else if (mobileTab === "candidates") setAddCandidateOpen(true);
-                else if (mobileTab === "expenses") setAddExpenseOpen(true);
-                else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
-              }}
-              label={
-                mobileTab === "schedule"
-                  ? "予定を追加"
-                  : mobileTab === "candidates"
-                    ? "候補を追加"
-                    : mobileTab === "expenses"
-                      ? "費用を追加"
-                      : "お土産を追加"
-              }
-              hidden={!canEdit || !online || mobileTab === "bookmarks" || mobileTab === "activity"}
-            />
+              <Fab
+                onClick={() => {
+                  if (mobileTab === "schedule") {
+                    if (scheduleLimitReached) {
+                      toast.error(scheduleLimitMessage);
+                      return;
+                    }
+                    setAddScheduleOpen(true);
+                  } else if (mobileTab === "candidates") setAddCandidateOpen(true);
+                  else if (mobileTab === "expenses") setAddExpenseOpen(true);
+                  else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
+                }}
+                label={
+                  mobileTab === "schedule"
+                    ? "予定を追加"
+                    : mobileTab === "candidates"
+                      ? "候補を追加"
+                      : mobileTab === "expenses"
+                        ? "費用を追加"
+                        : "お土産を追加"
+                }
+                hidden={
+                  !canEdit || !online || mobileTab === "bookmarks" || mobileTab === "activity"
+                }
+              />
 
-            <AddPatternDialog patternOps={patternOps} />
-            <RenamePatternDialog patternOps={patternOps} />
-            <BatchDeleteDialog selection={selection} />
-            <DeletePatternDialog patternOps={patternOps} />
-            <OverwritePatternDialog patternOps={patternOps} patterns={currentDay?.patterns ?? []} />
-            <BookmarkListPickerDialog
-              open={bookmarkPickerOpen}
-              onOpenChange={setBookmarkPickerOpen}
-              onSelect={handleBookmarkListSelected}
-            />
-          </div>
-        </SelectionProvider>
+              <AddPatternDialog patternOps={patternOps} />
+              <RenamePatternDialog patternOps={patternOps} />
+              <BatchDeleteDialog selection={selection} />
+              <DeletePatternDialog patternOps={patternOps} />
+              <OverwritePatternDialog
+                patternOps={patternOps}
+                patterns={currentDay?.patterns ?? []}
+              />
+              <BookmarkListPickerDialog
+                open={bookmarkPickerOpen}
+                onOpenChange={setBookmarkPickerOpen}
+                onSelect={handleBookmarkListSelected}
+              />
+            </div>
+          </SelectionProvider>
+        </MapsProvider>
       )}
     </LoadingBoundary>
+  );
+}
+
+function MapsProvider({ enabled, children }: { enabled: boolean; children: React.ReactNode }) {
+  if (!enabled) return <>{children}</>;
+  return (
+    <APIProvider
+      apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ""}
+      libraries={["places", "geometry"]}
+    >
+      {children}
+    </APIProvider>
   );
 }

@@ -731,6 +731,7 @@ export default function TripDetailPage() {
                   scheduleLimitMessage={scheduleLimitMessage}
                   onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
                   onReorderSchedule={dnd.reorderSchedule}
+                  mapsEnabled={tripData.mapsEnabled}
                   headerContent={
                     <PatternTabs
                       patterns={currentDay.patterns}
@@ -989,6 +990,7 @@ export default function TripDetailPage() {
                           scheduleLimitMessage={scheduleLimitMessage}
                           onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
                           onReorderSchedule={dnd.reorderSchedule}
+                          mapsEnabled={trip.mapsEnabled}
                           headerContent={
                             <PatternTabs
                               patterns={currentDay.patterns}

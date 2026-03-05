@@ -62,6 +62,7 @@ export const PlaceItem = memo(function PlaceItem({
   reorderable,
   onMoveUp,
   onMoveDown,
+  mapsEnabled,
 }: PlaceItemProps) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
@@ -197,6 +198,7 @@ export const PlaceItem = memo(function PlaceItem({
         onUpdate={onUpdate}
         maxEndDayOffset={maxEndDayOffset}
         shift={shift}
+        mapsEnabled={mapsEnabled}
       />
     </div>
   );

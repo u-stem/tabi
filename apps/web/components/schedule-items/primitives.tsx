@@ -95,6 +95,7 @@ export type ScheduleItemProps = {
   reorderable?: boolean;
   onMoveUp?: () => void;
   onMoveDown?: () => void;
+  mapsEnabled?: boolean;
 };
 
 export function ScheduleMenu({
@@ -340,6 +341,7 @@ export function ScheduleItemDialogs({
   onUpdate,
   maxEndDayOffset,
   shift,
+  mapsEnabled,
 }: {
   tripId: string;
   dayId: string;
@@ -365,6 +367,7 @@ export function ScheduleItemDialogs({
   onUpdate: () => void;
   maxEndDayOffset?: number;
   shift: ReturnType<typeof useShiftProposal>;
+  mapsEnabled?: boolean;
 }) {
   return (
     <>
@@ -383,6 +386,7 @@ export function ScheduleItemDialogs({
         onUpdate={onUpdate}
         maxEndDayOffset={maxEndDayOffset}
         onShiftProposal={shift.onShiftProposal}
+        mapsEnabled={mapsEnabled}
       />
       <BatchShiftDialog
         open={shift.shiftDialogOpen}

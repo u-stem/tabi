@@ -65,6 +65,7 @@ export const TransportItem = memo(function TransportItem({
   reorderable,
   onMoveUp,
   onMoveDown,
+  mapsEnabled,
 }: TransportItemProps) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
@@ -236,6 +237,7 @@ export const TransportItem = memo(function TransportItem({
         onUpdate={onUpdate}
         maxEndDayOffset={maxEndDayOffset}
         shift={shift}
+        mapsEnabled={mapsEnabled}
       />
     </div>
   );

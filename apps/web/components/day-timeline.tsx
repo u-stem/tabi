@@ -390,6 +390,7 @@ export function DayTimeline({
                   maxEndDayOffset={maxEndDayOffset}
                   open={addScheduleOpen}
                   onOpenChange={onAddScheduleOpenChange}
+                  mapsEnabled={mapsEnabled}
                 />
               ))}
             {!disabled && isMobile && !scheduleLimitReached && (
@@ -402,6 +403,7 @@ export function DayTimeline({
                 maxEndDayOffset={maxEndDayOffset}
                 open={addScheduleOpen}
                 onOpenChange={onAddScheduleOpenChange}
+                mapsEnabled={mapsEnabled}
                 hideTrigger
               />
             )}

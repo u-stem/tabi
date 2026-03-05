@@ -1,8 +1,16 @@
 "use client";
 
 import type { ScheduleResponse } from "@sugara/shared";
-import { AdvancedMarker, Map as GoogleMap, InfoWindow } from "@vis.gl/react-google-maps";
-import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  AdvancedMarker,
+  Map as GoogleMap,
+  InfoWindow,
+  useMap,
+  useMapsLibrary,
+} from "@vis.gl/react-google-maps";
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
 
 // Day color palette (cycles when more than 10 days)
 const DAY_COLORS = [
@@ -23,6 +31,7 @@ type MapMode = "day" | "all";
 export type ScheduleWithDayIndex = ScheduleResponse & { dayIndex: number };
 
 type Props = {
+  tripId: string;
   currentDaySchedules: ScheduleResponse[];
   allSchedules: ScheduleWithDayIndex[];
   online: boolean;
@@ -39,7 +48,65 @@ function isMappableWithDay(s: ScheduleWithDayIndex): s is MappableScheduleWithDa
   return s.latitude != null && s.longitude != null;
 }
 
-export function MapPanel({ currentDaySchedules, allSchedules, online }: Props) {
+// Draws a single route polyline between two mappable schedules.
+// Shares React Query cache with TravelTimeSeparator via identical query keys.
+function RoutePolyline({
+  tripId,
+  origin,
+  dest,
+}: {
+  tripId: string;
+  origin: MappableSchedule;
+  dest: MappableSchedule;
+}) {
+  const queryKey =
+    origin.placeId && dest.placeId
+      ? ["directions", origin.placeId, dest.placeId, "DRIVING"]
+      : ["directions", origin.latitude, origin.longitude, dest.latitude, dest.longitude, "DRIVING"];
+
+  const params = new URLSearchParams({
+    tripId,
+    originLat: String(origin.latitude),
+    originLng: String(origin.longitude),
+    destLat: String(dest.latitude),
+    destLng: String(dest.longitude),
+    ...(origin.placeId ? { originPlaceId: origin.placeId } : {}),
+    ...(dest.placeId ? { destPlaceId: dest.placeId } : {}),
+  });
+
+  const { data } = useQuery({
+    queryKey,
+    queryFn: () =>
+      api<{ durationSeconds: number; encodedPolyline: string | null }>(`/api/directions?${params}`),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  const map = useMap();
+  const geometryLib = useMapsLibrary("geometry");
+  const mapsLib = useMapsLibrary("maps");
+
+  useEffect(() => {
+    if (!data?.encodedPolyline || !map || !geometryLib || !mapsLib) return;
+
+    const path = geometryLib.encoding.decodePath(data.encodedPolyline);
+    const polyline = new mapsLib.Polyline({
+      path,
+      map,
+      strokeColor: "#3b82f6",
+      strokeOpacity: 0.7,
+      strokeWeight: 4,
+    });
+
+    return () => {
+      polyline.setMap(null);
+    };
+  }, [data, map, geometryLib, mapsLib]);
+
+  return null;
+}
+
+export function MapPanel({ tripId, currentDaySchedules, allSchedules, online }: Props) {
   const [mode, setMode] = useState<MapMode>("day");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
@@ -65,6 +132,12 @@ export function MapPanel({ currentDaySchedules, allSchedules, online }: Props) {
       : { lat: 36.2048, lng: 138.2529 };
 
   const selectedSchedule = selectedId ? mappable.find((s) => s.id === selectedId) : null;
+
+  // Non-transport mappable schedules in sort order for route drawing (当日 mode only)
+  const routePoints =
+    mode === "day"
+      ? currentDaySchedules.filter(isMappable).filter((s) => s.category !== "transport")
+      : [];
 
   return (
     <div className="flex h-full flex-col">
@@ -117,6 +190,18 @@ export function MapPanel({ currentDaySchedules, allSchedules, online }: Props) {
               <p className="text-sm font-medium">{selectedSchedule.name}</p>
             </InfoWindow>
           )}
+          {routePoints.map((dest, i) => {
+            if (i === 0) return null;
+            const origin = routePoints[i - 1];
+            return (
+              <RoutePolyline
+                key={`route-${origin.id}-${dest.id}`}
+                tripId={tripId}
+                origin={origin}
+                dest={dest}
+              />
+            );
+          })}
         </GoogleMap>
       </div>
     </div>

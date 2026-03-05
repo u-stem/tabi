@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { BookmarkListCard } from "@/app/users/[userId]/page";
 import { MyQrDialog } from "@/components/my-qr-dialog";
+import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
@@ -17,6 +18,16 @@ import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
+
+function BookmarkListsSkeleton() {
+  return (
+    <div className="divide-y overflow-hidden rounded-lg border">
+      {[1, 2, 3].map((i) => (
+        <Skeleton key={i} className="h-12 w-full rounded-none" />
+      ))}
+    </div>
+  );
+}
 
 export default function SpMyPage() {
   const { data: session } = useSession();
@@ -83,22 +94,16 @@ export default function SpMyPage() {
         </div>
       </div>
 
-      {/* Bookmark lists — no delayed skeleton: header is always visible so we show skeleton
-          immediately to avoid layout shift when the section mounts below the header */}
-      {isLoading && (
-        <div className="overflow-hidden rounded-lg border divide-y">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-12 w-full rounded-none" />
-          ))}
-        </div>
-      )}
-      {!isLoading && profile && profile.bookmarkLists.length > 0 && (
-        <div className="overflow-hidden rounded-lg border divide-y">
-          {profile.bookmarkLists.map((list) => (
-            <BookmarkListCard key={list.id} list={list} userId={userId ?? ""} />
-          ))}
-        </div>
-      )}
+      {/* Bookmark lists */}
+      <LoadingBoundary isLoading={isLoading} skeleton={<BookmarkListsSkeleton />}>
+        {profile && profile.bookmarkLists.length > 0 && (
+          <div className="overflow-hidden rounded-lg border divide-y">
+            {profile.bookmarkLists.map((list) => (
+              <BookmarkListCard key={list.id} list={list} userId={userId ?? ""} />
+            ))}
+          </div>
+        )}
+      </LoadingBoundary>
     </div>
   );
 }

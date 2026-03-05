@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -189,6 +189,101 @@ export function DayTimeline({
     }
   }
 
+  const merged = useMemo(
+    () => buildMergedTimeline(schedules, crossDayEntries),
+    [schedules, crossDayEntries],
+  );
+  const sortableIds = useMemo(() => timelineSortableIds(merged), [merged]);
+  const scheduleIndexById = useMemo(() => new Map(schedules.map((s, i) => [s.id, i])), [schedules]);
+
+  const overlayIndicator = <DndInsertIndicator overlay />;
+  const inlineIndicator = <DndInsertIndicator />;
+
+  function renderItem(item: TimelineItem, i: number, opts?: { selectable?: boolean }) {
+    const isFirst = i === 0;
+    const isLast = i === merged.length - 1;
+
+    const sortableId =
+      item.type === "crossDay" ? `cross-${item.entry.schedule.id}` : item.schedule.id;
+    const showInsertIndicator = overScheduleId != null && sortableId === overScheduleId;
+
+    if (item.type === "crossDay") {
+      const {
+        schedule: s,
+        sourceDayId,
+        sourcePatternId,
+        sourceDayNumber,
+        crossDayPosition,
+      } = item.entry;
+      const sourceMaxEndDayOffset =
+        totalDays != null ? totalDays - sourceDayNumber : maxEndDayOffset;
+      return (
+        <div key={`cross-${s.id}`} className="relative">
+          {showInsertIndicator && overlayIndicator}
+          <ScheduleItem
+            {...s}
+            tripId={tripId}
+            dayId={sourceDayId}
+            patternId={sourcePatternId}
+            date={date}
+            isFirst={isFirst}
+            isLast={isLast}
+            onDelete={() => handleDelete(s.id, sourceDayId, sourcePatternId)}
+            onUpdate={onRefresh}
+            onUnassign={!disabled && !opts?.selectable ? () => handleUnassign(s.id) : undefined}
+            disabled={disabled}
+            timeStatus={isToday ? getCrossDayTimeStatus(now, s.endTime) : null}
+            maxEndDayOffset={sourceMaxEndDayOffset}
+            crossDayDisplay
+            crossDaySourceDayNumber={sourceDayNumber}
+            crossDayPosition={crossDayPosition}
+          />
+        </div>
+      );
+    }
+
+    const { schedule } = item;
+    // O(1) lookup via precomputed Map; previously O(n) findIndex
+    const scheduleIdx = scheduleIndexById.get(schedule.id) ?? -1;
+    // slice is O(n-k) instead of filter O(n); valid because schedules is in sortOrder order
+    const schedulesAfter = scheduleIdx >= 0 ? schedules.slice(scheduleIdx + 1) : [];
+    const isReorderable = isMobile && reorderMode && !disabled;
+    const reorderFirst = scheduleIdx === 0;
+    const reorderLast = scheduleIdx === schedules.length - 1;
+
+    return (
+      <div key={schedule.id} className="relative">
+        {showInsertIndicator && overlayIndicator}
+        <ScheduleItem
+          {...schedule}
+          tripId={tripId}
+          dayId={dayId}
+          patternId={patternId}
+          date={date}
+          isFirst={isReorderable ? reorderFirst : isFirst}
+          isLast={isReorderable ? reorderLast : isLast}
+          onDelete={() => handleDelete(schedule.id)}
+          onUpdate={onRefresh}
+          onUnassign={
+            !disabled && !opts?.selectable ? () => handleUnassign(schedule.id) : undefined
+          }
+          disabled={disabled}
+          timeStatus={getScheduleTimeStatus(schedule)}
+          maxEndDayOffset={maxEndDayOffset}
+          selectable={opts?.selectable}
+          selected={opts?.selectable ? selectedIds?.has(schedule.id) : undefined}
+          onSelect={opts?.selectable ? sel.toggle : undefined}
+          siblingSchedules={schedulesAfter}
+          onSaveToBookmark={onSaveToBookmark ? () => onSaveToBookmark([schedule.id]) : undefined}
+          draggable={!isMobile}
+          reorderable={isReorderable}
+          onMoveUp={isReorderable ? () => onReorderSchedule?.(schedule.id, "up") : undefined}
+          onMoveDown={isReorderable ? () => onReorderSchedule?.(schedule.id, "down") : undefined}
+        />
+      </div>
+    );
+  }
+
   return (
     <div>
       {selectionMode ? (
@@ -353,142 +448,30 @@ export function DayTimeline({
       )}
       {!selectionMode && !reorderMode && headerContent}
 
-      {(() => {
-        const merged = buildMergedTimeline(schedules, crossDayEntries);
-        const total = merged.length;
-
-        if (total === 0) {
-          return (
-            <div
-              ref={selectionMode ? undefined : setDroppableRef}
-              className={cn(
-                "rounded-md border border-dashed p-6 text-center transition-colors",
-                isOverTimeline && DROP_ZONE_ACTIVE,
-              )}
-            >
-              <p className="text-sm text-muted-foreground">{MSG.EMPTY_SCHEDULE}</p>
+      {merged.length === 0 ? (
+        <div
+          ref={selectionMode ? undefined : setDroppableRef}
+          className={cn(
+            "rounded-md border border-dashed p-6 text-center transition-colors",
+            isOverTimeline && DROP_ZONE_ACTIVE,
+          )}
+        >
+          <p className="text-sm text-muted-foreground">{MSG.EMPTY_SCHEDULE}</p>
+        </div>
+      ) : selectionMode ? (
+        <div className="space-y-1.5">
+          {merged.map((item, i) => renderItem(item, i, { selectable: true }))}
+        </div>
+      ) : (
+        <div ref={setDroppableRef}>
+          <SortableContext items={sortableIds} strategy={verticalListSortingStrategy}>
+            <div className="space-y-1.5">
+              {merged.map((item, i) => renderItem(item, i))}
+              {isOverTimeline && overScheduleId === null && inlineIndicator}
             </div>
-          );
-        }
-
-        const overlayIndicator = <DndInsertIndicator overlay />;
-        const inlineIndicator = <DndInsertIndicator />;
-
-        function renderItem(item: TimelineItem, i: number, opts?: { selectable?: boolean }) {
-          const isFirst = i === 0;
-          const isLast = i === total - 1;
-
-          // Determine sortable ID to match against overScheduleId
-          const sortableId =
-            item.type === "crossDay" ? `cross-${item.entry.schedule.id}` : item.schedule.id;
-          const showInsertIndicator = overScheduleId != null && sortableId === overScheduleId;
-
-          if (item.type === "crossDay") {
-            // Cross-day entries are not selectable in batch mode because they
-            // belong to a different day's pattern and batch operations target
-            // the current day's schedules only.
-            const {
-              schedule: s,
-              sourceDayId,
-              sourcePatternId,
-              sourceDayNumber,
-              crossDayPosition,
-            } = item.entry;
-            // Calculate maxEndDayOffset from the source day, not the display day
-            const sourceMaxEndDayOffset =
-              totalDays != null ? totalDays - sourceDayNumber : maxEndDayOffset;
-            return (
-              <div key={`cross-${s.id}`} className="relative">
-                {showInsertIndicator && overlayIndicator}
-                <ScheduleItem
-                  {...s}
-                  tripId={tripId}
-                  dayId={sourceDayId}
-                  patternId={sourcePatternId}
-                  date={date}
-                  isFirst={isFirst}
-                  isLast={isLast}
-                  onDelete={() => handleDelete(s.id, sourceDayId, sourcePatternId)}
-                  onUpdate={onRefresh}
-                  onUnassign={
-                    !disabled && !opts?.selectable ? () => handleUnassign(s.id) : undefined
-                  }
-                  disabled={disabled}
-                  timeStatus={isToday ? getCrossDayTimeStatus(now, s.endTime) : null}
-                  maxEndDayOffset={sourceMaxEndDayOffset}
-                  crossDayDisplay
-                  crossDaySourceDayNumber={sourceDayNumber}
-                  crossDayPosition={crossDayPosition}
-                />
-              </div>
-            );
-          }
-
-          const { schedule } = item;
-          const schedulesAfter = schedules.filter((s) => s.sortOrder > schedule.sortOrder);
-          const isReorderable = isMobile && reorderMode && !disabled;
-          const scheduleIdx = schedules.findIndex((s) => s.id === schedule.id);
-          const reorderFirst = scheduleIdx === 0;
-          const reorderLast = scheduleIdx === schedules.length - 1;
-          const scheduleEl = (
-            <ScheduleItem
-              {...schedule}
-              tripId={tripId}
-              dayId={dayId}
-              patternId={patternId}
-              date={date}
-              isFirst={isReorderable ? reorderFirst : isFirst}
-              isLast={isReorderable ? reorderLast : isLast}
-              onDelete={() => handleDelete(schedule.id)}
-              onUpdate={onRefresh}
-              onUnassign={
-                !disabled && !opts?.selectable ? () => handleUnassign(schedule.id) : undefined
-              }
-              disabled={disabled}
-              timeStatus={getScheduleTimeStatus(schedule)}
-              maxEndDayOffset={maxEndDayOffset}
-              selectable={opts?.selectable}
-              selected={opts?.selectable ? selectedIds?.has(schedule.id) : undefined}
-              onSelect={opts?.selectable ? sel.toggle : undefined}
-              siblingSchedules={schedulesAfter}
-              onSaveToBookmark={
-                onSaveToBookmark ? () => onSaveToBookmark([schedule.id]) : undefined
-              }
-              draggable={!isMobile}
-              reorderable={isReorderable}
-              onMoveUp={isReorderable ? () => onReorderSchedule?.(schedule.id, "up") : undefined}
-              onMoveDown={
-                isReorderable ? () => onReorderSchedule?.(schedule.id, "down") : undefined
-              }
-            />
-          );
-
-          return (
-            <div key={schedule.id} className="relative">
-              {showInsertIndicator && overlayIndicator}
-              {scheduleEl}
-            </div>
-          );
-        }
-
-        return selectionMode ? (
-          <div className="space-y-1.5">
-            {merged.map((item, i) => renderItem(item, i, { selectable: true }))}
-          </div>
-        ) : (
-          <div ref={setDroppableRef}>
-            <SortableContext
-              items={timelineSortableIds(merged)}
-              strategy={verticalListSortingStrategy}
-            >
-              <div className="space-y-1.5">
-                {merged.map((item, i) => renderItem(item, i))}
-                {isOverTimeline && overScheduleId === null && inlineIndicator}
-              </div>
-            </SortableContext>
-          </div>
-        );
-      })()}
+          </SortableContext>
+        </div>
+      )}
     </div>
   );
 }

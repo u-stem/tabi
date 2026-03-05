@@ -4,7 +4,13 @@ import { useSession } from "@/lib/auth-client";
 import { isGuestUser } from "@/lib/guest";
 import { cn } from "@/lib/utils";
 
-export type RightPanelTab = "candidates" | "activity" | "bookmarks" | "expenses" | "souvenirs";
+export type RightPanelTab =
+  | "candidates"
+  | "activity"
+  | "bookmarks"
+  | "expenses"
+  | "souvenirs"
+  | "map";
 
 const CHIP_BASE =
   "shrink-0 rounded-full px-3.5 py-1.5 text-center text-sm font-medium transition-[colors,transform] active:scale-[0.95]";
@@ -15,10 +21,12 @@ export function RightPanelTabs({
   current,
   onChange,
   candidateCount,
+  mapsEnabled = false,
 }: {
   current: RightPanelTab;
   onChange: (tab: RightPanelTab) => void;
   candidateCount: number;
+  mapsEnabled?: boolean;
 }) {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
@@ -76,6 +84,17 @@ export function RightPanelTabs({
           className={cn(CHIP_BASE, current === "bookmarks" ? CHIP_ACTIVE : CHIP_INACTIVE)}
         >
           ブックマーク
+        </button>
+      )}
+      {mapsEnabled && (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={current === "map"}
+          onClick={() => onChange("map")}
+          className={cn(CHIP_BASE, current === "map" ? CHIP_ACTIVE : CHIP_INACTIVE)}
+        >
+          地図
         </button>
       )}
     </div>

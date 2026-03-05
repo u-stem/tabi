@@ -1029,6 +1029,11 @@ export default function TripDetailPage() {
                     hasDays={trip.days.length > 0}
                     maxEndDayOffset={Math.max(0, trip.days.length - 1)}
                     onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
+                    mapsEnabled={trip.mapsEnabled}
+                    allSchedules={trip.days.flatMap((day) =>
+                      day.patterns.flatMap((p) => p.schedules),
+                    )}
+                    currentDaySchedules={currentDay?.patterns.flatMap((p) => p.schedules) ?? []}
                   />
                 </div>
                 {mounted &&

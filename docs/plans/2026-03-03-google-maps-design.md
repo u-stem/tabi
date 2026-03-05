@@ -85,12 +85,12 @@ GET /api/directions?tripId=...&originLat=...&originLng=...&destLat=...&destLng=.
 
 これにより、Maps 機能を無効化された旅行から directions API を直接叩いても拒否される。
 
-### Zod スキーマ（`packages/shared/src/schemas/trip.ts`）
+### 型定義（`packages/shared/src/types.ts`）
 
-`tripSchema`（レスポンス型）に追加:
+`TripResponse` 型（レスポンス型は Zod スキーマではなく TypeScript 型で定義されている）に追加:
 
 ```ts
-mapsEnabled: z.boolean()
+mapsEnabled: boolean
 ```
 
 ---
@@ -136,17 +136,25 @@ place_id   VARCHAR(255)      -- nullable（Google Place ID）
 - `latitude / longitude` が null のスポットは地図にピンを出さない、所要時間計算もスキップする
 - DB migration（trips + schedules 両テーブル分を 1 ファイルにまとめる）: `bun run db:generate` → `bun run db:migrate`
 
-### Zod スキーマ（`packages/shared/src/schemas/trip.ts`）
+### 型定義（`packages/shared/src/types.ts`）
 
-`tripSchema`（レスポンス型）に追加:
+`TripResponse` 型に追加（レスポンス型は TypeScript 型で定義、`tripSchema` は存在しない）:
 
 ```ts
-mapsEnabled: z.boolean()
+mapsEnabled: boolean
+```
+
+`ScheduleResponse` 型に追加:
+
+```ts
+latitude?: number | null
+longitude?: number | null
+placeId?: string | null
 ```
 
 ### Zod スキーマ（`packages/shared/src/schemas/schedule.ts`）
 
-`createScheduleSchema` と `updateScheduleSchema` に追加:
+`createScheduleSchema` に追加（`updateScheduleSchema` は `.partial()` 派生のため不要）:
 
 ```ts
 latitude:  z.number().nullable().optional()
@@ -305,8 +313,8 @@ MapPanel
 
 | ファイル | 変更内容 |
 |---------|---------|
-| `day-timeline.tsx` | 表示条件を満たすペアの間に `TravelTimeSeparator` を挿入 |
-| `travel-time-separator.tsx`（新規） | 所要時間表示コンポーネント |
+| `apps/web/components/day-timeline.tsx` | 表示条件を満たすペアの間に `TravelTimeSeparator` を挿入 |
+| `apps/web/components/travel-time-separator.tsx`（新規） | 所要時間表示コンポーネント |
 | `apps/api/src/routes/directions.ts`（新規） | Routes API プロキシ（`requireAuth` 必須） |
 | `apps/web/app/api/[[...route]]/route.ts` | directions ルートを追加 |
 

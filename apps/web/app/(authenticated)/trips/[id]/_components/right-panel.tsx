@@ -1,11 +1,12 @@
 "use client";
 
-import type { CandidateResponse } from "@sugara/shared";
+import type { CandidateResponse, ScheduleResponse } from "@sugara/shared";
 import { ActivityLog } from "@/components/activity-log";
 import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
 import { ExpensePanel } from "@/components/expense-panel";
 import { SouvenirPanel } from "@/components/souvenir-panel";
+import { MapPanel } from "./map-panel";
 import { type RightPanelTab, RightPanelTabs } from "./right-panel-tabs";
 
 export type { RightPanelTab };
@@ -31,6 +32,9 @@ export function RightPanel({
   maxEndDayOffset,
   onSaveToBookmark,
   hasDays,
+  mapsEnabled,
+  allSchedules,
+  currentDaySchedules,
 }: {
   tripId: string;
   rightPanelTab: RightPanelTab;
@@ -52,6 +56,9 @@ export function RightPanel({
   maxEndDayOffset: number;
   onSaveToBookmark?: (scheduleIds: string[]) => void;
   hasDays: boolean;
+  mapsEnabled: boolean;
+  allSchedules: ScheduleResponse[];
+  currentDaySchedules: ScheduleResponse[];
 }) {
   return (
     <div className="hidden max-h-[calc(100vh-8rem)] sm:max-h-[calc(100vh-12rem)] lg:flex min-w-0 flex-[2] flex-col rounded-lg border border-dashed bg-card self-start sticky top-4">
@@ -59,8 +66,22 @@ export function RightPanel({
         current={rightPanelTab}
         onChange={setRightPanelTab}
         candidateCount={candidates.length}
+        mapsEnabled={mapsEnabled}
       />
-      <div className="min-h-0 overflow-y-auto overscroll-contain p-4">
+      {rightPanelTab === "map" ? (
+        <div className="min-h-0 flex-1 overflow-hidden">
+          <MapPanel
+            currentDaySchedules={currentDaySchedules}
+            allSchedules={allSchedules}
+            online={online}
+          />
+        </div>
+      ) : null}
+      <div
+        className={
+          rightPanelTab === "map" ? "hidden" : "min-h-0 overflow-y-auto overscroll-contain p-4"
+        }
+      >
         {rightPanelTab === "candidates" ? (
           currentDayId && currentPatternId ? (
             <CandidatePanel

@@ -85,7 +85,7 @@ export default function QuickPollPage() {
           <span className="ml-2 text-sm text-muted-foreground">投票</span>
         </div>
       </header>
-      <LoadingBoundary isLoading={isLoading} skeleton={<PollSkeleton />}>
+      <LoadingBoundary isLoading={isLoading} skeleton={<PollSkeleton />} delay={0}>
         {error || !poll ? (
           <div className="container flex max-w-lg flex-col items-center py-16 text-center">
             <Vote className="mb-4 h-12 w-12 text-muted-foreground" />
@@ -173,11 +173,14 @@ export default function QuickPollPage() {
 
 function PollSkeleton() {
   return (
-    <div className="container max-w-lg py-8 space-y-4">
+    <div className="container max-w-lg py-8 space-y-6">
       <Skeleton className="h-7 w-3/4" />
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-12 w-full" />
-      <Skeleton className="h-12 w-full" />
+      <div className="space-y-2">
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+      </div>
+      <Skeleton className="mx-auto h-4 w-16" />
     </div>
   );
 }

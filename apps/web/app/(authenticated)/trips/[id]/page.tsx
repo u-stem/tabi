@@ -67,6 +67,7 @@ import { BookmarkTab } from "./_components/bookmark-tab";
 import { DayMemoEditor } from "./_components/day-memo-editor";
 import { DayTabs } from "./_components/day-tabs";
 import { ExpenseTab } from "./_components/expense-tab";
+import { MapPanel } from "./_components/map-panel";
 import { PatternTabs } from "./_components/pattern-tabs";
 import { PollTab } from "./_components/poll-tab";
 import { RightPanel, type RightPanelTab } from "./_components/right-panel";
@@ -814,6 +815,19 @@ export default function TripDetailPage() {
         );
       case "activity":
         return <ActivityLog tripId={tripId} />;
+      case "map":
+        return (
+          <div className="h-[calc(100svh-14rem)]">
+            <MapPanel
+              tripId={tripId}
+              currentDaySchedules={currentPattern?.schedules ?? []}
+              allSchedules={tripData.days.flatMap((day, dayIndex) =>
+                day.patterns.flatMap((p) => p.schedules.map((s) => ({ ...s, dayIndex }))),
+              )}
+              online={online}
+            />
+          </div>
+        );
     }
   }
 
@@ -847,6 +861,7 @@ export default function TripDetailPage() {
                 onOpenActivity={() => {
                   handleMobileTabChange("activity", "tap");
                 }}
+                onOpenMap={trip.mapsEnabled ? () => handleMobileTabChange("map", "tap") : undefined}
               />
               <EditTripDialog
                 tripId={tripId}

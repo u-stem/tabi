@@ -8,7 +8,8 @@ export type MobileContentTab =
   | "expenses"
   | "bookmarks"
   | "activity"
-  | "souvenirs";
+  | "souvenirs"
+  | "map";
 
 interface MobileContentTabsProps {
   activeTab: MobileContentTab;

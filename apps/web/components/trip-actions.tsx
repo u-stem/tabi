@@ -12,6 +12,7 @@ import {
   FileDown,
   History,
   Link,
+  Map as MapIcon,
   MoreHorizontal,
   Pencil,
   PenLine,
@@ -88,6 +89,7 @@ type TripActionsProps = {
   compact?: boolean;
   onOpenBookmarks?: () => void;
   onOpenActivity?: () => void;
+  onOpenMap?: () => void;
 };
 
 // "scheduling" is system-managed and should not appear in the manual status dropdown
@@ -114,6 +116,7 @@ export function TripActions({
   compact,
   onOpenBookmarks,
   onOpenActivity,
+  onOpenMap,
 }: TripActionsProps) {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
@@ -234,6 +237,15 @@ export function TripActions({
   }
 
   const sheetActions = [
+    ...(onOpenMap
+      ? [
+          {
+            label: "地図",
+            icon: <MapIcon className="h-4 w-4" />,
+            onClick: onOpenMap,
+          },
+        ]
+      : []),
     ...(onOpenBookmarks
       ? [
           {
@@ -413,6 +425,12 @@ export function TripActions({
           <DropdownMenuContent align="end">
             {compact && (
               <>
+                {onOpenMap && (
+                  <DropdownMenuItem onClick={onOpenMap}>
+                    <MapIcon />
+                    地図
+                  </DropdownMenuItem>
+                )}
                 {onOpenBookmarks && (
                   <DropdownMenuItem onClick={onOpenBookmarks}>
                     <Bookmark />

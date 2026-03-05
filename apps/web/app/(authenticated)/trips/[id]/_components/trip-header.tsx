@@ -20,6 +20,7 @@ export function TripHeader({
   onEditOpen,
   onOpenBookmarks,
   onOpenActivity,
+  onOpenMap,
 }: {
   trip: TripResponse;
   tripId: string;
@@ -31,6 +32,7 @@ export function TripHeader({
   onEditOpen: () => void;
   onOpenBookmarks?: () => void;
   onOpenActivity?: () => void;
+  onOpenMap?: () => void;
 }) {
   const tripActionsProps = {
     tripId,
@@ -43,6 +45,7 @@ export function TripHeader({
     memberLimitReached: trip.memberCount >= MAX_MEMBERS_PER_TRIP,
     onOpenBookmarks,
     onOpenActivity,
+    onOpenMap,
   } as const;
 
   return (

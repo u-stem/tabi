@@ -65,7 +65,7 @@ export default function PollsPage() {
   return (
     <div className="container max-w-lg py-8">
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-xl font-bold">投票</h1>
+        <h1 className="text-xl font-bold">かんたん投票</h1>
         <Button asChild size="sm">
           <Link href="/polls/new">
             <Plus className="mr-1 h-4 w-4" />

@@ -95,6 +95,9 @@ export function RightPanelTabs({
           className={cn(CHIP_BASE, current === "map" ? CHIP_ACTIVE : CHIP_INACTIVE)}
         >
           地図
+          <span className="ml-1 text-[10px] font-semibold uppercase tracking-wide opacity-60">
+            β
+          </span>
         </button>
       )}
     </div>

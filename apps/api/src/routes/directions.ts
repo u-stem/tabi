@@ -16,6 +16,12 @@ directionsRoutes.get("/", requireAuth, async (c) => {
     return c.json({ error: "Missing required query parameters" }, 400);
   }
 
+  const coords = [originLat, originLng, destLat, destLng].map(Number);
+  if (coords.some(Number.isNaN)) {
+    return c.json({ error: "Invalid coordinate values" }, 400);
+  }
+  const [oLat, oLng, dLat, dLng] = coords;
+
   const role = await checkTripAccess(tripId, user.id);
   if (!role) {
     return c.json({ error: "Forbidden" }, 403);
@@ -37,12 +43,12 @@ directionsRoutes.get("/", requireAuth, async (c) => {
   const body = {
     origin: {
       location: {
-        latLng: { latitude: Number(originLat), longitude: Number(originLng) },
+        latLng: { latitude: oLat, longitude: oLng },
       },
     },
     destination: {
       location: {
-        latLng: { latitude: Number(destLat), longitude: Number(destLng) },
+        latLng: { latitude: dLat, longitude: dLng },
       },
     },
     travelMode: "DRIVE",

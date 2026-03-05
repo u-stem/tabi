@@ -228,7 +228,7 @@ export default function TripDetailPage() {
   });
   useAuthRedirect(queryError);
   const pollId = trip?.poll?.id;
-  const { isLoading: isPollLoading } = useQuery({
+  const { isLoading: isPollLoading, data: pollData } = useQuery({
     queryKey: queryKeys.polls.detail(pollId ?? ""),
     queryFn: () => api<PollDetailResponse>(`/api/polls/${pollId}`),
     enabled: !!pollId,
@@ -246,6 +246,7 @@ export default function TripDetailPage() {
   const [addCandidateOpen, setAddCandidateOpen] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const [addSouvenirOpen, setAddSouvenirOpen] = useState(false);
+  const [addPollOptionOpen, setAddPollOptionOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(0);
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
@@ -605,6 +606,14 @@ export default function TripDetailPage() {
     [currentDay?.dayNumber, trip?.days],
   );
 
+  const allSchedules = useMemo(
+    () =>
+      trip?.days.flatMap((day, dayIndex) =>
+        day.patterns.flatMap((p) => p.schedules.map((s) => ({ ...s, dayIndex }))),
+      ) ?? [],
+    [trip?.days],
+  );
+
   const dnd = useTripDragAndDrop({
     tripId,
     currentDayId: currentDay?.id ?? null,
@@ -695,6 +704,8 @@ export default function TripDetailPage() {
                   canEdit={canEdit}
                   onMutate={onMutate}
                   onConfirmed={() => setSelectedDay(0)}
+                  addOptionOpen={addPollOptionOpen}
+                  onAddOptionOpenChange={setAddPollOptionOpen}
                 />
               </div>
             ) : currentDay && currentPattern ? (
@@ -824,9 +835,7 @@ export default function TripDetailPage() {
             <MapPanel
               tripId={tripId}
               currentDaySchedules={currentPattern?.schedules ?? []}
-              allSchedules={tripData.days.flatMap((day, dayIndex) =>
-                day.patterns.flatMap((p) => p.schedules.map((s) => ({ ...s, dayIndex }))),
-              )}
+              allSchedules={allSchedules}
               online={online}
             />
           </div>
@@ -962,6 +971,8 @@ export default function TripDetailPage() {
                           canEdit={canEdit}
                           onMutate={onMutate}
                           onConfirmed={() => setSelectedDay(0)}
+                          addOptionOpen={addPollOptionOpen}
+                          onAddOptionOpenChange={setAddPollOptionOpen}
                         />
                       </div>
                     ) : currentDay && currentPattern ? (
@@ -1058,9 +1069,7 @@ export default function TripDetailPage() {
                     maxEndDayOffset={Math.max(0, trip.days.length - 1)}
                     onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
                     mapsEnabled={trip.mapsEnabled}
-                    allSchedules={trip.days.flatMap((day, dayIndex) =>
-                      day.patterns.flatMap((p) => p.schedules.map((s) => ({ ...s, dayIndex }))),
-                    )}
+                    allSchedules={allSchedules}
                     currentDaySchedules={currentPattern?.schedules ?? []}
                   />
                 </div>
@@ -1095,18 +1104,24 @@ export default function TripDetailPage() {
               <Fab
                 onClick={() => {
                   if (mobileTab === "schedule") {
-                    if (scheduleLimitReached) {
-                      toast.error(scheduleLimitMessage);
-                      return;
+                    if (selectedDay === -1) {
+                      setAddPollOptionOpen(true);
+                    } else {
+                      if (scheduleLimitReached) {
+                        toast.error(scheduleLimitMessage);
+                        return;
+                      }
+                      setAddScheduleOpen(true);
                     }
-                    setAddScheduleOpen(true);
                   } else if (mobileTab === "candidates") setAddCandidateOpen(true);
                   else if (mobileTab === "expenses") setAddExpenseOpen(true);
                   else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
                 }}
                 label={
                   mobileTab === "schedule"
-                    ? "予定を追加"
+                    ? selectedDay === -1
+                      ? "日程案追加"
+                      : "予定を追加"
                     : mobileTab === "candidates"
                       ? "候補を追加"
                       : mobileTab === "expenses"
@@ -1114,7 +1129,13 @@ export default function TripDetailPage() {
                         : "お土産を追加"
                 }
                 hidden={
-                  !canEdit || !online || mobileTab === "bookmarks" || mobileTab === "activity"
+                  !canEdit ||
+                  !online ||
+                  mobileTab === "bookmarks" ||
+                  mobileTab === "activity" ||
+                  (mobileTab === "schedule" &&
+                    selectedDay === -1 &&
+                    (!isOwnerRole(trip.role) || pollData?.status !== "open"))
                 }
               />
 

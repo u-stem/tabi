@@ -53,7 +53,7 @@ export function useDayWeather({ tripId, currentDayId, onDone }: UseDayWeatherArg
     const dayId = currentDayId;
     const next = { ...weather };
 
-    queryClient.cancelQueries({ queryKey: cacheKey });
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(cacheKey, {
@@ -69,8 +69,6 @@ export function useDayWeather({ tripId, currentDayId, onDone }: UseDayWeatherArg
       await api(`/api/trips/${tripId}/days/${dayId}`, {
         method: "PATCH",
         body: JSON.stringify({
-          // memo is required in the PATCH schema; use the pre-mutation snapshot value
-          memo: prev?.days.find((d) => d.id === dayId)?.memo ?? null,
           weatherType: next.weatherType,
           weatherTypeSecondary: next.weatherTypeSecondary,
           tempHigh: next.tempHigh,

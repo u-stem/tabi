@@ -67,7 +67,7 @@ export function usePatternOperations({
     if (!currentDayId) return;
     const dayId = currentDayId;
 
-    queryClient.cancelQueries({ queryKey: cacheKey });
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(cacheKey, {
@@ -98,7 +98,7 @@ export function usePatternOperations({
     const patternId = renameTarget.id;
     const newLabel = renameLabel.trim();
 
-    queryClient.cancelQueries({ queryKey: cacheKey });
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(cacheKey, {

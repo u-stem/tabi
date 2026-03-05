@@ -34,7 +34,7 @@ export function usePollMemo({ pollId, onDone }: UsePollMemoArgs) {
     setSaving(true);
     const newNote = text.trim() || null;
 
-    queryClient.cancelQueries({ queryKey: cacheKey });
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<PollDetailResponse>(cacheKey);
     if (prev) {
       queryClient.setQueryData(cacheKey, { ...prev, note: newNote });

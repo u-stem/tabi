@@ -92,7 +92,7 @@ export function useScheduleSelection({
     const count = selectedIds.size;
     const ids = [...selectedIds];
 
-    queryClient.cancelQueries({ queryKey: cacheKey });
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       let next = prev;
@@ -127,7 +127,7 @@ export function useScheduleSelection({
     const count = selectedIds.size;
     const ids = [...selectedIds];
 
-    queryClient.cancelQueries({ queryKey: cacheKey });
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       let next = prev;
@@ -160,7 +160,7 @@ export function useScheduleSelection({
     const ids = [...selectedIds];
     const target = selectionTarget;
 
-    queryClient.cancelQueries({ queryKey: cacheKey });
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
       let next = prev;

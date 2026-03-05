@@ -60,7 +60,7 @@ export function useBookmarkListSelection({
     const count = ids.length;
     const idSet = new Set(ids);
 
-    queryClient.cancelQueries({ queryKey: cacheKey });
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<BookmarkListResponse[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(

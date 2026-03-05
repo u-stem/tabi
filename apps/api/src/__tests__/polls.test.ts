@@ -17,6 +17,7 @@ const {
   mockDbQuery: {
     users: { findFirst: vi.fn() },
     trips: { findFirst: vi.fn() },
+    tripMembers: { findFirst: vi.fn() },
     schedulePollParticipants: { findFirst: vi.fn(), findMany: vi.fn() },
   },
   mockCreateNotification: vi.fn(),
@@ -178,6 +179,11 @@ describe("Poll routes", () => {
         id: "00000000-0000-0000-0000-000000000002",
         name: "New Participant",
         image: null,
+      });
+      mockDbQuery.tripMembers.findFirst.mockResolvedValue({
+        tripId: "trip-1",
+        userId: "00000000-0000-0000-0000-000000000002",
+        role: "editor",
       });
       mockDbQuery.schedulePollParticipants.findFirst.mockResolvedValue(undefined);
       mockDbInsert.mockReturnValue({

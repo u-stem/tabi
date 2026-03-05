@@ -253,6 +253,14 @@ export default function SpTripDetailPage() {
     [currentDay?.dayNumber, trip?.days],
   );
 
+  const allSchedules = useMemo(
+    () =>
+      trip?.days.flatMap((day, dayIndex) =>
+        day.patterns.flatMap((p) => p.schedules.map((s) => ({ ...s, dayIndex }))),
+      ) ?? [],
+    [trip?.days],
+  );
+
   const dnd = useTripDragAndDrop({
     tripId: tripId ?? "",
     currentDayId: currentDay?.id ?? null,
@@ -487,9 +495,7 @@ export default function SpTripDetailPage() {
             <MapPanel
               tripId={tripId ?? ""}
               currentDaySchedules={currentPattern?.schedules ?? []}
-              allSchedules={trip.days.flatMap((day, dayIndex) =>
-                day.patterns.flatMap((p) => p.schedules.map((s) => ({ ...s, dayIndex }))),
-              )}
+              allSchedules={allSchedules}
               online={online}
             />
           </div>

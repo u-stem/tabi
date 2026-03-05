@@ -157,7 +157,7 @@ export function useHomeTrips(): UseHomeTripsReturn {
     const idSet = new Set(ids);
 
     const cacheKey = queryKeys.trips.owned();
-    queryClient.cancelQueries({ queryKey: cacheKey });
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripListItem[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(

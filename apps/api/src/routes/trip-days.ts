@@ -39,7 +39,7 @@ tripDayRoutes.patch("/:tripId/days/:dayId", requireTripAccess("editor"), async (
   const [updated] = await db
     .update(tripDays)
     .set({
-      memo: parsed.data.memo,
+      ...(parsed.data.memo !== undefined && { memo: parsed.data.memo }),
       ...(parsed.data.weatherType !== undefined && { weatherType: parsed.data.weatherType }),
       ...(parsed.data.weatherTypeSecondary !== undefined && {
         weatherTypeSecondary: parsed.data.weatherTypeSecondary,

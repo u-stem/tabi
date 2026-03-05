@@ -381,6 +381,12 @@ pollRoutes.post("/:pollId/participants", async (c) => {
   });
   if (!targetUser) return c.json({ error: ERROR_MSG.USER_NOT_FOUND }, 404);
 
+  // Verify the target user is a trip member
+  const isTripMember = await db.query.tripMembers.findFirst({
+    where: and(eq(tripMembers.tripId, poll.tripId), eq(tripMembers.userId, parsed.data.userId)),
+  });
+  if (!isTripMember) return c.json({ error: ERROR_MSG.USER_NOT_FOUND }, 404);
+
   const existing = await db.query.schedulePollParticipants.findFirst({
     where: and(
       eq(schedulePollParticipants.pollId, pollId),

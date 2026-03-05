@@ -33,7 +33,7 @@ export const WEATHER_LABELS: Record<WeatherType, string> = {
 };
 
 export const updateTripDaySchema = z.object({
-  memo: z.string().max(DAY_MEMO_MAX_LENGTH).nullable(),
+  memo: z.string().max(DAY_MEMO_MAX_LENGTH).nullable().optional(),
   weatherType: z.enum(WEATHER_TYPES).nullable().optional(),
   weatherTypeSecondary: z.enum(WEATHER_TYPES).nullable().optional(),
   tempHigh: z.number().int().min(-50).max(60).nullable().optional(),

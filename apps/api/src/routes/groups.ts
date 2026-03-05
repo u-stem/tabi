@@ -244,41 +244,52 @@ groupRoutes.post("/:groupId/members/bulk", async (c) => {
 
   const { userIds } = parsed.data;
 
-  const [{ count: currentCount }] = await db
-    .select({ count: count() })
-    .from(groupMembers)
-    .where(eq(groupMembers.groupId, groupId));
+  const result = await db.transaction(async (tx) => {
+    const [{ count: currentCount }] = await tx
+      .select({ count: count() })
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, groupId));
 
-  const remainingSlots = MAX_MEMBERS_PER_GROUP - currentCount;
-  if (remainingSlots <= 0) {
+    const remainingSlots = MAX_MEMBERS_PER_GROUP - currentCount;
+    if (remainingSlots <= 0) {
+      return { added: 0, failed: userIds.length, limitReached: true } as const;
+    }
+
+    const existingMembers = await tx
+      .select({ userId: groupMembers.userId })
+      .from(groupMembers)
+      .where(eq(groupMembers.groupId, groupId));
+    const existingMemberIds = new Set(existingMembers.map((m) => m.userId));
+
+    const newUserIds = userIds.filter((id) => !existingMemberIds.has(id));
+
+    let validUserIds = new Set<string>();
+    if (newUserIds.length > 0) {
+      const existingUsers = await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(inArray(users.id, newUserIds));
+      validUserIds = new Set(existingUsers.map((u) => u.id));
+    }
+
+    const toAdd = newUserIds.filter((id) => validUserIds.has(id)).slice(0, remainingSlots);
+
+    if (toAdd.length > 0) {
+      await tx.insert(groupMembers).values(toAdd.map((uid) => ({ groupId, userId: uid })));
+    }
+
+    return {
+      added: toAdd.length,
+      failed: userIds.length - toAdd.length,
+      limitReached: false,
+    } as const;
+  });
+
+  if (result.limitReached) {
     return c.json({ error: ERROR_MSG.LIMIT_GROUP_MEMBERS }, 409);
   }
 
-  const existingMembers = await db
-    .select({ userId: groupMembers.userId })
-    .from(groupMembers)
-    .where(eq(groupMembers.groupId, groupId));
-  const existingMemberIds = new Set(existingMembers.map((m) => m.userId));
-
-  const newUserIds = userIds.filter((id) => !existingMemberIds.has(id));
-
-  let validUserIds = new Set<string>();
-  if (newUserIds.length > 0) {
-    const existingUsers = await db
-      .select({ id: users.id })
-      .from(users)
-      .where(inArray(users.id, newUserIds));
-    validUserIds = new Set(existingUsers.map((u) => u.id));
-  }
-
-  const toAdd = newUserIds.filter((id) => validUserIds.has(id)).slice(0, remainingSlots);
-
-  if (toAdd.length > 0) {
-    await db.insert(groupMembers).values(toAdd.map((uid) => ({ groupId, userId: uid })));
-  }
-
-  const failed = userIds.length - toAdd.length;
-  return c.json({ added: toAdd.length, failed }, 201);
+  return c.json({ added: result.added, failed: result.failed }, 201);
 });
 
 // Remove member from group

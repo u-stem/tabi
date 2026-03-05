@@ -44,6 +44,11 @@ type UseTripDragAndDropArgs = {
   onDone: () => void;
 };
 
+const POINTER_SENSOR_OPTIONS = { activationConstraint: { distance: 8 } } as const;
+const TOUCH_SENSOR_OPTIONS = {
+  activationConstraint: { delay: 200, tolerance: 5 },
+} as const;
+
 export function useTripDragAndDrop({
   tripId,
   currentDayId,
@@ -62,8 +67,8 @@ export function useTripDragAndDrop({
   const [lastOverZone, setLastOverZone] = useState<"timeline" | "candidates" | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(PointerSensor, POINTER_SENSOR_OPTIONS),
+    useSensor(TouchSensor, TOUCH_SENSOR_OPTIONS),
   );
 
   const collisionDetection = pointerWithin;

@@ -124,6 +124,32 @@ export function ScheduleFormFields({
     setUrlKeys((prev) => prev.filter((_, i) => i !== index));
   }, []);
 
+  const handlePlaceSelect = useCallback(
+    ({
+      formattedAddress,
+      lat,
+      lng,
+      placeId,
+      displayName,
+    }: {
+      formattedAddress: string;
+      lat: number;
+      lng: number;
+      placeId: string;
+      displayName: string;
+    }) => {
+      setAddress(formattedAddress);
+      onLocationSelected?.({
+        address: formattedAddress,
+        latitude: lat,
+        longitude: lng,
+        placeId,
+        name: displayName,
+      });
+    },
+    [onLocationSelected],
+  );
+
   return (
     <>
       <div className="space-y-2">
@@ -189,16 +215,7 @@ export function ScheduleFormFields({
             <PlacesAutocompleteInput
               id={`${idPrefix}address`}
               defaultValue={defaultValues?.address ?? ""}
-              onPlaceSelect={({ formattedAddress, lat, lng, placeId, displayName }) => {
-                setAddress(formattedAddress);
-                onLocationSelected?.({
-                  address: formattedAddress,
-                  latitude: lat,
-                  longitude: lng,
-                  placeId,
-                  name: displayName,
-                });
-              }}
+              onPlaceSelect={handlePlaceSelect}
             />
           </div>
         ) : (

@@ -6,7 +6,7 @@ import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
 import { ExpensePanel } from "@/components/expense-panel";
 import { SouvenirPanel } from "@/components/souvenir-panel";
-import { MapPanel } from "./map-panel";
+import { MapPanel, type ScheduleWithDayIndex } from "./map-panel";
 import { type RightPanelTab, RightPanelTabs } from "./right-panel-tabs";
 
 export type { RightPanelTab };
@@ -57,7 +57,7 @@ export function RightPanel({
   onSaveToBookmark?: (scheduleIds: string[]) => void;
   hasDays: boolean;
   mapsEnabled: boolean;
-  allSchedules: ScheduleResponse[];
+  allSchedules: ScheduleWithDayIndex[];
   currentDaySchedules: ScheduleResponse[];
 }) {
   return (

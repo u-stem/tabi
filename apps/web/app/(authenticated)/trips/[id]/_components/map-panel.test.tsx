@@ -1,5 +1,7 @@
+import type { ScheduleResponse } from "@sugara/shared";
 import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import type { ScheduleWithDayIndex } from "./map-panel";
 import { MapPanel } from "./map-panel";
 
 vi.mock("@vis.gl/react-google-maps", () => ({
@@ -15,7 +17,7 @@ vi.mock("@vis.gl/react-google-maps", () => ({
   useMap: vi.fn(() => null),
 }));
 
-const scheduleWithCoords = {
+const baseSchedule: ScheduleResponse = {
   id: "1",
   name: "spot A",
   latitude: 35.6762,
@@ -32,16 +34,19 @@ const scheduleWithCoords = {
   departurePlace: null,
   arrivalPlace: null,
   transportMethod: null,
+  sortOrder: 0,
   updatedAt: new Date().toISOString(),
-} as const;
+};
 
-const scheduleWithoutCoords = {
-  ...scheduleWithCoords,
+const scheduleWithCoords: ScheduleWithDayIndex = { ...baseSchedule, dayIndex: 0 };
+const scheduleWithoutCoords: ScheduleWithDayIndex = {
+  ...baseSchedule,
   id: "2",
   name: "spot B",
   latitude: null,
   longitude: null,
-} as const;
+  dayIndex: 0,
+};
 
 describe("MapPanel", () => {
   afterEach(() => {
@@ -51,8 +56,8 @@ describe("MapPanel", () => {
   it("lat/lng があるスポットにのみマーカーを表示する", () => {
     render(
       <MapPanel
-        currentDaySchedules={[scheduleWithCoords as never, scheduleWithoutCoords as never]}
-        allSchedules={[scheduleWithCoords as never, scheduleWithoutCoords as never]}
+        currentDaySchedules={[scheduleWithCoords, scheduleWithoutCoords]}
+        allSchedules={[scheduleWithCoords, scheduleWithoutCoords]}
         online={true}
       />,
     );

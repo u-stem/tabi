@@ -20,15 +20,22 @@ const DAY_COLORS = [
 
 type MapMode = "day" | "all";
 
+export type ScheduleWithDayIndex = ScheduleResponse & { dayIndex: number };
+
 type Props = {
   currentDaySchedules: ScheduleResponse[];
-  allSchedules: ScheduleResponse[];
+  allSchedules: ScheduleWithDayIndex[];
   online: boolean;
 };
 
 type MappableSchedule = ScheduleResponse & { latitude: number; longitude: number };
+type MappableScheduleWithDay = ScheduleWithDayIndex & { latitude: number; longitude: number };
 
 function isMappable(s: ScheduleResponse): s is MappableSchedule {
+  return s.latitude != null && s.longitude != null;
+}
+
+function isMappableWithDay(s: ScheduleWithDayIndex): s is MappableScheduleWithDay {
   return s.latitude != null && s.longitude != null;
 }
 
@@ -44,8 +51,10 @@ export function MapPanel({ currentDaySchedules, allSchedules, online }: Props) {
     );
   }
 
-  const schedules = mode === "day" ? currentDaySchedules : allSchedules;
-  const mappable = schedules.filter(isMappable);
+  const mappable =
+    mode === "day"
+      ? currentDaySchedules.filter(isMappable)
+      : allSchedules.filter(isMappableWithDay);
 
   const center =
     mappable.length > 0
@@ -82,8 +91,11 @@ export function MapPanel({ currentDaySchedules, allSchedules, online }: Props) {
           mapId="sugara-trip-map"
           className="h-full w-full"
         >
-          {mappable.map((schedule, index) => {
-            const color = mode === "all" ? DAY_COLORS[index % DAY_COLORS.length] : "#3b82f6";
+          {mappable.map((schedule) => {
+            const color =
+              mode === "all" && "dayIndex" in schedule
+                ? DAY_COLORS[(schedule as MappableScheduleWithDay).dayIndex % DAY_COLORS.length]
+                : "#3b82f6";
             return (
               <AdvancedMarker
                 key={schedule.id}

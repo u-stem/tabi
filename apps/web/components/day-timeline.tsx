@@ -482,7 +482,13 @@ export function DayTimeline({
                   item.schedule.latitude != null &&
                   item.schedule.longitude != null &&
                   next.schedule.latitude != null &&
-                  next.schedule.longitude != null;
+                  next.schedule.longitude != null &&
+                  // Only show when both schedules have times set (no travel time for untimed spots)
+                  item.schedule.startTime != null &&
+                  item.schedule.endTime != null &&
+                  next.schedule.startTime != null &&
+                  // Skip if first schedule spans multiple days (endDayOffset > 0)
+                  (item.schedule.endDayOffset == null || item.schedule.endDayOffset === 0);
                 const itemKey =
                   item.type === "crossDay" ? `cross-${item.entry.schedule.id}` : item.schedule.id;
                 return (

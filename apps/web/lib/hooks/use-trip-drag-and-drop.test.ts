@@ -71,7 +71,7 @@ const s1 = makeSchedule("s1");
 const s2 = makeSchedule("s2");
 const s3 = makeSchedule("s3");
 
-describe("useTripDragAndDrop — localSchedules sync guard", () => {
+describe("useTripDragAndDrop — null-based snapshot isolation", () => {
   afterEach(() => vi.clearAllMocks());
 
   it("updates localSchedules when schedules prop changes while NOT dragging", () => {
@@ -196,5 +196,52 @@ describe("useTripDragAndDrop — localSchedules sync guard", () => {
     // Optimistic reorder should be visible while the API call is in-flight
     expect(result.current.localSchedules[0].id).toBe("s2");
     expect(result.current.localSchedules[1].id).toBe("s1");
+  });
+
+  it("falls back to server data after the API call resolves", async () => {
+    // Default mock resolves immediately (mockResolvedValue(undefined))
+    const { result } = renderHook(() =>
+      useTripDragAndDrop({
+        tripId: "trip1",
+        currentDayId: "day1",
+        currentPatternId: "pattern1",
+        schedules: [s1, s2],
+        candidates: [],
+        onDone: vi.fn(),
+      }),
+    );
+
+    act(() => {
+      result.current.handleDragStart({
+        active: {
+          id: "s1",
+          data: { current: { type: "schedule" } },
+          rect: { current: { initial: null, translated: null } },
+        },
+        activatorEvent: new PointerEvent("pointerdown"),
+      } as Parameters<typeof result.current.handleDragStart>[0]);
+    });
+
+    await act(async () => {
+      await result.current.handleDragEnd({
+        active: {
+          id: "s1",
+          data: { current: { type: "schedule" } },
+          rect: { current: { initial: null, translated: null } },
+        },
+        over: {
+          id: "s2",
+          data: { current: { type: "schedule" } },
+          rect: { width: 0, height: 0, top: 0, left: 0, bottom: 0, right: 0 },
+          disabled: false,
+        },
+        delta: { x: 0, y: 0 },
+        activatorEvent: new PointerEvent("pointerup"),
+        collisions: null,
+      } as Parameters<typeof result.current.handleDragEnd>[0]);
+    });
+
+    // After API resolves, finally resets local state to null → falls back to schedules prop
+    expect(result.current.localSchedules).toStrictEqual([s1, s2]);
   });
 });

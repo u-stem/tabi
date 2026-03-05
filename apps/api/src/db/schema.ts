@@ -70,6 +70,8 @@ export const expenseSplitTypeEnum = pgEnum("expense_split_type", ["equal", "cust
 export const pollStatusEnum = pgEnum("poll_status", ["open", "confirmed", "closed"]);
 export const pollResponseEnum = pgEnum("poll_response", ["ok", "maybe", "ng"]);
 
+export const quickPollStatusEnum = pgEnum("quick_poll_status", ["open", "closed"]);
+
 export const souvenirPriorityEnum = pgEnum("souvenir_priority", ["high", "medium"]);
 
 export const weatherTypeEnum = pgEnum("weather_type", [
@@ -736,6 +738,14 @@ export const notificationPreferencesRelations = relations(notificationPreference
   user: one(users, { fields: [notificationPreferences.userId], references: [users.id] }),
 }));
 
+export const routeCache = pgTable("route_cache", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  cacheKey: text("cache_key").notNull().unique(),
+  durationSeconds: integer("duration_seconds").notNull(),
+  encodedPolyline: text("encoded_polyline"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const faqs = pgTable("faqs", {
   id: uuid("id").primaryKey().defaultRandom(),
   question: text("question").notNull(),
@@ -744,3 +754,88 @@ export const faqs = pgTable("faqs", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
+
+export const quickPolls = pgTable(
+  "quick_polls",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    creatorId: uuid("creator_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    shareToken: varchar("share_token", { length: 64 }).notNull().unique(),
+    question: text("question").notNull(),
+    allowMultiple: boolean("allow_multiple").notNull().default(false),
+    showResultsBeforeVote: boolean("show_results_before_vote").notNull().default(true),
+    status: quickPollStatusEnum("status").notNull().default("open"),
+    closedAt: timestamp("closed_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("quick_polls_creator_id_idx").on(table.creatorId),
+    index("quick_polls_expires_at_idx").on(table.expiresAt),
+  ],
+).enableRLS();
+
+export const quickPollOptions = pgTable(
+  "quick_poll_options",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    pollId: uuid("poll_id")
+      .notNull()
+      .references(() => quickPolls.id, { onDelete: "cascade" }),
+    label: text("label").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (table) => [index("quick_poll_options_poll_id_idx").on(table.pollId)],
+).enableRLS();
+
+export const quickPollVotes = pgTable(
+  "quick_poll_votes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    pollId: uuid("poll_id")
+      .notNull()
+      .references(() => quickPolls.id, { onDelete: "cascade" }),
+    optionId: uuid("option_id")
+      .notNull()
+      .references(() => quickPollOptions.id, { onDelete: "cascade" }),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "cascade" }),
+    anonymousId: text("anonymous_id"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    index("quick_poll_votes_poll_id_idx").on(table.pollId),
+    uniqueIndex("quick_poll_votes_option_user_idx")
+      .on(table.pollId, table.optionId, table.userId)
+      .where(sql`user_id IS NOT NULL`),
+    uniqueIndex("quick_poll_votes_option_anonymous_idx")
+      .on(table.pollId, table.optionId, table.anonymousId)
+      .where(sql`anonymous_id IS NOT NULL`),
+    check(
+      "quick_poll_votes_user_or_anonymous",
+      sql`user_id IS NOT NULL OR anonymous_id IS NOT NULL`,
+    ),
+  ],
+).enableRLS();
+
+export const quickPollsRelations = relations(quickPolls, ({ one, many }) => ({
+  creator: one(users, { fields: [quickPolls.creatorId], references: [users.id] }),
+  options: many(quickPollOptions),
+  votes: many(quickPollVotes),
+}));
+
+export const quickPollOptionsRelations = relations(quickPollOptions, ({ one, many }) => ({
+  poll: one(quickPolls, { fields: [quickPollOptions.pollId], references: [quickPolls.id] }),
+  votes: many(quickPollVotes),
+}));
+
+export const quickPollVotesRelations = relations(quickPollVotes, ({ one }) => ({
+  poll: one(quickPolls, { fields: [quickPollVotes.pollId], references: [quickPolls.id] }),
+  option: one(quickPollOptions, {
+    fields: [quickPollVotes.optionId],
+    references: [quickPollOptions.id],
+  }),
+  user: one(users, { fields: [quickPollVotes.userId], references: [users.id] }),
+}));

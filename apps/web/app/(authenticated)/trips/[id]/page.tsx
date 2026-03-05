@@ -1,6 +1,6 @@
 "use client";
 
-import { type Announcements, DndContext, DragOverlay } from "@dnd-kit/core";
+import { type Announcements, defaultDropAnimation, DndContext, DragOverlay } from "@dnd-kit/core";
 import type { BookmarkListResponse, PollDetailResponse, TripResponse } from "@sugara/shared";
 import {
   canEdit as canEditRole,
@@ -1031,7 +1031,7 @@ export default function TripDetailPage() {
               </div>
               {mounted &&
                 createPortal(
-                  <DragOverlay>
+                  <DragOverlay dropAnimation={defaultDropAnimation}>
                     {dnd.activeDragItem &&
                       (() => {
                         const Icon = CATEGORY_ICONS[dnd.activeDragItem.category];

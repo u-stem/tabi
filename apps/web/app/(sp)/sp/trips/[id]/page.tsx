@@ -8,9 +8,18 @@ import {
   MAX_SCHEDULES_PER_TRIP,
 } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { APIProvider } from "@vis.gl/react-google-maps";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { toast } from "sonner";
 import { ActivityLog } from "@/components/activity-log";
 import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dialog";
@@ -35,6 +44,7 @@ const EditTripDialog = dynamic(() =>
 // Reuse trip page sub-components from the desktop page's _components
 import { DayMemoEditor } from "@/app/(authenticated)/trips/[id]/_components/day-memo-editor";
 import { DayTabs } from "@/app/(authenticated)/trips/[id]/_components/day-tabs";
+import { MapPanel } from "@/app/(authenticated)/trips/[id]/_components/map-panel";
 import { PatternTabs } from "@/app/(authenticated)/trips/[id]/_components/pattern-tabs";
 import { PollTab } from "@/app/(authenticated)/trips/[id]/_components/poll-tab";
 import {
@@ -471,6 +481,19 @@ export default function SpTripDetailPage() {
         );
       case "activity":
         return <ActivityLog tripId={tripId ?? ""} />;
+      case "map":
+        return (
+          <div className="h-[calc(100svh-14rem)]">
+            <MapPanel
+              tripId={tripId ?? ""}
+              currentDaySchedules={currentPattern?.schedules ?? []}
+              allSchedules={trip.days.flatMap((day, dayIndex) =>
+                day.patterns.flatMap((p) => p.schedules.map((s) => ({ ...s, dayIndex }))),
+              )}
+              online={online}
+            />
+          </div>
+        );
     }
   }
 
@@ -522,157 +545,175 @@ export default function SpTripDetailPage() {
       {queryError || !trip ? (
         <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
       ) : (
-        <SelectionProvider value={selectionValue}>
-          <div className="mt-4">
-            <TripHeader
-              trip={trip}
-              tripId={tripId}
-              otherPresence={otherPresence}
-              isConnected={isConnected}
-              online={online}
-              canEdit={canEdit}
-              onMutate={onMutate}
-              onEditOpen={() => setEditOpen(true)}
-              onOpenBookmarks={
-                isGuest
-                  ? undefined
-                  : () => {
-                      handleMobileTabChange("bookmarks", "tap");
-                    }
-              }
-              onOpenActivity={() => {
-                handleMobileTabChange("activity", "tap");
-              }}
-            />
-            <EditTripDialog
-              tripId={tripId}
-              title={trip.title}
-              destination={trip.destination}
-              startDate={trip.startDate}
-              endDate={trip.endDate}
-              coverImageUrl={trip.coverImageUrl}
-              coverImagePosition={trip.coverImagePosition}
-              open={editOpen}
-              onOpenChange={setEditOpen}
-              onUpdate={onMutate}
-            />
-            <DndContext
-              sensors={dnd.sensors}
-              collisionDetection={dnd.collisionDetection}
-              onDragStart={dnd.handleDragStart}
-              onDragOver={dnd.handleDragOver}
-              onDragEnd={dnd.handleDragEnd}
-              accessibility={{ announcements: undefined }}
-            >
-              {/* SP mobile layout — always visible, no lg:hidden */}
-              <div>
-                <MobileContentTabs
-                  activeTab={mobileTab}
-                  onTabChange={handleMobileTabChange}
-                  candidateCount={dnd.localCandidates.length}
-                />
-                <div
-                  ref={mobileContentRef}
-                  className={
-                    isActivelySwiping
-                      ? "overflow-hidden pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
-                      : "overflow-y-auto overscroll-contain pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
-                  }
-                >
-                  <div
-                    ref={swipeContainerRef}
-                    className="relative touch-pan-y"
-                    style={{ willChange: isActivelySwiping ? "transform" : "auto" }}
-                  >
-                    {/* Current tab */}
-                    <div
-                      className={
-                        tapTransitionRef.current
-                          ? "animate-[tab-fade-in_150ms_ease-out]"
-                          : undefined
+        <MapsProvider enabled={trip.mapsEnabled}>
+          <SelectionProvider value={selectionValue}>
+            <div className="mt-4">
+              <TripHeader
+                trip={trip}
+                tripId={tripId}
+                otherPresence={otherPresence}
+                isConnected={isConnected}
+                online={online}
+                canEdit={canEdit}
+                onMutate={onMutate}
+                onEditOpen={() => setEditOpen(true)}
+                onOpenBookmarks={
+                  isGuest
+                    ? undefined
+                    : () => {
+                        handleMobileTabChange("bookmarks", "tap");
                       }
-                      ref={() => {
-                        tapTransitionRef.current = false;
-                      }}
+                }
+                onOpenActivity={() => {
+                  handleMobileTabChange("activity", "tap");
+                }}
+                onOpenMap={trip.mapsEnabled ? () => handleMobileTabChange("map", "tap") : undefined}
+              />
+              <EditTripDialog
+                tripId={tripId}
+                title={trip.title}
+                destination={trip.destination}
+                startDate={trip.startDate}
+                endDate={trip.endDate}
+                coverImageUrl={trip.coverImageUrl}
+                coverImagePosition={trip.coverImagePosition}
+                open={editOpen}
+                onOpenChange={setEditOpen}
+                onUpdate={onMutate}
+              />
+              <DndContext
+                sensors={dnd.sensors}
+                collisionDetection={dnd.collisionDetection}
+                onDragStart={dnd.handleDragStart}
+                onDragOver={dnd.handleDragOver}
+                onDragEnd={dnd.handleDragEnd}
+                accessibility={{ announcements: undefined }}
+              >
+                {/* SP mobile layout — always visible, no lg:hidden */}
+                <div>
+                  <MobileContentTabs
+                    activeTab={mobileTab}
+                    onTabChange={handleMobileTabChange}
+                    candidateCount={dnd.localCandidates.length}
+                  />
+                  <div
+                    ref={mobileContentRef}
+                    className={
+                      isActivelySwiping
+                        ? "overflow-hidden pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
+                        : "overflow-y-auto overscroll-contain pb-20 touch-pan-y min-h-[calc(100svh-12rem)]"
+                    }
+                  >
+                    <div
+                      ref={swipeContainerRef}
+                      className="relative touch-pan-y"
+                      style={{ willChange: isActivelySwiping ? "transform" : "auto" }}
                     >
+                      {/* Current tab */}
                       <div
-                        id={getMobileTabPanelId(mobileTab)}
-                        role="tabpanel"
-                        aria-labelledby={getMobileTabTriggerId(mobileTab)}
-                      >
-                        {renderTabContent(mobileTab)}
-                      </div>
-                    </div>
-
-                    {/* Adjacent tab (rendered only during swipe) */}
-                    {swipe.adjacent && adjacentTabId && (
-                      <div
-                        className="absolute top-0 left-0 w-full"
-                        aria-hidden="true"
-                        style={{
-                          transform:
-                            swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                        className={
+                          tapTransitionRef.current
+                            ? "animate-[tab-fade-in_150ms_ease-out]"
+                            : undefined
+                        }
+                        ref={() => {
+                          tapTransitionRef.current = false;
                         }}
                       >
-                        {renderTabContent(adjacentTabId)}
+                        <div
+                          id={getMobileTabPanelId(mobileTab)}
+                          role="tabpanel"
+                          aria-labelledby={getMobileTabTriggerId(mobileTab)}
+                        >
+                          {renderTabContent(mobileTab)}
+                        </div>
                       </div>
-                    )}
+
+                      {/* Adjacent tab (rendered only during swipe) */}
+                      {swipe.adjacent && adjacentTabId && (
+                        <div
+                          className="absolute top-0 left-0 w-full"
+                          aria-hidden="true"
+                          style={{
+                            transform:
+                              swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
+                          }}
+                        >
+                          {renderTabContent(adjacentTabId)}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </DndContext>
+              </DndContext>
 
-            <Fab
-              onClick={() => {
-                if (mobileTab === "schedule") {
-                  if (selectedDay === -1) {
-                    setAddPollOptionOpen(true);
-                  } else {
-                    if (scheduleLimitReached) {
-                      toast.error(scheduleLimitMessage);
-                      return;
+              <Fab
+                onClick={() => {
+                  if (mobileTab === "schedule") {
+                    if (selectedDay === -1) {
+                      setAddPollOptionOpen(true);
+                    } else {
+                      if (scheduleLimitReached) {
+                        toast.error(scheduleLimitMessage);
+                        return;
+                      }
+                      setAddScheduleOpen(true);
                     }
-                    setAddScheduleOpen(true);
-                  }
-                } else if (mobileTab === "candidates") setAddCandidateOpen(true);
-                else if (mobileTab === "expenses") setAddExpenseOpen(true);
-                else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
-              }}
-              label={
-                mobileTab === "schedule"
-                  ? selectedDay === -1
-                    ? "日程案追加"
-                    : "予定を追加"
-                  : mobileTab === "candidates"
-                    ? "候補を追加"
-                    : mobileTab === "souvenirs"
-                      ? "お土産を追加"
-                      : "費用を追加"
-              }
-              hidden={
-                !canEdit ||
-                !online ||
-                mobileTab === "bookmarks" ||
-                mobileTab === "activity" ||
-                (mobileTab === "schedule" &&
-                  selectedDay === -1 &&
-                  (!isOwnerRole(trip.role) || pollData?.status !== "open"))
-              }
-            />
+                  } else if (mobileTab === "candidates") setAddCandidateOpen(true);
+                  else if (mobileTab === "expenses") setAddExpenseOpen(true);
+                  else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
+                }}
+                label={
+                  mobileTab === "schedule"
+                    ? selectedDay === -1
+                      ? "日程案追加"
+                      : "予定を追加"
+                    : mobileTab === "candidates"
+                      ? "候補を追加"
+                      : mobileTab === "souvenirs"
+                        ? "お土産を追加"
+                        : "費用を追加"
+                }
+                hidden={
+                  !canEdit ||
+                  !online ||
+                  mobileTab === "bookmarks" ||
+                  mobileTab === "activity" ||
+                  (mobileTab === "schedule" &&
+                    selectedDay === -1 &&
+                    (!isOwnerRole(trip.role) || pollData?.status !== "open"))
+                }
+              />
 
-            <AddPatternDialog patternOps={patternOps} />
-            <RenamePatternDialog patternOps={patternOps} />
-            <BatchDeleteDialog selection={selection} />
-            <DeletePatternDialog patternOps={patternOps} />
-            <OverwritePatternDialog patternOps={patternOps} patterns={currentDay?.patterns ?? []} />
-            <BookmarkListPickerDialog
-              open={bookmarkPickerOpen}
-              onOpenChange={setBookmarkPickerOpen}
-              onSelect={handleBookmarkListSelected}
-            />
-          </div>
-        </SelectionProvider>
+              <AddPatternDialog patternOps={patternOps} />
+              <RenamePatternDialog patternOps={patternOps} />
+              <BatchDeleteDialog selection={selection} />
+              <DeletePatternDialog patternOps={patternOps} />
+              <OverwritePatternDialog
+                patternOps={patternOps}
+                patterns={currentDay?.patterns ?? []}
+              />
+              <BookmarkListPickerDialog
+                open={bookmarkPickerOpen}
+                onOpenChange={setBookmarkPickerOpen}
+                onSelect={handleBookmarkListSelected}
+              />
+            </div>
+          </SelectionProvider>
+        </MapsProvider>
       )}
     </LoadingBoundary>
+  );
+}
+
+function MapsProvider({ enabled, children }: { enabled: boolean; children: ReactNode }) {
+  if (!enabled) return <>{children}</>;
+  return (
+    <APIProvider
+      apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ""}
+      libraries={["places", "geometry"]}
+    >
+      {children}
+    </APIProvider>
   );
 }

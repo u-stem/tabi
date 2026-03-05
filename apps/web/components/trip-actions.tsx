@@ -240,7 +240,7 @@ export function TripActions({
     ...(onOpenMap
       ? [
           {
-            label: "地図",
+            label: "地図 β",
             icon: <MapIcon className="h-4 w-4" />,
             onClick: onOpenMap,
           },
@@ -428,7 +428,7 @@ export function TripActions({
                 {onOpenMap && (
                   <DropdownMenuItem onClick={onOpenMap}>
                     <MapIcon />
-                    地図
+                    地図 β
                   </DropdownMenuItem>
                 )}
                 {onOpenBookmarks && (

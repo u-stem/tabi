@@ -1,0 +1,148 @@
+import { act, renderHook } from "@testing-library/react";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { useTripDragAndDrop } from "./use-trip-drag-and-drop";
+
+vi.mock("@/lib/api", () => ({
+  api: vi.fn().mockResolvedValue(undefined),
+  ApiError: class ApiError extends Error {
+    status: number;
+    constructor(status: number, message: string) {
+      super(message);
+      this.status = status;
+    }
+  },
+}));
+
+vi.mock("sonner", () => ({
+  toast: { success: vi.fn(), error: vi.fn() },
+}));
+
+vi.mock("@dnd-kit/core", () => ({
+  useSensor: vi.fn(() => ({})),
+  useSensors: vi.fn((...sensors: unknown[]) => sensors),
+  PointerSensor: class {},
+  TouchSensor: class {},
+  pointerWithin: vi.fn(),
+}));
+
+vi.mock("@dnd-kit/sortable", () => ({
+  arrayMove: vi.fn((arr: unknown[], from: number, to: number) => {
+    const result = [...arr];
+    result.splice(to, 0, result.splice(from, 1)[0]);
+    return result;
+  }),
+}));
+
+vi.mock("@/lib/merge-timeline", () => ({
+  buildMergedTimeline: vi.fn((schedules: unknown[]) =>
+    schedules.map((s) => ({ type: "schedule", schedule: s })),
+  ),
+  timelineSortableIds: vi.fn((items: Array<{ schedule: { id: string } }>) =>
+    items.map((i) => i.schedule.id),
+  ),
+  timelineScheduleOrder: vi.fn((items: Array<{ type: string; schedule: unknown }>) =>
+    items.filter((i) => i.type === "schedule").map((i) => i.schedule),
+  ),
+}));
+
+// Minimal schedule shape needed for hook initialization
+function makeSchedule(id: string) {
+  return {
+    id,
+    name: `Schedule ${id}`,
+    category: "sightseeing" as const,
+    color: "blue" as const,
+    address: null,
+    startTime: null,
+    endTime: null,
+    sortOrder: 0,
+    memo: null,
+    urls: [],
+    departurePlace: null,
+    arrivalPlace: null,
+    transportMethod: null,
+    endDayOffset: 0,
+    updatedAt: "2024-01-01T00:00:00Z",
+  };
+}
+
+const s1 = makeSchedule("s1");
+const s2 = makeSchedule("s2");
+const s3 = makeSchedule("s3");
+
+describe("useTripDragAndDrop — localSchedules sync guard", () => {
+  afterEach(() => vi.clearAllMocks());
+
+  it("updates localSchedules when schedules prop changes while NOT dragging", () => {
+    const { result, rerender } = renderHook(
+      ({ schedules }) =>
+        useTripDragAndDrop({
+          tripId: "trip1",
+          currentDayId: null,
+          currentPatternId: null,
+          schedules,
+          candidates: [],
+          onDone: vi.fn(),
+        }),
+      { initialProps: { schedules: [s1, s2] } },
+    );
+
+    expect(result.current.localSchedules).toHaveLength(2);
+
+    rerender({ schedules: [s1, s2, s3] });
+
+    expect(result.current.localSchedules).toHaveLength(3);
+  });
+
+  it("does NOT update localSchedules when schedules prop changes while dragging", async () => {
+    const { result, rerender } = renderHook(
+      ({ schedules }) =>
+        useTripDragAndDrop({
+          tripId: "trip1",
+          currentDayId: null,
+          currentPatternId: null,
+          schedules,
+          candidates: [],
+          onDone: vi.fn(),
+        }),
+      { initialProps: { schedules: [s1, s2] } },
+    );
+
+    // Simulate drag start — sets activeDragItem to non-null
+    act(() => {
+      result.current.handleDragStart({
+        active: {
+          id: "s1",
+          data: { current: { type: "schedule" } },
+          rect: { current: { initial: null, translated: null } },
+        },
+        activatorEvent: new PointerEvent("pointerdown"),
+      } as Parameters<typeof result.current.handleDragStart>[0]);
+    });
+
+    // Schedules prop changes while drag is in progress
+    rerender({ schedules: [s1, s2, s3] });
+
+    // localSchedules must remain unchanged during drag
+    expect(result.current.localSchedules).toHaveLength(2);
+
+    // Simulate drag end (currentPatternId is null → returns early, no API call)
+    await act(async () => {
+      await result.current.handleDragEnd({
+        active: {
+          id: "s1",
+          data: { current: { type: "schedule" } },
+          rect: { current: { initial: null, translated: null } },
+        },
+        over: null,
+        delta: { x: 0, y: 0 },
+        activatorEvent: new PointerEvent("pointerup"),
+        collisions: null,
+      } as Parameters<typeof result.current.handleDragEnd>[0]);
+    });
+
+    // After drag ends, sync resumes on next prop change
+    rerender({ schedules: [s1, s2, s3] });
+    expect(result.current.localSchedules).toHaveLength(3);
+  });
+});

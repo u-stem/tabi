@@ -69,22 +69,24 @@ export function useTripDragAndDrop({
   const collisionDetection = pointerWithin;
 
   useEffect(() => {
+    if (activeDragItem !== null) return;
     setLocalSchedules((prev) => {
       if (prev.length === schedules.length && prev.every((s, i) => s === schedules[i])) {
         return prev;
       }
       return schedules;
     });
-  }, [schedules]);
+  }, [schedules, activeDragItem]);
 
   useEffect(() => {
+    if (activeDragItem !== null) return;
     setLocalCandidates((prev) => {
       if (prev.length === candidates.length && prev.every((c, i) => c === candidates[i])) {
         return prev;
       }
       return candidates;
     });
-  }, [candidates]);
+  }, [candidates, activeDragItem]);
 
   function handleDragStart(event: DragStartEvent) {
     const { active } = event;

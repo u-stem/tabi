@@ -8,6 +8,9 @@ type ScheduleFormState = {
   transportMethod: TransportMethod | "";
   endDayOffset: number;
   urls: string[];
+  latitude?: number | null;
+  longitude?: number | null;
+  placeId?: string | null;
 };
 
 // Use `emptyToNull` for clearable text/time fields so the API receives null to clear the value,
@@ -36,5 +39,8 @@ export function buildSchedulePayload(formData: FormData, state: ScheduleFormStat
         }
       : {}),
     ...(state.endDayOffset > 0 ? { endDayOffset: state.endDayOffset } : {}),
+    ...(state.latitude != null ? { latitude: state.latitude } : {}),
+    ...(state.longitude != null ? { longitude: state.longitude } : {}),
+    ...(state.placeId != null ? { placeId: state.placeId } : {}),
   };
 }

@@ -40,6 +40,7 @@ type AddScheduleDialogProps = {
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   hideTrigger?: boolean;
+  mapsEnabled?: boolean;
 };
 
 export function AddScheduleDialog({
@@ -52,6 +53,7 @@ export function AddScheduleDialog({
   open: controlledOpen,
   onOpenChange: controlledOnOpenChange,
   hideTrigger,
+  mapsEnabled = false,
 }: AddScheduleDialogProps) {
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
@@ -69,6 +71,9 @@ export function AddScheduleDialog({
   const [endDayOffset, setEndDayOffset] = useState(0);
   const [timeError, setTimeError] = useState<string | null>(null);
   const [urls, setUrls] = useState<string[]>([]);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+  const [placeId, setPlaceId] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -95,6 +100,9 @@ export function AddScheduleDialog({
       transportMethod,
       endDayOffset,
       urls,
+      latitude,
+      longitude,
+      placeId,
     });
 
     try {
@@ -137,6 +145,9 @@ export function AddScheduleDialog({
           setEndDayOffset(0);
           setTimeError(null);
           setUrls([]);
+          setLatitude(null);
+          setLongitude(null);
+          setPlaceId(null);
         }
       }}
     >
@@ -171,6 +182,12 @@ export function AddScheduleDialog({
             timeError={timeError}
             urls={urls}
             onUrlsChange={setUrls}
+            mapsEnabled={mapsEnabled}
+            onLocationSelected={({ latitude: lat, longitude: lng, placeId: pid }) => {
+              setLatitude(lat);
+              setLongitude(lng);
+              setPlaceId(pid);
+            }}
           />
           {error && (
             <p role="alert" className="text-sm text-destructive">

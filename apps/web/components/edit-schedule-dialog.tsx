@@ -40,6 +40,7 @@ type EditScheduleDialogProps = {
   onUpdate: () => void;
   maxEndDayOffset?: number;
   onShiftProposal?: (timeDelta: TimeDelta) => void;
+  mapsEnabled?: boolean;
 };
 
 export function EditScheduleDialog({
@@ -52,6 +53,7 @@ export function EditScheduleDialog({
   onUpdate,
   maxEndDayOffset = 0,
   onShiftProposal,
+  mapsEnabled = false,
 }: EditScheduleDialogProps) {
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
@@ -68,6 +70,9 @@ export function EditScheduleDialog({
   const [endDayOffset, setEndDayOffset] = useState(schedule.endDayOffset ?? 0);
   const [timeError, setTimeError] = useState<string | null>(null);
   const [urls, setUrls] = useState<string[]>(schedule.urls ?? []);
+  const [latitude, setLatitude] = useState<number | null>(schedule.latitude ?? null);
+  const [longitude, setLongitude] = useState<number | null>(schedule.longitude ?? null);
+  const [placeId, setPlaceId] = useState<string | null>(schedule.placeId ?? null);
 
   function handleOpenChange(isOpen: boolean) {
     onOpenChange(isOpen);
@@ -81,6 +86,9 @@ export function EditScheduleDialog({
       setEndTime(schedule.endTime ?? undefined);
       setEndDayOffset(schedule.endDayOffset ?? 0);
       setUrls(schedule.urls ?? []);
+      setLatitude(schedule.latitude ?? null);
+      setLongitude(schedule.longitude ?? null);
+      setPlaceId(schedule.placeId ?? null);
     }
   }
 
@@ -110,6 +118,9 @@ export function EditScheduleDialog({
         transportMethod,
         endDayOffset,
         urls,
+        latitude,
+        longitude,
+        placeId,
       }),
       endDayOffset: endDayOffset > 0 ? endDayOffset : null,
       expectedUpdatedAt: schedule.updatedAt,
@@ -198,6 +209,12 @@ export function EditScheduleDialog({
               memo: schedule.memo ?? "",
             }}
             idPrefix="edit-"
+            mapsEnabled={mapsEnabled}
+            onLocationSelected={({ latitude: lat, longitude: lng, placeId: pid }) => {
+              setLatitude(lat);
+              setLongitude(lng);
+              setPlaceId(pid);
+            }}
           />
           {error && (
             <p role="alert" className="text-sm text-destructive">

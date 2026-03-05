@@ -11,7 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
@@ -531,6 +531,12 @@ export default function TripDetailPage() {
     [tripId, saveToBookmarkIds, queryClient],
   );
 
+  // Restore scroll position synchronously before paint to avoid a one-frame flicker
+  // where the new tab content is momentarily shown at the previous tab's scroll position.
+  useLayoutEffect(() => {
+    mobileContentRef.current?.scrollTo(0, scrollPositions.current[mobileTab] ?? 0);
+  }, [mobileTab]);
+
   const handleMobileTabChange = useCallback((tab: MobileContentTab, source?: "tap") => {
     if (mobileContentRef.current) {
       scrollPositions.current[mobileTabRef.current] = mobileContentRef.current.scrollTop;
@@ -538,9 +544,6 @@ export default function TripDetailPage() {
     tapTransitionRef.current = source === "tap";
     mobileTabRef.current = tab;
     setMobileTab(tab);
-    requestAnimationFrame(() => {
-      mobileContentRef.current?.scrollTo(0, scrollPositions.current[tab] ?? 0);
-    });
   }, []);
 
   const handleSwipe = useCallback(

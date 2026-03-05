@@ -10,7 +10,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ActivityLog } from "@/components/activity-log";
 import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dialog";
@@ -168,6 +168,12 @@ export default function SpTripDetailPage() {
     [tripId, saveToBookmarkIds, queryClient],
   );
 
+  // Restore scroll position synchronously before paint to avoid a one-frame flicker
+  // where the new tab content is momentarily shown at the previous tab's scroll position.
+  useLayoutEffect(() => {
+    mobileContentRef.current?.scrollTo(0, scrollPositions.current[mobileTab] ?? 0);
+  }, [mobileTab]);
+
   const handleMobileTabChange = useCallback((tab: MobileContentTab, source?: "tap") => {
     if (mobileContentRef.current) {
       scrollPositions.current[mobileTabRef.current] = mobileContentRef.current.scrollTop;
@@ -175,9 +181,6 @@ export default function SpTripDetailPage() {
     tapTransitionRef.current = source === "tap";
     mobileTabRef.current = tab;
     setMobileTab(tab);
-    requestAnimationFrame(() => {
-      mobileContentRef.current?.scrollTo(0, scrollPositions.current[tab] ?? 0);
-    });
   }, []);
 
   const handleSwipe = useCallback(

@@ -154,7 +154,11 @@ export const PlaceItem = memo(function PlaceItem({
     <div
       ref={sortable.nodeRef}
       style={sortable.style}
-      className={cn("flex gap-3 py-1.5", sortable.isDragging && "opacity-50")}
+      className={cn(
+        "animate-in fade-in-0 slide-in-from-top-1 duration-200",
+        "flex gap-3 py-1.5",
+        sortable.isDragging && "opacity-50",
+      )}
     >
       <TimelineNode
         variant="place"

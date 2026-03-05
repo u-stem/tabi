@@ -113,6 +113,7 @@ export const CandidateItem = memo(function CandidateItem({
       ref={setNodeRef}
       style={style}
       className={cn(
+        "animate-in fade-in-0 slide-in-from-top-1 duration-200",
         "flex items-center gap-2 rounded-md border p-3",
         isDragging && "opacity-50",
         selectable &&

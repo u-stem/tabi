@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { api } from "../lib/api";
 import { requestPushPermission } from "../lib/hooks/use-push-subscription";
 import { MSG } from "../lib/messages";
+import { QUERY_CONFIG } from "../lib/query-config";
 import { queryKeys } from "../lib/query-keys";
 import { Button } from "./ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
@@ -79,6 +80,7 @@ export function NotificationPreferencesSection() {
   const { data: inAppData, isLoading: inAppLoading } = useQuery({
     queryKey: queryKeys.notifications.preferences(),
     queryFn: () => api<InAppPref[]>("/api/notification-preferences"),
+    ...QUERY_CONFIG.stable,
   });
 
   // Device-level: push preferences for this specific device
@@ -89,6 +91,7 @@ export function NotificationPreferencesSection() {
         `/api/push-subscriptions/preferences?endpoint=${encodeURIComponent(deviceEndpoint ?? "")}`,
       ),
     enabled: !!deviceEndpoint && pushPermission === "granted",
+    ...QUERY_CONFIG.stable,
   });
 
   const updateInAppCategory = useMutation({

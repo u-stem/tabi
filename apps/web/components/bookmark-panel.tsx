@@ -231,37 +231,37 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
                 })}
               </div>
             )}
-            <ResponsiveAlertDialog
-              open={confirmIds.length > 0}
-              onOpenChange={(open) => {
-                if (!open) setConfirmIds([]);
-              }}
-            >
-              <ResponsiveAlertDialogContent>
-                <ResponsiveAlertDialogHeader>
-                  <ResponsiveAlertDialogTitle>
-                    {confirmIds.length}件を候補に追加しますか？
-                  </ResponsiveAlertDialogTitle>
-                  <ResponsiveAlertDialogDescription>
-                    選択した{confirmIds.length}件のブックマークを旅行の候補に追加します。
-                  </ResponsiveAlertDialogDescription>
-                </ResponsiveAlertDialogHeader>
-                <ResponsiveAlertDialogFooter>
-                  <ResponsiveAlertDialogCancel>
-                    <X className="h-4 w-4" />
-                    キャンセル
-                  </ResponsiveAlertDialogCancel>
-                  <ResponsiveAlertDialogAction
-                    onClick={() => addToCandidates(confirmIds)}
-                    disabled={loading}
-                  >
-                    <Plus className="h-4 w-4" />
-                    {loading ? "追加中..." : "追加する"}
-                  </ResponsiveAlertDialogAction>
-                </ResponsiveAlertDialogFooter>
-              </ResponsiveAlertDialogContent>
-            </ResponsiveAlertDialog>
           </LoadingBoundary>
+          <ResponsiveAlertDialog
+            open={confirmIds.length > 0}
+            onOpenChange={(open) => {
+              if (!open) setConfirmIds([]);
+            }}
+          >
+            <ResponsiveAlertDialogContent>
+              <ResponsiveAlertDialogHeader>
+                <ResponsiveAlertDialogTitle>
+                  {confirmIds.length}件を候補に追加しますか？
+                </ResponsiveAlertDialogTitle>
+                <ResponsiveAlertDialogDescription>
+                  選択した{confirmIds.length}件のブックマークを旅行の候補に追加します。
+                </ResponsiveAlertDialogDescription>
+              </ResponsiveAlertDialogHeader>
+              <ResponsiveAlertDialogFooter>
+                <ResponsiveAlertDialogCancel>
+                  <X className="h-4 w-4" />
+                  キャンセル
+                </ResponsiveAlertDialogCancel>
+                <ResponsiveAlertDialogAction
+                  onClick={() => addToCandidates(confirmIds)}
+                  disabled={loading}
+                >
+                  <Plus className="h-4 w-4" />
+                  {loading ? "追加中..." : "追加する"}
+                </ResponsiveAlertDialogAction>
+              </ResponsiveAlertDialogFooter>
+            </ResponsiveAlertDialogContent>
+          </ResponsiveAlertDialog>
         </div>
       )}
     </LoadingBoundary>

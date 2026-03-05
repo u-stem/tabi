@@ -54,4 +54,13 @@ describe("LoadingBoundary", () => {
     expect(screen.getByText("error ui")).toBeDefined();
     expect(screen.queryByText("content")).toBeNull();
   });
+
+  it("renders nothing when error is provided but errorFallback is omitted", () => {
+    const { container } = render(
+      <LoadingBoundary isLoading={false} skeleton={<div>skeleton</div>} error={new Error("fail")}>
+        <div>content</div>
+      </LoadingBoundary>,
+    );
+    expect(container.firstChild).toBeNull();
+  });
 });

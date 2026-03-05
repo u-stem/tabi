@@ -10,9 +10,9 @@ type ScheduleFormState = {
   urls: string[];
 };
 
-// Use `|| undefined` for fields where absence means "not set" (time, transportMethod).
-// Use `emptyToNull` for clearable text fields so the API receives null to clear the value,
+// Use `emptyToNull` for clearable text/time fields so the API receives null to clear the value,
 // rather than omitting the field (which would leave the old value intact on partial updates).
+// Use `|| undefined` only for fields that should be omitted entirely when unset (e.g. transportMethod).
 function emptyToNull(value: string | null): string | null {
   return value && value.trim() !== "" ? value : null;
 }
@@ -25,8 +25,8 @@ export function buildSchedulePayload(formData: FormData, state: ScheduleFormStat
     address:
       state.category !== "transport" ? emptyToNull(formData.get("address") as string) : undefined,
     urls: state.urls.filter((u) => u.trim() !== ""),
-    startTime: state.startTime || undefined,
-    endTime: state.endTime || undefined,
+    startTime: state.startTime ?? null,
+    endTime: state.endTime ?? null,
     memo: emptyToNull(formData.get("memo") as string),
     ...(state.category === "transport"
       ? {

@@ -9,6 +9,7 @@ import { ErrorMessage, ProfileContent, ProfileSkeletonContent } from "@/app/user
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { ApiError, api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
 export default function SpProfilePage() {
@@ -23,6 +24,7 @@ export default function SpProfilePage() {
     queryKey: queryKeys.profile.bookmarkLists(userId ?? ""),
     queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
     enabled: userId !== null,
+    ...QUERY_CONFIG.stable,
   });
 
   useEffect(() => {

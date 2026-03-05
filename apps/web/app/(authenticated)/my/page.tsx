@@ -16,6 +16,7 @@ import { useSession } from "@/lib/auth-client";
 import { copyToClipboard } from "@/lib/clipboard";
 import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
 function BookmarkListsSkeleton() {
@@ -50,6 +51,7 @@ export default function MyPage() {
     queryKey: queryKeys.profile.bookmarkLists(userId ?? ""),
     queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
     enabled: !!userId,
+    ...QUERY_CONFIG.stable,
   });
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-4">

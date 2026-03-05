@@ -15,6 +15,7 @@ import { useSession } from "@/lib/auth-client";
 import { copyToClipboard } from "@/lib/clipboard";
 import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
 export default function SpMyPage() {
@@ -39,6 +40,7 @@ export default function SpMyPage() {
     queryKey: queryKeys.profile.bookmarkLists(userId ?? ""),
     queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
     enabled: !!userId,
+    ...QUERY_CONFIG.stable,
   });
 
   return (

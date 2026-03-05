@@ -36,6 +36,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
 type GroupMembersDialogProps = {
@@ -57,12 +58,14 @@ export function GroupMembersDialog({ group, onOpenChange }: GroupMembersDialogPr
     queryKey: queryKeys.groups.members(groupId),
     queryFn: () => api<GroupMemberResponse[]>(`/api/groups/${groupId}/members`),
     enabled: group !== null,
+    ...QUERY_CONFIG.stable,
   });
 
   const { data: friends = [], isLoading: friendsLoading } = useQuery({
     queryKey: queryKeys.friends.list(),
     queryFn: () => api<FriendResponse[]>("/api/friends"),
     enabled: group !== null,
+    ...QUERY_CONFIG.stable,
   });
 
   const dataLoading = membersLoading || friendsLoading;

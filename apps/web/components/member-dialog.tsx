@@ -45,6 +45,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
 type MemberDialogProps = {
@@ -82,18 +83,21 @@ export function MemberDialog({
     queryKey: queryKeys.friends.list(),
     queryFn: () => api<FriendResponse[]>("/api/friends"),
     enabled: open,
+    ...QUERY_CONFIG.stable,
   });
 
   const { data: groups = [] } = useQuery({
     queryKey: queryKeys.groups.list(),
     queryFn: () => api<GroupResponse[]>("/api/groups"),
     enabled: open,
+    ...QUERY_CONFIG.stable,
   });
 
   const { data: groupMembers = [] } = useQuery({
     queryKey: queryKeys.groups.members(selectedGroupId ?? ""),
     queryFn: () => api<GroupMemberResponse[]>(`/api/groups/${selectedGroupId}/members`),
     enabled: open && selectedGroupId !== null,
+    ...QUERY_CONFIG.stable,
   });
 
   const invalidateMembers = () =>

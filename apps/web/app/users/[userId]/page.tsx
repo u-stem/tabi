@@ -16,6 +16,7 @@ import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
 import { MSG } from "@/lib/messages";
+import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
 type BookmarkListDetail = BookmarkListResponse & {
@@ -61,6 +62,7 @@ export function BookmarkListCard({ list, userId }: { list: BookmarkListResponse;
     queryFn: () => api<BookmarkListDetail>(`/api/users/${userId}/bookmark-lists/${list.id}`),
     // Only fetch when expanded
     enabled: expanded,
+    ...QUERY_CONFIG.stable,
   });
 
   return (
@@ -193,6 +195,7 @@ export default function PublicProfilePage() {
     queryKey: queryKeys.profile.bookmarkLists(userId ?? ""),
     queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
     enabled: userId !== null,
+    ...QUERY_CONFIG.stable,
   });
 
   // Set document title when profile is loaded

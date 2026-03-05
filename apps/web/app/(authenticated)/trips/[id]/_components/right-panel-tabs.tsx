@@ -47,6 +47,18 @@ export function RightPanelTabs({
         候補
         {candidateCount > 0 && <span className="ml-1 text-xs">{candidateCount}</span>}
       </button>
+      {mapsEnabled && (
+        <button
+          type="button"
+          role="tab"
+          aria-selected={current === "map"}
+          onClick={() => onChange("map")}
+          className={cn(CHIP_BASE, current === "map" ? CHIP_ACTIVE : CHIP_INACTIVE)}
+        >
+          地図
+          <span className="ml-1 text-[10px] font-semibold opacity-60">β</span>
+        </button>
+      )}
       <button
         type="button"
         role="tab"
@@ -84,18 +96,6 @@ export function RightPanelTabs({
           className={cn(CHIP_BASE, current === "bookmarks" ? CHIP_ACTIVE : CHIP_INACTIVE)}
         >
           ブックマーク
-        </button>
-      )}
-      {mapsEnabled && (
-        <button
-          type="button"
-          role="tab"
-          aria-selected={current === "map"}
-          onClick={() => onChange("map")}
-          className={cn(CHIP_BASE, current === "map" ? CHIP_ACTIVE : CHIP_INACTIVE)}
-        >
-          地図
-          <span className="ml-1 text-[10px] font-semibold opacity-60">β</span>
         </button>
       )}
     </div>

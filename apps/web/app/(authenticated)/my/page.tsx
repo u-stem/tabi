@@ -18,6 +18,16 @@ import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
+function BookmarkListsSkeleton() {
+  return (
+    <div className="divide-y overflow-hidden rounded-lg border">
+      {[1, 2, 3].map((i) => (
+        <Skeleton key={i} className="h-12 w-full rounded-none" />
+      ))}
+    </div>
+  );
+}
+
 export default function MyPage() {
   const { data: session } = useSession();
   const [idCopied, setIdCopied] = useState(false);
@@ -41,14 +51,6 @@ export default function MyPage() {
     queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
     enabled: !!userId,
   });
-  const bookmarkListsSkeleton = (
-    <div className="overflow-hidden rounded-lg border divide-y">
-      {[1, 2, 3].map((i) => (
-        <Skeleton key={i} className="h-12 w-full rounded-none" />
-      ))}
-    </div>
-  );
-
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-4">
       {/* Profile header */}
@@ -90,7 +92,7 @@ export default function MyPage() {
       </div>
 
       {/* Bookmark lists */}
-      <LoadingBoundary isLoading={isLoading} skeleton={bookmarkListsSkeleton}>
+      <LoadingBoundary isLoading={isLoading} skeleton={<BookmarkListsSkeleton />}>
         {profile && profile.bookmarkLists.length > 0 && (
           <div className="overflow-hidden rounded-lg border divide-y">
             {profile.bookmarkLists.map((list) => (

@@ -21,6 +21,9 @@ export type ScheduleResponse = {
   transportMethod?: string | null;
   color: ScheduleColor;
   endDayOffset?: number | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  placeId?: string | null;
   updatedAt: string;
 };
 
@@ -72,6 +75,7 @@ export type TripResponse = {
   scheduleCount: number;
   memberCount: number;
   poll: TripPollSummary | null;
+  mapsEnabled: boolean;
 };
 
 export type TripListItem = {

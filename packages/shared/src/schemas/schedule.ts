@@ -77,6 +77,9 @@ export const createScheduleSchema = z.object({
   transportMethod: transportMethodSchema.nullish(),
   color: scheduleColorSchema.default("blue"),
   endDayOffset: z.number().int().min(1).max(MAX_END_DAY_OFFSET).nullish(),
+  latitude: z.number().nullable().optional(),
+  longitude: z.number().nullable().optional(),
+  placeId: z.string().max(255).nullable().optional(),
 });
 export const updateScheduleSchema = createScheduleSchema.partial().extend({
   expectedUpdatedAt: z.string().datetime().optional(),

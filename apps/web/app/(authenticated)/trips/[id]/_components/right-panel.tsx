@@ -71,6 +71,7 @@ export function RightPanel({
       {rightPanelTab === "map" ? (
         <div className="min-h-0 flex-1 overflow-hidden">
           <MapPanel
+            tripId={tripId}
             currentDaySchedules={currentDaySchedules}
             allSchedules={allSchedules}
             online={online}

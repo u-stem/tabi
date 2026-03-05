@@ -9,7 +9,7 @@ import {
   useMap,
   useMapsLibrary,
 } from "@vis.gl/react-google-maps";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { SCHEDULE_COLOR_HEX } from "@/lib/colors";
 
@@ -41,12 +41,52 @@ type Props = {
 type MappableSchedule = ScheduleResponse & { latitude: number; longitude: number };
 type MappableScheduleWithDay = ScheduleWithDayIndex & { latitude: number; longitude: number };
 
+// Same runtime check, but separate predicates are required for TypeScript to
+// narrow the return type correctly in each call site.
 function isMappable(s: ScheduleResponse): s is MappableSchedule {
   return s.latitude != null && s.longitude != null;
 }
 
 function isMappableWithDay(s: ScheduleWithDayIndex): s is MappableScheduleWithDay {
   return s.latitude != null && s.longitude != null;
+}
+
+// Calls fitBounds whenever the map instance becomes available or `trigger` changes.
+// Positions are read via ref so data updates within a mode don't cause unwanted re-fits.
+function MapAutoFit({
+  positions,
+  trigger,
+}: {
+  positions: { lat: number; lng: number }[];
+  trigger: string;
+}) {
+  const map = useMap();
+  const positionsRef = useRef(positions);
+  positionsRef.current = positions;
+
+  useEffect(() => {
+    const pts = positionsRef.current;
+    if (!map || pts.length === 0) return;
+
+    if (pts.length === 1) {
+      map.setCenter(pts[0]);
+      map.setZoom(15);
+      return;
+    }
+
+    const bounds = pts.reduce(
+      (b, { lat, lng }) => ({
+        north: Math.max(b.north, lat),
+        south: Math.min(b.south, lat),
+        east: Math.max(b.east, lng),
+        west: Math.min(b.west, lng),
+      }),
+      { north: -90, south: 90, east: -180, west: 180 },
+    );
+    map.fitBounds(bounds, 40);
+  }, [map, trigger]);
+
+  return null;
 }
 
 // Draws a single route polyline between two mappable schedules.
@@ -119,10 +159,19 @@ export function MapPanel({ tripId, currentDaySchedules, allSchedules, online }: 
     );
   }
 
+  // markerColor is computed here to avoid type assertions in JSX
   const mappable =
     mode === "day"
-      ? currentDaySchedules.filter(isMappable)
-      : allSchedules.filter(isMappableWithDay);
+      ? currentDaySchedules.filter(isMappable).map((s) => ({
+          ...s,
+          markerColor: SCHEDULE_COLOR_HEX[s.color] ?? "#3b82f6",
+        }))
+      : allSchedules.filter(isMappableWithDay).map((s) => ({
+          ...s,
+          markerColor: DAY_COLORS[s.dayIndex % DAY_COLORS.length],
+        }));
+
+  const positions = mappable.map(({ latitude, longitude }) => ({ lat: latitude, lng: longitude }));
 
   const center =
     mappable.length > 0
@@ -164,31 +213,32 @@ export function MapPanel({ tripId, currentDaySchedules, allSchedules, online }: 
           defaultZoom={13}
           mapId="sugara-trip-map"
           className="h-full w-full"
+          onClick={() => setSelectedId(null)}
         >
-          {mappable.map((schedule) => {
-            const color =
-              mode === "all" && "dayIndex" in schedule
-                ? DAY_COLORS[(schedule as MappableScheduleWithDay).dayIndex % DAY_COLORS.length]
-                : (SCHEDULE_COLOR_HEX[schedule.color] ?? "#3b82f6");
-            return (
-              <AdvancedMarker
-                key={schedule.id}
-                position={{ lat: schedule.latitude, lng: schedule.longitude }}
-                onClick={() => setSelectedId(schedule.id === selectedId ? null : schedule.id)}
-              >
-                <div
-                  className="h-3 w-3 rounded-full border-2 border-white shadow"
-                  style={{ backgroundColor: color }}
-                />
-              </AdvancedMarker>
-            );
-          })}
+          <MapAutoFit positions={positions} trigger={mode} />
+          {mappable.map((schedule) => (
+            <AdvancedMarker
+              key={schedule.id}
+              position={{ lat: schedule.latitude, lng: schedule.longitude }}
+              onClick={() => setSelectedId(schedule.id === selectedId ? null : schedule.id)}
+            >
+              <div
+                className="h-3 w-3 rounded-full border-2 border-white shadow"
+                style={{ backgroundColor: schedule.markerColor }}
+              />
+            </AdvancedMarker>
+          ))}
           {selectedSchedule && (
             <InfoWindow
               position={{ lat: selectedSchedule.latitude, lng: selectedSchedule.longitude }}
               onCloseClick={() => setSelectedId(null)}
+              headerDisabled
             >
-              <p className="text-sm font-medium">{selectedSchedule.name}</p>
+              {/* InfoWindow always has a white background regardless of app theme,
+                  so hardcode dark text to avoid invisible text in dark mode */}
+              <p style={{ color: "#000", fontSize: "0.875rem", fontWeight: 500, margin: 0 }}>
+                {selectedSchedule.name}
+              </p>
             </InfoWindow>
           )}
           {routePoints.map((dest, i) => {

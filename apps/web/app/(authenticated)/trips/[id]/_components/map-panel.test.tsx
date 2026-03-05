@@ -15,6 +15,11 @@ vi.mock("@vis.gl/react-google-maps", () => ({
     <div data-testid="info-window">{children}</div>
   ),
   useMap: vi.fn(() => null),
+  useMapsLibrary: vi.fn(() => null),
+}));
+
+vi.mock("@tanstack/react-query", () => ({
+  useQuery: vi.fn(() => ({ data: undefined })),
 }));
 
 const baseSchedule: ScheduleResponse = {
@@ -56,6 +61,7 @@ describe("MapPanel", () => {
   it("lat/lng があるスポットにのみマーカーを表示する", () => {
     render(
       <MapPanel
+        tripId="trip-1"
         currentDaySchedules={[scheduleWithCoords, scheduleWithoutCoords]}
         allSchedules={[scheduleWithCoords, scheduleWithoutCoords]}
         online={true}
@@ -65,7 +71,7 @@ describe("MapPanel", () => {
   });
 
   it("オフライン時はメッセージを表示する", () => {
-    render(<MapPanel currentDaySchedules={[]} allSchedules={[]} online={false} />);
+    render(<MapPanel tripId="trip-1" currentDaySchedules={[]} allSchedules={[]} online={false} />);
     expect(screen.getByText(/オフライン/)).toBeDefined();
   });
 });

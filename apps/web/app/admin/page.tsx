@@ -186,10 +186,40 @@ type AdminUsersResponse = { users: AdminUser[] };
 
 function AdminSkeleton() {
   return (
-    <div className="container py-8 space-y-4">
-      {["row-1", "row-2", "row-3", "row-4", "row-5"].map((key) => (
-        <Skeleton key={key} className="h-12 w-full" />
-      ))}
+    <div className="min-h-screen">
+      <header className="border-b">
+        <div className="container flex h-14 items-center gap-3">
+          <Skeleton className="h-6 w-6" />
+          <Skeleton className="h-4 w-32" />
+        </div>
+      </header>
+      <main className="container max-w-4xl py-8">
+        <Skeleton className="h-10 w-full rounded-lg" />
+        <div className="mt-6 space-y-8">
+          <div>
+            <Skeleton className="h-4 w-20 mb-3" />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {[1, 2, 3, 4].map((i) => (
+                <div key={i} className="rounded-lg border bg-card p-4">
+                  <Skeleton className="h-3 w-16" />
+                  <Skeleton className="mt-2 h-7 w-12" />
+                </div>
+              ))}
+            </div>
+          </div>
+          <div>
+            <Skeleton className="h-4 w-16 mb-3" />
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="rounded-lg border bg-card p-4">
+                  <Skeleton className="h-3 w-12" />
+                  <Skeleton className="mt-2 h-7 w-10" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </main>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useSortable } from "@dnd-kit/sortable";
+import { defaultAnimateLayoutChanges, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
   CATEGORY_LABELS,
@@ -94,6 +94,7 @@ export const CandidateItem = memo(function CandidateItem({
   const [sheetOpen, setSheetOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: spot.id,
+    animateLayoutChanges: defaultAnimateLayoutChanges,
     disabled: !draggable || disabled || selectable || reorderable,
     data: { type: "candidate" },
   });

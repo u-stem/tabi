@@ -1,6 +1,6 @@
 "use client";
 
-import { useSortable } from "@dnd-kit/sortable";
+import { defaultAnimateLayoutChanges, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { CSSProperties } from "react";
 import { memo } from "react";
@@ -18,6 +18,7 @@ export const ScheduleItem = memo(function ScheduleItem(props: ScheduleItemProps)
   const sortableId = crossDayDisplay ? `cross-${id}` : id;
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: sortableId,
+    animateLayoutChanges: defaultAnimateLayoutChanges,
     // crossDayDisplay is excluded from disabled so it acts as a drop target,
     // but listeners are omitted below to prevent dragging cross-day entries.
     disabled: disabled || selectable || reorderable || draggable === false,

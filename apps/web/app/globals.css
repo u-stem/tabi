@@ -146,33 +146,35 @@
   }
 }
 
-/* Google Places Autocomplete — override to match app design system */
+/* Google Places Autocomplete — override to match app design system.
+   !important is required because Google injects its own stylesheet with high specificity. */
 .pac-container {
-  background-color: var(--popover);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  background-color: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1) !important;
   margin-top: 4px;
   font-family: inherit;
   font-size: 0.875rem;
 }
 
 .pac-item {
-  padding: 8px 12px;
+  padding: 8px 12px !important;
   cursor: pointer;
-  border-top: 1px solid var(--border);
-  color: var(--popover-foreground);
+  border-top: 1px solid var(--border) !important;
+  color: var(--popover-foreground) !important;
+  background-color: var(--popover) !important;
   line-height: 1.5;
 }
 
 .pac-item:first-child {
-  border-top: none;
+  border-top: none !important;
 }
 
 .pac-item:hover,
 .pac-item-selected {
-  background-color: var(--accent);
-  color: var(--accent-foreground);
+  background-color: var(--accent) !important;
+  color: var(--accent-foreground) !important;
 }
 
 .pac-icon {
@@ -181,7 +183,7 @@
 
 .pac-item-query {
   font-size: 0.875rem;
-  color: var(--popover-foreground);
+  color: inherit !important;
   padding-right: 4px;
 }
 
@@ -191,7 +193,7 @@
 
 /* Keep "Powered by Google" attribution, style its background */
 .pac-container::after {
-  background-color: var(--popover);
+  background-color: var(--popover) !important;
   padding: 4px 12px;
 }
 

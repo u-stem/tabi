@@ -21,7 +21,7 @@ vi.mock("sonner", () => ({
 vi.mock("@dnd-kit/core", () => ({
   useSensor: vi.fn(() => ({})),
   useSensors: vi.fn((...sensors: unknown[]) => sensors),
-  PointerSensor: class {},
+  MouseSensor: class {},
   TouchSensor: class {},
   pointerWithin: vi.fn(),
 }));

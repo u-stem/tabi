@@ -59,7 +59,7 @@ export function MobileContentTabs({
           aria-controls={getMobileTabPanelId(tab.id)}
           tabIndex={activeTab === tab.id ? 0 : -1}
           className={cn(
-            "min-w-0 rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] min-h-[36px] active:scale-[0.97] overflow-hidden",
+            "min-w-0 rounded-md px-2 py-1.5 text-sm font-medium min-h-[36px] active:scale-[0.97] overflow-hidden",
             activeTab === tab.id
               ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground",

@@ -321,9 +321,12 @@ export default function SpTripDetailPage() {
     selection.exit();
   }, [selectedDay, mobileTab]);
 
-  // Prevent outer SpScrollContainer from scrolling during swipe
+  // Prevent outer SpScrollContainer from scrolling during swipe.
+  // useLayoutEffect (not useEffect) so the overflow restore happens before
+  // paint — otherwise a second paint with changed overflow causes a visible
+  // position shift on the tab bar (the candidate count number "floats").
   const isActivelySwiping = swipe.adjacent !== null || swipe.isAnimating;
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = spScrollRef?.current;
     if (!el || !isActivelySwiping) return;
     el.style.overflow = "hidden";
@@ -621,11 +624,13 @@ export default function SpTripDetailPage() {
                     onTabChange={handleMobileTabChange}
                     candidateCount={dnd.localCandidates.length}
                   />
-                  <div ref={mobileContentRef} className="pb-20 min-h-[calc(100svh-12rem)]">
+                  <div
+                    ref={mobileContentRef}
+                    className="min-h-[60vh] overflow-x-hidden touch-pan-y pb-20"
+                  >
                     <div
                       ref={swipeContainerRef}
-                      className="relative touch-pan-y"
-                      style={{ willChange: swipe.adjacent ? "transform" : "auto" }}
+                      className="relative touch-pan-y will-change-transform"
                     >
                       {/* Current tab */}
                       <div

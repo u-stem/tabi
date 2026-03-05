@@ -2,7 +2,7 @@ import {
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
-  PointerSensor,
+  MouseSensor,
   pointerWithin,
   TouchSensor,
   useSensor,
@@ -44,7 +44,10 @@ type UseTripDragAndDropArgs = {
   onDone: () => void;
 };
 
-const POINTER_SENSOR_OPTIONS = { activationConstraint: { distance: 8 } } as const;
+// MouseSensor (not PointerSensor) so that touch input is handled exclusively
+// by TouchSensor. PointerSensor responds to touch pointerdown and competes
+// with useSwipeTab's horizontal swipe detection, causing wobble.
+const MOUSE_SENSOR_OPTIONS = { activationConstraint: { distance: 8 } } as const;
 const TOUCH_SENSOR_OPTIONS = {
   activationConstraint: { delay: 200, tolerance: 5 },
 } as const;
@@ -68,7 +71,7 @@ export function useTripDragAndDrop({
   const [lastOverZone, setLastOverZone] = useState<"timeline" | "candidates" | null>(null);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, POINTER_SENSOR_OPTIONS),
+    useSensor(MouseSensor, MOUSE_SENSOR_OPTIONS),
     useSensor(TouchSensor, TOUCH_SENSOR_OPTIONS),
   );
 

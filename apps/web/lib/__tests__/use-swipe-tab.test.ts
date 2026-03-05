@@ -508,4 +508,68 @@ describe("useSwipeTab", () => {
     expect(touchEndRemoved).toBeDefined();
     expect(touchCancelRemoved).toBeDefined();
   });
+
+  describe("rAF retry when refs are initially null", () => {
+    it("registers listeners after refs become available via rAF", () => {
+      const containerRef = { current: null as HTMLElement | null };
+      const swipeRef = { current: null as HTMLElement | null };
+
+      const { result } = renderHook(() =>
+        useSwipeTab(containerRef, swipeRef, {
+          onSwipeComplete: vi.fn(),
+          enabled: true,
+          canSwipePrev: true,
+          canSwipeNext: true,
+        }),
+      );
+
+      // No listeners registered yet (refs are null)
+      expect(container.el.addEventListener).not.toHaveBeenCalled();
+      expect(result.current.adjacent).toBeNull();
+
+      // Populate refs
+      containerRef.current = container.el;
+      swipeRef.current = swipeEl.el;
+
+      // Advance rAF
+      act(() => {
+        vi.advanceTimersByTime(16);
+      });
+
+      // Listeners should now be registered
+      const calls = container.el.addEventListener as ReturnType<typeof vi.fn>;
+      const pointerDownCall = calls.mock.calls.find((c: unknown[]) => c[0] === "pointerdown");
+      expect(pointerDownCall).toBeDefined();
+    });
+
+    it("stops retrying after MAX_RETRIES (~60 frames)", () => {
+      const containerRef = { current: null as HTMLElement | null };
+      const swipeRef = { current: null as HTMLElement | null };
+
+      renderHook(() =>
+        useSwipeTab(containerRef, swipeRef, {
+          onSwipeComplete: vi.fn(),
+          enabled: true,
+          canSwipePrev: true,
+          canSwipeNext: true,
+        }),
+      );
+
+      // Advance past MAX_RETRIES (60 frames)
+      act(() => {
+        vi.advanceTimersByTime(16 * 65);
+      });
+
+      // Populate refs after max retries exceeded
+      containerRef.current = container.el;
+      swipeRef.current = swipeEl.el;
+
+      act(() => {
+        vi.advanceTimersByTime(16);
+      });
+
+      // Listeners should NOT be registered (retries exhausted)
+      expect(container.el.addEventListener).not.toHaveBeenCalled();
+    });
+  });
 });

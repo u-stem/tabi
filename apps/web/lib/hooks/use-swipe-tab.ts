@@ -61,261 +61,286 @@ export function useSwipeTab(
   optionsRef.current = options;
 
   useEffect(() => {
-    const containerEl = containerRef.current;
-    const swipeEl = swipeRef.current;
-    if (!containerEl || !swipeEl || options.enabled === false) return;
-    const container = containerEl;
-    const swipe = swipeEl;
+    if (options.enabled === false) return;
 
-    let startX = 0;
-    let startY = 0;
-    let startTime = 0;
-    let axis: "pending" | "horizontal" | "vertical" = "pending";
-    let containerWidth = 0;
-    let adjacentSet: "prev" | "next" | null = null;
-    let animating = false;
-    let tracking = false;
-    let trackingSource: "pointer" | "touch" | null = null;
-    let activePointerId: number | null = null;
-    let activeTouchId: number | null = null;
-    let unmounted = false;
+    // Refs may not be populated yet when enabled flips true (e.g. skeleton
+    // still visible due to LoadingBoundary's minimum display time). Poll
+    // via rAF until the DOM elements are mounted.
+    const MAX_RETRIES = 60; // ~1s at 60fps
+    let rafId: number | null = null;
+    let teardown: (() => void) | undefined;
+    let retries = 0;
 
-    function resetSwipe() {
-      axis = "pending";
-      adjacentSet = null;
-      animating = false;
-      tracking = false;
-      trackingSource = null;
-      activePointerId = null;
-      activeTouchId = null;
-      swipe.style.transform = "";
-      swipe.style.transition = "";
-      setAdjacent(null);
-      setIsAnimating(false);
+    function trySetup() {
+      const containerEl = containerRef.current;
+      const swipeEl = swipeRef.current;
+      if (!containerEl || !swipeEl) {
+        if (retries++ < MAX_RETRIES) {
+          rafId = requestAnimationFrame(trySetup);
+        }
+        return;
+      }
+      rafId = null;
+      teardown = setup(containerEl, swipeEl);
     }
 
-    function handleTransitionEnd() {
-      swipe.removeEventListener("transitionend", handleTransitionEnd);
-      if (unmounted || !animating) return;
+    trySetup();
 
-      const opts = optionsRef.current;
-      const currentTransform = swipe.style.transform;
-      const isFullSlide =
-        currentTransform.includes(`${containerWidth}`) ||
-        currentTransform.includes(`${-containerWidth}`);
+    return () => {
+      if (rafId !== null) cancelAnimationFrame(rafId);
+      teardown?.();
+    };
 
-      if (isFullSlide) {
-        const direction = currentTransform.includes("-") ? "left" : "right";
-        // Clear transition first so React's synchronous DOM updates (willChange
-        // teardown, overflow class change) cannot re-trigger a CSS transition
-        // from translateX(-width) → translateX(0).
-        swipe.style.transition = "";
-        // Flush React state synchronously so the new tab content renders
-        // BEFORE we clear the transform — prevents one-frame flicker
-        flushSync(() => {
-          setAdjacent(null);
-          setIsAnimating(false);
-          opts.onSwipeComplete(direction);
-        });
+    function setup(container: HTMLElement, swipe: HTMLElement): () => void {
+      let startX = 0;
+      let startY = 0;
+      let startTime = 0;
+      let axis: "pending" | "horizontal" | "vertical" = "pending";
+      let containerWidth = 0;
+      let adjacentSet: "prev" | "next" | null = null;
+      let animating = false;
+      let tracking = false;
+      let trackingSource: "pointer" | "touch" | null = null;
+      let activePointerId: number | null = null;
+      let activeTouchId: number | null = null;
+      let unmounted = false;
+
+      function resetSwipe() {
         axis = "pending";
         adjacentSet = null;
         animating = false;
         tracking = false;
         trackingSource = null;
         activePointerId = null;
+        activeTouchId = null;
         swipe.style.transform = "";
-      } else {
+        swipe.style.transition = "";
+        setAdjacent(null);
+        setIsAnimating(false);
+      }
+
+      function handleTransitionEnd() {
+        swipe.removeEventListener("transitionend", handleTransitionEnd);
+        if (unmounted || !animating) return;
+
+        const opts = optionsRef.current;
+        const currentTransform = swipe.style.transform;
+        const isFullSlide =
+          currentTransform.includes(`${containerWidth}`) ||
+          currentTransform.includes(`${-containerWidth}`);
+
+        if (isFullSlide) {
+          const direction = currentTransform.includes("-") ? "left" : "right";
+          // Clear transition and transform BEFORE flushSync so that React's
+          // layout effects (e.g. scroll restoration) compute positions at the
+          // final location, not at the slide-out offset. No paint can occur
+          // between these DOM writes and flushSync because it's all synchronous.
+          swipe.style.transition = "";
+          swipe.style.transform = "";
+          flushSync(() => {
+            setAdjacent(null);
+            setIsAnimating(false);
+            opts.onSwipeComplete(direction);
+          });
+          axis = "pending";
+          adjacentSet = null;
+          animating = false;
+          tracking = false;
+          trackingSource = null;
+          activePointerId = null;
+        } else {
+          resetSwipe();
+        }
+      }
+
+      function startSwipe(clientX: number, clientY: number, source: "pointer" | "touch") {
+        if (animating) return;
+        containerWidth = container.offsetWidth;
+        // Bail out if the container has no width (e.g. hidden/unmeasured) to
+        // prevent the transform string comparison from producing false positives.
+        if (containerWidth === 0) return;
+        startX = clientX;
+        startY = clientY;
+        startTime = Date.now();
+        axis = "pending";
+        tracking = true;
+        trackingSource = source;
+      }
+
+      function moveSwipe(clientX: number, clientY: number) {
+        if (!tracking || animating || axis === "vertical") return;
+        const dx = clientX - startX;
+        const dy = clientY - startY;
+        const absDx = Math.abs(dx);
+        const absDy = Math.abs(dy);
+
+        if (axis === "pending") {
+          if (absDx < LOCK_THRESHOLD && absDy < LOCK_THRESHOLD) return;
+          axis = absDx > absDy * HORIZONTAL_BIAS ? "horizontal" : "vertical";
+          if (axis === "vertical") return;
+        }
+
+        const opts = optionsRef.current;
+        const canPrev = opts.canSwipePrev;
+        const canNext = opts.canSwipeNext;
+
+        // Set adjacent tab (once per swipe direction)
+        if (dx < 0 && canNext && adjacentSet !== "next") {
+          adjacentSet = "next";
+          setAdjacent("next");
+        } else if (dx > 0 && canPrev && adjacentSet !== "prev") {
+          adjacentSet = "prev";
+          setAdjacent("prev");
+        }
+
+        // Rubber-band at edges
+        let translateX: number;
+        if (dx < 0 && !canNext) {
+          translateX = dx / 3;
+        } else if (dx > 0 && !canPrev) {
+          translateX = dx / 3;
+        } else {
+          translateX = dx;
+        }
+
+        swipe.style.transform = `translateX(${translateX}px)`;
+      }
+
+      function endSwipe(clientX: number) {
+        if (!tracking) return;
+        trackingSource = null;
+        activePointerId = null;
+        if (animating || axis !== "horizontal") {
+          if (axis === "pending") resetSwipe();
+          return;
+        }
+
+        const dx = clientX - startX;
+        const absDx = Math.abs(dx);
+        const elapsed = Date.now() - startTime;
+        const velocity = elapsed > 0 ? absDx / elapsed : 0;
+
+        const opts = optionsRef.current;
+        const canPrev = opts.canSwipePrev;
+        const canNext = opts.canSwipeNext;
+
+        const isSwipeLeft = dx < 0 && canNext;
+        const isSwipeRight = dx > 0 && canPrev;
+        const meetsThreshold = absDx >= SWIPE_THRESHOLD || velocity >= VELOCITY_THRESHOLD;
+
+        if (meetsThreshold && (isSwipeLeft || isSwipeRight)) {
+          // Snap to full width
+          animating = true;
+          setIsAnimating(true);
+          const targetX = dx < 0 ? -containerWidth : containerWidth;
+          swipe.addEventListener("transitionend", handleTransitionEnd, { once: true });
+          swipe.style.transition = `transform ${SNAP_DURATION}ms cubic-bezier(0.2, 0, 0, 1)`;
+          // Force reflow so transition fires from current position
+          swipe.offsetHeight;
+          swipe.style.transform = `translateX(${targetX}px)`;
+        } else {
+          // Spring back to origin
+          animating = true;
+          setIsAnimating(true);
+          swipe.addEventListener("transitionend", handleTransitionEnd, { once: true });
+          swipe.style.transition = `transform ${SNAP_DURATION}ms cubic-bezier(0.2, 0, 0, 1)`;
+          swipe.offsetHeight;
+          swipe.style.transform = "translateX(0px)";
+        }
+      }
+
+      function handlePointerDown(e: PointerEvent) {
+        if (e.pointerType !== "touch") return;
+        if (shouldIgnoreSwipeStart(e.target)) return;
+        if (trackingSource && trackingSource !== "pointer") return;
+        if (activePointerId !== null) return;
+        activePointerId = e.pointerId;
+        startSwipe(e.clientX, e.clientY, "pointer");
+      }
+
+      function handlePointerMove(e: PointerEvent) {
+        if (trackingSource !== "pointer" || activePointerId !== e.pointerId) return;
+        moveSwipe(e.clientX, e.clientY);
+      }
+
+      function handlePointerUp(e: PointerEvent) {
+        if (trackingSource !== "pointer" || activePointerId !== e.pointerId) return;
+        endSwipe(e.clientX);
+      }
+
+      function handlePointerCancel(e: PointerEvent) {
+        if (trackingSource !== "pointer" || activePointerId !== e.pointerId) return;
         resetSwipe();
       }
-    }
 
-    function startSwipe(clientX: number, clientY: number, source: "pointer" | "touch") {
-      if (animating) return;
-      containerWidth = container.offsetWidth;
-      // Bail out if the container has no width (e.g. hidden/unmeasured) to
-      // prevent the transform string comparison from producing false positives.
-      if (containerWidth === 0) return;
-      startX = clientX;
-      startY = clientY;
-      startTime = Date.now();
-      axis = "pending";
-      tracking = true;
-      trackingSource = source;
-    }
-
-    function moveSwipe(clientX: number, clientY: number) {
-      if (!tracking || animating || axis === "vertical") return;
-      const dx = clientX - startX;
-      const dy = clientY - startY;
-      const absDx = Math.abs(dx);
-      const absDy = Math.abs(dy);
-
-      if (axis === "pending") {
-        if (absDx < LOCK_THRESHOLD && absDy < LOCK_THRESHOLD) return;
-        axis = absDx > absDy * HORIZONTAL_BIAS ? "horizontal" : "vertical";
-        if (axis === "vertical") return;
+      function handleTouchStart(e: TouchEvent) {
+        if (shouldIgnoreSwipeStart(e.target)) return;
+        if (trackingSource === "pointer") return;
+        if (activeTouchId !== null) return;
+        const point = e.touches[0];
+        if (!point) return;
+        activeTouchId = point.identifier;
+        startSwipe(point.clientX, point.clientY, "touch");
       }
 
-      const opts = optionsRef.current;
-      const canPrev = opts.canSwipePrev;
-      const canNext = opts.canSwipeNext;
-
-      // Set adjacent tab (once per swipe direction)
-      if (dx < 0 && canNext && adjacentSet !== "next") {
-        adjacentSet = "next";
-        setAdjacent("next");
-      } else if (dx > 0 && canPrev && adjacentSet !== "prev") {
-        adjacentSet = "prev";
-        setAdjacent("prev");
+      function handleTouchMove(e: TouchEvent) {
+        // Prevent browser vertical scroll when horizontal axis is locked,
+        // regardless of tracking source. Pointer events fire before touch events
+        // on mobile, so trackingSource is typically "pointer" — but the browser
+        // uses touch events (not pointer events) for scroll decisions.
+        if (axis === "horizontal") {
+          e.preventDefault();
+        }
+        if (trackingSource !== "touch") return;
+        const point = Array.from(e.touches).find((t) => t.identifier === activeTouchId);
+        if (!point) return;
+        moveSwipe(point.clientX, point.clientY);
       }
 
-      // Rubber-band at edges
-      let translateX: number;
-      if (dx < 0 && !canNext) {
-        translateX = dx / 3;
-      } else if (dx > 0 && !canPrev) {
-        translateX = dx / 3;
-      } else {
-        translateX = dx;
+      function handleTouchEnd(e: TouchEvent) {
+        if (trackingSource !== "touch") return;
+        const point = Array.from(e.changedTouches).find((t) => t.identifier === activeTouchId);
+        if (!point) return;
+        activeTouchId = null;
+        endSwipe(point.clientX);
       }
 
-      swipe.style.transform = `translateX(${translateX}px)`;
-    }
-
-    function endSwipe(clientX: number) {
-      if (!tracking) return;
-      trackingSource = null;
-      activePointerId = null;
-      if (animating || axis !== "horizontal") {
-        if (axis === "pending") resetSwipe();
-        return;
+      function handleTouchCancel() {
+        if (trackingSource !== "touch") return;
+        activeTouchId = null;
+        resetSwipe();
       }
 
-      const dx = clientX - startX;
-      const absDx = Math.abs(dx);
-      const elapsed = Date.now() - startTime;
-      const velocity = elapsed > 0 ? absDx / elapsed : 0;
+      // Intercept swipe start before nested controls update pointer capture.
+      container.addEventListener("pointerdown", handlePointerDown, {
+        passive: true,
+        capture: true,
+      });
+      // Keep move/up on document to survive capture shifts from nested controls.
+      document.addEventListener("pointermove", handlePointerMove, { passive: true });
+      document.addEventListener("pointerup", handlePointerUp, { passive: true });
+      document.addEventListener("pointercancel", handlePointerCancel, { passive: true });
+      // Touch fallback path for environments where pointer events can be flaky.
+      container.addEventListener("touchstart", handleTouchStart, { passive: true, capture: true });
+      // non-passive so preventDefault() can cancel browser scroll after axis lock.
+      document.addEventListener("touchmove", handleTouchMove, { passive: false });
+      document.addEventListener("touchend", handleTouchEnd, { passive: true });
+      document.addEventListener("touchcancel", handleTouchCancel, { passive: true });
 
-      const opts = optionsRef.current;
-      const canPrev = opts.canSwipePrev;
-      const canNext = opts.canSwipeNext;
-
-      const isSwipeLeft = dx < 0 && canNext;
-      const isSwipeRight = dx > 0 && canPrev;
-      const meetsThreshold = absDx >= SWIPE_THRESHOLD || velocity >= VELOCITY_THRESHOLD;
-
-      if (meetsThreshold && (isSwipeLeft || isSwipeRight)) {
-        // Snap to full width
-        animating = true;
-        setIsAnimating(true);
-        const targetX = dx < 0 ? -containerWidth : containerWidth;
-        swipe.addEventListener("transitionend", handleTransitionEnd, { once: true });
-        swipe.style.transition = `transform ${SNAP_DURATION}ms cubic-bezier(0.2, 0, 0, 1)`;
-        // Force reflow so transition fires from current position
-        swipe.offsetHeight;
-        swipe.style.transform = `translateX(${targetX}px)`;
-      } else {
-        // Spring back to origin
-        animating = true;
-        setIsAnimating(true);
-        swipe.addEventListener("transitionend", handleTransitionEnd, { once: true });
-        swipe.style.transition = `transform ${SNAP_DURATION}ms cubic-bezier(0.2, 0, 0, 1)`;
-        swipe.offsetHeight;
-        swipe.style.transform = "translateX(0px)";
-      }
-    }
-
-    function handlePointerDown(e: PointerEvent) {
-      if (e.pointerType !== "touch") return;
-      if (shouldIgnoreSwipeStart(e.target)) return;
-      if (trackingSource && trackingSource !== "pointer") return;
-      if (activePointerId !== null) return;
-      activePointerId = e.pointerId;
-      startSwipe(e.clientX, e.clientY, "pointer");
-    }
-
-    function handlePointerMove(e: PointerEvent) {
-      if (trackingSource !== "pointer" || activePointerId !== e.pointerId) return;
-      moveSwipe(e.clientX, e.clientY);
-    }
-
-    function handlePointerUp(e: PointerEvent) {
-      if (trackingSource !== "pointer" || activePointerId !== e.pointerId) return;
-      endSwipe(e.clientX);
-    }
-
-    function handlePointerCancel(e: PointerEvent) {
-      if (trackingSource !== "pointer" || activePointerId !== e.pointerId) return;
-      resetSwipe();
-    }
-
-    function handleTouchStart(e: TouchEvent) {
-      if (shouldIgnoreSwipeStart(e.target)) return;
-      if (trackingSource === "pointer") return;
-      if (activeTouchId !== null) return;
-      const point = e.touches[0];
-      if (!point) return;
-      activeTouchId = point.identifier;
-      startSwipe(point.clientX, point.clientY, "touch");
-    }
-
-    function handleTouchMove(e: TouchEvent) {
-      // Prevent browser vertical scroll when horizontal axis is locked,
-      // regardless of tracking source. Pointer events fire before touch events
-      // on mobile, so trackingSource is typically "pointer" — but the browser
-      // uses touch events (not pointer events) for scroll decisions.
-      if (axis === "horizontal") {
-        e.preventDefault();
-      }
-      if (trackingSource !== "touch") return;
-      const point = Array.from(e.touches).find((t) => t.identifier === activeTouchId);
-      if (!point) return;
-      moveSwipe(point.clientX, point.clientY);
-    }
-
-    function handleTouchEnd(e: TouchEvent) {
-      if (trackingSource !== "touch") return;
-      const point = Array.from(e.changedTouches).find((t) => t.identifier === activeTouchId);
-      if (!point) return;
-      activeTouchId = null;
-      endSwipe(point.clientX);
-    }
-
-    function handleTouchCancel() {
-      if (trackingSource !== "touch") return;
-      activeTouchId = null;
-      resetSwipe();
-    }
-
-    // Intercept swipe start before nested controls update pointer capture.
-    container.addEventListener("pointerdown", handlePointerDown, {
-      passive: true,
-      capture: true,
-    });
-    // Keep move/up on document to survive capture shifts from nested controls.
-    document.addEventListener("pointermove", handlePointerMove, { passive: true });
-    document.addEventListener("pointerup", handlePointerUp, { passive: true });
-    document.addEventListener("pointercancel", handlePointerCancel, { passive: true });
-    // Touch fallback path for environments where pointer events can be flaky.
-    container.addEventListener("touchstart", handleTouchStart, { passive: true, capture: true });
-    // non-passive so preventDefault() can cancel browser scroll after axis lock.
-    document.addEventListener("touchmove", handleTouchMove, { passive: false });
-    document.addEventListener("touchend", handleTouchEnd, { passive: true });
-    document.addEventListener("touchcancel", handleTouchCancel, { passive: true });
-
-    return () => {
-      unmounted = true;
-      container.removeEventListener("pointerdown", handlePointerDown, true);
-      document.removeEventListener("pointermove", handlePointerMove);
-      document.removeEventListener("pointerup", handlePointerUp);
-      document.removeEventListener("pointercancel", handlePointerCancel);
-      container.removeEventListener("touchstart", handleTouchStart, true);
-      document.removeEventListener("touchmove", handleTouchMove);
-      document.removeEventListener("touchend", handleTouchEnd);
-      document.removeEventListener("touchcancel", handleTouchCancel);
-      swipe.style.transform = "";
-      swipe.style.transition = "";
-    };
+      return () => {
+        unmounted = true;
+        container.removeEventListener("pointerdown", handlePointerDown, true);
+        document.removeEventListener("pointermove", handlePointerMove);
+        document.removeEventListener("pointerup", handlePointerUp);
+        document.removeEventListener("pointercancel", handlePointerCancel);
+        container.removeEventListener("touchstart", handleTouchStart, true);
+        document.removeEventListener("touchmove", handleTouchMove);
+        document.removeEventListener("touchend", handleTouchEnd);
+        document.removeEventListener("touchcancel", handleTouchCancel);
+        swipe.style.transform = "";
+        swipe.style.transition = "";
+      };
+    } // end setup()
   }, [containerRef, swipeRef, options.enabled]);
 
   return { adjacent, isAnimating };

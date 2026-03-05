@@ -53,6 +53,11 @@ export function PlacesAutocompleteInput({ id, defaultValue, onPlaceSelect }: Pro
       name="address"
       defaultValue={defaultValue}
       placeholder="場所を検索..."
+      onKeyDown={(e) => {
+        // Prevent Enter from submitting the form — autocomplete consumes Enter
+        // to select a suggestion, so the user must use the submit button.
+        if (e.key === "Enter") e.preventDefault();
+      }}
     />
   );
 }

@@ -9,7 +9,7 @@ import type {
 import { DEFAULT_SCHEDULE_CATEGORY } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { ScheduleFormFields } from "@/components/schedule-form-fields";
 import { Button } from "@/components/ui/button";
@@ -74,6 +74,25 @@ export function AddScheduleDialog({
   const [latitude, setLatitude] = useState<number | null>(null);
   const [longitude, setLongitude] = useState<number | null>(null);
   const [placeId, setPlaceId] = useState<string | null>(null);
+
+  const handleLocationSelected = useCallback(
+    ({
+      latitude: lat,
+      longitude: lng,
+      placeId: pid,
+    }: {
+      latitude: number;
+      longitude: number;
+      placeId: string;
+      address: string;
+      name: string;
+    }) => {
+      setLatitude(lat);
+      setLongitude(lng);
+      setPlaceId(pid);
+    },
+    [],
+  );
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -183,11 +202,7 @@ export function AddScheduleDialog({
             urls={urls}
             onUrlsChange={setUrls}
             mapsEnabled={mapsEnabled}
-            onLocationSelected={({ latitude: lat, longitude: lng, placeId: pid }) => {
-              setLatitude(lat);
-              setLongitude(lng);
-              setPlaceId(pid);
-            }}
+            onLocationSelected={handleLocationSelected}
           />
           {error && (
             <p role="alert" className="text-sm text-destructive">

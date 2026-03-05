@@ -10,7 +10,7 @@ import type {
 import { computeTimeDelta } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { ScheduleFormFields } from "@/components/schedule-form-fields";
 import { Button } from "@/components/ui/button";
@@ -73,6 +73,25 @@ export function EditScheduleDialog({
   const [latitude, setLatitude] = useState<number | null>(schedule.latitude ?? null);
   const [longitude, setLongitude] = useState<number | null>(schedule.longitude ?? null);
   const [placeId, setPlaceId] = useState<string | null>(schedule.placeId ?? null);
+
+  const handleLocationSelected = useCallback(
+    ({
+      latitude: lat,
+      longitude: lng,
+      placeId: pid,
+    }: {
+      latitude: number;
+      longitude: number;
+      placeId: string;
+      address: string;
+      name: string;
+    }) => {
+      setLatitude(lat);
+      setLongitude(lng);
+      setPlaceId(pid);
+    },
+    [],
+  );
 
   function handleOpenChange(isOpen: boolean) {
     onOpenChange(isOpen);
@@ -210,11 +229,7 @@ export function EditScheduleDialog({
             }}
             idPrefix="edit-"
             mapsEnabled={mapsEnabled}
-            onLocationSelected={({ latitude: lat, longitude: lng, placeId: pid }) => {
-              setLatitude(lat);
-              setLongitude(lng);
-              setPlaceId(pid);
-            }}
+            onLocationSelected={handleLocationSelected}
           />
           {error && (
             <p role="alert" className="text-sm text-destructive">

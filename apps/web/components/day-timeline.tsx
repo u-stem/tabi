@@ -282,6 +282,7 @@ export function DayTimeline({
           reorderable={isReorderable}
           onMoveUp={isReorderable ? () => onReorderSchedule?.(schedule.id, "up") : undefined}
           onMoveDown={isReorderable ? () => onReorderSchedule?.(schedule.id, "down") : undefined}
+          mapsEnabled={mapsEnabled}
         />
       </div>
     );

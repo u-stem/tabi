@@ -6,6 +6,7 @@ import {
   QUICK_POLL_QUESTION_MAX_LENGTH,
 } from "@sugara/shared";
 import { Check, Copy, Plus, X } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -124,32 +125,40 @@ export function CreateQuickPollDialog({
     }
   }
 
-  // After creation: show share URL
+  // After creation: show share URL (matches ShareDialog layout)
   if (shareUrl) {
     return (
       <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
-        <ResponsiveDialogContent>
+        <ResponsiveDialogContent className="sm:max-w-sm">
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>投票を作成しました</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>共有リンク</ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
-              以下のリンクを共有してください
+              URLまたはQRコードで共有できます
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="flex gap-2">
-              <Input value={shareUrl} readOnly className="font-mono text-sm" />
-              <Button variant="outline" onClick={copyShareUrl}>
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={shareUrl}
+                className="min-w-0 flex-1 rounded-md border bg-muted px-3 py-2 text-sm"
+                onFocus={(e) => e.currentTarget.select()}
+              />
+              <Button
+                variant="outline"
+                size="icon"
+                className="shrink-0"
+                onClick={copyShareUrl}
+                aria-label={linkCopied ? "コピー完了" : "URLをコピー"}
+              >
                 {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                コピー
               </Button>
             </div>
+            <div className="flex justify-center rounded-md border bg-white p-4">
+              <QRCodeSVG value={shareUrl} size={200} level="M" />
+            </div>
           </div>
-          <ResponsiveDialogFooter>
-            <Button variant="outline" onClick={() => window.open(shareUrl, "_blank")}>
-              投票ページを開く
-            </Button>
-            <Button onClick={() => handleOpenChange(false)}>閉じる</Button>
-          </ResponsiveDialogFooter>
         </ResponsiveDialogContent>
       </ResponsiveDialog>
     );

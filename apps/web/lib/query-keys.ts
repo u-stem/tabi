@@ -39,6 +39,7 @@ export const queryKeys = {
   quickPolls: {
     all: ["quick-polls"] as const,
     list: () => [...queryKeys.quickPolls.all, "list"] as const,
+    detail: (id: string) => [...queryKeys.quickPolls.all, id] as const,
     shared: (token: string) => [...queryKeys.quickPolls.all, "shared", token] as const,
   },
   expenses: {

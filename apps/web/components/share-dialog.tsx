@@ -21,9 +21,16 @@ type ShareDialogProps = {
   onOpenChange: (open: boolean) => void;
   shareUrl: string;
   expiresAt: string | null;
+  description?: string;
 };
 
-export function ShareDialog({ open, onOpenChange, shareUrl, expiresAt }: ShareDialogProps) {
+export function ShareDialog({
+  open,
+  onOpenChange,
+  shareUrl,
+  expiresAt,
+  description = "URLまたはQRコードで共有できます",
+}: ShareDialogProps) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -42,9 +49,7 @@ export function ShareDialog({ open, onOpenChange, shareUrl, expiresAt }: ShareDi
       <ResponsiveDialogContent className="sm:max-w-sm">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>共有リンク</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            URLまたはQRコードで旅行プランを共有できます
-          </ResponsiveDialogDescription>
+          <ResponsiveDialogDescription>{description}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
         <div className="space-y-4">

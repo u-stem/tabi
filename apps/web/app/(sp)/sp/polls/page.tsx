@@ -1,11 +1,13 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Copy, Trash2, XCircle } from "lucide-react";
+import { Share2, Trash2, XCircle } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CreateQuickPollDialog } from "@/components/create-quick-poll-dialog";
 import { Fab } from "@/components/fab";
+import { ShareDialog } from "@/components/share-dialog";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
@@ -53,6 +55,7 @@ function SpPollsSkeleton() {
 export default function SpPollsPage() {
   const queryClient = useQueryClient();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [shareDialogToken, setShareDialogToken] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = pageTitle("かんたん投票");
@@ -89,14 +92,9 @@ export default function SpPollsPage() {
     queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.list() });
   }
 
-  async function copyLink(shareToken: string) {
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}/p/${shareToken}`);
-      toast.success(MSG.QUICK_POLL_LINK_COPIED);
-    } catch {
-      toast.error(MSG.COPY_FAILED);
-    }
-  }
+  const shareUrl = shareDialogToken
+    ? `${typeof window !== "undefined" ? window.location.origin : ""}/p/${shareDialogToken}`
+    : "";
 
   return (
     <>
@@ -106,7 +104,11 @@ export default function SpPollsPage() {
         ) : (
           <div className="mt-4 space-y-3">
             {polls.map((poll) => (
-              <div key={poll.id} className="rounded-lg border p-4 space-y-3">
+              <Link
+                key={poll.id}
+                href={`/sp/polls/${poll.id}`}
+                className="block rounded-lg border p-4 space-y-3 transition-colors hover:bg-accent/50"
+              >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{poll.question}</p>
@@ -124,15 +126,25 @@ export default function SpPollsPage() {
                 </div>
 
                 <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={() => copyLink(poll.shareToken)}>
-                    <Copy className="mr-1 h-3.5 w-3.5" />
-                    リンク
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShareDialogToken(poll.shareToken);
+                    }}
+                  >
+                    <Share2 className="mr-1 h-3.5 w-3.5" />
+                    共有
                   </Button>
                   {poll.status === "open" && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => closeMutation.mutate(poll.id)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        closeMutation.mutate(poll.id);
+                      }}
                       disabled={closeMutation.isPending}
                     >
                       <XCircle className="mr-1 h-3.5 w-3.5" />
@@ -143,14 +155,17 @@ export default function SpPollsPage() {
                     variant="ghost"
                     size="sm"
                     className="text-destructive hover:text-destructive"
-                    onClick={() => deleteMutation.mutate(poll.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      deleteMutation.mutate(poll.id);
+                    }}
                     disabled={deleteMutation.isPending}
                   >
                     <Trash2 className="mr-1 h-3.5 w-3.5" />
                     削除
                   </Button>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
@@ -159,6 +174,14 @@ export default function SpPollsPage() {
         open={createDialogOpen}
         onOpenChange={setCreateDialogOpen}
         onCreated={invalidateList}
+      />
+      <ShareDialog
+        open={shareDialogToken !== null}
+        onOpenChange={(open) => {
+          if (!open) setShareDialogToken(null);
+        }}
+        shareUrl={shareUrl}
+        expiresAt={null}
       />
       <Fab onClick={() => setCreateDialogOpen(true)} label="投票を新規作成" />
     </>

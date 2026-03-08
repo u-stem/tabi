@@ -86,6 +86,38 @@ quickPollRoutes.get("/", async (c) => {
   );
 });
 
+// Get detail (creator only)
+quickPollRoutes.get("/:id", async (c) => {
+  const user = c.get("user");
+  const pollId = c.req.param("id");
+
+  const poll = await db.query.quickPolls.findFirst({
+    where: and(eq(quickPolls.id, pollId), eq(quickPolls.creatorId, user.id)),
+    with: {
+      options: { orderBy: (o, { asc }) => [asc(o.sortOrder)] },
+      votes: { columns: { id: true, optionId: true } },
+    },
+  });
+  if (!poll) return c.json({ error: ERROR_MSG.QUICK_POLL_NOT_FOUND }, 404);
+
+  return c.json({
+    id: poll.id,
+    question: poll.question,
+    shareToken: poll.shareToken,
+    status: isExpired(poll) ? "closed" : poll.status,
+    allowMultiple: poll.allowMultiple,
+    showResultsBeforeVote: poll.showResultsBeforeVote,
+    expiresAt: poll.expiresAt.toISOString(),
+    createdAt: poll.createdAt.toISOString(),
+    options: poll.options.map((o) => ({
+      id: o.id,
+      label: o.label,
+      voteCount: poll.votes.filter((v) => v.optionId === o.id).length,
+    })),
+    totalVotes: new Set(poll.votes.map((v) => v.id)).size,
+  });
+});
+
 // Update (close)
 quickPollRoutes.patch("/:id", async (c) => {
   const user = c.get("user");

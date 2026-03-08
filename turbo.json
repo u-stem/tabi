@@ -24,7 +24,9 @@
     "test": {
       "dependsOn": ["^build"]
     },
-    "lint": {},
+    "lint": {
+      "cache": false
+    },
     "format": {
       "cache": false
     },

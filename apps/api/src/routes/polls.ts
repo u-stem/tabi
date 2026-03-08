@@ -527,7 +527,7 @@ pollRoutes.post("/:pollId/share", async (c) => {
   // Generate new token (or replace expired / legacy one)
   const expiresAt = shareExpiresAt();
   const whereCondition = poll.shareToken
-    ? eq(schedulePolls.id, pollId)
+    ? and(eq(schedulePolls.id, pollId), eq(schedulePolls.shareToken, poll.shareToken))
     : and(eq(schedulePolls.id, pollId), isNull(schedulePolls.shareToken));
   const [updated] = await db
     .update(schedulePolls)

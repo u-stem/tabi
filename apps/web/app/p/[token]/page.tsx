@@ -38,7 +38,10 @@ export default function QuickPollPage() {
     error,
   } = useQuery({
     queryKey: queryKeys.quickPolls.shared(token ?? ""),
-    queryFn: () => api<QuickPollResponse>(`/api/quick-polls/s/${token}?anonymousId=${anonymousId}`),
+    queryFn: () =>
+      api<QuickPollResponse>(`/api/quick-polls/s/${token}`, {
+        headers: { "X-Anonymous-Id": anonymousId },
+      }),
     enabled: token !== null,
     retry: false,
   });

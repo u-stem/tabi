@@ -95,8 +95,10 @@ export default function SettingsPage({
     document.title = pageTitle("設定");
   }, []);
 
+  const emailVerifiedShown = useRef(false);
   useEffect(() => {
-    if (searchParams.get("emailVerified") === "1") {
+    if (!emailVerifiedShown.current && searchParams.get("emailVerified") === "1") {
+      emailVerifiedShown.current = true;
       toast.success("メールアドレスを設定しました。");
       router.replace("/settings");
     }

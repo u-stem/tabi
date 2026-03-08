@@ -476,6 +476,10 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
   const user = c.get("user");
   const tripId = c.req.param("id");
 
+  if (user.isAnonymous) {
+    return c.json({ error: ERROR_MSG.GUEST_TRIP_LIMIT }, 403);
+  }
+
   const source = await db.query.trips.findFirst({
     where: eq(trips.id, tripId),
     with: {

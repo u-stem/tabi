@@ -31,7 +31,7 @@ quickPollShareRoutes.get("/api/quick-polls/s/:shareToken", rateLimit, async (c) 
 
   // Try to identify current user for myVoteOptionIds
   const user = await getOptionalUser(c);
-  const anonymousId = c.req.query("anonymousId");
+  const anonymousId = c.req.header("x-anonymous-id");
 
   const myVoteOptionIds = poll.votes
     .filter((v) => {
@@ -101,7 +101,10 @@ quickPollShareRoutes.post("/api/quick-polls/s/:shareToken/vote", rateLimit, asyn
   // Remove existing votes for this user/anonymous
   const deleteCondition = voterId
     ? and(eq(quickPollVotes.pollId, poll.id), eq(quickPollVotes.userId, voterId))
-    : and(eq(quickPollVotes.pollId, poll.id), eq(quickPollVotes.anonymousId, voterAnonymousId!));
+    : and(
+        eq(quickPollVotes.pollId, poll.id),
+        eq(quickPollVotes.anonymousId, voterAnonymousId as string),
+      );
   await db.delete(quickPollVotes).where(deleteCondition);
 
   // Insert new votes
@@ -146,7 +149,10 @@ quickPollShareRoutes.delete("/api/quick-polls/s/:shareToken/vote", rateLimit, as
 
   const deleteCondition = voterId
     ? and(eq(quickPollVotes.pollId, poll.id), eq(quickPollVotes.userId, voterId))
-    : and(eq(quickPollVotes.pollId, poll.id), eq(quickPollVotes.anonymousId, voterAnonymousId!));
+    : and(
+        eq(quickPollVotes.pollId, poll.id),
+        eq(quickPollVotes.anonymousId, voterAnonymousId as string),
+      );
   await db.delete(quickPollVotes).where(deleteCondition);
 
   return c.json({ ok: true });

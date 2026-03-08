@@ -50,7 +50,7 @@ export async function switchViewMode(
       sameSite: "lax",
     });
   } else {
-    document.cookie = `${VIEW_MODE_COOKIE}=${mode}; path=/; max-age=${maxAge}; SameSite=Lax`;
+    document.cookie = `${VIEW_MODE_COOKIE}=${mode}; path=/; max-age=${maxAge}; SameSite=Lax; Secure`;
   }
 
   const { pathname, search, hash } = window.location;

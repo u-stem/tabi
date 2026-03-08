@@ -133,10 +133,18 @@ shareRoutes.get("/api/shared/:token", sharedTripRateLimit, async (c) => {
     return c.json({ error: ERROR_MSG.SHARED_NOT_FOUND }, 404);
   }
 
-  // Remove sensitive fields, but expose expiry as ISO string for UI
-  const { ownerId, shareToken, shareTokenExpiresAt: _expiry, ...publicTrip } = trip;
   return c.json({
-    ...publicTrip,
+    id: trip.id,
+    title: trip.title,
+    destination: trip.destination,
+    startDate: trip.startDate,
+    endDate: trip.endDate,
+    status: trip.status,
+    coverImageUrl: trip.coverImageUrl,
+    coverImagePosition: trip.coverImagePosition,
+    createdAt: trip.createdAt,
+    updatedAt: trip.updatedAt,
+    days: trip.days,
     shareExpiresAt: trip.shareTokenExpiresAt?.toISOString() ?? null,
   });
 });

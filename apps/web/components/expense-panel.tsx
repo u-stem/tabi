@@ -68,6 +68,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
   });
 
   const handleSaved = () => {
+    setEditingExpenseItem(null);
     queryClient.invalidateQueries({ queryKey: queryKeys.expenses.list(tripId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId) });
   };
@@ -197,7 +198,10 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
           <ExpenseDialog
             tripId={tripId}
             open={dialogOpen}
-            onOpenChange={setDialogOpen}
+            onOpenChange={(open) => {
+              if (!open) setEditingExpenseItem(null);
+              setDialogOpen(open);
+            }}
             expense={editingExpenseItem}
             onSaved={handleSaved}
           />

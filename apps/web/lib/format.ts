@@ -51,41 +51,6 @@ export function formatTimeRange(startTime?: string | null, endTime?: string | nu
   return "";
 }
 
-export type TimeStatus = "past" | "current" | "future";
-
-export function getTimeStatus(
-  now: string,
-  startTime?: string | null,
-  endTime?: string | null,
-): TimeStatus {
-  const nowHm = now.slice(0, 5);
-
-  if (!startTime) return "future";
-
-  const startHm = startTime.slice(0, 5);
-
-  if (endTime) {
-    const endHm = endTime.slice(0, 5);
-    if (endHm <= nowHm) return "past";
-    if (startHm <= nowHm) return "current";
-    return "future";
-  }
-
-  // startTime only: treat as past once the time has passed
-  return startHm <= nowHm ? "past" : "future";
-}
-
-/**
- * TimeStatus for cross-day entries displayed on the target day.
- * Only endTime is relevant (the checkout / arrival time on this day).
- */
-export function getCrossDayTimeStatus(now: string, endTime?: string | null): TimeStatus | null {
-  if (!endTime) return null;
-  const nowHm = now.slice(0, 5);
-  const endHm = endTime.slice(0, 5);
-  return endHm <= nowHm ? "past" : "current";
-}
-
 export function compareByStartTime(
   a: { startTime?: string | null },
   b: { startTime?: string | null },

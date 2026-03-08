@@ -29,17 +29,9 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
 import { DROP_ZONE_ACTIVE } from "@/lib/colors";
-import {
-  compareByStartTime,
-  formatDate,
-  getCrossDayTimeStatus,
-  getTimeStatus,
-  type TimeStatus,
-  toDateString,
-} from "@/lib/format";
+import { compareByStartTime, formatDate } from "@/lib/format";
 
 import { useSelection } from "@/lib/hooks/selection-context";
-import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 
 import type { TimelineItem } from "@/lib/merge-timeline";
@@ -114,13 +106,6 @@ export function DayTimeline({
 
   const isMobile = useMobile();
   const [reorderMode, setReorderMode] = useState(false);
-  const now = useCurrentTime();
-  const isToday = date === toDateString(new Date());
-
-  function getScheduleTimeStatus(schedule: ScheduleResponse): TimeStatus | null {
-    if (!isToday) return null;
-    return getTimeStatus(now, schedule.startTime, schedule.endTime);
-  }
 
   async function handleDelete(
     scheduleId: string,
@@ -235,7 +220,6 @@ export function DayTimeline({
             onUpdate={onRefresh}
             onUnassign={!disabled && !opts?.selectable ? () => handleUnassign(s.id) : undefined}
             disabled={disabled}
-            timeStatus={isToday ? getCrossDayTimeStatus(now, s.endTime) : null}
             maxEndDayOffset={sourceMaxEndDayOffset}
             crossDayDisplay
             crossDaySourceDayNumber={sourceDayNumber}
@@ -271,7 +255,6 @@ export function DayTimeline({
             !disabled && !opts?.selectable ? () => handleUnassign(schedule.id) : undefined
           }
           disabled={disabled}
-          timeStatus={getScheduleTimeStatus(schedule)}
           maxEndDayOffset={maxEndDayOffset}
           selectable={opts?.selectable}
           selected={opts?.selectable ? selectedIds?.has(schedule.id) : undefined}

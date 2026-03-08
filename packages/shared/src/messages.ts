@@ -137,8 +137,6 @@ export const MSG = {
   TRIP_FETCH_FAILED: "旅行の取得に失敗しました",
   TRIP_NOT_FOUND: "旅行が見つかりません",
   TRIP_DATE_REQUIRED: "日付を選択してください",
-  TRIP_AUTO_IN_PROGRESS: "旅行が開始されました。ステータスを「進行中」に変更しました",
-  TRIP_AUTO_COMPLETED: "全ての予定が終了しました。ステータスを「完了」に変更しました",
   TRIP_BULK_DELETED: (n: number) => `${n}件の旅行を削除しました`,
   TRIP_BULK_DELETE_FAILED: (n: number) => `${n}件の削除に失敗しました`,
   TRIP_DAYS_REDUCED: "日数を減らすことはできません",

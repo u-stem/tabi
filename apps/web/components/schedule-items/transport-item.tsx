@@ -49,7 +49,6 @@ export const TransportItem = memo(function TransportItem({
   disabled,
   isFirst,
   isLast,
-  timeStatus,
   selectable,
   selected,
   onSelect,
@@ -70,8 +69,6 @@ export const TransportItem = memo(function TransportItem({
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
-  const isPast = timeStatus === "past";
-  const isCurrent = timeStatus === "current";
   const TransportIcon = transportMethod
     ? TRANSPORT_ICONS[transportMethod as TransportMethod]
     : CATEGORY_ICONS.transport;
@@ -111,7 +108,6 @@ export const TransportItem = memo(function TransportItem({
     <div
       className={cn(
         "min-w-0 flex-1 rounded-md border p-3",
-        isPast && "opacity-50",
         crossDayDisplay && "border-dashed bg-muted/30",
         selectable &&
           "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -205,8 +201,6 @@ export const TransportItem = memo(function TransportItem({
         icon={TransportIcon}
         isFirst={isFirst}
         isLast={isLast}
-        isPast={isPast}
-        isCurrent={isCurrent}
         colorClasses={colorClasses}
       />
 

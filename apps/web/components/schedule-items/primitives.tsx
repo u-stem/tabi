@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/responsive-alert-dialog";
 import type { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
 import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
-import type { TimeStatus } from "@/lib/format";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { cn } from "@/lib/utils";
@@ -73,7 +72,6 @@ export type ScheduleItemProps = {
   disabled?: boolean;
   isFirst?: boolean;
   isLast?: boolean;
-  timeStatus?: TimeStatus | null;
   selectable?: boolean;
   selected?: boolean;
   onSelect?: (id: string) => void;
@@ -266,35 +264,23 @@ export function TimelineNode({
   icon: Icon,
   isFirst,
   isLast,
-  isPast,
-  isCurrent,
   colorClasses,
 }: {
   variant: "place" | "transport";
   icon: React.ComponentType<{ className?: string }>;
   isFirst?: boolean;
   isLast?: boolean;
-  isPast: boolean;
-  isCurrent: boolean;
   colorClasses: (typeof SCHEDULE_COLOR_CLASSES)[ScheduleColor];
 }) {
   const isPlace = variant === "place";
   const nodeSize = isPlace ? "h-7 w-7" : "h-5 w-5";
   const iconSize = isPlace ? "h-3.5 w-3.5" : "h-2.5 w-2.5";
-  const ringOffset = isPlace ? "ring-offset-2" : "ring-offset-1";
 
   const lineSegment = (hidden: boolean) => (
     <div
       className={cn(
         "w-px flex-1",
-        hidden
-          ? "border-transparent"
-          : cn(
-              "border-l",
-              isPast
-                ? `border-solid ${colorClasses.border}`
-                : "border-dashed border-muted-foreground/30",
-            ),
+        hidden ? "border-transparent" : cn("border-l border-solid", colorClasses.border),
       )}
     />
   );
@@ -303,15 +289,6 @@ export function TimelineNode({
     <div className={cn("flex flex-col items-center", !isPlace && "w-7")} aria-hidden="true">
       {lineSegment(!!isFirst)}
       <div className="relative flex shrink-0 items-center justify-center">
-        {isCurrent && (
-          <span
-            className={cn(
-              "absolute animate-ping rounded-full opacity-30",
-              nodeSize,
-              colorClasses.bg,
-            )}
-          />
-        )}
         <div
           className={cn(
             "relative flex items-center justify-center rounded-full",
@@ -319,8 +296,6 @@ export function TimelineNode({
             isPlace
               ? cn("text-white", colorClasses.bg)
               : cn("border-2 bg-background", colorClasses.border),
-            isPast && "opacity-50",
-            isCurrent && `ring-2 ${ringOffset} ring-offset-background ${colorClasses.ring}`,
           )}
         >
           <Icon className={cn(iconSize, !isPlace && colorClasses.text)} />

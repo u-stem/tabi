@@ -47,7 +47,6 @@ export const PlaceItem = memo(function PlaceItem({
   disabled,
   isFirst,
   isLast,
-  timeStatus,
   selectable,
   selected,
   onSelect,
@@ -68,8 +67,6 @@ export const PlaceItem = memo(function PlaceItem({
   const shift = useShiftProposal(siblingSchedules);
   const CategoryIcon = CATEGORY_ICONS[category];
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
-  const isPast = timeStatus === "past";
-  const isCurrent = timeStatus === "current";
 
   const visibleStartTime = crossDayDisplay ? endTime : startTime;
   const visibleEndTime = crossDayDisplay || endDayOffset ? null : endTime;
@@ -79,7 +76,6 @@ export const PlaceItem = memo(function PlaceItem({
     <div
       className={cn(
         "min-w-0 flex-1 rounded-md border p-3",
-        isPast && "opacity-50",
         crossDayDisplay && "border-dashed bg-muted/30",
         selectable &&
           "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
@@ -166,8 +162,6 @@ export const PlaceItem = memo(function PlaceItem({
         icon={CategoryIcon}
         isFirst={isFirst}
         isLast={isLast}
-        isPast={isPast}
-        isCurrent={isCurrent}
         colorClasses={colorClasses}
       />
 

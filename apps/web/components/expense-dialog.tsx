@@ -287,7 +287,12 @@ export function ExpenseDialog({
                 )}
               >
                 合計: {customTotal.toLocaleString()}円 / {parsedAmount.toLocaleString()}円
-                {customMismatch && " (一致していません)"}
+                {customMismatch &&
+                  ` (${
+                    parsedAmount > customTotal
+                      ? `残り ${(parsedAmount - customTotal).toLocaleString()}円`
+                      : `${(customTotal - parsedAmount).toLocaleString()}円 超過`
+                  })`}
               </p>
             )}
           </div>

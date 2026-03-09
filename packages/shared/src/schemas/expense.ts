@@ -2,7 +2,7 @@ import { z } from "zod";
 
 export const EXPENSE_TITLE_MAX_LENGTH = 200;
 
-export const expenseSplitTypeSchema = z.enum(["equal", "custom"]);
+export const expenseSplitTypeSchema = z.enum(["equal", "custom", "itemized"]);
 export type ExpenseSplitType = z.infer<typeof expenseSplitTypeSchema>;
 
 const splitItemSchema = z.object({
@@ -27,7 +27,7 @@ export const createExpenseSchema = z
   )
   .refine(
     (data) => {
-      if (data.splitType === "custom") {
+      if (data.splitType === "custom" || data.splitType === "itemized") {
         return data.splits.every((s) => s.amount !== undefined);
       }
       return true;
@@ -36,7 +36,7 @@ export const createExpenseSchema = z
   )
   .refine(
     (data) => {
-      if (data.splitType === "custom") {
+      if (data.splitType === "custom" || data.splitType === "itemized") {
         const total = data.splits.reduce((sum, s) => sum + (s.amount ?? 0), 0);
         return total === data.amount;
       }
@@ -75,7 +75,7 @@ export const updateExpenseSchema = z
   )
   .refine(
     (data) => {
-      if (data.splitType === "custom" && data.splits) {
+      if ((data.splitType === "custom" || data.splitType === "itemized") && data.splits) {
         return data.splits.every((s) => s.amount !== undefined);
       }
       return true;
@@ -84,7 +84,11 @@ export const updateExpenseSchema = z
   )
   .refine(
     (data) => {
-      if (data.splitType === "custom" && data.splits && data.amount !== undefined) {
+      if (
+        (data.splitType === "custom" || data.splitType === "itemized") &&
+        data.splits &&
+        data.amount !== undefined
+      ) {
         const total = data.splits.reduce((sum, s) => sum + (s.amount ?? 0), 0);
         return total === data.amount;
       }

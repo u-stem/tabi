@@ -794,12 +794,16 @@ async function main() {
         paidBy: "alice" as const,
         splitType: "itemized" as const,
         customSplits: [
-          // dev: beer 800 + food 3000 = 3800
-          // alice: oolong 300 + food 3000 + sake 1200 = 4500
-          // bob: beer 800 + food 3000 + highball 900 + dessert 2000 = 6700
           { user: "dev" as const, amount: 3800 },
           { user: "alice" as const, amount: 4500 },
           { user: "bob" as const, amount: 6700 },
+        ],
+        lineItemsDef: [
+          { name: "お通し", amount: 1500, users: ["dev", "alice", "bob"] as const },
+          { name: "刺身盛り合わせ", amount: 3500, users: ["dev", "alice", "bob"] as const },
+          { name: "日本酒", amount: 5000, users: ["dev", "alice"] as const },
+          { name: "ソフトドリンク", amount: 1000, users: ["bob"] as const },
+          { name: "デザート", amount: 4000, users: ["dev", "alice", "bob"] as const },
         ],
       },
     ];
@@ -823,6 +827,15 @@ async function main() {
               })
               .filter((s): s is { userId: string } => s !== null);
 
+      const lineItemsPayload =
+        "lineItemsDef" in exp && exp.lineItemsDef
+          ? exp.lineItemsDef.map((li) => ({
+              name: li.name,
+              amount: li.amount,
+              memberIds: li.users.map((u) => expenseUsers[u]).filter((id): id is string => !!id),
+            }))
+          : undefined;
+
       await apiFetch(`/api/trips/${trip.id}/expenses`, {
         method: "POST",
         body: JSON.stringify({
@@ -831,6 +844,7 @@ async function main() {
           paidByUserId,
           splitType: exp.splitType,
           splits,
+          ...(lineItemsPayload ? { lineItems: lineItemsPayload } : {}),
         }),
         headers: { cookie: ownerCookies },
       });

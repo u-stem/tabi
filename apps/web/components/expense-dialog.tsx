@@ -4,7 +4,7 @@ import type { ExpenseSplitType, MemberResponse } from "@sugara/shared";
 import { EXPENSE_TITLE_MAX_LENGTH } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus, Trash2, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -137,7 +137,7 @@ export function ExpenseDialog({
   const customMismatch = splitType === "custom" && customTotal !== parsedAmount;
 
   // Itemized split calculations
-  const allMemberIds = new Set(members.map((m) => m.userId));
+  const allMemberIds = useMemo(() => new Set(members.map((m) => m.userId)), [members]);
   const itemsTotal = lineItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
   const restAmount = parsedAmount - itemsTotal;
 
@@ -153,12 +153,14 @@ export function ExpenseDialog({
     splitType === "itemized"
       ? calculateItemizedSplits(
           effectiveItems.map((item) => ({ ...item, amount: Number(item.amount) || 0 })),
-          parsedAmount,
         )
       : [];
 
   const itemizedTotal = itemizedSplits.reduce((sum, s) => sum + s.amount, 0);
   const itemizedMismatch = splitType === "itemized" && itemizedTotal !== parsedAmount;
+  const hasInvalidLineItems =
+    splitType === "itemized" &&
+    lineItems.some((item) => item.amount <= 0 || item.memberIds.size === 0);
 
   const addLineItem = useCallback(() => {
     setLineItems((prev) => [
@@ -440,6 +442,12 @@ export function ExpenseDialog({
                       </button>
                     ))}
                   </div>
+                  {item.amount <= 0 && (
+                    <p className="text-xs text-destructive">金額を入力してください</p>
+                  )}
+                  {item.memberIds.size === 0 && (
+                    <p className="text-xs text-destructive">対象メンバーを選択してください</p>
+                  )}
                 </div>
               ))}
 
@@ -501,7 +509,8 @@ export function ExpenseDialog({
                 parsedAmount <= 0 ||
                 (splitType === "equal" && selectedMembers.size === 0) ||
                 (splitType === "custom" && (selectedMembers.size === 0 || customMismatch)) ||
-                (splitType === "itemized" && (lineItems.length === 0 || itemizedMismatch))
+                (splitType === "itemized" &&
+                  (lineItems.length === 0 || itemizedMismatch || hasInvalidLineItems))
               }
             >
               {loading ? (

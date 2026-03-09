@@ -12,7 +12,6 @@ export type ExpenseLineItem = {
  */
 export function calculateItemizedSplits(
   items: ExpenseLineItem[],
-  _totalAmount: number,
 ): { userId: string; amount: number }[] {
   const memberTotals = new Map<string, number>();
 

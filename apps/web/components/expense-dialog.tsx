@@ -328,6 +328,11 @@ export function ExpenseDialog({
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+            <p className="text-xs text-muted-foreground">
+              {splitType === "equal" && "選択したメンバーで均等に割り勘します"}
+              {splitType === "custom" && "メンバーごとに負担額を指定します"}
+              {splitType === "itemized" && "品目ごとに対象メンバーを選んで割り勘します"}
+            </p>
           </div>
 
           {splitType !== "itemized" && (

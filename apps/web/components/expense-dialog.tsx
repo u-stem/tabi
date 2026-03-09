@@ -7,7 +7,6 @@ import { Check, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -332,49 +331,61 @@ export function ExpenseDialog({
               <Label asChild>
                 <span>対象メンバー</span>
               </Label>
-              <div className="space-y-2">
+              <div className="flex flex-wrap gap-1.5">
                 {members.map((m) => (
-                  <div key={m.userId} className="flex items-center gap-3">
-                    <Checkbox
-                      id={`member-${m.userId}`}
-                      checked={selectedMembers.has(m.userId)}
-                      onCheckedChange={() => toggleMember(m.userId)}
-                    />
-                    <label htmlFor={`member-${m.userId}`} className="flex-1 text-sm cursor-pointer">
-                      {m.name}
-                    </label>
-                    {splitType === "custom" && selectedMembers.has(m.userId) && (
-                      <Input
-                        id={`split-${m.userId}`}
-                        type="number"
-                        className="w-24"
-                        aria-label={`${m.name}の負担額`}
-                        value={customAmounts[m.userId] ?? ""}
-                        onChange={(e) =>
-                          setCustomAmounts((prev) => ({ ...prev, [m.userId]: e.target.value }))
-                        }
-                        placeholder="0"
-                        min={0}
-                      />
+                  <button
+                    key={m.userId}
+                    type="button"
+                    onClick={() => toggleMember(m.userId)}
+                    className={cn(
+                      "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                      selectedMembers.has(m.userId)
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-input bg-background text-muted-foreground hover:bg-accent",
                     )}
-                  </div>
+                  >
+                    {m.name}
+                  </button>
                 ))}
               </div>
-              {splitType === "custom" && parsedAmount > 0 && (
-                <p
-                  className={cn(
-                    "text-xs",
-                    customMismatch ? "text-destructive" : "text-muted-foreground",
+              {splitType === "custom" && (
+                <div className="space-y-2">
+                  {members
+                    .filter((m) => selectedMembers.has(m.userId))
+                    .map((m) => (
+                      <div key={m.userId} className="flex items-center gap-3">
+                        <span className="flex-1 text-sm">{m.name}</span>
+                        <Input
+                          id={`split-${m.userId}`}
+                          type="number"
+                          className="w-24"
+                          aria-label={`${m.name}の負担額`}
+                          value={customAmounts[m.userId] ?? ""}
+                          onChange={(e) =>
+                            setCustomAmounts((prev) => ({ ...prev, [m.userId]: e.target.value }))
+                          }
+                          placeholder="0"
+                          min={0}
+                        />
+                      </div>
+                    ))}
+                  {parsedAmount > 0 && (
+                    <p
+                      className={cn(
+                        "text-xs",
+                        customMismatch ? "text-destructive" : "text-muted-foreground",
+                      )}
+                    >
+                      合計: {customTotal.toLocaleString()}円 / {parsedAmount.toLocaleString()}円
+                      {customMismatch &&
+                        ` (${
+                          parsedAmount > customTotal
+                            ? `残り ${(parsedAmount - customTotal).toLocaleString()}円`
+                            : `${(customTotal - parsedAmount).toLocaleString()}円 超過`
+                        })`}
+                    </p>
                   )}
-                >
-                  合計: {customTotal.toLocaleString()}円 / {parsedAmount.toLocaleString()}円
-                  {customMismatch &&
-                    ` (${
-                      parsedAmount > customTotal
-                        ? `残り ${(parsedAmount - customTotal).toLocaleString()}円`
-                        : `${(customTotal - parsedAmount).toLocaleString()}円 超過`
-                    })`}
-                </p>
+                </div>
               )}
             </div>
           )}

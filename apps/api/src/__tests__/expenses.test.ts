@@ -244,6 +244,62 @@ describe("Expense routes", () => {
       expect(res.status).toBe(201);
     });
 
+    it("creates expense with itemized split", async () => {
+      const itemizedBody = {
+        title: "居酒屋",
+        amount: 5000,
+        paidByUserId: userId1,
+        splitType: "itemized",
+        splits: [
+          { userId: userId1, amount: 3000 },
+          { userId: userId2, amount: 2000 },
+        ],
+      };
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([
+        { userId: userId1 },
+        { userId: userId2 },
+      ]);
+      mockCountQuery(0);
+      mockDbInsert
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi
+              .fn()
+              .mockResolvedValueOnce([{ id: "exp-3", ...itemizedBody, createdAt: new Date() }]),
+          }),
+        })
+        .mockReturnValueOnce({
+          values: vi.fn().mockResolvedValueOnce(undefined),
+        });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(itemizedBody),
+      });
+
+      expect(res.status).toBe(201);
+    });
+
+    it("returns 400 when itemized split total does not match amount", async () => {
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "居酒屋",
+          amount: 5000,
+          paidByUserId: userId1,
+          splitType: "itemized",
+          splits: [
+            { userId: userId1, amount: 2000 },
+            { userId: userId2, amount: 2000 },
+          ],
+        }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
     it("returns 400 for empty title", async () => {
       const res = await makeApp().request(`/api/trips/${tripId}/expenses`, {
         method: "POST",

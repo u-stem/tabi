@@ -93,6 +93,10 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_USER_NOT_MEMBER }, 400);
   }
 
+  if (lineItems?.some((item) => item.memberIds.some((id) => !memberIds.has(id)))) {
+    return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_USER_NOT_MEMBER }, 400);
+  }
+
   // Calculate split amounts for equal type
   const splitAmounts =
     splitType === "equal"
@@ -179,8 +183,8 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
 
   const { splits, lineItems, ...updateFields } = parsed.data;
 
-  // Verify member constraints when paidByUserId or splits change
-  if (updateFields.paidByUserId || splits) {
+  // Verify member constraints when paidByUserId, splits, or lineItems change
+  if (updateFields.paidByUserId || splits || lineItems) {
     const members = await db.query.tripMembers.findMany({
       where: eq(tripMembers.tripId, tripId),
     });
@@ -191,6 +195,10 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
     }
 
     if (splits?.some((s) => !memberIds.has(s.userId))) {
+      return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_USER_NOT_MEMBER }, 400);
+    }
+
+    if (lineItems?.some((item) => item.memberIds.some((id) => !memberIds.has(id)))) {
       return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_USER_NOT_MEMBER }, 400);
     }
   }
@@ -232,10 +240,9 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
       );
     }
 
-    // Delete existing line items (cascade deletes members)
-    await tx.delete(expenseLineItems).where(eq(expenseLineItems.expenseId, expenseId));
-
-    if (lineItems && lineItems.length > 0) {
+    if (lineItems !== undefined) {
+      // Explicitly provided: delete and re-insert
+      await tx.delete(expenseLineItems).where(eq(expenseLineItems.expenseId, expenseId));
       for (let i = 0; i < lineItems.length; i++) {
         const item = lineItems[i];
         const [lineItem] = await tx
@@ -255,6 +262,9 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
           })),
         );
       }
+    } else if (updateFields.splitType && updateFields.splitType !== "itemized") {
+      // splitType changed away from itemized: clean up orphaned line items
+      await tx.delete(expenseLineItems).where(eq(expenseLineItems.expenseId, expenseId));
     }
 
     return result;

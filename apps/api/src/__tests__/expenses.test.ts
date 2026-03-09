@@ -327,6 +327,33 @@ describe("Expense routes", () => {
       expect(res.status).toBe(400);
     });
 
+    it("returns 400 when lineItem memberIds contains non-member", async () => {
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([
+        { userId: userId1 },
+        { userId: userId2 },
+      ]);
+      mockCountQuery(0);
+      const nonMemberId = "00000000-0000-0000-0000-000000000099";
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "居酒屋",
+          amount: 5000,
+          paidByUserId: userId1,
+          splitType: "itemized",
+          splits: [
+            { userId: userId1, amount: 3000 },
+            { userId: userId2, amount: 2000 },
+          ],
+          lineItems: [{ name: "料理", amount: 5000, memberIds: [userId1, nonMemberId] }],
+        }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
     it("returns 400 when itemized split has no lineItems", async () => {
       const res = await makeApp().request(`/api/trips/${tripId}/expenses`, {
         method: "POST",
@@ -484,9 +511,6 @@ describe("Expense routes", () => {
           }),
         }),
       });
-      mockDbDelete.mockReturnValue({
-        where: vi.fn().mockResolvedValue(undefined),
-      });
 
       const res = await makeApp().request(`/api/trips/${tripId}/expenses/exp-1`, {
         method: "PATCH",
@@ -495,6 +519,8 @@ describe("Expense routes", () => {
       });
 
       expect(res.status).toBe(200);
+      // lineItems should NOT be deleted when only title changes
+      expect(mockDbDelete).not.toHaveBeenCalled();
     });
 
     it("updates expense with splits in transaction", async () => {

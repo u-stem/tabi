@@ -23,7 +23,7 @@ export const createExpenseSchema = z
     paidByUserId: z.string().uuid(),
     splitType: expenseSplitTypeSchema,
     splits: z.array(splitItemSchema).min(1),
-    lineItems: z.array(lineItemInputSchema).optional(),
+    lineItems: z.array(lineItemInputSchema).max(50).optional(),
   })
   .refine(
     (data) => {
@@ -68,7 +68,7 @@ export const updateExpenseSchema = z
     paidByUserId: z.string().uuid(),
     splitType: expenseSplitTypeSchema,
     splits: z.array(splitItemSchema).min(1),
-    lineItems: z.array(lineItemInputSchema).optional(),
+    lineItems: z.array(lineItemInputSchema).max(50).optional(),
   })
   .partial()
   .refine(

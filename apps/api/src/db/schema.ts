@@ -491,6 +491,33 @@ export const expenseSplits = pgTable(
   (table) => [primaryKey({ columns: [table.expenseId, table.userId] })],
 ).enableRLS();
 
+export const expenseLineItems = pgTable(
+  "expense_line_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    expenseId: uuid("expense_id")
+      .notNull()
+      .references(() => expenses.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 200 }).notNull(),
+    amount: integer("amount").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (table) => [index("expense_line_items_expense_id_idx").on(table.expenseId)],
+).enableRLS();
+
+export const expenseLineItemMembers = pgTable(
+  "expense_line_item_members",
+  {
+    lineItemId: uuid("line_item_id")
+      .notNull()
+      .references(() => expenseLineItems.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (table) => [primaryKey({ columns: [table.lineItemId, table.userId] })],
+).enableRLS();
+
 // --- Relations ---
 
 export const usersRelations = relations(users, ({ many }) => ({
@@ -626,11 +653,25 @@ export const expensesRelations = relations(expenses, ({ one, many }) => ({
   trip: one(trips, { fields: [expenses.tripId], references: [trips.id] }),
   paidByUser: one(users, { fields: [expenses.paidByUserId], references: [users.id] }),
   splits: many(expenseSplits),
+  lineItems: many(expenseLineItems),
 }));
 
 export const expenseSplitsRelations = relations(expenseSplits, ({ one }) => ({
   expense: one(expenses, { fields: [expenseSplits.expenseId], references: [expenses.id] }),
   user: one(users, { fields: [expenseSplits.userId], references: [users.id] }),
+}));
+
+export const expenseLineItemsRelations = relations(expenseLineItems, ({ one, many }) => ({
+  expense: one(expenses, { fields: [expenseLineItems.expenseId], references: [expenses.id] }),
+  members: many(expenseLineItemMembers),
+}));
+
+export const expenseLineItemMembersRelations = relations(expenseLineItemMembers, ({ one }) => ({
+  lineItem: one(expenseLineItems, {
+    fields: [expenseLineItemMembers.lineItemId],
+    references: [expenseLineItems.id],
+  }),
+  user: one(users, { fields: [expenseLineItemMembers.userId], references: [users.id] }),
 }));
 
 export const souvenirItems = pgTable(

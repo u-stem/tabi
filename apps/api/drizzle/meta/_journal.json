@@ -183,6 +183,13 @@
       "when": 1773015297271,
       "tag": "0025_cloudy_silverclaw",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1773018588113,
+      "tag": "0026_cultured_ma_gnuci",
+      "breakpoints": true
     }
   ]
 }

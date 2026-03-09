@@ -72,6 +72,7 @@ export function ExpenseDialog({
   const [loading, setLoading] = useState(false);
   const [lineItems, setLineItems] = useState<ExpenseLineItem[]>([]);
   const [splitTheRest, setSplitTheRest] = useState(false);
+  const [membersInitialized, setMembersInitialized] = useState(false);
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -90,6 +91,7 @@ export function ExpenseDialog({
       setCustomAmounts(amounts);
       setLineItems([]);
       setSplitTheRest(false);
+      setMembersInitialized(true);
     } else {
       setTitle("");
       setAmount("");
@@ -99,15 +101,17 @@ export function ExpenseDialog({
       setCustomAmounts({});
       setLineItems([]);
       setSplitTheRest(false);
+      setMembersInitialized(false);
     }
   }, [open, expense]);
 
-  // Auto-select all members when members are loaded and no expense
+  // Auto-select all members only on first load for new expense
   useEffect(() => {
-    if (open && !expense && members.length > 0 && selectedMembers.size === 0) {
+    if (open && !membersInitialized && !expense && members.length > 0) {
       setSelectedMembers(new Set(members.map((m) => m.userId)));
+      setMembersInitialized(true);
     }
-  }, [open, expense, members, selectedMembers.size]);
+  }, [open, membersInitialized, expense, members]);
 
   // Auto-set paidBy when members are loaded and no payer is set
   useEffect(() => {

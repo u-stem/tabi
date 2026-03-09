@@ -357,7 +357,7 @@ export function ExpenseDialog({
                     type="button"
                     onClick={() => toggleMember(m.userId)}
                     className={cn(
-                      "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                      "rounded-full border px-3 py-1.5 text-sm transition-colors",
                       selectedMembers.has(m.userId)
                         ? "border-primary bg-primary text-primary-foreground"
                         : "border-input bg-background text-muted-foreground hover:bg-accent",
@@ -462,7 +462,7 @@ export function ExpenseDialog({
                         type="button"
                         onClick={() => toggleLineItemMember(item.id, m.userId)}
                         className={cn(
-                          "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                          "rounded-full border px-3 py-1.5 text-sm transition-colors",
                           item.memberIds.has(m.userId)
                             ? "border-primary bg-primary text-primary-foreground"
                             : "border-input bg-background text-muted-foreground hover:bg-accent",

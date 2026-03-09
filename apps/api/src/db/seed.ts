@@ -885,17 +885,11 @@ async function main() {
     const seedPollId = pollTripDetail.poll.id;
     console.log(`  Poll ID: ${seedPollId}`);
 
-    // Add alice and bob as poll participants + trip members
+    // Add alice and bob as trip members first, then poll participants
+    // (participant endpoint requires user to be a trip member)
     for (const username of ["alice", "bob"] as const) {
       const userData = userMap.get(username);
       if (!userData) continue;
-      await tryCreate(() =>
-        apiFetch(`/api/polls/${seedPollId}/participants`, {
-          method: "POST",
-          body: JSON.stringify({ userId: userData.userId }),
-          headers: { cookie: ownerCookies },
-        }),
-      );
       await tryCreate(() =>
         apiFetch(`/api/trips/${pollTrip.id}/members`, {
           method: "POST",
@@ -903,7 +897,14 @@ async function main() {
           headers: { cookie: ownerCookies },
         }),
       );
-      console.log(`  Participant + member: ${username}`);
+      await tryCreate(() =>
+        apiFetch(`/api/polls/${seedPollId}/participants`, {
+          method: "POST",
+          body: JSON.stringify({ userId: userData.userId }),
+          headers: { cookie: ownerCookies },
+        }),
+      );
+      console.log(`  Member + participant: ${username}`);
     }
 
     // Fetch option IDs and submit responses

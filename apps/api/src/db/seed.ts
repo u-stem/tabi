@@ -788,6 +788,20 @@ async function main() {
         splitType: "equal" as const,
         splitWith: ["dev", "alice", "bob"] as const,
       },
+      {
+        title: "先斗町 居酒屋",
+        amount: 15000,
+        paidBy: "alice" as const,
+        splitType: "itemized" as const,
+        customSplits: [
+          // dev: beer 800 + food 3000 = 3800
+          // alice: oolong 300 + food 3000 + sake 1200 = 4500
+          // bob: beer 800 + food 3000 + highball 900 + dessert 2000 = 6700
+          { user: "dev" as const, amount: 3800 },
+          { user: "alice" as const, amount: 4500 },
+          { user: "bob" as const, amount: 6700 },
+        ],
+      },
     ];
 
     console.log(`\nCreating ${sampleExpenses.length} expenses...`);
@@ -795,7 +809,7 @@ async function main() {
       const paidByUserId = expenseUsers[exp.paidBy];
       if (!paidByUserId) continue;
       const splits =
-        exp.splitType === "custom" && exp.customSplits
+        (exp.splitType === "custom" || exp.splitType === "itemized") && exp.customSplits
           ? exp.customSplits
               .map((s) => {
                 const userId = expenseUsers[s.user];

@@ -10,6 +10,12 @@ const splitItemSchema = z.object({
   amount: z.number().int().min(0).optional(),
 });
 
+const lineItemInputSchema = z.object({
+  name: z.string().min(1).max(200),
+  amount: z.number().int().min(1),
+  memberIds: z.array(z.string().uuid()).min(1),
+});
+
 export const createExpenseSchema = z
   .object({
     title: z.string().min(1).max(EXPENSE_TITLE_MAX_LENGTH),
@@ -17,6 +23,7 @@ export const createExpenseSchema = z
     paidByUserId: z.string().uuid(),
     splitType: expenseSplitTypeSchema,
     splits: z.array(splitItemSchema).min(1),
+    lineItems: z.array(lineItemInputSchema).optional(),
   })
   .refine(
     (data) => {
@@ -43,6 +50,15 @@ export const createExpenseSchema = z
       return true;
     },
     { message: "Split amounts must equal total amount", path: ["splits"] },
+  )
+  .refine(
+    (data) => {
+      if (data.splitType === "itemized") {
+        return data.lineItems !== undefined && data.lineItems.length > 0;
+      }
+      return true;
+    },
+    { message: "Itemized split requires line items", path: ["lineItems"] },
   );
 
 export const updateExpenseSchema = z
@@ -52,6 +68,7 @@ export const updateExpenseSchema = z
     paidByUserId: z.string().uuid(),
     splitType: expenseSplitTypeSchema,
     splits: z.array(splitItemSchema).min(1),
+    lineItems: z.array(lineItemInputSchema).optional(),
   })
   .partial()
   .refine(
@@ -95,4 +112,13 @@ export const updateExpenseSchema = z
       return true;
     },
     { message: "Split amounts must equal total amount", path: ["splits"] },
+  )
+  .refine(
+    (data) => {
+      if (data.splitType === "itemized") {
+        return data.lineItems !== undefined && data.lineItems.length > 0;
+      }
+      return true;
+    },
+    { message: "Itemized split requires line items", path: ["lineItems"] },
   );

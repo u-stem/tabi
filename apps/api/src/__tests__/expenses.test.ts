@@ -244,7 +244,7 @@ describe("Expense routes", () => {
       expect(res.status).toBe(201);
     });
 
-    it("creates expense with itemized split", async () => {
+    it("creates expense with itemized split and line items", async () => {
       const itemizedBody = {
         title: "居酒屋",
         amount: 5000,
@@ -253,6 +253,10 @@ describe("Expense routes", () => {
         splits: [
           { userId: userId1, amount: 3000 },
           { userId: userId2, amount: 2000 },
+        ],
+        lineItems: [
+          { name: "料理", amount: 3000, memberIds: [userId1, userId2] },
+          { name: "ビール", amount: 2000, memberIds: [userId1] },
         ],
       };
       mockDbQuery.tripMembers.findMany.mockResolvedValue([
@@ -270,6 +274,26 @@ describe("Expense routes", () => {
         })
         .mockReturnValueOnce({
           values: vi.fn().mockResolvedValueOnce(undefined),
+        })
+        // lineItem 1 insert + returning
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValueOnce([{ id: "li-1" }]),
+          }),
+        })
+        // lineItem 1 members insert
+        .mockReturnValueOnce({
+          values: vi.fn().mockResolvedValueOnce(undefined),
+        })
+        // lineItem 2 insert + returning
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValueOnce([{ id: "li-2" }]),
+          }),
+        })
+        // lineItem 2 members insert
+        .mockReturnValueOnce({
+          values: vi.fn().mockResolvedValueOnce(undefined),
         });
 
       const res = await makeApp().request(`/api/trips/${tripId}/expenses`, {
@@ -279,6 +303,8 @@ describe("Expense routes", () => {
       });
 
       expect(res.status).toBe(201);
+      // Verify line items were inserted (expense + splits + 2*(lineItem + members) = 6 inserts)
+      expect(mockDbInsert).toHaveBeenCalledTimes(6);
     });
 
     it("returns 400 when itemized split total does not match amount", async () => {
@@ -292,6 +318,26 @@ describe("Expense routes", () => {
           splitType: "itemized",
           splits: [
             { userId: userId1, amount: 2000 },
+            { userId: userId2, amount: 2000 },
+          ],
+          lineItems: [{ name: "料理", amount: 4000, memberIds: [userId1, userId2] }],
+        }),
+      });
+
+      expect(res.status).toBe(400);
+    });
+
+    it("returns 400 when itemized split has no lineItems", async () => {
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "居酒屋",
+          amount: 5000,
+          paidByUserId: userId1,
+          splitType: "itemized",
+          splits: [
+            { userId: userId1, amount: 3000 },
             { userId: userId2, amount: 2000 },
           ],
         }),
@@ -438,6 +484,9 @@ describe("Expense routes", () => {
           }),
         }),
       });
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
 
       const res = await makeApp().request(`/api/trips/${tripId}/expenses/exp-1`, {
         method: "PATCH",
@@ -538,6 +587,78 @@ describe("Expense routes", () => {
       });
 
       expect(res.status).toBe(404);
+    });
+
+    it("updates itemized expense line items", async () => {
+      mockDbQuery.expenses.findFirst.mockResolvedValue({
+        id: "exp-1",
+        tripId,
+        title: "居酒屋",
+        amount: 5000,
+        splitType: "itemized",
+      });
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([
+        { userId: userId1 },
+        { userId: userId2 },
+      ]);
+      const updatedExpense = { id: "exp-1", title: "居酒屋", amount: 6000 };
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updatedExpense]),
+          }),
+        }),
+      });
+      mockDbDelete.mockReturnValue({
+        where: vi.fn().mockResolvedValue(undefined),
+      });
+      mockDbInsert
+        // splits insert
+        .mockReturnValueOnce({
+          values: vi.fn().mockResolvedValueOnce(undefined),
+        })
+        // lineItem 1 insert
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValueOnce([{ id: "li-1" }]),
+          }),
+        })
+        // lineItem 1 members
+        .mockReturnValueOnce({
+          values: vi.fn().mockResolvedValueOnce(undefined),
+        })
+        // lineItem 2 insert
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValueOnce([{ id: "li-2" }]),
+          }),
+        })
+        // lineItem 2 members
+        .mockReturnValueOnce({
+          values: vi.fn().mockResolvedValueOnce(undefined),
+        });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses/exp-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: "居酒屋",
+          amount: 6000,
+          splitType: "itemized",
+          splits: [
+            { userId: userId1, amount: 4000 },
+            { userId: userId2, amount: 2000 },
+          ],
+          lineItems: [
+            { name: "料理", amount: 4000, memberIds: [userId1, userId2] },
+            { name: "ソフトドリンク", amount: 2000, memberIds: [userId2] },
+          ],
+        }),
+      });
+
+      expect(res.status).toBe(200);
+      // delete is called twice: once for splits, once for lineItems
+      expect(mockDbDelete).toHaveBeenCalledTimes(2);
     });
 
     it("amount のみ更新で既存 splits 合計と不一致の場合 400 を返す", async () => {

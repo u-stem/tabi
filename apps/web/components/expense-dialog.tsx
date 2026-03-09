@@ -397,7 +397,7 @@ export function ExpenseDialog({
                   <span>品目</span>
                 </Label>
                 <Button type="button" variant="outline" size="sm" onClick={addLineItem}>
-                  <Plus className="h-3.5 w-3.5" /> 追加
+                  <Plus className="h-3.5 w-3.5" /> 品目を追加
                 </Button>
               </div>
 

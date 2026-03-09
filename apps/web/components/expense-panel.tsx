@@ -261,7 +261,11 @@ function ExpenseRow({
           <p className="truncate text-sm font-medium">{expense.title}</p>
           <p className="text-xs text-muted-foreground">
             {expense.paidByUser.name}が支払い
-            {expense.splitType === "equal" ? " / 均等" : " / カスタム"}
+            {expense.splitType === "equal"
+              ? " / 均等"
+              : expense.splitType === "itemized"
+                ? " / アイテム別"
+                : " / カスタム"}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">

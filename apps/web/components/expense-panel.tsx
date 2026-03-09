@@ -337,7 +337,9 @@ function ExpenseRow({
               </div>
             )}
             <div className="space-y-1 border-t px-3 pt-2 pb-3">
-              <p className="text-xs text-muted-foreground">負担額</p>
+              {expense.lineItems.length > 0 && (
+                <p className="text-xs text-muted-foreground">負担額</p>
+              )}
               {[...expense.splits]
                 .sort((a, b) => b.amount - a.amount)
                 .map((split) => (

@@ -215,6 +215,14 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
     }
   }
 
+  // Reject empty lineItems when splitType remains itemized
+  if (lineItems !== undefined) {
+    const effectiveSplitType = updateFields.splitType ?? existing.splitType;
+    if (effectiveSplitType === "itemized" && lineItems.length === 0) {
+      return c.json({ error: "Itemized split requires line items" }, 400);
+    }
+  }
+
   const updated = await db.transaction(async (tx) => {
     const [result] = await tx
       .update(expenses)
@@ -241,7 +249,6 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
     }
 
     if (lineItems !== undefined) {
-      // Explicitly provided: delete and re-insert
       await tx.delete(expenseLineItems).where(eq(expenseLineItems.expenseId, expenseId));
       for (let i = 0; i < lineItems.length; i++) {
         const item = lineItems[i];

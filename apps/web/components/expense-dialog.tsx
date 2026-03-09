@@ -38,6 +38,13 @@ type Expense = {
   splitType: ExpenseSplitType;
   paidByUserId: string;
   splits: { userId: string; amount: number }[];
+  lineItems?: {
+    id: string;
+    name: string;
+    amount: number;
+    sortOrder: number;
+    members: { userId: string }[];
+  }[];
 };
 
 type ExpenseDialogProps = {
@@ -81,16 +88,30 @@ export function ExpenseDialog({
       setTitle(expense.title);
       setAmount(String(expense.amount));
       setPaidByUserId(expense.paidByUserId);
-      // itemized expenses are loaded as custom (item data not persisted)
-      setSplitType(expense.splitType === "itemized" ? "custom" : expense.splitType);
+
+      if (expense.splitType === "itemized" && expense.lineItems && expense.lineItems.length > 0) {
+        setSplitType("itemized");
+        setLineItems(
+          expense.lineItems.map((li) => ({
+            id: li.id,
+            name: li.name,
+            amount: li.amount,
+            memberIds: new Set(li.members.map((m) => m.userId)),
+          })),
+        );
+        setSplitTheRest(false);
+      } else {
+        setSplitType(expense.splitType === "itemized" ? "custom" : expense.splitType);
+        setLineItems([]);
+        setSplitTheRest(false);
+      }
+
       setSelectedMembers(new Set(expense.splits.map((s) => s.userId)));
       const amounts: Record<string, string> = {};
       for (const s of expense.splits) {
         amounts[s.userId] = String(s.amount);
       }
       setCustomAmounts(amounts);
-      setLineItems([]);
-      setSplitTheRest(false);
       setMembersInitialized(true);
     } else {
       setTitle("");
@@ -217,29 +238,34 @@ export function ExpenseDialog({
       splits = Array.from(selectedMembers).map((userId) => ({ userId }));
     }
 
+    const lineItemsPayload =
+      splitType === "itemized"
+        ? lineItems.map((item) => ({
+            name: item.name,
+            amount: Number(item.amount) || 0,
+            memberIds: Array.from(item.memberIds),
+          }))
+        : undefined;
+
     setLoading(true);
     try {
+      const body = {
+        title,
+        amount: parsedAmount,
+        paidByUserId,
+        splitType,
+        splits,
+        ...(lineItemsPayload ? { lineItems: lineItemsPayload } : {}),
+      };
       if (isEdit) {
         await api(`/api/trips/${tripId}/expenses/${expense.id}`, {
           method: "PATCH",
-          body: JSON.stringify({
-            title,
-            amount: parsedAmount,
-            paidByUserId,
-            splitType,
-            splits,
-          }),
+          body: JSON.stringify(body),
         });
       } else {
         await api(`/api/trips/${tripId}/expenses`, {
           method: "POST",
-          body: JSON.stringify({
-            title,
-            amount: parsedAmount,
-            paidByUserId,
-            splitType,
-            splits,
-          }),
+          body: JSON.stringify(body),
         });
       }
       onOpenChange(false);

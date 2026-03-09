@@ -65,7 +65,7 @@ export const scheduleColorEnum = pgEnum("schedule_color", [
   "gray",
 ]);
 
-export const expenseSplitTypeEnum = pgEnum("expense_split_type", ["equal", "custom"]);
+export const expenseSplitTypeEnum = pgEnum("expense_split_type", ["equal", "custom", "itemized"]);
 
 export const pollStatusEnum = pgEnum("poll_status", ["open", "confirmed", "closed"]);
 export const pollResponseEnum = pgEnum("poll_response", ["ok", "maybe", "ng"]);

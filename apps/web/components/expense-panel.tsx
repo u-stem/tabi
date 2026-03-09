@@ -319,7 +319,25 @@ function ExpenseRow({
             内訳を表示
           </CollapsiblePrimitive.Trigger>
           <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
+            {expense.lineItems.length > 0 && (
+              <div className="space-y-1 border-t px-3 pt-2 pb-3">
+                <p className="text-xs text-muted-foreground">品目</p>
+                {expense.lineItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between pl-2 text-sm">
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                      {item.name}
+                      <span className="text-xs text-muted-foreground">
+                        ({item.members.length}人)
+                      </span>
+                    </span>
+                    <span className="font-medium">{item.amount.toLocaleString()}円</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="space-y-1 border-t px-3 pt-2 pb-3">
+              <p className="text-xs text-muted-foreground">負担額</p>
               {[...expense.splits]
                 .sort((a, b) => b.amount - a.amount)
                 .map((split) => (

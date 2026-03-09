@@ -1,6 +1,6 @@
 "use client";
 
-import type { ExpenseSplitType, MemberResponse } from "@sugara/shared";
+import type { ExpenseItem, ExpenseSplitType, MemberResponse } from "@sugara/shared";
 import { EXPENSE_TITLE_MAX_LENGTH } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus, Trash2, X } from "lucide-react";
@@ -31,27 +31,11 @@ import { calculateItemizedSplits, type ExpenseLineItem } from "@/lib/expense-cal
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
-type Expense = {
-  id: string;
-  title: string;
-  amount: number;
-  splitType: ExpenseSplitType;
-  paidByUserId: string;
-  splits: { userId: string; amount: number }[];
-  lineItems?: {
-    id: string;
-    name: string;
-    amount: number;
-    sortOrder: number;
-    members: { userId: string }[];
-  }[];
-};
-
 type ExpenseDialogProps = {
   tripId: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  expense?: Expense | null;
+  expense?: ExpenseItem | null;
   onSaved: () => void;
 };
 

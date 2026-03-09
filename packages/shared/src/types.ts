@@ -245,6 +245,14 @@ export type ExpenseSplit = {
   user: { id: string; name: string };
 };
 
+export type ExpenseLineItemResponse = {
+  id: string;
+  name: string;
+  amount: number;
+  sortOrder: number;
+  members: { userId: string }[];
+};
+
 export type ExpenseItem = {
   id: string;
   title: string;
@@ -253,6 +261,7 @@ export type ExpenseItem = {
   paidByUserId: string;
   paidByUser: { id: string; name: string };
   splits: ExpenseSplit[];
+  lineItems: ExpenseLineItemResponse[];
   createdAt: string;
 };
 

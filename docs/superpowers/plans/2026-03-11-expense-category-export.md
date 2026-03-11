@@ -180,15 +180,17 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
 };
 ```
 
-- [ ] **Step 4: Add MSG entry for expense export failure**
+- [ ] **Step 4: Fix existing MSG and add export failure entry**
 
-Add to `MSG` object in `messages.ts`, after the existing `EXPENSE_DELETE_FAILED` entry:
+In `messages.ts`, fix the existing `EXPENSE_DELETE_FAILED` to use「費用」instead of「経費」, and add the export failure entry:
 
 ```typescript
-  EXPENSE_EXPORT_FAILED: "経費のエクスポートに失敗しました",
+  // Expense
+  EXPENSE_DELETE_FAILED: "費用の削除に失敗しました",
+  EXPENSE_EXPORT_FAILED: "費用のエクスポートに失敗しました",
 ```
 
-Note: `EXPENSE_DELETE_FAILED` already exists -- do not duplicate it. The existing `EXPORT_FAILED`/`EXPORT_SUCCESS` are for the trip export feature and should not be reused here.
+Note: The existing `EXPORT_FAILED`/`EXPORT_SUCCESS` are for the trip export feature and should not be reused here.
 
 - [ ] **Step 5: Verify types compile**
 
@@ -199,7 +201,7 @@ Expected: No errors
 
 ```bash
 git add packages/shared/src/schemas/expense.ts packages/shared/src/types.ts packages/shared/src/messages.ts
-git commit -m "feat: 経費カテゴリのスキーマ・型・ラベルを追加"
+git commit -m "feat: 費用カテゴリのスキーマ・型・ラベルを追加"
 ```
 
 ---
@@ -477,7 +479,7 @@ Expected: All tests PASS
 
 ```bash
 git add apps/api/src/routes/expenses.ts apps/api/src/__tests__/expenses.test.ts
-git commit -m "feat: 経費カテゴリの CRUD と集計を実装"
+git commit -m "feat: 費用カテゴリの CRUD と集計を実装"
 ```
 
 ---
@@ -711,7 +713,7 @@ Expected: All tests PASS
 
 ```bash
 git add apps/api/src/routes/expenses.ts apps/api/src/__tests__/expenses.test.ts
-git commit -m "feat: 経費の CSV エクスポート機能を追加"
+git commit -m "feat: 費用の CSV エクスポート機能を追加"
 ```
 
 ---
@@ -934,7 +936,7 @@ Expected: No errors
 
 ```bash
 git add apps/web/components/expense-dialog.tsx apps/web/components/expense-panel.tsx
-git commit -m "feat: 経費カテゴリ選択・カテゴリ別集計・CSV エクスポートの UI を追加"
+git commit -m "feat: 費用カテゴリ選択・カテゴリ別集計・CSV エクスポートの UI を追加"
 ```
 
 ---
@@ -952,12 +954,12 @@ Add to the `FAQ_ITEMS` array in the Expenses section:
 
 ```typescript
   {
-    question: "経費にカテゴリを設定できますか？",
+    question: "費用にカテゴリを設定できますか？",
     answer: "はい。費用を追加・編集する際に、交通費・宿泊費・食費・通信費・消耗品費・交際費・会議費・その他のカテゴリを設定できます。カテゴリは任意で、設定しなくても費用を記録できます。",
     sortOrder: /* next available in Expenses section */,
   },
   {
-    question: "経費をCSVでエクスポートできますか？",
+    question: "費用をCSVでエクスポートできますか？",
     answer: "はい。費用タブのエクスポートボタンからCSVファイルをダウンロードできます。日付・カテゴリ・タイトル・金額・支払者・分担方法が含まれます。出張の経費精算にご活用ください。",
     sortOrder: /* next available in Expenses section */,
   },
@@ -972,7 +974,7 @@ Expected: FAQ items inserted successfully
 
 ```bash
 git add apps/api/src/db/seed-faqs.ts
-git commit -m "docs: 経費カテゴリと CSV エクスポートの FAQ を追加"
+git commit -m "docs: 費用カテゴリと CSV エクスポートの FAQ を追加"
 ```
 
 ### Task 11: Final verification

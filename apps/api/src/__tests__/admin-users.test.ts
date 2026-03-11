@@ -105,7 +105,9 @@ describe("POST /api/admin/users/:userId/temp-password", () => {
     mockHashPassword.mockResolvedValue("hashed-password");
     mockDbUpdate.mockReturnValue({
       set: vi.fn().mockReturnValue({
-        where: vi.fn().mockResolvedValue(undefined),
+        where: vi.fn().mockReturnValue({
+          returning: vi.fn().mockResolvedValue([{ id: "account-1" }]),
+        }),
       }),
     });
   });

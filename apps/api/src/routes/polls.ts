@@ -616,6 +616,15 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
   const tripId = poll.tripId;
 
   const result = await db.transaction(async (tx) => {
+    // Re-check status inside transaction to prevent double-confirm
+    const currentPoll = await tx.query.schedulePolls.findFirst({
+      where: eq(schedulePolls.id, pollId),
+      columns: { status: true },
+    });
+    if (!currentPoll || currentPoll.status !== "open") {
+      return "already_confirmed" as const;
+    }
+
     // Update existing trip with confirmed dates
     await tx
       .update(trips)
@@ -665,6 +674,9 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
     return updatedPoll;
   });
 
+  if (result === "already_confirmed") {
+    return c.json({ error: ERROR_MSG.POLL_NOT_OPEN }, 400);
+  }
   if (!result) {
     return c.json({ error: ERROR_MSG.LIMIT_MEMBERS }, 409);
   }

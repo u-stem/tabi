@@ -322,6 +322,9 @@ export function useTripDragAndDrop({
           transportMethod: candidate.transportMethod,
           color: candidate.color,
           endDayOffset: candidate.endDayOffset,
+          latitude: candidate.latitude,
+          longitude: candidate.longitude,
+          placeId: candidate.placeId,
           updatedAt: candidate.updatedAt,
         };
 

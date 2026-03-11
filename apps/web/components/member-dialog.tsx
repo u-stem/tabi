@@ -174,7 +174,7 @@ export function MemberDialog({
 
   async function handleRoleChange(memberId: string, newRole: string) {
     const cacheKey = queryKeys.trips.members(tripId);
-    queryClient.cancelQueries({ queryKey: cacheKey });
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<MemberResponse[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(
@@ -198,7 +198,7 @@ export function MemberDialog({
 
   async function handleRemove(memberId: string) {
     const cacheKey = queryKeys.trips.members(tripId);
-    queryClient.cancelQueries({ queryKey: cacheKey });
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<MemberResponse[]>(cacheKey);
     if (prev) {
       queryClient.setQueryData(

@@ -224,7 +224,7 @@ export function ExpenseDialog({
 
     const lineItemsPayload =
       splitType === "itemized"
-        ? lineItems.map((item) => ({
+        ? effectiveItems.map((item) => ({
             name: item.name,
             amount: Number(item.amount) || 0,
             memberIds: Array.from(item.memberIds),

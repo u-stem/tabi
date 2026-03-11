@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { MAX_LINE_ITEMS_PER_EXPENSE } from "../limits";
 
 export const EXPENSE_TITLE_MAX_LENGTH = 200;
 
@@ -23,7 +24,7 @@ export const createExpenseSchema = z
     paidByUserId: z.string().uuid(),
     splitType: expenseSplitTypeSchema,
     splits: z.array(splitItemSchema).min(1),
-    lineItems: z.array(lineItemInputSchema).max(50).optional(),
+    lineItems: z.array(lineItemInputSchema).max(MAX_LINE_ITEMS_PER_EXPENSE).optional(),
   })
   .refine(
     (data) => {
@@ -68,7 +69,7 @@ export const updateExpenseSchema = z
     paidByUserId: z.string().uuid(),
     splitType: expenseSplitTypeSchema,
     splits: z.array(splitItemSchema).min(1),
-    lineItems: z.array(lineItemInputSchema).max(50).optional(),
+    lineItems: z.array(lineItemInputSchema).max(MAX_LINE_ITEMS_PER_EXPENSE).optional(),
   })
   .partial()
   .refine(

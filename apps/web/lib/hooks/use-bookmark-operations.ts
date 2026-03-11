@@ -85,6 +85,7 @@ export function useBookmarkOperations({
     if (!editingBookmark) return;
     const trimmed = bookmarkName.trim();
     if (!trimmed) return;
+    setSubmitting(true);
 
     const updatedFields = {
       name: trimmed,

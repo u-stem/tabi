@@ -18,6 +18,9 @@ describe("buildScheduleCloneValues", () => {
     arrivalPlace: "Station B",
     transportMethod: "train" as const,
     color: "red" as const,
+    latitude: 35.6586,
+    longitude: 139.7454,
+    placeId: "ChIJCewJkL2LGGAR3Qmk0vCTGkg",
     endDayOffset: 1,
     createdAt: new Date("2025-01-01"),
     updatedAt: new Date("2025-01-01"),
@@ -39,6 +42,9 @@ describe("buildScheduleCloneValues", () => {
       arrivalPlace: "Station B",
       transportMethod: "train",
       color: "red",
+      latitude: 35.6586,
+      longitude: 139.7454,
+      placeId: "ChIJCewJkL2LGGAR3Qmk0vCTGkg",
       endDayOffset: 1,
     });
   });
@@ -70,6 +76,9 @@ describe("buildScheduleCloneValues", () => {
       departurePlace: null,
       arrivalPlace: null,
       transportMethod: null,
+      latitude: null,
+      longitude: null,
+      placeId: null,
       endDayOffset: null,
     };
     const result = buildScheduleCloneValues(nullSource);
@@ -81,6 +90,9 @@ describe("buildScheduleCloneValues", () => {
     expect(result.departurePlace).toBeNull();
     expect(result.arrivalPlace).toBeNull();
     expect(result.transportMethod).toBeNull();
+    expect(result.latitude).toBeNull();
+    expect(result.longitude).toBeNull();
+    expect(result.placeId).toBeNull();
     expect(result.endDayOffset).toBeNull();
   });
 });

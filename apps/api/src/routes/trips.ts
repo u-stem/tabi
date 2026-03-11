@@ -434,10 +434,21 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
     return c.json(currentTrip);
   }
 
-  let updated: typeof currentTrip | undefined;
+  let updated: typeof currentTrip | null | undefined;
 
   if (datesChanged && effectiveStart && effectiveEnd) {
     updated = await db.transaction(async (tx) => {
+      // Re-verify trip dates inside transaction to prevent TOCTOU
+      const current = await tx.query.trips.findFirst({
+        where: eq(trips.id, tripId),
+        columns: { startDate: true, endDate: true },
+      });
+      if (
+        current?.startDate !== currentTrip.startDate ||
+        current?.endDate !== currentTrip.endDate
+      ) {
+        return null;
+      }
       await syncTripDays(tx, tripId, effectiveStart, effectiveEnd);
       const [result] = await tx
         .update(trips)
@@ -446,6 +457,10 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
         .returning();
       return result;
     });
+
+    if (!updated) {
+      return c.json({ error: ERROR_MSG.CONFLICT }, 409);
+    }
   } else {
     const [result] = await db
       .update(trips)
@@ -453,10 +468,10 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
       .where(eq(trips.id, tripId))
       .returning();
     updated = result;
-  }
 
-  if (!updated) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
+    if (!updated) {
+      return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
+    }
   }
 
   logActivity({

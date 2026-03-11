@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { MOBILE_UA_REGEX, SP_PREFIX, SP_ROUTES, VIEW_MODE_COOKIE } from "@/lib/view-mode";
 
-const protectedPaths = ["/home", "/trips", "/bookmarks", "/friends", "/settings", "/my", "/sp", "/admin"];
+const protectedPaths = ["/home", "/trips", "/bookmarks", "/friends", "/settings", "/my", "/tools", "/sp", "/admin"];
 const guestOnlyPaths = ["/", "/auth/login", "/auth/signup"];
 
 export async function proxy(request: NextRequest) {
@@ -101,6 +101,7 @@ export const config = {
     "/settings",
     "/my/:path*",
     "/my",
+    "/tools/:path*",
     "/sp/:path*",
     "/admin/:path*",
     "/admin",

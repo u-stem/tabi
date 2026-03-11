@@ -262,10 +262,15 @@ adminRoutes.post("/api/admin/users/:userId/temp-password", requireAuth, requireA
   const tempPassword = generateTempPassword();
   const passwordHash = await hashPassword(tempPassword);
 
-  await db
+  const updated = await db
     .update(accounts)
     .set({ password: passwordHash, updatedAt: new Date() })
-    .where(and(eq(accounts.userId, userId), eq(accounts.providerId, "credential")));
+    .where(and(eq(accounts.userId, userId), eq(accounts.providerId, "credential")))
+    .returning({ id: accounts.id });
+
+  if (updated.length === 0) {
+    return c.json({ error: "No credential account found" }, 404);
+  }
 
   return c.json({ tempPassword });
 });

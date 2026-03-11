@@ -194,6 +194,11 @@ export const auth = betterAuth({
             .update(schema.expenseSplits)
             .set({ userId: newUserId })
             .where(eq(schema.expenseSplits.userId, oldUserId));
+
+          await tx
+            .update(schema.quickPollVotes)
+            .set({ userId: newUserId })
+            .where(eq(schema.quickPollVotes.userId, oldUserId));
         });
       },
     }),

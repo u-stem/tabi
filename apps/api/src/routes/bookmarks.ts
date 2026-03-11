@@ -182,11 +182,12 @@ bookmarkRoutes.patch("/:listId/bookmarks/reorder", async (c) => {
   }
 
   await db.transaction(async (tx) => {
-    await Promise.all(
-      parsed.data.orderedIds.map((id, i) =>
-        tx.update(bookmarks).set({ sortOrder: i }).where(eq(bookmarks.id, id)),
-      ),
-    );
+    for (let i = 0; i < parsed.data.orderedIds.length; i++) {
+      await tx
+        .update(bookmarks)
+        .set({ sortOrder: i })
+        .where(eq(bookmarks.id, parsed.data.orderedIds[i]));
+    }
   });
 
   return c.json({ ok: true });

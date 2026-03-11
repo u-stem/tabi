@@ -16,6 +16,9 @@ const CLONE_FIELDS = [
   "arrivalPlace",
   "transportMethod",
   "color",
+  "latitude",
+  "longitude",
+  "placeId",
   "endDayOffset",
 ] as const;
 

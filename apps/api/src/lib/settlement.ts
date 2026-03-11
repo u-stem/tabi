@@ -13,6 +13,7 @@ type Settlement = {
 };
 
 export function calculateEqualSplit(totalAmount: number, memberCount: number): number[] {
+  if (memberCount === 0) return [];
   const base = Math.floor(totalAmount / memberCount);
   const remainder = totalAmount - base * memberCount;
   return Array.from({ length: memberCount }, (_, i) => (i < remainder ? base + 1 : base));

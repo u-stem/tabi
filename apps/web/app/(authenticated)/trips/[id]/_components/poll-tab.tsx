@@ -123,7 +123,7 @@ export function PollTab({
 
   // Allow parent (e.g. FAB) to open the add-option dialog
   useEffect(() => {
-    if (addOptionOpen) setShowAddOption(true);
+    setShowAddOption(addOptionOpen ?? false);
   }, [addOptionOpen]);
   const [addOptionMonth, setAddOptionMonth] = useState<Date>(new Date());
   const [showConfirmSelect, setShowConfirmSelect] = useState(false);

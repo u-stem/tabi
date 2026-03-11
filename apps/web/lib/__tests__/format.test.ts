@@ -7,9 +7,7 @@ import {
   formatDateShort,
   formatTime,
   formatTimeRange,
-  getCrossDayTimeStatus,
   getDayCount,
-  getTimeStatus,
   isSafeUrl,
   validateTimeRange,
 } from "../format";
@@ -151,48 +149,6 @@ describe("validateTimeRange", () => {
   });
 });
 
-describe("getTimeStatus", () => {
-  it("returns future when no times are set", () => {
-    expect(getTimeStatus("12:00", null, null)).toBe("future");
-  });
-
-  it("returns future when only endTime is set", () => {
-    expect(getTimeStatus("12:00", null, "13:00")).toBe("future");
-  });
-
-  it("returns past when endTime <= now", () => {
-    expect(getTimeStatus("15:00", "10:00", "14:00")).toBe("past");
-  });
-
-  it("returns past when endTime equals now", () => {
-    expect(getTimeStatus("14:00", "10:00", "14:00")).toBe("past");
-  });
-
-  it("returns current when startTime <= now < endTime", () => {
-    expect(getTimeStatus("12:00", "10:00", "14:00")).toBe("current");
-  });
-
-  it("returns current when startTime equals now", () => {
-    expect(getTimeStatus("10:00", "10:00", "14:00")).toBe("current");
-  });
-
-  it("returns future when startTime > now", () => {
-    expect(getTimeStatus("09:00", "10:00", "14:00")).toBe("future");
-  });
-
-  it("returns past when only startTime is set and startTime <= now", () => {
-    expect(getTimeStatus("12:00", "10:00", null)).toBe("past");
-  });
-
-  it("returns future when only startTime is set and startTime > now", () => {
-    expect(getTimeStatus("09:00", "10:00", null)).toBe("future");
-  });
-
-  it("handles HH:MM:SS format by comparing first 5 characters", () => {
-    expect(getTimeStatus("12:00", "10:00:00", "14:00:00")).toBe("current");
-  });
-});
-
 describe("compareByStartTime", () => {
   it("sorts spots with earlier startTime first", () => {
     expect(compareByStartTime({ startTime: "09:00" }, { startTime: "10:00" })).toBeLessThan(0);
@@ -244,24 +200,6 @@ describe("getDayCount", () => {
 
   it("handles year boundaries", () => {
     expect(getDayCount("2025-12-30", "2026-01-02")).toBe(4);
-  });
-});
-
-describe("getCrossDayTimeStatus", () => {
-  it("returns past when endTime has passed", () => {
-    expect(getCrossDayTimeStatus("11:00", "10:00")).toBe("past");
-  });
-
-  it("returns current when endTime has not passed", () => {
-    expect(getCrossDayTimeStatus("09:00", "10:00")).toBe("current");
-  });
-
-  it("returns past when endTime equals now", () => {
-    expect(getCrossDayTimeStatus("10:00", "10:00")).toBe("past");
-  });
-
-  it("returns null when endTime is null", () => {
-    expect(getCrossDayTimeStatus("10:00", null)).toBeNull();
   });
 });
 

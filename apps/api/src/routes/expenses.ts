@@ -2,7 +2,13 @@ import { createExpenseSchema, MAX_EXPENSES_PER_TRIP, updateExpenseSchema } from 
 import { count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { expenseSplits, expenses, tripMembers } from "../db/schema";
+import {
+  expenseLineItemMembers,
+  expenseLineItems,
+  expenseSplits,
+  expenses,
+  tripMembers,
+} from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { notifyUsers } from "../lib/notifications";
@@ -24,6 +30,10 @@ expenseRoutes.get("/:tripId/expenses", requireTripAccess(), async (c) => {
       with: {
         paidByUser: { columns: { id: true, name: true } },
         splits: { with: { user: { columns: { id: true, name: true } } } },
+        lineItems: {
+          with: { members: true },
+          orderBy: (lineItems, { asc }) => [asc(lineItems.sortOrder)],
+        },
       },
       orderBy: (expenses, { desc }) => [desc(expenses.createdAt)],
     }),
@@ -56,7 +66,7 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const { title, amount, paidByUserId, splitType, splits } = parsed.data;
+  const { title, amount, paidByUserId, splitType, splits, lineItems } = parsed.data;
 
   // Check expense count limit
   const [{ count: expenseCount }] = await db
@@ -83,6 +93,10 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_USER_NOT_MEMBER }, 400);
   }
 
+  if (lineItems?.some((item) => item.memberIds.some((id) => !memberIds.has(id)))) {
+    return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_USER_NOT_MEMBER }, 400);
+  }
+
   // Calculate split amounts for equal type
   const splitAmounts =
     splitType === "equal"
@@ -102,6 +116,28 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
         amount: splitAmounts[i],
       })),
     );
+
+    if (lineItems && lineItems.length > 0) {
+      for (let i = 0; i < lineItems.length; i++) {
+        const item = lineItems[i];
+        const [lineItem] = await tx
+          .insert(expenseLineItems)
+          .values({
+            expenseId: expense.id,
+            name: item.name,
+            amount: item.amount,
+            sortOrder: i,
+          })
+          .returning();
+
+        await tx.insert(expenseLineItemMembers).values(
+          item.memberIds.map((userId) => ({
+            lineItemId: lineItem.id,
+            userId,
+          })),
+        );
+      }
+    }
 
     return expense;
   });
@@ -145,10 +181,10 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
     return c.json({ error: ERROR_MSG.EXPENSE_NOT_FOUND }, 404);
   }
 
-  const { splits, ...updateFields } = parsed.data;
+  const { splits, lineItems, ...updateFields } = parsed.data;
 
-  // Verify member constraints when paidByUserId or splits change
-  if (updateFields.paidByUserId || splits) {
+  // Verify member constraints when paidByUserId, splits, or lineItems change
+  if (updateFields.paidByUserId || splits || lineItems) {
     const members = await db.query.tripMembers.findMany({
       where: eq(tripMembers.tripId, tripId),
     });
@@ -159,6 +195,10 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
     }
 
     if (splits?.some((s) => !memberIds.has(s.userId))) {
+      return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_USER_NOT_MEMBER }, 400);
+    }
+
+    if (lineItems?.some((item) => item.memberIds.some((id) => !memberIds.has(id)))) {
       return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_USER_NOT_MEMBER }, 400);
     }
   }
@@ -172,6 +212,14 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
     const existingTotal = existingSplits.reduce((sum, s) => sum + s.amount, 0);
     if (existingTotal !== updateFields.amount) {
       return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_AMOUNT_MISMATCH }, 400);
+    }
+  }
+
+  // Reject empty lineItems when splitType remains itemized
+  if (lineItems !== undefined) {
+    const effectiveSplitType = updateFields.splitType ?? existing.splitType;
+    if (effectiveSplitType === "itemized" && lineItems.length === 0) {
+      return c.json({ error: "Itemized split requires line items" }, 400);
     }
   }
 
@@ -198,6 +246,32 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
           amount: splitAmounts[i],
         })),
       );
+    }
+
+    if (lineItems !== undefined) {
+      await tx.delete(expenseLineItems).where(eq(expenseLineItems.expenseId, expenseId));
+      for (let i = 0; i < lineItems.length; i++) {
+        const item = lineItems[i];
+        const [lineItem] = await tx
+          .insert(expenseLineItems)
+          .values({
+            expenseId,
+            name: item.name,
+            amount: item.amount,
+            sortOrder: i,
+          })
+          .returning();
+
+        await tx.insert(expenseLineItemMembers).values(
+          item.memberIds.map((userId) => ({
+            lineItemId: lineItem.id,
+            userId,
+          })),
+        );
+      }
+    } else if (updateFields.splitType && updateFields.splitType !== "itemized") {
+      // splitType changed away from itemized: clean up orphaned line items
+      await tx.delete(expenseLineItems).where(eq(expenseLineItems.expenseId, expenseId));
     }
 
     return result;

@@ -78,7 +78,7 @@ test.describe("Expenses", () => {
 
     // Add button should be disabled due to mismatch
     await expect(dialog.getByRole("button", { name: "追加" })).toBeDisabled();
-    await expect(dialog.getByText("(一致していません)")).toBeVisible();
+    await expect(dialog.getByText("(残り 2,000円)")).toBeVisible();
   });
 
   test("edits an expense", async ({ authenticatedPage: page }) => {

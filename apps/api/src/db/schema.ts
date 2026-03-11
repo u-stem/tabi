@@ -65,7 +65,7 @@ export const scheduleColorEnum = pgEnum("schedule_color", [
   "gray",
 ]);
 
-export const expenseSplitTypeEnum = pgEnum("expense_split_type", ["equal", "custom"]);
+export const expenseSplitTypeEnum = pgEnum("expense_split_type", ["equal", "custom", "itemized"]);
 
 export const pollStatusEnum = pgEnum("poll_status", ["open", "confirmed", "closed"]);
 export const pollResponseEnum = pgEnum("poll_response", ["ok", "maybe", "ng"]);
@@ -402,6 +402,8 @@ export const schedulePolls = pgTable("schedule_polls", {
   deadline: timestamp("deadline", { withTimezone: true }),
   shareToken: varchar("share_token", { length: 64 }).unique(),
   shareTokenExpiresAt: timestamp("share_token_expires_at", { withTimezone: true }),
+  // FK to schedulePollOptions.id omitted to avoid circular type inference
+  // between schedulePolls and schedulePollOptions. Enforced at application layer.
   confirmedOptionId: uuid("confirmed_option_id"),
   tripId: uuid("trip_id")
     .notNull()
@@ -489,6 +491,33 @@ export const expenseSplits = pgTable(
     amount: integer("amount").notNull(),
   },
   (table) => [primaryKey({ columns: [table.expenseId, table.userId] })],
+).enableRLS();
+
+export const expenseLineItems = pgTable(
+  "expense_line_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    expenseId: uuid("expense_id")
+      .notNull()
+      .references(() => expenses.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 200 }).notNull(),
+    amount: integer("amount").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+  },
+  (table) => [index("expense_line_items_expense_id_idx").on(table.expenseId)],
+).enableRLS();
+
+export const expenseLineItemMembers = pgTable(
+  "expense_line_item_members",
+  {
+    lineItemId: uuid("line_item_id")
+      .notNull()
+      .references(() => expenseLineItems.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+  },
+  (table) => [primaryKey({ columns: [table.lineItemId, table.userId] })],
 ).enableRLS();
 
 // --- Relations ---
@@ -626,11 +655,25 @@ export const expensesRelations = relations(expenses, ({ one, many }) => ({
   trip: one(trips, { fields: [expenses.tripId], references: [trips.id] }),
   paidByUser: one(users, { fields: [expenses.paidByUserId], references: [users.id] }),
   splits: many(expenseSplits),
+  lineItems: many(expenseLineItems),
 }));
 
 export const expenseSplitsRelations = relations(expenseSplits, ({ one }) => ({
   expense: one(expenses, { fields: [expenseSplits.expenseId], references: [expenses.id] }),
   user: one(users, { fields: [expenseSplits.userId], references: [users.id] }),
+}));
+
+export const expenseLineItemsRelations = relations(expenseLineItems, ({ one, many }) => ({
+  expense: one(expenses, { fields: [expenseLineItems.expenseId], references: [expenses.id] }),
+  members: many(expenseLineItemMembers),
+}));
+
+export const expenseLineItemMembersRelations = relations(expenseLineItemMembers, ({ one }) => ({
+  lineItem: one(expenseLineItems, {
+    fields: [expenseLineItemMembers.lineItemId],
+    references: [expenseLineItems.id],
+  }),
+  user: one(users, { fields: [expenseLineItemMembers.userId], references: [users.id] }),
 }));
 
 export const souvenirItems = pgTable(

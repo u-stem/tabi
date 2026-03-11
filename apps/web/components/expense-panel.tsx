@@ -68,6 +68,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
   });
 
   const handleSaved = () => {
+    setEditingExpenseItem(null);
     queryClient.invalidateQueries({ queryKey: queryKeys.expenses.list(tripId) });
     queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId) });
   };
@@ -197,7 +198,10 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
           <ExpenseDialog
             tripId={tripId}
             open={dialogOpen}
-            onOpenChange={setDialogOpen}
+            onOpenChange={(open) => {
+              if (!open) setEditingExpenseItem(null);
+              setDialogOpen(open);
+            }}
             expense={editingExpenseItem}
             onSaved={handleSaved}
           />
@@ -257,7 +261,11 @@ function ExpenseRow({
           <p className="truncate text-sm font-medium">{expense.title}</p>
           <p className="text-xs text-muted-foreground">
             {expense.paidByUser.name}が支払い
-            {expense.splitType === "equal" ? " / 均等" : " / カスタム"}
+            {expense.splitType === "equal"
+              ? " / 均等"
+              : expense.splitType === "itemized"
+                ? " / アイテム別"
+                : " / カスタム"}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -311,7 +319,27 @@ function ExpenseRow({
             内訳を表示
           </CollapsiblePrimitive.Trigger>
           <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
+            {expense.lineItems.length > 0 && (
+              <div className="space-y-1 border-t px-3 pt-2 pb-3">
+                <p className="text-xs text-muted-foreground">品目</p>
+                {expense.lineItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between pl-2 text-sm">
+                    <span className="flex items-center gap-1.5">
+                      <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                      {item.name}
+                      <span className="text-xs text-muted-foreground">
+                        ({item.members.length}人)
+                      </span>
+                    </span>
+                    <span className="font-medium">{item.amount.toLocaleString()}円</span>
+                  </div>
+                ))}
+              </div>
+            )}
             <div className="space-y-1 border-t px-3 pt-2 pb-3">
+              {expense.lineItems.length > 0 && (
+                <p className="text-xs text-muted-foreground">負担額</p>
+              )}
               {[...expense.splits]
                 .sort((a, b) => b.amount - a.amount)
                 .map((split) => (

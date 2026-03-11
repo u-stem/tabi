@@ -1,0 +1,1 @@
+ALTER TYPE "public"."expense_split_type" ADD VALUE 'itemized';

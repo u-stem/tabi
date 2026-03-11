@@ -118,7 +118,7 @@ directionsRoutes.get("/", requireAuth, async (c) => {
     .onConflictDoNothing()
     .then(
       () => {},
-      () => {},
+      (err) => console.error("Route cache insert failed:", err),
     );
 
   return c.json({ durationSeconds, encodedPolyline });

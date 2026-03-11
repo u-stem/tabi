@@ -788,6 +788,24 @@ async function main() {
         splitType: "equal" as const,
         splitWith: ["dev", "alice", "bob"] as const,
       },
+      {
+        title: "先斗町 居酒屋",
+        amount: 15000,
+        paidBy: "alice" as const,
+        splitType: "itemized" as const,
+        customSplits: [
+          { user: "dev" as const, amount: 3800 },
+          { user: "alice" as const, amount: 4500 },
+          { user: "bob" as const, amount: 6700 },
+        ],
+        lineItemsDef: [
+          { name: "お通し", amount: 1500, users: ["dev", "alice", "bob"] as const },
+          { name: "刺身盛り合わせ", amount: 3500, users: ["dev", "alice", "bob"] as const },
+          { name: "日本酒", amount: 5000, users: ["dev", "alice"] as const },
+          { name: "ソフトドリンク", amount: 1000, users: ["bob"] as const },
+          { name: "デザート", amount: 4000, users: ["dev", "alice", "bob"] as const },
+        ],
+      },
     ];
 
     console.log(`\nCreating ${sampleExpenses.length} expenses...`);
@@ -795,7 +813,7 @@ async function main() {
       const paidByUserId = expenseUsers[exp.paidBy];
       if (!paidByUserId) continue;
       const splits =
-        exp.splitType === "custom" && exp.customSplits
+        (exp.splitType === "custom" || exp.splitType === "itemized") && exp.customSplits
           ? exp.customSplits
               .map((s) => {
                 const userId = expenseUsers[s.user];
@@ -809,6 +827,15 @@ async function main() {
               })
               .filter((s): s is { userId: string } => s !== null);
 
+      const lineItemsPayload =
+        "lineItemsDef" in exp && exp.lineItemsDef
+          ? exp.lineItemsDef.map((li) => ({
+              name: li.name,
+              amount: li.amount,
+              memberIds: li.users.map((u) => expenseUsers[u]).filter((id): id is string => !!id),
+            }))
+          : undefined;
+
       await apiFetch(`/api/trips/${trip.id}/expenses`, {
         method: "POST",
         body: JSON.stringify({
@@ -817,6 +844,7 @@ async function main() {
           paidByUserId,
           splitType: exp.splitType,
           splits,
+          ...(lineItemsPayload ? { lineItems: lineItemsPayload } : {}),
         }),
         headers: { cookie: ownerCookies },
       });
@@ -871,17 +899,11 @@ async function main() {
     const seedPollId = pollTripDetail.poll.id;
     console.log(`  Poll ID: ${seedPollId}`);
 
-    // Add alice and bob as poll participants + trip members
+    // Add alice and bob as trip members first, then poll participants
+    // (participant endpoint requires user to be a trip member)
     for (const username of ["alice", "bob"] as const) {
       const userData = userMap.get(username);
       if (!userData) continue;
-      await tryCreate(() =>
-        apiFetch(`/api/polls/${seedPollId}/participants`, {
-          method: "POST",
-          body: JSON.stringify({ userId: userData.userId }),
-          headers: { cookie: ownerCookies },
-        }),
-      );
       await tryCreate(() =>
         apiFetch(`/api/trips/${pollTrip.id}/members`, {
           method: "POST",
@@ -889,7 +911,14 @@ async function main() {
           headers: { cookie: ownerCookies },
         }),
       );
-      console.log(`  Participant + member: ${username}`);
+      await tryCreate(() =>
+        apiFetch(`/api/polls/${seedPollId}/participants`, {
+          method: "POST",
+          body: JSON.stringify({ userId: userData.userId }),
+          headers: { cookie: ownerCookies },
+        }),
+      );
+      console.log(`  Member + participant: ${username}`);
     }
 
     // Fetch option IDs and submit responses

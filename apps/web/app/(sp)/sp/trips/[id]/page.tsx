@@ -66,8 +66,6 @@ import { getCrossDayEntries } from "@/lib/cross-day";
 import { isGuestUser } from "@/lib/guest";
 import { SelectionProvider } from "@/lib/hooks/selection-context";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
-import { useAutoStatusTransition } from "@/lib/hooks/use-auto-status-transition";
-import { useCurrentTime } from "@/lib/hooks/use-current-time";
 import { useDayMemo } from "@/lib/hooks/use-day-memo";
 import { useDayWeather } from "@/lib/hooks/use-day-weather";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
@@ -84,7 +82,6 @@ export default function SpTripDetailPage() {
   const params = useParams();
   const tripId = typeof params.id === "string" ? params.id : null;
   const online = useOnlineStatus();
-  const now = useCurrentTime();
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const spScrollRef = useSpScrollContainer();
@@ -244,8 +241,6 @@ export default function SpTripDetailPage() {
       updatePresence("poll", null);
     }
   }, [currentDay?.id, currentPattern?.id, selectedDay, updatePresence]);
-
-  useAutoStatusTransition({ trip, tripId: tripId ?? "", now, onMutate });
 
   // Show poll tab by default for scheduling trips
   useEffect(() => {

@@ -25,7 +25,7 @@ export function Logo({ href, className }: { href?: string; className?: string })
     [baseGradient],
   );
 
-  const handleMouseLeave = useCallback(() => {
+  const clearHighlight = useCallback(() => {
     const el = ref.current;
     if (!el) return;
     // Clear inline style so Tailwind gradient takes over again
@@ -46,7 +46,8 @@ export function Logo({ href, className }: { href?: string; className?: string })
         href={href}
         className={style}
         onMouseMove={handleMouseMove}
-        onMouseLeave={handleMouseLeave}
+        onMouseLeave={clearHighlight}
+        onTouchEnd={clearHighlight}
       >
         sugara
       </Link>

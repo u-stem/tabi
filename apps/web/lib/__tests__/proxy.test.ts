@@ -83,7 +83,11 @@ describe("proxy — CSP nonce", () => {
     expect(csp).toBeTruthy();
     expect(csp).toContain("'strict-dynamic'");
     expect(csp).toMatch(/'nonce-[A-Za-z0-9+/=]+'/);
-    expect(csp).not.toContain("'unsafe-inline'");
+    // script-src uses nonce, not unsafe-inline
+    expect(csp).toMatch(/script-src[^;]*'nonce-/);
+    expect(csp).not.toMatch(/script-src[^;]*'unsafe-inline'/);
+    // style-src uses unsafe-inline (required by vaul/react-remove-scroll)
+    expect(csp).toMatch(/style-src[^;]*'unsafe-inline'/);
   });
 
   it("sets x-nonce header on non-auth pages", async () => {

@@ -928,10 +928,10 @@ describe("buildExpenseExport", () => {
     // Member split columns
     expect(headers).toContain("Alice");
     expect(headers).toContain("Bob");
-    expect(rows[0]["Alice"]).toBe(2500);
-    expect(rows[0]["Bob"]).toBe(2500);
-    expect(rows[1]["Alice"]).toBe(1000);
-    expect(rows[1]["Bob"]).toBe(2000);
+    expect(rows[0].Alice).toBe(2500);
+    expect(rows[0].Bob).toBe(2500);
+    expect(rows[1].Alice).toBe(1000);
+    expect(rows[1].Bob).toBe(2000);
   });
 
   it("includes total row after expenses", () => {

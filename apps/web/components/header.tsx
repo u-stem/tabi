@@ -2,16 +2,15 @@
 
 import type { FriendRequestResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
-import { Settings, Smartphone } from "lucide-react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { AnnouncementBanner } from "@/components/announcement-banner";
 import { GuestBanner } from "@/components/guest-banner";
+import { HeaderMenu } from "@/components/header-menu";
 import { Logo } from "@/components/logo";
 import { NotificationBell } from "@/components/notification-bell";
 import { OfflineBanner } from "@/components/offline-banner";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserAvatar } from "@/components/user-avatar";
@@ -22,11 +21,9 @@ import { usePushSubscription } from "@/lib/hooks/use-push-subscription";
 import { NAV_LINKS } from "@/lib/nav-links";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
-import { switchViewMode } from "@/lib/view-mode";
 
 export function Header() {
   const pathname = usePathname();
-  const router = useRouter();
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
   usePushSubscription(!!session?.user && !isGuest);
@@ -81,45 +78,18 @@ export function Header() {
         </div>
         <TooltipProvider>
           <div className="flex items-center gap-1">
+            <HeaderMenu />
             {mounted && session?.user && !isGuest && <NotificationBell />}
-            {!/\/(print|export)(\/|$)/.test(pathname) && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    type="button"
-                    aria-label="SP版で表示"
-                    onClick={() => void switchViewMode("sp", (url) => router.push(url))}
-                    className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                  >
-                    <Smartphone className="h-5 w-5" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>SP版で表示</TooltipContent>
-              </Tooltip>
-            )}
-            <ThemeToggle />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link
-                  href="/settings"
-                  aria-label="設定"
-                  className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                >
-                  <Settings className="h-5 w-5" />
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent>設定</TooltipContent>
-            </Tooltip>
             {!mounted || !session?.user || isGuest ? (
               <Skeleton className="h-8 w-8 rounded-full" />
             ) : (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link href="/my" aria-label="マイページ">
+                  <Link href="/my" aria-label="マイページ" className="group">
                     <UserAvatar
                       name={session.user.name ?? ""}
                       image={session.user.image}
-                      className="h-8 w-8"
+                      className="h-8 w-8 transition-transform duration-200 group-hover:scale-110"
                     />
                   </Link>
                 </TooltipTrigger>

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_JP } from "next/font/google";
+import { headers } from "next/headers";
 import { QueryProvider } from "@/components/query-provider";
 import { SwProvider } from "@/components/sw-provider";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -41,7 +42,9 @@ export function generateMetadata(): Metadata {
   };
 }
 
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
+  const nonce = (await headers()).get("x-nonce") ?? "";
+
   return (
     <html lang="ja" suppressHydrationWarning>
       <body
@@ -52,6 +55,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
+          nonce={nonce}
         >
           <SwProvider swUrl="/sw.js" disable={process.env.NODE_ENV !== "production"}>
             <QueryProvider>{children}</QueryProvider>

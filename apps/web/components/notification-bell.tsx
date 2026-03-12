@@ -64,9 +64,9 @@ export function NotificationBell() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="relative flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                className="group relative flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               >
-                <Bell className="h-5 w-5" />
+                <Bell className="h-5 w-5 transition-transform duration-200 group-hover:rotate-12" />
                 {unreadCount > 0 && (
                   <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
                     {unreadCount > 9 ? "9+" : unreadCount}

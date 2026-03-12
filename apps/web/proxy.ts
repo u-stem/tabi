@@ -11,7 +11,7 @@ function buildCspHeader(nonce: string): string {
   const directives = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""} https://maps.googleapis.com`,
-    `style-src 'self' 'nonce-${nonce}'`,
+    `style-src 'self' 'unsafe-inline'`,
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' blob: data: https://api.dicebear.com https://*.supabase.co https://maps.gstatic.com https://maps.googleapis.com https://*.ggpht.com",
     "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.dicebear.com https://maps.googleapis.com https://routes.googleapis.com",

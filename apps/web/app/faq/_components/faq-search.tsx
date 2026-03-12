@@ -1,5 +1,6 @@
 "use client";
 
+import type { SearchResult } from "minisearch";
 import { useMemo, useState } from "react";
 import type { SearchableFaq } from "@/lib/faq-search";
 import { buildFaqIndex } from "@/lib/faq-search";
@@ -15,7 +16,7 @@ export function FaqSearch({ faqs }: Props) {
 
   const results = useMemo<SearchableFaq[]>(() => {
     if (!query.trim()) return faqs;
-    return index.search(query) as unknown as SearchableFaq[];
+    return index.search(query) as Array<SearchResult & SearchableFaq>;
   }, [index, faqs, query]);
 
   return (

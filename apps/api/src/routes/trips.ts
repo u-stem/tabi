@@ -310,16 +310,17 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
       },
     },
   });
+
+  if (!tripWithPoll) {
+    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
+  }
+
   const candidates = await queryCandidatesWithReactions(tripId, user.id);
   const [{ count: memberCount }] = await db
     .select({ count: count() })
     .from(tripMembers)
     .where(eq(tripMembers.tripId, tripId));
   const detailSettings = await getAppSettings();
-
-  if (!tripWithPoll) {
-    return c.json({ error: ERROR_MSG.TRIP_NOT_FOUND }, 404);
-  }
 
   const { poll: rawPoll, ...trip } = tripWithPoll;
 

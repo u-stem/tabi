@@ -118,23 +118,24 @@ candidateRoutes.post("/:tripId/candidates/batch-assign", requireTripAccess("edit
   }
 
   await db.transaction(async (tx) => {
-    let nextOrder = await getNextSortOrder(
+    const baseOrder = await getNextSortOrder(
       tx,
       schedules.sortOrder,
       schedules,
       eq(schedules.dayPatternId, parsed.data.dayPatternId),
     );
 
-    for (const scheduleId of parsed.data.scheduleIds) {
-      await tx
-        .update(schedules)
-        .set({
-          dayPatternId: parsed.data.dayPatternId,
-          sortOrder: nextOrder++,
-          updatedAt: new Date(),
-        })
-        .where(eq(schedules.id, scheduleId));
-    }
+    const ids = parsed.data.scheduleIds;
+    const now = new Date();
+    const cases = ids.map((id, i) => sql`when ${schedules.id} = ${id} then ${baseOrder + i}`);
+    await tx
+      .update(schedules)
+      .set({
+        dayPatternId: parsed.data.dayPatternId,
+        sortOrder: sql`case ${sql.join(cases, sql` `)} end`,
+        updatedAt: now,
+      })
+      .where(inArray(schedules.id, ids));
   });
 
   logActivity({

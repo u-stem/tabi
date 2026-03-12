@@ -72,7 +72,7 @@ describe("logActivity", () => {
     expect(mockInsert).toHaveBeenCalledTimes(1);
   });
 
-  it("does not delete when under the cap", async () => {
+  it("always runs pruning via subquery (no-op when under cap)", async () => {
     const ids = Array.from({ length: 10 }, (_, i) => ({ id: `log-${i}` }));
     setupSelectMock(ids);
 
@@ -83,7 +83,8 @@ describe("logActivity", () => {
       entityType: "schedule",
     });
 
-    expect(mockDelete).not.toHaveBeenCalled();
+    // Subquery-based DELETE always runs but deletes 0 rows when under cap
+    expect(mockDelete).toHaveBeenCalledTimes(1);
   });
 
   it("deletes old entries when at the cap", async () => {

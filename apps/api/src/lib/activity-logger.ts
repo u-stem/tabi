@@ -43,18 +43,16 @@ async function logActivityInternal(params: LogActivityParams): Promise<void> {
     detail: params.detail ?? null,
   });
 
-  // Keep only the latest MAX_LOGS_PER_TRIP entries per trip
-  const keepIds = await db
+  // Keep only the latest MAX_LOGS_PER_TRIP entries per trip.
+  // Uses a subquery to avoid separate SELECT + DELETE round-trips.
+  const keepSubquery = db
     .select({ id: activityLogs.id })
     .from(activityLogs)
     .where(eq(activityLogs.tripId, params.tripId))
     .orderBy(desc(activityLogs.createdAt))
     .limit(MAX_LOGS_PER_TRIP);
 
-  const keepIdList = keepIds.map((r) => r.id);
-  if (keepIdList.length >= MAX_LOGS_PER_TRIP) {
-    await db
-      .delete(activityLogs)
-      .where(and(eq(activityLogs.tripId, params.tripId), notInArray(activityLogs.id, keepIdList)));
-  }
+  await db
+    .delete(activityLogs)
+    .where(and(eq(activityLogs.tripId, params.tripId), notInArray(activityLogs.id, keepSubquery)));
 }

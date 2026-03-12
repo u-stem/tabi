@@ -413,8 +413,8 @@ export const schedulePolls = pgTable("schedule_polls", {
   deadline: timestamp("deadline", { withTimezone: true }),
   shareToken: varchar("share_token", { length: 64 }).unique(),
   shareTokenExpiresAt: timestamp("share_token_expires_at", { withTimezone: true }),
-  // FK to schedulePollOptions.id omitted to avoid circular type inference
-  // between schedulePolls and schedulePollOptions. Enforced at application layer.
+  // FK to schedulePollOptions.id is defined via raw SQL in migration
+  // to avoid circular type inference in Drizzle's TypeScript layer.
   confirmedOptionId: uuid("confirmed_option_id"),
   tripId: uuid("trip_id")
     .notNull()
@@ -743,10 +743,7 @@ export const notifications = pgTable(
     readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [
-    index("notifications_user_id_idx").on(table.userId),
-    index("notifications_created_at_idx").on(table.createdAt),
-  ],
+  (table) => [index("notifications_user_id_created_at_idx").on(table.userId, table.createdAt)],
 ).enableRLS();
 
 export const pushSubscriptions = pgTable(

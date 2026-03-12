@@ -28,15 +28,25 @@ export async function resolveIsAdmin(user: UserLike): Promise<boolean> {
 
 /**
  * Get the admin user's ID (or null if ADMIN_USERNAME is unset / not found).
+ * Cached for 5 minutes to avoid per-request DB queries.
  */
+let adminUserIdCache: { value: string | null; expiresAt: number } | null = null;
+const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000;
+
 export async function getAdminUserId(): Promise<string | null> {
   const adminUsername = process.env.ADMIN_USERNAME;
   if (!adminUsername) return null;
+
+  if (adminUserIdCache && adminUserIdCache.expiresAt > Date.now()) {
+    return adminUserIdCache.value;
+  }
 
   const row = await db
     .select({ id: users.id })
     .from(users)
     .where(eq(users.username, adminUsername))
     .limit(1);
-  return row[0]?.id ?? null;
+  const value = row[0]?.id ?? null;
+  adminUserIdCache = { value, expiresAt: Date.now() + ADMIN_CACHE_TTL_MS };
+  return value;
 }

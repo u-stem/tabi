@@ -126,10 +126,14 @@ async function createNotificationInternal(params: CreateNotificationParams): Pro
 
   if (inAppEnabled) {
     await db.insert(notifications).values({ userId, tripId, type, payload });
-    void pruneOldNotifications(userId);
+    pruneOldNotifications(userId).catch((err) => {
+      console.error("[pruneOldNotifications]", err);
+    });
   }
 
-  void sendPushToUser(userId, type, payload, tripId);
+  sendPushToUser(userId, type, payload, tripId).catch((err) => {
+    console.error("[sendPushToUser]", err);
+  });
 }
 
 async function pruneOldNotifications(userId: string): Promise<void> {

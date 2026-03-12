@@ -47,6 +47,10 @@ export function useTripSync(
   useEffect(() => {
     function connect() {
       disconnect();
+      // SECURITY: Supabase Realtime channels are accessible to anyone with the anon key.
+      // tripId is a UUIDv4 (122-bit entropy), making brute-force impractical.
+      // TODO: Enable Realtime Authorization in Supabase Dashboard
+      // to verify JWT claims against trip membership.
       const channel = supabase.channel(`trip:${tripId}`);
 
       channel

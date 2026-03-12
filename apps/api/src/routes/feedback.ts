@@ -25,7 +25,9 @@ feedbackRoutes.post("/feedback", requireAuth, async (c) => {
   }
 
   // Sanitize to prevent @mention spam and markdown injection
-  const sanitized = body.replace(/@/g, "@ ").replace(/\[([^\]]*)\]\(javascript:/gi, "[$1](");
+  const sanitized = body
+    .replace(/@/g, "@ ")
+    .replace(/\[([^\]]*)\]\((javascript|data|vbscript):/gi, "[$1](");
   const title =
     sanitized.length > TITLE_MAX_LENGTH ? `${sanitized.slice(0, TITLE_MAX_LENGTH)}...` : sanitized;
 

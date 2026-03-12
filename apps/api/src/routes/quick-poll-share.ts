@@ -92,6 +92,9 @@ quickPollShareRoutes.post("/api/quick-polls/s/:shareToken/vote", rateLimit, asyn
 
   const user = await getOptionalUser(c);
   const voterId = user?.id ?? null;
+  // NOTE: anonymousId is client-generated (localStorage UUID). A determined user
+  // can forge different IDs to vote multiple times. Acceptable trade-off for
+  // a lightweight poll feature; use authenticated voting for important decisions.
   const voterAnonymousId = !voterId ? anonymousId : undefined;
 
   if (!voterId && !voterAnonymousId) {

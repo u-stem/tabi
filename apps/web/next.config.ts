@@ -3,7 +3,8 @@ import type { NextConfig } from "next";
 
 const cspDirectives = [
   "default-src 'self'",
-  // Next.js requires 'unsafe-inline' for hydration scripts
+  // Next.js requires 'unsafe-inline' for hydration scripts.
+  // TODO: Migrate to nonce-based CSP with 'strict-dynamic' for stronger XSS protection.
   "script-src 'self' 'unsafe-inline' https://maps.googleapis.com",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' https://fonts.gstatic.com",

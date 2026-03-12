@@ -9,7 +9,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildCandidateRows,
   buildDefaultFileName,
-  buildExpenseRows,
+  buildExpenseExport,
   buildPreviewRows,
   buildScheduleRows,
   DEFAULT_CSV_OPTIONS,
@@ -877,13 +877,27 @@ describe("exportTripToCSV", () => {
 function makeExpenseData(overrides: Partial<ExpenseExportData> = {}): ExpenseExportData {
   return {
     expenses: [
-      { title: "夕食", amount: 5000, paidByName: "Alice", splitType: "equal", category: null },
+      {
+        title: "夕食",
+        amount: 5000,
+        paidByName: "Alice",
+        splitType: "equal",
+        category: null,
+        splits: [
+          { name: "Alice", amount: 2500 },
+          { name: "Bob", amount: 2500 },
+        ],
+      },
       {
         title: "タクシー",
         amount: 3000,
         paidByName: "Bob",
         splitType: "custom",
         category: "交通費",
+        splits: [
+          { name: "Alice", amount: 1000 },
+          { name: "Bob", amount: 2000 },
+        ],
       },
     ],
     settlement: {
@@ -898,10 +912,10 @@ function makeExpenseData(overrides: Partial<ExpenseExportData> = {}): ExpenseExp
   };
 }
 
-describe("buildExpenseRows", () => {
+describe("buildExpenseExport", () => {
   it("returns expense rows with correct column values", () => {
     const data = makeExpenseData();
-    const rows = buildExpenseRows(data);
+    const { headers, rows } = buildExpenseExport(data);
 
     expect(rows[0][EXPENSE_EXPORT_HEADERS.title]).toBe("夕食");
     expect(rows[0][EXPENSE_EXPORT_HEADERS.amount]).toBe(5000);
@@ -910,11 +924,19 @@ describe("buildExpenseRows", () => {
 
     expect(rows[1][EXPENSE_EXPORT_HEADERS.title]).toBe("タクシー");
     expect(rows[1][EXPENSE_EXPORT_HEADERS.splitType]).toBe("カスタム");
+
+    // Member split columns
+    expect(headers).toContain("Alice");
+    expect(headers).toContain("Bob");
+    expect(rows[0]["Alice"]).toBe(2500);
+    expect(rows[0]["Bob"]).toBe(2500);
+    expect(rows[1]["Alice"]).toBe(1000);
+    expect(rows[1]["Bob"]).toBe(2000);
   });
 
   it("includes total row after expenses", () => {
     const data = makeExpenseData();
-    const rows = buildExpenseRows(data);
+    const rows = buildExpenseExport(data).rows;
 
     const totalRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "合計");
     expect(totalRow).toBeDefined();
@@ -923,7 +945,7 @@ describe("buildExpenseRows", () => {
 
   it("includes balance section with non-zero balances", () => {
     const data = makeExpenseData();
-    const rows = buildExpenseRows(data);
+    const rows = buildExpenseExport(data).rows;
 
     const sectionRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[過不足]");
     expect(sectionRow).toBeDefined();
@@ -939,7 +961,7 @@ describe("buildExpenseRows", () => {
 
   it("includes transfer section", () => {
     const data = makeExpenseData();
-    const rows = buildExpenseRows(data);
+    const rows = buildExpenseExport(data).rows;
 
     const sectionRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[精算]");
     expect(sectionRow).toBeDefined();
@@ -962,7 +984,7 @@ describe("buildExpenseRows", () => {
         transfers: [],
       },
     });
-    const rows = buildExpenseRows(data);
+    const rows = buildExpenseExport(data).rows;
 
     const sectionIdx = rows.findIndex((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[過不足]");
     const balanceRows = rows
@@ -988,7 +1010,7 @@ describe("buildExpenseRows", () => {
         transfers: [],
       },
     });
-    const rows = buildExpenseRows(data);
+    const rows = buildExpenseExport(data).rows;
 
     expect(rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[過不足]")).toBeUndefined();
   });
@@ -1001,7 +1023,7 @@ describe("buildExpenseRows", () => {
         transfers: [],
       },
     });
-    const rows = buildExpenseRows(data);
+    const rows = buildExpenseExport(data).rows;
 
     expect(rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[精算]")).toBeUndefined();
   });

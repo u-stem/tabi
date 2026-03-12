@@ -77,6 +77,7 @@ export type ExpenseExportItem = {
   paidByName: string;
   splitType: string;
   category: string | null;
+  splits: { name: string; amount: number }[];
 };
 
 export type ExpenseSettlement = {
@@ -220,38 +221,58 @@ export function buildPreviewRows(
   return rows;
 }
 
-export function buildExpenseRows(data: ExpenseExportData): Record<string, string | number>[] {
+export type ExpenseExportResult = {
+  headers: string[];
+  rows: Record<string, string | number>[];
+};
+
+export function buildExpenseExport(data: ExpenseExportData): ExpenseExportResult {
   const H = EXPENSE_EXPORT_HEADERS;
-  const blank = (): Record<string, string | number> => ({
-    [H.category]: "",
-    [H.title]: "",
-    [H.amount]: "",
-    [H.paidBy]: "",
-    [H.splitType]: "",
-  });
+
+  // Collect unique member names in stable order
+  const memberNameSet = new Set<string>();
+  for (const e of data.expenses) {
+    for (const s of e.splits) {
+      memberNameSet.add(s.name);
+    }
+  }
+  const memberNames = [...memberNameSet];
+
+  const staticHeaders = Object.values(H);
+  const headers = [...staticHeaders, ...memberNames];
+
+  const blank = (): Record<string, string | number> => {
+    const row: Record<string, string | number> = {};
+    for (const h of headers) row[h] = "";
+    return row;
+  };
 
   const rows: Record<string, string | number>[] = [];
 
   // Expense list
   for (const e of data.expenses) {
-    rows.push({
+    const row: Record<string, string | number> = {
       [H.category]: e.category ?? "",
       [H.title]: e.title,
       [H.amount]: e.amount,
       [H.paidBy]: e.paidByName,
       [H.splitType]:
         SPLIT_TYPE_LABELS[e.splitType as keyof typeof SPLIT_TYPE_LABELS] ?? e.splitType,
-    });
+    };
+    // Per-member split amounts
+    const splitMap = new Map(e.splits.map((s) => [s.name, s.amount]));
+    for (const name of memberNames) {
+      row[name] = splitMap.get(name) ?? "";
+    }
+    rows.push(row);
   }
 
   // Total
   rows.push(blank());
   rows.push({
-    [H.category]: "",
+    ...blank(),
     [H.title]: "合計",
     [H.amount]: data.settlement.totalAmount,
-    [H.paidBy]: "",
-    [H.splitType]: "",
   });
 
   // Balances (skip if all zero)
@@ -261,21 +282,9 @@ export function buildExpenseRows(data: ExpenseExportData): Record<string, string
 
   if (nonZeroBalances.length > 0) {
     rows.push(blank());
-    rows.push({
-      [H.category]: "",
-      [H.title]: "[過不足]",
-      [H.amount]: "",
-      [H.paidBy]: "",
-      [H.splitType]: "",
-    });
+    rows.push({ ...blank(), [H.title]: "[過不足]" });
     for (const b of nonZeroBalances) {
-      rows.push({
-        [H.category]: "",
-        [H.title]: b.name,
-        [H.amount]: b.net,
-        [H.paidBy]: "",
-        [H.splitType]: "",
-      });
+      rows.push({ ...blank(), [H.title]: b.name, [H.amount]: b.net });
     }
   }
 
@@ -283,25 +292,13 @@ export function buildExpenseRows(data: ExpenseExportData): Record<string, string
   if (data.settlement.transfers.length > 0) {
     const sorted = [...data.settlement.transfers].sort((a, b) => b.amount - a.amount);
     rows.push(blank());
-    rows.push({
-      [H.category]: "",
-      [H.title]: "[精算]",
-      [H.amount]: "",
-      [H.paidBy]: "",
-      [H.splitType]: "",
-    });
+    rows.push({ ...blank(), [H.title]: "[精算]" });
     for (const t of sorted) {
-      rows.push({
-        [H.category]: "",
-        [H.title]: `${t.fromName} → ${t.toName}`,
-        [H.amount]: t.amount,
-        [H.paidBy]: "",
-        [H.splitType]: "",
-      });
+      rows.push({ ...blank(), [H.title]: `${t.fromName} → ${t.toName}`, [H.amount]: t.amount });
     }
   }
 
-  return rows;
+  return { headers, rows };
 }
 
 export async function exportTripToExcel(trip: TripResponse, options: ExportOptions): Promise<void> {
@@ -347,8 +344,8 @@ export async function exportTripToExcel(trip: TripResponse, options: ExportOptio
   }
 
   if (options.includeExpenses && options.expenseData && options.expenseData.expenses.length > 0) {
-    const expenseRows = buildExpenseRows(options.expenseData);
-    const ws = XLSX.utils.json_to_sheet(expenseRows);
+    const { headers: expenseHeaders, rows: expenseRows } = buildExpenseExport(options.expenseData);
+    const ws = XLSX.utils.json_to_sheet(expenseRows, { header: expenseHeaders });
     XLSX.utils.book_append_sheet(wb, ws, "費用");
   }
 
@@ -422,8 +419,7 @@ export async function exportTripToCSV(trip: TripResponse, options: ExportOptions
   }
 
   if (options.includeExpenses && options.expenseData && options.expenseData.expenses.length > 0) {
-    const expenseHeaders = Object.values(EXPENSE_EXPORT_HEADERS);
-    const expenseRows = buildExpenseRows(options.expenseData);
+    const { headers: expenseHeaders, rows: expenseRows } = buildExpenseExport(options.expenseData);
     csv += `${eol}${eol}--- 費用 ---${eol}${rowsToCSV(expenseHeaders, expenseRows, delimiter, lineEnding)}`;
   }
 

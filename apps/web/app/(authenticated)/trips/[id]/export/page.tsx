@@ -26,12 +26,11 @@ import { pageTitle } from "@/lib/constants";
 import {
   buildCandidateRows,
   buildDefaultFileName,
-  buildExpenseRows,
+  buildExpenseExport,
   buildScheduleRows,
   type CSVDelimiter,
   type CSVLineEnding,
   DEFAULT_CSV_OPTIONS,
-  EXPENSE_EXPORT_HEADERS,
   EXPORT_FIELD_LABELS,
   EXPORT_FIELDS,
   type ExpenseExportData,
@@ -64,6 +63,7 @@ function toExpenseExportData(data: ExpensesResponse): ExpenseExportData {
       paidByName: e.paidByUser.name,
       splitType: e.splitType,
       category: e.category ? (EXPENSE_CATEGORY_LABELS[e.category] ?? null) : null,
+      splits: e.splits.map((s) => ({ name: s.user.name, amount: s.amount })),
     })),
     settlement: {
       totalAmount: data.settlement.totalAmount,
@@ -98,8 +98,7 @@ function ExpensePreviewTable({
       </thead>
       <tbody>
         {data.rows.map((row, index) => {
-          const titleHeader = EXPENSE_EXPORT_HEADERS.title;
-          const rowKey = `expense-${row[titleHeader]}-${index}`;
+          const rowKey = `expense-${row[data.headers[0]]}-${index}`;
           return (
             <tr key={rowKey} className="border-b last:border-b-0">
               {data.headers.map((header) => (
@@ -278,10 +277,7 @@ export default function TripExportPage() {
     if (!includeExpenses || !expenseExportData || expenseExportData.expenses.length === 0) {
       return null;
     }
-    return {
-      headers: Object.values(EXPENSE_EXPORT_HEADERS),
-      rows: buildExpenseRows(expenseExportData),
-    };
+    return buildExpenseExport(expenseExportData);
   }, [includeExpenses, expenseExportData]);
 
   const sheetNames = useMemo(() => {

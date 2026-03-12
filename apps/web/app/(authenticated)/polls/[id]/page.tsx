@@ -1,17 +1,17 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Check, Copy, Trash2, XCircle } from "lucide-react";
+import { ArrowLeft, Trash2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { QRCodeSVG } from "qrcode.react";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { toast } from "sonner";
+import { CopyButton } from "@/components/copy-button";
 import { Button } from "@/components/ui/button";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
-import { copyToClipboard } from "@/lib/clipboard";
 import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -48,8 +48,6 @@ export default function QuickPollDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const pollId = typeof params.id === "string" ? params.id : "";
-  const [copied, setCopied] = useState(false);
-
   const {
     data: poll,
     isLoading,
@@ -90,17 +88,6 @@ export default function QuickPollDetailPage() {
 
   const shareUrl =
     poll && typeof window !== "undefined" ? `${window.location.origin}/p/${poll.shareToken}` : "";
-
-  async function handleCopy() {
-    try {
-      await copyToClipboard(shareUrl);
-      setCopied(true);
-      toast.success(MSG.QUICK_POLL_LINK_COPIED);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      toast.error(MSG.COPY_FAILED);
-    }
-  }
 
   return (
     <div className="mt-4 mx-auto max-w-lg">
@@ -166,15 +153,11 @@ export default function QuickPollDetailPage() {
                   className="min-w-0 flex-1 rounded-md border bg-muted px-3 py-2 text-sm"
                   onFocus={(e) => e.currentTarget.select()}
                 />
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="shrink-0"
-                  onClick={handleCopy}
-                  aria-label={copied ? "コピー完了" : "URLをコピー"}
-                >
-                  {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                </Button>
+                <CopyButton
+                  value={shareUrl}
+                  successMessage={MSG.QUICK_POLL_LINK_COPIED}
+                  label="URLをコピー"
+                />
               </div>
               <div className="flex justify-center rounded-md border bg-white p-4">
                 <QRCodeSVG value={shareUrl} size={200} level="M" />

@@ -15,6 +15,18 @@ const seasonalGradients: Record<Season, string> = {
   winter: "from-blue-400 to-indigo-400",
 };
 
+// Raw color values for inline style usage (e.g. Logo ripple effect)
+const seasonalColors: Record<Season, [string, string]> = {
+  spring: ["#f472b6", "#c084fc"],
+  summer: ["#22c55e", "#2dd4bf"],
+  autumn: ["#f59e0b", "#ef4444"],
+  winter: ["#60a5fa", "#818cf8"],
+};
+
+export function getSeasonalColors(): [string, string] {
+  return seasonalColors[getSeason()];
+}
+
 export function getSeasonalGradient(): string {
   return seasonalGradients[getSeason()];
 }

@@ -285,14 +285,22 @@ export default function BookmarksPage() {
           <EmptyState message={MSG.EMPTY_BOOKMARK_LIST_FILTER} variant="page" />
         ) : (
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filteredBookmarkLists.map((list) => (
-              <BookmarkListCard
+            {filteredBookmarkLists.map((list, index) => (
+              <div
                 key={list.id}
-                {...list}
-                selectable={sel.selectionMode}
-                selected={sel.selectedIds.has(list.id)}
-                onSelect={sel.toggle}
-              />
+                className="animate-in fade-in duration-300"
+                style={{
+                  animationDelay: `${Math.min(index * 50, 300)}ms`,
+                  animationFillMode: "both",
+                }}
+              >
+                <BookmarkListCard
+                  {...list}
+                  selectable={sel.selectionMode}
+                  selected={sel.selectedIds.has(list.id)}
+                  onSelect={sel.toggle}
+                />
+              </div>
             ))}
           </div>
         )}

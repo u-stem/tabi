@@ -29,7 +29,7 @@ export function Fab({ onClick, label, hidden, className }: FabProps) {
       type="button"
       aria-label={label}
       className={cn(
-        "fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-[transform,opacity] duration-300 active:scale-95",
+        "fixed right-4 z-30 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition-[transform,opacity,box-shadow] duration-300 hover:scale-110 hover:shadow-xl active:scale-95",
         !isMobile && "hidden",
         scrollHidden && "opacity-0 pointer-events-none scale-90",
         className,

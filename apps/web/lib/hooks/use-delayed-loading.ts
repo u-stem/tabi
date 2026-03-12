@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 
 const DEFAULT_DELAY_MS = 200;
+const DEFAULT_MIN_DISPLAY_MS = 500;
 
 /**
  * Delays showing loading state to avoid skeleton flash on fast loads.
  * Returns true only after `delay` ms have elapsed while `loading` is true.
- * Once shown, stays true for at least `delay` ms to prevent flickering.
+ * Once shown, stays true for at least `minDisplay` ms to prevent flickering.
  */
-export function useDelayedLoading(loading: boolean, delay = DEFAULT_DELAY_MS): boolean {
+export function useDelayedLoading(
+  loading: boolean,
+  delay = DEFAULT_DELAY_MS,
+  minDisplay = DEFAULT_MIN_DISPLAY_MS,
+): boolean {
   const [show, setShow] = useState(false);
   const shownAtRef = useRef<number | null>(null);
 
@@ -20,7 +25,7 @@ export function useDelayedLoading(loading: boolean, delay = DEFAULT_DELAY_MS): b
       }
       // Ensure minimum display time before hiding
       const elapsed = Date.now() - shownAtRef.current;
-      if (elapsed >= delay) {
+      if (elapsed >= minDisplay) {
         setShow(false);
         shownAtRef.current = null;
         return;
@@ -28,7 +33,7 @@ export function useDelayedLoading(loading: boolean, delay = DEFAULT_DELAY_MS): b
       const timer = setTimeout(() => {
         setShow(false);
         shownAtRef.current = null;
-      }, delay - elapsed);
+      }, minDisplay - elapsed);
       return () => clearTimeout(timer);
     }
     const timer = setTimeout(() => {
@@ -36,7 +41,7 @@ export function useDelayedLoading(loading: boolean, delay = DEFAULT_DELAY_MS): b
       shownAtRef.current = Date.now();
     }, delay);
     return () => clearTimeout(timer);
-  }, [loading, delay]);
+  }, [loading, delay, minDisplay]);
 
   return show;
 }

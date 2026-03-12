@@ -227,14 +227,22 @@ export default function HomePage() {
         ) : (
           <div className="mt-4 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredTrips.map((trip, index) => (
-              <TripCard
+              <div
                 key={trip.id}
-                {...trip}
-                priority={index === 0}
-                selectable={selectionMode}
-                selected={selectedIds.has(trip.id)}
-                onSelect={handleSelect}
-              />
+                className="animate-in fade-in duration-300"
+                style={{
+                  animationDelay: `${Math.min(index * 50, 300)}ms`,
+                  animationFillMode: "both",
+                }}
+              >
+                <TripCard
+                  {...trip}
+                  priority={index === 0}
+                  selectable={selectionMode}
+                  selected={selectedIds.has(trip.id)}
+                  onSelect={handleSelect}
+                />
+              </div>
             ))}
           </div>
         )}

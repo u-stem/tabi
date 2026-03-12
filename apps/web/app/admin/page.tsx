@@ -1,11 +1,12 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, Copy, ExternalLink, KeyRound, Save, X } from "lucide-react";
+import { ExternalLink, KeyRound, Save, X } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { CopyButton } from "@/components/copy-button";
 import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiError, api } from "@/lib/api";
-import { copyToClipboard } from "@/lib/clipboard";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -250,7 +250,6 @@ export default function AdminPage() {
     username: string;
     tempPassword: string;
   } | null>(null);
-  const [copied, setCopied] = useState(false);
 
   const { data, isLoading, error, dataUpdatedAt } = useQuery({
     queryKey: queryKeys.admin.stats(),
@@ -548,7 +547,6 @@ export default function AdminPage() {
             open
             onOpenChange={() => {
               setTempPasswordInfo(null);
-              setCopied(false);
             }}
           >
             <ResponsiveDialogContent className="sm:max-w-md">
@@ -564,20 +562,11 @@ export default function AdminPage() {
                   <code className="min-w-0 flex-1 rounded-md border bg-muted px-3 py-2 font-mono text-sm">
                     {tempPasswordInfo.tempPassword}
                   </code>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="shrink-0"
-                    aria-label={copied ? "コピー完了" : "パスワードをコピー"}
-                    onClick={async () => {
-                      await copyToClipboard(tempPasswordInfo.tempPassword);
-                      setCopied(true);
-                      toast.success("コピーしました");
-                      setTimeout(() => setCopied(false), 2000);
-                    }}
-                  >
-                    {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-                  </Button>
+                  <CopyButton
+                    value={tempPasswordInfo.tempPassword}
+                    successMessage="コピーしました"
+                    label="パスワードをコピー"
+                  />
                 </div>
                 <p className="text-xs text-destructive">このパスワードは一度しか表示されません。</p>
               </div>

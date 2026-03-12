@@ -1,40 +1,21 @@
 "use client";
 
-import type { PublicProfileResponse } from "@sugara/shared";
-import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronRight, Copy, Dices, Pencil, Vote } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { BookmarkListCard } from "@/app/users/[userId]/page";
 import { MyQrDialog } from "@/components/my-qr-dialog";
-import { EmptyState } from "@/components/ui/empty-state";
-import { LoadingBoundary } from "@/components/ui/loading-boundary";
-import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
-import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { copyToClipboard } from "@/lib/clipboard";
 import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
-import { QUERY_CONFIG } from "@/lib/query-config";
-import { queryKeys } from "@/lib/query-keys";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
     <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
       {children}
     </h2>
-  );
-}
-
-function BookmarkListsSkeleton() {
-  return (
-    <div className="divide-y overflow-hidden rounded-lg border">
-      {[1, 2, 3].map((i) => (
-        <Skeleton key={i} className="h-12 w-full rounded-none" />
-      ))}
-    </div>
   );
 }
 
@@ -56,12 +37,6 @@ export default function MyPage() {
     toast.success(MSG.SETTINGS_USER_ID_COPIED);
     setTimeout(() => setIdCopied(false), 2000);
   }
-  const { data: profile, isLoading } = useQuery({
-    queryKey: queryKeys.profile.bookmarkLists(userId ?? ""),
-    queryFn: () => api<PublicProfileResponse>(`/api/users/${userId}/bookmark-lists`),
-    enabled: !!userId,
-    ...QUERY_CONFIG.stable,
-  });
 
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-6">
@@ -87,7 +62,11 @@ export default function MyPage() {
               </span>
               <span>ID:</span>
               <code className="font-mono">{userId.slice(0, 8)}...</code>
-              {idCopied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              {idCopied ? (
+                <Check className="h-3.5 w-3.5 text-green-500" />
+              ) : (
+                <Copy className="h-3.5 w-3.5" />
+              )}
             </button>
           )}
         </div>
@@ -101,22 +80,6 @@ export default function MyPage() {
           </Link>
           {userId && <MyQrDialog userId={userId} />}
         </div>
-      </div>
-
-      {/* Bookmark lists */}
-      <div className="space-y-2">
-        <SectionHeading>ブックマーク</SectionHeading>
-        <LoadingBoundary isLoading={isLoading} skeleton={<BookmarkListsSkeleton />}>
-          {profile && profile.bookmarkLists.length > 0 ? (
-            <div className="overflow-hidden rounded-lg border divide-y">
-              {profile.bookmarkLists.map((list) => (
-                <BookmarkListCard key={list.id} list={list} userId={userId ?? ""} />
-              ))}
-            </div>
-          ) : (
-            <EmptyState message={MSG.EMPTY_BOOKMARK_LIST} variant="box" />
-          )}
-        </LoadingBoundary>
       </div>
 
       {/* Tools */}

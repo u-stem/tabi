@@ -208,9 +208,7 @@ function SendRequestSection() {
               required
             />
             <p className="text-xs text-muted-foreground">
-              ユーザーIDは相手のプロフィールページで
-              <br />
-              確認できます。
+              ユーザーIDは相手のプロフィールページで確認できます。
             </p>
           </div>
         </CardContent>

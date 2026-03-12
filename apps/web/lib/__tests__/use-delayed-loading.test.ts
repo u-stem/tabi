@@ -36,9 +36,9 @@ describe("useDelayedLoading", () => {
     expect(result.current).toBe(false);
   });
 
-  it("stays visible for minimum delay after being shown", () => {
+  it("stays visible for minimum display time after being shown", () => {
     vi.useFakeTimers();
-    const { result, rerender } = renderHook(({ loading }) => useDelayedLoading(loading, 200), {
+    const { result, rerender } = renderHook(({ loading }) => useDelayedLoading(loading, 200, 500), {
       initialProps: { loading: true },
     });
 
@@ -49,21 +49,21 @@ describe("useDelayedLoading", () => {
     // Loading finishes at 230ms (30ms after skeleton shown)
     act(() => vi.advanceTimersByTime(30));
     rerender({ loading: false });
-    // Still visible because minimum display time not met
+    // Still visible because minimum display time (500ms) not met
     expect(result.current).toBe(true);
 
-    // At 370ms (170ms after loading=false), still showing
-    act(() => vi.advanceTimersByTime(100));
+    // At 600ms (400ms after loading=false), still showing
+    act(() => vi.advanceTimersByTime(270));
     expect(result.current).toBe(true);
 
-    // At 400ms (200ms after skeleton shown), minimum met
-    act(() => vi.advanceTimersByTime(70));
+    // At 700ms (500ms after skeleton shown), minimum met
+    act(() => vi.advanceTimersByTime(200));
     expect(result.current).toBe(false);
   });
 
-  it("hides immediately if shown for longer than minimum delay", () => {
+  it("hides immediately if shown for longer than minimum display time", () => {
     vi.useFakeTimers();
-    const { result, rerender } = renderHook(({ loading }) => useDelayedLoading(loading, 200), {
+    const { result, rerender } = renderHook(({ loading }) => useDelayedLoading(loading, 200, 500), {
       initialProps: { loading: true },
     });
 
@@ -71,10 +71,10 @@ describe("useDelayedLoading", () => {
     act(() => vi.advanceTimersByTime(200));
     expect(result.current).toBe(true);
 
-    // Loading finishes at 500ms (300ms after skeleton shown)
-    act(() => vi.advanceTimersByTime(300));
+    // Loading finishes at 800ms (600ms after skeleton shown)
+    act(() => vi.advanceTimersByTime(600));
     rerender({ loading: false });
-    // Already shown for 300ms > 200ms minimum, hides immediately
+    // Already shown for 600ms > 500ms minimum, hides immediately
     expect(result.current).toBe(false);
   });
 

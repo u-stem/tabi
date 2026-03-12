@@ -65,7 +65,9 @@ export function BottomNavBase({ className, links, friendHref }: BottomNavBasePro
                 active ? "font-medium text-primary" : "text-muted-foreground",
               )}
             >
-              <link.icon className="h-5 w-5" />
+              <link.icon
+                className={cn("h-5 w-5 transition-transform duration-200", active && "scale-110")}
+              />
               <span className="sr-only">{link.label}</span>
               {link.href === friendHref && friendRequestCount > 0 && (
                 <span className="absolute top-1.5 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">

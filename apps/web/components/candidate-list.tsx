@@ -60,7 +60,14 @@ export const CandidateList = memo(function CandidateList({
         {candidates.map((spot, idx) => {
           const isReorderable = isMobile && reorderMode && !disabled;
           const item = (
-            <div key={spot.id} className={withDndIndicators ? "relative" : undefined}>
+            <div
+              key={spot.id}
+              className={cn(
+                withDndIndicators ? "relative" : undefined,
+                "animate-in fade-in duration-300",
+              )}
+              style={{ animationDelay: `${Math.min(idx * 30, 300)}ms`, animationFillMode: "both" }}
+            >
               {withDndIndicators && overCandidateId === spot.id && overlayIndicator}
               <CandidateItem
                 spot={spot}

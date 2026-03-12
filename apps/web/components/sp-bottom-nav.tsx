@@ -70,7 +70,9 @@ export function SpBottomNav() {
                 active ? "font-medium text-primary" : "text-muted-foreground",
               )}
             >
-              <link.icon className="h-6 w-6" />
+              <link.icon
+                className={cn("h-6 w-6 transition-transform duration-200", active && "scale-110")}
+              />
               <span className="text-[10px] leading-none">{link.label}</span>
               {link.href === friendHref && friendRequestCount > 0 && (
                 <span className="absolute top-2 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
@@ -92,7 +94,12 @@ export function SpBottomNav() {
             )}
             aria-label="通知"
           >
-            <Bell className="h-6 w-6" />
+            <Bell
+              className={cn(
+                "h-6 w-6 transition-transform duration-200",
+                pathname === "/sp/notifications" && "scale-110",
+              )}
+            />
             <span className="text-[10px] leading-none">通知</span>
             {unreadCount > 0 && (
               <span className="absolute top-2 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">

@@ -199,25 +199,26 @@
   padding: 4px 12px;
 }
 
-/* GPU-accelerated shimmer using transform on a pseudo-element */
-.skeleton-shimmer::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  transform: translateX(-100%);
-  background: linear-gradient(
+/* Unified shimmer — background-attachment:fixed makes every skeleton share
+   the same gradient coordinates, so a single wave sweeps across the page. */
+.skeleton-shimmer {
+  background-image: linear-gradient(
     90deg,
-    transparent 25%,
+    transparent 35%,
     var(--shimmer-highlight) 50%,
-    transparent 75%
+    transparent 65%
   );
+  background-size: 200vw 100%;
+  background-attachment: fixed;
   animation: shimmer 2s linear infinite;
-  will-change: transform;
 }
 
 @keyframes shimmer {
+  from {
+    background-position: -100vw 0;
+  }
   to {
-    transform: translateX(100%);
+    background-position: 100vw 0;
   }
 }
 

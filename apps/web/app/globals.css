@@ -91,6 +91,7 @@
   --font-sans: var(--font-inter), var(--font-noto-sans-jp), ui-sans-serif,
     system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
     "Segoe UI Symbol", "Noto Color Emoji";
+  --animate-shimmer: shimmer 1.5s ease-in-out infinite;
 }
 
 @utility container {
@@ -195,6 +196,15 @@
 .pac-container::after {
   background-color: var(--popover) !important;
   padding: 4px 12px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @keyframes tab-fade-in {

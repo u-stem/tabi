@@ -119,7 +119,10 @@ export function useSwipeTab(
         setIsAnimating(false);
       }
 
-      function handleTransitionEnd() {
+      function handleTransitionEnd(e: TransitionEvent) {
+        // Ignore bubbled transitionend from child elements — only respond to
+        // the swipe element's own transform transition finishing.
+        if (e.target !== swipe) return;
         swipe.removeEventListener("transitionend", handleTransitionEnd);
         if (unmounted || !animating) return;
 
@@ -233,7 +236,7 @@ export function useSwipeTab(
           animating = true;
           setIsAnimating(true);
           const targetX = dx < 0 ? -containerWidth : containerWidth;
-          swipe.addEventListener("transitionend", handleTransitionEnd, { once: true });
+          swipe.addEventListener("transitionend", handleTransitionEnd);
           swipe.style.transition = `transform ${SNAP_DURATION}ms cubic-bezier(0.2, 0, 0, 1)`;
           // Force reflow so transition fires from current position
           swipe.offsetHeight;
@@ -242,7 +245,7 @@ export function useSwipeTab(
           // Spring back to origin
           animating = true;
           setIsAnimating(true);
-          swipe.addEventListener("transitionend", handleTransitionEnd, { once: true });
+          swipe.addEventListener("transitionend", handleTransitionEnd);
           swipe.style.transition = `transform ${SNAP_DURATION}ms cubic-bezier(0.2, 0, 0, 1)`;
           swipe.offsetHeight;
           swipe.style.transform = "translateX(0px)";
@@ -337,6 +340,7 @@ export function useSwipeTab(
         document.removeEventListener("touchmove", handleTouchMove);
         document.removeEventListener("touchend", handleTouchEnd);
         document.removeEventListener("touchcancel", handleTouchCancel);
+        swipe.removeEventListener("transitionend", handleTransitionEnd);
         swipe.style.transform = "";
         swipe.style.transition = "";
       };

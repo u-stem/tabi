@@ -199,30 +199,26 @@
   padding: 4px 12px;
 }
 
-/* Unified shimmer — background-attachment:fixed makes every skeleton share
-   the same gradient coordinates, so a single wave sweeps across the page.
-   transform:translateZ(0) + will-change promote to GPU compositor layer. */
-.skeleton-shimmer {
-  background-image: linear-gradient(
+/* GPU-accelerated shimmer via ::after + transform.
+   All skeletons mount simultaneously so animations stay in sync. */
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
     90deg,
-    transparent 25%,
+    transparent 20%,
     var(--shimmer-highlight) 50%,
-    transparent 75%
+    transparent 80%
   );
-  background-size: 300vw 100%;
-  background-attachment: fixed;
   animation: shimmer 2.5s ease-in-out infinite;
-  transform: translateZ(0);
-  will-change: background-position;
-  backface-visibility: hidden;
+  will-change: transform;
 }
 
 @keyframes shimmer {
-  from {
-    background-position: -150vw 0;
-  }
   to {
-    background-position: 150vw 0;
+    transform: translateX(100%);
   }
 }
 

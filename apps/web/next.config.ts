@@ -1,22 +1,7 @@
 import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
 
-const cspDirectives = [
-  "default-src 'self'",
-  // Next.js requires 'unsafe-inline' for hydration scripts.
-  "script-src 'self' 'unsafe-inline' https://maps.googleapis.com",
-  "style-src 'self' 'unsafe-inline'",
-  "font-src 'self' https://fonts.gstatic.com",
-  "img-src 'self' blob: data: https://api.dicebear.com https://*.supabase.co https://maps.gstatic.com https://maps.googleapis.com https://*.ggpht.com",
-  "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.dicebear.com https://maps.googleapis.com https://routes.googleapis.com",
-  "frame-src 'none'",
-  "frame-ancestors 'none'",
-  "object-src 'none'",
-  "worker-src 'self' blob:",
-  "base-uri 'self'",
-  "form-action 'self'",
-  "upgrade-insecure-requests",
-];
+// CSP is now set in proxy.ts with per-request nonce for XSS protection.
 
 const securityHeaders = [
   {
@@ -40,14 +25,6 @@ const securityHeaders = [
     value: "max-age=63072000; includeSubDomains; preload",
   },
 ];
-
-// CSP breaks Turbopack dev mode (requires 'unsafe-eval')
-if (process.env.NODE_ENV === "production") {
-  securityHeaders.push({
-    key: "Content-Security-Policy",
-    value: cspDirectives.join("; "),
-  });
-}
 
 const nextConfig: NextConfig = {
   transpilePackages: ["@sugara/api", "@sugara/shared"],

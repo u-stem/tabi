@@ -57,3 +57,36 @@ describe("proxy — SP redirect", () => {
     expect(res?.headers.get("location")).not.toContain("/sp/");
   });
 });
+
+describe("proxy — CSP nonce", () => {
+  it("sets CSP header with nonce on non-auth pages", async () => {
+    const req = makeRequest("/faq");
+    const res = await proxy(req);
+    const csp = res?.headers.get("Content-Security-Policy");
+    expect(csp).toBeTruthy();
+    expect(csp).toContain("'strict-dynamic'");
+    expect(csp).toMatch(/'nonce-[A-Za-z0-9+/=]+'/);
+    expect(csp).not.toContain("'unsafe-inline'");
+  });
+
+  it("sets x-nonce header on non-auth pages", async () => {
+    const req = makeRequest("/faq");
+    const res = await proxy(req);
+    const nonce = res?.headers.get("x-nonce");
+    expect(nonce).toBeTruthy();
+    expect(nonce!.length).toBeGreaterThan(0);
+  });
+
+  it("generates unique nonce per request", async () => {
+    const res1 = await proxy(makeRequest("/faq"));
+    const res2 = await proxy(makeRequest("/faq"));
+    expect(res1?.headers.get("x-nonce")).not.toBe(res2?.headers.get("x-nonce"));
+  });
+
+  it("does not set CSP on redirect responses", async () => {
+    const req = makeRequest("/trips/abc123", { viewMode: "sp" });
+    const res = await proxy(req);
+    expect(res?.status).toBe(307);
+    expect(res?.headers.get("Content-Security-Policy")).toBeNull();
+  });
+});

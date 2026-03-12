@@ -5,8 +5,37 @@ import { MOBILE_UA_REGEX, SP_PREFIX, SP_ROUTES, VIEW_MODE_COOKIE } from "@/lib/v
 const protectedPaths = ["/home", "/trips", "/bookmarks", "/friends", "/settings", "/my", "/tools", "/sp", "/admin"];
 const guestOnlyPaths = ["/", "/auth/login", "/auth/signup"];
 
+const isDev = process.env.NODE_ENV === "development";
+
+function buildCspHeader(nonce: string): string {
+  const directives = [
+    "default-src 'self'",
+    `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? " 'unsafe-eval'" : ""} https://maps.googleapis.com`,
+    `style-src 'self' 'nonce-${nonce}'`,
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' blob: data: https://api.dicebear.com https://*.supabase.co https://maps.gstatic.com https://maps.googleapis.com https://*.ggpht.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.dicebear.com https://maps.googleapis.com https://routes.googleapis.com",
+    "frame-src 'none'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "worker-src 'self' blob:",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "upgrade-insecure-requests",
+  ];
+  return directives.join("; ");
+}
+
+function applyCspHeaders(response: NextResponse, nonce: string): NextResponse {
+  const csp = buildCspHeader(nonce);
+  response.headers.set("Content-Security-Policy", csp);
+  response.headers.set("x-nonce", nonce);
+  return response;
+}
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
 
   // ── SP ↔ Desktop redirect ──────────────────────────────
   const viewMode = request.cookies.get(VIEW_MODE_COOKIE)?.value;
@@ -57,7 +86,10 @@ export async function proxy(request: NextRequest) {
   const isGuestOnly = guestOnlyPaths.includes(pathname);
 
   if (!isProtected && !isGuestOnly) {
-    return NextResponse.next();
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-nonce", nonce);
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    return applyCspHeaders(response, nonce);
   }
 
   const cookieHeader = request.headers.get("cookie") ?? "";
@@ -79,13 +111,19 @@ export async function proxy(request: NextRequest) {
       return NextResponse.redirect(new URL("/home", request.url));
     }
 
-    return NextResponse.next();
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set("x-nonce", nonce);
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    return applyCspHeaders(response, nonce);
   } catch (err) {
     console.error("[Proxy] Session check failed:", err);
     // Treat session check failure as unauthenticated for all routes that require auth.
     // This includes both explicitly protected paths and any other path in the matcher.
     if (isGuestOnly) {
-      return NextResponse.next();
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set("x-nonce", nonce);
+      const response = NextResponse.next({ request: { headers: requestHeaders } });
+      return applyCspHeaders(response, nonce);
     }
     return NextResponse.redirect(new URL("/auth/login", request.url));
   }
@@ -93,20 +131,7 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/home/:path*",
-    "/trips/:path*",
-    "/bookmarks/:path*",
-    "/friends/:path*",
-    "/settings/:path*",
-    "/settings",
-    "/my/:path*",
-    "/my",
-    "/tools/:path*",
-    "/sp/:path*",
-    "/admin/:path*",
-    "/admin",
-    "/",
-    "/auth/login",
-    "/auth/signup",
+    // Match all pages except static files, images, and API routes
+    "/((?!api|_next/static|_next/image|sw\\.js|swe-worker|icons|manifest|favicon).*)",
   ],
 };

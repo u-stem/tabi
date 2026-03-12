@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { MOBILE_UA_REGEX, SP_PREFIX, SP_ROUTES, VIEW_MODE_COOKIE } from "@/lib/view-mode";
+import { MOBILE_UA_REGEX, SP_ONLY_ROUTES, SP_PREFIX, SP_ROUTES, VIEW_MODE_COOKIE } from "@/lib/view-mode";
 
 const protectedPaths = ["/home", "/trips", "/bookmarks", "/friends", "/settings", "/my", "/tools", "/sp", "/admin"];
 const guestOnlyPaths = ["/", "/auth/login", "/auth/signup"];
@@ -62,8 +62,12 @@ export async function proxy(request: NextRequest) {
   }
 
   if (desiredMode === "desktop" && isOnSp) {
+    const stripped = pathname.slice(SP_PREFIX.length) || "/home";
+    const isSpOnly = SP_ONLY_ROUTES.some(
+      (route) => stripped === route || stripped.startsWith(`${route}/`),
+    );
     const url = request.nextUrl.clone();
-    url.pathname = pathname.slice(SP_PREFIX.length) || "/home";
+    url.pathname = isSpOnly ? "/home" : stripped;
     return NextResponse.redirect(url);
   }
 

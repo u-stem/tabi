@@ -24,6 +24,9 @@ export const SP_ROUTES = [
   "/tools",
 ] as const;
 
+/** Routes that exist only in SP and have no desktop counterpart. */
+export const SP_ONLY_ROUTES = ["/notifications"] as const;
+
 /** Path prefix for all SP pages. */
 export const SP_PREFIX = "/sp";
 
@@ -68,7 +71,11 @@ export async function switchViewMode(
   } else {
     // Currently on SP → navigate to desktop
     if (pathname.startsWith(SP_PREFIX)) {
-      const desktopPath = pathname.slice(SP_PREFIX.length) || "/home";
+      const stripped = pathname.slice(SP_PREFIX.length) || "/home";
+      const isSpOnly = SP_ONLY_ROUTES.some(
+        (route) => stripped === route || stripped.startsWith(`${route}/`),
+      );
+      const desktopPath = isSpOnly ? "/home" : stripped;
       navigate(`${desktopPath}${search}${hash}`);
     }
   }

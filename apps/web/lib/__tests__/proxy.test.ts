@@ -58,6 +58,23 @@ describe("proxy — SP redirect", () => {
   });
 });
 
+describe("proxy — SP-only route fallback", () => {
+  it("redirects /sp/notifications to /home in desktop mode", async () => {
+    const req = makeRequest("/sp/notifications", { viewMode: "desktop" });
+    const res = await proxy(req);
+    expect(res?.status).toBe(307);
+    expect(res?.headers.get("location")).toContain("/home");
+    expect(res?.headers.get("location")).not.toContain("/notifications");
+  });
+
+  it("redirects /sp/trips/abc to /trips/abc in desktop mode (not SP-only)", async () => {
+    const req = makeRequest("/sp/trips/abc", { viewMode: "desktop" });
+    const res = await proxy(req);
+    expect(res?.status).toBe(307);
+    expect(res?.headers.get("location")).toContain("/trips/abc");
+  });
+});
+
 describe("proxy — CSP nonce", () => {
   it("sets CSP header with nonce on non-auth pages", async () => {
     const req = makeRequest("/faq");

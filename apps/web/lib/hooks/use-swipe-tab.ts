@@ -134,21 +134,17 @@ export function useSwipeTab(
 
         if (isFullSlide) {
           const direction = currentTransform.includes("-") ? "left" : "right";
-          // Hide the swipe element, swap content via flushSync, then reveal
-          // after the browser has painted the new content. rAF ensures the
-          // hidden frame is actually composited before we make it visible,
-          // preventing the old tab from flashing at position 0.
-          swipe.style.visibility = "hidden";
+          // The swipe element is fully off-screen (translateX ± containerWidth).
+          // Swap content while it's invisible, then snap back to origin.
+          // All DOM writes happen in a single JS task so the browser only
+          // paints the final state — no visibility hack needed.
           swipe.style.transition = "";
-          swipe.style.transform = "";
           flushSync(() => {
             setAdjacent(null);
             setIsAnimating(false);
             opts.onSwipeComplete(direction);
           });
-          requestAnimationFrame(() => {
-            if (!unmounted) swipe.style.visibility = "";
-          });
+          swipe.style.transform = "";
           axis = "pending";
           adjacentSet = null;
           animating = false;

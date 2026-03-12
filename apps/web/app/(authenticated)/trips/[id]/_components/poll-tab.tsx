@@ -53,6 +53,7 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { formatDateRangeShort } from "@/lib/format";
@@ -277,8 +278,10 @@ export function PollTab({
 
   if (isLoading || !poll) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <p className="text-sm text-muted-foreground">読み込み中...</p>
+      <div className="space-y-4 p-4">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-24 w-full" />
       </div>
     );
   }
@@ -519,6 +522,10 @@ export function PollTab({
                         <button
                           key={value}
                           type="button"
+                          aria-pressed={isActive}
+                          aria-label={
+                            value === "ok" ? "参加可能" : value === "maybe" ? "未定" : "参加不可"
+                          }
                           className={`flex h-8 flex-1 items-center justify-center rounded border transition-colors ${
                             isActive
                               ? config.activeClassName
@@ -669,12 +676,13 @@ export function PollTab({
               キャンセル
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogAction
+              disabled={confirmMutation.isPending}
               onClick={() => {
                 if (confirmOptionId) confirmMutation.mutate(confirmOptionId);
                 setConfirmOptionId(null);
               }}
             >
-              確定する
+              {confirmMutation.isPending ? "確定中..." : "確定する"}
             </ResponsiveAlertDialogAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>
@@ -706,13 +714,14 @@ export function PollTab({
               キャンセル
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
+              disabled={deleteOptionMutation.isPending}
               onClick={() => {
                 if (deleteOptionId) deleteOptionMutation.mutate(deleteOptionId);
                 setDeleteOptionId(null);
               }}
             >
               <Trash2 className="h-4 w-4" />
-              削除する
+              {deleteOptionMutation.isPending ? "削除中..." : "削除する"}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>

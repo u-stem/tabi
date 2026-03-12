@@ -25,6 +25,7 @@ export function SignupForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [password, setPassword] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -139,8 +140,14 @@ export function SignupForm() {
               autoComplete="new-password"
               minLength={MIN_PASSWORD_LENGTH}
               required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
             />
-            <p className="text-xs text-muted-foreground">{getPasswordRequirementsText()}</p>
+            {password.length > 0 ? (
+              <PasswordStrength password={password} />
+            ) : (
+              <p className="text-xs text-muted-foreground">{getPasswordRequirementsText()}</p>
+            )}
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">
@@ -221,4 +228,12 @@ export function SignupForm() {
       </CardContent>
     </Card>
   );
+}
+
+function PasswordStrength({ password }: { password: string }) {
+  const { errors } = validatePassword(password);
+  if (errors.length === 0) {
+    return <p className="text-xs text-green-600 dark:text-green-400">要件を満たしています</p>;
+  }
+  return <p className="text-xs text-muted-foreground">未達: {errors.join("、")}</p>;
 }

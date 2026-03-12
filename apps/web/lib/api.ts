@@ -60,6 +60,8 @@ export function getApiErrorMessage(
   if (err instanceof ApiError) {
     if (err.status === 409) return opts?.conflict ?? err.message;
     if (err.status === 404) return opts?.notFound ?? err.message;
+    // Server errors (5xx) may contain technical details; use fallback instead
+    if (err.status >= 500) return fallback;
     return err.message;
   }
   if (err instanceof Error) return err.message;

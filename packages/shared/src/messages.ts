@@ -266,6 +266,7 @@ export const MSG = {
   POLL_NOTE_UPDATE_FAILED: "メモの更新に失敗しました",
 
   // Expense
+  EXPENSE_SAVE_FAILED: "費用の保存に失敗しました",
   EXPENSE_DELETE_FAILED: "費用の削除に失敗しました",
 
   // Notification
@@ -398,6 +399,7 @@ export const MSG = {
   EMPTY_GROUP: "グループがありません",
   EMPTY_NOTIFICATION: "通知はありません",
   EMPTY_EXPENSE: "費用はまだ記録されていません",
+  SOUVENIR_SAVE_FAILED: "お土産の保存に失敗しました",
   EMPTY_SOUVENIR: "お土産リストはまだありません",
   EMPTY_NEWS: "お知らせはまだありません",
   EMPTY_EXPORT_SHEET: "このシートにデータがありません",

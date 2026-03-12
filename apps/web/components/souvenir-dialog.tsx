@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/responsive-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 type SouvenirDialogProps = {
@@ -126,7 +127,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
       onOpenChange(false);
       onSaved();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to save souvenir"));
+      toast.error(getApiErrorMessage(err, MSG.SOUVENIR_SAVE_FAILED));
     } finally {
       setLoading(false);
     }

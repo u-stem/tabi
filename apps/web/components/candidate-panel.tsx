@@ -164,6 +164,16 @@ export function CandidatePanel({
   }
 
   async function handleReact(scheduleId: string, type: "like" | "hmm") {
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    queryClient.setQueryData(cacheKey, (old: TripResponse | undefined) => {
+      if (!old) return old;
+      return {
+        ...old,
+        candidates: old.candidates.map((c) =>
+          c.id === scheduleId ? { ...c, myReaction: type } : c,
+        ),
+      };
+    });
     try {
       await api(`/api/trips/${tripId}/candidates/${scheduleId}/reaction`, {
         method: "PUT",
@@ -171,17 +181,29 @@ export function CandidatePanel({
       });
       onRefresh();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.REACTION_FAILED);
     }
   }
 
   async function handleRemoveReaction(scheduleId: string) {
+    const prev = queryClient.getQueryData<TripResponse>(cacheKey);
+    queryClient.setQueryData(cacheKey, (old: TripResponse | undefined) => {
+      if (!old) return old;
+      return {
+        ...old,
+        candidates: old.candidates.map((c) =>
+          c.id === scheduleId ? { ...c, myReaction: null } : c,
+        ),
+      };
+    });
     try {
       await api(`/api/trips/${tripId}/candidates/${scheduleId}/reaction`, {
         method: "DELETE",
       });
       onRefresh();
     } catch {
+      if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(MSG.REACTION_REMOVE_FAILED);
     }
   }

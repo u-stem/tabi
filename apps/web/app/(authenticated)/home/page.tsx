@@ -173,11 +173,13 @@ export default function HomePage() {
         error={error}
         errorFallback={errorFallback}
       >
-        <div className="mt-4 flex gap-1.5">
+        <div className="mt-4 flex gap-1.5" role="tablist">
           {tabs.map(({ value, label }) => (
             <button
               key={value}
               type="button"
+              role="tab"
+              aria-selected={tab === value}
               onClick={() => handleTabChange(value)}
               className={cn(
                 "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.95]",

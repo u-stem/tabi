@@ -33,6 +33,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { calculateItemizedSplits, type ExpenseLineItem } from "@/lib/expense-calc";
+import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
@@ -264,7 +265,7 @@ export function ExpenseDialog({
       onOpenChange(false);
       onSaved();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, "Failed to save expense"));
+      toast.error(getApiErrorMessage(err, MSG.EXPENSE_SAVE_FAILED));
     } finally {
       setLoading(false);
     }

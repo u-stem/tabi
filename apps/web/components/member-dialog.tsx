@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
@@ -302,9 +303,14 @@ export function MemberDialog({
                         </SelectContent>
                       </Select>
                       {member.hasExpenses ? (
-                        <span className="cursor-not-allowed select-none text-sm text-muted-foreground/50">
-                          削除
-                        </span>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <span className="cursor-not-allowed select-none text-sm text-muted-foreground/50">
+                              削除
+                            </span>
+                          </TooltipTrigger>
+                          <TooltipContent>費用データがあるため削除できません</TooltipContent>
+                        </Tooltip>
                       ) : (
                         <button
                           type="button"

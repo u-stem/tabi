@@ -79,6 +79,7 @@ import { queryKeys } from "@/lib/query-keys";
 
 type TripActionsProps = {
   tripId: string;
+  tripTitle: string;
   status: TripStatus;
   role: MemberRole;
   pollId?: string | null;
@@ -106,6 +107,7 @@ const STATUS_ICONS: Record<string, ReactNode> = {
 
 export function TripActions({
   tripId,
+  tripTitle,
   status,
   role,
   pollId,
@@ -570,7 +572,7 @@ export function TripActions({
           <ResponsiveAlertDialogHeader>
             <ResponsiveAlertDialogTitle>旅行を削除しますか？</ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              この旅行とすべての予定が削除されます。この操作は取り消せません。
+              「{tripTitle}」とすべての予定が削除されます。この操作は取り消せません。
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>

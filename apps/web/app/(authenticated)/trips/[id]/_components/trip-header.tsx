@@ -36,6 +36,7 @@ export function TripHeader({
 }) {
   const tripActionsProps = {
     tripId,
+    tripTitle: trip.title,
     status: trip.status,
     role: trip.role,
     pollId: trip.poll?.id,

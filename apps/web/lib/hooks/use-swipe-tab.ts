@@ -2,7 +2,7 @@ import { type RefObject, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 
 const SWIPE_THRESHOLD = 40;
-const LOCK_THRESHOLD = 10;
+const LOCK_THRESHOLD = 6;
 // 1.2 allows swipes up to ~40° from horizontal (iOS-like).
 // 1.8 was too strict and rejected natural diagonal swipes.
 const HORIZONTAL_BIAS = 1.2;

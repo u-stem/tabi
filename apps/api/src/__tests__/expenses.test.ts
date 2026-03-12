@@ -730,6 +730,65 @@ describe("Expense routes", () => {
       expect(res.status).toBe(400);
     });
 
+    it("updates expense category", async () => {
+      mockDbQuery.expenses.findFirst.mockResolvedValue({
+        id: "exp-1",
+        tripId,
+        title: "Taxi",
+        amount: 2000,
+        splitType: "equal",
+        category: null,
+      });
+      const updatedExpense = {
+        id: "exp-1",
+        title: "Taxi",
+        amount: 2000,
+        category: "transportation",
+      };
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updatedExpense]),
+          }),
+        }),
+      });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses/exp-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: "transportation" }),
+      });
+
+      expect(res.status).toBe(200);
+    });
+
+    it("clears expense category by sending null", async () => {
+      mockDbQuery.expenses.findFirst.mockResolvedValue({
+        id: "exp-1",
+        tripId,
+        title: "Taxi",
+        amount: 2000,
+        splitType: "equal",
+        category: "transportation",
+      });
+      const updatedExpense = { id: "exp-1", title: "Taxi", amount: 2000, category: null };
+      mockDbUpdate.mockReturnValue({
+        set: vi.fn().mockReturnValue({
+          where: vi.fn().mockReturnValue({
+            returning: vi.fn().mockResolvedValue([updatedExpense]),
+          }),
+        }),
+      });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses/exp-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ category: null }),
+      });
+
+      expect(res.status).toBe(200);
+    });
+
     it("returns 404 for non-existent expense", async () => {
       mockDbQuery.expenses.findFirst.mockResolvedValue(null);
 

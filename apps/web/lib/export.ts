@@ -92,8 +92,8 @@ export type ExpenseExportData = {
 };
 
 export const EXPENSE_EXPORT_HEADERS = {
-  category: "カテゴリ",
   title: "タイトル",
+  category: "カテゴリ",
   amount: "金額",
   paidBy: "支払者",
   splitType: "分担方法",
@@ -229,14 +229,14 @@ export type ExpenseExportResult = {
 export function buildExpenseExport(data: ExpenseExportData): ExpenseExportResult {
   const H = EXPENSE_EXPORT_HEADERS;
 
-  // Collect unique member names in stable order
+  // Collect unique member names in sorted order for stable output
   const memberNameSet = new Set<string>();
   for (const e of data.expenses) {
     for (const s of e.splits) {
       memberNameSet.add(s.name);
     }
   }
-  const memberNames = [...memberNameSet];
+  const memberNames = [...memberNameSet].sort((a, b) => a.localeCompare(b));
 
   const staticHeaders = Object.values(H);
   const headers = [...staticHeaders, ...memberNames];

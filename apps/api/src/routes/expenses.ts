@@ -1,3 +1,4 @@
+import type { ExpenseCategory } from "@sugara/shared";
 import {
   createExpenseSchema,
   EXPENSE_CATEGORY_LABELS,
@@ -68,8 +69,8 @@ expenseRoutes.get("/:tripId/expenses", requireTripAccess(), async (c) => {
   }
 
   const categoryTotals = Array.from(categoryMap.entries()).map(([category, data]) => ({
-    category,
-    label: EXPENSE_CATEGORY_LABELS[category as keyof typeof EXPENSE_CATEGORY_LABELS] ?? category,
+    category: category as ExpenseCategory,
+    label: EXPENSE_CATEGORY_LABELS[category as ExpenseCategory],
     total: data.total,
     count: data.count,
   }));

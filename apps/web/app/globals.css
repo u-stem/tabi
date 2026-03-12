@@ -57,7 +57,7 @@
   --chart-3: hsl(30 80% 55%);
   --chart-4: hsl(280 65% 60%);
   --chart-5: hsl(340 75% 55%);
-  --shimmer-highlight: rgba(255, 255, 255, 0.08);
+  --shimmer-highlight: rgba(255, 255, 255, 0.04);
 }
 
 @theme inline {

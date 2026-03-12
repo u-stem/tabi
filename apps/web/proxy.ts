@@ -14,7 +14,7 @@ function buildCspHeader(nonce: string): string {
     `style-src 'self' 'unsafe-inline'`,
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' blob: data: https://api.dicebear.com https://*.supabase.co https://maps.gstatic.com https://maps.googleapis.com https://*.ggpht.com",
-    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.dicebear.com https://maps.googleapis.com https://routes.googleapis.com",
+    `connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.dicebear.com https://maps.googleapis.com https://routes.googleapis.com${isDev ? " ws://127.0.0.1:* http://127.0.0.1:*" : ""}`,
     "frame-src 'none'",
     "frame-ancestors 'none'",
     "object-src 'none'",

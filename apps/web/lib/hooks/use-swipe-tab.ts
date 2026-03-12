@@ -131,10 +131,9 @@ export function useSwipeTab(
 
         if (isFullSlide) {
           const direction = currentTransform.includes("-") ? "left" : "right";
-          // Clear transition and transform BEFORE flushSync so that React's
-          // layout effects (e.g. scroll restoration) compute positions at the
-          // final location, not at the slide-out offset. No paint can occur
-          // between these DOM writes and flushSync because it's all synchronous.
+          // Hide before clearing transform to prevent a flash frame where the
+          // old tab snaps back to center before React replaces the content.
+          swipe.style.visibility = "hidden";
           swipe.style.transition = "";
           swipe.style.transform = "";
           flushSync(() => {
@@ -142,6 +141,7 @@ export function useSwipeTab(
             setIsAnimating(false);
             opts.onSwipeComplete(direction);
           });
+          swipe.style.visibility = "";
           axis = "pending";
           adjacentSet = null;
           animating = false;

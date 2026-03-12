@@ -34,7 +34,6 @@ export const auth = betterAuth({
     enabled: isProduction,
     window: 60,
     max: 30,
-    // TODO: Switch to external store (e.g. Upstash Redis) for Vercel serverless.
     // In-memory storage is per-instance and not shared across function invocations.
     storage: "memory",
     customRules: {

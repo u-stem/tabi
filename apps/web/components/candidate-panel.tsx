@@ -164,14 +164,22 @@ export function CandidatePanel({
   }
 
   async function handleReact(scheduleId: string, type: "like" | "hmm") {
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     queryClient.setQueryData(cacheKey, (old: TripResponse | undefined) => {
       if (!old) return old;
       return {
         ...old,
-        candidates: old.candidates.map((c) =>
-          c.id === scheduleId ? { ...c, myReaction: type } : c,
-        ),
+        candidates: old.candidates.map((c) => {
+          if (c.id !== scheduleId) return c;
+          const prevReaction = c.myReaction;
+          return {
+            ...c,
+            myReaction: type,
+            likeCount: c.likeCount + (type === "like" ? 1 : 0) - (prevReaction === "like" ? 1 : 0),
+            hmmCount: c.hmmCount + (type === "hmm" ? 1 : 0) - (prevReaction === "hmm" ? 1 : 0),
+          };
+        }),
       };
     });
     try {
@@ -187,14 +195,21 @@ export function CandidatePanel({
   }
 
   async function handleRemoveReaction(scheduleId: string) {
+    await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     queryClient.setQueryData(cacheKey, (old: TripResponse | undefined) => {
       if (!old) return old;
       return {
         ...old,
-        candidates: old.candidates.map((c) =>
-          c.id === scheduleId ? { ...c, myReaction: null } : c,
-        ),
+        candidates: old.candidates.map((c) => {
+          if (c.id !== scheduleId) return c;
+          return {
+            ...c,
+            myReaction: null,
+            likeCount: c.likeCount - (c.myReaction === "like" ? 1 : 0),
+            hmmCount: c.hmmCount - (c.myReaction === "hmm" ? 1 : 0),
+          };
+        }),
       };
     });
     try {

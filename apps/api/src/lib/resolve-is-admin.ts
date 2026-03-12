@@ -29,6 +29,7 @@ export async function resolveIsAdmin(user: UserLike): Promise<boolean> {
 /**
  * Get the admin user's ID (or null if ADMIN_USERNAME is unset / not found).
  * Cached for 5 minutes to avoid per-request DB queries.
+ * In Vercel serverless, cache is per-instance and not shared across invocations.
  */
 let adminUserIdCache: { value: string | null; expiresAt: number } | null = null;
 const ADMIN_CACHE_TTL_MS = 5 * 60 * 1000;

@@ -25,7 +25,7 @@ export function SignupForm() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
-  const [password, setPassword] = useState("");
+  const [passwordInput, setPasswordInput] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -140,11 +140,11 @@ export function SignupForm() {
               autoComplete="new-password"
               minLength={MIN_PASSWORD_LENGTH}
               required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              value={passwordInput}
+              onChange={(e) => setPasswordInput(e.target.value)}
             />
-            {password.length > 0 ? (
-              <PasswordStrength password={password} />
+            {passwordInput.length > 0 ? (
+              <PasswordStrength password={passwordInput} />
             ) : (
               <p className="text-xs text-muted-foreground">{getPasswordRequirementsText()}</p>
             )}

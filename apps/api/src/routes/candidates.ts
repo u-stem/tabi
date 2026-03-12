@@ -132,7 +132,7 @@ candidateRoutes.post("/:tripId/candidates/batch-assign", requireTripAccess("edit
       .update(schedules)
       .set({
         dayPatternId: parsed.data.dayPatternId,
-        sortOrder: sql`case ${sql.join(cases, sql` `)} end`,
+        sortOrder: sql`case ${sql.join(cases, sql` `)} else ${schedules.sortOrder} end`,
         updatedAt: now,
       })
       .where(inArray(schedules.id, ids));

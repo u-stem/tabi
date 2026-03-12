@@ -6,8 +6,7 @@ function Skeleton({ className, ...props }: React.HTMLAttributes<HTMLDivElement>)
       className={cn("animate-shimmer rounded-md bg-muted bg-[length:200%_100%]", className)}
       style={{
         backgroundImage:
-          "linear-gradient(90deg, transparent 25%, var(--muted-foreground) 50%, transparent 75%)",
-        backgroundBlendMode: "soft-light",
+          "linear-gradient(90deg, transparent 25%, var(--shimmer-highlight) 50%, transparent 75%)",
       }}
       {...props}
     />

@@ -736,6 +736,7 @@ async function main() {
         amount: 43560,
         paidBy: "dev" as const,
         splitType: "equal" as const,
+        category: "transportation" as const,
         splitWith: ["dev", "alice", "bob"] as const,
       },
       {
@@ -743,6 +744,7 @@ async function main() {
         amount: 12000,
         paidBy: "alice" as const,
         splitType: "equal" as const,
+        category: "meals" as const,
         splitWith: ["dev", "alice", "bob"] as const,
       },
       {
@@ -750,6 +752,7 @@ async function main() {
         amount: 47400,
         paidBy: "dev" as const,
         splitType: "equal" as const,
+        category: "accommodation" as const,
         splitWith: ["dev", "alice", "bob"] as const,
       },
       {
@@ -757,6 +760,7 @@ async function main() {
         amount: 4500,
         paidBy: "bob" as const,
         splitType: "equal" as const,
+        category: "meals" as const,
         splitWith: ["dev", "alice", "bob"] as const,
       },
       {
@@ -764,6 +768,7 @@ async function main() {
         amount: 1500,
         paidBy: "alice" as const,
         splitType: "custom" as const,
+        category: "transportation" as const,
         customSplits: [
           { user: "dev" as const, amount: 500 },
           { user: "alice" as const, amount: 500 },
@@ -775,6 +780,7 @@ async function main() {
         amount: 66000,
         paidBy: "dev" as const,
         splitType: "custom" as const,
+        category: "accommodation" as const,
         customSplits: [
           { user: "dev" as const, amount: 22000 },
           { user: "alice" as const, amount: 22000 },
@@ -786,6 +792,7 @@ async function main() {
         amount: 4200,
         paidBy: "bob" as const,
         splitType: "equal" as const,
+        category: "meals" as const,
         splitWith: ["dev", "alice", "bob"] as const,
       },
       {
@@ -793,6 +800,7 @@ async function main() {
         amount: 15000,
         paidBy: "alice" as const,
         splitType: "itemized" as const,
+        category: "meals" as const,
         customSplits: [
           { user: "dev" as const, amount: 3800 },
           { user: "alice" as const, amount: 4500 },
@@ -844,6 +852,7 @@ async function main() {
           paidByUserId,
           splitType: exp.splitType,
           splits,
+          ...("category" in exp && exp.category ? { category: exp.category } : {}),
           ...(lineItemsPayload ? { lineItems: lineItemsPayload } : {}),
         }),
         headers: { cookie: ownerCookies },

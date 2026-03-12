@@ -1,6 +1,7 @@
 "use client";
 
 import type { ExpensesResponse, TripResponse } from "@sugara/shared";
+import { EXPENSE_CATEGORY_LABELS } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCheck, Download, X } from "lucide-react";
 import { useParams } from "next/navigation";
@@ -62,6 +63,7 @@ function toExpenseExportData(data: ExpensesResponse): ExpenseExportData {
       amount: e.amount,
       paidByName: e.paidByUser.name,
       splitType: e.splitType,
+      category: e.category ? (EXPENSE_CATEGORY_LABELS[e.category] ?? null) : null,
     })),
     settlement: {
       totalAmount: data.settlement.totalAmount,

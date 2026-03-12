@@ -1,6 +1,7 @@
 "use client";
 
 import type { ExpenseItem, ExpensesResponse } from "@sugara/shared";
+import { EXPENSE_CATEGORY_LABELS } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight, ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Collapsible as CollapsiblePrimitive } from "radix-ui";
@@ -83,9 +84,10 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
     setDialogOpen(true);
   };
 
-  const { expenses, settlement } = data ?? {
+  const { expenses, settlement, categoryTotals } = data ?? {
     expenses: [],
     settlement: { totalAmount: 0, balances: [], transfers: [] },
+    categoryTotals: [],
   };
 
   return (
@@ -170,6 +172,26 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
                         </div>
                       ))}
                   </div>
+                  {categoryTotals.length > 0 && (
+                    <div className="space-y-1 border-t px-3 pt-2 pb-3">
+                      <p className="text-xs text-muted-foreground">カテゴリ別</p>
+                      {categoryTotals
+                        .sort((a, b) => b.total - a.total)
+                        .map((ct) => (
+                          <div
+                            key={ct.category}
+                            className="flex items-center justify-between pl-2 text-sm"
+                          >
+                            <span className="flex items-center gap-1.5">
+                              <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                              {ct.label}
+                              <span className="text-xs text-muted-foreground">({ct.count}件)</span>
+                            </span>
+                            <span className="font-medium">{ct.total.toLocaleString()}円</span>
+                          </div>
+                        ))}
+                    </div>
+                  )}
                 </CollapsiblePrimitive.Content>
               </>
             )}
@@ -266,6 +288,8 @@ function ExpenseRow({
               : expense.splitType === "itemized"
                 ? " / アイテム別"
                 : " / カスタム"}
+            {expense.category &&
+              ` / ${EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category}`}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">

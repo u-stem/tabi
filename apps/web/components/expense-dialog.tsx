@@ -1,7 +1,12 @@
 "use client";
 
-import type { ExpenseItem, ExpenseSplitType, MemberResponse } from "@sugara/shared";
-import { EXPENSE_TITLE_MAX_LENGTH } from "@sugara/shared";
+import type {
+  ExpenseCategory,
+  ExpenseItem,
+  ExpenseSplitType,
+  MemberResponse,
+} from "@sugara/shared";
+import { EXPENSE_CATEGORY_LABELS, EXPENSE_TITLE_MAX_LENGTH } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -61,6 +66,7 @@ export function ExpenseDialog({
   const [selectedMembers, setSelectedMembers] = useState<Set<string>>(new Set());
   const [customAmounts, setCustomAmounts] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
+  const [category, setCategory] = useState<ExpenseCategory | "">("");
   const [lineItems, setLineItems] = useState<ExpenseLineItem[]>([]);
   const [splitTheRest, setSplitTheRest] = useState(false);
   const [membersInitialized, setMembersInitialized] = useState(false);
@@ -72,6 +78,7 @@ export function ExpenseDialog({
       setTitle(expense.title);
       setAmount(String(expense.amount));
       setPaidByUserId(expense.paidByUserId);
+      setCategory(expense.category ?? "");
 
       if (expense.splitType === "itemized" && expense.lineItems && expense.lineItems.length > 0) {
         setSplitType("itemized");
@@ -101,6 +108,7 @@ export function ExpenseDialog({
       setTitle("");
       setAmount("");
       setPaidByUserId("");
+      setCategory("");
       setSplitType("equal");
       setSelectedMembers(new Set());
       setCustomAmounts({});
@@ -239,6 +247,7 @@ export function ExpenseDialog({
         paidByUserId,
         splitType,
         splits,
+        ...(isEdit ? { category: category || null } : category ? { category } : {}),
         ...(lineItemsPayload ? { lineItems: lineItemsPayload } : {}),
       };
       if (isEdit) {
@@ -286,6 +295,26 @@ export function ExpenseDialog({
             <p className="text-right text-xs text-muted-foreground">
               {title.length}/{EXPENSE_TITLE_MAX_LENGTH}
             </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="expense-category">カテゴリ</Label>
+            <Select
+              value={category || "__none__"}
+              onValueChange={(v) => setCategory(v === "__none__" ? "" : (v as ExpenseCategory))}
+            >
+              <SelectTrigger id="expense-category">
+                <SelectValue placeholder="未分類" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__none__">未分類</SelectItem>
+                {Object.entries(EXPENSE_CATEGORY_LABELS).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

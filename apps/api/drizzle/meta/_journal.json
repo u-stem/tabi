@@ -190,6 +190,13 @@
       "when": 1773018588113,
       "tag": "0026_cultured_ma_gnuci",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1773276395208,
+      "tag": "0027_nebulous_cerise",
+      "breakpoints": true
     }
   ]
 }

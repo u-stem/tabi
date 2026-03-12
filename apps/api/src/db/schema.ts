@@ -67,6 +67,17 @@ export const scheduleColorEnum = pgEnum("schedule_color", [
 
 export const expenseSplitTypeEnum = pgEnum("expense_split_type", ["equal", "custom", "itemized"]);
 
+export const expenseCategoryEnum = pgEnum("expense_category", [
+  "transportation",
+  "accommodation",
+  "meals",
+  "communication",
+  "supplies",
+  "entertainment",
+  "conference",
+  "other",
+]);
+
 export const pollStatusEnum = pgEnum("poll_status", ["open", "confirmed", "closed"]);
 export const pollResponseEnum = pgEnum("poll_response", ["ok", "maybe", "ng"]);
 
@@ -473,6 +484,7 @@ export const expenses = pgTable(
     title: varchar("title", { length: 200 }).notNull(),
     amount: integer("amount").notNull(),
     splitType: expenseSplitTypeEnum("split_type").notNull(),
+    category: expenseCategoryEnum("category"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

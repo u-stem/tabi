@@ -6,6 +6,18 @@ export const EXPENSE_TITLE_MAX_LENGTH = 200;
 export const expenseSplitTypeSchema = z.enum(["equal", "custom", "itemized"]);
 export type ExpenseSplitType = z.infer<typeof expenseSplitTypeSchema>;
 
+export const expenseCategorySchema = z.enum([
+  "transportation",
+  "accommodation",
+  "meals",
+  "communication",
+  "supplies",
+  "entertainment",
+  "conference",
+  "other",
+]);
+export type ExpenseCategory = z.infer<typeof expenseCategorySchema>;
+
 const splitItemSchema = z.object({
   userId: z.string().uuid(),
   amount: z.number().int().min(0).optional(),
@@ -23,6 +35,7 @@ export const createExpenseSchema = z
     amount: z.number().int().min(1),
     paidByUserId: z.string().uuid(),
     splitType: expenseSplitTypeSchema,
+    category: expenseCategorySchema.optional(),
     splits: z.array(splitItemSchema).min(1),
     lineItems: z.array(lineItemInputSchema).max(MAX_LINE_ITEMS_PER_EXPENSE).optional(),
   })
@@ -68,6 +81,7 @@ export const updateExpenseSchema = z
     amount: z.number().int().min(1),
     paidByUserId: z.string().uuid(),
     splitType: expenseSplitTypeSchema,
+    category: expenseCategorySchema.nullable().optional(),
     splits: z.array(splitItemSchema).min(1),
     lineItems: z.array(lineItemInputSchema).max(MAX_LINE_ITEMS_PER_EXPENSE).optional(),
   })

@@ -5,7 +5,7 @@ import type {
   ScheduleResponse,
   TripResponse,
 } from "@sugara/shared";
-import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
+import { CATEGORY_LABELS, SPLIT_TYPE_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import { formatDate, formatTime, toDateString } from "@/lib/format";
 
 // Ordered by: When → What → Where → How → Extra → Meta
@@ -76,6 +76,7 @@ export type ExpenseExportItem = {
   amount: number;
   paidByName: string;
   splitType: string;
+  category: string | null;
 };
 
 export type ExpenseSettlement = {
@@ -90,16 +91,12 @@ export type ExpenseExportData = {
 };
 
 export const EXPENSE_EXPORT_HEADERS = {
+  category: "カテゴリ",
   title: "タイトル",
   amount: "金額",
   paidBy: "支払者",
   splitType: "分担方法",
 } as const;
-
-const SPLIT_TYPE_LABELS: Record<string, string> = {
-  equal: "均等",
-  custom: "カスタム",
-};
 
 export type ExportOptions = {
   format?: ExportFormat;
@@ -226,6 +223,7 @@ export function buildPreviewRows(
 export function buildExpenseRows(data: ExpenseExportData): Record<string, string | number>[] {
   const H = EXPENSE_EXPORT_HEADERS;
   const blank = (): Record<string, string | number> => ({
+    [H.category]: "",
     [H.title]: "",
     [H.amount]: "",
     [H.paidBy]: "",
@@ -237,16 +235,19 @@ export function buildExpenseRows(data: ExpenseExportData): Record<string, string
   // Expense list
   for (const e of data.expenses) {
     rows.push({
+      [H.category]: e.category ?? "",
       [H.title]: e.title,
       [H.amount]: e.amount,
       [H.paidBy]: e.paidByName,
-      [H.splitType]: SPLIT_TYPE_LABELS[e.splitType] ?? e.splitType,
+      [H.splitType]:
+        SPLIT_TYPE_LABELS[e.splitType as keyof typeof SPLIT_TYPE_LABELS] ?? e.splitType,
     });
   }
 
   // Total
   rows.push(blank());
   rows.push({
+    [H.category]: "",
     [H.title]: "合計",
     [H.amount]: data.settlement.totalAmount,
     [H.paidBy]: "",
@@ -260,9 +261,21 @@ export function buildExpenseRows(data: ExpenseExportData): Record<string, string
 
   if (nonZeroBalances.length > 0) {
     rows.push(blank());
-    rows.push({ [H.title]: "[過不足]", [H.amount]: "", [H.paidBy]: "", [H.splitType]: "" });
+    rows.push({
+      [H.category]: "",
+      [H.title]: "[過不足]",
+      [H.amount]: "",
+      [H.paidBy]: "",
+      [H.splitType]: "",
+    });
     for (const b of nonZeroBalances) {
-      rows.push({ [H.title]: b.name, [H.amount]: b.net, [H.paidBy]: "", [H.splitType]: "" });
+      rows.push({
+        [H.category]: "",
+        [H.title]: b.name,
+        [H.amount]: b.net,
+        [H.paidBy]: "",
+        [H.splitType]: "",
+      });
     }
   }
 
@@ -270,9 +283,16 @@ export function buildExpenseRows(data: ExpenseExportData): Record<string, string
   if (data.settlement.transfers.length > 0) {
     const sorted = [...data.settlement.transfers].sort((a, b) => b.amount - a.amount);
     rows.push(blank());
-    rows.push({ [H.title]: "[精算]", [H.amount]: "", [H.paidBy]: "", [H.splitType]: "" });
+    rows.push({
+      [H.category]: "",
+      [H.title]: "[精算]",
+      [H.amount]: "",
+      [H.paidBy]: "",
+      [H.splitType]: "",
+    });
     for (const t of sorted) {
       rows.push({
+        [H.category]: "",
         [H.title]: `${t.fromName} → ${t.toName}`,
         [H.amount]: t.amount,
         [H.paidBy]: "",

@@ -1,5 +1,5 @@
 import type { BookmarkListVisibility } from "./schemas/bookmark";
-import type { ExpenseSplitType } from "./schemas/expense";
+import type { ExpenseCategory, ExpenseSplitType } from "./schemas/expense";
 import type { MemberRole } from "./schemas/member";
 import type { PollResponseValue, PollStatus } from "./schemas/poll";
 import type { ReactionType, ScheduleCategory, ScheduleColor } from "./schemas/schedule";
@@ -258,6 +258,7 @@ export type ExpenseItem = {
   title: string;
   amount: number;
   splitType: ExpenseSplitType;
+  category: ExpenseCategory | null;
   paidByUserId: string;
   paidByUser: { id: string; name: string };
   splits: ExpenseSplit[];
@@ -277,9 +278,17 @@ export type Settlement = {
   transfers: Transfer[];
 };
 
+export type CategoryTotal = {
+  category: ExpenseCategory;
+  label: string;
+  total: number;
+  count: number;
+};
+
 export type ExpensesResponse = {
   expenses: ExpenseItem[];
   settlement: Settlement;
+  categoryTotals: CategoryTotal[];
 };
 
 // Notification API response types

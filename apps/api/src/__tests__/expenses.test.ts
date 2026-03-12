@@ -160,6 +160,67 @@ describe("Expense routes", () => {
       const res = await makeApp().request(`/api/trips/${tripId}/expenses`);
       expect(res.status).toBe(200);
     });
+
+    it("returns categoryTotals in response", async () => {
+      mockDbQuery.expenses.findMany.mockResolvedValue([
+        {
+          id: "exp-1",
+          title: "Train",
+          amount: 500,
+          splitType: "equal",
+          category: "transportation",
+          paidByUserId: userId1,
+          paidByUser: { id: userId1, name: "User 1" },
+          splits: [
+            { userId: userId1, amount: 250, user: { id: userId1, name: "User 1" } },
+            { userId: userId2, amount: 250, user: { id: userId2, name: "User 2" } },
+          ],
+          createdAt: "2026-01-01T00:00:00Z",
+        },
+        {
+          id: "exp-2",
+          title: "Bus",
+          amount: 300,
+          splitType: "equal",
+          category: "transportation",
+          paidByUserId: userId2,
+          paidByUser: { id: userId2, name: "User 2" },
+          splits: [
+            { userId: userId1, amount: 150, user: { id: userId1, name: "User 1" } },
+            { userId: userId2, amount: 150, user: { id: userId2, name: "User 2" } },
+          ],
+          createdAt: "2026-01-02T00:00:00Z",
+        },
+        {
+          id: "exp-3",
+          title: "Misc",
+          amount: 200,
+          splitType: "equal",
+          category: null,
+          paidByUserId: userId1,
+          paidByUser: { id: userId1, name: "User 1" },
+          splits: [
+            { userId: userId1, amount: 100, user: { id: userId1, name: "User 1" } },
+            { userId: userId2, amount: 100, user: { id: userId2, name: "User 2" } },
+          ],
+          createdAt: "2026-01-03T00:00:00Z",
+        },
+      ]);
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([
+        { userId: userId1, user: { id: userId1, name: "User 1" } },
+        { userId: userId2, user: { id: userId2, name: "User 2" } },
+      ]);
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses`);
+      expect(res.status).toBe(200);
+
+      const json = await res.json();
+      expect(json.categoryTotals).toBeDefined();
+      expect(json.categoryTotals).toHaveLength(1);
+      expect(json.categoryTotals[0].category).toBe("transportation");
+      expect(json.categoryTotals[0].total).toBe(800);
+      expect(json.categoryTotals[0].count).toBe(2);
+    });
   });
 
   describe("POST /api/trips/:tripId/expenses", () => {
@@ -462,6 +523,72 @@ describe("Expense routes", () => {
       });
 
       expect(res.status).toBe(404);
+    });
+
+    it("creates expense with category", async () => {
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([
+        { userId: userId1 },
+        { userId: userId2 },
+      ]);
+      mockCountQuery(0);
+      mockDbInsert
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi
+              .fn()
+              .mockResolvedValueOnce([
+                { id: "exp-1", ...validBody, category: "transportation", createdAt: new Date() },
+              ]),
+          }),
+        })
+        .mockReturnValueOnce({
+          values: vi.fn().mockResolvedValueOnce(undefined),
+        });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...validBody, category: "transportation" }),
+      });
+
+      expect(res.status).toBe(201);
+    });
+
+    it("creates expense without category", async () => {
+      mockDbQuery.tripMembers.findMany.mockResolvedValue([
+        { userId: userId1 },
+        { userId: userId2 },
+      ]);
+      mockCountQuery(0);
+      mockDbInsert
+        .mockReturnValueOnce({
+          values: vi.fn().mockReturnValue({
+            returning: vi
+              .fn()
+              .mockResolvedValueOnce([{ id: "exp-1", ...validBody, createdAt: new Date() }]),
+          }),
+        })
+        .mockReturnValueOnce({
+          values: vi.fn().mockResolvedValueOnce(undefined),
+        });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(validBody),
+      });
+
+      expect(res.status).toBe(201);
+    });
+
+    it("returns 400 for invalid category", async () => {
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...validBody, category: "invalid_category" }),
+      });
+
+      expect(res.status).toBe(400);
     });
 
     it("POST: 経費作成時に splits の他ユーザーに createNotification を呼ぶ", async () => {

@@ -1,4 +1,9 @@
-import { createExpenseSchema, MAX_EXPENSES_PER_TRIP, updateExpenseSchema } from "@sugara/shared";
+import {
+  createExpenseSchema,
+  EXPENSE_CATEGORY_LABELS,
+  MAX_EXPENSES_PER_TRIP,
+  updateExpenseSchema,
+} from "@sugara/shared";
 import { count, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
@@ -52,7 +57,24 @@ expenseRoutes.get("/:tripId/expenses", requireTripAccess(), async (c) => {
 
   const settlement = calculateSettlement(expenseData, memberInfos);
 
-  return c.json({ expenses: expenseList, settlement });
+  const categoryMap = new Map<string, { total: number; count: number }>();
+  for (const e of expenseList) {
+    if (e.category) {
+      const existing = categoryMap.get(e.category) ?? { total: 0, count: 0 };
+      existing.total += e.amount;
+      existing.count += 1;
+      categoryMap.set(e.category, existing);
+    }
+  }
+
+  const categoryTotals = Array.from(categoryMap.entries()).map(([category, data]) => ({
+    category,
+    label: EXPENSE_CATEGORY_LABELS[category as keyof typeof EXPENSE_CATEGORY_LABELS] ?? category,
+    total: data.total,
+    count: data.count,
+  }));
+
+  return c.json({ expenses: expenseList, settlement, categoryTotals });
 });
 
 // Create expense
@@ -66,7 +88,7 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const { title, amount, paidByUserId, splitType, splits, lineItems } = parsed.data;
+  const { title, amount, paidByUserId, splitType, splits, lineItems, category } = parsed.data;
 
   // Check expense count limit
   const [{ count: expenseCount }] = await db
@@ -106,7 +128,7 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
   const result = await db.transaction(async (tx) => {
     const [expense] = await tx
       .insert(expenses)
-      .values({ tripId, paidByUserId, title, amount, splitType })
+      .values({ tripId, paidByUserId, title, amount, splitType, category: category ?? null })
       .returning();
 
     await tx.insert(expenseSplits).values(

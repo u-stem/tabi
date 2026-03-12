@@ -1,10 +1,10 @@
-# Expense Category & CSV Export Implementation Plan
+# Expense Category Implementation Plan
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add expense categories, category-based summaries, and CSV export to the expense management system.
+**Goal:** Add expense categories, category-based summaries, and category data in existing trip export to the expense management system.
 
-**Architecture:** Extend the existing `expenses` table with a nullable `category` column. Add category totals computation to the GET endpoint response. Add a new CSV export endpoint. Update the expense dialog and panel UI to support category selection and display.
+**Architecture:** Extend the existing `expenses` table with a nullable `category` column. Add category totals computation to the GET endpoint response. Extend the existing trip export (`apps/web/lib/export.ts`) to include category column. Update the expense dialog and panel UI to support category selection and display.
 
 **Tech Stack:** Drizzle ORM (migration), Zod (validation), Hono (API), React (UI), Vitest (testing)
 
@@ -20,23 +20,25 @@
 |------|--------|----------------|
 | `src/schemas/expense.ts` | Modify | Add `expenseCategorySchema` enum, add `category` to create/update schemas |
 | `src/types.ts` | Modify | Add `ExpenseCategory` type, `category` to `ExpenseItem`, `CategoryTotal` type, `categoryTotals` to `ExpensesResponse` |
-| `src/messages.ts` | Modify | Add `EXPENSE_CATEGORY_LABELS`, add export-related MSG entries |
+| `src/messages.ts` | Modify | Add `EXPENSE_CATEGORY_LABELS`, `SPLIT_TYPE_LABELS` |
 
 ### apps/api
 
 | File | Action | Responsibility |
 |------|--------|----------------|
 | `src/db/schema.ts` | Modify | Add `expenseCategoryEnum`, add `category` column to `expenses` |
-| `src/routes/expenses.ts` | Modify | Handle `category` in create/update, compute `categoryTotals` in GET, add CSV export endpoint |
-| `src/__tests__/expenses.test.ts` | Modify | Add tests for category CRUD and CSV export |
-| `src/db/seed-faqs.ts` | Modify | Add FAQ entries for expense categories and CSV export |
+| `src/routes/expenses.ts` | Modify | Handle `category` in create/update, compute `categoryTotals` in GET |
+| `src/__tests__/expenses.test.ts` | Modify | Add tests for category CRUD and categoryTotals |
+| `src/db/seed-faqs.ts` | Modify | Add FAQ entry for expense categories |
 
 ### apps/web
 
 | File | Action | Responsibility |
 |------|--------|----------------|
 | `components/expense-dialog.tsx` | Modify | Add category select field |
-| `components/expense-panel.tsx` | Modify | Show category in ExpenseRow, add category totals section, add export button |
+| `components/expense-panel.tsx` | Modify | Show category in ExpenseRow, add category totals section |
+| `lib/export.ts` | Modify | Add category column to expense export headers/rows, add "itemized" to SPLIT_TYPE_LABELS |
+| `app/(authenticated)/trips/[id]/export/page.tsx` | Modify | Pass category in `toExpenseExportData()` |
 
 ---
 
@@ -180,24 +182,34 @@ export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
 };
 ```
 
-- [ ] **Step 4: Fix existing MSG and add export failure entry**
+- [ ] **Step 4: Add SPLIT_TYPE_LABELS to messages.ts**
 
-In `messages.ts`, fix the existing `EXPENSE_DELETE_FAILED` to use「費用」instead of「経費」, and add the export failure entry:
+Add import and labels for split types (centralizing what was previously local in `export.ts`):
 
 ```typescript
-  // Expense
-  EXPENSE_DELETE_FAILED: "費用の削除に失敗しました",
-  EXPENSE_EXPORT_FAILED: "費用のエクスポートに失敗しました",
+import type { ExpenseSplitType } from "./schemas/expense";
+
+export const SPLIT_TYPE_LABELS: Record<ExpenseSplitType, string> = {
+  equal: "均等",
+  custom: "カスタム",
+  itemized: "アイテム別",
+};
 ```
 
-Note: The existing `EXPORT_FAILED`/`EXPORT_SUCCESS` are for the trip export feature and should not be reused here.
+- [ ] **Step 5: Fix existing MSG terminology**
 
-- [ ] **Step 5: Verify types compile**
+In `messages.ts`, fix the existing `EXPENSE_DELETE_FAILED` to use「費用」instead of「経費」:
+
+```typescript
+  EXPENSE_DELETE_FAILED: "費用の削除に失敗しました",
+```
+
+- [ ] **Step 6: Verify types compile**
 
 Run: `bun run --filter @sugara/shared check-types`
 Expected: No errors
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 git add packages/shared/src/schemas/expense.ts packages/shared/src/types.ts packages/shared/src/messages.ts
@@ -484,236 +496,171 @@ git commit -m "feat: 費用カテゴリの CRUD と集計を実装"
 
 ---
 
-## Chunk 4: API - CSV Export
+## Chunk 4: Extend Existing Export with Category
 
-### Task 6: Write tests for CSV export endpoint
+The trip export page (`apps/web/app/(authenticated)/trips/[id]/export/page.tsx`) already supports exporting expenses via `apps/web/lib/export.ts`. We extend the existing infrastructure to include the category column.
 
-**Files:**
-- Modify: `apps/api/src/__tests__/expenses.test.ts`
-
-- [ ] **Step 1: Add tests for CSV export**
-
-Add a new describe block:
-
-```typescript
-  describe("GET /api/trips/:tripId/expenses/export", () => {
-    it("returns CSV with BOM and correct headers", async () => {
-      mockDbQuery.expenses.findMany.mockResolvedValue([
-        {
-          id: "exp-1",
-          title: "Taxi",
-          amount: 2000,
-          splitType: "equal",
-          category: "transportation",
-          paidByUserId: userId1,
-          paidByUser: { id: userId1, name: "User 1" },
-          splits: [],
-          lineItems: [],
-          createdAt: "2026-03-10T10:00:00Z",
-        },
-      ]);
-
-      const res = await makeApp().request(
-        `/api/trips/${tripId}/expenses/export?format=csv`,
-      );
-
-      expect(res.status).toBe(200);
-      expect(res.headers.get("content-type")).toContain("text/csv");
-      expect(res.headers.get("content-disposition")).toContain("attachment");
-
-      const text = await res.text();
-      // BOM check
-      expect(text.charCodeAt(0)).toBe(0xfeff);
-      // Header row
-      expect(text).toContain("日付,カテゴリ,タイトル,金額,支払者,分担方法");
-      // Data row
-      expect(text).toContain("交通費");
-      expect(text).toContain("Taxi");
-      expect(text).toContain("2000");
-    });
-
-    it("returns CSV with empty category when not set", async () => {
-      mockDbQuery.expenses.findMany.mockResolvedValue([
-        {
-          id: "exp-2",
-          title: "Lunch",
-          amount: 1000,
-          splitType: "equal",
-          category: null,
-          paidByUserId: userId1,
-          paidByUser: { id: userId1, name: "User 1" },
-          splits: [],
-          lineItems: [],
-          createdAt: "2026-03-10T12:00:00Z",
-        },
-      ]);
-
-      const res = await makeApp().request(
-        `/api/trips/${tripId}/expenses/export?format=csv`,
-      );
-
-      expect(res.status).toBe(200);
-      const text = await res.text();
-      // Category column should be empty
-      const lines = text.split("\n");
-      const dataLine = lines[1];
-      expect(dataLine).toContain(",,Lunch,");
-    });
-
-    it("returns empty CSV with only headers when no expenses", async () => {
-      mockDbQuery.expenses.findMany.mockResolvedValue([]);
-
-      const res = await makeApp().request(
-        `/api/trips/${tripId}/expenses/export?format=csv`,
-      );
-
-      expect(res.status).toBe(200);
-      const text = await res.text();
-      const lines = text.trim().split("\n");
-      expect(lines).toHaveLength(1);
-    });
-
-    it("allows viewer access", async () => {
-      setupAuth("viewer");
-      mockDbQuery.expenses.findMany.mockResolvedValue([]);
-
-      const res = await makeApp().request(
-        `/api/trips/${tripId}/expenses/export?format=csv`,
-      );
-
-      expect(res.status).toBe(200);
-    });
-
-    it("escapes CSV fields with commas and quotes", async () => {
-      mockDbQuery.expenses.findMany.mockResolvedValue([
-        {
-          id: "exp-3",
-          title: 'Dinner, "special"',
-          amount: 3000,
-          splitType: "equal",
-          category: "meals",
-          paidByUserId: userId1,
-          paidByUser: { id: userId1, name: "User 1" },
-          createdAt: "2026-03-10T18:00:00Z",
-        },
-      ]);
-
-      const res = await makeApp().request(
-        `/api/trips/${tripId}/expenses/export?format=csv`,
-      );
-
-      expect(res.status).toBe(200);
-      const text = await res.text();
-      // Title with comma and quotes should be escaped
-      expect(text).toContain('"Dinner, ""special"""');
-    });
-  });
-```
-
-- [ ] **Step 2: Run tests to verify they fail**
-
-Run: `bun run --filter @sugara/api test -- expenses.test.ts`
-Expected: New tests FAIL (export endpoint does not exist yet)
-
-### Task 7: Implement CSV export endpoint
+### Task 6: Add category to existing export infrastructure
 
 **Files:**
-- Modify: `apps/api/src/routes/expenses.ts`
+- Modify: `apps/web/lib/export.ts`
+- Modify: `apps/web/app/(authenticated)/trips/[id]/export/page.tsx`
 
-- [ ] **Step 1: Add SPLIT_TYPE_LABELS to messages.ts**
+- [ ] **Step 1: Add category to `ExpenseExportItem` type**
 
-Add to `packages/shared/src/messages.ts`, after `EXPENSE_CATEGORY_LABELS`:
+In `apps/web/lib/export.ts`, update the type:
 
 ```typescript
-import type { ExpenseSplitType } from "./schemas/expense";
-
-export const SPLIT_TYPE_LABELS: Record<ExpenseSplitType, string> = {
-  equal: "均等",
-  custom: "カスタム",
-  itemized: "アイテム別",
+export type ExpenseExportItem = {
+  title: string;
+  amount: number;
+  paidByName: string;
+  splitType: string;
+  category: string | null;
 };
 ```
 
-Then import in `apps/api/src/routes/expenses.ts`:
+- [ ] **Step 2: Add category to `EXPENSE_EXPORT_HEADERS`**
 
 ```typescript
-import { EXPENSE_CATEGORY_LABELS, SPLIT_TYPE_LABELS } from "@sugara/shared";
+export const EXPENSE_EXPORT_HEADERS = {
+  category: "カテゴリ",
+  title: "タイトル",
+  amount: "金額",
+  paidBy: "支払者",
+  splitType: "分担方法",
+} as const;
 ```
 
-- [ ] **Step 2: Add helper function for CSV escaping**
+- [ ] **Step 3: Replace local `SPLIT_TYPE_LABELS` with shared import**
 
-Add before the route definitions:
+Remove the local `SPLIT_TYPE_LABELS` definition and import from shared:
 
 ```typescript
-function escapeCsvField(value: string): string {
-  if (value.includes(",") || value.includes('"') || value.includes("\n")) {
-    return `"${value.replace(/"/g, '""')}"`;
+import { CATEGORY_LABELS, SPLIT_TYPE_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
+```
+
+- [ ] **Step 4: Add category column to `buildExpenseRows`**
+
+Update `buildExpenseRows` to include category in the rows. The `blank()` helper and all row constructions need the new column:
+
+```typescript
+export function buildExpenseRows(data: ExpenseExportData): Record<string, string | number>[] {
+  const H = EXPENSE_EXPORT_HEADERS;
+  const blank = (): Record<string, string | number> => ({
+    [H.category]: "",
+    [H.title]: "",
+    [H.amount]: "",
+    [H.paidBy]: "",
+    [H.splitType]: "",
+  });
+
+  const rows: Record<string, string | number>[] = [];
+
+  for (const e of data.expenses) {
+    rows.push({
+      [H.category]: e.category ?? "",
+      [H.title]: e.title,
+      [H.amount]: e.amount,
+      [H.paidBy]: e.paidByName,
+      [H.splitType]: SPLIT_TYPE_LABELS[e.splitType as keyof typeof SPLIT_TYPE_LABELS] ?? e.splitType,
+    });
   }
-  return value;
+
+  // Total
+  rows.push(blank());
+  rows.push({
+    [H.category]: "",
+    [H.title]: "合計",
+    [H.amount]: data.settlement.totalAmount,
+    [H.paidBy]: "",
+    [H.splitType]: "",
+  });
+
+  // Balances
+  const nonZeroBalances = data.settlement.balances
+    .filter((b) => b.net !== 0)
+    .sort((a, b) => b.net - a.net);
+
+  if (nonZeroBalances.length > 0) {
+    rows.push(blank());
+    rows.push({ [H.category]: "", [H.title]: "[過不足]", [H.amount]: "", [H.paidBy]: "", [H.splitType]: "" });
+    for (const b of nonZeroBalances) {
+      rows.push({ [H.category]: "", [H.title]: b.name, [H.amount]: b.net, [H.paidBy]: "", [H.splitType]: "" });
+    }
+  }
+
+  // Transfers
+  if (data.settlement.transfers.length > 0) {
+    const sorted = [...data.settlement.transfers].sort((a, b) => b.amount - a.amount);
+    rows.push(blank());
+    rows.push({ [H.category]: "", [H.title]: "[精算]", [H.amount]: "", [H.paidBy]: "", [H.splitType]: "" });
+    for (const t of sorted) {
+      rows.push({
+        [H.category]: "",
+        [H.title]: `${t.fromName} → ${t.toName}`,
+        [H.amount]: t.amount,
+        [H.paidBy]: "",
+        [H.splitType]: "",
+      });
+    }
+  }
+
+  return rows;
 }
 ```
 
-- [ ] **Step 3: Add export endpoint**
+- [ ] **Step 5: Update `toExpenseExportData` in export page**
 
-Add after the GET list endpoint (both are read operations; Hono correctly distinguishes `/export` from `/:expenseId`):
+In `apps/web/app/(authenticated)/trips/[id]/export/page.tsx`, add import and update the mapping:
 
 ```typescript
-// Export expenses as CSV
-expenseRoutes.get("/:tripId/expenses/export", requireTripAccess(), async (c) => {
-  const tripId = c.req.param("tripId");
-
-  // Only fetch paidByUser for CSV -- splits/lineItems are not needed for export
-  const expenseList = await db.query.expenses.findMany({
-    where: eq(expenses.tripId, tripId),
-    with: {
-      paidByUser: { columns: { id: true, name: true } },
-    },
-    orderBy: (expenses, { asc }) => [asc(expenses.createdAt)],
-  });
-
-  const BOM = "\uFEFF";
-  const header = "日付,カテゴリ,タイトル,金額,支払者,分担方法";
-
-  const rows = expenseList.map((e) => {
-    const date = e.createdAt instanceof Date
-      ? e.createdAt.toISOString().split("T")[0]
-      : String(e.createdAt).split("T")[0];
-    const category = e.category
-      ? (EXPENSE_CATEGORY_LABELS[e.category as keyof typeof EXPENSE_CATEGORY_LABELS] ?? "")
-      : "";
-    const title = escapeCsvField(e.title);
-    const paidBy = escapeCsvField(e.paidByUser.name);
-    const splitType = SPLIT_TYPE_LABELS[e.splitType] ?? e.splitType;
-
-    return `${date},${category},${title},${e.amount},${paidBy},${splitType}`;
-  });
-
-  const csv = BOM + [header, ...rows].join("\n");
-
-  return new Response(csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="expenses.csv"`,
-    },
-  });
-});
+import { EXPENSE_CATEGORY_LABELS } from "@sugara/shared";
 ```
 
-- [ ] **Step 4: Run tests to verify they pass**
+```typescript
+function toExpenseExportData(data: ExpensesResponse): ExpenseExportData {
+  return {
+    expenses: data.expenses.map((e) => ({
+      title: e.title,
+      amount: e.amount,
+      paidByName: e.paidByUser.name,
+      splitType: e.splitType,
+      category: e.category
+        ? (EXPENSE_CATEGORY_LABELS[e.category] ?? null)
+        : null,
+    })),
+    settlement: {
+      totalAmount: data.settlement.totalAmount,
+      balances: data.settlement.balances.map((b) => ({
+        name: b.name,
+        net: b.net,
+      })),
+      transfers: data.settlement.transfers.map((t) => ({
+        fromName: t.from.name,
+        toName: t.to.name,
+        amount: t.amount,
+      })),
+    },
+  };
+}
+```
 
-Run: `bun run --filter @sugara/api test -- expenses.test.ts`
-Expected: All tests PASS
+- [ ] **Step 6: Verify types compile**
 
-- [ ] **Step 5: Run full test suite**
+Run: `bun run check-types`
+Expected: No errors
+
+- [ ] **Step 7: Run existing export tests**
 
 Run: `bun run test`
-Expected: All tests PASS
+Expected: All tests PASS (existing export tests should still work; if any use `ExpenseExportItem`, update them to include `category: null`)
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
-git add apps/api/src/routes/expenses.ts apps/api/src/__tests__/expenses.test.ts
-git commit -m "feat: 費用の CSV エクスポート機能を追加"
+git add apps/web/lib/export.ts apps/web/app/\(authenticated\)/trips/\[id\]/export/page.tsx
+git commit -m "feat: 既存エクスポートに費用カテゴリ列を追加"
 ```
 
 ---
@@ -814,7 +761,7 @@ For edit mode, also handle clearing category:
 Run: `bun run --filter @sugara/web check-types`
 Expected: No errors
 
-### Task 9: Update expense panel with category display, totals, and export
+### Task 9: Update expense panel with category display and totals
 
 **Files:**
 - Modify: `apps/web/components/expense-panel.tsx`
@@ -824,7 +771,6 @@ Expected: No errors
 ```typescript
 import type { CategoryTotal } from "@sugara/shared";
 import { EXPENSE_CATEGORY_LABELS } from "@sugara/shared";
-import { Download } from "lucide-react";
 ```
 
 - [ ] **Step 2: Show category in ExpenseRow subtitle**
@@ -880,49 +826,7 @@ Add a category totals section inside the CollapsiblePrimitive.Content, after the
                   )}
 ```
 
-- [ ] **Step 4: Add export button**
-
-Add export handler function in `ExpensePanel`:
-
-```typescript
-  const handleExport = async () => {
-    try {
-      const res = await fetch(`/api/trips/${tripId}/expenses/export?format=csv`);
-      if (!res.ok) throw new Error("Export failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "expenses.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch {
-      toast.error(MSG.EXPENSE_EXPORT_FAILED);
-    }
-  };
-```
-
-Update the toolbar section to include the export button (for both mobile and desktop):
-
-```tsx
-          {/* Toolbar */}
-          <div className="flex justify-end gap-2">
-            {expenses.length > 0 && (
-              <Button variant="outline" size="sm" onClick={handleExport}>
-                <Download className="h-4 w-4" />
-                {!isMobile && "エクスポート"}
-              </Button>
-            )}
-            {canEdit && !isMobile && (
-              <Button variant="outline" size="sm" onClick={handleAdd}>
-                <Plus className="h-4 w-4" />
-                費用を追加
-              </Button>
-            )}
-          </div>
-```
-
-- [ ] **Step 5: Verify types compile**
+- [ ] **Step 4: Verify types compile**
 
 Run: `bun run check-types`
 Expected: No errors
@@ -936,7 +840,7 @@ Expected: No errors
 
 ```bash
 git add apps/web/components/expense-dialog.tsx apps/web/components/expense-panel.tsx
-git commit -m "feat: 費用カテゴリ選択・カテゴリ別集計・CSV エクスポートの UI を追加"
+git commit -m "feat: 費用カテゴリ選択・カテゴリ別集計の UI を追加"
 ```
 
 ---
@@ -948,19 +852,14 @@ git commit -m "feat: 費用カテゴリ選択・カテゴリ別集計・CSV エ�
 **Files:**
 - Modify: `apps/api/src/db/seed-faqs.ts`
 
-- [ ] **Step 1: Add FAQ entries for expense categories and CSV export**
+- [ ] **Step 1: Add FAQ entry for expense categories**
 
 Add to the `FAQ_ITEMS` array in the Expenses section:
 
 ```typescript
   {
     question: "費用にカテゴリを設定できますか？",
-    answer: "はい。費用を追加・編集する際に、交通費・宿泊費・食費・通信費・消耗品費・交際費・会議費・その他のカテゴリを設定できます。カテゴリは任意で、設定しなくても費用を記録できます。",
-    sortOrder: /* next available in Expenses section */,
-  },
-  {
-    question: "費用をCSVでエクスポートできますか？",
-    answer: "はい。費用タブのエクスポートボタンからCSVファイルをダウンロードできます。日付・カテゴリ・タイトル・金額・支払者・分担方法が含まれます。出張の経費精算にご活用ください。",
+    answer: "はい。費用を追加・編集する際に、交通費・宿泊費・食費・通信費・消耗品費・交際費・会議費・その他のカテゴリを設定できます。カテゴリは任意で、設定しなくても費用を記録できます。カテゴリ別の集計は精算サマリーに表示され、エクスポートにも含まれます。",
     sortOrder: /* next available in Expenses section */,
   },
 ```
@@ -974,7 +873,7 @@ Expected: FAQ items inserted successfully
 
 ```bash
 git add apps/api/src/db/seed-faqs.ts
-git commit -m "docs: 費用カテゴリと CSV エクスポートの FAQ を追加"
+git commit -m "docs: 費用カテゴリの FAQ を追加"
 ```
 
 ### Task 11: Final verification
@@ -1002,5 +901,5 @@ Expected: Server starts on localhost:3000 without errors. Manually verify:
 2. Add a new expense with a category selected
 3. Verify category shows in expense list
 4. Verify category totals appear in settlement summary
-5. Click export button and verify CSV downloads with correct content
+5. Open export page, enable expenses, verify category column appears in preview
 6. Edit an expense to change/remove category

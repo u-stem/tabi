@@ -877,8 +877,14 @@ describe("exportTripToCSV", () => {
 function makeExpenseData(overrides: Partial<ExpenseExportData> = {}): ExpenseExportData {
   return {
     expenses: [
-      { title: "夕食", amount: 5000, paidByName: "Alice", splitType: "equal" },
-      { title: "タクシー", amount: 3000, paidByName: "Bob", splitType: "custom" },
+      { title: "夕食", amount: 5000, paidByName: "Alice", splitType: "equal", category: null },
+      {
+        title: "タクシー",
+        amount: 3000,
+        paidByName: "Bob",
+        splitType: "custom",
+        category: "交通費",
+      },
     ],
     settlement: {
       totalAmount: 8000,

@@ -73,17 +73,17 @@ type CategoryTotal = {
 };
 ```
 
-### 4. CSV export
+### 4. Export integration
 
-- New API endpoint: `GET /api/trips/:tripId/expenses/export?format=csv`
-- UTF-8 with BOM (Excel compatibility)
-- Columns: date, category, title, amount, paidBy, splitType
+- Extend existing trip export (`apps/web/lib/export.ts`) to include category column
+- Add `category` field to `ExpenseExportItem` type and `EXPENSE_EXPORT_HEADERS`
+- Add missing `itemized` value to `SPLIT_TYPE_LABELS` (moved to shared `messages.ts`)
 - Category column shows Japanese label (empty if unset)
-- Browser-side Blob download triggered by export button in expense panel header
+- No new API endpoint needed -- existing export page already supports expense data
 
 ## Out of scope
 
-- PDF export (CSV is sufficient for initial release)
+- PDF export
 - Multi-currency support (future enhancement)
 - Trip-level business/leisure label
 - Per diem calculation

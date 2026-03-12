@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const DEFAULT_DELAY_MS = 200;
-const DEFAULT_MIN_DISPLAY_MS = 500;
+const DEFAULT_MIN_DISPLAY_MS = 300;
 
 /**
  * Delays showing loading state to avoid skeleton flash on fast loads.

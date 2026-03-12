@@ -66,7 +66,7 @@ export function SpBottomNav() {
               key={link.href}
               href={link.href}
               className={cn(
-                "relative flex flex-1 flex-col items-center justify-center gap-1 transition-[colors,transform] active:bg-accent active:scale-[0.90]",
+                "relative flex flex-1 flex-col items-center justify-center gap-1 outline-none [-webkit-tap-highlight-color:transparent] transition-transform active:scale-[0.90]",
                 active ? "font-medium text-primary" : "text-muted-foreground",
               )}
             >
@@ -87,7 +87,7 @@ export function SpBottomNav() {
           <Link
             href="/sp/notifications"
             className={cn(
-              "relative flex flex-1 flex-col items-center justify-center gap-1 transition-[colors,transform] active:bg-accent active:scale-[0.90]",
+              "relative flex flex-1 flex-col items-center justify-center gap-1 outline-none [-webkit-tap-highlight-color:transparent] transition-transform active:scale-[0.90]",
               pathname === "/sp/notifications"
                 ? "font-medium text-primary"
                 : "text-muted-foreground",
@@ -112,7 +112,7 @@ export function SpBottomNav() {
         <Link
           href="/sp/my"
           className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-1 transition-[colors,transform] active:bg-accent active:scale-[0.90]",
+            "flex flex-1 flex-col items-center justify-center gap-1 outline-none [-webkit-tap-highlight-color:transparent] transition-transform active:scale-[0.90]",
             pathname === "/sp/my" ? "font-medium text-primary" : "text-muted-foreground",
           )}
           aria-label="プロフィール"

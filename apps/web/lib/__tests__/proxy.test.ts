@@ -74,7 +74,7 @@ describe("proxy — CSP nonce", () => {
     const res = await proxy(req);
     const nonce = res?.headers.get("x-nonce");
     expect(nonce).toBeTruthy();
-    expect(nonce!.length).toBeGreaterThan(0);
+    expect(nonce?.length).toBeGreaterThan(0);
   });
 
   it("generates unique nonce per request", async () => {

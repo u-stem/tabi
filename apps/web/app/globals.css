@@ -93,7 +93,6 @@
   --font-sans: var(--font-inter), var(--font-noto-sans-jp), ui-sans-serif,
     system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
     "Segoe UI Symbol", "Noto Color Emoji";
-  --animate-shimmer: shimmer 2s linear infinite;
 }
 
 @utility container {
@@ -200,12 +199,25 @@
   padding: 4px 12px;
 }
 
+/* GPU-accelerated shimmer using transform on a pseudo-element */
+.skeleton-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent 25%,
+    var(--shimmer-highlight) 50%,
+    transparent 75%
+  );
+  animation: shimmer 2s linear infinite;
+  will-change: transform;
+}
+
 @keyframes shimmer {
-  0% {
-    background-position: -200% 0;
-  }
-  100% {
-    background-position: 200% 0;
+  to {
+    transform: translateX(100%);
   }
 }
 

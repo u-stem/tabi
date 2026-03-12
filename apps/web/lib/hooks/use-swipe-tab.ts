@@ -134,8 +134,10 @@ export function useSwipeTab(
 
         if (isFullSlide) {
           const direction = currentTransform.includes("-") ? "left" : "right";
-          // Hide before clearing transform to prevent a flash frame where the
-          // old tab snaps back to center before React replaces the content.
+          // Hide the swipe element, swap content via flushSync, then reveal
+          // after the browser has painted the new content. rAF ensures the
+          // hidden frame is actually composited before we make it visible,
+          // preventing the old tab from flashing at position 0.
           swipe.style.visibility = "hidden";
           swipe.style.transition = "";
           swipe.style.transform = "";
@@ -144,7 +146,9 @@ export function useSwipeTab(
             setIsAnimating(false);
             opts.onSwipeComplete(direction);
           });
-          swipe.style.visibility = "";
+          requestAnimationFrame(() => {
+            if (!unmounted) swipe.style.visibility = "";
+          });
           axis = "pending";
           adjacentSet = null;
           animating = false;

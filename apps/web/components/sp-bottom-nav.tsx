@@ -2,10 +2,11 @@
 
 import type { FriendRequestResponse, NotificationsResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
+import type { LucideIcon } from "lucide-react";
 import { Bell, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
@@ -14,6 +15,62 @@ import { useScrollDirection } from "@/lib/hooks/use-scroll-direction";
 import { SP_NAV_LINKS } from "@/lib/nav-links";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
+
+const NAV_LINK_CLASS =
+  "relative flex flex-1 flex-col items-center justify-center gap-1 outline-none [-webkit-tap-highlight-color:transparent] transition-transform active:scale-[0.90]";
+
+function NavIcon({ icon: Icon, active }: { icon: LucideIcon; active: boolean }) {
+  return (
+    <Icon className={cn("h-6 w-6 transition-transform duration-200", active && "scale-110")} />
+  );
+}
+
+function ActiveDot({ visible }: { visible: boolean }) {
+  return (
+    <span
+      className={cn(
+        "absolute top-1.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-primary transition-opacity duration-200",
+        visible ? "opacity-100" : "opacity-0",
+      )}
+    />
+  );
+}
+
+function Badge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span className="absolute top-2 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
+      {count > 9 ? "9+" : count}
+    </span>
+  );
+}
+
+function NavItem({
+  href,
+  active,
+  label,
+  children,
+  badge,
+}: {
+  href: string;
+  active: boolean;
+  label: string;
+  children: ReactNode;
+  badge?: number;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(NAV_LINK_CLASS, active ? "font-medium text-primary" : "text-muted-foreground")}
+      aria-label={label}
+    >
+      <ActiveDot visible={active} />
+      {children}
+      <span className="text-[10px] leading-none">{label}</span>
+      {badge != null && <Badge count={badge} />}
+    </Link>
+  );
+}
 
 export function SpBottomNav() {
   const pathname = usePathname();
@@ -62,61 +119,28 @@ export function SpBottomNav() {
         {visibleLinks.map((link) => {
           const active = pathname === link.href;
           return (
-            <Link
+            <NavItem
               key={link.href}
               href={link.href}
-              className={cn(
-                "relative flex flex-1 flex-col items-center justify-center gap-1 outline-none [-webkit-tap-highlight-color:transparent] transition-transform active:scale-[0.90]",
-                active ? "font-medium text-primary" : "text-muted-foreground",
-              )}
+              active={active}
+              label={link.label}
+              badge={link.href === friendHref ? friendRequestCount : undefined}
             >
-              <link.icon
-                className={cn("h-6 w-6 transition-transform duration-200", active && "scale-110")}
-              />
-              <span className="text-[10px] leading-none">{link.label}</span>
-              {link.href === friendHref && friendRequestCount > 0 && (
-                <span className="absolute top-2 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
-                  {friendRequestCount}
-                </span>
-              )}
-            </Link>
+              <NavIcon icon={link.icon} active={active} />
+            </NavItem>
           );
         })}
-        {/* Notification tab: shown only for authenticated non-guest users */}
         {mounted && session?.user && !isGuest && (
-          <Link
+          <NavItem
             href="/sp/notifications"
-            className={cn(
-              "relative flex flex-1 flex-col items-center justify-center gap-1 outline-none [-webkit-tap-highlight-color:transparent] transition-transform active:scale-[0.90]",
-              pathname === "/sp/notifications"
-                ? "font-medium text-primary"
-                : "text-muted-foreground",
-            )}
-            aria-label="通知"
+            active={pathname === "/sp/notifications"}
+            label="通知"
+            badge={unreadCount}
           >
-            <Bell
-              className={cn(
-                "h-6 w-6 transition-transform duration-200",
-                pathname === "/sp/notifications" && "scale-110",
-              )}
-            />
-            <span className="text-[10px] leading-none">通知</span>
-            {unreadCount > 0 && (
-              <span className="absolute top-2 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
-                {unreadCount > 9 ? "9+" : unreadCount}
-              </span>
-            )}
-          </Link>
+            <NavIcon icon={Bell} active={pathname === "/sp/notifications"} />
+          </NavItem>
         )}
-        {/* Account tab: always rendered to keep layout stable, content conditional on session */}
-        <Link
-          href="/sp/my"
-          className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-1 outline-none [-webkit-tap-highlight-color:transparent] transition-transform active:scale-[0.90]",
-            pathname === "/sp/my" ? "font-medium text-primary" : "text-muted-foreground",
-          )}
-          aria-label="プロフィール"
-        >
+        <NavItem href="/sp/my" active={pathname === "/sp/my"} label="プロフィール">
           {mounted && session?.user ? (
             <UserAvatar
               name={session.user.name ?? ""}
@@ -126,8 +150,7 @@ export function SpBottomNav() {
           ) : (
             <User className="h-6 w-6" />
           )}
-          <span className="text-[10px] leading-none">プロフィール</span>
-        </Link>
+        </NavItem>
       </div>
     </nav>
   );

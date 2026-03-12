@@ -32,6 +32,7 @@ import type { useBookmarkOperations } from "@/lib/hooks/use-bookmark-operations"
 import type { useBookmarkSelection } from "@/lib/hooks/use-bookmark-selection";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
+import { cn } from "@/lib/utils";
 
 type ListOps = ReturnType<typeof useBookmarkListOperations>;
 type BmOps = ReturnType<typeof useBookmarkOperations>;
@@ -219,11 +220,17 @@ export function BookmarkListHeader({
           </div>
         </div>
       ) : (
-        <div className="mt-3 flex items-center gap-1.5 justify-end">
+        <div
+          className={cn(
+            "mt-3 flex items-center gap-1.5",
+            isMobile ? "justify-stretch" : "justify-end",
+          )}
+        >
           {bookmarkCount > 0 && online && (
             <Button
               variant="outline"
               size="sm"
+              className={cn(isMobile && "h-9 flex-1")}
               onClick={() => {
                 onReorderModeChange?.(false);
                 sel.enter();
@@ -237,6 +244,7 @@ export function BookmarkListHeader({
             <Button
               variant="outline"
               size="sm"
+              className="h-9 flex-1"
               onClick={() => {
                 sel.exit();
                 onReorderModeChange?.(true);

@@ -54,25 +54,26 @@ import { cn } from "@/lib/utils";
 function SpBookmarkDetailSkeleton() {
   return (
     <div className="mt-4 mx-auto max-w-2xl">
+      {/* Header: title + badge + menu */}
       <div className="mb-6">
         <div className="flex items-center gap-2">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-5 w-14 rounded-full" />
           <Skeleton className="ml-auto h-8 w-8 rounded-md" />
         </div>
-        <Skeleton className="mt-2 h-4 w-32" />
-        <div className="mt-3 flex items-center justify-end gap-1.5">
-          <Skeleton className="h-8 w-16 rounded-md" />
-          <Skeleton className="h-8 w-20 rounded-md" />
+        <Skeleton className="mt-1 h-4 w-28" />
+        {/* Action buttons */}
+        <div className="mt-3 flex gap-1.5">
+          <Skeleton className="h-9 flex-1 rounded-md" />
+          <Skeleton className="h-9 flex-1 rounded-md" />
         </div>
       </div>
+      {/* Bookmark items */}
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
-            <div className="min-w-0 flex-1">
-              <Skeleton className="h-4 w-32" />
-            </div>
-            <Skeleton className="h-8 w-8 rounded-md" />
+          <div key={i} className="rounded-lg border px-3 py-2 space-y-1.5">
+            <Skeleton className="h-4 w-3/5" />
+            <Skeleton className="h-3 w-2/5" />
           </div>
         ))}
       </div>

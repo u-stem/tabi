@@ -43,29 +43,25 @@ const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.R
 
 function SpBookmarksSkeleton() {
   return (
-    <>
-      <div className="mt-4 flex items-center gap-2">
-        <Skeleton className="h-8 w-[100px]" />
-        <div className="flex items-center gap-2 ml-auto">
-          <Skeleton className="h-8 w-24" />
-        </div>
+    <div className="mt-4">
+      {/* Filter + selection buttons */}
+      <div className="flex gap-2">
+        <Skeleton className="h-9 flex-1 rounded-md" />
+        <Skeleton className="h-9 flex-1 rounded-md" />
       </div>
+      {/* Bookmark list cards */}
       <div className="mt-4 grid gap-4">
-        {["skeleton-1", "skeleton-2", "skeleton-3"].map((key) => (
-          <div key={key} className="rounded-lg border bg-card shadow-sm">
-            <div className="flex flex-col space-y-1.5 p-6">
-              <div className="flex items-center justify-between">
-                <Skeleton className="h-5 w-32" />
-                <Skeleton className="h-5 w-16 rounded-full" />
-              </div>
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="rounded-lg border p-4 space-y-2">
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-5 w-12 rounded-full" />
             </div>
-            <div className="p-6 pt-0">
-              <Skeleton className="h-4 w-40" />
-            </div>
+            <Skeleton className="h-4 w-24" />
           </div>
         ))}
       </div>
-    </>
+    </div>
   );
 }
 

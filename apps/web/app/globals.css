@@ -57,7 +57,7 @@
   --chart-3: hsl(30 80% 55%);
   --chart-4: hsl(280 65% 60%);
   --chart-5: hsl(340 75% 55%);
-  --shimmer-highlight: rgba(255, 255, 255, 0.04);
+  --shimmer-highlight: rgba(255, 255, 255, 0.05);
 }
 
 @theme inline {
@@ -93,7 +93,7 @@
   --font-sans: var(--font-inter), var(--font-noto-sans-jp), ui-sans-serif,
     system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
     "Segoe UI Symbol", "Noto Color Emoji";
-  --animate-shimmer: shimmer 1.5s ease-in-out infinite;
+  --animate-shimmer: shimmer 2s linear infinite;
 }
 
 @utility container {

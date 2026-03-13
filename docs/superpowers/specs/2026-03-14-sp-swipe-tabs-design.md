@@ -28,6 +28,8 @@ type SpSwipeTabsProps<T extends string = string> = {
   activeTab: T;
   onTabChange: (tabId: T) => void;
   renderContent: (tabId: T) => ReactNode;
+  /** Content inserted between tab bar and swipe container (e.g. toolbar) */
+  children?: ReactNode;
   /** Enable scroll position restoration per tab */
   preserveScroll?: boolean;
   /** External scroll container (e.g. SpScrollContainer). Used for scroll save/restore. */

@@ -281,6 +281,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "poll_started",
   "poll_closed",
   "expense_added",
+  "settlement_checked",
 ]);
 
 export const scheduleReactions = pgTable(
@@ -890,4 +891,56 @@ export const quickPollVotesRelations = relations(quickPollVotes, ({ one }) => ({
     references: [quickPollOptions.id],
   }),
   user: one(users, { fields: [quickPollVotes.userId], references: [users.id] }),
+}));
+
+// ─── Settlement Payments ────────────────────────────────────────────────────
+
+export const settlementPayments = pgTable(
+  "settlement_payments",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    tripId: uuid("trip_id")
+      .notNull()
+      .references(() => trips.id, { onDelete: "cascade" }),
+    fromUserId: uuid("from_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    toUserId: uuid("to_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    amount: integer("amount").notNull(),
+    paidAt: timestamp("paid_at", { withTimezone: true }).defaultNow().notNull(),
+    paidByUserId: uuid("paid_by_user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [
+    index("settlement_payments_trip_id_idx").on(table.tripId),
+    uniqueIndex("settlement_payments_trip_from_to_amount_idx").on(
+      table.tripId,
+      table.fromUserId,
+      table.toUserId,
+      table.amount,
+    ),
+  ],
+).enableRLS();
+
+export const settlementPaymentsRelations = relations(settlementPayments, ({ one }) => ({
+  trip: one(trips, { fields: [settlementPayments.tripId], references: [trips.id] }),
+  fromUser: one(users, {
+    fields: [settlementPayments.fromUserId],
+    references: [users.id],
+    relationName: "settlementPaymentFrom",
+  }),
+  toUser: one(users, {
+    fields: [settlementPayments.toUserId],
+    references: [users.id],
+    relationName: "settlementPaymentTo",
+  }),
+  paidByUser: one(users, {
+    fields: [settlementPayments.paidByUserId],
+    references: [users.id],
+    relationName: "settlementPaymentPaidBy",
+  }),
 }));

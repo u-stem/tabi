@@ -402,7 +402,7 @@ export function ScheduleTimeLabel({
       : null;
 
   const labelEl = labelText ? (
-    <span className="shrink-0 whitespace-nowrap rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
+    <span className="shrink-0 whitespace-nowrap rounded-sm bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
       {labelText}
     </span>
   ) : null;

@@ -413,7 +413,7 @@ function ScheduleCard({
           </span>
           <span className="break-words text-sm font-medium">{schedule.name}</span>
           {roleLabel && (
-            <span className="rounded-sm bg-muted px-1 py-0.5 text-[10px] text-muted-foreground">
+            <span className="rounded-sm bg-muted px-1 py-0.5 text-xs text-muted-foreground">
               {roleLabel}
             </span>
           )}

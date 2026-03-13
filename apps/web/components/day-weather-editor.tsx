@@ -207,9 +207,7 @@ function WeatherPickerForm({
                   className={cn("h-6 w-6", !(isPrimary || isSecondary) && WEATHER_ICON_COLOR[type])}
                 />
                 {gridLayout && (
-                  <span className="text-center text-[10px] leading-tight">
-                    {WEATHER_LABELS[type]}
-                  </span>
+                  <span className="text-center text-xs leading-tight">{WEATHER_LABELS[type]}</span>
                 )}
               </button>
             );

@@ -54,7 +54,7 @@ function NavItem({
       aria-label={label}
     >
       {children}
-      <span className="text-[10px] leading-none">{label}</span>
+      <span className="text-xs leading-none">{label}</span>
       {badge != null && <Badge count={badge} />}
     </Link>
   );

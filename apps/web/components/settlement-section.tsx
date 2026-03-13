@@ -171,7 +171,13 @@ export function SettlementSection({
         const payment = findPayment(settlementPayments, t.from.id, t.to.id, t.amount);
         const isChecked = !!payment;
         const canToggle = currentUserId === t.from.id || currentUserId === t.to.id;
-        const isLoading = checkMutation.isPending || uncheckMutation.isPending;
+        // Only disable the specific item being mutated, not all checkboxes
+        const isPending =
+          (checkMutation.isPending &&
+            checkMutation.variables?.fromUserId === t.from.id &&
+            checkMutation.variables?.toUserId === t.to.id &&
+            checkMutation.variables?.amount === t.amount) ||
+          (uncheckMutation.isPending && payment?.id === uncheckMutation.variables);
 
         return (
           <div
@@ -185,7 +191,7 @@ export function SettlementSection({
             <Checkbox
               checked={isChecked}
               onCheckedChange={() => handleToggle(t.from.id, t.to.id, t.amount)}
-              disabled={!canToggle || isLoading}
+              disabled={!canToggle || !!isPending}
               className="h-4 w-4 before:absolute before:inset-0 before:content-['']"
             />
             <span className={isChecked ? "line-through text-muted-foreground" : ""}>

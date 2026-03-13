@@ -3,13 +3,14 @@
 import type { ExpenseItem, ExpensesResponse } from "@sugara/shared";
 import { EXPENSE_CATEGORY_LABELS } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowRight, ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Collapsible as CollapsiblePrimitive } from "radix-ui";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
 import { ExpenseDialog } from "@/components/expense-dialog";
 import { ItemMenuButton } from "@/components/item-menu-button";
+import { SettlementSection } from "@/components/settlement-section";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/responsive-alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { useSession } from "@/lib/auth-client";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -44,6 +46,7 @@ type ExpensePanelProps = {
 export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: ExpensePanelProps) {
   const isMobile = useMobile();
   const queryClient = useQueryClient();
+  const { data: session } = useSession();
   const { data, isLoading, isError } = useQuery({
     queryKey: queryKeys.expenses.list(tripId),
     queryFn: () => api<ExpensesResponse>(`/api/trips/${tripId}/expenses`),
@@ -84,9 +87,10 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
     setDialogOpen(true);
   };
 
-  const { expenses, settlement, categoryTotals } = data ?? {
+  const { expenses, settlement, settlementPayments, categoryTotals } = data ?? {
     expenses: [],
     settlement: { totalAmount: 0, balances: [], transfers: [] },
+    settlementPayments: [],
     categoryTotals: [],
   };
 
@@ -155,23 +159,12 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
                         </div>
                       ))}
                   </div>
-                  <div className="space-y-1 border-t px-3 pt-2 pb-3">
-                    <p className="text-xs text-muted-foreground">精算</p>
-                    {[...settlement.transfers]
-                      .sort((a, b) => b.amount - a.amount)
-                      .map((t, i) => (
-                        <div
-                          key={`${t.from.id}-${t.to.id}-${i}`}
-                          className="flex items-center gap-1.5 pl-2 text-sm"
-                        >
-                          <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
-                          <span>{t.from.name}</span>
-                          <ArrowRight className="h-3 w-3 shrink-0 text-muted-foreground" />
-                          <span>{t.to.name}</span>
-                          <span className="ml-auto font-medium">{t.amount.toLocaleString()}円</span>
-                        </div>
-                      ))}
-                  </div>
+                  <SettlementSection
+                    tripId={tripId}
+                    settlement={settlement}
+                    settlementPayments={settlementPayments}
+                    currentUserId={session?.user?.id}
+                  />
                   {categoryTotals.length > 0 && (
                     <div className="space-y-1 border-t px-3 pt-2 pb-3">
                       <p className="text-xs text-muted-foreground">カテゴリ別</p>

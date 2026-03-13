@@ -8,7 +8,7 @@ import {
 } from "@sugara/shared";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
-import { ArrowRightLeft, Check, Copy, Loader2, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowRightLeft, Check, Copy, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -61,6 +61,14 @@ const ACTION_STYLES: Record<string, ActionStyle> = {
   confirmed: {
     icon: Check,
     color: "bg-blue-100 text-blue-600 dark:bg-blue-900 dark:text-blue-400",
+  },
+  settle: {
+    icon: Check,
+    color: "bg-green-100 text-green-600 dark:bg-green-900 dark:text-green-400",
+  },
+  unsettle: {
+    icon: X,
+    color: "bg-red-100 text-red-600 dark:bg-red-900 dark:text-red-400",
   },
 };
 
@@ -121,6 +129,10 @@ const ACTION_TEMPLATES: Record<string, Record<string, string>> = {
   chat_session: {
     created: "作戦会議を開始",
     deleted: "作戦会議を終了",
+  },
+  settlement: {
+    settle: "精算{name}をチェック",
+    unsettle: "精算{name}のチェックを解除",
   },
 };
 

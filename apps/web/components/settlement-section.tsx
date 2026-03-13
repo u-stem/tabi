@@ -105,15 +105,18 @@ export function SettlementSection({
         const isLoading = checkMutation.isPending || uncheckMutation.isPending;
 
         return (
-          <div
+          <button
             key={`${t.from.id}-${t.to.id}-${t.amount}`}
-            className="flex items-center gap-1.5 pl-1 text-sm"
+            type="button"
+            disabled={!canToggle || isLoading}
+            onClick={() => handleToggle(t.from.id, t.to.id, t.amount)}
+            className="flex w-full items-center gap-2 rounded-sm px-1 py-1.5 text-sm select-none enabled:cursor-pointer enabled:hover:bg-muted/80 enabled:active:bg-muted transition-colors disabled:opacity-100 text-left"
           >
             <Checkbox
               checked={isChecked}
-              onCheckedChange={() => handleToggle(t.from.id, t.to.id, t.amount)}
-              disabled={!canToggle || isLoading}
-              className="h-4 w-4"
+              tabIndex={-1}
+              className="h-4 w-4 pointer-events-none"
+              aria-hidden
             />
             <span className={isChecked ? "line-through text-muted-foreground" : ""}>
               {t.from.name}
@@ -129,7 +132,7 @@ export function SettlementSection({
             >
               {t.amount.toLocaleString()}円
             </span>
-          </div>
+          </button>
         );
       })}
     </div>

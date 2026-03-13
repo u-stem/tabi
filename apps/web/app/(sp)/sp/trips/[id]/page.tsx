@@ -324,17 +324,16 @@ export default function SpTripDetailPage() {
   // position and compensate the CURRENT tab with translateY so it stays
   // visually stable. This ensures shared elements (header, tab bar) match
   // the target tab's scroll state during the entire swipe animation.
-  const swipeCompensationRef = useRef(0);
+  // Track which DOM element received translateY so cleanup always targets
+  // the correct element, even after currentTabIdx changes on swipe completion.
+  const compensatedElRef = useRef<HTMLElement | null>(null);
   const isActivelySwiping = swipe.adjacent !== null || swipe.isAnimating;
   useLayoutEffect(() => {
     if (swipe.adjacent === null) {
-      // Swipe ended or cancelled — remove compensation from all tabs.
-      if (swipeCompensationRef.current !== 0) {
-        const currentEl = swipeContainerRef.current?.children[currentTabIdx] as
-          | HTMLElement
-          | undefined;
-        if (currentEl) currentEl.style.transform = "";
-        swipeCompensationRef.current = 0;
+      // Swipe ended or cancelled — remove compensation from the element that has it.
+      if (compensatedElRef.current) {
+        compensatedElRef.current.style.transform = "";
+        compensatedElRef.current = null;
       }
       return;
     }
@@ -355,8 +354,10 @@ export default function SpTripDetailPage() {
     scrollEl.scrollTo(0, targetScroll);
     // Shift current tab to cancel the visual jump from the scroll change
     const currentEl = swipeContainerRef.current?.children[currentTabIdx] as HTMLElement | undefined;
-    if (currentEl) currentEl.style.transform = `translateY(${compensation}px)`;
-    swipeCompensationRef.current = compensation;
+    if (currentEl) {
+      currentEl.style.transform = `translateY(${compensation}px)`;
+      compensatedElRef.current = currentEl;
+    }
   }, [swipe.adjacent, currentTabIdx, mobileTab, spScrollRef, tabIds]);
 
   // Prevent outer SpScrollContainer from scrolling during swipe.

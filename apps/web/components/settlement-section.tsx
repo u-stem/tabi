@@ -1,6 +1,6 @@
 "use client";
 
-import type { Settlement, SettlementPayment } from "@sugara/shared";
+import type { ExpensesResponse, Settlement, SettlementPayment } from "@sugara/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
 import { toast } from "sonner";
@@ -40,8 +40,9 @@ export function SettlementSection({
   ).length;
   const allChecked = transfers.length > 0 && checkedCount === transfers.length;
 
-  const invalidateSettlement = () => {
-    queryClient.invalidateQueries({ queryKey: queryKeys.expenses.list(tripId) });
+  const expenseQueryKey = queryKeys.expenses.list(tripId);
+
+  const invalidateRelated = () => {
     queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId) });
     if (currentUserId) {
       queryClient.invalidateQueries({
@@ -52,17 +53,44 @@ export function SettlementSection({
 
   const checkMutation = useMutation({
     mutationFn: (body: { fromUserId: string; toUserId: string; amount: number }) =>
-      api(`/api/trips/${tripId}/settlement-payments`, {
+      api<SettlementPayment>(`/api/trips/${tripId}/settlement-payments`, {
         method: "POST",
         body: JSON.stringify(body),
       }),
-    onSuccess: invalidateSettlement,
-    onError: (err) => {
+    onMutate: async (body) => {
+      await queryClient.cancelQueries({ queryKey: expenseQueryKey });
+      const previous = queryClient.getQueryData<ExpensesResponse>(expenseQueryKey);
+      if (previous) {
+        // Optimistic: add a temporary payment entry
+        const optimistic: SettlementPayment = {
+          id: `optimistic-${Date.now()}`,
+          tripId,
+          fromUserId: body.fromUserId,
+          toUserId: body.toUserId,
+          amount: body.amount,
+          paidAt: new Date().toISOString(),
+          paidByUserId: currentUserId ?? body.fromUserId,
+        };
+        queryClient.setQueryData<ExpensesResponse>(expenseQueryKey, {
+          ...previous,
+          settlementPayments: [...previous.settlementPayments, optimistic],
+        });
+      }
+      return { previous };
+    },
+    onError: (err, _body, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(expenseQueryKey, context.previous);
+      }
       toast.error(
         getApiErrorMessage(err, MSG.SETTLEMENT_CHECK_FAILED, {
           conflict: MSG.SETTLEMENT_ALREADY_CHECKED,
         }),
       );
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: expenseQueryKey });
+      invalidateRelated();
     },
   });
 
@@ -71,9 +99,26 @@ export function SettlementSection({
       api(`/api/trips/${tripId}/settlement-payments/${paymentId}`, {
         method: "DELETE",
       }),
-    onSuccess: invalidateSettlement,
-    onError: (err) => {
+    onMutate: async (paymentId) => {
+      await queryClient.cancelQueries({ queryKey: expenseQueryKey });
+      const previous = queryClient.getQueryData<ExpensesResponse>(expenseQueryKey);
+      if (previous) {
+        queryClient.setQueryData<ExpensesResponse>(expenseQueryKey, {
+          ...previous,
+          settlementPayments: previous.settlementPayments.filter((p) => p.id !== paymentId),
+        });
+      }
+      return { previous };
+    },
+    onError: (err, _paymentId, context) => {
+      if (context?.previous) {
+        queryClient.setQueryData(expenseQueryKey, context.previous);
+      }
       toast.error(getApiErrorMessage(err, MSG.SETTLEMENT_UNCHECK_FAILED));
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: expenseQueryKey });
+      invalidateRelated();
     },
   });
 

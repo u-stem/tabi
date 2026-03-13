@@ -120,9 +120,6 @@ export default function SpTripDetailPage() {
   const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
   const mobileTabRef = useRef<MobileContentTab>("schedule");
   const scrollPositions = useRef<Record<string, number>>({});
-  // Live scroll position at swipe start — scrollPositions is only written on
-  // tab change, so this captures the up-to-date value for translateY compensation.
-  const swipeScrollSnapshot = useRef(0);
   const mobileContentRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const [tapAnimating, setTapAnimating] = useState(false);
@@ -323,22 +320,49 @@ export default function SpTripDetailPage() {
     selection.exit();
   }, [selectedDay, mobileTab]);
 
-  // Snapshot the current scroll position when a swipe gesture begins so
-  // the translateY compensation on the adjacent tab uses the live value.
+  // When a swipe gesture begins, jump scroll to the target tab's saved
+  // position and compensate the CURRENT tab with translateY so it stays
+  // visually stable. This ensures shared elements (header, tab bar) match
+  // the target tab's scroll state during the entire swipe animation.
+  const swipeCompensationRef = useRef(0);
+  const isActivelySwiping = swipe.adjacent !== null || swipe.isAnimating;
   useLayoutEffect(() => {
-    if (swipe.adjacent !== null) {
-      const scrollEl = spScrollRef?.current ?? mobileContentRef.current;
-      const pos = scrollEl?.scrollTop ?? 0;
-      scrollPositions.current[mobileTab] = pos;
-      swipeScrollSnapshot.current = pos;
+    if (swipe.adjacent === null) {
+      // Swipe ended or cancelled — remove compensation from all tabs.
+      if (swipeCompensationRef.current !== 0) {
+        const currentEl = swipeContainerRef.current?.children[currentTabIdx] as
+          | HTMLElement
+          | undefined;
+        if (currentEl) currentEl.style.transform = "";
+        swipeCompensationRef.current = 0;
+      }
+      return;
     }
-  }, [swipe.adjacent, mobileTab, spScrollRef]);
+
+    const scrollEl = spScrollRef?.current ?? mobileContentRef.current;
+    if (!scrollEl) return;
+
+    const adjacentIdx = currentTabIdx + (swipe.adjacent === "next" ? 1 : -1);
+    const adjacentTabId = tabIds[adjacentIdx];
+    if (!adjacentTabId) return;
+
+    const currentScroll = scrollEl.scrollTop;
+    scrollPositions.current[mobileTab] = currentScroll;
+    const targetScroll = scrollPositions.current[adjacentTabId] ?? 0;
+    const compensation = currentScroll - targetScroll;
+
+    // Scroll to target position (shared header/tabs match the target tab)
+    scrollEl.scrollTo(0, targetScroll);
+    // Shift current tab to cancel the visual jump from the scroll change
+    const currentEl = swipeContainerRef.current?.children[currentTabIdx] as HTMLElement | undefined;
+    if (currentEl) currentEl.style.transform = `translateY(${compensation}px)`;
+    swipeCompensationRef.current = compensation;
+  }, [swipe.adjacent, currentTabIdx, mobileTab, spScrollRef, tabIds]);
 
   // Prevent outer SpScrollContainer from scrolling during swipe.
   // useLayoutEffect (not useEffect) so the overflow restore happens before
   // paint — otherwise a second paint with changed overflow causes a visible
   // position shift on the tab bar (the candidate count number "floats").
-  const isActivelySwiping = swipe.adjacent !== null || swipe.isAnimating;
   useLayoutEffect(() => {
     const el = spScrollRef?.current;
     if (!el || !isActivelySwiping) return;
@@ -660,22 +684,10 @@ export default function SpTripDetailPage() {
                           const isSwipeTarget =
                             swipe.adjacent !== null &&
                             i === currentTabIdx + (swipe.adjacent === "next" ? 1 : -1);
-                          // Compensate for shared scroll container: the adjacent tab
-                          // would appear at the current tab's scroll position during
-                          // the swipe animation. Shift it by the difference so it
-                          // visually appears at its own saved scroll position.
-                          const scrollCompensation = isSwipeTarget
-                            ? swipeScrollSnapshot.current - (scrollPositions.current[tabId] ?? 0)
-                            : 0;
                           return (
                             <div
                               key={tabId}
                               className={`w-full shrink-0${!isCurrent && !isSwipeTarget ? " h-0 overflow-hidden" : ""}`}
-                              style={
-                                scrollCompensation !== 0
-                                  ? { transform: `translateY(${scrollCompensation}px)` }
-                                  : undefined
-                              }
                               id={getMobileTabPanelId(tabId)}
                               role="tabpanel"
                               aria-labelledby={getMobileTabTriggerId(tabId)}

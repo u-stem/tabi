@@ -11,15 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
-import {
-  type ReactNode,
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ActivityLog } from "@/components/activity-log";
 import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dialog";
@@ -28,14 +20,8 @@ import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
 import { ExpensePanel } from "@/components/expense-panel";
 import { Fab } from "@/components/fab";
-import {
-  getMobileTabIds,
-  getMobileTabPanelId,
-  getMobileTabTriggerId,
-  type MobileContentTab,
-  MobileContentTabs,
-} from "@/components/mobile-content-tabs";
 import { SouvenirPanel } from "@/components/souvenir-panel";
+import { SpSwipeTabs } from "@/components/sp-swipe-tabs";
 
 const EditTripDialog = dynamic(() =>
   import("@/components/edit-trip-dialog").then((mod) => mod.EditTripDialog),
@@ -71,12 +57,27 @@ import { useDayWeather } from "@/lib/hooks/use-day-weather";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
 import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
-import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
 import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
+
+type MobileContentTab =
+  | "schedule"
+  | "candidates"
+  | "expenses"
+  | "bookmarks"
+  | "activity"
+  | "souvenirs"
+  | "map";
+
+const SWIPE_TABS = [
+  { id: "schedule" as const, label: "予定" },
+  { id: "candidates" as const, label: "候補" },
+  { id: "expenses" as const, label: "費用" },
+  { id: "souvenirs" as const, label: "お土産" },
+];
 
 export default function SpTripDetailPage() {
   const params = useParams();
@@ -119,10 +120,6 @@ export default function SpTripDetailPage() {
   const [selectedPattern, setSelectedPattern] = useState<Record<string, number>>({});
   const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
   const mobileTabRef = useRef<MobileContentTab>("schedule");
-  const scrollPositions = useRef<Record<string, number>>({});
-  const mobileContentRef = useRef<HTMLDivElement>(null);
-  const swipeContainerRef = useRef<HTMLDivElement>(null);
-  const [tapAnimating, setTapAnimating] = useState(false);
   const [saveToBookmarkIds, setSaveToBookmarkIds] = useState<string[]>([]);
   const [bookmarkPickerOpen, setBookmarkPickerOpen] = useState(false);
 
@@ -177,55 +174,10 @@ export default function SpTripDetailPage() {
     [tripId, saveToBookmarkIds, queryClient],
   );
 
-  // Restore scroll position synchronously before paint to avoid a one-frame flicker
-  // where the new tab content is momentarily shown at the previous tab's scroll position.
-  // On SP, the actual scroll container is SpScrollContainer (outer), not mobileContentRef.
-  useLayoutEffect(() => {
-    const scrollEl = spScrollRef?.current ?? mobileContentRef.current;
-    scrollEl?.scrollTo(0, scrollPositions.current[mobileTab] ?? 0);
-  }, [mobileTab]);
-
-  const handleMobileTabChange = useCallback(
-    (tab: MobileContentTab, source?: "tap") => {
-      const scrollEl = spScrollRef?.current ?? mobileContentRef.current;
-      if (scrollEl) {
-        scrollPositions.current[mobileTabRef.current] = scrollEl.scrollTop;
-        // Pre-set scroll position before React commits DOM changes (h-0 swap).
-        // Without this, the browser compositor may paint a frame at scrollTop=0
-        // between the DOM commit and useLayoutEffect restoration.
-        scrollEl.scrollTo(0, scrollPositions.current[tab] ?? 0);
-      }
-      if (source === "tap") setTapAnimating(true);
-      mobileTabRef.current = tab;
-      setMobileTab(tab);
-    },
-    [spScrollRef],
-  );
-
-  const handleSwipe = useCallback(
-    (direction: "left" | "right") => {
-      const tabIds = getMobileTabIds();
-      const idx = tabIds.indexOf(mobileTabRef.current);
-      if (idx === -1) return;
-      const next = direction === "left" ? idx + 1 : idx - 1;
-      if (next < 0 || next >= tabIds.length) return;
-      handleMobileTabChange(tabIds[next]);
-    },
-    [handleMobileTabChange],
-  );
-
-  const tabIds = useMemo(() => getMobileTabIds(), []);
-  const currentTabIdx = tabIds.indexOf(mobileTab);
-  const canSwipeMobileTabs = currentTabIdx !== -1;
-  const swipe = useSwipeTab(mobileContentRef, swipeContainerRef, {
-    onSwipeComplete: handleSwipe,
-    // !isLoading ensures refs are populated before listeners are registered.
-    // Without this, enabled can flip true while skeleton is still mounted (refs null),
-    // and then stays true when content renders — so the effect never re-runs.
-    enabled: !isLoading && !!trip && canSwipeMobileTabs,
-    canSwipePrev: canSwipeMobileTabs && currentTabIdx > 0,
-    canSwipeNext: canSwipeMobileTabs && currentTabIdx < tabIds.length - 1,
-  });
+  const handleMobileTabChange = useCallback((tab: MobileContentTab) => {
+    mobileTabRef.current = tab;
+    setMobileTab(tab);
+  }, []);
 
   useEffect(() => {
     if (trip) {
@@ -320,59 +272,6 @@ export default function SpTripDetailPage() {
     selection.exit();
   }, [selectedDay, mobileTab]);
 
-  // When a swipe gesture begins, jump scroll to the target tab's saved
-  // position and compensate the CURRENT tab with translateY so it stays
-  // visually stable. This ensures shared elements (header, tab bar) match
-  // the target tab's scroll state during the entire swipe animation.
-  // Track which DOM element received translateY so cleanup always targets
-  // the correct element, even after currentTabIdx changes on swipe completion.
-  const compensatedElRef = useRef<HTMLElement | null>(null);
-  const isActivelySwiping = swipe.adjacent !== null || swipe.isAnimating;
-  useLayoutEffect(() => {
-    if (swipe.adjacent === null) {
-      // Swipe ended or cancelled — remove compensation from the element that has it.
-      if (compensatedElRef.current) {
-        compensatedElRef.current.style.transform = "";
-        compensatedElRef.current = null;
-      }
-      return;
-    }
-
-    const scrollEl = spScrollRef?.current ?? mobileContentRef.current;
-    if (!scrollEl) return;
-
-    const adjacentIdx = currentTabIdx + (swipe.adjacent === "next" ? 1 : -1);
-    const adjacentTabId = tabIds[adjacentIdx];
-    if (!adjacentTabId) return;
-
-    const currentScroll = scrollEl.scrollTop;
-    scrollPositions.current[mobileTab] = currentScroll;
-    const targetScroll = scrollPositions.current[adjacentTabId] ?? 0;
-    const compensation = currentScroll - targetScroll;
-
-    // Scroll to target position (shared header/tabs match the target tab)
-    scrollEl.scrollTo(0, targetScroll);
-    // Shift current tab to cancel the visual jump from the scroll change
-    const currentEl = swipeContainerRef.current?.children[currentTabIdx] as HTMLElement | undefined;
-    if (currentEl) {
-      currentEl.style.transform = `translateY(${compensation}px)`;
-      compensatedElRef.current = currentEl;
-    }
-  }, [swipe.adjacent, currentTabIdx, mobileTab, spScrollRef, tabIds]);
-
-  // Prevent outer SpScrollContainer from scrolling during swipe.
-  // useLayoutEffect (not useEffect) so the overflow restore happens before
-  // paint — otherwise a second paint with changed overflow causes a visible
-  // position shift on the tab bar (the candidate count number "floats").
-  useLayoutEffect(() => {
-    const el = spScrollRef?.current;
-    if (!el || !isActivelySwiping) return;
-    el.style.overflow = "hidden";
-    return () => {
-      el.style.overflow = "";
-    };
-  }, [isActivelySwiping, spScrollRef]);
-
   // Routing guarantees params.id is always a string, but guard defensively
   if (!tripId) return null;
 
@@ -381,6 +280,11 @@ export default function SpTripDetailPage() {
   const scheduleLimitReached = trip ? trip.scheduleCount >= MAX_SCHEDULES_PER_TRIP : false;
   const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
   const selectionValue = { ...selection, canEnter: canEdit && online };
+
+  const spTripTabs = SWIPE_TABS.map((t) =>
+    t.id === "candidates" ? { ...t, badge: dnd.localCandidates.length } : t,
+  );
+  const isSwipableTab = SWIPE_TABS.some((t) => t.id === mobileTab);
 
   function renderTabContent(tabId: MobileContentTab) {
     if (!trip) return null;
@@ -623,13 +527,13 @@ export default function SpTripDetailPage() {
                   isGuest
                     ? undefined
                     : () => {
-                        handleMobileTabChange("bookmarks", "tap");
+                        handleMobileTabChange("bookmarks");
                       }
                 }
                 onOpenActivity={() => {
-                  handleMobileTabChange("activity", "tap");
+                  handleMobileTabChange("activity");
                 }}
-                onOpenMap={trip.mapsEnabled ? () => handleMobileTabChange("map", "tap") : undefined}
+                onOpenMap={trip.mapsEnabled ? () => handleMobileTabChange("map") : undefined}
               />
               <EditTripDialog
                 tripId={tripId}
@@ -653,54 +557,17 @@ export default function SpTripDetailPage() {
               >
                 {/* SP mobile layout — always visible, no lg:hidden */}
                 <div>
-                  <MobileContentTabs
+                  <SpSwipeTabs<MobileContentTab>
+                    tabs={spTripTabs}
                     activeTab={mobileTab}
                     onTabChange={handleMobileTabChange}
-                    candidateCount={dnd.localCandidates.length}
+                    renderContent={renderTabContent}
+                    swipeEnabled={isSwipableTab && !!trip}
+                    preserveScroll
+                    scrollRef={spScrollRef ?? undefined}
+                    className="my-2"
                   />
-                  <div
-                    ref={mobileContentRef}
-                    className="min-h-[60vh] overflow-x-hidden touch-pan-y pb-20"
-                  >
-                    {/* Base offset: snaps to current tab index. React-controlled.
-                         Tap changes animate via CSS transition; swipe changes snap
-                         instantly (the hook handles the smooth animation). */}
-                    <div
-                      style={{
-                        transform: `translateX(${-currentTabIdx * 100}%)`,
-                        transition: tapAnimating
-                          ? "transform 250ms cubic-bezier(0.2, 0, 0, 1)"
-                          : "none",
-                      }}
-                      onTransitionEnd={() => setTapAnimating(false)}
-                    >
-                      {/* Swipe delta: finger-tracking translateX. Hook-controlled. */}
-                      <div
-                        ref={swipeContainerRef}
-                        className="flex touch-pan-y will-change-transform"
-                      >
-                        {tabIds.map((tabId, i) => {
-                          const isCurrent = tabId === mobileTab;
-                          // During swipe, the adjacent tab needs full height to be visible
-                          const isSwipeTarget =
-                            swipe.adjacent !== null &&
-                            i === currentTabIdx + (swipe.adjacent === "next" ? 1 : -1);
-                          return (
-                            <div
-                              key={tabId}
-                              className={`w-full shrink-0${!isCurrent && !isSwipeTarget ? " h-0 overflow-hidden" : ""}`}
-                              id={getMobileTabPanelId(tabId)}
-                              role="tabpanel"
-                              aria-labelledby={getMobileTabTriggerId(tabId)}
-                              aria-hidden={!isCurrent || undefined}
-                            >
-                              {renderTabContent(tabId)}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  </div>
+                  {!isSwipableTab && <div className="pb-20">{renderTabContent(mobileTab)}</div>}
                 </div>
               </DndContext>
 

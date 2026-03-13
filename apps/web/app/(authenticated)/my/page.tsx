@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { MyQrDialog } from "@/components/my-qr-dialog";
+import { UnsettledSummarySection } from "@/components/unsettled-summary";
 import { UserAvatar } from "@/components/user-avatar";
 import { useSession } from "@/lib/auth-client";
 import { copyToClipboard } from "@/lib/clipboard";
@@ -81,6 +82,9 @@ export default function MyPage() {
           {userId && <MyQrDialog userId={userId} />}
         </div>
       </div>
+
+      {/* Unsettled summary */}
+      {userId && <UnsettledSummarySection userId={userId} isOwnProfile />}
 
       {/* Tools */}
       <div className="space-y-2">

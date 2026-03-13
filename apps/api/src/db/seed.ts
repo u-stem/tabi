@@ -860,7 +860,40 @@ async function main() {
       console.log(`  費用: ${exp.title} (${exp.amount.toLocaleString()}円)`);
     }
 
-    // 8. Create souvenirs
+    // 8. Mark first settlement transfer as paid
+    console.log("\nCreating settlement payments...");
+    const expensesRes = await apiFetch<{
+      settlement: {
+        transfers: {
+          from: { id: string; name: string };
+          to: { id: string; name: string };
+          amount: number;
+        }[];
+      };
+    }>(`/api/trips/${trip.id}/expenses`, { headers: { cookie: ownerCookies } });
+    const firstTransfer = expensesRes.settlement.transfers[0];
+    if (firstTransfer) {
+      await apiFetch(`/api/trips/${trip.id}/settlement-payments`, {
+        method: "POST",
+        body: JSON.stringify({
+          fromUserId: firstTransfer.from.id,
+          toUserId: firstTransfer.to.id,
+          amount: firstTransfer.amount,
+        }),
+        headers: { cookie: ownerCookies },
+      });
+      console.log(
+        `  精算済み: ${firstTransfer.from.name} → ${firstTransfer.to.name} (${firstTransfer.amount.toLocaleString()}円)`,
+      );
+      if (expensesRes.settlement.transfers.length > 1) {
+        const remaining = expensesRes.settlement.transfers.slice(1);
+        for (const t of remaining) {
+          console.log(`  未精算: ${t.from.name} → ${t.to.name} (${t.amount.toLocaleString()}円)`);
+        }
+      }
+    }
+
+    // 9. Create souvenirs
     console.log("\nCreating souvenirs...");
     for (const { isPurchased, ...souvenirData } of SAMPLE_SOUVENIRS_DEV) {
       const created = await apiFetch<{ id: string }>(`/api/trips/${trip.id}/souvenirs`, {
@@ -889,7 +922,7 @@ async function main() {
     }
   }
 
-  // 9. Create poll trip (skip if already exists)
+  // 10. Create poll trip (skip if already exists)
   console.log(`\nCreating poll trip: ${SAMPLE_POLL_TRIP.title}`);
   const existingPollTrip = existingTrips.find((t) => t.title === SAMPLE_POLL_TRIP.title);
   if (existingPollTrip) {
@@ -982,7 +1015,7 @@ async function main() {
     }
   }
 
-  // 10. Create friend relationships (skip if already friends)
+  // 11. Create friend relationships (skip if already friends)
   console.log("\nCreating friend relationships...");
 
   async function ensureFriends(
@@ -1020,7 +1053,7 @@ async function main() {
     await ensureFriends(aliceData.cookies, bobData.cookies, bobData.userId, "alice <-> bob");
   }
 
-  // 11. Create groups with members (skip if already exists)
+  // 12. Create groups with members (skip if already exists)
   console.log("\nCreating groups...");
 
   async function ensureGroup(name: string, memberUserIds: string[], label: string) {
@@ -1054,7 +1087,7 @@ async function main() {
     "家族 (dev所有, alice)",
   );
 
-  // 12. Create bookmark lists with bookmarks (skip if already exists)
+  // 13. Create bookmark lists with bookmarks (skip if already exists)
   console.log(`\nCreating ${SAMPLE_BOOKMARK_LISTS.length} bookmark lists...`);
   for (const listData of SAMPLE_BOOKMARK_LISTS) {
     if (existingBookmarkLists.some((l) => l.name === listData.name)) {

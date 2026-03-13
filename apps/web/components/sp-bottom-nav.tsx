@@ -103,43 +103,48 @@ export function SpBottomNav() {
       )}
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <div className="flex h-16 items-stretch">
+      <ul className="flex h-16 items-stretch">
         {visibleLinks.map((link) => {
           const active = pathname === link.href;
           return (
-            <NavItem
-              key={link.href}
-              href={link.href}
-              active={active}
-              label={link.label}
-              badge={link.href === friendHref ? friendRequestCount : undefined}
-            >
-              <NavIcon icon={link.icon} active={active} />
-            </NavItem>
+            <li key={link.href} className="flex flex-1">
+              <NavItem
+                href={link.href}
+                active={active}
+                label={link.label}
+                badge={link.href === friendHref ? friendRequestCount : undefined}
+              >
+                <NavIcon icon={link.icon} active={active} />
+              </NavItem>
+            </li>
           );
         })}
         {mounted && session?.user && !isGuest && (
-          <NavItem
-            href="/sp/notifications"
-            active={pathname === "/sp/notifications"}
-            label="通知"
-            badge={unreadCount}
-          >
-            <NavIcon icon={Bell} active={pathname === "/sp/notifications"} />
-          </NavItem>
+          <li className="flex flex-1">
+            <NavItem
+              href="/sp/notifications"
+              active={pathname === "/sp/notifications"}
+              label="通知"
+              badge={unreadCount}
+            >
+              <NavIcon icon={Bell} active={pathname === "/sp/notifications"} />
+            </NavItem>
+          </li>
         )}
-        <NavItem href="/sp/my" active={pathname === "/sp/my"} label="プロフィール">
-          {mounted && session?.user ? (
-            <UserAvatar
-              name={session.user.name ?? ""}
-              image={session.user.image}
-              className="h-6 w-6"
-            />
-          ) : (
-            <User className="h-6 w-6" />
-          )}
-        </NavItem>
-      </div>
+        <li className="flex flex-1">
+          <NavItem href="/sp/my" active={pathname === "/sp/my"} label="プロフィール">
+            {mounted && session?.user ? (
+              <UserAvatar
+                name={session.user.name ?? ""}
+                image={session.user.image}
+                className="h-6 w-6"
+              />
+            ) : (
+              <User className="h-6 w-6" />
+            )}
+          </NavItem>
+        </li>
+      </ul>
     </nav>
   );
 }

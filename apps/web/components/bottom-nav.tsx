@@ -53,31 +53,32 @@ export function BottomNavBase({ className, links, friendHref }: BottomNavBasePro
       )}
       style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
     >
-      <div className="flex h-12 items-stretch">
+      <ul className="flex h-12 items-stretch">
         {visibleLinks.map((link) => {
           const active = pathname === link.href;
           return (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-xs transition-[colors,transform] active:bg-accent active:scale-[0.90]",
-                active ? "font-medium text-primary" : "text-muted-foreground",
-              )}
-            >
-              <link.icon
-                className={cn("h-5 w-5 transition-transform duration-200", active && "scale-110")}
-              />
-              <span className="sr-only">{link.label}</span>
-              {link.href === friendHref && friendRequestCount > 0 && (
-                <span className="absolute top-1.5 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
-                  {friendRequestCount}
-                </span>
-              )}
-            </Link>
+            <li key={link.href} className="flex flex-1">
+              <Link
+                href={link.href}
+                className={cn(
+                  "relative flex flex-1 flex-col items-center justify-center gap-0.5 text-xs transition-[colors,transform] active:bg-accent active:scale-[0.90]",
+                  active ? "font-medium text-primary" : "text-muted-foreground",
+                )}
+              >
+                <link.icon
+                  className={cn("h-5 w-5 transition-transform duration-200", active && "scale-110")}
+                />
+                <span className="sr-only">{link.label}</span>
+                {link.href === friendHref && friendRequestCount > 0 && (
+                  <span className="absolute top-1.5 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
+                    {friendRequestCount}
+                  </span>
+                )}
+              </Link>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </nav>
   );
 }

@@ -47,7 +47,7 @@ export function TimeInput({ value, onChange, disabled, className }: TimeInputPro
   return (
     <div className={cn("flex items-center gap-1", className)}>
       <Select value={parsed?.hour ?? ""} onValueChange={handleHourChange} disabled={disabled}>
-        <SelectTrigger className="w-[70px]">
+        <SelectTrigger className="w-[70px]" aria-label="時">
           <SelectValue placeholder="--" />
         </SelectTrigger>
         <SelectContent>
@@ -60,7 +60,7 @@ export function TimeInput({ value, onChange, disabled, className }: TimeInputPro
       </Select>
       <span className="text-muted-foreground">:</span>
       <Select value={parsed?.minute ?? ""} onValueChange={handleMinuteChange} disabled={disabled}>
-        <SelectTrigger className="w-[70px]">
+        <SelectTrigger className="w-[70px]" aria-label="分">
           <SelectValue placeholder="--" />
         </SelectTrigger>
         <SelectContent>

@@ -386,6 +386,7 @@ export function ExpenseDialog({
                     key={m.userId}
                     type="button"
                     onClick={() => toggleMember(m.userId)}
+                    aria-pressed={selectedMembers.has(m.userId)}
                     className={cn(
                       "rounded-full border px-3 py-1.5 text-sm transition-colors",
                       selectedMembers.has(m.userId)
@@ -481,6 +482,7 @@ export function ExpenseDialog({
                       size="icon"
                       className="h-8 w-8 shrink-0"
                       onClick={() => removeLineItem(item.id)}
+                      aria-label="品目を削除"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -491,6 +493,7 @@ export function ExpenseDialog({
                         key={m.userId}
                         type="button"
                         onClick={() => toggleLineItemMember(item.id, m.userId)}
+                        aria-pressed={item.memberIds.has(m.userId)}
                         className={cn(
                           "rounded-full border px-3 py-1.5 text-sm transition-colors",
                           item.memberIds.has(m.userId)

@@ -470,14 +470,6 @@ export function cardBodyProps(
   if (selectable) {
     return {
       onClick: () => onSelect?.(id),
-      onKeyDown: (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onSelect?.(id);
-        }
-      },
-      role: "button" as const,
-      tabIndex: 0,
       "aria-pressed": selected,
     };
   }

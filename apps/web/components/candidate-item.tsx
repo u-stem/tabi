@@ -108,29 +108,23 @@ export const CandidateItem = memo(function CandidateItem({
   const transportLabel = spot.transportMethod
     ? TRANSPORT_METHOD_LABELS[spot.transportMethod as TransportMethod]
     : null;
+  const CardWrapper = selectable ? "button" : "div";
   const cardElement = (
-    <div
+    <CardWrapper
       ref={setNodeRef}
       style={style}
+      type={selectable ? "button" : undefined}
       className={cn(
         "animate-in fade-in-0 slide-in-from-top-1 duration-200",
         "flex items-center gap-2 rounded-md border p-3",
         isDragging && "opacity-50",
         selectable &&
-          "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "w-full cursor-pointer text-left transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         selectable && selected && SELECTED_RING,
       )}
       {...(selectable
         ? {
             onClick: () => onSelect?.(spot.id),
-            onKeyDown: (e: React.KeyboardEvent) => {
-              if (e.key === "Enter" || e.key === " ") {
-                e.preventDefault();
-                onSelect?.(spot.id);
-              }
-            },
-            role: "button" as const,
-            tabIndex: 0,
             "aria-pressed": selected,
           }
         : {})}
@@ -339,7 +333,7 @@ export const CandidateItem = memo(function CandidateItem({
             </DropdownMenuContent>
           </DropdownMenu>
         ))}
-    </div>
+    </CardWrapper>
   );
 
   return (

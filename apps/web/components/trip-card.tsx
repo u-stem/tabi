@@ -51,7 +51,7 @@ export const TripCard = memo(function TripCard({
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-xl">
           <Image
             src={coverImageUrl}
-            alt=""
+            alt={`${title}のカバー画像`}
             fill
             priority={priority}
             className="object-cover"

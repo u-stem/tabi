@@ -72,13 +72,15 @@ export const PlaceItem = memo(function PlaceItem({
   const visibleEndTime = crossDayDisplay || endDayOffset ? null : endTime;
   const timeStr = formatTimeRange(visibleStartTime, visibleEndTime);
 
+  const CardBodyWrapper = selectable ? "button" : "div";
   const cardBody = (
-    <div
+    <CardBodyWrapper
+      type={selectable ? "button" : undefined}
       className={cn(
         "min-w-0 flex-1 rounded-md border p-3",
         crossDayDisplay && "border-dashed bg-muted/30",
         selectable &&
-          "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          "w-full cursor-pointer text-left transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         selectable && selected && SELECTED_RING,
       )}
       {...cardBodyProps(
@@ -144,7 +146,7 @@ export const PlaceItem = memo(function PlaceItem({
           />
         )}
       </div>
-    </div>
+    </CardBodyWrapper>
   );
 
   return (

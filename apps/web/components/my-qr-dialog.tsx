@@ -36,7 +36,7 @@ export function MyQrDialog({ userId }: MyQrDialogProps) {
           <ResponsiveDialogTitle>フレンド追加用QRコード</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
         <div className="flex flex-col items-center gap-4 py-4">
-          <div className="rounded-lg border p-4 bg-white">
+          <div className="rounded-lg border bg-white p-4 dark:border-0 dark:shadow-sm">
             <QRCodeSVG value={url} size={200} level="M" />
           </div>
           <p className="text-sm text-muted-foreground text-center">

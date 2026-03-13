@@ -1,7 +1,8 @@
 import type { MemberRole, ScheduleColor, TripStatus } from "@sugara/shared";
 
 export const SELECTED_RING = "border-ring ring-2 ring-ring";
-export const DROP_ZONE_ACTIVE = "border-blue-400 bg-blue-50 dark:bg-blue-950/30";
+export const DROP_ZONE_ACTIVE =
+  "border-blue-400 bg-blue-50 dark:border-blue-600 dark:bg-blue-950/30";
 
 export const STATUS_COLORS: Record<TripStatus, string> = {
   scheduling:

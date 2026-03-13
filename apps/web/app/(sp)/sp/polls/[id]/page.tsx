@@ -159,7 +159,7 @@ export default function SpQuickPollDetailPage() {
                   label="URLをコピー"
                 />
               </div>
-              <div className="flex justify-center rounded-md border bg-white p-4">
+              <div className="flex justify-center rounded-md border bg-white p-4 dark:border-0 dark:shadow-sm">
                 <QRCodeSVG value={shareUrl} size={200} level="M" />
               </div>
             </div>

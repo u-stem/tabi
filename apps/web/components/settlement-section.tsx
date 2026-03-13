@@ -138,7 +138,18 @@ export function SettlementSection({
   const handleToggle = (fromId: string, toId: string, amount: number) => {
     const existing = findPayment(settlementPayments, fromId, toId, amount);
     if (existing) {
-      uncheckMutation.mutate(existing.id);
+      if (existing.id.startsWith("optimistic-")) {
+        // Still pending on server — just remove from cache
+        const current = queryClient.getQueryData<ExpensesResponse>(expenseQueryKey);
+        if (current) {
+          queryClient.setQueryData<ExpensesResponse>(expenseQueryKey, {
+            ...current,
+            settlementPayments: current.settlementPayments.filter((p) => p.id !== existing.id),
+          });
+        }
+      } else {
+        uncheckMutation.mutate(existing.id);
+      }
     } else {
       checkMutation.mutate({ fromUserId: fromId, toUserId: toId, amount });
     }

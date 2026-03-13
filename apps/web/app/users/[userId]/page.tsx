@@ -10,6 +10,7 @@ import { Logo } from "@/components/logo";
 import { Badge } from "@/components/ui/badge";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
+import { UnsettledSummarySection } from "@/components/unsettled-summary";
 import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
@@ -144,6 +145,9 @@ export function ProfileContent({
   profile: PublicProfileResponse;
   userId: string;
 }) {
+  const { data: session } = useSession();
+  const isOwnProfile = session?.user?.id === userId;
+
   return (
     <>
       <div className="mb-6 flex flex-col items-center gap-3 py-6">
@@ -156,6 +160,8 @@ export function ProfileContent({
         <h1 className="text-xl font-bold">{profile.name}</h1>
         <p className="text-sm text-muted-foreground">{profile.bookmarkLists.length} リスト</p>
       </div>
+
+      <UnsettledSummarySection userId={userId} isOwnProfile={isOwnProfile} />
 
       {profile.bookmarkLists.length === 0 ? (
         <div className="flex flex-col items-center py-12 text-center">

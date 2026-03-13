@@ -20,6 +20,7 @@ type TripCardProps = TripListItem & {
   onSelect?: (id: string) => void;
   /** Pass true for the first visible card to avoid lazy-loading the LCP image. */
   priority?: boolean;
+  unsettled?: boolean;
 };
 
 export const TripCard = memo(function TripCard({
@@ -38,6 +39,7 @@ export const TripCard = memo(function TripCard({
   selected = false,
   onSelect,
   priority = false,
+  unsettled = false,
 }: TripCardProps) {
   const hasDates = startDate && endDate;
   const dayCount = hasDates ? getDayCount(startDate, endDate) : null;
@@ -65,6 +67,14 @@ export const TripCard = memo(function TripCard({
             <CardTitle className="truncate text-lg">{title}</CardTitle>
           </div>
           <div className="flex items-center gap-1.5">
+            {unsettled && (
+              <Badge
+                variant="outline"
+                className="text-xs border-red-200 text-red-600 dark:border-red-800 dark:text-red-400"
+              >
+                未精算
+              </Badge>
+            )}
             {showRole && (
               <Badge variant="outline" className={cn("text-xs", ROLE_COLORS[role])}>
                 {ROLE_LABELS[role]}

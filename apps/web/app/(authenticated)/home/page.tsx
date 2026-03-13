@@ -17,6 +17,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { pageTitle } from "@/lib/constants";
 import { type HomeTab, useHomeTrips } from "@/lib/hooks/use-home-trips";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
+import { useUnsettledTripIds } from "@/lib/hooks/use-unsettled-trip-ids";
 import { isDialogOpen } from "@/lib/hotkeys";
 import { MSG } from "@/lib/messages";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
@@ -88,6 +89,7 @@ export default function HomePage() {
     invalidateAll,
   } = useHomeTrips();
 
+  const unsettledTripIds = useUnsettledTripIds();
   const online = useOnlineStatus();
   const searchInputRef = useRef<HTMLInputElement>(null);
 
@@ -241,6 +243,7 @@ export default function HomePage() {
                   selectable={selectionMode}
                   selected={selectedIds.has(trip.id)}
                   onSelect={handleSelect}
+                  unsettled={unsettledTripIds.has(trip.id)}
                 />
               </div>
             ))}

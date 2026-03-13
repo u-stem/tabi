@@ -25,26 +25,31 @@ export function UnsettledSummarySection({ userId, isOwnProfile }: UnsettledSumma
   }
 
   return (
-    <div className="space-y-3">
-      <p className="text-sm font-semibold">未精算</p>
-      <div className="flex gap-3">
-        <div className="flex-1 rounded-lg bg-red-50 p-3 text-center dark:bg-red-950">
-          <p className="text-xs text-red-600 dark:text-red-400">支払い残</p>
-          <p className="text-lg font-bold text-red-600 dark:text-red-400">
-            {data.totalOwed > 0 ? `¥${data.totalOwed.toLocaleString()}` : "-"}
-          </p>
-        </div>
-        <div className="flex-1 rounded-lg bg-emerald-50 p-3 text-center dark:bg-emerald-950">
-          <p className="text-xs text-emerald-600 dark:text-emerald-400">受取り残</p>
-          <p className="text-lg font-bold text-emerald-600 dark:text-emerald-400">
-            {data.totalOwedTo > 0 ? `¥${data.totalOwedTo.toLocaleString()}` : "-"}
-          </p>
-        </div>
+    <div className="rounded-lg border">
+      <div className="flex items-center justify-between px-3 py-2 text-sm">
+        <span className="font-medium">未精算</span>
+        <span className="flex items-center gap-3 text-xs text-muted-foreground">
+          {data.totalOwed > 0 && (
+            <span>
+              支払い残{" "}
+              <span className="font-semibold text-destructive">
+                ¥{data.totalOwed.toLocaleString()}
+              </span>
+            </span>
+          )}
+          {data.totalOwedTo > 0 && (
+            <span>
+              受取り残{" "}
+              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
+                ¥{data.totalOwedTo.toLocaleString()}
+              </span>
+            </span>
+          )}
+        </span>
       </div>
-
       {data.trips.map((trip) => (
-        <div key={trip.tripId} className="overflow-hidden rounded-lg border">
-          <div className="border-b bg-muted/50 px-3 py-2 text-xs font-semibold">
+        <div key={trip.tripId}>
+          <div className="border-t bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
             {trip.tripTitle}
           </div>
           {trip.transfers.map((t, i) => {
@@ -52,7 +57,7 @@ export function UnsettledSummarySection({ userId, isOwnProfile }: UnsettledSumma
             return (
               <div
                 key={`${t.fromUser.id}-${t.toUser.id}-${i}`}
-                className="flex items-center justify-between border-b px-3 py-2 text-sm last:border-b-0"
+                className="flex items-center justify-between border-t px-3 py-2 text-sm"
               >
                 <span className="flex items-center gap-1">
                   {isOwed ? "あなた" : t.fromUser.name}
@@ -60,10 +65,8 @@ export function UnsettledSummarySection({ userId, isOwnProfile }: UnsettledSumma
                   {isOwed ? t.toUser.name : "あなた"}
                 </span>
                 <span
-                  className={`font-semibold ${
-                    isOwed
-                      ? "text-red-600 dark:text-red-400"
-                      : "text-emerald-600 dark:text-emerald-400"
+                  className={`font-medium ${
+                    isOwed ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"
                   }`}
                 >
                   ¥{t.amount.toLocaleString()}

@@ -85,7 +85,11 @@ export function Header() {
             ) : (
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Link href="/my" aria-label="マイページ" className="group">
+                  <Link
+                    href="/my"
+                    aria-label="マイページ"
+                    className="group flex h-9 w-9 items-center justify-center"
+                  >
                     <UserAvatar
                       name={session.user.name ?? ""}
                       image={session.user.image}

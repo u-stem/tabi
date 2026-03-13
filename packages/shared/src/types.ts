@@ -288,7 +288,36 @@ export type CategoryTotal = {
 export type ExpensesResponse = {
   expenses: ExpenseItem[];
   settlement: Settlement;
+  settlementPayments: SettlementPayment[];
   categoryTotals: CategoryTotal[];
+};
+
+export type SettlementPayment = {
+  id: string;
+  tripId: string;
+  fromUserId: string;
+  toUserId: string;
+  amount: number;
+  paidAt: string;
+  paidByUserId: string;
+};
+
+export type UnsettledTransfer = {
+  fromUser: { id: string; name: string };
+  toUser: { id: string; name: string };
+  amount: number;
+};
+
+export type UnsettledTrip = {
+  tripId: string;
+  tripTitle: string;
+  transfers: UnsettledTransfer[];
+};
+
+export type UnsettledSummary = {
+  totalOwed: number;
+  totalOwedTo: number;
+  trips: UnsettledTrip[];
 };
 
 // Notification API response types

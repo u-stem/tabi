@@ -268,6 +268,9 @@ export const MSG = {
   // Expense
   EXPENSE_SAVE_FAILED: "費用の保存に失敗しました",
   EXPENSE_DELETE_FAILED: "費用の削除に失敗しました",
+  SETTLEMENT_CHECK_FAILED: "精算チェックに失敗しました",
+  SETTLEMENT_UNCHECK_FAILED: "精算チェックの解除に失敗しました",
+  SETTLEMENT_ALREADY_CHECKED: "この精算は既にチェック済みです",
 
   // Notification
   NOTIFICATION_MARK_READ_FAILED: "既読の更新に失敗しました",
@@ -462,6 +465,7 @@ export const PUSH_MSG: Record<string, (payload: Record<string, string | undefine
   poll_started: () => "日程投票が開始されました",
   poll_closed: () => "日程投票が終了しました",
   expense_added: (p) => `${p.actorName}さんが費用「${p.entityName}」を追加しました`,
+  settlement_checked: (p) => `${p.actorName}さんが精算をチェックしました`,
 };
 
 // ─── UI labels (Japanese, used in dropdowns and badges) ───────────────────────

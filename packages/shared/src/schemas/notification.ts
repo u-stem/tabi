@@ -10,6 +10,7 @@ export const notificationTypeSchema = z.enum([
   "poll_started",
   "poll_closed",
   "expense_added",
+  "settlement_checked",
 ]);
 
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
@@ -45,6 +46,7 @@ export const NOTIFICATION_DEFAULTS = {
   poll_started: { inApp: true, push: false },
   poll_closed: { inApp: true, push: false },
   expense_added: { inApp: false, push: false },
+  settlement_checked: { inApp: true, push: true },
 } satisfies Record<NotificationType, { inApp: boolean; push: boolean }>;
 
 /** Japanese labels for notification types, used in preference settings UI. */
@@ -58,6 +60,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   poll_started: "日程投票が開始された",
   poll_closed: "日程投票が終了した",
   expense_added: "費用が追加された",
+  settlement_checked: "精算チェック",
 };
 
 /**
@@ -84,6 +87,8 @@ export function formatNotificationText(type: string, payload: Record<string, str
       return `「${payload.tripName}」の日程投票が終了しました`;
     case "expense_added":
       return `${payload.actorName}さんが費用「${payload.entityName}」を追加しました`;
+    case "settlement_checked":
+      return `${payload.actorName}さんが精算をチェックしました`;
     default:
       return "新しい通知があります";
   }

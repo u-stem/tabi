@@ -137,3 +137,9 @@ export const updateExpenseSchema = z
     },
     { message: "Itemized split requires line items", path: ["lineItems"] },
   );
+
+export const createSettlementPaymentSchema = z.object({
+  fromUserId: z.string().uuid(),
+  toUserId: z.string().uuid(),
+  amount: z.number().int().positive(),
+});

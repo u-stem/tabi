@@ -122,7 +122,7 @@ export default function SpTripDetailPage() {
   const scrollPositions = useRef<Record<string, number>>({});
   const mobileContentRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
-  const tapTransitionRef = useRef(false);
+  const [tapAnimating, setTapAnimating] = useState(false);
   const [saveToBookmarkIds, setSaveToBookmarkIds] = useState<string[]>([]);
   const [bookmarkPickerOpen, setBookmarkPickerOpen] = useState(false);
 
@@ -191,7 +191,7 @@ export default function SpTripDetailPage() {
       if (scrollEl) {
         scrollPositions.current[mobileTabRef.current] = scrollEl.scrollTop;
       }
-      tapTransitionRef.current = source === "tap";
+      if (source === "tap") setTapAnimating(true);
       mobileTabRef.current = tab;
       setMobileTab(tab);
     },
@@ -338,10 +338,6 @@ export default function SpTripDetailPage() {
   const scheduleLimitReached = trip ? trip.scheduleCount >= MAX_SCHEDULES_PER_TRIP : false;
   const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
   const selectionValue = { ...selection, canEnter: canEdit && online };
-
-  const adjacentTabId = swipe.adjacent
-    ? (tabIds[currentTabIdx + (swipe.adjacent === "next" ? 1 : -1)] ?? null)
-    : null;
 
   function renderTabContent(tabId: MobileContentTab) {
     if (!trip) return null;
@@ -623,43 +619,36 @@ export default function SpTripDetailPage() {
                     ref={mobileContentRef}
                     className="min-h-[60vh] overflow-x-hidden touch-pan-y pb-20"
                   >
+                    {/* Base offset: snaps to current tab index. React-controlled.
+                         Tap changes animate via CSS transition; swipe changes snap
+                         instantly (the hook handles the smooth animation). */}
                     <div
-                      ref={swipeContainerRef}
-                      className="relative touch-pan-y will-change-transform"
+                      style={{
+                        transform: `translateX(${-currentTabIdx * 100}%)`,
+                        transition: tapAnimating
+                          ? "transform 250ms cubic-bezier(0.2, 0, 0, 1)"
+                          : "none",
+                      }}
+                      onTransitionEnd={() => setTapAnimating(false)}
                     >
-                      {/* Current tab */}
+                      {/* Swipe delta: finger-tracking translateX. Hook-controlled. */}
                       <div
-                        className={
-                          tapTransitionRef.current
-                            ? "animate-[tab-fade-in_150ms_ease-out]"
-                            : undefined
-                        }
-                        ref={() => {
-                          tapTransitionRef.current = false;
-                        }}
+                        ref={swipeContainerRef}
+                        className="flex touch-pan-y will-change-transform"
                       >
-                        <div
-                          id={getMobileTabPanelId(mobileTab)}
-                          role="tabpanel"
-                          aria-labelledby={getMobileTabTriggerId(mobileTab)}
-                        >
-                          {renderTabContent(mobileTab)}
-                        </div>
+                        {tabIds.map((tabId) => (
+                          <div
+                            key={tabId}
+                            className="w-full shrink-0"
+                            id={getMobileTabPanelId(tabId)}
+                            role="tabpanel"
+                            aria-labelledby={getMobileTabTriggerId(tabId)}
+                            aria-hidden={tabId !== mobileTab || undefined}
+                          >
+                            {renderTabContent(tabId)}
+                          </div>
+                        ))}
                       </div>
-
-                      {/* Adjacent tab (rendered only during swipe) */}
-                      {swipe.adjacent && adjacentTabId && (
-                        <div
-                          className="absolute top-0 left-0 w-full"
-                          aria-hidden="true"
-                          style={{
-                            transform:
-                              swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
-                          }}
-                        >
-                          {renderTabContent(adjacentTabId)}
-                        </div>
-                      )}
                     </div>
                   </div>
                 </div>

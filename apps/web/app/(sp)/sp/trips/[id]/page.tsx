@@ -120,6 +120,9 @@ export default function SpTripDetailPage() {
   const [mobileTab, setMobileTab] = useState<MobileContentTab>("schedule");
   const mobileTabRef = useRef<MobileContentTab>("schedule");
   const scrollPositions = useRef<Record<string, number>>({});
+  // Live scroll position at swipe start — scrollPositions is only written on
+  // tab change, so this captures the up-to-date value for translateY compensation.
+  const swipeScrollSnapshot = useRef(0);
   const mobileContentRef = useRef<HTMLDivElement>(null);
   const swipeContainerRef = useRef<HTMLDivElement>(null);
   const [tapAnimating, setTapAnimating] = useState(false);
@@ -319,6 +322,17 @@ export default function SpTripDetailPage() {
   useEffect(() => {
     selection.exit();
   }, [selectedDay, mobileTab]);
+
+  // Snapshot the current scroll position when a swipe gesture begins so
+  // the translateY compensation on the adjacent tab uses the live value.
+  useLayoutEffect(() => {
+    if (swipe.adjacent !== null) {
+      const scrollEl = spScrollRef?.current ?? mobileContentRef.current;
+      const pos = scrollEl?.scrollTop ?? 0;
+      scrollPositions.current[mobileTab] = pos;
+      swipeScrollSnapshot.current = pos;
+    }
+  }, [swipe.adjacent, mobileTab, spScrollRef]);
 
   // Prevent outer SpScrollContainer from scrolling during swipe.
   // useLayoutEffect (not useEffect) so the overflow restore happens before
@@ -646,10 +660,22 @@ export default function SpTripDetailPage() {
                           const isSwipeTarget =
                             swipe.adjacent !== null &&
                             i === currentTabIdx + (swipe.adjacent === "next" ? 1 : -1);
+                          // Compensate for shared scroll container: the adjacent tab
+                          // would appear at the current tab's scroll position during
+                          // the swipe animation. Shift it by the difference so it
+                          // visually appears at its own saved scroll position.
+                          const scrollCompensation = isSwipeTarget
+                            ? swipeScrollSnapshot.current - (scrollPositions.current[tabId] ?? 0)
+                            : 0;
                           return (
                             <div
                               key={tabId}
                               className={`w-full shrink-0${!isCurrent && !isSwipeTarget ? " h-0 overflow-hidden" : ""}`}
+                              style={
+                                scrollCompensation !== 0
+                                  ? { transform: `translateY(${scrollCompensation}px)` }
+                                  : undefined
+                              }
                               id={getMobileTabPanelId(tabId)}
                               role="tabpanel"
                               aria-labelledby={getMobileTabTriggerId(tabId)}

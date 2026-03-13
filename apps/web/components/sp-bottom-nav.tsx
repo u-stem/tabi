@@ -39,7 +39,7 @@ function ActiveDot({ visible }: { visible: boolean }) {
 function Badge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <span className="absolute top-2 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
+    <span className="absolute top-1.5 left-1/2 ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
       {count > 9 ? "9+" : count}
     </span>
   );

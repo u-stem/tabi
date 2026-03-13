@@ -2,12 +2,13 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { UserPlus, X } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { FriendsTab } from "@/app/(authenticated)/friends/_components/friends-tab";
 import { GroupsTab } from "@/app/(authenticated)/friends/_components/groups-tab";
 import { Fab } from "@/components/fab";
 import { FriendRequestsCard } from "@/components/friend-requests-card";
+import { SpSwipeTabs, type SwipeTab } from "@/components/sp-swipe-tabs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -27,18 +28,15 @@ import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
 import { useFriendsPage } from "@/lib/hooks/use-friends-page";
-import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
-import { cn } from "@/lib/utils";
 
-const TABS = ["friends", "groups"] as const;
-type Tab = (typeof TABS)[number];
+type Tab = "friends" | "groups";
 
-const TAB_LABELS: Record<Tab, string> = {
-  friends: "フレンド",
-  groups: "グループ",
-};
+const FRIEND_TABS: SwipeTab<Tab>[] = [
+  { id: "friends", label: "フレンド" },
+  { id: "groups", label: "グループ" },
+];
 
 function SpFriendsSkeleton() {
   return (
@@ -79,49 +77,18 @@ export default function SpFriendsPage() {
   const { friends, requests, groups, isLoading } = useFriendsPage(isGuest);
 
   const [tab, setTab] = useState<Tab>("friends");
-  const tabRef = useRef<Tab>("friends");
   const [sendOpen, setSendOpen] = useState(false);
   const [addresseeId, setAddresseeId] = useState("");
   const [sendLoading, setSendLoading] = useState(false);
   const [groupsCreateOpen, setGroupsCreateOpen] = useState(false);
 
-  const contentRef = useRef<HTMLDivElement>(null);
-  const swipeRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     document.title = pageTitle("フレンド");
   }, []);
 
-  const currentTabIdx = TABS.indexOf(tab);
-
   const changeTab = useCallback((t: Tab) => {
-    tabRef.current = t;
     setTab(t);
   }, []);
-
-  const handleSwipe = useCallback(
-    (direction: "left" | "right") => {
-      const idx = TABS.indexOf(tabRef.current);
-      const nextIdx = direction === "left" ? idx + 1 : idx - 1;
-      if (nextIdx < 0 || nextIdx >= TABS.length) return;
-      changeTab(TABS[nextIdx]);
-    },
-    [changeTab],
-  );
-
-  const swipe = useSwipeTab(contentRef, swipeRef, {
-    onSwipeComplete: handleSwipe,
-    canSwipePrev: currentTabIdx > 0,
-    canSwipeNext: currentTabIdx < TABS.length - 1,
-    enabled: !isLoading && !isGuest,
-  });
-
-  const adjacentTab =
-    swipe.adjacent === "next"
-      ? TABS[currentTabIdx + 1]
-      : swipe.adjacent === "prev"
-        ? TABS[currentTabIdx - 1]
-        : undefined;
 
   async function handleSendRequest(e: React.FormEvent) {
     e.preventDefault();
@@ -144,25 +111,28 @@ export default function SpFriendsPage() {
     }
   }
 
-  function renderTab(t: Tab) {
-    switch (t) {
-      case "friends":
-        return (
-          <div className="space-y-4">
-            <FriendRequestsCard requests={requests} profileHrefPrefix="/sp/users" />
-            <FriendsTab friends={friends} profileHrefPrefix="/sp/users" />
-          </div>
-        );
-      case "groups":
-        return (
-          <GroupsTab
-            groups={groups}
-            createOpen={groupsCreateOpen}
-            onCreateOpenChange={setGroupsCreateOpen}
-          />
-        );
-    }
-  }
+  const renderContent = useCallback(
+    (t: Tab) => {
+      switch (t) {
+        case "friends":
+          return (
+            <div className="space-y-4">
+              <FriendRequestsCard requests={requests} profileHrefPrefix="/sp/users" />
+              <FriendsTab friends={friends} profileHrefPrefix="/sp/users" />
+            </div>
+          );
+        case "groups":
+          return (
+            <GroupsTab
+              groups={groups}
+              createOpen={groupsCreateOpen}
+              onCreateOpenChange={setGroupsCreateOpen}
+            />
+          );
+      }
+    },
+    [requests, friends, groups, groupsCreateOpen, setGroupsCreateOpen],
+  );
 
   if (isGuest) {
     return (
@@ -174,67 +144,17 @@ export default function SpFriendsPage() {
     );
   }
 
-  const tabItems = TABS.map((t, i) => ({ value: t, label: TAB_LABELS[t], index: i }));
-
   return (
     <>
       <LoadingBoundary isLoading={isLoading} skeleton={<SpFriendsSkeleton />}>
-        {/* Tab bar */}
-        <div
-          role="tablist"
-          aria-orientation="horizontal"
-          className="mt-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
-        >
-          {tabItems.map(({ value, label, index }) => (
-            <button
-              key={value}
-              type="button"
-              role="tab"
-              aria-selected={tab === value}
-              tabIndex={tab === value ? 0 : -1}
-              onClick={() => changeTab(value)}
-              onKeyDown={(e) => {
-                if (e.key === "ArrowRight") {
-                  e.preventDefault();
-                  changeTab(tabItems[(index + 1) % tabItems.length].value);
-                } else if (e.key === "ArrowLeft") {
-                  e.preventDefault();
-                  changeTab(tabItems[(index - 1 + tabItems.length) % tabItems.length].value);
-                }
-              }}
-              className={cn(
-                "min-h-[36px] rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.97]",
-                tab === value
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-
-        {/* Swipe container */}
-        <div
-          ref={contentRef}
-          className="mt-4 min-h-[60vh] overflow-x-hidden px-0.5 -mx-0.5 touch-pan-y"
-        >
-          <div ref={swipeRef} className="relative touch-pan-y will-change-transform">
-            <div className="pt-0.5">{renderTab(tab)}</div>
-
-            {swipe.adjacent && adjacentTab && (
-              <div
-                className="absolute top-0 left-0 w-full pt-0.5"
-                aria-hidden="true"
-                style={{
-                  transform: swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
-                }}
-              >
-                {renderTab(adjacentTab)}
-              </div>
-            )}
-          </div>
-        </div>
+        <SpSwipeTabs<Tab>
+          tabs={FRIEND_TABS}
+          activeTab={tab}
+          onTabChange={changeTab}
+          renderContent={renderContent}
+          swipeEnabled={!isLoading && !isGuest}
+          className="mt-4"
+        />
       </LoadingBoundary>
 
       {/* FABs are rendered outside the swipe container to avoid will-change-transform breaking fixed positioning */}

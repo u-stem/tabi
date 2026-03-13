@@ -89,7 +89,7 @@ export function SettlementSection({
   if (transfers.length === 0) return null;
 
   return (
-    <div className="space-y-2 rounded-md border px-3 pt-2 pb-3">
+    <div className="space-y-2 rounded-md border bg-muted/50 px-3 pt-2 pb-3">
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">精算</span>
         <span

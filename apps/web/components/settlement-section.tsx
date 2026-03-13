@@ -109,17 +109,22 @@ export function SettlementSection({
   });
 
   const uncheckMutation = useMutation({
-    mutationFn: (paymentId: string) =>
-      api(`/api/trips/${tripId}/settlement-payments/${paymentId}`, {
+    mutationFn: (vars: {
+      paymentId: string;
+      fromUserId: string;
+      toUserId: string;
+      amount: number;
+    }) =>
+      api(`/api/trips/${tripId}/settlement-payments/${vars.paymentId}`, {
         method: "DELETE",
       }),
-    onMutate: async (paymentId) => {
+    onMutate: async (vars) => {
       await queryClient.cancelQueries({ queryKey: expenseQueryKey });
       const previous = queryClient.getQueryData<ExpensesResponse>(expenseQueryKey);
       if (previous) {
         queryClient.setQueryData<ExpensesResponse>(expenseQueryKey, {
           ...previous,
-          settlementPayments: previous.settlementPayments.filter((p) => p.id !== paymentId),
+          settlementPayments: previous.settlementPayments.filter((p) => p.id !== vars.paymentId),
         });
       }
       return { previous };
@@ -127,7 +132,7 @@ export function SettlementSection({
     onSuccess: () => {
       invalidateRelated();
     },
-    onError: (err, _paymentId, context) => {
+    onError: (err, _vars, context) => {
       if (context?.previous) {
         queryClient.setQueryData(expenseQueryKey, context.previous);
       }
@@ -148,7 +153,12 @@ export function SettlementSection({
           });
         }
       } else {
-        uncheckMutation.mutate(existing.id);
+        uncheckMutation.mutate({
+          paymentId: existing.id,
+          fromUserId: fromId,
+          toUserId: toId,
+          amount,
+        });
       }
     } else {
       checkMutation.mutate({ fromUserId: fromId, toUserId: toId, amount });
@@ -177,7 +187,10 @@ export function SettlementSection({
             checkMutation.variables?.fromUserId === t.from.id &&
             checkMutation.variables?.toUserId === t.to.id &&
             checkMutation.variables?.amount === t.amount) ||
-          (uncheckMutation.isPending && payment?.id === uncheckMutation.variables);
+          (uncheckMutation.isPending &&
+            uncheckMutation.variables?.fromUserId === t.from.id &&
+            uncheckMutation.variables?.toUserId === t.to.id &&
+            uncheckMutation.variables?.amount === t.amount);
 
         return (
           <div

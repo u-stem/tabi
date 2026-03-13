@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { expenses, settlementPayments, tripMembers } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
+import { PG_UNIQUE_VIOLATION } from "../lib/constants";
 import { notifyUsers } from "../lib/notifications";
 import { calculateSettlement } from "../lib/settlement";
 import { requireAuth } from "../middleware/auth";
@@ -95,10 +96,9 @@ settlementPaymentRoutes.post("/:tripId/settlement-payments", requireTripAccess()
       }),
     });
 
-    return c.json({ settlementPayment: payment }, 201);
+    return c.json(payment, 201);
   } catch (err: unknown) {
-    // biome-ignore lint/suspicious/noExplicitAny: DB error code is not typed
-    if (err instanceof Error && (err as any).code === "23505") {
+    if (err instanceof Error && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
       return c.json({ error: "Settlement already checked" }, 409);
     }
     throw err;

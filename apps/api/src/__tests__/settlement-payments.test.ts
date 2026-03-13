@@ -118,7 +118,7 @@ describe("Settlement payment routes", () => {
 
       expect(res.status).toBe(201);
       const json = await res.json();
-      expect(json.settlementPayment.fromUserId).toBe(fromUserId);
+      expect(json.fromUserId).toBe(fromUserId);
       expect(logActivity).toHaveBeenCalledWith(
         expect.objectContaining({ action: "settle", entityType: "settlement" }),
       );
@@ -155,9 +155,7 @@ describe("Settlement payment routes", () => {
         { userId: toUserId, user: { id: toUserId, name: "To" } },
       ]);
       mockDbQuery.expenses.findMany.mockResolvedValue([]);
-      const uniqueError = new Error("duplicate key");
-      // biome-ignore lint/suspicious/noExplicitAny: DB error code is not typed
-      (uniqueError as any).code = "23505";
+      const uniqueError = Object.assign(new Error("duplicate key"), { code: "23505" });
       mockDbInsert.mockReturnValue({
         values: vi.fn().mockReturnValue({
           returning: vi.fn().mockRejectedValue(uniqueError),

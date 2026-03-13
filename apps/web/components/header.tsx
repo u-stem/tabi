@@ -77,7 +77,7 @@ export function Header() {
           ))}
         </div>
         <TooltipProvider>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <HeaderMenu />
             {mounted && session?.user && !isGuest && <NotificationBell />}
             {!mounted || !session?.user || isGuest ? (

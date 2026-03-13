@@ -23,6 +23,9 @@ const {
     trips: {
       findFirst: vi.fn(),
     },
+    settlementPayments: {
+      findMany: vi.fn(),
+    },
   },
   mockDbInsert: vi.fn(),
   mockDbUpdate: vi.fn(),
@@ -102,7 +105,10 @@ describe("Expense routes", () => {
     vi.clearAllMocks();
     setupAuth();
     mockDbQuery.trips.findFirst.mockResolvedValue({ title: "テスト旅行" });
+    mockDbQuery.settlementPayments.findMany.mockResolvedValue([]);
     mockCreateNotification.mockResolvedValue(undefined);
+    // Default: auto-reset of settlement payments needs .where() chain
+    mockDbDelete.mockReturnValue({ where: vi.fn().mockResolvedValue(undefined) });
   });
 
   describe("GET /api/trips/:tripId/expenses", () => {
@@ -646,8 +652,8 @@ describe("Expense routes", () => {
       });
 
       expect(res.status).toBe(200);
-      // lineItems should NOT be deleted when only title changes
-      expect(mockDbDelete).not.toHaveBeenCalled();
+      // lineItems should NOT be deleted when only title changes (1 call is auto-reset of settlement payments)
+      expect(mockDbDelete).toHaveBeenCalledTimes(1);
     });
 
     it("updates expense with splits in transaction", async () => {
@@ -869,8 +875,8 @@ describe("Expense routes", () => {
       });
 
       expect(res.status).toBe(200);
-      // delete is called twice: once for splits, once for lineItems
-      expect(mockDbDelete).toHaveBeenCalledTimes(2);
+      // delete is called 3 times: splits, lineItems, and auto-reset of settlement payments
+      expect(mockDbDelete).toHaveBeenCalledTimes(3);
     });
 
     it("amount のみ更新で既存 splits 合計と不一致の場合 400 を返す", async () => {

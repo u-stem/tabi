@@ -13,6 +13,7 @@ import {
   expenseLineItems,
   expenseSplits,
   expenses,
+  settlementPayments,
   tripMembers,
 } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
@@ -75,7 +76,16 @@ expenseRoutes.get("/:tripId/expenses", requireTripAccess(), async (c) => {
     count: data.count,
   }));
 
-  return c.json({ expenses: expenseList, settlement, categoryTotals });
+  const payments = await db.query.settlementPayments.findMany({
+    where: eq(settlementPayments.tripId, tripId),
+  });
+
+  return c.json({
+    expenses: expenseList,
+    settlement,
+    settlementPayments: payments,
+    categoryTotals,
+  });
 });
 
 // Create expense
@@ -161,6 +171,9 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
         );
       }
     }
+
+    // Auto-reset settlement payments when expenses change
+    await tx.delete(settlementPayments).where(eq(settlementPayments.tripId, tripId));
 
     return expense;
   });
@@ -297,6 +310,9 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
       await tx.delete(expenseLineItems).where(eq(expenseLineItems.expenseId, expenseId));
     }
 
+    // Auto-reset settlement payments when expenses change
+    await tx.delete(settlementPayments).where(eq(settlementPayments.tripId, tripId));
+
     return result;
   });
 
@@ -333,7 +349,11 @@ expenseRoutes.delete("/:tripId/expenses/:expenseId", requireTripAccess("editor")
     return c.json({ error: ERROR_MSG.EXPENSE_NOT_FOUND }, 404);
   }
 
-  await db.delete(expenses).where(eq(expenses.id, expenseId));
+  await db.transaction(async (tx) => {
+    await tx.delete(expenses).where(eq(expenses.id, expenseId));
+    // Auto-reset settlement payments when expenses change
+    await tx.delete(settlementPayments).where(eq(settlementPayments.tripId, tripId));
+  });
 
   logActivity({
     tripId,

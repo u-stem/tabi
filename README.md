@@ -2,6 +2,19 @@
 
 旅行計画Webアプリケーション。
 
+## 主な機能
+
+- **旅行計画**: 日程・スケジュール管理、メンバー招待、ロールベースの権限制御 (owner / editor / viewer)
+- **リアルタイム共同編集**: メンバー間でスケジュールの変更がリアルタイムに同期
+- **費用管理**: 費用の記録・カテゴリ分類・割り勘計算・精算チェック
+- **投票**: 旅行内のスケジュール投票、独立したかんたん投票 (リンク共有対応)
+- **ブックマーク**: スポットのブックマークリスト管理
+- **お土産管理**: 贈り先ごとの購入リスト・優先度設定
+- **ルーレット**: 行き先をランダムに決定
+- **通知**: アプリ内通知・Web Push 通知
+- **共有**: トークンベースの旅行共有 (未登録ユーザーにも閲覧可)
+- **モバイル対応**: SP 専用レイアウトによるモバイルフレンドリーな UI
+
 ## 技術スタック
 
 - **モノレポ**: Turborepo + bun workspaces
@@ -28,13 +41,13 @@
 ```bash
 bun install
 supabase start
-bun run db:push
+bun run db:migrate
 bun run db:seed
 ```
 
 1. `bun install` で依存関係をインストール (lefthook も自動セットアップ)
 2. `supabase start` でローカル Supabase を起動 (PostgreSQL, Realtime など)
-3. `bun run db:push` で DB スキーマを反映
+3. `bun run db:migrate` でマイグレーションを実行
 4. `bun run db:seed` で開発用シードデータを投入
 
 ### 環境変数
@@ -62,7 +75,7 @@ bun run --filter @sugara/web dev      # Next.js 開発サーバーを起動
 
 ```bash
 supabase db reset
-bun run db:push
+bun run db:migrate
 bun run db:seed
 ```
 
@@ -77,8 +90,7 @@ bun run lint         # 全パッケージ lint (Biome)
 bun run format       # 全パッケージ format (Biome)
 bun run check        # lint + format + import sort (Biome)
 bun run check-types  # TypeScript 型チェック
-bun run db:push      # DB スキーマ反映
-bun run db:generate  # マイグレーション生成
+bun run db:generate  # マイグレーション生成 (スキーマ変更後)
 bun run db:migrate   # マイグレーション実行
 bun run db:studio    # Drizzle Studio 起動
 bun run db:seed      # 開発用シードデータ投入

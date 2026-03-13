@@ -80,8 +80,10 @@ export function Header() {
           <div className="flex items-center gap-2">
             <HeaderMenu />
             {mounted && session?.user && !isGuest && <NotificationBell />}
-            {!mounted || !session?.user || isGuest ? (
+            {!mounted || !session?.user ? (
               <Skeleton className="h-8 w-8 rounded-full" />
+            ) : isGuest ? (
+              <UserAvatar name="G" className="h-8 w-8" />
             ) : (
               <Tooltip>
                 <TooltipTrigger asChild>

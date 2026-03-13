@@ -2,7 +2,9 @@
 
 import type { UnsettledSummary } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { api } from "@/lib/api";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
@@ -13,6 +15,7 @@ type UnsettledSummarySectionProps = {
 };
 
 export function UnsettledSummarySection({ userId, isOwnProfile }: UnsettledSummarySectionProps) {
+  const pathname = usePathname();
   const { data } = useQuery({
     queryKey: queryKeys.settlement.unsettled(userId),
     queryFn: () => api<UnsettledSummary>(`/api/users/${userId}/unsettled-summary`),
@@ -24,58 +27,54 @@ export function UnsettledSummarySection({ userId, isOwnProfile }: UnsettledSumma
     return null;
   }
 
+  const tripBase = pathname.startsWith("/sp/") ? "/sp/trips" : "/trips";
+
   return (
-    <div className="rounded-lg border">
-      <div className="flex items-center justify-between px-3 py-2 text-sm">
-        <span className="font-medium">未精算</span>
-        <span className="flex items-center gap-3 text-xs text-muted-foreground">
-          {data.totalOwed > 0 && (
-            <span>
-              支払い残{" "}
-              <span className="font-semibold text-destructive">
-                ¥{data.totalOwed.toLocaleString()}
-              </span>
-            </span>
-          )}
-          {data.totalOwedTo > 0 && (
-            <span>
-              受取り残{" "}
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">
-                ¥{data.totalOwedTo.toLocaleString()}
-              </span>
-            </span>
-          )}
-        </span>
-      </div>
-      {data.trips.map((trip) => (
-        <div key={trip.tripId}>
-          <div className="border-t bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground">
-            {trip.tripTitle}
-          </div>
-          {trip.transfers.map((t, i) => {
-            const isOwed = t.fromUser.id === userId;
-            return (
-              <div
-                key={`${t.fromUser.id}-${t.toUser.id}-${i}`}
-                className="flex items-center justify-between border-t px-3 py-2 text-sm"
-              >
-                <span className="flex items-center gap-1">
-                  {isOwed ? "あなた" : t.fromUser.name}
-                  <ArrowRight className="h-3 w-3 text-muted-foreground" />
-                  {isOwed ? t.toUser.name : "あなた"}
+    <div className="space-y-2">
+      <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">未精算</h2>
+      {data.trips.map((trip) => {
+        const owed = trip.transfers
+          .filter((t) => t.fromUser.id === userId)
+          .reduce((sum, t) => sum + t.amount, 0);
+        const owedTo = trip.transfers
+          .filter((t) => t.toUser.id === userId)
+          .reduce((sum, t) => sum + t.amount, 0);
+
+        return (
+          <Link
+            key={trip.tripId}
+            href={`${tripBase}/${trip.tripId}`}
+            className="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm hover:bg-accent transition-colors"
+          >
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium">{trip.tripTitle}</p>
+              <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                {trip.transfers.map((t, i) => (
+                  <span
+                    key={`${t.fromUser.id}-${t.toUser.id}-${i}`}
+                    className="flex items-center gap-0.5"
+                  >
+                    {t.fromUser.name}
+                    <ArrowRight className="h-2.5 w-2.5" />
+                    {t.toUser.name}
+                  </span>
+                ))}
+              </p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              {owed > 0 && (
+                <span className="font-medium text-destructive">-¥{owed.toLocaleString()}</span>
+              )}
+              {owedTo > 0 && (
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                  +¥{owedTo.toLocaleString()}
                 </span>
-                <span
-                  className={`font-medium ${
-                    isOwed ? "text-destructive" : "text-emerald-600 dark:text-emerald-400"
-                  }`}
-                >
-                  ¥{t.amount.toLocaleString()}
-                </span>
-              </div>
-            );
-          })}
-        </div>
-      ))}
+              )}
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 }

@@ -97,7 +97,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
       queryClient.invalidateQueries({ queryKey: queryKeys.souvenirs.list(tripId) });
     },
     onError: (err) => {
-      toast.error(getApiErrorMessage(err, "Failed to update"));
+      toast.error(getApiErrorMessage(err, MSG.SOUVENIR_SAVE_FAILED));
     },
   });
 
@@ -108,7 +108,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
       setDeleteTarget(null);
     },
     onError: (err) => {
-      toast.error(getApiErrorMessage(err, "Failed to delete"));
+      toast.error(getApiErrorMessage(err, MSG.SOUVENIR_DELETE_FAILED));
     },
   });
 
@@ -124,7 +124,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
       setBulkDeleteOpen(false);
     },
     onError: (err) => {
-      toast.error(getApiErrorMessage(err, "Failed to delete"));
+      toast.error(getApiErrorMessage(err, MSG.SOUVENIR_DELETE_FAILED));
     },
   });
 

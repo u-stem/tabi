@@ -403,6 +403,7 @@ export const MSG = {
   EMPTY_NOTIFICATION: "通知はありません",
   EMPTY_EXPENSE: "費用はまだ記録されていません",
   SOUVENIR_SAVE_FAILED: "お土産の保存に失敗しました",
+  SOUVENIR_DELETE_FAILED: "お土産の削除に失敗しました",
   EMPTY_SOUVENIR: "お土産リストはまだありません",
   EMPTY_NEWS: "お知らせはまだありません",
   EMPTY_EXPORT_SHEET: "このシートにデータがありません",
@@ -410,6 +411,7 @@ export const MSG = {
   // UI status
   MEMBER_ALL_ADDED: "全員追加済みです",
   NO_CHANGES: "変更がありません",
+  VALIDATION_ERROR: "入力内容を確認してください",
 } as const;
 
 // ─── Auth error translations (Better Auth code → Japanese) ───────────────────

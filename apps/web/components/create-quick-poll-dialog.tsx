@@ -93,7 +93,7 @@ export function CreateQuickPollDialog({
     };
     const parsed = createQuickPollSchema.safeParse(data);
     if (!parsed.success) {
-      toast.error("入力内容を確認してください");
+      toast.error(MSG.VALIDATION_ERROR);
       return;
     }
     setSubmitting(true);

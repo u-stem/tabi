@@ -636,18 +636,25 @@ export default function SpTripDetailPage() {
                         ref={swipeContainerRef}
                         className="flex touch-pan-y will-change-transform"
                       >
-                        {tabIds.map((tabId) => (
-                          <div
-                            key={tabId}
-                            className="w-full shrink-0"
-                            id={getMobileTabPanelId(tabId)}
-                            role="tabpanel"
-                            aria-labelledby={getMobileTabTriggerId(tabId)}
-                            aria-hidden={tabId !== mobileTab || undefined}
-                          >
-                            {renderTabContent(tabId)}
-                          </div>
-                        ))}
+                        {tabIds.map((tabId, i) => {
+                          const isCurrent = tabId === mobileTab;
+                          // During swipe, the adjacent tab needs full height to be visible
+                          const isSwipeTarget =
+                            swipe.adjacent !== null &&
+                            i === currentTabIdx + (swipe.adjacent === "next" ? 1 : -1);
+                          return (
+                            <div
+                              key={tabId}
+                              className={`w-full shrink-0${!isCurrent && !isSwipeTarget ? " h-0 overflow-hidden" : ""}`}
+                              id={getMobileTabPanelId(tabId)}
+                              role="tabpanel"
+                              aria-labelledby={getMobileTabTriggerId(tabId)}
+                              aria-hidden={!isCurrent || undefined}
+                            >
+                              {renderTabContent(tabId)}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>

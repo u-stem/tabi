@@ -159,12 +159,6 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
                         </div>
                       ))}
                   </div>
-                  <SettlementSection
-                    tripId={tripId}
-                    settlement={settlement}
-                    settlementPayments={settlementPayments}
-                    currentUserId={session?.user?.id}
-                  />
                   {categoryTotals.length > 0 && (
                     <div className="space-y-1 border-t px-3 pt-2 pb-3">
                       <p className="text-xs text-muted-foreground">カテゴリ別</p>
@@ -192,6 +186,16 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
               <p className="px-3 pb-3 text-xs text-muted-foreground">{MSG.EMPTY_EXPENSE}</p>
             )}
           </CollapsiblePrimitive.Root>
+
+          {/* Settlement section */}
+          {settlement.transfers.length > 0 && (
+            <SettlementSection
+              tripId={tripId}
+              settlement={settlement}
+              settlementPayments={settlementPayments}
+              currentUserId={session?.user?.id}
+            />
+          )}
 
           {/* ExpenseItem list */}
           {expenses.length > 0 && (

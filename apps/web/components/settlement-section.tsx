@@ -89,10 +89,12 @@ export function SettlementSection({
   if (transfers.length === 0) return null;
 
   return (
-    <div className="space-y-1 border-t px-3 pt-2 pb-3">
+    <div className="space-y-2 rounded-md border px-3 pt-2 pb-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted-foreground">精算</p>
-        <span className="text-xs text-emerald-600 dark:text-emerald-400">
+        <span className="text-sm font-medium">精算</span>
+        <span
+          className={`text-xs ${allChecked ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}
+        >
           {allChecked ? "精算完了" : `${checkedCount}/${transfers.length} 完了`}
         </span>
       </div>

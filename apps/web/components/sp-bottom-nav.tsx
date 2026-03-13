@@ -25,17 +25,6 @@ function NavIcon({ icon: Icon, active }: { icon: LucideIcon; active: boolean }) 
   );
 }
 
-function ActiveDot({ visible }: { visible: boolean }) {
-  return (
-    <span
-      className={cn(
-        "absolute top-1.5 left-1/2 -translate-x-1/2 h-1 w-1 rounded-full bg-primary transition-opacity duration-200",
-        visible ? "opacity-100" : "opacity-0",
-      )}
-    />
-  );
-}
-
 function Badge({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
@@ -64,7 +53,6 @@ function NavItem({
       className={cn(NAV_LINK_CLASS, active ? "font-medium text-primary" : "text-muted-foreground")}
       aria-label={label}
     >
-      <ActiveDot visible={active} />
       {children}
       <span className="text-[10px] leading-none">{label}</span>
       {badge != null && <Badge count={badge} />}

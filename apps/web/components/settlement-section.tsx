@@ -78,6 +78,24 @@ export function SettlementSection({
       }
       return { previous };
     },
+    onSuccess: (realPayment, _body) => {
+      // Replace optimistic entry with server response (real ID)
+      const current = queryClient.getQueryData<ExpensesResponse>(expenseQueryKey);
+      if (current) {
+        queryClient.setQueryData<ExpensesResponse>(expenseQueryKey, {
+          ...current,
+          settlementPayments: current.settlementPayments.map((p) =>
+            p.id.startsWith("optimistic-") &&
+            p.fromUserId === realPayment.fromUserId &&
+            p.toUserId === realPayment.toUserId &&
+            p.amount === realPayment.amount
+              ? realPayment
+              : p,
+          ),
+        });
+      }
+      invalidateRelated();
+    },
     onError: (err, _body, context) => {
       if (context?.previous) {
         queryClient.setQueryData(expenseQueryKey, context.previous);
@@ -87,10 +105,6 @@ export function SettlementSection({
           conflict: MSG.SETTLEMENT_ALREADY_CHECKED,
         }),
       );
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: expenseQueryKey });
-      invalidateRelated();
     },
   });
 
@@ -110,15 +124,14 @@ export function SettlementSection({
       }
       return { previous };
     },
+    onSuccess: () => {
+      invalidateRelated();
+    },
     onError: (err, _paymentId, context) => {
       if (context?.previous) {
         queryClient.setQueryData(expenseQueryKey, context.previous);
       }
       toast.error(getApiErrorMessage(err, MSG.SETTLEMENT_UNCHECK_FAILED));
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: expenseQueryKey });
-      invalidateRelated();
     },
   });
 

@@ -17,7 +17,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
 const NAV_LINK_CLASS =
-  "relative flex flex-1 flex-col items-center justify-center gap-1 outline-none [-webkit-tap-highlight-color:transparent] transition-transform active:scale-[0.90]";
+  "relative flex flex-1 flex-col items-center justify-center gap-1 outline-none [-webkit-tap-highlight-color:transparent]";
 
 function NavIcon({ icon: Icon, active }: { icon: LucideIcon; active: boolean }) {
   return (

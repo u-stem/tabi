@@ -189,9 +189,9 @@ export default function SettingsPage({
               aria-selected={section === id}
               onClick={() => changeSection(id)}
               className={cn(
-                "min-h-[36px] rounded-md px-2 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.97]",
+                "min-h-[36px] rounded-md px-2 py-1.5 text-sm font-medium",
                 "flex items-center justify-center",
-                "md:justify-start md:gap-2 md:px-3 md:py-2 md:text-sm md:whitespace-nowrap md:active:scale-100",
+                "md:justify-start md:gap-2 md:px-3 md:py-2 md:text-sm md:whitespace-nowrap",
                 section === id
                   ? "bg-background text-foreground shadow-sm md:bg-muted md:shadow-none"
                   : "text-muted-foreground hover:text-foreground md:hover:bg-muted/50",

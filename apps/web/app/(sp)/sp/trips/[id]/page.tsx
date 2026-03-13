@@ -190,6 +190,10 @@ export default function SpTripDetailPage() {
       const scrollEl = spScrollRef?.current ?? mobileContentRef.current;
       if (scrollEl) {
         scrollPositions.current[mobileTabRef.current] = scrollEl.scrollTop;
+        // Pre-set scroll position before React commits DOM changes (h-0 swap).
+        // Without this, the browser compositor may paint a frame at scrollTop=0
+        // between the DOM commit and useLayoutEffect restoration.
+        scrollEl.scrollTo(0, scrollPositions.current[tab] ?? 0);
       }
       if (source === "tap") setTapAnimating(true);
       mobileTabRef.current = tab;

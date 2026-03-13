@@ -1,5 +1,5 @@
 import { getAppSettings } from "@sugara/api/lib/app-settings";
-import { ArrowRight, CalendarDays, Gift, LogIn, Receipt, Users, Vote, Zap } from "lucide-react";
+import { ArrowRight, CalendarDays, Dices, Gift, LogIn, Receipt, Vote, Zap } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,7 @@ const FEATURES = [
   {
     icon: CalendarDays,
     title: "スケジュール管理",
-    description: "日程ごとにスポットを整理。ドラッグで並べ替えも。",
+    description: "日程ごとに行き先を整理。ドラッグで並べ替えも。",
   },
   {
     icon: Zap,
@@ -32,9 +32,9 @@ const FEATURES = [
     description: "贈り先ごとに買うものを整理。優先度や購入済みの管理も。",
   },
   {
-    icon: Users,
-    title: "共有・招待",
-    description: "メンバー招待やリンク共有で、未登録ユーザーにも旅程を公開。",
+    icon: Dices,
+    title: "ルーレット",
+    description: "迷ったらルーレットで決定。行き先選びに遊び心を。",
   },
 ] as const;
 

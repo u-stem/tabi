@@ -97,8 +97,8 @@ describe("Push subscription routes", () => {
       expect(body.member_added).toBe(false);
       // member_removed not set → falls back to NOTIFICATION_DEFAULTS (true)
       expect(body.member_removed).toBe(true);
-      // All 9 types present
-      expect(Object.keys(body).length).toBe(9);
+      // All 10 types present
+      expect(Object.keys(body).length).toBe(10);
     });
 
     it("endpoint が存在しない場合は 404 を返す", async () => {

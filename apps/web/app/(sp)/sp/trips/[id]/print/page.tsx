@@ -9,7 +9,8 @@ import type {
 } from "@sugara/shared";
 import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
-import { Printer } from "lucide-react";
+import { ArrowLeft, Printer } from "lucide-react";
+import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 
@@ -44,7 +45,7 @@ function PrintSkeleton() {
   );
 }
 
-export default function TripPrintPage() {
+export default function SpTripPrintPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const tripId = typeof params.id === "string" ? params.id : null;
@@ -81,11 +82,19 @@ export default function TripPrintPage() {
       ) : (
         <div className="mx-auto max-w-3xl px-6 py-8 print:max-w-none print:px-0 print:py-0">
           <header className="mb-6 print:mb-4">
-            <div className="flex items-center justify-between gap-4">
-              <h1 className="text-2xl font-bold print:text-xl print:font-semibold">{trip.title}</h1>
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/sp/trips/${tripId}`}
+                className="shrink-0 text-muted-foreground print:hidden"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Link>
+              <h1 className="flex-1 truncate text-lg font-semibold print:text-xl print:font-semibold">
+                {trip.title}
+              </h1>
               <Button size="sm" className="shrink-0 print:hidden" onClick={() => window.print()}>
                 <Printer className="h-4 w-4" />
-                印刷 / PDF保存
+                印刷
               </Button>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">

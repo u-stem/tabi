@@ -280,7 +280,13 @@ export function TripActions({
           {
             label: "メンバー",
             icon: <Users className="h-4 w-4" />,
-            onClick: () => setMemberOpen(true),
+            onClick: () => {
+              if (isMobile) {
+                router.push(`/sp/trips/${tripId}/members`);
+              } else {
+                setMemberOpen(true);
+              }
+            },
           },
         ]
       : []),
@@ -298,14 +304,14 @@ export function TripActions({
           {
             label: "印刷 / PDF",
             icon: <Printer className="h-4 w-4" />,
-            href: `/trips/${tripId}/print`,
+            href: isMobile ? `/sp/trips/${tripId}/print` : `/trips/${tripId}/print`,
           },
         ]
       : []),
     {
       label: "エクスポート",
       icon: <FileDown className="h-4 w-4" />,
-      href: `/trips/${tripId}/export`,
+      href: isMobile ? `/sp/trips/${tripId}/export` : `/trips/${tripId}/export`,
     },
     ...(onEdit
       ? [
@@ -490,14 +496,14 @@ export function TripActions({
             )}
             {canEditRole && (
               <DropdownMenuItem asChild>
-                <NextLink href={`/trips/${tripId}/print`}>
+                <NextLink href={isMobile ? `/sp/trips/${tripId}/print` : `/trips/${tripId}/print`}>
                   <Printer />
                   印刷 / PDF
                 </NextLink>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem asChild>
-              <NextLink href={`/trips/${tripId}/export`}>
+              <NextLink href={isMobile ? `/sp/trips/${tripId}/export` : `/trips/${tripId}/export`}>
                 <FileDown />
                 エクスポート
               </NextLink>

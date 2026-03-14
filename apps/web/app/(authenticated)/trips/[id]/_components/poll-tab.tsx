@@ -53,7 +53,7 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { formatDateRangeShort } from "@/lib/format";
@@ -278,11 +278,11 @@ export function PollTab({
 
   if (isLoading || !poll) {
     return (
-      <div className="space-y-4 p-4">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-      </div>
+      <SkeletonGroup className="space-y-4 p-4">
+        <SkeletonBone className="h-10 w-full" />
+        <SkeletonBone className="h-24 w-full" />
+        <SkeletonBone className="h-24 w-full" />
+      </SkeletonGroup>
     );
   }
 

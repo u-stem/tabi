@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
@@ -49,13 +49,13 @@ export default function FriendsAddPage() {
 
   if (sessionLoading) {
     return (
-      <div className="mt-4 mx-auto max-w-sm px-4">
+      <SkeletonGroup className="mt-4 mx-auto max-w-sm px-4">
         <div className="flex flex-col items-center gap-6 rounded-lg border p-8">
-          <Skeleton className="h-16 w-16 rounded-full" />
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-10 w-full" />
+          <SkeletonBone className="h-16 w-16 rounded-full" />
+          <SkeletonBone className="h-5 w-32" />
+          <SkeletonBone className="h-10 w-full" />
         </div>
-      </div>
+      </SkeletonGroup>
     );
   }
 
@@ -69,13 +69,13 @@ export default function FriendsAddPage() {
 
   if (isLoading) {
     return (
-      <div className="mt-4 mx-auto max-w-sm px-4">
+      <SkeletonGroup className="mt-4 mx-auto max-w-sm px-4">
         <div className="flex flex-col items-center gap-6 rounded-lg border p-8">
-          <Skeleton className="h-16 w-16 rounded-full" />
-          <Skeleton className="h-5 w-32" />
-          <Skeleton className="h-10 w-full" />
+          <SkeletonBone className="h-16 w-16 rounded-full" />
+          <SkeletonBone className="h-5 w-32" />
+          <SkeletonBone className="h-10 w-full" />
         </div>
-      </div>
+      </SkeletonGroup>
     );
   }
 

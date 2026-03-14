@@ -125,6 +125,14 @@ describe("SpSwipeTabs", () => {
     expect(onTabChange).not.toHaveBeenCalled();
   });
 
+  it("moves focus to the target tab on ArrowRight", () => {
+    renderTabs({ activeTab: "a" });
+    const tabA = screen.getByRole("tab", { name: "Tab A" });
+    tabA.focus();
+    fireEvent.keyDown(tabA, { key: "ArrowRight" });
+    expect(document.getElementById("mobile-tab-trigger-b")).toBe(document.activeElement);
+  });
+
   it("sets correct trigger id on tab", () => {
     renderTabs();
     expect(screen.getByRole("tab", { name: "Tab A" }).getAttribute("id")).toBe(
@@ -139,21 +147,40 @@ describe("SpSwipeTabs", () => {
     );
   });
 
-  it("sets correct id on tabpanel", () => {
+  it("renders all tab panels in DOM", () => {
+    renderTabs({ activeTab: "a" });
+    const panels = screen.getAllByRole("tabpanel", { hidden: true });
+    expect(panels).toHaveLength(3);
+  });
+
+  it("sets inert on non-active tab panels", () => {
+    renderTabs({ activeTab: "b" });
+    const panelA = document.getElementById("mobile-tab-panel-a");
+    const panelB = document.getElementById("mobile-tab-panel-b");
+    const panelC = document.getElementById("mobile-tab-panel-c");
+    expect(panelA?.hasAttribute("inert")).toBe(true);
+    expect(panelB?.hasAttribute("inert")).toBe(false);
+    expect(panelC?.hasAttribute("inert")).toBe(true);
+  });
+
+  it("sets correct id on active tabpanel", () => {
     renderTabs();
-    expect(screen.getByRole("tabpanel").getAttribute("id")).toBe("mobile-tab-panel-a");
+    const panel = document.getElementById("mobile-tab-panel-a");
+    expect(panel).toBeDefined();
+    expect(panel?.getAttribute("role")).toBe("tabpanel");
   });
 
   it("sets correct aria-labelledby on tabpanel", () => {
     renderTabs();
-    expect(screen.getByRole("tabpanel").getAttribute("aria-labelledby")).toBe(
-      "mobile-tab-trigger-a",
-    );
+    const panel = document.getElementById("mobile-tab-panel-a");
+    expect(panel?.getAttribute("aria-labelledby")).toBe("mobile-tab-trigger-a");
   });
 
-  it("renders active tab content", () => {
+  it("renders all tab contents", () => {
     renderTabs({ activeTab: "b" });
+    expect(screen.getByText("Content a")).toBeDefined();
     expect(screen.getByText("Content b")).toBeDefined();
+    expect(screen.getByText("Content c")).toBeDefined();
   });
 
   it("shows badge when count > 0", () => {
@@ -181,20 +208,16 @@ describe("SpSwipeTabs", () => {
   it("does not have active:scale in tab button classes", () => {
     renderTabs();
     const tabs = screen.getAllByRole("tab");
-    for (const tab of tabs) {
-      expect(tab.className).not.toContain("active:scale");
-    }
+    expect(tabs.every((tab) => !tab.className.includes("active:scale"))).toBe(true);
   });
 
   it("does not have transition in tab button classes", () => {
     renderTabs();
     const tabs = screen.getAllByRole("tab");
-    for (const tab of tabs) {
-      expect(tab.className).not.toContain("transition");
-    }
+    expect(tabs.every((tab) => !tab.className.includes("transition"))).toBe(true);
   });
 
-  it("renders children between tab bar and swipe container", () => {
+  it("renders children between tab bar and scroll container", () => {
     render(
       <SpSwipeTabs
         tabs={[...TABS]}
@@ -208,7 +231,7 @@ describe("SpSwipeTabs", () => {
     expect(screen.getByTestId("toolbar")).toBeDefined();
   });
 
-  it("hides swipe container when activeTab is not in tabs list", () => {
+  it("hides scroll container when activeTab is not in tabs list", () => {
     render(
       <SpSwipeTabs
         tabs={[...TABS]}
@@ -217,7 +240,7 @@ describe("SpSwipeTabs", () => {
         renderContent={(id) => <div>Content {id}</div>}
       />,
     );
-    expect(screen.queryByRole("tabpanel")).toBeNull();
+    expect(screen.queryByRole("tabpanel", { hidden: true })).toBeNull();
   });
 
   it("shows no tab as active when activeTab is not in tabs list", () => {
@@ -230,8 +253,26 @@ describe("SpSwipeTabs", () => {
       />,
     );
     const tabs = screen.getAllByRole("tab");
-    for (const tab of tabs) {
-      expect(tab.getAttribute("aria-selected")).toBe("false");
-    }
+    expect(tabs.every((tab) => tab.getAttribute("aria-selected") === "false")).toBe(true);
+  });
+
+  it("applies overflow-x-hidden when swipeEnabled is false", () => {
+    renderTabs({ swipeEnabled: false });
+    const panels = screen.getAllByRole("tabpanel", { hidden: true });
+    const container = panels[0].parentElement;
+    expect(container?.className).toContain("overflow-x-hidden");
+    expect(container?.className).not.toContain("snap-x");
+  });
+
+  it("tab panels have overflow-y-auto for independent scroll", () => {
+    renderTabs();
+    const panels = screen.getAllByRole("tabpanel", { hidden: true });
+    expect(panels.every((p) => p.className.includes("overflow-y-auto"))).toBe(true);
+  });
+
+  it("tab bar has sticky class", () => {
+    renderTabs();
+    const tablist = screen.getByRole("tablist");
+    expect(tablist.className).toContain("sticky");
   });
 });

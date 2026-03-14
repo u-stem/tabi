@@ -15,10 +15,12 @@ type PullToRefreshState = {
 
 /**
  * Pull-to-refresh for a scroll container.
- * Returns state + touch handlers to attach to the scrollable element.
+ * When activeScrollElement is set, touch listeners attach to that element
+ * and scrollTop checks use it instead of scrollRef.
  */
 export function usePullToRefresh(
   scrollRef: React.RefObject<HTMLElement | null>,
+  activeScrollElement: HTMLElement | null,
   onRefresh: () => Promise<void>,
 ) {
   const [state, setState] = useState<PullToRefreshState>({
@@ -32,22 +34,26 @@ export function usePullToRefresh(
 
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
-      const el = scrollRef.current;
-      if (!el || el.scrollTop > 0 || state.refreshing) return;
+      if (state.refreshing) return;
+      if (activeScrollElement && activeScrollElement.scrollTop > 0) return;
+      if (!activeScrollElement && scrollRef.current && scrollRef.current.scrollTop > 0) return;
       if (isDialogOrDrawerOpen()) return;
       startYRef.current = e.touches[0].clientY;
       pullingRef.current = false;
     },
-    [scrollRef, state.refreshing],
+    [scrollRef, activeScrollElement, state.refreshing],
   );
 
   const handleTouchMove = useCallback(
     (e: TouchEvent) => {
-      const el = scrollRef.current;
-      if (!el || state.refreshing) return;
+      if (state.refreshing) return;
       if (isDialogOrDrawerOpen()) return;
-      if (el.scrollTop > 0) {
-        // Scrolled down — reset pull state
+      const scrolledDown = activeScrollElement
+        ? activeScrollElement.scrollTop > 0
+        : scrollRef.current
+          ? scrollRef.current.scrollTop > 0
+          : false;
+      if (scrolledDown) {
         if (pullingRef.current) {
           pullingRef.current = false;
           setState((s) => ({ ...s, pulling: false, pullDistance: 0 }));
@@ -58,14 +64,13 @@ export function usePullToRefresh(
       const deltaY = e.touches[0].clientY - startYRef.current;
       if (deltaY <= 0) return;
 
-      // Prevent native scroll while pulling
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
       pullingRef.current = true;
 
       const distance = Math.min(deltaY * 0.5, MAX_PULL);
       setState((s) => ({ ...s, pulling: true, pullDistance: distance }));
     },
-    [scrollRef, state.refreshing],
+    [scrollRef, activeScrollElement, state.refreshing],
   );
 
   const handleTouchEnd = useCallback(async () => {
@@ -85,9 +90,8 @@ export function usePullToRefresh(
   }, [state.pullDistance, onRefresh]);
 
   useEffect(() => {
-    const el = scrollRef.current;
+    const el = activeScrollElement ?? scrollRef.current;
     if (!el) return;
-    // passive: false needed to call preventDefault in touchmove
     el.addEventListener("touchstart", handleTouchStart, { passive: true });
     el.addEventListener("touchmove", handleTouchMove, { passive: false });
     el.addEventListener("touchend", handleTouchEnd, { passive: true });
@@ -96,7 +100,7 @@ export function usePullToRefresh(
       el.removeEventListener("touchmove", handleTouchMove);
       el.removeEventListener("touchend", handleTouchEnd);
     };
-  }, [scrollRef, handleTouchStart, handleTouchMove, handleTouchEnd]);
+  }, [scrollRef, activeScrollElement, handleTouchStart, handleTouchMove, handleTouchEnd]);
 
   return state;
 }

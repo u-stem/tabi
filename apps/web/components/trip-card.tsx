@@ -108,7 +108,7 @@ export const TripCard = memo(function TripCard({
       >
         <Card
           className={cn(
-            "transition-[colors,transform,box-shadow] hover:bg-accent/50 hover:shadow-md active:scale-[0.98] group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring",
+            "transition-[colors,transform,box-shadow] hover:bg-accent/50 hover:shadow-md lg:active:scale-[0.98] group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring",
             selected && SELECTED_RING,
           )}
         >
@@ -120,7 +120,7 @@ export const TripCard = memo(function TripCard({
 
   return (
     <Link href={`${hrefPrefix}/${id}`} className="group block focus-visible:outline-none">
-      <Card className="transition-[colors,transform,box-shadow] hover:bg-accent/50 hover:shadow-md active:scale-[0.98] group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
+      <Card className="transition-[colors,transform,box-shadow] hover:bg-accent/50 hover:shadow-md lg:active:scale-[0.98] group-focus-visible:border-ring group-focus-visible:ring-2 group-focus-visible:ring-ring">
         {inner}
       </Card>
     </Link>

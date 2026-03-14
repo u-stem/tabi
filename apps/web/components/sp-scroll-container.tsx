@@ -2,33 +2,61 @@
 
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
-import { createContext, useCallback, useContext, useRef } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
 import { usePullToRefresh } from "@/lib/hooks/use-pull-to-refresh";
 
 const THRESHOLD = 80;
 
-const SpScrollContext = createContext<React.RefObject<HTMLDivElement | null> | null>(null);
+type SpScrollContextValue = {
+  ref: React.RefObject<HTMLDivElement | null>;
+  activeScrollElement: HTMLElement | null;
+  setActiveScrollElement: (el: HTMLElement | null) => void;
+};
+
+const SpScrollContext = createContext<SpScrollContextValue | null>(null);
 
 export function useSpScrollContainer() {
-  return useContext(SpScrollContext);
+  const ctx = useContext(SpScrollContext);
+  return ctx?.ref ?? null;
+}
+
+export function useSpActiveScrollElement() {
+  const ctx = useContext(SpScrollContext);
+  return ctx?.activeScrollElement ?? null;
+}
+
+export function useSetActiveScrollElement() {
+  const ctx = useContext(SpScrollContext);
+  return ctx?.setActiveScrollElement ?? null;
 }
 
 export function SpScrollContainer({ children }: { children: React.ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [activeScrollElement, setActiveScrollElement] = useState<HTMLElement | null>(null);
   const queryClient = useQueryClient();
 
   const handleRefresh = useCallback(async () => {
     await queryClient.invalidateQueries();
   }, [queryClient]);
 
-  const { pulling, pullDistance, refreshing } = usePullToRefresh(ref, handleRefresh);
+  const { pulling, pullDistance, refreshing } = usePullToRefresh(
+    ref,
+    activeScrollElement,
+    handleRefresh,
+  );
 
   const visible = pulling || refreshing;
   const progress = Math.min(pullDistance / THRESHOLD, 1);
   const height = pulling ? pullDistance : refreshing ? 48 : 0;
 
+  // Only re-render consumers when activeScrollElement changes
+  const contextValue = useMemo(
+    () => ({ ref, activeScrollElement, setActiveScrollElement }),
+    [activeScrollElement],
+  );
+
   return (
-    <SpScrollContext.Provider value={ref}>
+    <SpScrollContext.Provider value={contextValue}>
       <div
         ref={ref}
         className="sp-layout min-h-0 flex-1 overflow-y-auto touch-pan-y overscroll-y-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"

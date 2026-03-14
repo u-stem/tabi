@@ -32,6 +32,7 @@ export default function SpRoulettePage() {
         activeTab={mode}
         onTabChange={changeMode}
         renderContent={renderContent}
+        swipeEnabled
       />
     </div>
   );

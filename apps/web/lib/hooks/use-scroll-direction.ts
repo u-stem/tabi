@@ -1,16 +1,21 @@
 import { useEffect, useRef, useState } from "react";
-import { useSpScrollContainer } from "@/components/sp-scroll-container";
+import { useSpActiveScrollElement, useSpScrollContainer } from "@/components/sp-scroll-container";
 
 // Returns true when UI chrome should be hidden (user is scrolling down).
 // Resets to false when near the top of the page.
+// Prefers activeScrollElement (set by SpSwipeTabs) over SpScrollContainer.
 export function useScrollDirection(threshold = 8): boolean {
   const scrollContainerRef = useSpScrollContainer();
+  const activeScrollElement = useSpActiveScrollElement();
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
 
   useEffect(() => {
-    const el = scrollContainerRef?.current ?? null;
+    const el = activeScrollElement ?? scrollContainerRef?.current ?? null;
     const target: EventTarget = el ?? window;
+
+    // Reset tracking when the target changes
+    lastScrollY.current = el ? el.scrollTop : window.scrollY;
 
     function handleScroll() {
       const currentY = el ? el.scrollTop : window.scrollY;
@@ -29,7 +34,7 @@ export function useScrollDirection(threshold = 8): boolean {
 
     target.addEventListener("scroll", handleScroll, { passive: true });
     return () => target.removeEventListener("scroll", handleScroll);
-  }, [threshold, scrollContainerRef]);
+  }, [threshold, scrollContainerRef, activeScrollElement]);
 
   return hidden;
 }

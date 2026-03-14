@@ -1,7 +1,7 @@
 "use client";
 
-import { type ReactNode, type RefObject, useCallback, useLayoutEffect, useRef } from "react";
-import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { useSetActiveScrollElement } from "@/components/sp-scroll-container";
 import { cn } from "@/lib/utils";
 
 export type SwipeTab<T extends string = string> = {
@@ -17,13 +17,16 @@ export type SpSwipeTabsProps<T extends string = string> = {
   renderContent: (tabId: T) => ReactNode;
   /** Content inserted between tab bar and swipe container (e.g. toolbar) */
   children?: ReactNode;
-  preserveScroll?: boolean;
-  scrollRef?: RefObject<HTMLElement | null>;
   swipeEnabled?: boolean;
   className?: string;
 };
 
+// SpHeader h-14 = 56px, tab bar p-1(8px) + button min-h-[36px] = 44px
+const PANEL_HEIGHT = "calc(100dvh - 56px - 44px)";
+const PANEL_BOTTOM_PADDING = "calc(4rem + env(safe-area-inset-bottom, 0px))";
+
 const GRID_COLS: Record<number, string> = {
+  1: "grid-cols-1",
   2: "grid-cols-2",
   3: "grid-cols-3",
   4: "grid-cols-4",
@@ -44,77 +47,153 @@ export function SpSwipeTabs<T extends string = string>({
   onTabChange,
   renderContent,
   children,
-  preserveScroll = false,
-  scrollRef,
   swipeEnabled = true,
   className,
 }: SpSwipeTabsProps<T>) {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const swipeRef = useRef<HTMLDivElement>(null);
+  const setActiveScrollElement = useSetActiveScrollElement();
+  const snapRef = useRef<HTMLDivElement>(null);
+  const panelRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const activeTabRef = useRef(activeTab);
   activeTabRef.current = activeTab;
-  const scrollPositions = useRef<Record<string, number>>({});
+  // Guard to skip scrollend handling during programmatic scrollTo
+  const isProgrammaticRef = useRef(false);
+  // Visual tab index — ref for synchronous access in scroll handler, state for rendering
+  const [visualTabIdx, setVisualTabIdx] = useState(() => tabs.findIndex((t) => t.id === activeTab));
+  const visualTabIdxRef = useRef(visualTabIdx);
 
   const currentTabIdx = tabs.findIndex((t) => t.id === activeTab);
 
-  const handleSwipe = useCallback(
-    (direction: "left" | "right") => {
-      const idx = tabs.findIndex((t) => t.id === activeTabRef.current);
-      if (idx === -1) return;
-      const nextIdx = direction === "left" ? idx + 1 : idx - 1;
-      if (nextIdx < 0 || nextIdx >= tabs.length) return;
-      if (preserveScroll) {
-        saveScrollPosition(activeTabRef.current);
+  // Sync visualTabIdx when activeTab changes externally (tab click, keyboard)
+  useEffect(() => {
+    visualTabIdxRef.current = currentTabIdx;
+    setVisualTabIdx(currentTabIdx);
+  }, [currentTabIdx]);
+
+  // Register active panel as the scroll source for useScrollDirection / usePullToRefresh
+  useEffect(() => {
+    if (!setActiveScrollElement) return;
+    const panelEl = panelRefs.current.get(activeTab) ?? null;
+    setActiveScrollElement(panelEl);
+    return () => {
+      setActiveScrollElement(null);
+    };
+  }, [activeTab, setActiveScrollElement]);
+
+  // Track scroll position for instant tab bar feedback + detect final tab on snap
+  // Also clamp scroll to ±1 panel from the touch-start position to prevent skipping tabs
+  useEffect(() => {
+    const el = snapRef.current;
+    if (!el) return;
+
+    let anchorLeft = -1;
+
+    function handleTouchStart() {
+      if (!el) return;
+      isProgrammaticRef.current = false;
+      const panelWidth = el.clientWidth;
+      if (panelWidth > 0) {
+        anchorLeft = Math.round(el.scrollLeft / panelWidth) * panelWidth;
       }
-      onTabChange(tabs[nextIdx].id);
-    },
-    [tabs, onTabChange, preserveScroll],
-  );
-
-  const swipe = useSwipeTab(containerRef, swipeRef, {
-    onSwipeComplete: handleSwipe,
-    canSwipePrev: currentTabIdx > 0,
-    canSwipeNext: currentTabIdx >= 0 && currentTabIdx < tabs.length - 1,
-    enabled: swipeEnabled && currentTabIdx !== -1,
-  });
-
-  const adjacentTab =
-    swipe.adjacent === "next"
-      ? tabs[currentTabIdx + 1]?.id
-      : swipe.adjacent === "prev"
-        ? tabs[currentTabIdx - 1]?.id
-        : undefined;
-
-  function getScrollEl() {
-    return scrollRef?.current ?? containerRef.current;
-  }
-
-  function saveScrollPosition(tabId: string) {
-    const el = getScrollEl();
-    if (el) {
-      scrollPositions.current[tabId] = el.scrollTop;
     }
-  }
 
-  // Restore scroll position synchronously before paint
-  useLayoutEffect(() => {
-    if (!preserveScroll) return;
-    const el = getScrollEl();
-    el?.scrollTo(0, scrollPositions.current[activeTab] ?? 0);
-  }, [activeTab, preserveScroll, scrollRef]);
+    function handleTouchEnd() {
+      anchorLeft = -1;
+    }
+
+    function handleScroll() {
+      if (!el) return;
+      const panelWidth = el.clientWidth;
+      if (panelWidth === 0) return;
+
+      if (anchorLeft >= 0) {
+        const minLeft = Math.max(0, anchorLeft - panelWidth);
+        const maxLeft = Math.min(el.scrollWidth - panelWidth, anchorLeft + panelWidth);
+        if (el.scrollLeft < minLeft) {
+          el.scrollLeft = minLeft;
+        } else if (el.scrollLeft > maxLeft) {
+          el.scrollLeft = maxLeft;
+        }
+      }
+
+      const idx = Math.round(el.scrollLeft / panelWidth);
+      if (idx !== visualTabIdxRef.current && idx >= 0 && idx < tabs.length) {
+        // Skip visual update during programmatic scroll (tab click) to prevent flicker
+        if (isProgrammaticRef.current) return;
+        visualTabIdxRef.current = idx;
+        setVisualTabIdx(idx);
+      }
+    }
+
+    function detectTab() {
+      if (!el || isProgrammaticRef.current) return;
+      const panelWidth = el.clientWidth;
+      if (panelWidth === 0) return;
+      const idx = Math.round(el.scrollLeft / panelWidth);
+      const newTab = tabs[idx];
+      if (newTab && newTab.id !== activeTabRef.current) {
+        onTabChange(newTab.id);
+      }
+    }
+
+    const hasScrollEnd = "onscrollend" in window;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    function handleScrollWithFallback() {
+      handleScroll();
+      if (!hasScrollEnd) {
+        clearTimeout(timer);
+        timer = setTimeout(detectTab, 150);
+      }
+    }
+
+    el.addEventListener("touchstart", handleTouchStart, { passive: true });
+    el.addEventListener("touchend", handleTouchEnd, { passive: true });
+    el.addEventListener("touchcancel", handleTouchEnd, { passive: true });
+    el.addEventListener("scroll", handleScrollWithFallback, { passive: true });
+    if (hasScrollEnd) {
+      el.addEventListener("scrollend", detectTab);
+    }
+
+    return () => {
+      if (timer) clearTimeout(timer);
+      el.removeEventListener("touchstart", handleTouchStart);
+      el.removeEventListener("touchend", handleTouchEnd);
+      el.removeEventListener("touchcancel", handleTouchEnd);
+      el.removeEventListener("scroll", handleScrollWithFallback);
+      if (hasScrollEnd) {
+        el.removeEventListener("scrollend", detectTab);
+      }
+    };
+  }, [tabs, onTabChange]);
+
+  // Sync activeTab prop to scroll position (for tab click, keyboard, external changes)
+  useEffect(() => {
+    const el = snapRef.current;
+    if (!el) return;
+    const idx = tabs.findIndex((t) => t.id === activeTab);
+    if (idx === -1) return;
+    const targetLeft = idx * el.clientWidth;
+    if (Math.abs(el.scrollLeft - targetLeft) < 2) return;
+    isProgrammaticRef.current = true;
+    el.scrollTo({ left: targetLeft, behavior: "smooth" });
+
+    function clearGuard() {
+      isProgrammaticRef.current = false;
+      el?.removeEventListener("scrollend", clearGuard);
+    }
+    if ("onscrollend" in window) {
+      el.addEventListener("scrollend", clearGuard, { once: true });
+    } else {
+      setTimeout(clearGuard, 600);
+    }
+  }, [activeTab, tabs]);
 
   const handleTabClick = useCallback(
     (tabId: T) => {
       if (tabId === activeTabRef.current) return;
-      if (preserveScroll) {
-        saveScrollPosition(activeTabRef.current);
-        // Pre-set scroll position before React commits DOM changes
-        const el = getScrollEl();
-        el?.scrollTo(0, scrollPositions.current[tabId] ?? 0);
-      }
       onTabChange(tabId);
     },
-    [onTabChange, preserveScroll, scrollRef],
+    [onTabChange],
   );
 
   const handleKeyDown = useCallback(
@@ -137,79 +216,93 @@ export function SpSwipeTabs<T extends string = string>({
       }
       if (targetId !== undefined) {
         onTabChange(targetId);
+        document.getElementById(getMobileTabTriggerId(targetId))?.focus();
       }
     },
     [tabs, onTabChange],
   );
 
+  const setPanelRef = useCallback((tabId: string, el: HTMLDivElement | null) => {
+    if (el) {
+      panelRefs.current.set(tabId, el);
+    } else {
+      panelRefs.current.delete(tabId);
+    }
+  }, []);
+
   return (
     <div className={className}>
-      {/* Tab bar */}
+      {/* Tab bar — sticky within SpScrollContainer */}
       <div
         role="tablist"
         aria-orientation="horizontal"
-        className={cn("grid gap-1 rounded-lg bg-muted p-1", GRID_COLS[tabs.length])}
+        className={cn(
+          "sticky top-0 z-20 grid gap-1 rounded-lg bg-muted p-1",
+          GRID_COLS[tabs.length],
+        )}
       >
-        {tabs.map((tab, index) => (
-          <button
-            key={tab.id}
-            id={getMobileTabTriggerId(tab.id)}
-            type="button"
-            role="tab"
-            aria-selected={activeTab === tab.id}
-            aria-controls={getMobileTabPanelId(tab.id)}
-            tabIndex={activeTab === tab.id ? 0 : -1}
-            className={cn(
-              "min-w-0 rounded-md px-2 py-1.5 text-sm font-medium min-h-[36px] overflow-hidden",
-              activeTab === tab.id
-                ? "bg-background text-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground",
-            )}
-            onClick={() => handleTabClick(tab.id)}
-            onKeyDown={(e) => handleKeyDown(e, index)}
-          >
-            <span className="flex w-full items-center justify-center gap-1 whitespace-nowrap">
-              <span className="truncate">{tab.label}</span>
-              {tab.badge != null && tab.badge > 0 && (
-                <span className="shrink-0 text-xs">{tab.badge}</span>
+        {tabs.map((tab, index) => {
+          const isVisuallyActive = index === visualTabIdx;
+          return (
+            <button
+              key={tab.id}
+              id={getMobileTabTriggerId(tab.id)}
+              type="button"
+              role="tab"
+              aria-selected={activeTab === tab.id}
+              aria-controls={getMobileTabPanelId(tab.id)}
+              tabIndex={activeTab === tab.id ? 0 : -1}
+              className={cn(
+                "min-w-0 rounded-md px-2 py-1.5 text-sm font-medium min-h-[36px] overflow-hidden",
+                isVisuallyActive
+                  ? "bg-background text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
               )}
-            </span>
-          </button>
-        ))}
+              onClick={() => handleTabClick(tab.id)}
+              onKeyDown={(e) => handleKeyDown(e, index)}
+            >
+              <span className="flex w-full items-center justify-center gap-1 whitespace-nowrap">
+                <span className="truncate">{tab.label}</span>
+                {tab.badge != null && tab.badge > 0 && (
+                  <span className="shrink-0 text-xs">{tab.badge}</span>
+                )}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {children}
 
-      {/* Swipe container — only rendered when activeTab is in tabs list */}
+      {/* Scroll snap container — all tabs pre-rendered, each panel scrolls independently */}
       {currentTabIdx !== -1 && (
         <div
-          ref={containerRef}
-          className="min-h-[60vh] overflow-x-hidden px-0.5 -mx-0.5 touch-pan-y"
+          ref={snapRef}
+          className={cn(
+            "flex [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            swipeEnabled
+              ? "overflow-x-auto snap-x snap-mandatory overscroll-x-contain"
+              : "overflow-x-hidden",
+          )}
+          style={{ height: PANEL_HEIGHT }}
         >
-          <div ref={swipeRef} className="relative touch-pan-y will-change-transform">
-            {/* Active tab content */}
-            <div
-              className="pt-0.5"
-              id={getMobileTabPanelId(activeTab)}
-              role="tabpanel"
-              aria-labelledby={getMobileTabTriggerId(activeTab)}
-            >
-              {renderContent(activeTab)}
-            </div>
-
-            {/* Adjacent tab (rendered only during swipe) */}
-            {swipe.adjacent && adjacentTab && (
+          {tabs.map((tab) => {
+            const isActive = tab.id === activeTab;
+            return (
               <div
-                className="absolute top-0 left-0 w-full pt-0.5"
-                aria-hidden="true"
-                style={{
-                  transform: swipe.adjacent === "next" ? "translateX(100%)" : "translateX(-100%)",
-                }}
+                key={tab.id}
+                ref={(el) => setPanelRef(tab.id, el)}
+                className="w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain"
+                style={{ paddingBottom: PANEL_BOTTOM_PADDING }}
+                id={getMobileTabPanelId(tab.id)}
+                role="tabpanel"
+                aria-labelledby={getMobileTabTriggerId(tab.id)}
+                {...(!isActive && { inert: true })}
               >
-                {renderContent(adjacentTab as T)}
+                {renderContent(tab.id)}
               </div>
-            )}
-          </div>
+            );
+          })}
         </div>
       )}
     </div>

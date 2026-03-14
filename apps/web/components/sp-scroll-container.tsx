@@ -59,7 +59,7 @@ export function SpScrollContainer({ children }: { children: React.ReactNode }) {
     <SpScrollContext.Provider value={contextValue}>
       <div
         ref={ref}
-        className="sp-layout min-h-0 flex-1 overflow-y-auto touch-pan-y overscroll-y-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className={`sp-layout min-h-0 flex-1 touch-pan-y overscroll-y-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${activeScrollElement ? "overflow-y-hidden" : "overflow-y-auto"}`}
       >
         {visible && (
           <div className="flex items-center justify-center overflow-hidden" style={{ height }}>

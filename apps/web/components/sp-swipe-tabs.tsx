@@ -19,10 +19,12 @@ export type SpSwipeTabsProps<T extends string = string> = {
   children?: ReactNode;
   swipeEnabled?: boolean;
   className?: string;
+  /** Extra height to subtract from viewport (e.g. a page header above the tabs) */
+  extraTopOffset?: number;
 };
 
 // SpHeader h-14 = 56px, tab bar p-1(8px) + button min-h-[36px] = 44px
-const PANEL_HEIGHT = "calc(100dvh - 56px - 44px)";
+const BASE_TOP = 56 + 44;
 const PANEL_BOTTOM_PADDING = "calc(4rem + env(safe-area-inset-bottom, 0px))";
 
 const GRID_COLS: Record<number, string> = {
@@ -49,7 +51,9 @@ export function SpSwipeTabs<T extends string = string>({
   children,
   swipeEnabled = true,
   className,
+  extraTopOffset = 0,
 }: SpSwipeTabsProps<T>) {
+  const panelHeight = `calc(100dvh - ${BASE_TOP + extraTopOffset}px)`;
   const setActiveScrollElement = useSetActiveScrollElement();
   const snapRef = useRef<HTMLDivElement>(null);
   const panelRefs = useRef<Map<string, HTMLDivElement>>(new Map());
@@ -237,7 +241,7 @@ export function SpSwipeTabs<T extends string = string>({
         role="tablist"
         aria-orientation="horizontal"
         className={cn(
-          "sticky top-0 z-20 grid gap-1 rounded-lg bg-muted p-1",
+          "sticky top-0 z-20 grid gap-1 rounded-lg bg-muted p-1 touch-pan-x",
           GRID_COLS[tabs.length],
         )}
       >
@@ -284,7 +288,7 @@ export function SpSwipeTabs<T extends string = string>({
               ? "overflow-x-auto snap-x snap-mandatory overscroll-x-contain"
               : "overflow-x-hidden",
           )}
-          style={{ height: PANEL_HEIGHT }}
+          style={{ height: panelHeight }}
         >
           {tabs.map((tab) => {
             const isActive = tab.id === activeTab;
@@ -292,7 +296,7 @@ export function SpSwipeTabs<T extends string = string>({
               <div
                 key={tab.id}
                 ref={(el) => setPanelRef(tab.id, el)}
-                className="w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain"
+                className="w-full shrink-0 snap-start snap-always overflow-y-auto overscroll-y-contain pt-3"
                 style={{ paddingBottom: PANEL_BOTTOM_PADDING }}
                 id={getMobileTabPanelId(tab.id)}
                 role="tabpanel"

@@ -55,9 +55,10 @@ export async function api<T>(path: string, options: FetchOptions = {}): Promise<
 export function getApiErrorMessage(
   err: unknown,
   fallback: string,
-  opts?: { conflict?: string; notFound?: string },
+  opts?: { badRequest?: string; conflict?: string; notFound?: string },
 ): string {
   if (err instanceof ApiError) {
+    if (err.status === 400) return opts?.badRequest ?? err.message;
     if (err.status === 409) return opts?.conflict ?? err.message;
     if (err.status === 404) return opts?.notFound ?? err.message;
     // Server errors (5xx) may contain technical details; use fallback instead

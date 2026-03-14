@@ -3,7 +3,7 @@
 import type { GroupResponse } from "@sugara/shared";
 import { GROUP_NAME_MAX_LENGTH } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { Check, MoreHorizontal, Pencil, Plus, Trash2, UserPlus, Users, X } from "lucide-react";
+import { Check, MoreHorizontal, Pencil, Plus, Trash2, Users, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
@@ -41,9 +41,8 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
-import { cn } from "@/lib/utils";
 import { CreateGroupDialog } from "./create-group-dialog";
-import { GroupMembersDialog } from "./group-detail-dialog";
+import { GroupDetailModal } from "./group-detail-modal";
 
 export function GroupsTab({
   groups,
@@ -59,21 +58,14 @@ export function GroupsTab({
   const [internalCreateOpen, setInternalCreateOpen] = useState(false);
   const createOpen = externalCreateOpen ?? internalCreateOpen;
   const setCreateOpen = onCreateOpenChange ?? setInternalCreateOpen;
-  const [membersGroupId, setMembersGroupId] = useState<string | null>(null);
+  const [detailGroup, setDetailGroup] = useState<GroupResponse | null>(null);
   const [editGroup, setEditGroup] = useState<GroupResponse | null>(null);
   const [editName, setEditName] = useState("");
   const [deleteGroup, setDeleteGroup] = useState<GroupResponse | null>(null);
   const [sheetGroup, setSheetGroup] = useState<GroupResponse | null>(null);
 
-  const membersGroup = groups.find((g) => g.id === membersGroupId) ?? null;
-
   const sheetActions = sheetGroup
     ? [
-        {
-          label: "メンバー追加",
-          icon: <UserPlus className="h-4 w-4" />,
-          onClick: () => setMembersGroupId(sheetGroup.id),
-        },
         {
           label: "編集",
           icon: <Pencil className="h-4 w-4" />,
@@ -148,8 +140,36 @@ export function GroupsTab({
 
   return (
     <div className="space-y-4">
-      <Card className="border-0 shadow-none sm:border sm:shadow-sm">
-        {!isMobile && (
+      {isMobile ? (
+        groups.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">{MSG.EMPTY_GROUP}</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {groups.map((group) => (
+              <div key={group.id} className="flex items-center gap-3">
+                <button
+                  type="button"
+                  className="flex min-w-0 flex-1 items-center gap-3 py-3 text-left"
+                  onClick={() => setDetailGroup(group)}
+                >
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted">
+                    <Users className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium">{group.name}</span>
+                    <span className="text-xs text-muted-foreground">{group.memberCount}人</span>
+                  </div>
+                </button>
+                <ItemMenuButton
+                  ariaLabel={`${group.name}のメニュー`}
+                  onClick={() => setSheetGroup(group)}
+                />
+              </div>
+            ))}
+          </div>
+        )
+      ) : (
+        <Card className="border-0 shadow-none sm:border sm:shadow-sm">
           <CardHeader className="flex-row items-center justify-between space-y-0">
             <CardTitle>グループ</CardTitle>
             <Button size="sm" onClick={() => setCreateOpen(true)}>
@@ -157,27 +177,20 @@ export function GroupsTab({
               新規作成
             </Button>
           </CardHeader>
-        )}
-        <CardContent>
-          {groups.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{MSG.EMPTY_GROUP}</p>
-          ) : (
-            <div className={cn("space-y-3", !isMobile && "max-h-80 overflow-y-auto")}>
-              {groups.map((group) => (
-                <div key={group.id} className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-sm truncate">{group.name}</span>
-                    <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
-                      <Users className="h-3.5 w-3.5" />
-                      {group.memberCount}
-                    </span>
-                  </div>
-                  {isMobile ? (
-                    <ItemMenuButton
-                      ariaLabel={`${group.name}のメニュー`}
-                      onClick={() => setSheetGroup(group)}
-                    />
-                  ) : (
+          <CardContent>
+            {groups.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{MSG.EMPTY_GROUP}</p>
+            ) : (
+              <div className="max-h-80 space-y-3 overflow-y-auto">
+                {groups.map((group) => (
+                  <div key={group.id} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-sm truncate">{group.name}</span>
+                      <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                        <Users className="h-3.5 w-3.5" />
+                        {group.memberCount}
+                      </span>
+                    </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -190,10 +203,6 @@ export function GroupsTab({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setMembersGroupId(group.id)}>
-                          <UserPlus className="h-4 w-4" />
-                          メンバー追加
-                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
                             setEditName(group.name);
@@ -212,21 +221,17 @@ export function GroupsTab({
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
-      <CreateGroupDialog
-        open={createOpen}
-        onOpenChange={setCreateOpen}
-        onCreated={setMembersGroupId}
-      />
+      <CreateGroupDialog open={createOpen} onOpenChange={setCreateOpen} />
 
-      <GroupMembersDialog group={membersGroup} onOpenChange={() => setMembersGroupId(null)} />
+      <GroupDetailModal group={detailGroup} onOpenChange={(v) => !v && setDetailGroup(null)} />
 
       {/* Edit name dialog */}
       <ResponsiveDialog open={editGroup !== null} onOpenChange={(v) => !v && setEditGroup(null)}>

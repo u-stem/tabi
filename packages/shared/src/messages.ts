@@ -156,6 +156,7 @@ export const MSG = {
   // Member
   MEMBER_ADDED: "メンバーを追加しました",
   MEMBER_ADD_FAILED: "メンバーの追加に失敗しました",
+  MEMBER_ALREADY: "すでに旅行のメンバーです",
   MEMBER_LIST_FAILED: "メンバー一覧の取得に失敗しました",
   MEMBER_ROLE_CHANGED: "ロールを変更しました",
   MEMBER_ROLE_CHANGE_FAILED: "ロールの変更に失敗しました",
@@ -229,6 +230,7 @@ export const MSG = {
   GROUP_DELETE_FAILED: "グループの削除に失敗しました",
   GROUP_MEMBER_ADDED: "メンバーを追加しました",
   GROUP_MEMBER_ADD_FAILED: "メンバーの追加に失敗しました",
+  GROUP_MEMBER_ALREADY: "すでにグループのメンバーです",
   GROUP_MEMBER_REMOVED: "メンバーを削除しました",
   GROUP_MEMBER_REMOVE_FAILED: "メンバーの削除に失敗しました",
   GROUP_BULK_ADDED: (n: number) => `${n}人をメンバーに追加しました`,
@@ -412,6 +414,10 @@ export const MSG = {
   MEMBER_ALL_ADDED: "全員追加済みです",
   NO_CHANGES: "変更がありません",
   VALIDATION_ERROR: "入力内容を確認してください",
+
+  // Common errors
+  USER_NOT_FOUND: "ユーザーが見つかりません",
+  INVALID_USER_ID: "正しいユーザーIDを入力してください",
 } as const;
 
 // ─── Auth error translations (Better Auth code → Japanese) ───────────────────

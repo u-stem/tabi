@@ -2,10 +2,12 @@
 
 import type { FriendResponse } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { UserPlus, X } from "lucide-react";
+import { UserMinus, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
+import { ActionSheet } from "@/components/action-sheet";
+import { ItemMenuButton } from "@/components/item-menu-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -25,7 +27,6 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
-import { cn } from "@/lib/utils";
 
 export { SendRequestSection };
 
@@ -85,49 +86,97 @@ function FriendListSection({
     }
   }
 
+  const [sheetTarget, setSheetTarget] = useState<FriendResponse | null>(null);
+
   return (
     <>
-      <Card className="border-0 shadow-none sm:border sm:shadow-sm">
-        {!isMobile && (
+      {isMobile ? (
+        // Native-app-like list for mobile
+        friends.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">{MSG.EMPTY_FRIEND}</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {friends.map((friend) => (
+              <div key={friend.friendId} className="flex items-center gap-3">
+                <Link
+                  href={`${profileHrefPrefix}/${friend.userId}`}
+                  className="flex min-w-0 flex-1 items-center gap-3 py-3"
+                >
+                  <UserAvatar
+                    name={friend.name}
+                    image={friend.image}
+                    className="h-10 w-10 shrink-0"
+                  />
+                  <span className="truncate text-sm font-medium">{friend.name}</span>
+                </Link>
+                <ItemMenuButton
+                  ariaLabel={`${friend.name}のメニュー`}
+                  onClick={() => setSheetTarget(friend)}
+                />
+              </div>
+            ))}
+          </div>
+        )
+      ) : (
+        <Card className="border-0 shadow-none sm:border sm:shadow-sm">
           <CardHeader>
             <CardTitle>フレンド一覧</CardTitle>
           </CardHeader>
-        )}
-        <CardContent>
-          {friends.length === 0 ? (
-            <p className="text-sm text-muted-foreground">{MSG.EMPTY_FRIEND}</p>
-          ) : (
-            <div className={cn("space-y-3", !isMobile && "max-h-80 overflow-y-auto")}>
-              {friends.map((friend) => (
-                <div key={friend.friendId} className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <UserAvatar
-                      name={friend.name}
-                      image={friend.image}
-                      className="h-6 w-6 shrink-0"
-                      fallbackClassName="text-xs"
-                    />
-                    <span className="text-sm truncate">{friend.name}</span>
+          <CardContent>
+            {friends.length === 0 ? (
+              <p className="text-sm text-muted-foreground">{MSG.EMPTY_FRIEND}</p>
+            ) : (
+              <div className="max-h-80 space-y-3 overflow-y-auto">
+                {friends.map((friend) => (
+                  <div key={friend.friendId} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <UserAvatar
+                        name={friend.name}
+                        image={friend.image}
+                        className="h-6 w-6 shrink-0"
+                        fallbackClassName="text-xs"
+                      />
+                      <span className="text-sm truncate">{friend.name}</span>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <Button size="sm" variant="outline" asChild>
+                        <Link href={`${profileHrefPrefix}/${friend.userId}`}>プロフィール</Link>
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={loadingId === friend.friendId}
+                        onClick={() => setRemovingFriend(friend)}
+                      >
+                        解除
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button size="sm" variant="outline" asChild>
-                      <Link href={`${profileHrefPrefix}/${friend.userId}`}>プロフィール</Link>
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={loadingId === friend.friendId}
-                      onClick={() => setRemovingFriend(friend)}
-                    >
-                      解除
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Mobile action sheet */}
+      {isMobile && (
+        <ActionSheet
+          open={sheetTarget !== null}
+          onOpenChange={(v) => !v && setSheetTarget(null)}
+          actions={[
+            {
+              label: "フレンドを解除",
+              icon: <UserMinus className="h-4 w-4" />,
+              variant: "destructive",
+              onClick: () => {
+                if (sheetTarget) setRemovingFriend(sheetTarget);
+                setSheetTarget(null);
+              },
+            },
+          ]}
+        />
+      )}
       <ResponsiveAlertDialog
         open={removingFriend !== null}
         onOpenChange={(v) => !v && setRemovingFriend(null)}

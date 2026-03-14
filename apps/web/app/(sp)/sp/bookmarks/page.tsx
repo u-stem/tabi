@@ -22,7 +22,7 @@ import {
   ResponsiveAlertDialogHeader,
   ResponsiveAlertDialogTitle,
 } from "@/components/ui/responsive-alert-dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
@@ -43,25 +43,25 @@ const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.R
 
 function SpBookmarksSkeleton() {
   return (
-    <div className="mt-4">
+    <SkeletonGroup className="mt-4">
       {/* Filter + selection buttons */}
       <div className="flex gap-2">
-        <Skeleton className="h-9 flex-1 rounded-md" />
-        <Skeleton className="h-9 flex-1 rounded-md" />
+        <SkeletonBone className="h-9 flex-1 rounded-md" />
+        <SkeletonBone className="h-9 flex-1 rounded-md" />
       </div>
       {/* Bookmark list cards */}
       <div className="mt-4 grid gap-4">
         {[1, 2, 3].map((i) => (
           <div key={i} className="rounded-lg border p-4 space-y-2">
             <div className="flex items-center gap-2">
-              <Skeleton className="h-5 w-32" />
-              <Skeleton className="h-5 w-12 rounded-full" />
+              <SkeletonBone className="h-5 w-32" />
+              <SkeletonBone className="h-5 w-12 rounded-full" />
             </div>
-            <Skeleton className="h-4 w-24" />
+            <SkeletonBone className="h-4 w-24" />
           </div>
         ))}
       </div>
-    </div>
+    </SkeletonGroup>
   );
 }
 

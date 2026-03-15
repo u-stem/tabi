@@ -181,6 +181,7 @@ export function PollTab({
       invalidate();
       onMutate();
       setShowAddOption(false);
+      onAddOptionOpenChange?.(false);
       setPendingRange(undefined);
     },
     onError: (err) =>

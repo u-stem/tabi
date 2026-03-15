@@ -25,6 +25,7 @@ export function QrScannerDialog() {
   const [tab, setTab] = useState("camera");
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const processingRef = useRef(false);
 
   const stopScanner = useCallback(async () => {
     const scanner = scannerRef.current;
@@ -43,9 +44,11 @@ export function QrScannerDialog() {
 
   const handleScanSuccess = useCallback(
     async (decodedText: string) => {
+      if (processingRef.current) return;
       const origin = window.location.origin;
       const userId = parseQrFriendUrl(decodedText, origin);
       if (userId) {
+        processingRef.current = true;
         setError(null);
         await stopScanner();
         setOpen(false);
@@ -59,6 +62,7 @@ export function QrScannerDialog() {
 
   const startScanner = useCallback(async () => {
     setError(null);
+    await stopScanner();
     // Wait for the DOM element to be available
     await new Promise((r) => setTimeout(r, 100));
 
@@ -87,7 +91,7 @@ export function QrScannerDialog() {
           : "カメラへのアクセスが許可されていません。画像アップロードをお試しください",
       );
     }
-  }, [handleScanSuccess]);
+  }, [handleScanSuccess, stopScanner]);
 
   // Start/stop camera based on dialog open state and active tab
   useEffect(() => {
@@ -131,6 +135,7 @@ export function QrScannerDialog() {
     if (!nextOpen) {
       setError(null);
       setTab("camera");
+      processingRef.current = false;
     }
   }
 

@@ -20,6 +20,17 @@ Object.defineProperty(window, "localStorage", {
   },
 });
 
+// jsdom does not implement ResizeObserver; provide a minimal stub
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+Object.defineProperty(window, "ResizeObserver", {
+  writable: true,
+  value: ResizeObserverStub,
+});
+
 // jsdom does not implement matchMedia; provide a minimal stub
 Object.defineProperty(window, "matchMedia", {
   writable: true,

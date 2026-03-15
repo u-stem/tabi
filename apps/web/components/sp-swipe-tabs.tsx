@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { type ReactNode, useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useSetActiveScrollElement } from "@/components/sp-scroll-container";
 import { cn } from "@/lib/utils";
 
@@ -19,7 +19,9 @@ export type SpSwipeTabsProps<T extends string = string> = {
   children?: ReactNode;
   swipeEnabled?: boolean;
   className?: string;
-  /** Extra height to subtract from viewport (e.g. a page header above the tabs) */
+  /**
+   * @deprecated No longer needed — panel height is now measured dynamically.
+   */
   extraTopOffset?: number;
 };
 
@@ -53,12 +55,28 @@ export function SpSwipeTabs<T extends string = string>({
   className,
   extraTopOffset = 0,
 }: SpSwipeTabsProps<T>) {
-  const panelHeight = `calc(100dvh - ${BASE_TOP + extraTopOffset}px)`;
+  const [measuredHeight, setMeasuredHeight] = useState<string | null>(null);
   const setActiveScrollElement = useSetActiveScrollElement();
   const snapRef = useRef<HTMLDivElement>(null);
   const panelRefs = useRef<Map<string, HTMLDivElement>>(new Map());
   const activeTabRef = useRef(activeTab);
   activeTabRef.current = activeTab;
+  // Measure snap container's actual viewport position to compute exact panel height
+  useLayoutEffect(() => {
+    const el = snapRef.current;
+    if (!el) return;
+    const measure = () => {
+      const top = el.getBoundingClientRect().top;
+      if (top > 0) setMeasuredHeight(`calc(100dvh - ${top}px)`);
+    };
+    measure();
+    const observer = new ResizeObserver(measure);
+    if (el.parentElement) observer.observe(el.parentElement);
+    return () => observer.disconnect();
+  }, []);
+
+  const panelHeight = measuredHeight ?? `calc(100dvh - ${BASE_TOP + extraTopOffset}px)`;
+
   // Guard to skip scrollend handling during programmatic scrollTo
   const isProgrammaticRef = useRef(false);
   // Visual tab index — ref for synchronous access in scroll handler, state for rendering

@@ -28,6 +28,10 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#09090b" },
+  ],
 };
 
 export function generateMetadata(): Metadata {
@@ -38,6 +42,10 @@ export function generateMetadata(): Metadata {
     metadataBase: new URL(process.env.BETTER_AUTH_BASE_URL ?? "https://sugara.vercel.app"),
     title: "sugara",
     description,
+    appleWebApp: {
+      capable: true,
+      statusBarStyle: "black-translucent",
+    },
     icons: {
       icon: `/icons/favicon-${season}.png`,
       apple: ogImage,

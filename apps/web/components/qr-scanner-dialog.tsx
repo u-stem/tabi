@@ -48,6 +48,11 @@ export function QrScannerDialog() {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState(() => (isMobile ? "camera" : "image"));
+
+  function handleTabChange(value: string) {
+    setTab(value);
+    setError(null);
+  }
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const processingRef = useRef(false);
@@ -174,7 +179,7 @@ export function QrScannerDialog() {
         </ResponsiveDialogHeader>
         <div id={FILE_READER_ID} className="hidden" />
         {isMobile ? (
-          <Tabs value={tab} onValueChange={setTab}>
+          <Tabs value={tab} onValueChange={handleTabChange}>
             <TabsList className="w-full">
               <TabsTrigger value="camera" className="flex-1">
                 カメラ

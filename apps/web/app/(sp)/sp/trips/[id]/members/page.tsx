@@ -28,7 +28,7 @@ import {
   ResponsiveAlertDialogHeader,
   ResponsiveAlertDialogTitle,
 } from "@/components/ui/responsive-alert-dialog";
-import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
@@ -377,15 +377,15 @@ export default function SpTripMembersPage() {
             メンバー ({members.length})
           </p>
           {membersLoading ? (
-            <SkeletonGroup className="px-4">
+            <div className="px-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="flex items-center gap-3 py-3">
-                  <SkeletonBone className="h-10 w-10 rounded-full" />
-                  <SkeletonBone className="h-4 w-28" />
-                  <SkeletonBone className="ml-auto h-5 w-14 rounded-full" />
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="ml-auto h-5 w-14 rounded-full" />
                 </div>
               ))}
-            </SkeletonGroup>
+            </div>
           ) : (
             <div className="divide-y divide-border">
               {members.map((member) => (

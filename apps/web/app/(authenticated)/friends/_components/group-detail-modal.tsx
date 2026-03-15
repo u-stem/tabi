@@ -13,7 +13,7 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
-import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
@@ -184,14 +184,14 @@ export function GroupDetailModal({ group, onOpenChange }: Props) {
               メンバー ({members.length})
             </p>
             {membersLoading ? (
-              <SkeletonGroup className="px-1">
+              <div className="px-1">
                 {[1, 2, 3].map((i) => (
                   <div key={i} className="flex items-center gap-3 py-3">
-                    <SkeletonBone className="h-10 w-10 rounded-full" />
-                    <SkeletonBone className="h-4 w-28" />
+                    <Skeleton className="h-10 w-10 rounded-full" />
+                    <Skeleton className="h-4 w-28" />
                   </div>
                 ))}
-              </SkeletonGroup>
+              </div>
             ) : members.length === 0 ? (
               <p className="py-12 text-center text-sm text-muted-foreground">{MSG.EMPTY_MEMBER}</p>
             ) : (

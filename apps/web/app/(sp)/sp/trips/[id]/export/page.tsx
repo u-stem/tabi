@@ -20,7 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
 import {
@@ -82,16 +82,16 @@ function toExpenseExportData(data: ExpensesResponse): ExpenseExportData {
 
 function ExportSkeleton() {
   return (
-    <SkeletonGroup className="px-4 pt-4 space-y-4">
-      <SkeletonBone className="h-6 w-48" />
-      <SkeletonBone className="h-10 w-full rounded-md" />
+    <div className="px-4 pt-4 space-y-4">
+      <Skeleton className="h-6 w-48" />
+      <Skeleton className="h-10 w-full rounded-md" />
       <div className="grid grid-cols-2 gap-3">
         {["f1", "f2", "f3", "f4", "f5", "f6"].map((key) => (
-          <SkeletonBone key={key} className="h-6 w-full" />
+          <Skeleton key={key} className="h-6 w-full" />
         ))}
       </div>
-      <SkeletonBone className="h-10 w-full rounded-md" />
-    </SkeletonGroup>
+      <Skeleton className="h-10 w-full rounded-md" />
+    </div>
   );
 }
 

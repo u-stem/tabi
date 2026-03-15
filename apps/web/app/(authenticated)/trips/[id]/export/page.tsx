@@ -19,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
@@ -119,20 +119,20 @@ function ExpensePreviewTable({
 
 function ExportSkeleton() {
   return (
-    <SkeletonGroup className="flex min-h-[50vh] items-center justify-center">
+    <div className="flex min-h-[50vh] items-center justify-center">
       <div className="w-full max-w-5xl space-y-4 p-6">
         <div className="flex gap-2">
           {["tab-a", "tab-b", "tab-c", "tab-d"].map((key) => (
-            <SkeletonBone key={key} className="h-8 w-24 rounded-md" />
+            <Skeleton key={key} className="h-8 w-24 rounded-md" />
           ))}
         </div>
         <div className="grid grid-cols-3 gap-4">
           {["f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9"].map((key) => (
-            <SkeletonBone key={key} className="h-6 w-full" />
+            <Skeleton key={key} className="h-6 w-full" />
           ))}
         </div>
       </div>
-    </SkeletonGroup>
+    </div>
   );
 }
 

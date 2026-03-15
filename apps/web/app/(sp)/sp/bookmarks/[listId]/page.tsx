@@ -38,7 +38,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
-import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { SELECTED_RING } from "@/lib/colors";
 import { pageTitle } from "@/lib/constants";
@@ -53,31 +53,31 @@ import { cn } from "@/lib/utils";
 
 function SpBookmarkDetailSkeleton() {
   return (
-    <SkeletonGroup className="mt-4 mx-auto max-w-2xl">
+    <div className="mt-4 mx-auto max-w-2xl">
       {/* Header: title + badge + menu */}
       <div className="mb-6">
         <div className="flex items-center gap-2">
-          <SkeletonBone className="h-7 w-48" />
-          <SkeletonBone className="h-5 w-14 rounded-full" />
-          <SkeletonBone className="ml-auto h-8 w-8 rounded-md" />
+          <Skeleton className="h-7 w-48" />
+          <Skeleton className="h-5 w-14 rounded-full" />
+          <Skeleton className="ml-auto h-8 w-8 rounded-md" />
         </div>
-        <SkeletonBone className="mt-1 h-4 w-28" />
+        <Skeleton className="mt-1 h-4 w-28" />
         {/* Action buttons */}
         <div className="mt-3 flex gap-1.5">
-          <SkeletonBone className="h-9 flex-1 rounded-md" />
-          <SkeletonBone className="h-9 flex-1 rounded-md" />
+          <Skeleton className="h-9 flex-1 rounded-md" />
+          <Skeleton className="h-9 flex-1 rounded-md" />
         </div>
       </div>
       {/* Bookmark items */}
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
           <div key={i} className="rounded-lg border px-3 py-2 space-y-1.5">
-            <SkeletonBone className="h-4 w-3/5" />
-            <SkeletonBone className="h-3 w-2/5" />
+            <Skeleton className="h-4 w-3/5" />
+            <Skeleton className="h-3 w-2/5" />
           </div>
         ))}
       </div>
-    </SkeletonGroup>
+    </div>
   );
 }
 

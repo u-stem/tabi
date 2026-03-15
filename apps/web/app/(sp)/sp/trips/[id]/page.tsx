@@ -43,7 +43,7 @@ import {
 import { TripHeader } from "@/app/(authenticated)/trips/[id]/_components/trip-header";
 import { DayWeatherEditor } from "@/components/day-weather-editor";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
-import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
@@ -455,46 +455,46 @@ export default function SpTripDetailPage() {
   }
 
   const skeleton = (
-    <SkeletonGroup className="mt-4">
+    <div className="mt-4">
       <div className="flex h-11 items-center gap-2">
-        <SkeletonBone className="h-5 w-36" />
-        <SkeletonBone className="ml-auto h-8 w-8 rounded-md" />
+        <Skeleton className="h-5 w-36" />
+        <Skeleton className="ml-auto h-8 w-8 rounded-md" />
       </div>
       <div className="my-2 grid grid-cols-4 gap-1 rounded-lg bg-muted p-1">
         {[1, 2, 3, 4].map((i) => (
-          <SkeletonBone key={i} className="h-9 rounded-md" />
+          <Skeleton key={i} className="h-9 rounded-md" />
         ))}
       </div>
       <div className="rounded-lg border bg-card">
         <div className="flex gap-1.5 px-3 pt-3">
           {[1, 2, 3].map((i) => (
-            <SkeletonBone key={i} className="h-[44px] w-14 rounded-full" />
+            <Skeleton key={i} className="h-[44px] w-14 rounded-full" />
           ))}
         </div>
         <div className="p-4">
-          <SkeletonBone className="mb-3 h-9 w-full rounded-md" />
-          <SkeletonBone className="mb-3 h-9 w-full rounded-md" />
+          <Skeleton className="mb-3 h-9 w-full rounded-md" />
+          <Skeleton className="mb-3 h-9 w-full rounded-md" />
           <div className="mb-2 flex items-center gap-1.5">
-            <SkeletonBone className="h-8 flex-1 rounded-full" />
-            <SkeletonBone className="h-8 w-8 shrink-0 rounded-full" />
-            <SkeletonBone className="h-8 w-8 shrink-0 rounded-full" />
+            <Skeleton className="h-8 flex-1 rounded-full" />
+            <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
+            <Skeleton className="h-8 w-8 shrink-0 rounded-full" />
           </div>
           <div className="mb-2 flex items-center gap-1.5">
-            <SkeletonBone className="h-7 w-24 rounded-full" />
-            <SkeletonBone className="h-7 w-7 rounded-md" />
-            <SkeletonBone className="h-7 w-7 rounded-md" />
+            <Skeleton className="h-7 w-24 rounded-full" />
+            <Skeleton className="h-7 w-7 rounded-md" />
+            <Skeleton className="h-7 w-7 rounded-md" />
           </div>
           <div className="space-y-1.5">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex gap-3 py-1.5">
-                <SkeletonBone className="h-7 w-7 shrink-0 rounded-full" />
-                <SkeletonBone className="h-20 flex-1 rounded-md" />
+                <Skeleton className="h-7 w-7 shrink-0 rounded-full" />
+                <Skeleton className="h-20 flex-1 rounded-md" />
               </div>
             ))}
           </div>
         </div>
       </div>
-    </SkeletonGroup>
+    </div>
   );
 
   return (

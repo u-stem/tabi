@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { CopyButton } from "@/components/copy-button";
 import { Button } from "@/components/ui/button";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
-import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
 import { MSG } from "@/lib/messages";
@@ -31,15 +31,15 @@ type PollDetail = {
 
 function DetailSkeleton() {
   return (
-    <SkeletonGroup className="space-y-6">
-      <SkeletonBone className="h-7 w-3/4" />
+    <div className="space-y-6">
+      <Skeleton className="h-7 w-3/4" />
       <div className="space-y-2">
-        <SkeletonBone className="h-12 w-full rounded-lg" />
-        <SkeletonBone className="h-12 w-full rounded-lg" />
-        <SkeletonBone className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
+        <Skeleton className="h-12 w-full rounded-lg" />
       </div>
-      <SkeletonBone className="mx-auto h-4 w-16" />
-    </SkeletonGroup>
+      <Skeleton className="mx-auto h-4 w-16" />
+    </div>
   );
 }
 

@@ -15,7 +15,7 @@ import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
-import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
 import { getCrossDayEntries } from "@/lib/cross-day";
@@ -29,18 +29,18 @@ import { cn } from "@/lib/utils";
 
 function PrintSkeleton() {
   return (
-    <SkeletonGroup className="flex min-h-screen items-center justify-center">
+    <div className="flex min-h-screen items-center justify-center">
       <div className="w-full max-w-4xl space-y-8 p-8">
         {["day-1", "day-2", "day-3"].map((key) => (
           <div key={key} className="space-y-2">
-            <SkeletonBone className="h-6 w-48" />
-            <SkeletonBone className="h-4 w-full" />
-            <SkeletonBone className="h-4 w-full" />
-            <SkeletonBone className="h-4 w-3/4" />
+            <Skeleton className="h-6 w-48" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
           </div>
         ))}
       </div>
-    </SkeletonGroup>
+    </div>
   );
 }
 

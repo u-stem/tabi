@@ -20,7 +20,7 @@ import {
   ResponsiveAlertDialogHeader,
   ResponsiveAlertDialogTitle,
 } from "@/components/ui/responsive-alert-dialog";
-import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
@@ -101,14 +101,14 @@ export default function SpGroupDetailPage() {
 
       {/* Member list */}
       {membersLoading ? (
-        <SkeletonGroup className="mt-3 px-4">
+        <div className="mt-3 px-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="flex items-center gap-3 py-3">
-              <SkeletonBone className="h-10 w-10 rounded-full" />
-              <SkeletonBone className="h-4 w-28" />
+              <Skeleton className="h-10 w-10 rounded-full" />
+              <Skeleton className="h-4 w-28" />
             </div>
           ))}
-        </SkeletonGroup>
+        </div>
       ) : members.length === 0 ? (
         <p className="py-12 text-center text-sm text-muted-foreground">{MSG.EMPTY_MEMBER}</p>
       ) : (

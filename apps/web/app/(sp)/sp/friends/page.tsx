@@ -21,7 +21,7 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
-import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
@@ -39,18 +39,18 @@ const FRIEND_TABS: SwipeTab<Tab>[] = [
 
 function SpFriendsSkeleton() {
   return (
-    <SkeletonGroup className="mt-4 space-y-4">
+    <div className="mt-4 space-y-4">
       <div className="grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
-        <SkeletonBone className="h-9 rounded-md" />
-        <SkeletonBone className="h-9 rounded-md" />
+        <Skeleton className="h-9 rounded-md" />
+        <Skeleton className="h-9 rounded-md" />
       </div>
       {[1, 2, 3].map((i) => (
         <div key={i} className="flex items-center gap-3 py-3">
-          <SkeletonBone className="h-10 w-10 shrink-0 rounded-full" />
-          <SkeletonBone className="h-4 w-28" />
+          <Skeleton className="h-10 w-10 shrink-0 rounded-full" />
+          <Skeleton className="h-4 w-28" />
         </div>
       ))}
-    </SkeletonGroup>
+    </div>
   );
 }
 

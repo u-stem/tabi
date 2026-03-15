@@ -26,7 +26,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
-import { SkeletonBone, SkeletonGroup } from "@/components/ui/skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { SELECTED_RING } from "@/lib/colors";
 import { pageTitle } from "@/lib/constants";
@@ -51,31 +51,31 @@ import { BookmarkItemContent, SortableBookmarkItem } from "./_components/sortabl
 
 function BookmarkDetailSkeleton() {
   return (
-    <SkeletonGroup className="mt-4 mx-auto max-w-2xl">
+    <div className="mt-4 mx-auto max-w-2xl">
       <div className="mb-6">
         <div className="flex flex-wrap items-center gap-2">
-          <SkeletonBone className="h-8 w-48" />
-          <SkeletonBone className="h-5 w-16 rounded-full" />
-          <SkeletonBone className="ml-auto h-8 w-8 rounded-md" />
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-5 w-16 rounded-full" />
+          <Skeleton className="ml-auto h-8 w-8 rounded-md" />
         </div>
-        <SkeletonBone className="mt-2 h-4 w-32" />
+        <Skeleton className="mt-2 h-4 w-32" />
         <div className="mt-3 flex items-center justify-end gap-1.5">
-          <SkeletonBone className="h-8 w-16 rounded-md" />
-          <SkeletonBone className="h-8 w-16 rounded-md" />
+          <Skeleton className="h-8 w-16 rounded-md" />
+          <Skeleton className="h-8 w-16 rounded-md" />
         </div>
       </div>
       <div className="space-y-3">
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
-            <SkeletonBone className="h-5 w-5 shrink-0 rounded-sm" />
+            <Skeleton className="h-5 w-5 shrink-0 rounded-sm" />
             <div className="min-w-0 flex-1">
-              <SkeletonBone className="h-4 w-32" />
+              <Skeleton className="h-4 w-32" />
             </div>
-            <SkeletonBone className="h-8 w-8 rounded-md" />
+            <Skeleton className="h-8 w-8 rounded-md" />
           </div>
         ))}
       </div>
-    </SkeletonGroup>
+    </div>
   );
 }
 

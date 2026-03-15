@@ -175,6 +175,7 @@ export function AddScheduleDialog({
           <Button variant="outline" size="sm" disabled={disabled}>
             <Plus className="h-4 w-4" />
             予定を追加
+            <span className="hidden text-xs text-muted-foreground lg:inline">(A)</span>
           </Button>
         </ResponsiveDialogTrigger>
       )}

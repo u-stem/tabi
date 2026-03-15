@@ -242,6 +242,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
                 >
                   <Plus className="h-4 w-4" />
                   お土産を追加
+                  <span className="hidden text-xs text-muted-foreground lg:inline">(S)</span>
                 </Button>
               )}
             </div>

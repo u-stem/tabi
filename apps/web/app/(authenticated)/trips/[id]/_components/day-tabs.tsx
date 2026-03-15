@@ -40,6 +40,7 @@ export function DayTabs({
             className={cn(CHIP_BASE, selectedDay === -1 ? CHIP_ACTIVE : CHIP_INACTIVE)}
           >
             日程調整
+            <span className="hidden text-xs text-muted-foreground lg:inline">(P)</span>
             {otherPresence
               .filter((u) => u.dayId === "poll")
               .slice(0, 3)

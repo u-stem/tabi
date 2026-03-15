@@ -326,6 +326,7 @@ export function CandidatePanel({
                       <Button variant="outline" size="sm" className="w-full" disabled>
                         <Plus className="h-4 w-4" />
                         候補を追加
+                        <span className="hidden text-xs text-muted-foreground lg:inline">(C)</span>
                       </Button>
                     </span>
                   </TooltipTrigger>
@@ -335,6 +336,7 @@ export function CandidatePanel({
                 <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
                   <Plus className="h-4 w-4" />
                   候補を追加
+                  <span className="hidden text-xs text-muted-foreground lg:inline">(C)</span>
                 </Button>
               ))}
             {!disabled && candidates.length > 0 && sel.canEnter && (

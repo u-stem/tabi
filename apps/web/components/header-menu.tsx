@@ -1,7 +1,7 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { LogOut, Monitor, Settings, Smartphone, X } from "lucide-react";
+import { Keyboard, LogOut, Monitor, Settings, Smartphone, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -21,6 +21,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
 import { MSG } from "@/lib/messages";
+import { useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
 import { switchViewMode } from "@/lib/view-mode";
 
@@ -85,11 +86,25 @@ export function HeaderMenu() {
   const { expanded, toggle, ref } = useMenuState();
 
   const showSpToggle = !/\/(print|export)(\/|$)/.test(pathname);
+  const { open: openShortcutHelp } = useShortcutHelp();
 
   return (
     <div ref={ref} className="flex items-center">
       {expanded && (
         <div className="flex items-center gap-1 animate-in fade-in duration-150">
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                type="button"
+                aria-label="ショートカットキー一覧"
+                onClick={openShortcutHelp}
+                className="group flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              >
+                <Keyboard className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>ショートカットキー一覧</TooltipContent>
+          </Tooltip>
           {showSpToggle && (
             <Tooltip>
               <TooltipTrigger asChild>

@@ -268,6 +268,7 @@ export default function BookmarksPage() {
                       >
                         <Plus className="h-4 w-4" />
                         新規作成
+                        <span className="hidden text-xs text-muted-foreground lg:inline">(N)</span>
                       </Button>
                     </span>
                   </TooltipTrigger>

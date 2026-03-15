@@ -54,8 +54,8 @@ const DayPickerDrawer = dynamic(() =>
 type CandidatePanelProps = {
   tripId: string;
   candidates: CandidateResponse[];
-  currentDayId: string;
-  currentPatternId: string;
+  currentDayId?: string;
+  currentPatternId?: string;
   onRefresh: () => void;
   disabled?: boolean;
   draggable?: boolean;
@@ -119,9 +119,12 @@ export function CandidatePanel({
     return candidates;
   }, [candidates, sortBy]);
 
+  const hasDayContext = !!currentDayId && !!currentPatternId;
+
   async function handleAssign(spotId: string, dayId?: string, patternId?: string) {
     const targetDayId = dayId ?? currentDayId;
     const targetPatternId = patternId ?? currentPatternId;
+    if (!targetDayId || !targetPatternId) return;
     await queryClient.cancelQueries({ queryKey: cacheKey });
     const prev = queryClient.getQueryData<TripResponse>(cacheKey);
     if (prev) {
@@ -251,16 +254,18 @@ export function CandidatePanel({
             {selectedCount === candidates.length ? "全解除" : "全選択"}
           </Button>
           <div className="ml-auto flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 px-2 text-xs"
-              onClick={sel.batchAssign}
-              disabled={selectedCount === 0 || sel.batchLoading}
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              予定に追加
-            </Button>
+            {hasDayContext && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-2 text-xs"
+                onClick={sel.batchAssign}
+                disabled={selectedCount === 0 || sel.batchLoading}
+              >
+                <ArrowLeft className="h-3.5 w-3.5" />
+                予定に追加
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -390,7 +395,7 @@ export function CandidatePanel({
         onToggle={sel.toggle}
         onEdit={setEditSchedule}
         onDelete={handleDelete}
-        onAssign={handleAssignSpot}
+        onAssign={hasDayContext ? handleAssignSpot : undefined}
         onReact={handleReact}
         onRemoveReaction={handleRemoveReaction}
         onSaveToBookmark={onSaveToBookmark}

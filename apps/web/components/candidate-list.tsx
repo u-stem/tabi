@@ -24,7 +24,7 @@ type CandidateListProps = {
   onToggle: (id: string) => void;
   onEdit: (spot: CandidateResponse) => void;
   onDelete: (spotId: string) => void;
-  onAssign: (spotId: string) => void;
+  onAssign?: (spotId: string) => void;
   onReact: (spotId: string, type: "like" | "hmm") => void;
   onRemoveReaction: (spotId: string) => void;
   onSaveToBookmark?: (ids: string[]) => void;
@@ -73,7 +73,7 @@ export const CandidateList = memo(function CandidateList({
                 spot={spot}
                 onEdit={() => onEdit(spot)}
                 onDelete={() => onDelete(spot.id)}
-                onAssign={() => onAssign(spot.id)}
+                onAssign={onAssign ? () => onAssign(spot.id) : undefined}
                 onReact={(type) => onReact(spot.id, type)}
                 onRemoveReaction={() => onRemoveReaction(spot.id)}
                 onSaveToBookmark={onSaveToBookmark ? () => onSaveToBookmark([spot.id]) : undefined}

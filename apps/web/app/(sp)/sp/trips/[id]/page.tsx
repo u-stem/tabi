@@ -374,13 +374,13 @@ export default function SpTripDetailPage() {
           </div>
         );
       case "candidates":
-        return currentDay && currentPattern ? (
+        return (
           <div className="rounded-lg border bg-card p-4">
             <CandidatePanel
               tripId={tripId ?? ""}
               candidates={dnd.localCandidates}
-              currentDayId={currentDay.id}
-              currentPatternId={currentPattern.id}
+              currentDayId={currentDay?.id}
+              currentPatternId={currentPattern?.id}
               onRefresh={onMutate}
               disabled={!online || !canEdit}
               draggable={false}
@@ -394,12 +394,6 @@ export default function SpTripDetailPage() {
               days={trip.days}
             />
           </div>
-        ) : (
-          <p className="py-8 text-center text-sm text-muted-foreground">
-            {trip.days.length > 0
-              ? "日タブを選択すると候補を追加できます"
-              : "日程が確定すると候補を追加できます"}
-          </p>
         );
       case "expenses":
         return trip.days.length > 0 ? (

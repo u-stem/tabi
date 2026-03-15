@@ -30,6 +30,7 @@ export function usePullToRefresh(
   });
 
   const startYRef = useRef(0);
+  const startXRef = useRef(0);
   const pullingRef = useRef(false);
 
   const handleTouchStart = useCallback(
@@ -39,6 +40,7 @@ export function usePullToRefresh(
       if (!activeScrollElement && scrollRef.current && scrollRef.current.scrollTop > 0) return;
       if (isDialogOrDrawerOpen()) return;
       startYRef.current = e.touches[0].clientY;
+      startXRef.current = e.touches[0].clientX;
       pullingRef.current = false;
     },
     [scrollRef, activeScrollElement, state.refreshing],
@@ -63,6 +65,10 @@ export function usePullToRefresh(
 
       const deltaY = e.touches[0].clientY - startYRef.current;
       if (deltaY <= 0) return;
+
+      // Allow horizontal swipe (e.g. tab switching) without interference
+      const deltaX = e.touches[0].clientX - startXRef.current;
+      if (Math.abs(deltaX) > Math.abs(deltaY)) return;
 
       if (e.cancelable) e.preventDefault();
       pullingRef.current = true;

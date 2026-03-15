@@ -54,7 +54,7 @@ type CandidateItemProps = {
   spot: CandidateResponse;
   onEdit: () => void;
   onDelete: () => void;
-  onAssign: () => void;
+  onAssign?: () => void;
   onReact?: (type: "like" | "hmm") => void;
   onRemoveReaction?: () => void;
   onSaveToBookmark?: () => void;
@@ -283,11 +283,15 @@ export const CandidateItem = memo(function CandidateItem({
                   icon: <Pencil className="h-4 w-4" />,
                   onClick: onEdit,
                 },
-                {
-                  label: "予定に追加",
-                  icon: <ArrowLeft className="h-4 w-4" />,
-                  onClick: onAssign,
-                },
+                ...(onAssign
+                  ? [
+                      {
+                        label: "予定に追加",
+                        icon: <ArrowLeft className="h-4 w-4" />,
+                        onClick: onAssign,
+                      },
+                    ]
+                  : []),
                 ...(onSaveToBookmark
                   ? [
                       {
@@ -316,10 +320,12 @@ export const CandidateItem = memo(function CandidateItem({
                 <Pencil />
                 編集
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={onAssign}>
-                <ArrowLeft />
-                予定に追加
-              </DropdownMenuItem>
+              {onAssign && (
+                <DropdownMenuItem onClick={onAssign}>
+                  <ArrowLeft />
+                  予定に追加
+                </DropdownMenuItem>
+              )}
               {onSaveToBookmark && (
                 <DropdownMenuItem onClick={onSaveToBookmark}>
                   <Bookmark />

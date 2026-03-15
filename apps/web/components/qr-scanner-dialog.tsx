@@ -1,7 +1,7 @@
 "use client";
 
 import { Html5Qrcode } from "html5-qrcode";
-import { ImageIcon, ScanLine, Video } from "lucide-react";
+import { ImageIcon, ScanLine } from "lucide-react";
 import { useRouter } from "next/navigation";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -17,7 +17,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { parseQrFriendUrl } from "@/lib/qr-utils";
 
-const READER_ID = "qr-reader";
+const CAMERA_READER_ID = "qr-camera-reader";
+const FILE_READER_ID = "qr-file-reader";
 
 function ImageUploadArea({
   fileInputRef,
@@ -90,10 +91,10 @@ export function QrScannerDialog() {
     // Wait for the DOM element to be available
     await new Promise((r) => setTimeout(r, 100));
 
-    const el = document.getElementById(READER_ID);
+    const el = document.getElementById(CAMERA_READER_ID);
     if (!el) return;
 
-    const scanner = new Html5Qrcode(READER_ID);
+    const scanner = new Html5Qrcode(CAMERA_READER_ID);
     scannerRef.current = scanner;
 
     try {
@@ -134,15 +135,11 @@ export function QrScannerDialog() {
     if (!file) return;
     setError(null);
 
-    // Ensure scanner instance exists for file scanning
-    let scanner = scannerRef.current;
-    if (!scanner) {
-      scanner = new Html5Qrcode(READER_ID);
-      scannerRef.current = scanner;
-    }
+    // Use a separate hidden element for file scanning
+    const fileScannerInstance = new Html5Qrcode(FILE_READER_ID);
 
     try {
-      const result = await scanner.scanFileV2(file, false);
+      const result = await fileScannerInstance.scanFileV2(file, false);
       await handleScanSuccess(result.decodedText);
     } catch {
       setError("QRコードを検出できませんでした。別の画像を試してください");
@@ -175,28 +172,23 @@ export function QrScannerDialog() {
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>QRコードを読み取る</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
-        {/* Html5Qrcode constructor requires this element to exist */}
-        <div
-          id={READER_ID}
-          className={
-            isMobile && tab === "camera"
-              ? "aspect-square w-full overflow-hidden rounded-lg"
-              : "hidden"
-          }
-        />
+        <div id={FILE_READER_ID} className="hidden" />
         {isMobile ? (
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList className="w-full">
-              <TabsTrigger value="camera" className="flex-1 gap-1.5">
-                <Video className="h-3.5 w-3.5" />
+              <TabsTrigger value="camera" className="flex-1">
                 カメラ
               </TabsTrigger>
-              <TabsTrigger value="image" className="flex-1 gap-1.5">
-                <ImageIcon className="h-3.5 w-3.5" />
+              <TabsTrigger value="image" className="flex-1">
                 画像
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="camera" />
+            <TabsContent value="camera">
+              <div
+                id={CAMERA_READER_ID}
+                className="aspect-square w-full overflow-hidden rounded-lg"
+              />
+            </TabsContent>
             <TabsContent value="image">
               <ImageUploadArea fileInputRef={fileInputRef} onFileChange={handleFileChange} />
             </TabsContent>

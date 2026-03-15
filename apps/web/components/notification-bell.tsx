@@ -77,7 +77,7 @@ export function NotificationBell() {
           </TooltipTrigger>
           <TooltipContent>通知</TooltipContent>
         </Tooltip>
-        <DropdownMenuContent align="end" className="w-80">
+        <DropdownMenuContent align="end" className="w-80 max-h-[min(70vh,500px)] overflow-y-auto">
           {unreadCount > 0 && (
             <>
               <div className="flex justify-end px-3 py-2">

@@ -12,5 +12,5 @@ export const updateDayPatternSchema = z.object({
 });
 
 export const overwriteDayPatternSchema = z.object({
-  sourcePatternId: z.string().uuid(),
+  sourcePatternId: z.string().check(z.guid()),
 });

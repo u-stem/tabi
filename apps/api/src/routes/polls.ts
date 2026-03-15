@@ -24,6 +24,7 @@ import { formatShortDateRange, logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
 import { createNotification } from "../lib/notifications";
+import { getParam } from "../lib/params";
 import { findPollAsEditor, findPollAsOwner, findPollAsParticipant } from "../lib/poll-access";
 import { generateShareToken, shareExpiresAt } from "../lib/share-token";
 import { createInitialTripDays } from "../lib/trip-days";
@@ -124,7 +125,7 @@ pollRoutes.get("/", async (c) => {
 // Get poll detail
 pollRoutes.get("/:pollId", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("pollId");
+  const pollId = getParam(c, "pollId");
 
   const poll = await findPollAsParticipant(pollId, user.id);
   if (!poll) {
@@ -183,7 +184,7 @@ pollRoutes.get("/:pollId", async (c) => {
 // Update poll (owner: deadline, editor: note only, open only)
 pollRoutes.patch("/:pollId", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("pollId");
+  const pollId = getParam(c, "pollId");
   const body = await c.req.json();
   const parsed = updatePollSchema.safeParse(body);
 
@@ -234,7 +235,7 @@ pollRoutes.patch("/:pollId", async (c) => {
 // Delete poll (owner only)
 pollRoutes.delete("/:pollId", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("pollId");
+  const pollId = getParam(c, "pollId");
 
   const poll = await findPollAsOwner(pollId, user.id);
   if (!poll) {
@@ -260,7 +261,7 @@ pollRoutes.delete("/:pollId", async (c) => {
 // Add option (owner only, open only)
 pollRoutes.post("/:pollId/options", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("pollId");
+  const pollId = getParam(c, "pollId");
   const body = await c.req.json();
   const parsed = addPollOptionSchema.safeParse(body);
 
@@ -328,8 +329,8 @@ pollRoutes.post("/:pollId/options", async (c) => {
 // Delete option (owner only, open only)
 pollRoutes.delete("/:pollId/options/:optionId", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("pollId");
-  const optionId = c.req.param("optionId");
+  const pollId = getParam(c, "pollId");
+  const optionId = getParam(c, "optionId");
 
   const poll = await findPollAsOwner(pollId, user.id);
   if (!poll) return c.json({ error: ERROR_MSG.POLL_NOT_FOUND }, 404);
@@ -357,7 +358,7 @@ pollRoutes.delete("/:pollId/options/:optionId", async (c) => {
 // Add participant (owner only)
 pollRoutes.post("/:pollId/participants", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("pollId");
+  const pollId = getParam(c, "pollId");
   const body = await c.req.json();
   const parsed = addPollParticipantSchema.safeParse(body);
 
@@ -428,8 +429,8 @@ pollRoutes.post("/:pollId/participants", async (c) => {
 // Delete participant (owner only)
 pollRoutes.delete("/:pollId/participants/:participantId", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("pollId");
-  const participantId = c.req.param("participantId");
+  const pollId = getParam(c, "pollId");
+  const participantId = getParam(c, "participantId");
 
   const poll = await findPollAsOwner(pollId, user.id);
   if (!poll) return c.json({ error: ERROR_MSG.POLL_NOT_FOUND }, 404);
@@ -455,7 +456,7 @@ pollRoutes.delete("/:pollId/participants/:participantId", async (c) => {
 // Submit responses (participant only)
 pollRoutes.put("/:pollId/responses", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("pollId");
+  const pollId = getParam(c, "pollId");
   const body = await c.req.json();
   const parsed = submitPollResponsesSchema.safeParse(body);
 
@@ -507,7 +508,7 @@ pollRoutes.put("/:pollId/responses", async (c) => {
 // Generate or get share link (owner only)
 pollRoutes.post("/:pollId/share", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("pollId");
+  const pollId = getParam(c, "pollId");
 
   const poll = await findPollAsOwner(pollId, user.id);
   if (!poll) return c.json({ error: ERROR_MSG.POLL_NOT_FOUND }, 404);
@@ -565,7 +566,7 @@ pollRoutes.post("/:pollId/share", async (c) => {
 // Regenerate share link (owner only)
 pollRoutes.put("/:pollId/share", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("pollId");
+  const pollId = getParam(c, "pollId");
 
   const poll = await findPollAsOwner(pollId, user.id);
   if (!poll) return c.json({ error: ERROR_MSG.POLL_NOT_FOUND }, 404);
@@ -595,7 +596,7 @@ pollRoutes.put("/:pollId/share", async (c) => {
 // Confirm poll and update trip (owner only)
 pollRoutes.post("/:pollId/confirm", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("pollId");
+  const pollId = getParam(c, "pollId");
   const body = await c.req.json();
   const parsed = confirmPollSchema.safeParse(body);
 

@@ -8,6 +8,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { friends, users } from "../db/schema";
 import { ERROR_MSG, PG_UNIQUE_VIOLATION } from "../lib/constants";
+import { getParam } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { requireNonGuest } from "../middleware/require-non-guest";
 import type { AppEnv } from "../types";
@@ -133,7 +134,7 @@ friendRoutes.post("/requests", async (c) => {
 // Accept friend request
 friendRoutes.patch("/requests/:id", async (c) => {
   const user = c.get("user");
-  const requestId = c.req.param("id");
+  const requestId = getParam(c, "id");
 
   const body = await c.req.json();
   const parsed = acceptFriendRequestSchema.safeParse(body);
@@ -164,7 +165,7 @@ friendRoutes.patch("/requests/:id", async (c) => {
 // Reject or cancel friend request
 friendRoutes.delete("/requests/:id", async (c) => {
   const user = c.get("user");
-  const requestId = c.req.param("id");
+  const requestId = getParam(c, "id");
 
   const record = await db.query.friends.findFirst({
     where: and(eq(friends.id, requestId), eq(friends.status, "pending")),
@@ -186,7 +187,7 @@ friendRoutes.delete("/requests/:id", async (c) => {
 // Remove friend
 friendRoutes.delete("/:friendId", async (c) => {
   const user = c.get("user");
-  const friendId = c.req.param("friendId");
+  const friendId = getParam(c, "friendId");
 
   const record = await db.query.friends.findFirst({
     where: and(eq(friends.id, friendId), eq(friends.status, "accepted")),

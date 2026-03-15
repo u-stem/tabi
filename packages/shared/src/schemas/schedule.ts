@@ -88,22 +88,22 @@ export const updateScheduleSchema = createScheduleSchema.partial().extend({
 import { MAX_SCHEDULES_PER_TRIP } from "../limits";
 
 export const reorderSchedulesSchema = z.object({
-  scheduleIds: z.array(z.string().uuid()).max(MAX_SCHEDULES_PER_TRIP),
+  scheduleIds: z.array(z.string().check(z.guid())).max(MAX_SCHEDULES_PER_TRIP),
 });
 
 export const createCandidateSchema = createScheduleSchema;
 
 export const assignCandidateSchema = z.object({
-  dayPatternId: z.string().uuid(),
+  dayPatternId: z.string().check(z.guid()),
 });
 
 export const batchAssignCandidatesSchema = z.object({
-  scheduleIds: z.array(z.string().uuid()).min(1),
-  dayPatternId: z.string().uuid(),
+  scheduleIds: z.array(z.string().check(z.guid())).min(1),
+  dayPatternId: z.string().check(z.guid()),
 });
 
 export const batchScheduleIdsSchema = z.object({
-  scheduleIds: z.array(z.string().uuid()).min(1),
+  scheduleIds: z.array(z.string().check(z.guid())).min(1),
 });
 
 // Backward-compatible aliases
@@ -111,7 +111,7 @@ export const batchUnassignSchedulesSchema = batchScheduleIdsSchema;
 export const batchDeleteSchedulesSchema = batchScheduleIdsSchema;
 
 export const batchShiftSchedulesSchema = z.object({
-  scheduleIds: z.array(z.string().uuid()).min(1),
+  scheduleIds: z.array(z.string().check(z.guid())).min(1),
   deltaMinutes: z
     .number()
     .int()

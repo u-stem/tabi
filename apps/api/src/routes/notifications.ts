@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { notifications } from "../db/schema";
 import { ERROR_MSG, NOTIFICATIONS_LIST_LIMIT } from "../lib/constants";
+import { getParam } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -41,7 +42,7 @@ notificationRoutes.put("/read-all", async (c) => {
 // PUT /api/notifications/:id/read - 1件既読
 notificationRoutes.put("/:id/read", async (c) => {
   const user = c.get("user");
-  const id = c.req.param("id");
+  const id = getParam(c, "id");
   const [updated] = await db
     .update(notifications)
     .set({ readAt: new Date() })

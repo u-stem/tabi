@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { schedulePolls } from "../db/schema";
 import { ERROR_MSG, RATE_LIMIT_PUBLIC_RESOURCE } from "../lib/constants";
+import { getParam } from "../lib/params";
 import { rateLimitByIp } from "../middleware/rate-limit";
 
 const pollShareRoutes = new Hono();
@@ -11,7 +12,7 @@ const sharedPollRateLimit = rateLimitByIp(RATE_LIMIT_PUBLIC_RESOURCE);
 
 // Get shared poll (no auth)
 pollShareRoutes.get("/api/polls/shared/:token", sharedPollRateLimit, async (c) => {
-  const token = c.req.param("token");
+  const token = getParam(c, "token");
 
   const poll = await db.query.schedulePolls.findFirst({
     where: eq(schedulePolls.shareToken, token),

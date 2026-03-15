@@ -24,12 +24,12 @@ export const updateQuickPollSchema = z.object({
 });
 
 export const quickPollVoteSchema = z.object({
-  optionIds: z.array(z.string().uuid()).min(1),
-  anonymousId: z.string().uuid().optional(),
+  optionIds: z.array(z.string().check(z.guid())).min(1),
+  anonymousId: z.string().check(z.guid()).optional(),
 });
 
 export const quickPollDeleteVoteSchema = z.object({
-  anonymousId: z.string().uuid().optional(),
+  anonymousId: z.string().check(z.guid()).optional(),
 });
 
 // Response type for shared poll endpoint

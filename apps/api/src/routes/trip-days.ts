@@ -6,6 +6,7 @@ import { tripDays } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
+import { getParam } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
@@ -16,8 +17,8 @@ tripDayRoutes.use("*", requireAuth);
 // Update trip day (memo / weather / temperature)
 tripDayRoutes.patch("/:tripId/days/:dayId", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const dayId = c.req.param("dayId");
+  const tripId = getParam(c, "tripId");
+  const dayId = getParam(c, "dayId");
 
   const body = await c.req.json();
   const parsed = updateTripDaySchema.safeParse(body);

@@ -11,6 +11,7 @@ import { dayPatterns, schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
+import { getParam } from "../lib/params";
 import { canEdit, verifyDayAccess } from "../lib/permissions";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
 import { getNextSortOrder } from "../lib/sort-order";
@@ -23,8 +24,8 @@ patternRoutes.use("*", requireAuth);
 // List patterns for a day
 patternRoutes.get("/:tripId/days/:dayId/patterns", async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const dayId = c.req.param("dayId");
+  const tripId = getParam(c, "tripId");
+  const dayId = getParam(c, "dayId");
 
   const role = await verifyDayAccess(tripId, dayId, user.id);
   if (!role) {
@@ -46,8 +47,8 @@ patternRoutes.get("/:tripId/days/:dayId/patterns", async (c) => {
 // Create pattern
 patternRoutes.post("/:tripId/days/:dayId/patterns", async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const dayId = c.req.param("dayId");
+  const tripId = getParam(c, "tripId");
+  const dayId = getParam(c, "dayId");
 
   const role = await verifyDayAccess(tripId, dayId, user.id);
   if (!canEdit(role)) {
@@ -99,9 +100,9 @@ patternRoutes.post("/:tripId/days/:dayId/patterns", async (c) => {
 // Update pattern
 patternRoutes.patch("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const dayId = c.req.param("dayId");
-  const patternId = c.req.param("patternId");
+  const tripId = getParam(c, "tripId");
+  const dayId = getParam(c, "dayId");
+  const patternId = getParam(c, "patternId");
 
   const role = await verifyDayAccess(tripId, dayId, user.id);
   if (!canEdit(role)) {
@@ -145,9 +146,9 @@ patternRoutes.patch("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
 // Delete pattern (default cannot be deleted)
 patternRoutes.delete("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const dayId = c.req.param("dayId");
-  const patternId = c.req.param("patternId");
+  const tripId = getParam(c, "tripId");
+  const dayId = getParam(c, "dayId");
+  const patternId = getParam(c, "patternId");
 
   const role = await verifyDayAccess(tripId, dayId, user.id);
   if (!canEdit(role)) {
@@ -180,9 +181,9 @@ patternRoutes.delete("/:tripId/days/:dayId/patterns/:patternId", async (c) => {
 // Duplicate pattern (with schedules)
 patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const dayId = c.req.param("dayId");
-  const patternId = c.req.param("patternId");
+  const tripId = getParam(c, "tripId");
+  const dayId = getParam(c, "dayId");
+  const patternId = getParam(c, "patternId");
 
   const role = await verifyDayAccess(tripId, dayId, user.id);
   if (!canEdit(role)) {
@@ -242,9 +243,9 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/duplicate", async (
 // Overwrite pattern schedules with another pattern's schedules
 patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/overwrite", async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const dayId = c.req.param("dayId");
-  const patternId = c.req.param("patternId");
+  const tripId = getParam(c, "tripId");
+  const dayId = getParam(c, "dayId");
+  const patternId = getParam(c, "patternId");
 
   const role = await verifyDayAccess(tripId, dayId, user.id);
   if (!canEdit(role)) {

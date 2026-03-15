@@ -11,6 +11,7 @@ import { db } from "../db/index";
 import { bookmarkLists, bookmarks } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
+import { getParam } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { requireNonGuest } from "../middleware/require-non-guest";
 import type { AppEnv } from "../types";
@@ -117,7 +118,7 @@ bookmarkListRoutes.patch("/reorder", async (c) => {
 // Update bookmark list
 bookmarkListRoutes.patch("/:listId", async (c) => {
   const user = c.get("user");
-  const listId = c.req.param("listId");
+  const listId = getParam(c, "listId");
 
   const body = await c.req.json();
   const parsed = updateBookmarkListSchema.safeParse(body);
@@ -148,7 +149,7 @@ bookmarkListRoutes.patch("/:listId", async (c) => {
 // Duplicate bookmark list with bookmarks
 bookmarkListRoutes.post("/:listId/duplicate", async (c) => {
   const user = c.get("user");
-  const listId = c.req.param("listId");
+  const listId = getParam(c, "listId");
 
   const source = await db.query.bookmarkLists.findFirst({
     where: eq(bookmarkLists.id, listId),
@@ -290,7 +291,7 @@ bookmarkListRoutes.post("/batch-duplicate", async (c) => {
 // Delete bookmark list (cascades bookmarks)
 bookmarkListRoutes.delete("/:listId", async (c) => {
   const user = c.get("user");
-  const listId = c.req.param("listId");
+  const listId = getParam(c, "listId");
 
   const existing = await db.query.bookmarkLists.findFirst({
     where: eq(bookmarkLists.id, listId),

@@ -49,9 +49,9 @@ export function UnsettledSummarySection({ userId, isOwnProfile }: UnsettledSumma
             <div className="min-w-0 flex-1">
               <p className="truncate font-medium">{trip.tripTitle}</p>
               <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
-                {trip.transfers.map((t, i) => (
+                {trip.transfers.map((t) => (
                   <span
-                    key={`${t.fromUser.id}-${t.toUser.id}-${i}`}
+                    key={`${t.fromUser.id}-${t.toUser.id}-${t.amount}`}
                     className="flex items-center gap-0.5"
                   >
                     {t.fromUser.name}

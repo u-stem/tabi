@@ -1,5 +1,6 @@
 import type { Context, Next } from "hono";
 import { ERROR_MSG } from "../lib/constants";
+import { getParam } from "../lib/params";
 import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
 import type { AppEnv } from "../types";
 
@@ -14,7 +15,7 @@ type AccessLevel = "viewer" | "editor" | "owner";
 export function requireTripAccess(level: AccessLevel = "viewer", paramName = "tripId") {
   return async (c: Context<AppEnv>, next: Next) => {
     const user = c.get("user");
-    const tripId = c.req.param(paramName);
+    const tripId = getParam(c, paramName);
     const role = await checkTripAccess(tripId, user.id);
 
     if (!role || (level === "editor" && !canEdit(role)) || (level === "owner" && !isOwner(role))) {

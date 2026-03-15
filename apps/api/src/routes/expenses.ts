@@ -19,6 +19,7 @@ import {
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { notifyUsers } from "../lib/notifications";
+import { getParam } from "../lib/params";
 import { calculateEqualSplit, calculateSettlement } from "../lib/settlement";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
@@ -29,7 +30,7 @@ expenseRoutes.use("*", requireAuth);
 
 // List expenses with settlement summary
 expenseRoutes.get("/:tripId/expenses", requireTripAccess(), async (c) => {
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
 
   const [expenseList, members] = await Promise.all([
     db.query.expenses.findMany({
@@ -91,7 +92,7 @@ expenseRoutes.get("/:tripId/expenses", requireTripAccess(), async (c) => {
 // Create expense
 expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
 
   const body = await c.req.json();
   const parsed = createExpenseSchema.safeParse(body);
@@ -200,8 +201,8 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
 // Update expense
 expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const expenseId = c.req.param("expenseId");
+  const tripId = getParam(c, "tripId");
+  const expenseId = getParam(c, "expenseId");
 
   const body = await c.req.json();
   const parsed = updateExpenseSchema.safeParse(body);
@@ -338,8 +339,8 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
 // Delete expense
 expenseRoutes.delete("/:tripId/expenses/:expenseId", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const expenseId = c.req.param("expenseId");
+  const tripId = getParam(c, "tripId");
+  const expenseId = getParam(c, "expenseId");
 
   const existing = await db.query.expenses.findFirst({
     where: eq(expenses.id, expenseId),

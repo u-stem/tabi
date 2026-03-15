@@ -44,9 +44,16 @@ export const updateSouvenirSchema = z
     priority: z.enum(SOUVENIR_PRIORITY_VALUES).nullable(),
   })
   .partial()
-  .refine((data) => Object.keys(data).length > 0, {
-    message: "At least one field must be provided",
-  });
+  .refine(
+    (data) => {
+      // Fields with .default([]) are always present after parse — exclude them
+      const meaningful = Object.entries(data).filter(
+        ([, v]) => !(Array.isArray(v) && v.length === 0),
+      );
+      return meaningful.length > 0;
+    },
+    { message: "At least one field must be provided" },
+  );
 
 export type CreateSouvenirInput = z.infer<typeof createSouvenirSchema>;
 export type UpdateSouvenirInput = z.infer<typeof updateSouvenirSchema>;

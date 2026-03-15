@@ -12,6 +12,7 @@ import { db } from "../db/index";
 import { groupMembers, groups, users } from "../db/schema";
 import { ERROR_MSG, PG_UNIQUE_VIOLATION } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
+import { getParam } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { requireNonGuest } from "../middleware/require-non-guest";
 import type { AppEnv } from "../types";
@@ -94,7 +95,7 @@ groupRoutes.post("/", async (c) => {
 // Update group name
 groupRoutes.patch("/:groupId", async (c) => {
   const user = c.get("user");
-  const groupId = c.req.param("groupId");
+  const groupId = getParam(c, "groupId");
 
   const group = await verifyGroupOwnership(groupId, user.id);
   if (!group) {
@@ -128,7 +129,7 @@ groupRoutes.patch("/:groupId", async (c) => {
 // Delete group
 groupRoutes.delete("/:groupId", async (c) => {
   const user = c.get("user");
-  const groupId = c.req.param("groupId");
+  const groupId = getParam(c, "groupId");
 
   const group = await verifyGroupOwnership(groupId, user.id);
   if (!group) {
@@ -143,7 +144,7 @@ groupRoutes.delete("/:groupId", async (c) => {
 // List group members
 groupRoutes.get("/:groupId/members", async (c) => {
   const user = c.get("user");
-  const groupId = c.req.param("groupId");
+  const groupId = getParam(c, "groupId");
 
   const group = await db.query.groups.findFirst({
     where: and(eq(groups.id, groupId), eq(groups.ownerId, user.id)),
@@ -172,7 +173,7 @@ groupRoutes.get("/:groupId/members", async (c) => {
 // Add member to group
 groupRoutes.post("/:groupId/members", async (c) => {
   const user = c.get("user");
-  const groupId = c.req.param("groupId");
+  const groupId = getParam(c, "groupId");
 
   const group = await verifyGroupOwnership(groupId, user.id);
   if (!group) {
@@ -229,7 +230,7 @@ groupRoutes.post("/:groupId/members", async (c) => {
 // Bulk add members to group
 groupRoutes.post("/:groupId/members/bulk", async (c) => {
   const user = c.get("user");
-  const groupId = c.req.param("groupId");
+  const groupId = getParam(c, "groupId");
 
   const group = await verifyGroupOwnership(groupId, user.id);
   if (!group) {
@@ -295,8 +296,8 @@ groupRoutes.post("/:groupId/members/bulk", async (c) => {
 // Remove member from group
 groupRoutes.delete("/:groupId/members/:userId", async (c) => {
   const user = c.get("user");
-  const groupId = c.req.param("groupId");
-  const targetUserId = c.req.param("userId");
+  const groupId = getParam(c, "groupId");
+  const targetUserId = getParam(c, "userId");
 
   const group = await verifyGroupOwnership(groupId, user.id);
   if (!group) {

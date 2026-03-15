@@ -6,6 +6,7 @@ import { expenses, settlementPayments, tripMembers } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { PG_UNIQUE_VIOLATION } from "../lib/constants";
 import { notifyUsers } from "../lib/notifications";
+import { getParam } from "../lib/params";
 import { calculateSettlement } from "../lib/settlement";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
@@ -17,7 +18,7 @@ settlementPaymentRoutes.use("*", requireAuth);
 // Create settlement payment (mark transfer as paid)
 settlementPaymentRoutes.post("/:tripId/settlement-payments", requireTripAccess(), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
 
   const body = await c.req.json();
   const parsed = createSettlementPaymentSchema.safeParse(body);
@@ -111,8 +112,8 @@ settlementPaymentRoutes.delete(
   requireTripAccess(),
   async (c) => {
     const user = c.get("user");
-    const tripId = c.req.param("tripId");
-    const id = c.req.param("id");
+    const tripId = getParam(c, "tripId");
+    const id = getParam(c, "id");
 
     const existing = await db.query.settlementPayments.findFirst({
       where: and(eq(settlementPayments.id, id), eq(settlementPayments.tripId, tripId)),
@@ -156,7 +157,7 @@ unsettledSummaryRoutes.use("*", requireAuth);
 
 unsettledSummaryRoutes.get("/:userId/unsettled-summary", async (c) => {
   const user = c.get("user");
-  const userId = c.req.param("userId");
+  const userId = getParam(c, "userId");
 
   if (user.id !== userId) {
     return c.json({ error: "Unauthorized" }, 403);

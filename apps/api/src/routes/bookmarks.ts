@@ -12,6 +12,7 @@ import { db } from "../db/index";
 import { bookmarkLists, bookmarks, schedules } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
+import { getParam } from "../lib/params";
 import { checkTripAccess } from "../lib/permissions";
 import { requireAuth } from "../middleware/auth";
 import { requireNonGuest } from "../middleware/require-non-guest";
@@ -32,7 +33,7 @@ async function verifyListOwnership(listId: string, userId: string) {
 // List bookmarks
 bookmarkRoutes.get("/:listId/bookmarks", async (c) => {
   const user = c.get("user");
-  const listId = c.req.param("listId");
+  const listId = getParam(c, "listId");
 
   const list = await verifyListOwnership(listId, user.id);
   if (!list) return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
@@ -48,7 +49,7 @@ bookmarkRoutes.get("/:listId/bookmarks", async (c) => {
 // Create bookmark
 bookmarkRoutes.post("/:listId/bookmarks", async (c) => {
   const user = c.get("user");
-  const listId = c.req.param("listId");
+  const listId = getParam(c, "listId");
 
   const list = await verifyListOwnership(listId, user.id);
   if (!list) return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
@@ -93,7 +94,7 @@ bookmarkRoutes.post("/:listId/bookmarks", async (c) => {
 // Save schedules as bookmarks
 bookmarkRoutes.post("/:listId/bookmarks/from-schedules", async (c) => {
   const user = c.get("user");
-  const listId = c.req.param("listId");
+  const listId = getParam(c, "listId");
 
   const list = await verifyListOwnership(listId, user.id);
   if (!list) return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
@@ -160,7 +161,7 @@ bookmarkRoutes.post("/:listId/bookmarks/from-schedules", async (c) => {
 // Reorder bookmarks
 bookmarkRoutes.patch("/:listId/bookmarks/reorder", async (c) => {
   const user = c.get("user");
-  const listId = c.req.param("listId");
+  const listId = getParam(c, "listId");
 
   const list = await verifyListOwnership(listId, user.id);
   if (!list) return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
@@ -196,8 +197,8 @@ bookmarkRoutes.patch("/:listId/bookmarks/reorder", async (c) => {
 // Update bookmark
 bookmarkRoutes.patch("/:listId/bookmarks/:bookmarkId", async (c) => {
   const user = c.get("user");
-  const listId = c.req.param("listId");
-  const bookmarkId = c.req.param("bookmarkId");
+  const listId = getParam(c, "listId");
+  const bookmarkId = getParam(c, "bookmarkId");
 
   const list = await verifyListOwnership(listId, user.id);
   if (!list) return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
@@ -231,8 +232,8 @@ bookmarkRoutes.patch("/:listId/bookmarks/:bookmarkId", async (c) => {
 // Delete bookmark
 bookmarkRoutes.delete("/:listId/bookmarks/:bookmarkId", async (c) => {
   const user = c.get("user");
-  const listId = c.req.param("listId");
-  const bookmarkId = c.req.param("bookmarkId");
+  const listId = getParam(c, "listId");
+  const bookmarkId = getParam(c, "bookmarkId");
 
   const list = await verifyListOwnership(listId, user.id);
   if (!list) return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
@@ -252,7 +253,7 @@ bookmarkRoutes.delete("/:listId/bookmarks/:bookmarkId", async (c) => {
 // Batch delete bookmarks
 bookmarkRoutes.post("/:listId/bookmarks/batch-delete", async (c) => {
   const user = c.get("user");
-  const listId = c.req.param("listId");
+  const listId = getParam(c, "listId");
 
   const list = await verifyListOwnership(listId, user.id);
   if (!list) return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);
@@ -279,7 +280,7 @@ bookmarkRoutes.post("/:listId/bookmarks/batch-delete", async (c) => {
 // Batch duplicate bookmarks
 bookmarkRoutes.post("/:listId/bookmarks/batch-duplicate", async (c) => {
   const user = c.get("user");
-  const listId = c.req.param("listId");
+  const listId = getParam(c, "listId");
 
   const list = await verifyListOwnership(listId, user.id);
   if (!list) return c.json({ error: ERROR_MSG.BOOKMARK_LIST_NOT_FOUND }, 404);

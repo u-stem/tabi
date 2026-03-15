@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { bookmarkLists, friends, users } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
+import { getParam } from "../lib/params";
 import { optionalAuth } from "../middleware/optional-auth";
 import type { OptionalAuthEnv } from "../types";
 
@@ -25,7 +26,7 @@ async function areFriends(userA: string, userB: string): Promise<boolean> {
 
 // Public profile: list bookmark lists filtered by relationship
 profileRoutes.get("/:userId/bookmark-lists", optionalAuth, async (c) => {
-  const userId = c.req.param("userId");
+  const userId = getParam(c, "userId");
 
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
@@ -76,7 +77,7 @@ profileRoutes.get("/:userId/profile", optionalAuth, async (c) => {
   const viewer = c.get("user");
   if (!viewer) return c.json({ error: "Unauthorized" }, 401);
 
-  const userId = c.req.param("userId");
+  const userId = getParam(c, "userId");
 
   const user = await db.query.users.findFirst({
     where: eq(users.id, userId),
@@ -90,8 +91,8 @@ profileRoutes.get("/:userId/profile", optionalAuth, async (c) => {
 
 // Public: single list with bookmarks (access check by visibility)
 profileRoutes.get("/:userId/bookmark-lists/:listId", optionalAuth, async (c) => {
-  const userId = c.req.param("userId");
-  const listId = c.req.param("listId");
+  const userId = getParam(c, "userId");
+  const listId = getParam(c, "listId");
 
   const list = await db.query.bookmarkLists.findFirst({
     where: eq(bookmarkLists.id, listId),

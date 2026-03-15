@@ -8,6 +8,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { souvenirItems } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
+import { getParam } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
@@ -17,7 +18,7 @@ souvenirRoutes.use("*", requireAuth);
 
 // GET /api/trips/:tripId/souvenirs — own items only
 souvenirRoutes.get("/:tripId/souvenirs", requireTripAccess(), async (c) => {
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
   const user = c.get("user");
 
   const items = await db.query.souvenirItems.findMany({
@@ -30,7 +31,7 @@ souvenirRoutes.get("/:tripId/souvenirs", requireTripAccess(), async (c) => {
 
 // POST /api/trips/:tripId/souvenirs
 souvenirRoutes.post("/:tripId/souvenirs", requireTripAccess(), async (c) => {
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
   const user = c.get("user");
 
   const body = await c.req.json();
@@ -59,8 +60,8 @@ souvenirRoutes.post("/:tripId/souvenirs", requireTripAccess(), async (c) => {
 
 // PATCH /api/trips/:tripId/souvenirs/:itemId
 souvenirRoutes.patch("/:tripId/souvenirs/:itemId", requireTripAccess(), async (c) => {
-  const tripId = c.req.param("tripId");
-  const itemId = c.req.param("itemId");
+  const tripId = getParam(c, "tripId");
+  const itemId = getParam(c, "itemId");
   const user = c.get("user");
 
   const existing = await db.query.souvenirItems.findFirst({
@@ -91,8 +92,8 @@ souvenirRoutes.patch("/:tripId/souvenirs/:itemId", requireTripAccess(), async (c
 
 // DELETE /api/trips/:tripId/souvenirs/:itemId
 souvenirRoutes.delete("/:tripId/souvenirs/:itemId", requireTripAccess(), async (c) => {
-  const tripId = c.req.param("tripId");
-  const itemId = c.req.param("itemId");
+  const tripId = getParam(c, "tripId");
+  const itemId = getParam(c, "itemId");
   const user = c.get("user");
 
   const existing = await db.query.souvenirItems.findFirst({

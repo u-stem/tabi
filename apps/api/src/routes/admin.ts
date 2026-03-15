@@ -13,6 +13,7 @@ import {
   users,
 } from "../db/schema";
 import { getAppSettings, isValidMapsMode } from "../lib/app-settings";
+import { getParam } from "../lib/params";
 import { hashPassword } from "../lib/password";
 import { requireAuth } from "../middleware/auth";
 import { requireAdmin } from "../middleware/require-admin";
@@ -247,7 +248,7 @@ adminRoutes.get("/api/admin/users", requireAuth, requireAdmin, async (c) => {
 
 // POST /api/admin/users/:userId/temp-password — 一時パスワード発行
 adminRoutes.post("/api/admin/users/:userId/temp-password", requireAuth, requireAdmin, async (c) => {
-  const { userId } = c.req.param();
+  const userId = getParam(c, "userId");
 
   const [user] = await db
     .select({ id: users.id })

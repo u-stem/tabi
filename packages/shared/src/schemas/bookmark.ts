@@ -24,7 +24,7 @@ export const updateBookmarkListSchema = z.object({
 });
 
 export const reorderBookmarkListsSchema = z.object({
-  orderedIds: z.array(z.string().uuid()).max(MAX_BOOKMARK_LISTS_PER_USER),
+  orderedIds: z.array(z.string().check(z.guid())).max(MAX_BOOKMARK_LISTS_PER_USER),
 });
 
 const singleBookmarkUrlSchema = httpUrlSchema(BOOKMARK_URL_MAX_LENGTH);
@@ -48,18 +48,18 @@ export const updateBookmarkSchema = z.object({
 });
 
 export const reorderBookmarksSchema = z.object({
-  orderedIds: z.array(z.string().uuid()).max(MAX_BOOKMARKS_PER_LIST),
+  orderedIds: z.array(z.string().check(z.guid())).max(MAX_BOOKMARKS_PER_LIST),
 });
 
 export const batchBookmarkIdsSchema = z.object({
-  bookmarkIds: z.array(z.string().uuid()).min(1),
+  bookmarkIds: z.array(z.string().check(z.guid())).min(1),
 });
 
 export const batchBookmarkListIdsSchema = z.object({
-  listIds: z.array(z.string().uuid()).min(1),
+  listIds: z.array(z.string().check(z.guid())).min(1),
 });
 
 export const saveFromSchedulesSchema = z.object({
-  tripId: z.string().uuid(),
-  scheduleIds: z.array(z.string().uuid()).min(1),
+  tripId: z.string().check(z.guid()),
+  scheduleIds: z.array(z.string().check(z.guid())).min(1),
 });

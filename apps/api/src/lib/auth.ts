@@ -99,7 +99,7 @@ export const auth = betterAuth({
   user: {
     changeEmail: {
       enabled: true,
-      sendChangeEmailVerification: async ({ newEmail, url }) => {
+      sendChangeEmailVerification: async ({ newEmail, url }: { newEmail: string; url: string }) => {
         await getTransporter().sendMail({
           from: `"sugara" <${env.GMAIL_USER}>`,
           to: newEmail,

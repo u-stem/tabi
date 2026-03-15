@@ -6,7 +6,7 @@ export type MemberRole = z.infer<typeof fullMemberRoleSchema>;
 const assignableRoleSchema = z.enum(["editor", "viewer"]);
 
 export const addMemberSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string().check(z.guid()),
   role: assignableRoleSchema,
 });
 

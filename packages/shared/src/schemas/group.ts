@@ -10,9 +10,9 @@ export const updateGroupSchema = z.object({
 });
 
 export const addGroupMemberSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string().check(z.guid()),
 });
 
 export const addGroupMembersBulkSchema = z.object({
-  userIds: z.array(z.string().uuid()).min(1).max(MAX_MEMBERS_PER_GROUP),
+  userIds: z.array(z.string().check(z.guid())).min(1).max(MAX_MEMBERS_PER_GROUP),
 });

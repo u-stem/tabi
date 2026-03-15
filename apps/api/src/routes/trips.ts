@@ -23,6 +23,7 @@ import type { MapsMode } from "../lib/app-settings";
 import { getAppSettings } from "../lib/app-settings";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
+import { getParam } from "../lib/params";
 import { getAdminUserId } from "../lib/resolve-is-admin";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
 import {
@@ -279,7 +280,7 @@ tripRoutes.post("/", async (c) => {
 // Get trip detail with days and schedules (any member can view)
 tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("id");
+  const tripId = getParam(c, "id");
   const role = c.get("tripRole");
 
   // Run sequentially to avoid Supavisor pipeline stalls (see admin.ts fetchStats)
@@ -354,7 +355,7 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
 // Update trip (owner or editor)
 tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("id");
+  const tripId = getParam(c, "id");
   const body = await c.req.json();
   const parsed = updateTripSchema.safeParse(body);
 
@@ -490,7 +491,7 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
 // Duplicate trip (any member can duplicate, new trip is owned by current user)
 tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("id");
+  const tripId = getParam(c, "id");
 
   if (user.isAnonymous) {
     return c.json({ error: ERROR_MSG.GUEST_TRIP_LIMIT }, 403);
@@ -651,7 +652,7 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
 
 // Upload cover image (editor+)
 tripRoutes.post("/:id/cover-image", requireTripAccess("editor", "id"), async (c) => {
-  const tripId = c.req.param("id");
+  const tripId = getParam(c, "id");
 
   const body = await c.req.parseBody();
   const file = body.file;
@@ -694,7 +695,7 @@ tripRoutes.post("/:id/cover-image", requireTripAccess("editor", "id"), async (c)
 
 // Delete cover image (editor+)
 tripRoutes.delete("/:id/cover-image", requireTripAccess("editor", "id"), async (c) => {
-  const tripId = c.req.param("id");
+  const tripId = getParam(c, "id");
 
   const currentTrip = await db.query.trips.findFirst({
     where: eq(trips.id, tripId),
@@ -715,7 +716,7 @@ tripRoutes.delete("/:id/cover-image", requireTripAccess("editor", "id"), async (
 
 // Delete trip (owner only)
 tripRoutes.delete("/:id", requireTripAccess("owner", "id"), async (c) => {
-  const tripId = c.req.param("id");
+  const tripId = getParam(c, "id");
 
   const trip = await db.query.trips.findFirst({
     where: eq(trips.id, tripId),

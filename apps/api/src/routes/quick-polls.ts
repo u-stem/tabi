@@ -8,6 +8,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { quickPollOptions, quickPolls } from "../db/schema";
 import { ERROR_MSG, SEVEN_DAYS_MS } from "../lib/constants";
+import { getParam } from "../lib/params";
 import { generateShareToken } from "../lib/share-token";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -89,7 +90,7 @@ quickPollRoutes.get("/", async (c) => {
 // Get detail (creator only)
 quickPollRoutes.get("/:id", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("id");
+  const pollId = getParam(c, "id");
 
   const poll = await db.query.quickPolls.findFirst({
     where: and(eq(quickPolls.id, pollId), eq(quickPolls.creatorId, user.id)),
@@ -121,7 +122,7 @@ quickPollRoutes.get("/:id", async (c) => {
 // Update (close)
 quickPollRoutes.patch("/:id", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("id");
+  const pollId = getParam(c, "id");
   const parsed = updateQuickPollSchema.safeParse(await c.req.json());
   if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
 
@@ -148,7 +149,7 @@ quickPollRoutes.patch("/:id", async (c) => {
 // Delete
 quickPollRoutes.delete("/:id", async (c) => {
   const user = c.get("user");
-  const pollId = c.req.param("id");
+  const pollId = getParam(c, "id");
 
   const poll = await db.query.quickPolls.findFirst({
     where: and(eq(quickPolls.id, pollId), eq(quickPolls.creatorId, user.id)),

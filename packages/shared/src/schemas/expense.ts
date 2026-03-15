@@ -19,21 +19,21 @@ export const expenseCategorySchema = z.enum([
 export type ExpenseCategory = z.infer<typeof expenseCategorySchema>;
 
 const splitItemSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string().check(z.guid()),
   amount: z.number().int().min(0).optional(),
 });
 
 const lineItemInputSchema = z.object({
   name: z.string().min(1).max(200),
   amount: z.number().int().min(1),
-  memberIds: z.array(z.string().uuid()).min(1),
+  memberIds: z.array(z.string().check(z.guid())).min(1),
 });
 
 export const createExpenseSchema = z
   .object({
     title: z.string().min(1).max(EXPENSE_TITLE_MAX_LENGTH),
     amount: z.number().int().min(1),
-    paidByUserId: z.string().uuid(),
+    paidByUserId: z.string().check(z.guid()),
     splitType: expenseSplitTypeSchema,
     category: expenseCategorySchema.optional(),
     splits: z.array(splitItemSchema).min(1),
@@ -79,7 +79,7 @@ export const updateExpenseSchema = z
   .object({
     title: z.string().min(1).max(EXPENSE_TITLE_MAX_LENGTH),
     amount: z.number().int().min(1),
-    paidByUserId: z.string().uuid(),
+    paidByUserId: z.string().check(z.guid()),
     splitType: expenseSplitTypeSchema,
     category: expenseCategorySchema.nullable().optional(),
     splits: z.array(splitItemSchema).min(1),
@@ -139,7 +139,7 @@ export const updateExpenseSchema = z
   );
 
 export const createSettlementPaymentSchema = z.object({
-  fromUserId: z.string().uuid(),
-  toUserId: z.string().uuid(),
+  fromUserId: z.string().check(z.guid()),
+  toUserId: z.string().check(z.guid()),
   amount: z.number().int().positive(),
 });

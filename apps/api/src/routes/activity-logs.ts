@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { activityLogs, users } from "../db/schema";
 import { MAX_LOGS_PER_TRIP } from "../lib/constants";
+import { getParam } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
@@ -12,7 +13,7 @@ activityLogRoutes.use("*", requireAuth);
 
 // List activity logs for a trip
 activityLogRoutes.get("/:tripId/activity-logs", requireTripAccess(), async (c) => {
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
 
   const limitParam = Number(c.req.query("limit") || String(MAX_LOGS_PER_TRIP));
   const limit = Math.min(Math.max(1, limitParam), MAX_LOGS_PER_TRIP);

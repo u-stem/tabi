@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { trips } from "../db/schema";
 import { ERROR_MSG, RATE_LIMIT_PUBLIC_RESOURCE } from "../lib/constants";
+import { getParam } from "../lib/params";
 import { generateShareToken, shareExpiresAt } from "../lib/share-token";
 import { requireAuth } from "../middleware/auth";
 import { rateLimitByIp } from "../middleware/rate-limit";
@@ -21,7 +22,7 @@ shareRoutes.post(
   requireNonGuest,
   requireTripAccess("owner", "id"),
   async (c) => {
-    const tripId = c.req.param("id");
+    const tripId = getParam(c, "id");
 
     const trip = await db.query.trips.findFirst({
       where: eq(trips.id, tripId),
@@ -82,7 +83,7 @@ shareRoutes.put(
   requireNonGuest,
   requireTripAccess("owner", "id"),
   async (c) => {
-    const tripId = c.req.param("id");
+    const tripId = getParam(c, "id");
 
     const expiresAt = shareExpiresAt();
     const [updated] = await db
@@ -104,7 +105,7 @@ shareRoutes.put(
 
 // View shared trip (no auth required)
 shareRoutes.get("/api/shared/:token", sharedTripRateLimit, async (c) => {
-  const token = c.req.param("token");
+  const token = getParam(c, "token");
 
   const trip = await db.query.trips.findFirst({
     where: eq(trips.shareToken, token),

@@ -11,6 +11,7 @@ import { expenseSplits, expenses, tripMembers, users } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { notifyUsers } from "../lib/notifications";
+import { getParam } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
@@ -20,7 +21,7 @@ memberRoutes.use("*", requireAuth);
 
 // List members (any member can view)
 memberRoutes.get("/:tripId/members", requireTripAccess(), async (c) => {
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
 
   const members = await db.query.tripMembers.findMany({
     where: eq(tripMembers.tripId, tripId),
@@ -65,7 +66,7 @@ memberRoutes.get("/:tripId/members", requireTripAccess(), async (c) => {
 // Add member (owner only)
 memberRoutes.post("/:tripId/members", requireTripAccess("owner"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
 
   const body = await c.req.json();
   const parsed = addMemberSchema.safeParse(body);
@@ -139,8 +140,8 @@ memberRoutes.post("/:tripId/members", requireTripAccess("owner"), async (c) => {
 // Update member role (owner only)
 memberRoutes.patch("/:tripId/members/:userId", requireTripAccess("owner"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const targetUserId = c.req.param("userId");
+  const tripId = getParam(c, "tripId");
+  const targetUserId = getParam(c, "userId");
 
   if (targetUserId === user.id) {
     return c.json({ error: ERROR_MSG.CANNOT_CHANGE_OWN_ROLE }, 400);
@@ -191,8 +192,8 @@ memberRoutes.patch("/:tripId/members/:userId", requireTripAccess("owner"), async
 // Remove member (owner only)
 memberRoutes.delete("/:tripId/members/:userId", requireTripAccess("owner"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const targetUserId = c.req.param("userId");
+  const tripId = getParam(c, "tripId");
+  const targetUserId = getParam(c, "userId");
 
   if (targetUserId === user.id) {
     return c.json({ error: ERROR_MSG.CANNOT_REMOVE_SELF }, 400);

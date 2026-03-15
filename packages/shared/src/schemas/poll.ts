@@ -22,18 +22,18 @@ export const addPollOptionSchema = z
   });
 
 export const addPollParticipantSchema = z.object({
-  userId: z.string().uuid(),
+  userId: z.string().check(z.guid()),
 });
 
 export const submitPollResponsesSchema = z.object({
   responses: z.array(
     z.object({
-      optionId: z.string().uuid(),
+      optionId: z.string().check(z.guid()),
       response: pollResponseValueSchema,
     }),
   ),
 });
 
 export const confirmPollSchema = z.object({
-  optionId: z.string().uuid(),
+  optionId: z.string().check(z.guid()),
 });

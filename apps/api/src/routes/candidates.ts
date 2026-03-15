@@ -16,6 +16,7 @@ import { logActivity } from "../lib/activity-logger";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
+import { getParam } from "../lib/params";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
 import { getScheduleCount } from "../lib/schedule-count";
 import { getNextSortOrder } from "../lib/sort-order";
@@ -29,7 +30,7 @@ candidateRoutes.use("*", requireAuth);
 // List candidates for a trip
 candidateRoutes.get("/:tripId/candidates", requireTripAccess(), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
 
   const candidates = await queryCandidatesWithReactions(tripId, user.id);
   return c.json(candidates);
@@ -38,7 +39,7 @@ candidateRoutes.get("/:tripId/candidates", requireTripAccess(), async (c) => {
 // Create candidate
 candidateRoutes.post("/:tripId/candidates", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
 
   const body = await c.req.json();
   const parsed = createCandidateSchema.safeParse(body);
@@ -89,7 +90,7 @@ candidateRoutes.post("/:tripId/candidates", requireTripAccess("editor"), async (
 // Batch assign candidates to a day pattern
 candidateRoutes.post("/:tripId/candidates/batch-assign", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
 
   const body = await c.req.json();
   const parsed = batchAssignCandidatesSchema.safeParse(body);
@@ -152,7 +153,7 @@ candidateRoutes.post("/:tripId/candidates/batch-assign", requireTripAccess("edit
 // Batch delete candidates
 candidateRoutes.post("/:tripId/candidates/batch-delete", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
 
   const body = await c.req.json();
   const parsed = batchScheduleIdsSchema.safeParse(body);
@@ -198,7 +199,7 @@ candidateRoutes.post(
   requireTripAccess("editor"),
   async (c) => {
     const user = c.get("user");
-    const tripId = c.req.param("tripId");
+    const tripId = getParam(c, "tripId");
 
     const body = await c.req.json();
     const parsed = batchScheduleIdsSchema.safeParse(body);
@@ -265,7 +266,7 @@ candidateRoutes.post(
   requireTripAccess("editor"),
   async (c) => {
     const user = c.get("user");
-    const tripId = c.req.param("tripId");
+    const tripId = getParam(c, "tripId");
 
     const body = await c.req.json();
     const parsed = batchBookmarkIdsSchema.safeParse(body);
@@ -329,7 +330,7 @@ candidateRoutes.post(
 
 // Reorder candidates (registered before /:scheduleId to avoid route conflict)
 candidateRoutes.patch("/:tripId/candidates/reorder", requireTripAccess("editor"), async (c) => {
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
 
   const body = await c.req.json();
   const parsed = reorderSchedulesSchema.safeParse(body);
@@ -365,8 +366,8 @@ candidateRoutes.patch("/:tripId/candidates/reorder", requireTripAccess("editor")
 // Update candidate
 candidateRoutes.patch("/:tripId/candidates/:scheduleId", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const scheduleId = c.req.param("scheduleId");
+  const tripId = getParam(c, "tripId");
+  const scheduleId = getParam(c, "scheduleId");
 
   const body = await c.req.json();
   const parsed = updateScheduleSchema.safeParse(body);
@@ -426,8 +427,8 @@ candidateRoutes.delete(
   requireTripAccess("editor"),
   async (c) => {
     const user = c.get("user");
-    const tripId = c.req.param("tripId");
-    const scheduleId = c.req.param("scheduleId");
+    const tripId = getParam(c, "tripId");
+    const scheduleId = getParam(c, "scheduleId");
 
     const existing = await db.query.schedules.findFirst({
       where: and(
@@ -460,8 +461,8 @@ candidateRoutes.post(
   requireTripAccess("editor"),
   async (c) => {
     const user = c.get("user");
-    const tripId = c.req.param("tripId");
-    const scheduleId = c.req.param("scheduleId");
+    const tripId = getParam(c, "tripId");
+    const scheduleId = getParam(c, "scheduleId");
 
     const body = await c.req.json();
     const parsed = assignCandidateSchema.safeParse(body);

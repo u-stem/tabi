@@ -16,6 +16,7 @@ import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
 import { notifyTripMembersExcluding } from "../lib/notifications";
+import { getParam } from "../lib/params";
 import { canEdit, verifyPatternAccess } from "../lib/permissions";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
 import { getScheduleCount } from "../lib/schedule-count";
@@ -34,9 +35,9 @@ scheduleRoutes.use("*", requireAuth);
 // List schedules for a pattern
 scheduleRoutes.get("/:tripId/days/:dayId/patterns/:patternId/schedules", async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const dayId = c.req.param("dayId");
-  const patternId = c.req.param("patternId");
+  const tripId = getParam(c, "tripId");
+  const dayId = getParam(c, "dayId");
+  const patternId = getParam(c, "patternId");
 
   const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
   if (!role) {
@@ -53,9 +54,9 @@ scheduleRoutes.get("/:tripId/days/:dayId/patterns/:patternId/schedules", async (
 // Add schedule
 scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules", async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const dayId = c.req.param("dayId");
-  const patternId = c.req.param("patternId");
+  const tripId = getParam(c, "tripId");
+  const dayId = getParam(c, "dayId");
+  const patternId = getParam(c, "patternId");
 
   const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
   if (!canEdit(role)) {
@@ -122,9 +123,9 @@ scheduleRoutes.post(
   "/:tripId/days/:dayId/patterns/:patternId/schedules/batch-delete",
   async (c) => {
     const user = c.get("user");
-    const tripId = c.req.param("tripId");
-    const dayId = c.req.param("dayId");
-    const patternId = c.req.param("patternId");
+    const tripId = getParam(c, "tripId");
+    const dayId = getParam(c, "dayId");
+    const patternId = getParam(c, "patternId");
 
     const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
     if (!canEdit(role)) {
@@ -168,9 +169,9 @@ scheduleRoutes.post(
 // Batch shift schedule times
 scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules/batch-shift", async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const dayId = c.req.param("dayId");
-  const patternId = c.req.param("patternId");
+  const tripId = getParam(c, "tripId");
+  const dayId = getParam(c, "dayId");
+  const patternId = getParam(c, "patternId");
 
   const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
   if (!canEdit(role)) {
@@ -283,9 +284,9 @@ scheduleRoutes.post(
   "/:tripId/days/:dayId/patterns/:patternId/schedules/batch-duplicate",
   async (c) => {
     const user = c.get("user");
-    const tripId = c.req.param("tripId");
-    const dayId = c.req.param("dayId");
-    const patternId = c.req.param("patternId");
+    const tripId = getParam(c, "tripId");
+    const dayId = getParam(c, "dayId");
+    const patternId = getParam(c, "patternId");
 
     const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
     if (!canEdit(role)) {
@@ -355,9 +356,9 @@ scheduleRoutes.post(
 // Reorder schedules -- registered before /:scheduleId to avoid "reorder" matching as scheduleId
 scheduleRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/schedules/reorder", async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const dayId = c.req.param("dayId");
-  const patternId = c.req.param("patternId");
+  const tripId = getParam(c, "tripId");
+  const dayId = getParam(c, "dayId");
+  const patternId = getParam(c, "patternId");
 
   const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
   if (!canEdit(role)) {
@@ -405,10 +406,10 @@ scheduleRoutes.patch(
   "/:tripId/days/:dayId/patterns/:patternId/schedules/:scheduleId",
   async (c) => {
     const user = c.get("user");
-    const tripId = c.req.param("tripId");
-    const dayId = c.req.param("dayId");
-    const patternId = c.req.param("patternId");
-    const scheduleId = c.req.param("scheduleId");
+    const tripId = getParam(c, "tripId");
+    const dayId = getParam(c, "dayId");
+    const patternId = getParam(c, "patternId");
+    const scheduleId = getParam(c, "scheduleId");
 
     const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
     if (!canEdit(role)) {
@@ -481,10 +482,10 @@ scheduleRoutes.delete(
   "/:tripId/days/:dayId/patterns/:patternId/schedules/:scheduleId",
   async (c) => {
     const user = c.get("user");
-    const tripId = c.req.param("tripId");
-    const dayId = c.req.param("dayId");
-    const patternId = c.req.param("patternId");
-    const scheduleId = c.req.param("scheduleId");
+    const tripId = getParam(c, "tripId");
+    const dayId = getParam(c, "dayId");
+    const patternId = getParam(c, "patternId");
+    const scheduleId = getParam(c, "scheduleId");
 
     const role = await verifyPatternAccess(tripId, dayId, patternId, user.id);
     if (!canEdit(role)) {
@@ -523,7 +524,7 @@ scheduleRoutes.delete(
 // Batch unassign schedules (move to candidates)
 scheduleRoutes.post("/:tripId/schedules/batch-unassign", requireTripAccess("editor"), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
+  const tripId = getParam(c, "tripId");
 
   const body = await c.req.json();
   const parsed = batchUnassignSchedulesSchema.safeParse(body);
@@ -582,8 +583,8 @@ scheduleRoutes.post(
   requireTripAccess("editor"),
   async (c) => {
     const user = c.get("user");
-    const tripId = c.req.param("tripId");
-    const scheduleId = c.req.param("scheduleId");
+    const tripId = getParam(c, "tripId");
+    const scheduleId = getParam(c, "scheduleId");
 
     const existing = await db.query.schedules.findFirst({
       where: and(eq(schedules.id, scheduleId), eq(schedules.tripId, tripId)),

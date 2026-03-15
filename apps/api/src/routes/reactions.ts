@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { scheduleReactions, schedules } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
+import { getParam } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
 import type { AppEnv } from "../types";
@@ -24,8 +25,8 @@ async function getReactionCounts(scheduleId: string) {
 
 reactionRoutes.put("/:tripId/candidates/:scheduleId/reaction", requireTripAccess(), async (c) => {
   const user = c.get("user");
-  const tripId = c.req.param("tripId");
-  const scheduleId = c.req.param("scheduleId");
+  const tripId = getParam(c, "tripId");
+  const scheduleId = getParam(c, "scheduleId");
 
   const body = await c.req.json();
   const parsed = reactionSchema.safeParse(body);
@@ -67,8 +68,8 @@ reactionRoutes.delete(
   requireTripAccess(),
   async (c) => {
     const user = c.get("user");
-    const tripId = c.req.param("tripId");
-    const scheduleId = c.req.param("scheduleId");
+    const tripId = getParam(c, "tripId");
+    const scheduleId = getParam(c, "scheduleId");
 
     const existing = await db.query.schedules.findFirst({
       where: and(

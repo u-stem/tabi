@@ -189,13 +189,13 @@ function ResponsiveAlertDialogDestructiveAction({
 
 export {
   ResponsiveAlertDialog,
-  ResponsiveAlertDialogTrigger,
-  ResponsiveAlertDialogContent,
-  ResponsiveAlertDialogHeader,
-  ResponsiveAlertDialogFooter,
-  ResponsiveAlertDialogTitle,
-  ResponsiveAlertDialogDescription,
-  ResponsiveAlertDialogCancel,
   ResponsiveAlertDialogAction,
+  ResponsiveAlertDialogCancel,
+  ResponsiveAlertDialogContent,
+  ResponsiveAlertDialogDescription,
   ResponsiveAlertDialogDestructiveAction,
+  ResponsiveAlertDialogFooter,
+  ResponsiveAlertDialogHeader,
+  ResponsiveAlertDialogTitle,
+  ResponsiveAlertDialogTrigger,
 };

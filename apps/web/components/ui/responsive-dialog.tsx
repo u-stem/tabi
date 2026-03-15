@@ -135,11 +135,11 @@ function ResponsiveDialogClose({ ...props }: React.ComponentProps<typeof DialogC
 
 export {
   ResponsiveDialog,
-  ResponsiveDialogTrigger,
-  ResponsiveDialogContent,
-  ResponsiveDialogHeader,
-  ResponsiveDialogFooter,
-  ResponsiveDialogTitle,
-  ResponsiveDialogDescription,
   ResponsiveDialogClose,
+  ResponsiveDialogContent,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogTrigger,
 };

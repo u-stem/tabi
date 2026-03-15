@@ -5,7 +5,7 @@ import { useCallback, useRef } from "react";
 import { getSeasonalBg, getSeasonalColors, getSeasonalGradient } from "@/lib/season";
 import { cn } from "@/lib/utils";
 
-export { getSeasonalGradient, getSeasonalBg };
+export { getSeasonalBg, getSeasonalGradient };
 
 export function Logo({ href, className }: { href?: string; className?: string }) {
   const ref = useRef<HTMLAnchorElement>(null);

@@ -72,5 +72,5 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }: C
 }
 Calendar.displayName = "Calendar";
 
-export { Calendar };
 export type { CalendarProps };
+export { Calendar };

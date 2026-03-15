@@ -13,7 +13,7 @@ const monthOptions = Array.from({ length: 12 }, (_, i) => ({
   label: `${i + 1}月`,
 }));
 
-export { START_YEAR, END_YEAR };
+export { END_YEAR, START_YEAR };
 
 type CalendarNavProps = {
   month: Date;

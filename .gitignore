@@ -48,5 +48,9 @@ supabase/.temp/
 # Lefthook
 lefthook-local.yml
 
+# Superpowers
+.superpowers/
+docs/superpowers/
+
 # Misc
 *.tsbuildinfo

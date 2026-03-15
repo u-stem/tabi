@@ -204,7 +204,7 @@ export function QrScannerDialog() {
         ) : (
           <ImageUploadArea fileInputRef={fileInputRef} onFileChange={handleFileChange} />
         )}
-        {error && <p className="text-sm text-muted-foreground text-center">{error}</p>}
+        {error && <p className="text-sm text-destructive text-center">{error}</p>}
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );

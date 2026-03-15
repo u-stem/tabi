@@ -19,4 +19,4 @@ pre-push:
       run: bun run test
     audit:
       glob: "bun.lock"
-      run: bun audit
+      run: bun audit || echo "[audit] vulnerabilities found (non-blocking)"

@@ -14,7 +14,6 @@ import {
   ResponsiveDialogTrigger,
 } from "@/components/ui/responsive-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { parseQrFriendUrl } from "@/lib/qr-utils";
 
@@ -166,21 +165,25 @@ export function QrScannerDialog() {
 
   return (
     <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <ResponsiveDialogTrigger asChild>
-            <Button variant="outline" size="sm" className="gap-1.5 rounded-full">
-              <ScanLine className="h-3.5 w-3.5" />
-              読み取り
-            </Button>
-          </ResponsiveDialogTrigger>
-        </TooltipTrigger>
-        <TooltipContent>QRコードを読み取る</TooltipContent>
-      </Tooltip>
+      <ResponsiveDialogTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5 rounded-full">
+          <ScanLine className="h-3.5 w-3.5" />
+          読み取り
+        </Button>
+      </ResponsiveDialogTrigger>
       <ResponsiveDialogContent className="sm:max-w-sm">
         <ResponsiveDialogHeader>
           <ResponsiveDialogTitle>QRコードを読み取る</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
+        {/* Html5Qrcode constructor requires this element to exist */}
+        <div
+          id={READER_ID}
+          className={
+            isMobile && tab === "camera"
+              ? "aspect-square w-full overflow-hidden rounded-lg"
+              : "hidden"
+          }
+        />
         {isMobile ? (
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList className="w-full">
@@ -193,9 +196,7 @@ export function QrScannerDialog() {
                 画像
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="camera">
-              <div id={READER_ID} className="aspect-square w-full overflow-hidden rounded-lg" />
-            </TabsContent>
+            <TabsContent value="camera" />
             <TabsContent value="image">
               <ImageUploadArea fileInputRef={fileInputRef} onFileChange={handleFileChange} />
             </TabsContent>

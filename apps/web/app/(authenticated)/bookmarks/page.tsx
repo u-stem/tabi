@@ -120,7 +120,12 @@ export default function BookmarksPage() {
     () => [
       {
         group: "全般",
-        items: [{ key: "n", description: "新規作成" }],
+        items: [
+          { key: "n", description: "新規作成" },
+          { key: "s", description: "選択モード切替" },
+          { key: "Escape", description: "選択モード解除" },
+          { key: "a", description: "全選択 / 全解除" },
+        ],
       },
     ],
     [],
@@ -136,6 +141,33 @@ export default function BookmarksPage() {
     "n",
     () => {
       if (!isDialogOpen()) setCreateDialogOpen(true);
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "s",
+    () => {
+      if (!isDialogOpen() && !isGuest) sel.selectionMode ? sel.exit() : sel.enter();
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "Escape",
+    () => {
+      if (!isDialogOpen() && sel.selectionMode) sel.exit();
+    },
+    { enableOnFormTags: true },
+  );
+  useHotkeys(
+    "a",
+    () => {
+      if (!isDialogOpen() && sel.selectionMode) {
+        if (sel.selectedIds.size === filteredBookmarkLists.length) {
+          sel.deselectAll();
+        } else {
+          sel.selectAll();
+        }
+      }
     },
     { preventDefault: true },
   );
@@ -257,6 +289,7 @@ export default function BookmarksPage() {
                 >
                   <SquareMousePointer className="h-4 w-4" />
                   選択
+                  <span className="hidden text-xs text-muted-foreground lg:inline">(S)</span>
                 </Button>
                 <Tooltip>
                   <TooltipTrigger asChild>

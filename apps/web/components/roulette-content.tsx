@@ -4,6 +4,7 @@ import type { BookmarkResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Dices, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { api } from "@/lib/api";
 import { useBookmarkLists } from "@/lib/hooks/use-bookmark-lists";
 import { useRoulette } from "@/lib/hooks/use-roulette";
+import { isDialogOpen } from "@/lib/hotkeys";
 import { ALL_PREFECTURES, REGIONS } from "@/lib/prefectures";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
@@ -36,6 +38,21 @@ function RouletteDisplay({
   onReset: () => void;
   disabled: boolean;
 }) {
+  useHotkeys(
+    "space",
+    () => {
+      if (!isDialogOpen() && !disabled && state !== "spinning") onSpin();
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "r",
+    () => {
+      if (!isDialogOpen() && state === "result") onReset();
+    },
+    { preventDefault: true },
+  );
+
   return (
     <div className="flex flex-col items-center gap-4 py-4">
       <div
@@ -61,14 +78,19 @@ function RouletteDisplay({
           <>
             <Button variant="outline" onClick={onReset}>
               <RotateCcw className="h-4 w-4" /> リセット
+              <span className="hidden text-xs text-muted-foreground lg:inline">(R)</span>
             </Button>
             <Button onClick={onSpin}>
               <Dices className="h-4 w-4" /> もう一回
+              <span className="hidden text-xs text-muted-foreground lg:inline">(Space)</span>
             </Button>
           </>
         ) : (
           <Button onClick={onSpin} disabled={disabled || state === "spinning"}>
             <Dices className="h-4 w-4" /> {state === "spinning" ? "選択中..." : "回す"}
+            {state === "idle" && (
+              <span className="hidden text-xs text-muted-foreground lg:inline">(Space)</span>
+            )}
           </Button>
         )}
       </div>

@@ -101,6 +101,11 @@ export default function HomePage() {
         items: [
           { key: "/", description: "検索にフォーカス" },
           { key: "n", description: "新規作成" },
+          { key: "1", description: "「自分の旅行」タブ" },
+          { key: "2", description: "「共有された旅行」タブ" },
+          { key: "s", description: "選択モード切替" },
+          { key: "Escape", description: "選択モード解除" },
+          { key: "a", description: "全選択 / 全解除" },
         ],
       },
     ],
@@ -124,6 +129,47 @@ export default function HomePage() {
     "n",
     () => {
       if (!isDialogOpen()) setCreateTripOpen(true);
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "1",
+    () => {
+      if (!isDialogOpen()) handleTabChange("owned");
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "2",
+    () => {
+      if (!isDialogOpen()) handleTabChange("shared");
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "s",
+    () => {
+      if (!isDialogOpen()) setSelectionMode(!selectionMode);
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "Escape",
+    () => {
+      if (!isDialogOpen() && selectionMode) setSelectionMode(false);
+    },
+    { enableOnFormTags: true },
+  );
+  useHotkeys(
+    "a",
+    () => {
+      if (!isDialogOpen() && selectionMode) {
+        if (selectedIds.size === filteredTrips.length) {
+          handleDeselectAll();
+        } else {
+          handleSelectAll();
+        }
+      }
     },
     { preventDefault: true },
   );

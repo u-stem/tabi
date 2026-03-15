@@ -3,18 +3,22 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Share2, Trash2, XCircle } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { CreateQuickPollDialog } from "@/components/create-quick-poll-dialog";
 import { ShareDialog } from "@/components/share-dialog";
+import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
+import { isDialogOpen } from "@/lib/hotkeys";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
+import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 
 type PollListItem = {
   id: string;
@@ -61,9 +65,30 @@ export default function PollsPage() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [shareDialogToken, setShareDialogToken] = useState<string | null>(null);
 
+  const { open: openShortcutHelp } = useShortcutHelp();
+  const shortcuts: ShortcutGroup[] = useMemo(
+    () => [
+      {
+        group: "全般",
+        items: [{ key: "n", description: "新規作成" }],
+      },
+    ],
+    [],
+  );
+  useRegisterShortcuts(shortcuts);
+
   useEffect(() => {
     document.title = pageTitle("かんたん投票");
   }, []);
+
+  useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
+  useHotkeys(
+    "n",
+    () => {
+      if (!isDialogOpen()) setCreateDialogOpen(true);
+    },
+    { preventDefault: true },
+  );
 
   const { data: polls, isLoading } = useQuery({
     queryKey: queryKeys.quickPolls.list(),
@@ -107,6 +132,7 @@ export default function PollsPage() {
           <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
             <Plus className="h-4 w-4" />
             新規作成
+            <span className="hidden text-xs text-muted-foreground lg:inline">(N)</span>
           </Button>
         </div>
         {!polls?.length ? (

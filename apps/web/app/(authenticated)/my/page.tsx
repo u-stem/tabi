@@ -3,9 +3,12 @@
 import { Check, ChevronRight, Copy, Dices, Pencil, Vote } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { MyQrDialog } from "@/components/my-qr-dialog";
+import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 
 const QrScannerDialog = dynamic(
   () =>
@@ -20,7 +23,9 @@ import { UserAvatar } from "@/components/user-avatar";
 import { useSession } from "@/lib/auth-client";
 import { copyToClipboard } from "@/lib/clipboard";
 import { pageTitle } from "@/lib/constants";
+import { isDialogOpen } from "@/lib/hotkeys";
 import { MSG } from "@/lib/messages";
+import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
@@ -32,11 +37,33 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 
 export default function MyPage() {
   const { data: session } = useSession();
+  const router = useRouter();
   const [idCopied, setIdCopied] = useState(false);
+
+  const { open: openShortcutHelp } = useShortcutHelp();
+  const shortcuts: ShortcutGroup[] = useMemo(
+    () => [
+      {
+        group: "全般",
+        items: [{ key: "e", description: "プロフィール編集" }],
+      },
+    ],
+    [],
+  );
+  useRegisterShortcuts(shortcuts);
 
   useEffect(() => {
     document.title = pageTitle("プロフィール");
   }, []);
+
+  useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
+  useHotkeys(
+    "e",
+    () => {
+      if (!isDialogOpen()) router.push("/my/edit");
+    },
+    { preventDefault: true },
+  );
 
   const user = session?.user;
   const userId = user?.id;
@@ -88,6 +115,7 @@ export default function MyPage() {
           >
             <Pencil className="h-3 w-3" />
             編集
+            <span className="hidden text-xs text-muted-foreground lg:inline">(E)</span>
           </Link>
           {userId && (
             <>

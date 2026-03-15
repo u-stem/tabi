@@ -371,6 +371,7 @@ export function TripToolbar({
           >
             <SquareMousePointer className="h-4 w-4" />
             選択
+            <span className="hidden text-xs text-muted-foreground lg:inline">(S)</span>
           </Button>
         </div>
       )}

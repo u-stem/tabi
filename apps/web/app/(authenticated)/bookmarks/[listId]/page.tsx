@@ -19,9 +19,11 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { Fab } from "@/components/fab";
 import { ReorderControls } from "@/components/reorder-controls";
+import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
@@ -35,8 +37,10 @@ import { useBookmarkListOperations } from "@/lib/hooks/use-bookmark-list-operati
 import { useBookmarkOperations } from "@/lib/hooks/use-bookmark-operations";
 import { useBookmarkSelection } from "@/lib/hooks/use-bookmark-selection";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
+import { isDialogOpen } from "@/lib/hotkeys";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
+import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
 import {
   AddBookmarkDialog,
@@ -154,6 +158,74 @@ export default function BookmarkListDetailPage() {
     invalidateBookmarks,
     invalidateLists,
   });
+
+  // -- Shortcuts --
+
+  const { open: openShortcutHelp } = useShortcutHelp();
+  const detailShortcuts: ShortcutGroup[] = useMemo(
+    () => [
+      {
+        group: "全般",
+        items: [
+          { key: "n", description: "ブックマーク追加" },
+          { key: "e", description: "リスト編集" },
+          { key: "s", description: "選択モード切替" },
+          { key: "Escape", description: "選択 / 並び替えモード解除" },
+          { key: "a", description: "全選択 / 全解除" },
+        ],
+      },
+    ],
+    [],
+  );
+  useRegisterShortcuts(detailShortcuts);
+
+  useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
+  useHotkeys(
+    "n",
+    () => {
+      if (!isDialogOpen() && online && !sel.selectionMode && !reorderMode) bmOps.openAdd();
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "e",
+    () => {
+      if (!isDialogOpen() && list) listOps.openEdit(list);
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "s",
+    () => {
+      if (!isDialogOpen() && online) sel.selectionMode ? sel.exit() : sel.enter();
+    },
+    { preventDefault: true },
+  );
+  useHotkeys(
+    "Escape",
+    () => {
+      if (isDialogOpen()) return;
+      if (sel.selectionMode) {
+        sel.exit();
+      } else if (reorderMode) {
+        setReorderMode(false);
+      }
+    },
+    { enableOnFormTags: true },
+  );
+  useHotkeys(
+    "a",
+    () => {
+      if (!isDialogOpen() && sel.selectionMode) {
+        if (sel.selectedIds.size === localBookmarks.length) {
+          sel.deselectAll();
+        } else {
+          sel.selectAll();
+        }
+      }
+    },
+    { preventDefault: true },
+  );
 
   // -- Drag and drop --
 

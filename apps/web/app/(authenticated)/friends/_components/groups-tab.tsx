@@ -175,6 +175,7 @@ export function GroupsTab({
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               <Plus className="mr-1 h-4 w-4" />
               新規作成
+              <span className="hidden text-xs text-muted-foreground lg:inline">(N)</span>
             </Button>
           </CardHeader>
           <CardContent>
@@ -184,13 +185,17 @@ export function GroupsTab({
               <div className="max-h-80 space-y-3 overflow-y-auto">
                 {groups.map((group) => (
                   <div key={group.id} className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
+                    <button
+                      type="button"
+                      className="flex items-center gap-2 min-w-0 hover:underline"
+                      onClick={() => setDetailGroup(group)}
+                    >
                       <span className="text-sm truncate">{group.name}</span>
                       <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
                         <Users className="h-3.5 w-3.5" />
                         {group.memberCount}
                       </span>
-                    </div>
+                    </button>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
@@ -203,6 +208,10 @@ export function GroupsTab({
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setDetailGroup(group)}>
+                          <Users className="h-4 w-4" />
+                          メンバー管理
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
                             setEditName(group.name);

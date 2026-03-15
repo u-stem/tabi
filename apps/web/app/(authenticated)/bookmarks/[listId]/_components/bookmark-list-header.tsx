@@ -238,6 +238,7 @@ export function BookmarkListHeader({
             >
               <SquareMousePointer className="h-4 w-4" />
               選択
+              <span className="hidden text-xs text-muted-foreground lg:inline">(S)</span>
             </Button>
           )}
           {isMobile && bookmarkCount > 1 && online && (
@@ -266,6 +267,7 @@ export function BookmarkListHeader({
                   >
                     <Plus className="h-4 w-4" />
                     追加
+                    <span className="hidden text-xs text-muted-foreground lg:inline">(N)</span>
                   </Button>
                 </span>
               </TooltipTrigger>

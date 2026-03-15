@@ -372,7 +372,7 @@ export default function SpTripMembersPage() {
         )}
 
         {/* Member list */}
-        <div className="pb-20">
+        <div className="pb-[calc(5rem+env(safe-area-inset-bottom,0px))]">
           <p className="px-4 pt-4 pb-2 text-sm font-medium text-muted-foreground">
             メンバー ({members.length})
           </p>

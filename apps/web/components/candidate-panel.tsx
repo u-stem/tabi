@@ -423,7 +423,7 @@ export function CandidatePanel({
         />
       )}
 
-      {isMobile && days && days.length > 0 && (
+      {isMobile && hasDayContext && days && days.length > 0 && (
         <DayPickerDrawer
           open={dayPickerOpen}
           onOpenChange={(open) => {

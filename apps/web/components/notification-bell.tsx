@@ -8,7 +8,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../lib/api";
 import { MSG } from "../lib/messages";
@@ -20,12 +20,21 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function NotificationBell() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
+  // Track whether dropdown was recently open to suppress focus-triggered tooltip
+  const wasOpenRef = useRef(false);
+
+  function handleDropdownOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      wasOpenRef.current = true;
+    }
+    setOpen(nextOpen);
+  }
 
   const { data } = useQuery({
     queryKey: queryKeys.notifications.list(),
@@ -57,26 +66,33 @@ export function NotificationBell() {
   }
 
   return (
-    <TooltipProvider>
-      <DropdownMenu open={open} onOpenChange={setOpen}>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="group relative flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-              >
-                <Bell className="h-5 w-5 transition-transform duration-200 group-hover:rotate-12" />
-                {unreadCount > 0 && (
-                  <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </button>
-            </DropdownMenuTrigger>
-          </TooltipTrigger>
-          <TooltipContent>通知</TooltipContent>
-        </Tooltip>
+    <Tooltip>
+      <DropdownMenu open={open} onOpenChange={handleDropdownOpenChange}>
+        <TooltipTrigger asChild>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="通知"
+              className="group relative flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+              onFocus={(e) => {
+                // Radix composeEventHandlers checks defaultPrevented:
+                // preventDefault() stops Radix Tooltip's internal onOpen() from firing
+                if (wasOpenRef.current) {
+                  e.preventDefault();
+                  wasOpenRef.current = false;
+                }
+              }}
+            >
+              <Bell className="h-5 w-5 transition-transform duration-200 group-hover:rotate-12" />
+              {unreadCount > 0 && (
+                <span className="absolute right-0 top-0 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] text-white">
+                  {unreadCount > 9 ? "9+" : unreadCount}
+                </span>
+              )}
+            </button>
+          </DropdownMenuTrigger>
+        </TooltipTrigger>
+        <TooltipContent>通知</TooltipContent>
         <DropdownMenuContent align="end" className="w-80 max-h-[min(70vh,500px)] overflow-y-auto">
           {unreadCount > 0 && (
             <>
@@ -117,6 +133,6 @@ export function NotificationBell() {
           )}
         </DropdownMenuContent>
       </DropdownMenu>
-    </TooltipProvider>
+    </Tooltip>
   );
 }

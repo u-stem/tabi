@@ -67,7 +67,7 @@ export function SpSwipeTabs<T extends string = string>({
     if (!el) return;
     const measure = () => {
       const top = el.getBoundingClientRect().top;
-      if (top > 0) setMeasuredHeight(`calc(100dvh - ${top}px)`);
+      if (top >= 0) setMeasuredHeight(`calc(100dvh - ${top}px)`);
     };
     measure();
     const observer = new ResizeObserver(measure);

@@ -341,9 +341,9 @@ export type NotificationsResponse = {
 export type SharedTripResponse = {
   id: string;
   title: string;
-  destination: string;
-  startDate: string;
-  endDate: string;
+  destination: string | null;
+  startDate: string | null;
+  endDate: string | null;
   status: TripStatus;
   days: DayResponse[];
   shareExpiresAt: string | null;

@@ -132,7 +132,7 @@ export function SharedTripClient({ token }: { token: string }) {
     };
   }, [trip?.id]);
 
-  const dayCount = trip ? getDayCount(trip.startDate, trip.endDate) : 0;
+  const dayCount = trip?.startDate && trip?.endDate ? getDayCount(trip.startDate, trip.endDate) : 0;
 
   return (
     <div className="min-h-screen">
@@ -181,8 +181,14 @@ export function SharedTripClient({ token }: { token: string }) {
                   )}
                   <span className="flex items-center gap-1.5">
                     <Calendar className="h-4 w-4 shrink-0" />
-                    {formatDateRange(trip.startDate, trip.endDate)}
-                    <span className="text-xs">（{dayCount}日間）</span>
+                    {trip.startDate && trip.endDate ? (
+                      <>
+                        {formatDateRange(trip.startDate, trip.endDate)}
+                        <span className="text-xs">（{dayCount}日間）</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">日程未定</span>
+                    )}
                   </span>
                 </div>
                 {trip.shareExpiresAt && (
@@ -192,6 +198,11 @@ export function SharedTripClient({ token }: { token: string }) {
                 )}
               </div>
               <div className="space-y-6">
+                {(trip.days ?? []).length === 0 && (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    スケジュールはまだありません
+                  </p>
+                )}
                 {(trip.days ?? []).map((day) => {
                   const crossDayEntries = getCrossDayEntries(trip.days ?? [], day.dayNumber);
                   return (

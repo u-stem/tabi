@@ -41,26 +41,53 @@ const DrawerOverlay = React.forwardRef<
 ));
 DrawerOverlay.displayName = DrawerPrimitive.Overlay.displayName;
 
+// Offset drawer above virtual keyboard (repositionInputs is disabled)
+function useKeyboardOffset() {
+  const [offset, setOffset] = React.useState(0);
+  React.useEffect(() => {
+    const vv = window.visualViewport;
+    if (!vv) return;
+    function handleResize() {
+      if (!vv) return;
+      // Ignore pinch-zoom: only respond to keyboard-induced viewport shrink
+      if (vv.scale !== 1) return;
+      const kb = window.innerHeight - vv.height;
+      setOffset(kb > 0 ? kb : 0);
+    }
+    vv.addEventListener("resize", handleResize);
+    return () => vv.removeEventListener("resize", handleResize);
+  }, []);
+  return offset;
+}
+
 const DrawerContent = React.forwardRef<
   React.ComponentRef<typeof DrawerPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DrawerPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DrawerPortal>
-    <DrawerOverlay />
-    <DrawerPrimitive.Content
-      ref={ref}
-      className={cn(
-        "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto max-h-[92vh] flex-col rounded-t-[10px] border bg-background outline-none",
-        className,
-      )}
-      style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
-      {...props}
-    >
-      <div className="mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full bg-muted" />
-      <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pb-6">{children}</div>
-    </DrawerPrimitive.Content>
-  </DrawerPortal>
-));
+>(({ className, children, ...props }, ref) => {
+  const keyboardOffset = useKeyboardOffset();
+  return (
+    <DrawerPortal>
+      <DrawerOverlay />
+      <DrawerPrimitive.Content
+        ref={ref}
+        className={cn(
+          "fixed inset-x-0 bottom-0 z-50 mt-24 flex h-auto max-h-[92vh] flex-col rounded-t-[10px] border bg-background outline-none transition-transform duration-200",
+          className,
+        )}
+        style={{
+          paddingBottom: "env(safe-area-inset-bottom, 0px)",
+          transform: keyboardOffset > 0 ? `translateY(-${keyboardOffset}px)` : undefined,
+        }}
+        {...props}
+      >
+        <div className="mx-auto mt-4 h-2 w-[100px] shrink-0 rounded-full bg-muted" />
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 pb-6">
+          {children}
+        </div>
+      </DrawerPrimitive.Content>
+    </DrawerPortal>
+  );
+});
 DrawerContent.displayName = "DrawerContent";
 
 const DrawerHeader = ({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) => (

@@ -32,6 +32,18 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": ["apps/web/app/faq/page.tsx", "apps/web/app/news/*/page.tsx"],
+      "linter": {
+        "rules": {
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          }
+        }
+      }
+    }
+  ],
   "files": {
     "includes": ["**/*.ts", "**/*.tsx"]
   }

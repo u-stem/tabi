@@ -15,6 +15,7 @@ faqRoutes.get("/api/faqs", async (c) => {
     })
     .from(faqs)
     .orderBy(asc(faqs.sortOrder));
+  c.header("Cache-Control", "public, s-maxage=3600, stale-while-revalidate=600");
   return c.json(rows);
 });
 

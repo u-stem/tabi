@@ -5,6 +5,7 @@ import Markdown from "react-markdown";
 import { Logo } from "@/components/logo";
 import { pageTitle } from "@/lib/constants";
 import { getAllNews, getNewsBySlug } from "@/lib/news";
+import { getSeason } from "@/lib/season";
 
 type Props = {
   params: Promise<{ slug: string }>;
@@ -18,8 +19,25 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = getNewsBySlug(slug);
+  const ogImage = `/icons/apple-touch-icon-${getSeason()}.png`;
   if (!article) return { title: pageTitle("お知らせ") };
-  return { title: pageTitle(article.title) };
+  return {
+    title: pageTitle(article.title),
+    description: article.summary,
+    openGraph: {
+      title: article.title,
+      description: article.summary,
+      type: "article",
+      publishedTime: article.date,
+      images: [ogImage],
+    },
+    twitter: {
+      card: "summary",
+      title: article.title,
+      description: article.summary,
+      images: [ogImage],
+    },
+  };
 }
 
 export default async function NewsArticlePage({ params }: Props) {
@@ -30,8 +48,20 @@ export default async function NewsArticlePage({ params }: Props) {
     notFound();
   }
 
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: article.title,
+    description: article.summary,
+    datePublished: article.date,
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <header className="container flex h-14 items-center">
         <Logo href="/" />
       </header>

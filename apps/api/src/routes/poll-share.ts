@@ -33,6 +33,7 @@ pollShareRoutes.get("/api/polls/shared/:token", sharedPollRateLimit, async (c) =
     return c.json({ error: ERROR_MSG.POLL_SHARED_NOT_FOUND }, 404);
   }
 
+  c.header("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
   return c.json({
     id: poll.id,
     title: poll.trip.title,

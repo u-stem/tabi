@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+import { pageTitle } from "@/lib/constants";
 import { getAllNews } from "@/lib/news";
+
+export const metadata: Metadata = { title: pageTitle("ホーム") };
 
 export default async function SpHomeLayout({ children }: { children: React.ReactNode }) {
   const articles = getAllNews();

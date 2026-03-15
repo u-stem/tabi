@@ -1,5 +1,6 @@
 import type { SharedTripResponse } from "@sugara/shared";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { pageTitle } from "@/lib/constants";
 import { formatDateRange } from "@/lib/format";
 import { getSeason } from "@/lib/season";
@@ -56,5 +57,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function SharedTripPage({ params }: Props) {
   const { token } = await params;
+
+  const baseUrl = process.env.BETTER_AUTH_BASE_URL ?? "http://localhost:3000";
+  const res = await fetch(`${baseUrl}/api/shared/${token}`, {
+    next: { revalidate: 60 },
+  });
+  if (!res.ok) notFound();
+
   return <SharedTripClient token={token} />;
 }

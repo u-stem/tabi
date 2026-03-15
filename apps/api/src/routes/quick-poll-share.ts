@@ -41,6 +41,8 @@ quickPollShareRoutes.get("/api/quick-polls/s/:shareToken", rateLimit, async (c) 
     })
     .map((v) => v.optionId);
 
+  // Contains per-user vote state (myVoteOptionIds), so must not be cached publicly
+  c.header("Cache-Control", "private, no-cache");
   return c.json({
     id: poll.id,
     question: poll.question,

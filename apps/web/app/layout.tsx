@@ -32,12 +32,27 @@ export const viewport: Viewport = {
 
 export function generateMetadata(): Metadata {
   const season = getSeason();
+  const description = "旅行の計画を作成・共有できる共同編集アプリ。";
+  const ogImage = `/icons/apple-touch-icon-${season}.png`;
   return {
+    metadataBase: new URL(process.env.BETTER_AUTH_BASE_URL ?? "https://sugara.vercel.app"),
     title: "sugara",
-    description: "旅行の計画を作成・共有できる共同編集アプリ。",
+    description,
     icons: {
       icon: `/icons/favicon-${season}.png`,
-      apple: `/icons/apple-touch-icon-${season}.png`,
+      apple: ogImage,
+    },
+    openGraph: {
+      title: "sugara",
+      description,
+      images: [ogImage],
+      type: "website",
+    },
+    twitter: {
+      card: "summary",
+      title: "sugara",
+      description,
+      images: [ogImage],
     },
   };
 }

@@ -133,6 +133,7 @@ shareRoutes.get("/api/shared/:token", sharedTripRateLimit, async (c) => {
     return c.json({ error: ERROR_MSG.SHARED_NOT_FOUND }, 404);
   }
 
+  c.header("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
   return c.json({
     id: trip.id,
     title: trip.title,

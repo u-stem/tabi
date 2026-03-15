@@ -184,7 +184,7 @@ export default function HomePage() {
               aria-selected={tab === value}
               onClick={() => handleTabChange(value)}
               className={cn(
-                "shrink-0 rounded-full px-3.5 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.95]",
+                "shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-sm font-medium transition-[colors,transform] active:scale-[0.95]",
                 tab === value
                   ? "bg-muted text-foreground"
                   : "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground",

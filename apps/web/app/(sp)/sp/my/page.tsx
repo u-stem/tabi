@@ -81,10 +81,10 @@ export default function SpMyPage() {
             </button>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href="/sp/my/edit"
-            className="inline-flex h-8 items-center gap-1.5 rounded-full border px-4 text-sm hover:bg-accent"
+            className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-sm hover:bg-accent"
           >
             <Pencil className="h-3 w-3" />
             編集

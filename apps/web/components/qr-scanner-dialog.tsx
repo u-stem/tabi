@@ -186,7 +186,7 @@ export function QrScannerDialog() {
   return (
     <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
       <ResponsiveDialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5 rounded-full">
+        <Button variant="outline" size="sm" className="gap-1.5 whitespace-nowrap rounded-full">
           <ScanLine className="h-3.5 w-3.5" />
           読み取り
         </Button>

@@ -123,7 +123,7 @@ export default function SpFriendsAddPage() {
         ) : sent ? (
           <p className="text-sm text-muted-foreground">フレンド申請を送りました</p>
         ) : (
-          <Button onClick={handleSend} disabled={loading} className="w-full">
+          <Button onClick={handleSend} disabled={loading} className="w-full whitespace-normal">
             {loading ? "送信中..." : `${profile.name} さんにフレンド申請を送る`}
           </Button>
         )}

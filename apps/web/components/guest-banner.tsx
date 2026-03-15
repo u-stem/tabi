@@ -29,14 +29,14 @@ export function GuestBanner() {
     <>
       <div className="animate-in slide-in-from-top fade-in duration-300 border-b bg-amber-50 dark:bg-amber-950/30">
         <div className="container flex items-center justify-between px-4 py-1.5 text-sm">
-          <span className="text-amber-900 dark:text-amber-200">
+          <span className="min-w-0 truncate text-amber-900 dark:text-amber-200">
             ゲストモード（残り{daysRemaining}日）
           </span>
           {/* Show only after settings load to avoid flicker */}
           {settings?.signupEnabled === true && (
             <button
               type="button"
-              className="rounded-full bg-amber-600 px-3 py-0.5 text-xs font-medium text-white transition-colors hover:bg-amber-700 dark:bg-amber-500 dark:text-amber-950 dark:hover:bg-amber-400"
+              className="shrink-0 whitespace-nowrap rounded-full bg-amber-600 px-3 py-0.5 text-xs font-medium text-white transition-colors hover:bg-amber-700 dark:bg-amber-500 dark:text-amber-950 dark:hover:bg-amber-400"
               onClick={() => setUpgradeOpen(true)}
             >
               アカウント登録

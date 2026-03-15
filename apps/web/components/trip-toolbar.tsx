@@ -144,7 +144,7 @@ export function TripToolbar({
           >
             <X className="h-4 w-4" />
           </Button>
-          <span className="text-xs font-medium">{selectedCount}件選択中</span>
+          <span className="whitespace-nowrap text-xs font-medium">{selectedCount}件選択中</span>
           <Button
             variant="ghost"
             size="sm"
@@ -268,7 +268,7 @@ export function TripToolbar({
                   e.currentTarget.blur();
                   setStatusSheetOpen(true);
                 }}
-                className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
+                className="flex h-9 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border bg-background px-2 text-xs"
               >
                 {statusFilters.find((f) => f.value === statusFilter)?.icon}
                 {currentStatusLabel}
@@ -289,7 +289,7 @@ export function TripToolbar({
               type="button"
               aria-label="並び替え"
               onClick={() => onSortKeyChange(sortKey === "updatedAt" ? "startDate" : "updatedAt")}
-              className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
+              className="flex h-9 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border bg-background px-2 text-xs"
             >
               {sortOptions.find((s) => s.value === sortKey)?.icon}
               {currentSortLabel}
@@ -353,7 +353,7 @@ export function TripToolbar({
           type="button"
           aria-label="並び替え"
           onClick={() => onSortKeyChange(sortKey === "updatedAt" ? "startDate" : "updatedAt")}
-          className="flex h-8 flex-1 items-center justify-center gap-1 rounded-md border bg-background px-2.5 text-xs sm:flex-none"
+          className="flex h-8 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-md border bg-background px-2.5 text-xs sm:flex-none"
         >
           {sortOptions.find((s) => s.value === sortKey)?.icon}
           {currentSortLabel}

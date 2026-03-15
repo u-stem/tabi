@@ -21,12 +21,14 @@ export function InstallBanner() {
     <>
       <div className="animate-in slide-in-from-top fade-in duration-300 border-b bg-blue-50 dark:bg-blue-950/30">
         <div className="container flex items-center justify-between gap-2 px-4 py-1.5 text-sm">
-          <span className="text-blue-900 dark:text-blue-200">アプリをホーム画面に追加できます</span>
+          <span className="min-w-0 truncate text-blue-900 dark:text-blue-200">
+            アプリをホーム画面に追加できます
+          </span>
           <div className="flex shrink-0 items-center gap-2">
             {isIos ? (
               <button
                 type="button"
-                className="rounded-full bg-blue-600 px-3 py-0.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:text-blue-950 dark:hover:bg-blue-400"
+                className="whitespace-nowrap rounded-full bg-blue-600 px-3 py-0.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:text-blue-950 dark:hover:bg-blue-400"
                 onClick={() => setIosDrawerOpen(true)}
               >
                 追加方法を見る
@@ -34,7 +36,7 @@ export function InstallBanner() {
             ) : (
               <button
                 type="button"
-                className="rounded-full bg-blue-600 px-3 py-0.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:text-blue-950 dark:hover:bg-blue-400"
+                className="whitespace-nowrap rounded-full bg-blue-600 px-3 py-0.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:text-blue-950 dark:hover:bg-blue-400"
                 onClick={promptInstall}
               >
                 ホーム画面に追加

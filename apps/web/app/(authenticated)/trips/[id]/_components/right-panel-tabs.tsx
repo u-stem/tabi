@@ -13,7 +13,7 @@ export type RightPanelTab =
   | "map";
 
 const CHIP_BASE =
-  "shrink-0 rounded-full px-3.5 py-1.5 text-center text-sm font-medium transition-[colors,transform] active:scale-[0.95]";
+  "shrink-0 whitespace-nowrap rounded-full px-3.5 py-1.5 text-center text-sm font-medium transition-[colors,transform] active:scale-[0.95]";
 const CHIP_ACTIVE = "bg-muted text-foreground";
 const CHIP_INACTIVE = "bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground";
 

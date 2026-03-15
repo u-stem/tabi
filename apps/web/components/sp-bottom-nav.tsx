@@ -50,11 +50,15 @@ function NavItem({
   return (
     <Link
       href={href}
-      className={cn(NAV_LINK_CLASS, active ? "font-medium text-primary" : "text-muted-foreground")}
+      className={cn(
+        NAV_LINK_CLASS,
+        "overflow-hidden",
+        active ? "font-medium text-primary" : "text-muted-foreground",
+      )}
       aria-label={label}
     >
       {children}
-      <span className="text-xs leading-none">{label}</span>
+      <span className="max-w-full truncate whitespace-nowrap text-xs leading-none">{label}</span>
       {badge != null && <Badge count={badge} />}
     </Link>
   );

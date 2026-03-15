@@ -99,6 +99,24 @@ export function QrScannerDialog() {
     const el = document.getElementById(CAMERA_READER_ID);
     if (!el) return;
 
+    // Check camera availability before requesting access
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError("カメラが見つかりません。画像アップロードをお試しください");
+      return;
+    }
+
+    try {
+      const permission = await navigator.permissions.query({
+        name: "camera" as PermissionName,
+      });
+      if (permission.state === "denied") {
+        setError("カメラへのアクセスが許可されていません。画像アップロードをお試しください");
+        return;
+      }
+    } catch {
+      // Permissions API not supported — proceed and let getUserMedia handle it
+    }
+
     const scanner = new Html5Qrcode(CAMERA_READER_ID);
     scannerRef.current = scanner;
 

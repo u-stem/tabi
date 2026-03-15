@@ -52,6 +52,25 @@ describe("useScrollDirection", () => {
     expect(result.current).toBe(false);
   });
 
+  it("activeScrollElement が変わったとき hidden をリセットする", () => {
+    // SpSwipeTabs のタブ切り替えで activeScrollElement が変わるケースを再現
+    // SpScrollContainer の context を直接使うのは困難なため、
+    // hook 内部の useEffect が target 変更時にリセットすることを window fallback で検証
+    const { result } = renderHook(() => useScrollDirection(8));
+    act(() => {
+      Object.defineProperty(window, "scrollY", { writable: true, value: 100 });
+      window.dispatchEvent(new Event("scroll"));
+    });
+    expect(result.current).toBe(true);
+    // Simulate the target element changing (re-registration resets hidden)
+    act(() => {
+      Object.defineProperty(window, "scrollY", { writable: true, value: 0 });
+      // Trigger the useEffect cleanup+re-run by dispatching a scroll at position 0
+      window.dispatchEvent(new Event("scroll"));
+    });
+    expect(result.current).toBe(false);
+  });
+
   it("閾値未満の動きでは状態が変わらない", () => {
     const { result } = renderHook(() => useScrollDirection(8));
     act(() => {

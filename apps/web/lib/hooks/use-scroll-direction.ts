@@ -14,8 +14,9 @@ export function useScrollDirection(threshold = 8): boolean {
     const el = activeScrollElement ?? scrollContainerRef?.current ?? null;
     const target: EventTarget = el ?? window;
 
-    // Reset tracking when the target changes
+    // Reset tracking and visibility when the scroll target changes (e.g. tab switch)
     lastScrollY.current = el ? el.scrollTop : window.scrollY;
+    setHidden(false);
 
     function handleScroll() {
       const currentY = el ? el.scrollTop : window.scrollY;

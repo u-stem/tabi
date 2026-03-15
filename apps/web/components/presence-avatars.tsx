@@ -1,3 +1,4 @@
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
 import { cn } from "@/lib/utils";
 
@@ -42,38 +43,44 @@ export function PresenceAvatars({ users, isConnected }: PresenceAvatarsProps) {
   const overflow = users.length - MAX_VISIBLE;
 
   return (
-    <div className="flex items-center gap-1">
-      {!isConnected && (
-        <span className="text-xs text-muted-foreground" title="再接続中...">
-          &#x26A0;
-        </span>
-      )}
-      {/* Uses hashColor instead of UserAvatar for stable per-user colors in presence */}
-      {visible.map((user) => (
-        <span
-          key={user.userId}
-          title={user.name}
-          className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full"
-        >
-          {user.image ? (
-            <img src={user.image} alt={user.name} width={28} height={28} />
-          ) : (
-            <span
-              className={cn(
-                "flex h-full w-full items-center justify-center text-xs font-medium text-white",
-                hashColor(user.userId),
-              )}
-            >
-              {getInitial(user.name)}
-            </span>
-          )}
-        </span>
-      ))}
-      {overflow > 0 && (
-        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-          +{overflow}
-        </span>
-      )}
-    </div>
+    <TooltipProvider>
+      <div className="flex items-center gap-1">
+        {!isConnected && (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span className="text-xs text-muted-foreground">&#x26A0;</span>
+            </TooltipTrigger>
+            <TooltipContent>再接続中...</TooltipContent>
+          </Tooltip>
+        )}
+        {/* Uses hashColor instead of UserAvatar for stable per-user colors in presence */}
+        {visible.map((user) => (
+          <Tooltip key={user.userId}>
+            <TooltipTrigger asChild>
+              <span className="relative flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full">
+                {user.image ? (
+                  <img src={user.image} alt={user.name} width={28} height={28} />
+                ) : (
+                  <span
+                    className={cn(
+                      "flex h-full w-full items-center justify-center text-xs font-medium text-white",
+                      hashColor(user.userId),
+                    )}
+                  >
+                    {getInitial(user.name)}
+                  </span>
+                )}
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>{user.name}</TooltipContent>
+          </Tooltip>
+        ))}
+        {overflow > 0 && (
+          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+            +{overflow}
+          </span>
+        )}
+      </div>
+    </TooltipProvider>
   );
 }

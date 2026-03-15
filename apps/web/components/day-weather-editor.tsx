@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/drawer";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { useDayWeather } from "@/lib/hooks/use-day-weather";
 import { cn } from "@/lib/utils";
 import { WEATHER_ICON, WEATHER_ICON_COLOR } from "@/lib/weather-icons";
@@ -185,34 +186,47 @@ function WeatherPickerForm({
       {/* Weather grid */}
       <div className="space-y-2">
         <Label>天気</Label>
-        <div className={pickerClass}>
-          {WEATHER_TYPES.map((type) => {
-            const Icon = WEATHER_ICON[type];
-            const isPrimary = primary === type;
-            const isSecondary = secondary === type;
-            return (
-              <button
-                key={type}
-                type="button"
-                title={WEATHER_LABELS[type]}
-                onClick={() => handleClick(type)}
-                className={cn(
-                  buttonClass,
-                  isPrimary || isSecondary
-                    ? "border-primary bg-primary/20"
-                    : "border-border hover:bg-muted",
-                )}
-              >
-                <Icon
-                  className={cn("h-6 w-6", !(isPrimary || isSecondary) && WEATHER_ICON_COLOR[type])}
-                />
-                {gridLayout && (
-                  <span className="text-center text-xs leading-tight">{WEATHER_LABELS[type]}</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
+        <TooltipProvider>
+          <div className={pickerClass}>
+            {WEATHER_TYPES.map((type) => {
+              const Icon = WEATHER_ICON[type];
+              const isPrimary = primary === type;
+              const isSecondary = secondary === type;
+              const btn = (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => handleClick(type)}
+                  className={cn(
+                    buttonClass,
+                    isPrimary || isSecondary
+                      ? "border-primary bg-primary/20"
+                      : "border-border hover:bg-muted",
+                  )}
+                >
+                  <Icon
+                    className={cn(
+                      "h-6 w-6",
+                      !(isPrimary || isSecondary) && WEATHER_ICON_COLOR[type],
+                    )}
+                  />
+                  {gridLayout && (
+                    <span className="text-center text-xs leading-tight">
+                      {WEATHER_LABELS[type]}
+                    </span>
+                  )}
+                </button>
+              );
+              if (gridLayout) return btn;
+              return (
+                <Tooltip key={type}>
+                  <TooltipTrigger asChild>{btn}</TooltipTrigger>
+                  <TooltipContent>{WEATHER_LABELS[type]}</TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
+        </TooltipProvider>
       </div>
 
       {/* Temperature inputs */}

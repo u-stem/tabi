@@ -13,7 +13,7 @@ const quickPollShareRoutes = new Hono();
 const rateLimit = rateLimitByIp(RATE_LIMIT_PUBLIC_RESOURCE);
 
 // Get poll by share token (no auth required)
-quickPollShareRoutes.get("/api/quick-polls/s/:shareToken", rateLimit, async (c) => {
+quickPollShareRoutes.get("/api/shared/quick-polls/:shareToken", rateLimit, async (c) => {
   const shareToken = getParam(c, "shareToken");
 
   const poll = await db.query.quickPolls.findFirst({
@@ -65,7 +65,7 @@ quickPollShareRoutes.get("/api/quick-polls/s/:shareToken", rateLimit, async (c) 
 });
 
 // Vote (no auth required)
-quickPollShareRoutes.post("/api/quick-polls/s/:shareToken/vote", rateLimit, async (c) => {
+quickPollShareRoutes.post("/api/shared/quick-polls/:shareToken/vote", rateLimit, async (c) => {
   const shareToken = getParam(c, "shareToken");
   const parsed = quickPollVoteSchema.safeParse(await c.req.json());
   if (!parsed.success) return c.json({ error: parsed.error.flatten() }, 400);
@@ -127,7 +127,7 @@ quickPollShareRoutes.post("/api/quick-polls/s/:shareToken/vote", rateLimit, asyn
 });
 
 // Cancel vote (no auth required)
-quickPollShareRoutes.delete("/api/quick-polls/s/:shareToken/vote", rateLimit, async (c) => {
+quickPollShareRoutes.delete("/api/shared/quick-polls/:shareToken/vote", rateLimit, async (c) => {
   const shareToken = getParam(c, "shareToken");
 
   const body = await c.req.json().catch(() => ({}));

@@ -36,7 +36,7 @@ export function QuickPollClient({ token }: { token: string }) {
   } = useQuery({
     queryKey: queryKeys.quickPolls.shared(token),
     queryFn: () =>
-      api<QuickPollResponse>(`/api/quick-polls/s/${token}`, {
+      api<QuickPollResponse>(`/api/shared/quick-polls/${token}`, {
         headers: { "X-Anonymous-Id": anonymousId },
       }),
     retry: false,
@@ -44,7 +44,7 @@ export function QuickPollClient({ token }: { token: string }) {
 
   const voteMutation = useMutation({
     mutationFn: (optionIds: string[]) =>
-      api(`/api/quick-polls/s/${token}/vote`, {
+      api(`/api/shared/quick-polls/${token}/vote`, {
         method: "POST",
         body: JSON.stringify({ optionIds, anonymousId }),
       }),
@@ -58,7 +58,7 @@ export function QuickPollClient({ token }: { token: string }) {
 
   const cancelVoteMutation = useMutation({
     mutationFn: () =>
-      api(`/api/quick-polls/s/${token}/vote`, {
+      api(`/api/shared/quick-polls/${token}/vote`, {
         method: "DELETE",
         body: JSON.stringify({ anonymousId }),
       }),

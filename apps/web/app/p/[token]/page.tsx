@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const baseUrl = process.env.BETTER_AUTH_BASE_URL ?? "http://localhost:3000";
     // API returns Cache-Control: private (per-user vote state), but Next.js
     // Data Cache handles server-side caching independently via revalidate
-    const res = await fetch(`${baseUrl}/api/quick-polls/s/${token}`, {
+    const res = await fetch(`${baseUrl}/api/shared/quick-polls/${token}`, {
       next: { revalidate: 60 },
     });
     if (!res.ok) return fallback;
@@ -54,7 +54,7 @@ export default async function QuickPollPage({ params }: Props) {
   const { token } = await params;
 
   const baseUrl = process.env.BETTER_AUTH_BASE_URL ?? "http://localhost:3000";
-  const res = await fetch(`${baseUrl}/api/quick-polls/s/${token}`, {
+  const res = await fetch(`${baseUrl}/api/shared/quick-polls/${token}`, {
     next: { revalidate: 60 },
   });
   if (!res.ok) notFound();

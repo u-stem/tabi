@@ -189,7 +189,7 @@ describe("Quick Poll Share routes", () => {
     vi.clearAllMocks();
   });
 
-  describe("GET /api/quick-polls/s/:shareToken", () => {
+  describe("GET /api/shared/quick-polls/:shareToken", () => {
     it("should return poll by share token", async () => {
       const now = new Date();
       mockDbQuery.quickPolls.findFirst.mockResolvedValue({
@@ -208,7 +208,7 @@ describe("Quick Poll Share routes", () => {
         votes: [],
       });
 
-      const res = await shareApp.request("/api/quick-polls/s/abc123");
+      const res = await shareApp.request("/api/shared/quick-polls/abc123");
 
       expect(res.status).toBe(200);
       const body = await res.json();
@@ -225,7 +225,7 @@ describe("Quick Poll Share routes", () => {
         votes: [],
       });
 
-      const res = await shareApp.request("/api/quick-polls/s/expired");
+      const res = await shareApp.request("/api/shared/quick-polls/expired");
 
       expect(res.status).toBe(404);
     });
@@ -233,13 +233,13 @@ describe("Quick Poll Share routes", () => {
     it("should return 404 for non-existent token", async () => {
       mockDbQuery.quickPolls.findFirst.mockResolvedValue(null);
 
-      const res = await shareApp.request("/api/quick-polls/s/nonexistent");
+      const res = await shareApp.request("/api/shared/quick-polls/nonexistent");
 
       expect(res.status).toBe(404);
     });
   });
 
-  describe("POST /api/quick-polls/s/:shareToken/vote", () => {
+  describe("POST /api/shared/quick-polls/:shareToken/vote", () => {
     const OPT_ID_1 = "11111111-1111-4111-8111-111111111111";
     const OPT_ID_2 = "22222222-2222-4222-8222-222222222222";
     const ANON_ID = "00000000-0000-4000-8000-000000000001";
@@ -258,7 +258,7 @@ describe("Quick Poll Share routes", () => {
       const mockValues = vi.fn().mockReturnValue({ returning: mockReturning });
       mockDbInsert.mockReturnValue({ values: mockValues });
 
-      const res = await shareApp.request("/api/quick-polls/s/abc123/vote", {
+      const res = await shareApp.request("/api/shared/quick-polls/abc123/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -279,7 +279,7 @@ describe("Quick Poll Share routes", () => {
         options: [{ id: OPT_ID_1 }],
       });
 
-      const res = await shareApp.request("/api/quick-polls/s/abc123/vote", {
+      const res = await shareApp.request("/api/shared/quick-polls/abc123/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -300,7 +300,7 @@ describe("Quick Poll Share routes", () => {
         options: [{ id: OPT_ID_1 }, { id: OPT_ID_2 }],
       });
 
-      const res = await shareApp.request("/api/quick-polls/s/abc123/vote", {
+      const res = await shareApp.request("/api/shared/quick-polls/abc123/vote", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

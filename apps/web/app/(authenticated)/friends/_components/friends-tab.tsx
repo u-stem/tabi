@@ -2,7 +2,7 @@
 
 import type { FriendResponse } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
-import { UserMinus, UserPlus, X } from "lucide-react";
+import { UserMinus, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -10,8 +10,6 @@ import { ActionSheet } from "@/components/action-sheet";
 import { ItemMenuButton } from "@/components/item-menu-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   ResponsiveAlertDialog,
   ResponsiveAlertDialogCancel,
@@ -27,8 +25,6 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
-
-export { SendRequestSection };
 
 export function FriendsTab({
   friends,
@@ -206,62 +202,5 @@ function FriendListSection({
         </ResponsiveAlertDialogContent>
       </ResponsiveAlertDialog>
     </>
-  );
-}
-
-function SendRequestSection() {
-  const queryClient = useQueryClient();
-  const [addresseeId, setAddresseeId] = useState("");
-  const [loading, setLoading] = useState(false);
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const trimmed = addresseeId.trim();
-    if (!trimmed) return;
-
-    setLoading(true);
-    try {
-      await api("/api/friends/requests", {
-        method: "POST",
-        body: JSON.stringify({ addresseeId: trimmed }),
-      });
-      toast.success(MSG.FRIEND_REQUEST_SENT);
-      setAddresseeId("");
-      queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, MSG.FRIEND_REQUEST_SEND_FAILED));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  return (
-    <Card className="border-0 shadow-none sm:border sm:shadow-sm">
-      <form onSubmit={handleSubmit}>
-        <CardHeader className="flex-row items-center justify-between space-y-0">
-          <CardTitle>フレンド申請</CardTitle>
-          <Button size="sm" type="submit" disabled={loading || !addresseeId.trim()}>
-            <UserPlus className="mr-1 h-4 w-4" />
-            {loading ? "送信中..." : "申請"}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <Label htmlFor="addresseeId">ユーザーID</Label>
-            <Input
-              id="addresseeId"
-              name="addresseeId"
-              value={addresseeId}
-              onChange={(e) => setAddresseeId(e.target.value)}
-              placeholder="550e8400-e29b-41d4-..."
-              required
-            />
-            <p className="text-xs text-muted-foreground">
-              ユーザーIDは相手のプロフィールページで確認できます。
-            </p>
-          </div>
-        </CardContent>
-      </form>
-    </Card>
   );
 }

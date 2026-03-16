@@ -1,7 +1,6 @@
 "use client";
 
 import { Check, ChevronRight, Copy, Dices, Pencil, Vote } from "lucide-react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -9,15 +8,6 @@ import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
 import { MyQrDialog } from "@/components/my-qr-dialog";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
-
-const QrScannerDialog = dynamic(
-  () =>
-    import("@/components/qr-scanner-dialog").then((m) => ({
-      default: m.QrScannerDialog,
-    })),
-  { ssr: false },
-);
-
 import { UnsettledSummarySection } from "@/components/unsettled-summary";
 import { UserAvatar } from "@/components/user-avatar";
 import { useSession } from "@/lib/auth-client";
@@ -117,12 +107,7 @@ export default function MyPage() {
             編集
             <span className="hidden text-xs text-muted-foreground lg:inline">(E)</span>
           </Link>
-          {userId && (
-            <>
-              <MyQrDialog userId={userId} />
-              <QrScannerDialog />
-            </>
-          )}
+          {userId && <MyQrDialog userId={userId} />}
         </div>
       </div>
 

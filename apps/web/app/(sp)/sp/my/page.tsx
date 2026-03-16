@@ -1,20 +1,10 @@
 "use client";
 
 import { Check, ChevronRight, Copy, Dices, Pencil, Vote } from "lucide-react";
-import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { MyQrDialog } from "@/components/my-qr-dialog";
-
-const QrScannerDialog = dynamic(
-  () =>
-    import("@/components/qr-scanner-dialog").then((m) => ({
-      default: m.QrScannerDialog,
-    })),
-  { ssr: false },
-);
-
 import { UnsettledSummarySection } from "@/components/unsettled-summary";
 import { UserAvatar } from "@/components/user-avatar";
 import { useSession } from "@/lib/auth-client";
@@ -89,12 +79,7 @@ export default function SpMyPage() {
             <Pencil className="h-3 w-3" />
             編集
           </Link>
-          {userId && (
-            <>
-              <MyQrDialog userId={userId} />
-              <QrScannerDialog />
-            </>
-          )}
+          {userId && <MyQrDialog userId={userId} />}
         </div>
       </div>
 

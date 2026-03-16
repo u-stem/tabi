@@ -1,24 +1,40 @@
 "use client";
 
+import type { UserProfileResponse } from "@sugara/shared";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Html5Qrcode } from "html5-qrcode";
-import { ImageIcon, ScanLine } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ArrowLeft, ImageIcon, ScanLine, UserPlus } from "lucide-react";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { DialogSwipeTabs, type DialogTab } from "@/components/dialog-swipe-tabs";
 import { Button } from "@/components/ui/button";
 import {
   ResponsiveDialog,
   ResponsiveDialogContent,
+  ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
   ResponsiveDialogTrigger,
 } from "@/components/ui/responsive-dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Skeleton } from "@/components/ui/skeleton";
+import { UserAvatar } from "@/components/user-avatar";
+import { ApiError, api, getApiErrorMessage } from "@/lib/api";
+import { useSession } from "@/lib/auth-client";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
+import { MSG } from "@/lib/messages";
 import { parseQrFriendUrl } from "@/lib/qr-utils";
+import { queryKeys } from "@/lib/query-keys";
 
 const CAMERA_READER_ID = "qr-camera-reader";
 const FILE_READER_ID = "qr-file-reader";
+
+type ScanTabId = "camera" | "image";
+
+const MOBILE_TABS: DialogTab<ScanTabId>[] = [
+  { id: "camera", label: "カメラ" },
+  { id: "image", label: "画像" },
+];
 
 function ImageUploadArea({
   fileInputRef,
@@ -28,8 +44,8 @@ function ImageUploadArea({
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   return (
-    <label className="flex aspect-square w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-lg border-2 border-dashed border-muted-foreground/25 transition-colors hover:border-muted-foreground/50">
-      <ImageIcon className="h-10 w-10 text-muted-foreground" />
+    <label className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 py-6 transition-colors hover:border-muted-foreground/50">
+      <ImageIcon className="h-8 w-8 text-muted-foreground" />
       <span className="text-sm text-muted-foreground">タップして画像を選択</span>
       <input
         ref={fileInputRef}
@@ -42,15 +58,158 @@ function ImageUploadArea({
   );
 }
 
-export function QrScannerDialog() {
-  const router = useRouter();
+function ConfirmStep({
+  userId,
+  onBack,
+  onComplete,
+}: {
+  userId: string;
+  onBack: () => void;
+  onComplete: () => void;
+}) {
+  const queryClient = useQueryClient();
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
+  const isSelf = !!currentUserId && currentUserId === userId;
+
+  const {
+    data: profile,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: queryKeys.users.profile(userId),
+    queryFn: () => api<UserProfileResponse>(`/api/users/${userId}/profile`),
+    enabled: !isSelf,
+    retry: false,
+  });
+
+  const [sending, setSending] = useState(false);
+  const [alreadyFriend, setAlreadyFriend] = useState(false);
+
+  async function handleSend() {
+    setSending(true);
+    try {
+      await api("/api/friends/requests", {
+        method: "POST",
+        body: JSON.stringify({ addresseeId: userId }),
+      });
+      toast.success(MSG.FRIEND_REQUEST_SENT);
+      queryClient.invalidateQueries({ queryKey: queryKeys.friends.requests() });
+      onComplete();
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setAlreadyFriend(true);
+      }
+      toast.error(
+        getApiErrorMessage(err, MSG.FRIEND_REQUEST_SEND_FAILED, {
+          conflict: "すでにフレンドか申請済みです",
+        }),
+      );
+    } finally {
+      setSending(false);
+    }
+  }
+
+  if (isSelf) {
+    return (
+      <>
+        <div className="flex flex-col items-center gap-4 py-4">
+          <p className="text-sm text-muted-foreground">自分自身にフレンド申請はできません</p>
+        </div>
+        <ResponsiveDialogFooter className="[&>*]:flex-1">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            戻る
+          </Button>
+        </ResponsiveDialogFooter>
+      </>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col items-center gap-4 py-4">
+        <Skeleton className="h-16 w-16 rounded-full" />
+        <Skeleton className="h-5 w-32" />
+        <Skeleton className="h-10 w-full" />
+      </div>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <>
+        <div className="flex flex-col items-center gap-4 py-4">
+          <p className="text-sm text-muted-foreground">ユーザーが見つかりません</p>
+        </div>
+        <ResponsiveDialogFooter className="[&>*]:flex-1">
+          <Button variant="outline" onClick={onBack}>
+            <ArrowLeft className="mr-1 h-4 w-4" />
+            戻る
+          </Button>
+        </ResponsiveDialogFooter>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex flex-col items-center gap-4 py-4">
+        <UserAvatar
+          name={profile.name}
+          image={profile.image}
+          className="h-16 w-16"
+          fallbackClassName="text-2xl"
+        />
+        <h3 className="text-lg font-semibold">{profile.name}</h3>
+      </div>
+      <ResponsiveDialogFooter className="[&>*]:flex-1">
+        {alreadyFriend ? (
+          <Button disabled>すでにフレンドか申請済みです</Button>
+        ) : (
+          <Button onClick={handleSend} disabled={sending} className="w-full">
+            <UserPlus className="mr-1 h-4 w-4" />
+            {sending ? "送信中..." : "フレンド申請を送る"}
+          </Button>
+        )}
+      </ResponsiveDialogFooter>
+    </>
+  );
+}
+
+export function QrScannerDialog({
+  initialUserId,
+  onInitialUserIdConsumed,
+  trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+}: {
+  initialUserId?: string | null;
+  onInitialUserIdConsumed?: () => void;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+} = {}) {
   const isMobile = useMobile();
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+  const setOpen = isControlled ? (v: boolean) => controlledOnOpenChange?.(v) : setUncontrolledOpen;
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState(() => (isMobile ? "camera" : "image"));
+  const [tab, setTab] = useState<ScanTabId>("camera");
+  const [targetUserId, setTargetUserId] = useState<string | null>(null);
+
+  // Auto-open with initialUserId from URL (e.g. native camera QR scan)
+  useEffect(() => {
+    if (initialUserId) {
+      setTargetUserId(initialUserId);
+      setOpen(true);
+      onInitialUserIdConsumed?.();
+    }
+  }, [initialUserId, onInitialUserIdConsumed]);
 
   function handleTabChange(value: string) {
-    setTab(value);
+    setTab(value as ScanTabId);
     setError(null);
   }
   const scannerRef = useRef<Html5Qrcode | null>(null);
@@ -81,13 +240,12 @@ export function QrScannerDialog() {
         processingRef.current = true;
         setError(null);
         await stopScanner();
-        setOpen(false);
-        router.push(`/friends/add?userId=${encodeURIComponent(userId)}`);
+        setTargetUserId(userId);
       } else {
         setError("このQRコードはフレンド申請には使用できません");
       }
     },
-    [router, stopScanner],
+    [stopScanner],
   );
 
   const startScanner = useCallback(async () => {
@@ -143,7 +301,7 @@ export function QrScannerDialog() {
 
   // Start/stop camera based on dialog open state and active tab
   useEffect(() => {
-    if (open && tab === "camera") {
+    if (open && tab === "camera" && !targetUserId) {
       startScanner();
     } else {
       stopScanner();
@@ -151,7 +309,7 @@ export function QrScannerDialog() {
     return () => {
       stopScanner();
     };
-  }, [open, tab, startScanner, stopScanner]);
+  }, [open, tab, targetUserId, startScanner, stopScanner]);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -178,48 +336,71 @@ export function QrScannerDialog() {
     setOpen(nextOpen);
     if (!nextOpen) {
       setError(null);
-      setTab(isMobile ? "camera" : "image");
+      setTab("camera");
+      setTargetUserId(null);
       processingRef.current = false;
     }
   }
 
+  const renderScanContent = useCallback(
+    (tabId: ScanTabId) => {
+      switch (tabId) {
+        case "camera":
+          return (
+            <div
+              id={CAMERA_READER_ID}
+              className="aspect-square w-full overflow-hidden rounded-lg"
+            />
+          );
+        case "image":
+          return <ImageUploadArea fileInputRef={fileInputRef} onFileChange={handleFileChange} />;
+      }
+    },
+    [handleFileChange],
+  );
+
+  const defaultTrigger = (
+    <Button variant="outline">
+      <ScanLine className="mr-1 h-4 w-4" />
+      QR読み取り
+    </Button>
+  );
+  const resolvedTrigger = trigger ?? defaultTrigger;
+
   return (
     <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
-      <ResponsiveDialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1.5 whitespace-nowrap rounded-full">
-          <ScanLine className="h-3.5 w-3.5" />
-          読み取り
-        </Button>
-      </ResponsiveDialogTrigger>
+      {!initialUserId && (
+        <ResponsiveDialogTrigger asChild>{resolvedTrigger}</ResponsiveDialogTrigger>
+      )}
       <ResponsiveDialogContent className="sm:max-w-sm">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>QRコードを読み取る</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>QR読み取り</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
         <div id={FILE_READER_ID} className="hidden" />
-        {isMobile ? (
-          <Tabs value={tab} onValueChange={handleTabChange}>
-            <TabsList className="w-full">
-              <TabsTrigger value="camera" className="flex-1">
-                カメラ
-              </TabsTrigger>
-              <TabsTrigger value="image" className="flex-1">
-                画像
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="camera">
-              <div
-                id={CAMERA_READER_ID}
-                className="aspect-square w-full overflow-hidden rounded-lg"
-              />
-            </TabsContent>
-            <TabsContent value="image">
-              <ImageUploadArea fileInputRef={fileInputRef} onFileChange={handleFileChange} />
-            </TabsContent>
-          </Tabs>
+        {targetUserId ? (
+          <ConfirmStep
+            userId={targetUserId}
+            onBack={() => {
+              setTargetUserId(null);
+              processingRef.current = false;
+            }}
+            onComplete={() => setOpen(false)}
+          />
         ) : (
-          <ImageUploadArea fileInputRef={fileInputRef} onFileChange={handleFileChange} />
+          <>
+            {isMobile ? (
+              <DialogSwipeTabs
+                tabs={MOBILE_TABS}
+                activeTab={tab}
+                onTabChange={handleTabChange}
+                renderContent={renderScanContent}
+              />
+            ) : (
+              <ImageUploadArea fileInputRef={fileInputRef} onFileChange={handleFileChange} />
+            )}
+            {error && <p className="text-sm text-destructive text-center">{error}</p>}
+          </>
         )}
-        {error && <p className="text-sm text-destructive text-center">{error}</p>}
       </ResponsiveDialogContent>
     </ResponsiveDialog>
   );

@@ -18,10 +18,14 @@ test.describe("Friends", () => {
     const userBId = await pageB.locator('[data-testid="user-id"]').textContent();
     expect(userBId).toBeTruthy();
 
-    // User A sends friend request to user B
+    // User A sends friend request to user B via inline form
     await page.goto("/friends");
-    await page.getByLabel("ユーザーID").fill(userBId!);
+    await page.getByPlaceholder("ユーザーIDを入力").fill(userBId!);
     await page.getByRole("button", { name: "申請" }).click();
+
+    // Confirm dialog appears — send the request
+    await expect(page.getByText("Friend B")).toBeVisible();
+    await page.getByRole("button", { name: "申請" }).last().click();
     await expect(page.getByText("フレンド申請を送信しました")).toBeVisible();
 
     // User B sees the request and accepts it
@@ -65,10 +69,11 @@ test.describe("Friends", () => {
     const userAId = await page.locator('[data-testid="user-id"]').textContent();
     expect(userAId).toBeTruthy();
 
-    // User C sends request to user A
+    // User C sends request to user A via inline form
     await pageC.goto("/friends");
-    await pageC.getByLabel("ユーザーID").fill(userAId!);
+    await pageC.getByPlaceholder("ユーザーIDを入力").fill(userAId!);
     await pageC.getByRole("button", { name: "申請" }).click();
+    await pageC.getByRole("button", { name: "申請" }).last().click();
     await expect(pageC.getByText("フレンド申請を送信しました")).toBeVisible();
 
     // User A rejects the request
@@ -93,7 +98,7 @@ test.describe("Friends", () => {
     await expect(page.getByText(/相手がスキャンすると/)).toBeVisible();
   });
 
-  test("friend add page shows profile and send button for valid userId", async ({
+  test("inline form shows confirm dialog with profile for valid userId", async ({
     authenticatedPage: page,
     browser,
   }) => {
@@ -108,28 +113,29 @@ test.describe("Friends", () => {
     const userBId = await pageB.locator('[data-testid="user-id"]').textContent();
     expect(userBId).toBeTruthy();
 
-    await page.goto(`/friends/add?userId=${userBId}`);
-    await expect(page.getByRole("heading", { name: "QR Target User" })).toBeVisible();
-    await expect(page.getByRole("button", { name: /フレンド申請を送る/ })).toBeVisible();
+    // Enter user ID in inline form
+    await page.goto("/friends");
+    await page.getByPlaceholder("ユーザーIDを入力").fill(userBId!);
+    await page.getByRole("button", { name: "申請" }).click();
+
+    // Confirm dialog shows profile
+    await expect(page.getByText("QR Target User")).toBeVisible();
+    await expect(page.getByRole("button", { name: "申請" }).last()).toBeVisible();
 
     await contextB.close();
   });
 
-  test("friend add page without userId shows error message", async ({
-    authenticatedPage: page,
-  }) => {
-    await page.goto("/friends/add");
-    await expect(page.getByText("ユーザーIDが指定されていません")).toBeVisible();
-  });
-
-  test("friend add page redirects to my page for own userId", async ({
+  test("inline form shows error for own userId", async ({
     authenticatedPage: page,
   }) => {
     await page.goto("/my");
     const ownId = await page.locator('[data-testid="user-id"]').textContent();
     expect(ownId).toBeTruthy();
 
-    await page.goto(`/friends/add?userId=${ownId}`);
-    await expect(page).toHaveURL(/\/my$/, { timeout: 5000 });
+    await page.goto("/friends");
+    await page.getByPlaceholder("ユーザーIDを入力").fill(ownId!);
+    await page.getByRole("button", { name: "申請" }).click();
+
+    await expect(page.getByText("自分自身にフレンド申請はできません")).toBeVisible();
   });
 });

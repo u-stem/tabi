@@ -33,7 +33,12 @@ const serwist = new Serwist({
     ...defaultCache,
   ],
   fallbacks: {
-    document: "/offline",
+    entries: [
+      {
+        url: "/offline",
+        matcher: ({ request }) => request.destination === "document",
+      },
+    ],
   },
 });
 

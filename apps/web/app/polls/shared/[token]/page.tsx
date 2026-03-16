@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   try {
     const baseUrl = process.env.BETTER_AUTH_BASE_URL ?? "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/polls/shared/${token}`, {
+    const res = await fetch(`${baseUrl}/api/shared/polls/${token}`, {
       next: { revalidate: 60 },
     });
     if (!res.ok) return fallback;
@@ -58,7 +58,7 @@ export default async function SharedPollPage({ params }: Props) {
 
   // Return 404 status for crawlers when token is invalid
   const baseUrl = process.env.BETTER_AUTH_BASE_URL ?? "http://localhost:3000";
-  const res = await fetch(`${baseUrl}/api/polls/shared/${token}`, {
+  const res = await fetch(`${baseUrl}/api/shared/polls/${token}`, {
     next: { revalidate: 60 },
   });
   if (!res.ok) notFound();

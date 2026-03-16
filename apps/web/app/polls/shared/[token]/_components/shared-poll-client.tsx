@@ -55,7 +55,7 @@ export function SharedPollClient({ token }: { token: string }) {
     error,
   } = useQuery({
     queryKey: queryKeys.polls.shared(token),
-    queryFn: () => api<SharedPollResponse>(`/api/polls/shared/${token}`),
+    queryFn: () => api<SharedPollResponse>(`/api/shared/polls/${token}`),
     retry: false,
   });
 

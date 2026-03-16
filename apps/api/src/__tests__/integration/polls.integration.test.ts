@@ -396,7 +396,7 @@ describe("Polls Integration", () => {
     const shareRes = await app.request(`/api/polls/${pollId}/share`, json({}));
     const { shareToken } = await shareRes.json();
 
-    const res = await app.request(`/api/polls/shared/${shareToken}`);
+    const res = await app.request(`/api/shared/polls/${shareToken}`);
     expect(res.status).toBe(200);
     const poll = await res.json();
     expect(poll.title).toBe("Summer Trip");
@@ -405,7 +405,7 @@ describe("Polls Integration", () => {
   });
 
   it("returns 404 for invalid share token", async () => {
-    const res = await app.request("/api/polls/shared/invalid-token");
+    const res = await app.request("/api/shared/polls/invalid-token");
     expect(res.status).toBe(404);
   });
 

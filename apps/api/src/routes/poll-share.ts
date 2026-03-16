@@ -11,7 +11,7 @@ const pollShareRoutes = new Hono();
 const sharedPollRateLimit = rateLimitByIp(RATE_LIMIT_PUBLIC_RESOURCE);
 
 // Get shared poll (no auth)
-pollShareRoutes.get("/api/polls/shared/:token", sharedPollRateLimit, async (c) => {
+pollShareRoutes.get("/api/shared/polls/:token", sharedPollRateLimit, async (c) => {
   const token = getParam(c, "token");
 
   const poll = await db.query.schedulePolls.findFirst({

@@ -2,7 +2,7 @@
 /// <reference lib="esnext" />
 /// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
-import type { PrecacheEntry, SerwistGlobalConfig } from "serwist";
+import type { HandlerDidErrorCallbackParam, PrecacheEntry, SerwistGlobalConfig } from "serwist";
 import { NetworkFirst, Serwist } from "serwist";
 
 declare global {
@@ -12,6 +12,10 @@ declare global {
 }
 
 declare const self: ServiceWorkerGlobalScope;
+
+// Resolve the offline fallback URL once at startup so the handlerDidError
+// plugin can look it up without depending on Serwist's matchPrecache.
+const OFFLINE_URL = "/offline";
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
@@ -28,18 +32,32 @@ const serwist = new Serwist({
       handler: new NetworkFirst({
         cacheName: "navigations",
         networkTimeoutSeconds: 3,
+        plugins: [
+          {
+            handlerDidError: async (
+              _param: HandlerDidErrorCallbackParam,
+            ): Promise<Response | undefined> => {
+              // Search all caches for the precached offline page
+              for (const name of await caches.keys()) {
+                const cache = await caches.open(name);
+                const match = await cache.match(OFFLINE_URL);
+                if (match) return match;
+              }
+              // Last resort: inline response so navigation never fails silently
+              return new Response(
+                "<html><body><h1>Offline</h1><p>Please check your connection.</p></body></html>",
+                { headers: { "Content-Type": "text/html" } },
+              );
+            },
+          },
+        ],
       }),
     },
     ...defaultCache,
   ],
-  fallbacks: {
-    entries: [
-      {
-        url: "/offline",
-        matcher: ({ request }) => request.destination === "document",
-      },
-    ],
-  },
+  // additionalPrecacheEntries in next.config.ts precaches /offline with revision "1".
+  // The handlerDidError plugin above handles fallback directly, so the
+  // Serwist-level fallbacks option is no longer needed.
 });
 
 serwist.addEventListeners();

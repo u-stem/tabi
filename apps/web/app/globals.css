@@ -135,6 +135,8 @@
      native body scroll cannot be hidden with CSS on iOS. */
   html:has(.sp-layout),
   body:has(.sp-layout) {
+    position: fixed;
+    width: 100%;
     height: 100%;
     overflow: hidden;
   }

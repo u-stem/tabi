@@ -222,6 +222,26 @@ describe("useTripSync network recovery", () => {
   });
 });
 
+describe("useTripSync channel exposure", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    mockChannels = [];
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it("exposes channel ref", () => {
+    const { result } = renderHook(() => useTripSync("trip-1", user, onSync));
+    act(() => mockChannels[0]._emitStatus("SUBSCRIBED"));
+    expect(result.current.channel).toBe(mockChannels[0]);
+  });
+});
+
 describe("useTripSync cleanup", () => {
   beforeEach(() => {
     vi.useFakeTimers();

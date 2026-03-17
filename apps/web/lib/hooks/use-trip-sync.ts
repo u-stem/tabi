@@ -23,6 +23,7 @@ export function useTripSync(
   isConnected: boolean;
   updatePresence: (dayId: string, patternId: string | null) => void;
   broadcastChange: () => void;
+  channel: RealtimeChannel | null;
 } {
   const [presence, setPresence] = useState<PresenceUser[]>([]);
   const [isConnected, setIsConnected] = useState(false);
@@ -164,5 +165,6 @@ export function useTripSync(
     isConnected,
     updatePresence,
     broadcastChange,
+    channel: channelRef.current,
   };
 }

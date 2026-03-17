@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import { ScanLine } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
@@ -17,7 +18,9 @@ import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
 import { useFriendsPage } from "@/lib/hooks/use-friends-page";
+import { useFriendsSync } from "@/lib/hooks/use-friends-sync";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 
 const QrScannerDialog = dynamic(
   () =>
@@ -55,6 +58,10 @@ export default function SpFriendsPage() {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
   const { friends, requests, sentRequests, groups, isLoading } = useFriendsPage(isGuest);
+  const queryClient = useQueryClient();
+  useFriendsSync(session?.user?.id, () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.friends.all }),
+  );
 
   const [tab, setTab] = useState<Tab>("friends");
   const [groupsCreateOpen, setGroupsCreateOpen] = useState(false);

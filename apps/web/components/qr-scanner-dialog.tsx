@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
+import { broadcastFriendsUpdate } from "@/lib/hooks/use-friends-sync";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { parseQrFriendUrl } from "@/lib/qr-utils";
@@ -94,7 +95,8 @@ function ConfirmStep({
         body: JSON.stringify({ addresseeId: userId }),
       });
       toast.success(MSG.FRIEND_REQUEST_SENT);
-      queryClient.invalidateQueries({ queryKey: queryKeys.friends.requests() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
+      broadcastFriendsUpdate(userId);
       onComplete();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {

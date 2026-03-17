@@ -24,7 +24,10 @@ function createMockChannel() {
   return channel;
 }
 
-const mockRemoveChannel = vi.fn();
+// Simulate real SDK behavior: removeChannel triggers CLOSED on the channel
+const mockRemoveChannel = vi.fn((ch: ReturnType<typeof createMockChannel>) => {
+  ch._emitStatus("CLOSED");
+});
 let mockChannels: ReturnType<typeof createMockChannel>[] = [];
 
 vi.mock("../supabase", () => ({
@@ -34,7 +37,7 @@ vi.mock("../supabase", () => ({
       mockChannels.push(ch);
       return ch;
     }),
-    removeChannel: (...args: unknown[]) => mockRemoveChannel(...args),
+    removeChannel: (ch: ReturnType<typeof createMockChannel>) => mockRemoveChannel(ch),
   },
 }));
 

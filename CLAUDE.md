@@ -86,6 +86,11 @@ bun run --filter @sugara/shared check-types
 - `biome-ignore` による lint 抑制禁止。根本的に修正する
 - Git フック (lefthook): `bun install` で自動セットアップ。`--no-verify` でのスキップ禁止
 
+## Supabase Realtime
+
+- チャンネルの一時利用（subscribe → send → removeChannel）では、`cleaned` フラグで `removeChannel` の二重呼び出しを防ぐ。SDK の `removeChannel` は `CLOSED` コールバックを再発火するため、ガードなしでは無限再帰になる
+- Realtime チャンネルのテストモックでは `removeChannel` 呼び出し時に `_emitStatus("CLOSED")` を発火させ、SDK の実際の副作用を再現する（`use-trip-sync.test.ts`, `use-friends-sync.test.ts` 参照）
+
 ## FAQ メンテナンス
 
 機能を追加・変更したときは、そのユーザーが持ちそうな疑問を考え、`apps/api/src/db/seed-faqs.ts` を同じコミットで更新する。

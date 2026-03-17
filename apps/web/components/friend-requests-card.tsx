@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { broadcastFriendsUpdate } from "@/lib/hooks/use-friends-sync";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
@@ -39,7 +40,7 @@ export function FriendRequestsCard({
     queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
   };
 
-  async function handleAccept(id: string) {
+  async function handleAccept(id: string, requesterId: string) {
     setLoadingId(id);
     const cacheKey = queryKeys.friends.requests();
     queryClient.cancelQueries({ queryKey: cacheKey });
@@ -58,6 +59,7 @@ export function FriendRequestsCard({
         body: JSON.stringify({ status: "accepted" }),
       });
       invalidate();
+      broadcastFriendsUpdate(requesterId);
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.FRIEND_REQUEST_ACCEPT_FAILED));
@@ -66,7 +68,7 @@ export function FriendRequestsCard({
     }
   }
 
-  async function handleReject(id: string) {
+  async function handleReject(id: string, requesterId: string) {
     setLoadingId(id);
     const cacheKey = queryKeys.friends.requests();
     queryClient.cancelQueries({ queryKey: cacheKey });
@@ -82,6 +84,7 @@ export function FriendRequestsCard({
     try {
       await api(`/api/friends/requests/${id}`, { method: "DELETE" });
       invalidate();
+      broadcastFriendsUpdate(requesterId);
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.FRIEND_REQUEST_REJECT_FAILED));
@@ -113,7 +116,7 @@ export function FriendRequestsCard({
                   variant="outline"
                   className="h-9 w-9"
                   disabled={loadingId === req.id}
-                  onClick={() => handleReject(req.id)}
+                  onClick={() => handleReject(req.id, req.requesterId)}
                   aria-label="拒否"
                 >
                   <XIcon className="h-4 w-4" />
@@ -122,7 +125,7 @@ export function FriendRequestsCard({
                   size="icon"
                   className="h-9 w-9"
                   disabled={loadingId === req.id}
-                  onClick={() => handleAccept(req.id)}
+                  onClick={() => handleAccept(req.id, req.requesterId)}
                   aria-label="承認"
                 >
                   <Check className="h-4 w-4" />
@@ -159,7 +162,7 @@ export function FriendRequestsCard({
               <Button
                 size="sm"
                 disabled={loadingId === req.id}
-                onClick={() => handleAccept(req.id)}
+                onClick={() => handleAccept(req.id, req.requesterId)}
               >
                 承認
               </Button>
@@ -167,7 +170,7 @@ export function FriendRequestsCard({
                 size="sm"
                 variant="outline"
                 disabled={loadingId === req.id}
-                onClick={() => handleReject(req.id)}
+                onClick={() => handleReject(req.id, req.requesterId)}
               >
                 拒否
               </Button>

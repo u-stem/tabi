@@ -22,6 +22,7 @@ import {
 } from "@/components/ui/responsive-alert-dialog";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { broadcastFriendsUpdate } from "@/lib/hooks/use-friends-sync";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -58,7 +59,7 @@ function FriendListSection({
   const [removingFriend, setRemovingFriend] = useState<FriendResponse | null>(null);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  async function handleRemove(friendId: string) {
+  async function handleRemove(friendId: string, friendUserId: string) {
     setLoadingId(friendId);
     const cacheKey = queryKeys.friends.list();
     queryClient.cancelQueries({ queryKey: cacheKey });
@@ -74,6 +75,7 @@ function FriendListSection({
     try {
       await api(`/api/friends/${friendId}`, { method: "DELETE" });
       onRemoved();
+      broadcastFriendsUpdate(friendUserId);
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.FRIEND_REMOVE_FAILED));
@@ -192,7 +194,7 @@ function FriendListSection({
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
-                if (removingFriend) handleRemove(removingFriend.friendId);
+                if (removingFriend) handleRemove(removingFriend.friendId, removingFriend.userId);
                 setRemovingFriend(null);
               }}
             >

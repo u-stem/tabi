@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
+import { broadcastFriendsUpdate } from "@/lib/hooks/use-friends-sync";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -57,7 +58,8 @@ function ConfirmDialog({
         body: JSON.stringify({ addresseeId: userId }),
       });
       toast.success(MSG.FRIEND_REQUEST_SENT);
-      queryClient.invalidateQueries({ queryKey: queryKeys.friends.requests() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
+      broadcastFriendsUpdate(userId);
       onOpenChange(false);
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {

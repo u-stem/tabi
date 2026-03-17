@@ -1,5 +1,6 @@
 "use client";
 
+import { useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -14,8 +15,10 @@ import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
 import { useFriendsPage } from "@/lib/hooks/use-friends-page";
+import { useFriendsSync } from "@/lib/hooks/use-friends-sync";
 import { isDialogOpen } from "@/lib/hotkeys";
 import { MSG } from "@/lib/messages";
+import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { FriendsTab } from "./_components/friends-tab";
 import { GroupsTab } from "./_components/groups-tab";
@@ -72,6 +75,10 @@ export default function FriendsPage() {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
   const { friends, requests, sentRequests, groups, isLoading } = useFriendsPage(isGuest);
+  const queryClient = useQueryClient();
+  useFriendsSync(session?.user?.id, () =>
+    queryClient.invalidateQueries({ queryKey: queryKeys.friends.all }),
+  );
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const idInputRef = useRef<HTMLInputElement>(null);
 

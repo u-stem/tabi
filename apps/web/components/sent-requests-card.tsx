@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
+import { broadcastFriendsUpdate } from "@/lib/hooks/use-friends-sync";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
@@ -39,7 +40,7 @@ export function SentRequestsCard({
     queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
   };
 
-  async function handleCancel(id: string) {
+  async function handleCancel(id: string, addresseeId: string) {
     setLoadingId(id);
     const cacheKey = queryKeys.friends.sentRequests();
     queryClient.cancelQueries({ queryKey: cacheKey });
@@ -55,6 +56,7 @@ export function SentRequestsCard({
     try {
       await api(`/api/friends/requests/${id}`, { method: "DELETE" });
       invalidate();
+      broadcastFriendsUpdate(addresseeId);
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
       toast.error(getApiErrorMessage(err, MSG.FRIEND_REQUEST_CANCEL_FAILED));
@@ -86,7 +88,7 @@ export function SentRequestsCard({
                   variant="outline"
                   className="h-9 w-9"
                   disabled={loadingId === req.id}
-                  onClick={() => handleCancel(req.id)}
+                  onClick={() => handleCancel(req.id, req.addresseeId)}
                   aria-label="取り消し"
                 >
                   <XIcon className="h-4 w-4" />
@@ -124,7 +126,7 @@ export function SentRequestsCard({
                 size="sm"
                 variant="outline"
                 disabled={loadingId === req.id}
-                onClick={() => handleCancel(req.id)}
+                onClick={() => handleCancel(req.id, req.addresseeId)}
               >
                 取り消し
               </Button>

@@ -24,7 +24,7 @@ export function ReactionButton({
             <PopoverTrigger asChild>
               <button
                 type="button"
-                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 aria-label="リアクションを送る"
                 onClick={() => haptics.light()}
               >

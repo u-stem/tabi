@@ -28,7 +28,7 @@ export function ReactionButton({
                 aria-label="リアクションを送る"
                 onClick={() => haptics.light()}
               >
-                <SmilePlus className="h-4 w-4" />
+                <SmilePlus className="h-5 w-5" />
               </button>
             </PopoverTrigger>
           </TooltipTrigger>

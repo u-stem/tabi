@@ -1,5 +1,6 @@
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { hashColor } from "@/components/presence-avatars";
 
 export const REACTION_EMOJIS = ["👍", "❤️", "😂", "🎉", "😍", "🔥", "👏", "😮"] as const;
 
@@ -37,31 +38,8 @@ export function buildReactionUser(session: {
     id: session.user.id,
     name: session.user.name,
     image: session.user.image ?? undefined,
-    color: hashColorForReaction(session.user.id),
+    color: hashColor(session.user.id),
   };
-}
-
-// Inline hash to avoid circular dependency with presence-avatars
-function hashColorForReaction(userId: string): string {
-  const colors = [
-    "bg-blue-500",
-    "bg-emerald-500",
-    "bg-amber-500",
-    "bg-rose-500",
-    "bg-violet-500",
-    "bg-cyan-500",
-    "bg-orange-500",
-    "bg-teal-500",
-    "bg-pink-500",
-    "bg-indigo-500",
-    "bg-lime-500",
-    "bg-fuchsia-500",
-  ];
-  let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = (hash * 31 + userId.charCodeAt(i)) | 0;
-  }
-  return colors[Math.abs(hash) % colors.length];
 }
 
 export function useReaction(
@@ -77,6 +55,8 @@ export function useReaction(
   const [cooldown, setCooldown] = useState(false);
   const cooldownRef = useRef(false);
   const cooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const channelRef = useRef(channel);
+  channelRef.current = channel;
   const userRef = useRef(user);
   userRef.current = user;
 
@@ -107,7 +87,7 @@ export function useReaction(
 
   const sendReaction = useCallback(
     (emoji: string) => {
-      if (cooldownRef.current || !channel || !userRef.current) return;
+      if (cooldownRef.current || !channelRef.current || !userRef.current) return;
 
       const payload: ReactionEvent = {
         emoji,
@@ -117,7 +97,7 @@ export function useReaction(
         color: userRef.current.color,
       };
 
-      channel.send({
+      channelRef.current.send({
         type: "broadcast",
         event: "trip:reaction",
         payload,
@@ -134,7 +114,7 @@ export function useReaction(
         cooldownTimer.current = null;
       }, COOLDOWN_MS);
     },
-    [channel, addReaction],
+    [addReaction],
   );
 
   const removeReaction = useCallback((id: string) => {

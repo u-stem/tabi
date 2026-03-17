@@ -85,7 +85,6 @@ export function TripHeader({
       <div className="hidden lg:block">
         <div className="flex items-center gap-3">
           <h1 className="min-w-0 truncate text-2xl font-bold">{trip.title}</h1>
-          {showReaction && <ReactionButton onReaction={onReaction} cooldown={cooldown ?? false} />}
           <PresenceAvatars users={otherPresence} isConnected={isConnected} />
         </div>
         <p className="text-muted-foreground">
@@ -102,6 +101,7 @@ export function TripHeader({
           )}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
+          {showReaction && <ReactionButton onReaction={onReaction} cooldown={cooldown ?? false} />}
           <TripActions {...tripActionsProps} />
         </div>
       </div>

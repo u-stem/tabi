@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { FriendRequestsCard } from "@/components/friend-requests-card";
+import { SentRequestsCard } from "@/components/sent-requests-card";
 import type { ShortcutGroup } from "@/components/shortcut-help-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
@@ -70,7 +71,7 @@ function FriendsSkeleton() {
 export default function FriendsPage() {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
-  const { friends, requests, groups, isLoading } = useFriendsPage(isGuest);
+  const { friends, requests, sentRequests, groups, isLoading } = useFriendsPage(isGuest);
   const [createGroupOpen, setCreateGroupOpen] = useState(false);
   const idInputRef = useRef<HTMLInputElement>(null);
 
@@ -147,6 +148,7 @@ export default function FriendsPage() {
           </CardContent>
         </Card>
         <FriendRequestsCard requests={requests} />
+        <SentRequestsCard sentRequests={sentRequests} />
         <FriendsTab friends={friends} />
         <GroupsTab
           groups={groups}

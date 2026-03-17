@@ -405,6 +405,52 @@ describe("Friend routes", () => {
     });
   });
 
+  // --- GET /api/friends/requests/sent ---
+  describe("GET /api/friends/requests/sent", () => {
+    it("returns sent pending requests with addressee info", async () => {
+      mockDbQuery.friends.findMany.mockResolvedValue([
+        {
+          id: friendRecordId,
+          requesterId: userId,
+          addresseeId: otherUserId,
+          status: "pending",
+          createdAt: "2025-07-01T00:00:00.000Z",
+          addressee: { id: otherUserId, name: "Addressee", image: null },
+        },
+      ]);
+
+      const app = createTestApp(friendRoutes, "/api/friends");
+      const res = await app.request("/api/friends/requests/sent");
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body).toHaveLength(1);
+      expect(body[0].id).toBe(friendRecordId);
+      expect(body[0].addresseeId).toBe(otherUserId);
+      expect(body[0].name).toBe("Addressee");
+    });
+
+    it("returns empty array when no sent requests exist", async () => {
+      mockDbQuery.friends.findMany.mockResolvedValue([]);
+
+      const app = createTestApp(friendRoutes, "/api/friends");
+      const res = await app.request("/api/friends/requests/sent");
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body).toEqual([]);
+    });
+
+    it("returns 401 when unauthenticated", async () => {
+      mockGetSession.mockResolvedValue(null);
+
+      const app = createTestApp(friendRoutes, "/api/friends");
+      const res = await app.request("/api/friends/requests/sent");
+
+      expect(res.status).toBe(401);
+    });
+  });
+
   // --- DELETE /api/friends/:friendId ---
   describe("DELETE /api/friends/:friendId", () => {
     it("returns 200 when requester removes friend", async () => {

@@ -9,6 +9,7 @@ import { GroupsTab } from "@/app/(authenticated)/friends/_components/groups-tab"
 import { SendRequestSection } from "@/app/(authenticated)/friends/_components/send-request-section";
 import { Fab } from "@/components/fab";
 import { FriendRequestsCard } from "@/components/friend-requests-card";
+import { SentRequestsCard } from "@/components/sent-requests-card";
 import { SpSwipeTabs, type SwipeTab } from "@/components/sp-swipe-tabs";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -53,7 +54,7 @@ function SpFriendsSkeleton() {
 export default function SpFriendsPage() {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
-  const { friends, requests, groups, isLoading } = useFriendsPage(isGuest);
+  const { friends, requests, sentRequests, groups, isLoading } = useFriendsPage(isGuest);
 
   const [tab, setTab] = useState<Tab>("friends");
   const [groupsCreateOpen, setGroupsCreateOpen] = useState(false);
@@ -82,6 +83,7 @@ export default function SpFriendsPage() {
             <div className="space-y-4">
               <SendRequestSection />
               <FriendRequestsCard requests={requests} profileHrefPrefix="/sp/users" />
+              <SentRequestsCard sentRequests={sentRequests} profileHrefPrefix="/sp/users" />
               <FriendsTab friends={friends} profileHrefPrefix="/sp/users" />
             </div>
           );
@@ -95,7 +97,7 @@ export default function SpFriendsPage() {
           );
       }
     },
-    [requests, friends, groups, groupsCreateOpen, setGroupsCreateOpen],
+    [requests, sentRequests, friends, groups, groupsCreateOpen, setGroupsCreateOpen],
   );
 
   if (isGuest) {

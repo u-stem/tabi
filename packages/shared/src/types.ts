@@ -134,6 +134,14 @@ export type FriendRequestResponse = {
   createdAt: string;
 };
 
+export type SentFriendRequestResponse = {
+  id: string;
+  addresseeId: string;
+  name: string;
+  image?: string | null;
+  createdAt: string;
+};
+
 export type BookmarkListResponse = {
   id: string;
   name: string;

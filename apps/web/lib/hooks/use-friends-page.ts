@@ -1,4 +1,9 @@
-import type { FriendRequestResponse, FriendResponse, GroupResponse } from "@sugara/shared";
+import type {
+  FriendRequestResponse,
+  FriendResponse,
+  GroupResponse,
+  SentFriendRequestResponse,
+} from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
@@ -8,6 +13,7 @@ import { queryKeys } from "@/lib/query-keys";
 export type UseFriendsPageReturn = {
   friends: FriendResponse[];
   requests: FriendRequestResponse[];
+  sentRequests: SentFriendRequestResponse[];
   groups: GroupResponse[];
   isLoading: boolean;
 };
@@ -28,6 +34,13 @@ export function useFriendsPage(isGuest: boolean): UseFriendsPageReturn {
     ...QUERY_CONFIG.stable,
   });
 
+  const sentRequestsQuery = useQuery({
+    queryKey: queryKeys.friends.sentRequests(),
+    queryFn: () => api<SentFriendRequestResponse[]>("/api/friends/requests/sent"),
+    enabled: !isGuest,
+    ...QUERY_CONFIG.stable,
+  });
+
   const groupsQuery = useQuery({
     queryKey: queryKeys.groups.list(),
     queryFn: () => api<GroupResponse[]>("/api/groups"),
@@ -35,11 +48,16 @@ export function useFriendsPage(isGuest: boolean): UseFriendsPageReturn {
     ...QUERY_CONFIG.stable,
   });
 
-  const isLoading = friendsQuery.isLoading || requestsQuery.isLoading || groupsQuery.isLoading;
+  const isLoading =
+    friendsQuery.isLoading ||
+    requestsQuery.isLoading ||
+    sentRequestsQuery.isLoading ||
+    groupsQuery.isLoading;
 
   return {
     friends: friendsQuery.data ?? [],
     requests: requestsQuery.data ?? [],
+    sentRequests: sentRequestsQuery.data ?? [],
     groups: groupsQuery.data ?? [],
     isLoading,
   };

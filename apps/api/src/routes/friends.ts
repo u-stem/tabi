@@ -68,6 +68,28 @@ friendRoutes.get("/requests", async (c) => {
   );
 });
 
+// List sent pending requests
+friendRoutes.get("/requests/sent", async (c) => {
+  const user = c.get("user");
+
+  const records = await db.query.friends.findMany({
+    where: and(eq(friends.status, "pending"), eq(friends.requesterId, user.id)),
+    with: {
+      addressee: { columns: { id: true, name: true, image: true } },
+    },
+  });
+
+  return c.json(
+    records.map((r) => ({
+      id: r.id,
+      addresseeId: r.addresseeId,
+      name: r.addressee.name,
+      image: r.addressee.image,
+      createdAt: r.createdAt,
+    })),
+  );
+});
+
 // Send friend request
 friendRoutes.post("/requests", async (c) => {
   const user = c.get("user");

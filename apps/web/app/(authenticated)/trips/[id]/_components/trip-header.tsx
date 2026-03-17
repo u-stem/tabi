@@ -101,8 +101,8 @@ export function TripHeader({
           )}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          {showReaction && <ReactionButton onReaction={onReaction} cooldown={cooldown ?? false} />}
           <TripActions {...tripActionsProps} />
+          {showReaction && <ReactionButton onReaction={onReaction} cooldown={cooldown ?? false} />}
         </div>
       </div>
     </div>

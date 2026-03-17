@@ -100,6 +100,14 @@ bun run --filter @sugara/shared check-types
 - 機能の仕様変更 → 既存エントリの answer を更新
 - 機能の削除 → 該当エントリを削除
 
+## お知らせ (News) メンテナンス
+
+機能を追加・変更したときは `apps/web/content/news/YYYY-MM-DD-<topic>.md` にお知らせ記事を追加する。
+既存の記事で記述が古くなったもの（機能の場所が変わった等）も同じコミットで修正する。
+
+- 新機能の追加 → 新しい記事を作成
+- 既存機能の変更 → 影響する過去の記事を修正
+
 ## DB スキーマ変更
 
 スキーマ変更は必ず migration 経由で行う。`db:push` は削除済み (migration 追跡が壊れるため)。

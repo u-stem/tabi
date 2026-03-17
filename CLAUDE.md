@@ -77,6 +77,13 @@ bun run --filter @sugara/shared check-types
 - DB リセット: `supabase db reset && bun run db:migrate && bun run db:seed`
 - 結合テスト: `bun run --filter @sugara/api test:integration` (PostgreSQL の `sugara_test` DB が必要)
 
+## デプロイ
+
+- Vercel へのデプロイは push 時に自動実行
+- `turbo-ignore` により `@sugara/web` とその依存 (`@sugara/api`, `@sugara/shared`) に無関係な変更はスキップされる
+- アプリに影響しない変更（CLAUDE.md、docs のみ等）のコミットには `[skip ci]` を付けてデプロイをスキップする
+  - 例: `docs: CLAUDE.mdを更新 [skip ci]`
+
 ## 規約
 
 - Conventional Commits: `<type>: <日本語の説明>`

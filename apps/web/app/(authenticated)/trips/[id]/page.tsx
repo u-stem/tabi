@@ -20,7 +20,6 @@ import { BookmarkListPickerDialog } from "@/components/bookmark-list-picker-dial
 import { CandidatePanel } from "@/components/candidate-panel";
 import { DayTimeline } from "@/components/day-timeline";
 import { Fab } from "@/components/fab";
-import { hashColor } from "@/components/presence-avatars";
 import { ReactionOverlay } from "@/components/reaction-overlay";
 import { SpSwipeTabs } from "@/components/sp-swipe-tabs";
 
@@ -46,7 +45,7 @@ import { useDayWeather } from "@/lib/hooks/use-day-weather";
 import { useIsLg } from "@/lib/hooks/use-is-lg";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
-import { useReaction } from "@/lib/hooks/use-reaction";
+import { buildReactionUser, useReaction } from "@/lib/hooks/use-reaction";
 import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
 import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
@@ -510,15 +509,7 @@ export default function TripDetailPage() {
   );
 
   const reactionUser = useMemo(
-    () =>
-      session?.user
-        ? {
-            id: session.user.id,
-            name: session.user.name,
-            image: session.user.image ?? undefined,
-            color: hashColor(session.user.id),
-          }
-        : null,
+    () => (session?.user ? buildReactionUser(session) : null),
     [session?.user?.id, session?.user?.name, session?.user?.image],
   );
   const { reactions, sendReaction, removeReaction, cooldown } = useReaction(channel, reactionUser);

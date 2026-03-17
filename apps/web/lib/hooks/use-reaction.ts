@@ -23,12 +23,46 @@ export type FloatingReaction = {
   x: number;
 };
 
-type ReactionUser = {
+export type ReactionUser = {
   id: string;
   name: string;
   image?: string;
   color: string;
 };
+
+export function buildReactionUser(session: {
+  user: { id: string; name: string; image?: string | null };
+}): ReactionUser {
+  return {
+    id: session.user.id,
+    name: session.user.name,
+    image: session.user.image ?? undefined,
+    color: hashColorForReaction(session.user.id),
+  };
+}
+
+// Inline hash to avoid circular dependency with presence-avatars
+function hashColorForReaction(userId: string): string {
+  const colors = [
+    "bg-blue-500",
+    "bg-emerald-500",
+    "bg-amber-500",
+    "bg-rose-500",
+    "bg-violet-500",
+    "bg-cyan-500",
+    "bg-orange-500",
+    "bg-teal-500",
+    "bg-pink-500",
+    "bg-indigo-500",
+    "bg-lime-500",
+    "bg-fuchsia-500",
+  ];
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = (hash * 31 + userId.charCodeAt(i)) | 0;
+  }
+  return colors[Math.abs(hash) % colors.length];
+}
 
 export function useReaction(
   channel: RealtimeChannel | null,
@@ -41,6 +75,7 @@ export function useReaction(
 } {
   const [reactions, setReactions] = useState<FloatingReaction[]>([]);
   const [cooldown, setCooldown] = useState(false);
+  const cooldownRef = useRef(false);
   const cooldownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const userRef = useRef(user);
   userRef.current = user;
@@ -62,7 +97,9 @@ export function useReaction(
 
   useEffect(() => {
     if (!channel) return;
-
+    // Supabase SDK does not expose off() for broadcast handlers.
+    // Cleanup is unnecessary because the channel itself is removed
+    // and recreated by useTripSync on reconnection.
     channel.on("broadcast", { event: "trip:reaction" }, (msg: { payload: ReactionEvent }) => {
       addReaction(msg.payload);
     });
@@ -70,7 +107,7 @@ export function useReaction(
 
   const sendReaction = useCallback(
     (emoji: string) => {
-      if (cooldown || !channel || !userRef.current) return;
+      if (cooldownRef.current || !channel || !userRef.current) return;
 
       const payload: ReactionEvent = {
         emoji,
@@ -89,13 +126,15 @@ export function useReaction(
       // Show on own screen (Supabase broadcast does not echo to sender by default)
       addReaction(payload);
 
+      cooldownRef.current = true;
       setCooldown(true);
       cooldownTimer.current = setTimeout(() => {
+        cooldownRef.current = false;
         setCooldown(false);
         cooldownTimer.current = null;
       }, COOLDOWN_MS);
     },
-    [cooldown, channel, addReaction],
+    [channel, addReaction],
   );
 
   const removeReaction = useCallback((id: string) => {

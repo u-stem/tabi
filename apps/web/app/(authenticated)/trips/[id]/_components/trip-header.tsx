@@ -5,6 +5,7 @@ import { MAX_MEMBERS_PER_TRIP } from "@sugara/shared";
 import Image from "next/image";
 
 import { PresenceAvatars } from "@/components/presence-avatars";
+import { ReactionButton } from "@/components/reaction-button";
 import { TripActions } from "@/components/trip-actions";
 import { formatDateRange, getDayCount } from "@/lib/format";
 import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
@@ -53,6 +54,9 @@ export function TripHeader({
     onOpenMap,
   } as const;
 
+  // Show reaction button only when co-editing (other members are present)
+  const showReaction = onReaction && otherPresence.length > 0;
+
   return (
     <div className="mb-3 lg:mb-6">
       {trip.coverImageUrl && (
@@ -72,12 +76,8 @@ export function TripHeader({
       {/* Mobile compact header */}
       <div className="flex h-11 items-center gap-2 lg:hidden">
         <h1 className="min-w-0 flex-1 truncate text-base font-bold">{trip.title}</h1>
-        <PresenceAvatars
-          users={otherPresence}
-          isConnected={isConnected}
-          onReaction={onReaction}
-          cooldown={cooldown}
-        />
+        {showReaction && <ReactionButton onReaction={onReaction} cooldown={cooldown ?? false} />}
+        <PresenceAvatars users={otherPresence} isConnected={isConnected} />
         <TripActions {...tripActionsProps} compact />
       </div>
 
@@ -85,12 +85,8 @@ export function TripHeader({
       <div className="hidden lg:block">
         <div className="flex items-center gap-3">
           <h1 className="min-w-0 truncate text-2xl font-bold">{trip.title}</h1>
-          <PresenceAvatars
-            users={otherPresence}
-            isConnected={isConnected}
-            onReaction={onReaction}
-            cooldown={cooldown}
-          />
+          {showReaction && <ReactionButton onReaction={onReaction} cooldown={cooldown ?? false} />}
+          <PresenceAvatars users={otherPresence} isConnected={isConnected} />
         </div>
         <p className="text-muted-foreground">
           {trip.startDate && trip.endDate ? (

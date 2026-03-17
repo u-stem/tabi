@@ -25,7 +25,7 @@ export function ReactionOverlay({
           style={{
             left: `${r.x}%`,
             bottom: "20vh",
-            animation: "reaction-float-up 4s ease-out forwards",
+            animation: "reaction-float-up 8s ease-out forwards",
           }}
           onAnimationEnd={() => onAnimationEnd(r.id)}
         >

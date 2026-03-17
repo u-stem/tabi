@@ -21,6 +21,8 @@ export function TripHeader({
   onOpenBookmarks,
   onOpenActivity,
   onOpenMap,
+  onReaction,
+  cooldown,
 }: {
   trip: TripResponse;
   tripId: string;
@@ -33,6 +35,8 @@ export function TripHeader({
   onOpenBookmarks?: () => void;
   onOpenActivity?: () => void;
   onOpenMap?: () => void;
+  onReaction?: (emoji: string) => void;
+  cooldown?: boolean;
 }) {
   const tripActionsProps = {
     tripId,
@@ -68,7 +72,12 @@ export function TripHeader({
       {/* Mobile compact header */}
       <div className="flex h-11 items-center gap-2 lg:hidden">
         <h1 className="min-w-0 flex-1 truncate text-base font-bold">{trip.title}</h1>
-        <PresenceAvatars users={otherPresence} isConnected={isConnected} />
+        <PresenceAvatars
+          users={otherPresence}
+          isConnected={isConnected}
+          onReaction={onReaction}
+          cooldown={cooldown}
+        />
         <TripActions {...tripActionsProps} compact />
       </div>
 
@@ -76,7 +85,12 @@ export function TripHeader({
       <div className="hidden lg:block">
         <div className="flex items-center gap-3">
           <h1 className="min-w-0 truncate text-2xl font-bold">{trip.title}</h1>
-          <PresenceAvatars users={otherPresence} isConnected={isConnected} />
+          <PresenceAvatars
+            users={otherPresence}
+            isConnected={isConnected}
+            onReaction={onReaction}
+            cooldown={cooldown}
+          />
         </div>
         <p className="text-muted-foreground">
           {trip.startDate && trip.endDate ? (

@@ -506,127 +506,130 @@ export default function SpTripDetailPage() {
   );
 
   return (
-    <LoadingBoundary isLoading={isLoading || (!!pollId && isPollLoading)} skeleton={skeleton}>
-      {queryError || !trip ? (
-        <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
-      ) : (
-        <MapsProvider enabled={trip.mapsEnabled}>
-          <SelectionProvider value={selectionValue}>
-            <div className="mt-4">
-              <TripHeader
-                trip={trip}
-                tripId={tripId}
-                otherPresence={otherPresence}
-                isConnected={isConnected}
-                online={online}
-                canEdit={canEdit}
-                onMutate={onMutate}
-                onEditOpen={() => setEditOpen(true)}
-                onOpenBookmarks={
-                  isGuest
-                    ? undefined
-                    : () => {
-                        handleMobileTabChange("bookmarks");
-                      }
-                }
-                onOpenActivity={() => {
-                  handleMobileTabChange("activity");
-                }}
-                onOpenMap={trip.mapsEnabled ? () => handleMobileTabChange("map") : undefined}
-                onReaction={sendReaction}
-                cooldown={cooldown}
-              />
-              <EditTripDialog
-                tripId={tripId}
-                title={trip.title}
-                destination={trip.destination}
-                startDate={trip.startDate}
-                endDate={trip.endDate}
-                coverImageUrl={trip.coverImageUrl}
-                coverImagePosition={trip.coverImagePosition}
-                open={editOpen}
-                onOpenChange={setEditOpen}
-                onUpdate={onMutate}
-              />
-              <DndContext
-                sensors={dnd.sensors}
-                collisionDetection={dnd.collisionDetection}
-                onDragStart={dnd.handleDragStart}
-                onDragOver={dnd.handleDragOver}
-                onDragEnd={dnd.handleDragEnd}
-                accessibility={{ announcements: undefined }}
-              >
-                {/* SP mobile layout — always visible, no lg:hidden */}
-                <div>
-                  <SpSwipeTabs<MobileContentTab>
-                    tabs={spTripTabs}
-                    activeTab={mobileTab}
-                    onTabChange={handleMobileTabChange}
-                    renderContent={renderTabContent}
-                    swipeEnabled={isSwipableTab && !!trip}
-                    className="my-2"
-                  />
-                  {!isSwipableTab && <div className="pb-20">{renderTabContent(mobileTab)}</div>}
-                </div>
-              </DndContext>
+    <>
+      <LoadingBoundary isLoading={isLoading || (!!pollId && isPollLoading)} skeleton={skeleton}>
+        {queryError || !trip ? (
+          <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+        ) : (
+          <MapsProvider enabled={trip.mapsEnabled}>
+            <SelectionProvider value={selectionValue}>
+              <div className="mt-4">
+                <TripHeader
+                  trip={trip}
+                  tripId={tripId}
+                  otherPresence={otherPresence}
+                  isConnected={isConnected}
+                  online={online}
+                  canEdit={canEdit}
+                  onMutate={onMutate}
+                  onEditOpen={() => setEditOpen(true)}
+                  onOpenBookmarks={
+                    isGuest
+                      ? undefined
+                      : () => {
+                          handleMobileTabChange("bookmarks");
+                        }
+                  }
+                  onOpenActivity={() => {
+                    handleMobileTabChange("activity");
+                  }}
+                  onOpenMap={trip.mapsEnabled ? () => handleMobileTabChange("map") : undefined}
+                  onReaction={sendReaction}
+                  cooldown={cooldown}
+                />
+                <EditTripDialog
+                  tripId={tripId}
+                  title={trip.title}
+                  destination={trip.destination}
+                  startDate={trip.startDate}
+                  endDate={trip.endDate}
+                  coverImageUrl={trip.coverImageUrl}
+                  coverImagePosition={trip.coverImagePosition}
+                  open={editOpen}
+                  onOpenChange={setEditOpen}
+                  onUpdate={onMutate}
+                />
+                <DndContext
+                  sensors={dnd.sensors}
+                  collisionDetection={dnd.collisionDetection}
+                  onDragStart={dnd.handleDragStart}
+                  onDragOver={dnd.handleDragOver}
+                  onDragEnd={dnd.handleDragEnd}
+                  accessibility={{ announcements: undefined }}
+                >
+                  {/* SP mobile layout — always visible, no lg:hidden */}
+                  <div>
+                    <SpSwipeTabs<MobileContentTab>
+                      tabs={spTripTabs}
+                      activeTab={mobileTab}
+                      onTabChange={handleMobileTabChange}
+                      renderContent={renderTabContent}
+                      swipeEnabled={isSwipableTab && !!trip}
+                      className="my-2"
+                    />
+                    {!isSwipableTab && <div className="pb-20">{renderTabContent(mobileTab)}</div>}
+                  </div>
+                </DndContext>
 
-              <Fab
-                onClick={() => {
-                  if (mobileTab === "schedule") {
-                    if (selectedDay === -1) {
-                      setAddPollOptionOpen(true);
-                    } else {
-                      if (scheduleLimitReached) {
-                        toast.error(scheduleLimitMessage);
-                        return;
-                      }
-                      setAddScheduleOpen(true);
-                    }
-                  } else if (mobileTab === "candidates") setAddCandidateOpen(true);
-                  else if (mobileTab === "expenses") setAddExpenseOpen(true);
-                  else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
-                }}
-                label={
-                  mobileTab === "schedule"
-                    ? selectedDay === -1
-                      ? "日程案追加"
-                      : "予定を追加"
-                    : mobileTab === "candidates"
-                      ? "候補を追加"
-                      : mobileTab === "souvenirs"
-                        ? "お土産を追加"
-                        : "費用を追加"
-                }
-                hidden={
-                  !canEdit ||
-                  !online ||
-                  mobileTab === "bookmarks" ||
-                  mobileTab === "activity" ||
-                  (mobileTab === "schedule" &&
-                    selectedDay === -1 &&
-                    (!isOwnerRole(trip.role) || pollData?.status !== "open"))
-                }
-              />
+                <AddPatternDialog patternOps={patternOps} />
+                <RenamePatternDialog patternOps={patternOps} />
+                <BatchDeleteDialog selection={selection} />
+                <DeletePatternDialog patternOps={patternOps} />
+                <OverwritePatternDialog
+                  patternOps={patternOps}
+                  patterns={currentDay?.patterns ?? []}
+                />
+                <BookmarkListPickerDialog
+                  open={bookmarkPickerOpen}
+                  onOpenChange={setBookmarkPickerOpen}
+                  onSelect={handleBookmarkListSelected}
+                />
+              </div>
+            </SelectionProvider>
+          </MapsProvider>
+        )}
+        <ReactionOverlay reactions={reactions} onAnimationEnd={removeReaction} />
+      </LoadingBoundary>
 
-              <AddPatternDialog patternOps={patternOps} />
-              <RenamePatternDialog patternOps={patternOps} />
-              <BatchDeleteDialog selection={selection} />
-              <DeletePatternDialog patternOps={patternOps} />
-              <OverwritePatternDialog
-                patternOps={patternOps}
-                patterns={currentDay?.patterns ?? []}
-              />
-              <BookmarkListPickerDialog
-                open={bookmarkPickerOpen}
-                onOpenChange={setBookmarkPickerOpen}
-                onSelect={handleBookmarkListSelected}
-              />
-            </div>
-          </SelectionProvider>
-        </MapsProvider>
-      )}
-      <ReactionOverlay reactions={reactions} onAnimationEnd={removeReaction} />
-    </LoadingBoundary>
+      {/* FAB is rendered outside LoadingBoundary to avoid containing block issues breaking fixed positioning */}
+      <Fab
+        onClick={() => {
+          if (mobileTab === "schedule") {
+            if (selectedDay === -1) {
+              setAddPollOptionOpen(true);
+            } else {
+              if (scheduleLimitReached) {
+                toast.error(scheduleLimitMessage);
+                return;
+              }
+              setAddScheduleOpen(true);
+            }
+          } else if (mobileTab === "candidates") setAddCandidateOpen(true);
+          else if (mobileTab === "expenses") setAddExpenseOpen(true);
+          else if (mobileTab === "souvenirs") setAddSouvenirOpen(true);
+        }}
+        label={
+          mobileTab === "schedule"
+            ? selectedDay === -1
+              ? "日程案追加"
+              : "予定を追加"
+            : mobileTab === "candidates"
+              ? "候補を追加"
+              : mobileTab === "souvenirs"
+                ? "お土産を追加"
+                : "費用を追加"
+        }
+        hidden={
+          !canEdit ||
+          !online ||
+          mobileTab === "bookmarks" ||
+          mobileTab === "activity" ||
+          (mobileTab === "schedule" &&
+            selectedDay === -1 &&
+            (!isOwnerRole(trip?.role ?? null) || pollData?.status !== "open"))
+        }
+      />
+    </>
   );
 }
 

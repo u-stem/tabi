@@ -54,29 +54,41 @@ export function Header() {
         aria-label="メインナビゲーション"
         className="container flex h-14 items-center justify-between"
       >
-        <div className="flex items-center gap-6">
-          <Logo href="/home" />
-          {visibleNavLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={cn(
-                "hidden md:inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm transition-colors",
-                pathname === link.href
-                  ? "bg-muted font-medium text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {link.label}
-              {link.href === "/friends" && friendRequestCount > 0 && (
-                <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive text-xs font-medium tabular-nums text-destructive-foreground">
-                  {friendRequestCount}
-                </span>
-              )}
-            </Link>
-          ))}
-        </div>
         <TooltipProvider>
+          <div className="flex items-center gap-1 sm:gap-4 md:gap-6">
+            <Logo href="/home" className="mr-2 sm:mr-0" />
+            {visibleNavLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = pathname === link.href;
+              const badge = link.href === "/friends" && friendRequestCount > 0;
+              return (
+                <Tooltip key={link.href}>
+                  <TooltipTrigger asChild>
+                    <Link
+                      href={link.href}
+                      aria-label={link.label}
+                      className={cn(
+                        "relative inline-flex items-center gap-1 rounded-md text-sm transition-colors",
+                        "p-2 md:px-3 md:py-1.5",
+                        isActive
+                          ? "bg-muted font-medium text-foreground"
+                          : "text-muted-foreground hover:text-foreground",
+                      )}
+                    >
+                      <Icon className="h-5 w-5 md:hidden" />
+                      <span className="hidden md:inline">{link.label}</span>
+                      {badge && (
+                        <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground md:static md:top-auto md:right-auto md:ml-1 md:h-5 md:min-w-5 md:text-xs">
+                          {friendRequestCount}
+                        </span>
+                      )}
+                    </Link>
+                  </TooltipTrigger>
+                  <TooltipContent className="md:hidden">{link.label}</TooltipContent>
+                </Tooltip>
+              );
+            })}
+          </div>
           <div className="flex items-center gap-2">
             <HeaderMenu />
             {mounted && session?.user && !isGuest && <NotificationBell />}

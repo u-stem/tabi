@@ -29,10 +29,10 @@ export function ReactionOverlay({
           }}
           onAnimationEnd={() => onAnimationEnd(r.id)}
         >
-          <span className="text-[28px] leading-none">{r.emoji}</span>
+          <span className="text-[28px] leading-none lg:text-[40px]">{r.emoji}</span>
           <span
             className={cn(
-              "flex h-[18px] w-[18px] items-center justify-center rounded-full text-[9px] font-semibold text-white",
+              "flex h-[18px] w-[18px] items-center justify-center rounded-full text-[9px] font-semibold text-white lg:h-[22px] lg:w-[22px] lg:text-[11px]",
               r.color,
             )}
           >

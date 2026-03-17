@@ -114,7 +114,7 @@ export function PresenceAvatars({
                 <OverflowBadge count={overflow} />
               </button>
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-2" align="end" sideOffset={8}>
+            <PopoverContent className="w-auto p-2" align="center" sideOffset={8}>
               <ReactionPicker
                 onSelect={(emoji) => {
                   onReaction(emoji);

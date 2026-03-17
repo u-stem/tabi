@@ -21,10 +21,11 @@ export function ReactionOverlay({
         <div
           key={r.id}
           data-reaction-id={r.id}
-          className="absolute bottom-0 flex flex-col items-center gap-0.5"
+          className="absolute flex flex-col items-center gap-0.5"
           style={{
             left: `${r.x}%`,
-            animation: "reaction-float-up 2.5s ease-out forwards",
+            bottom: "20vh",
+            animation: "reaction-float-up 4s ease-out forwards",
           }}
           onAnimationEnd={() => onAnimationEnd(r.id)}
         >

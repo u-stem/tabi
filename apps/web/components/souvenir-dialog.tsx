@@ -7,11 +7,13 @@ import {
   SOUVENIR_NAME_MAX_LENGTH,
   SOUVENIR_PRIORITY_LABELS,
   SOUVENIR_RECIPIENT_MAX_LENGTH,
+  SOUVENIR_SHARE_STYLE_LABELS,
   SOUVENIR_URL_MAX_LENGTH,
   type SouvenirItem,
   type SouvenirPriority,
+  type SouvenirShareStyle,
 } from "@sugara/shared";
-import { Check, Flame, Minus, Plus, Star, X } from "lucide-react";
+import { Check, Flame, Heart, Minus, Plus, ShoppingBag, Star, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -26,6 +28,7 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
@@ -72,6 +75,8 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
   const [addresses, setAddresses] = useState<string[]>([]);
   const [memo, setMemo] = useState("");
   const [priority, setPriority] = useState<SouvenirPriority | null>(null);
+  const [isShared, setIsShared] = useState(false);
+  const [shareStyle, setShareStyle] = useState<SouvenirShareStyle | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -82,6 +87,8 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
       setAddresses(item.addresses);
       setMemo(item.memo ?? "");
       setPriority(item.priority);
+      setIsShared(item.isShared);
+      setShareStyle(item.shareStyle);
     } else {
       setName("");
       setRecipient("");
@@ -89,6 +96,8 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
       setAddresses([]);
       setMemo("");
       setPriority(null);
+      setIsShared(false);
+      setShareStyle(null);
     }
   }, [open, item]);
 
@@ -111,6 +120,8 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
         addresses: addresses.filter((a) => a.trim()),
         memo: memo.trim() || null,
         priority,
+        isShared,
+        shareStyle: isShared ? shareStyle : null,
       };
 
       if (isEdit) {
@@ -307,6 +318,65 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
               placeholder="自由メモ"
               rows={2}
             />
+          </div>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between rounded-md border px-3 py-2">
+              <Label htmlFor="souvenir-shared" className="cursor-pointer font-normal">
+                メンバーに公開
+              </Label>
+              <Switch
+                id="souvenir-shared"
+                checked={isShared}
+                onCheckedChange={(checked) => {
+                  setIsShared(checked);
+                  if (!checked) {
+                    setShareStyle(null);
+                  }
+                }}
+              />
+            </div>
+            {isShared && (
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={cn("flex-1", shareStyle === null && "bg-muted")}
+                  onClick={() => setShareStyle(null)}
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                  未設定
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "flex-1",
+                    shareStyle === "recommend" &&
+                      "border-pink-300 bg-pink-100 text-pink-800 hover:bg-pink-100 dark:border-pink-700 dark:bg-pink-900 dark:text-pink-200 dark:hover:bg-pink-900",
+                  )}
+                  onClick={() => setShareStyle("recommend")}
+                >
+                  <Heart className="h-3.5 w-3.5" />
+                  {SOUVENIR_SHARE_STYLE_LABELS.recommend}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className={cn(
+                    "flex-1",
+                    shareStyle === "errand" &&
+                      "border-sky-300 bg-sky-100 text-sky-800 hover:bg-sky-100 dark:border-sky-700 dark:bg-sky-900 dark:text-sky-200 dark:hover:bg-sky-900",
+                  )}
+                  onClick={() => setShareStyle("errand")}
+                >
+                  <ShoppingBag className="h-3.5 w-3.5" />
+                  {SOUVENIR_SHARE_STYLE_LABELS.errand}
+                </Button>
+              </div>
+            )}
           </div>
           <ResponsiveDialogFooter>
             <ResponsiveDialogClose asChild>

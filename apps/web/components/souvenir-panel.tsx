@@ -1,15 +1,22 @@
 "use client";
 
-import { SOUVENIR_PRIORITY_LABELS, type SouvenirItem, type SouvenirPriority } from "@sugara/shared";
+import {
+  SOUVENIR_PRIORITY_LABELS,
+  SOUVENIR_SHARE_STYLE_LABELS,
+  type SouvenirItem,
+  type SouvenirPriority,
+} from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
   ChevronDown,
   ExternalLink,
   Flame,
+  Heart,
   MapPin,
   Pencil,
   Plus,
+  ShoppingBag,
   SquareMousePointer,
   Star,
   StickyNote,
@@ -24,6 +31,7 @@ import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
 import { ItemMenuButton } from "@/components/item-menu-button";
 import { EmptyState } from "@/components/ui/empty-state";
+import { useSession } from "@/lib/auth-client";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 
 const SouvenirDialog = dynamic(() =>
@@ -52,6 +60,7 @@ import {
 } from "@/components/ui/responsive-alert-dialog";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { SELECTED_RING } from "@/lib/colors";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
@@ -70,6 +79,8 @@ type SouvenirPanelProps = {
 
 export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPanelProps) {
   const isMobile = useMobile();
+  const { data: session } = useSession();
+  const currentUserId = session?.user?.id;
   const queryClient = useQueryClient();
   const [internalDialogOpen, setInternalDialogOpen] = useState(false);
   const dialogOpen = addOpen ?? internalDialogOpen;
@@ -151,6 +162,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
   };
 
   const items = data?.items ?? [];
+  const ownItems = items.filter((i) => i.userId === currentUserId);
 
   const sortItems = (list: SouvenirItem[]) => {
     if (sortBy === "created") return list;
@@ -161,8 +173,12 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
     });
   };
 
-  const purchased = sortItems(items.filter((i) => i.isPurchased));
-  const remaining = sortItems(items.filter((i) => !i.isPurchased));
+  const isOwn = (i: SouvenirItem) => i.userId === currentUserId;
+  // Show purchase state for own items and for other members' items unless recommend-style
+  const showPurchased = (i: SouvenirItem) =>
+    i.isPurchased && (isOwn(i) || i.shareStyle !== "recommend");
+  const purchased = sortItems(items.filter((i) => showPurchased(i)));
+  const remaining = sortItems(items.filter((i) => !showPurchased(i)));
   const selectedCount = selectedIds.size;
 
   return (
@@ -185,12 +201,12 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
                 size="sm"
                 className="h-8 px-2 text-xs"
                 onClick={() =>
-                  selectedCount === items.length
+                  selectedCount === ownItems.length
                     ? setSelectedIds(new Set())
-                    : setSelectedIds(new Set(items.map((i) => i.id)))
+                    : setSelectedIds(new Set(ownItems.map((i) => i.id)))
                 }
               >
-                {selectedCount === items.length ? "全解除" : "全選択"}
+                {selectedCount === ownItems.length ? "全解除" : "全選択"}
               </Button>
               <div className="ml-auto">
                 <Button
@@ -258,6 +274,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
                     <SouvenirItemRow
                       key={item.id}
                       item={item}
+                      isOwnItem={item.userId === currentUserId}
                       isMobile={isMobile}
                       selectMode={selectMode}
                       selected={selectedIds.has(item.id)}
@@ -293,6 +310,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
                         <SouvenirItemRow
                           key={item.id}
                           item={item}
+                          isOwnItem={item.userId === currentUserId}
                           isMobile={isMobile}
                           selectMode={selectMode}
                           selected={selectedIds.has(item.id)}
@@ -384,6 +402,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
 
 function SouvenirItemRow({
   item,
+  isOwnItem,
   isMobile,
   selectMode,
   selected,
@@ -393,6 +412,7 @@ function SouvenirItemRow({
   onDelete,
 }: {
   item: SouvenirItem;
+  isOwnItem: boolean;
   isMobile: boolean;
   selectMode: boolean;
   selected: boolean;
@@ -406,12 +426,15 @@ function SouvenirItemRow({
     <div
       className={cn(
         "flex items-center gap-2 rounded-md border p-3",
-        item.isPurchased && !selected ? "opacity-50" : "",
+        (isOwnItem || item.shareStyle !== "recommend") && item.isPurchased && !selected
+          ? "opacity-50"
+          : "",
         selectMode &&
+          isOwnItem &&
           "cursor-pointer transition-colors hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         selectMode && selected && SELECTED_RING,
       )}
-      {...(selectMode
+      {...(selectMode && isOwnItem
         ? {
             onClick: onSelect,
             onKeyDown: (e: React.KeyboardEvent) => {
@@ -427,41 +450,67 @@ function SouvenirItemRow({
         : {})}
     >
       {selectMode ? (
-        <SelectionIndicator checked={selected} />
-      ) : (
+        isOwnItem ? (
+          <SelectionIndicator checked={selected} />
+        ) : (
+          <div className="h-5 w-5 shrink-0" />
+        )
+      ) : isOwnItem ? (
         <Checkbox
           checked={item.isPurchased}
           onCheckedChange={(checked) => onToggle(checked === true)}
           className="shrink-0"
           aria-label={item.isPurchased ? "購入済みを取り消す" : "購入済みにする"}
         />
-      )}
+      ) : null}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
           <p
-            className={`text-sm font-medium ${item.isPurchased && !selected ? "line-through" : ""}`}
+            className={`text-sm font-medium ${(isOwnItem || item.shareStyle !== "recommend") && item.isPurchased && !selected ? "line-through" : ""}`}
           >
             {item.name}
           </p>
           {item.priority && (
-            <Badge
-              variant="outline"
-              className={cn(
-                "shrink-0 gap-1 px-1.5 py-0 text-xs",
+            <IconBadgeWithTooltip
+              label={SOUVENIR_PRIORITY_LABELS[item.priority]}
+              isMobile={isMobile}
+              className={
                 item.priority === "high"
                   ? "border-rose-300 bg-rose-100 text-rose-800 dark:border-rose-700 dark:bg-rose-900 dark:text-rose-200"
-                  : "border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-700 dark:bg-amber-900 dark:text-amber-200",
-              )}
+                  : "border-amber-300 bg-amber-100 text-amber-800 dark:border-amber-700 dark:bg-amber-900 dark:text-amber-200"
+              }
             >
               {item.priority === "high" ? (
-                <Flame className="h-2.5 w-2.5" />
+                <Flame className="h-3 w-3" />
               ) : (
-                <Star className="h-2.5 w-2.5" />
+                <Star className="h-3 w-3" />
               )}
-              {SOUVENIR_PRIORITY_LABELS[item.priority]}
-            </Badge>
+            </IconBadgeWithTooltip>
+          )}
+          {(isOwnItem ? item.isShared : true) && item.shareStyle != null && (
+            <IconBadgeWithTooltip
+              label={SOUVENIR_SHARE_STYLE_LABELS[item.shareStyle]}
+              isMobile={isMobile}
+              className={
+                item.shareStyle === "errand"
+                  ? "border-sky-300 bg-sky-100 text-sky-800 dark:border-sky-700 dark:bg-sky-900 dark:text-sky-200"
+                  : "border-pink-300 bg-pink-100 text-pink-800 dark:border-pink-700 dark:bg-pink-900 dark:text-pink-200"
+              }
+            >
+              {item.shareStyle === "errand" ? (
+                <ShoppingBag className="h-3 w-3" />
+              ) : (
+                <Heart className="h-3 w-3" />
+              )}
+            </IconBadgeWithTooltip>
           )}
         </div>
+        {!isOwnItem && (
+          <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+            <User className="h-3 w-3 shrink-0" />
+            <span>{item.userName}</span>
+          </div>
+        )}
         {(item.recipient || item.addresses.length > 0 || item.urls.length > 0 || item.memo) && (
           <div className={cn("mt-1 space-y-1", selectMode && "pointer-events-none")}>
             {item.recipient && (
@@ -504,6 +553,7 @@ function SouvenirItemRow({
         )}
       </div>
       {!selectMode &&
+        isOwnItem &&
         (isMobile ? (
           <>
             <ItemMenuButton
@@ -549,5 +599,34 @@ function SouvenirItemRow({
           </DropdownMenu>
         ))}
     </div>
+  );
+}
+
+function IconBadgeWithTooltip({
+  label,
+  isMobile,
+  className,
+  children,
+}: {
+  label: string;
+  isMobile: boolean;
+  className: string;
+  children: React.ReactNode;
+}) {
+  const badge = (
+    <Badge variant="outline" className={cn("shrink-0 px-1 py-0", className)} aria-label={label}>
+      {children}
+    </Badge>
+  );
+
+  if (isMobile) return badge;
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span className="shrink-0">{badge}</span>
+      </TooltipTrigger>
+      <TooltipContent>{label}</TooltipContent>
+    </Tooltip>
   );
 }

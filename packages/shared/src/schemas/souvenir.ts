@@ -14,6 +14,13 @@ export const SOUVENIR_PRIORITY_LABELS: Record<SouvenirPriority, string> = {
   medium: "できれば",
 };
 
+export const SOUVENIR_SHARE_STYLE_VALUES = ["recommend", "errand"] as const;
+export type SouvenirShareStyle = (typeof SOUVENIR_SHARE_STYLE_VALUES)[number];
+export const SOUVENIR_SHARE_STYLE_LABELS: Record<SouvenirShareStyle, string> = {
+  recommend: "おすすめ",
+  errand: "おつかい",
+};
+
 const souvenirUrlsSchema = z
   .array(httpUrlSchema(SOUVENIR_URL_MAX_LENGTH))
   .max(MAX_URLS_PER_SOUVENIR)
@@ -31,6 +38,8 @@ export const createSouvenirSchema = z.object({
   addresses: souvenirAddressesSchema,
   memo: z.string().nullable().optional(),
   priority: z.enum(SOUVENIR_PRIORITY_VALUES).nullable().optional(),
+  isShared: z.boolean().optional(),
+  shareStyle: z.enum(SOUVENIR_SHARE_STYLE_VALUES).nullable().optional(),
 });
 
 export const updateSouvenirSchema = z
@@ -42,6 +51,8 @@ export const updateSouvenirSchema = z
     memo: z.string().nullable(),
     isPurchased: z.boolean(),
     priority: z.enum(SOUVENIR_PRIORITY_VALUES).nullable(),
+    isShared: z.boolean(),
+    shareStyle: z.enum(SOUVENIR_SHARE_STYLE_VALUES).nullable(),
   })
   .partial()
   .refine(
@@ -67,6 +78,11 @@ export type SouvenirItem = {
   memo: string | null;
   priority: SouvenirPriority | null;
   isPurchased: boolean;
+  isShared: boolean;
+  shareStyle: SouvenirShareStyle | null;
+  userId: string;
+  userName: string;
+  userImage: string | null;
   createdAt: string;
   updatedAt: string;
 };

@@ -84,6 +84,7 @@ export const pollResponseEnum = pgEnum("poll_response", ["ok", "maybe", "ng"]);
 export const quickPollStatusEnum = pgEnum("quick_poll_status", ["open", "closed"]);
 
 export const souvenirPriorityEnum = pgEnum("souvenir_priority", ["high", "medium"]);
+export const souvenirShareStyleEnum = pgEnum("souvenir_share_style", ["recommend", "errand"]);
 
 export const weatherTypeEnum = pgEnum("weather_type", [
   "sunny",
@@ -706,6 +707,8 @@ export const souvenirItems = pgTable(
     memo: text("memo"),
     priority: souvenirPriorityEnum("priority"),
     isPurchased: boolean("is_purchased").notNull().default(false),
+    isShared: boolean("is_shared").notNull().default(false),
+    shareStyle: souvenirShareStyleEnum("share_style"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },

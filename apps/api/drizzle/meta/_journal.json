@@ -218,6 +218,20 @@
       "when": 1773376408094,
       "tag": "0030_small_warbird",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1773715385292,
+      "tag": "0031_warm_wild_pack",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1773717291539,
+      "tag": "0032_abnormal_speedball",
+      "breakpoints": true
     }
   ]
 }

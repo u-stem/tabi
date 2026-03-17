@@ -3,10 +3,10 @@ import {
   MAX_SOUVENIRS_PER_USER_PER_TRIP,
   updateSouvenirSchema,
 } from "@sugara/shared";
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, or } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { souvenirItems } from "../db/schema";
+import { souvenirItems, users } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
 import { getParam } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
@@ -16,17 +16,51 @@ import type { AppEnv } from "../types";
 const souvenirRoutes = new Hono<AppEnv>();
 souvenirRoutes.use("*", requireAuth);
 
-// GET /api/trips/:tripId/souvenirs — own items only
+const souvenirItemColumns = {
+  id: souvenirItems.id,
+  name: souvenirItems.name,
+  recipient: souvenirItems.recipient,
+  urls: souvenirItems.urls,
+  addresses: souvenirItems.addresses,
+  memo: souvenirItems.memo,
+  priority: souvenirItems.priority,
+  isPurchased: souvenirItems.isPurchased,
+  isShared: souvenirItems.isShared,
+  shareStyle: souvenirItems.shareStyle,
+  userId: souvenirItems.userId,
+  userName: users.name,
+  userImage: users.image,
+  createdAt: souvenirItems.createdAt,
+  updatedAt: souvenirItems.updatedAt,
+} as const;
+
+async function findSouvenirWithUser(itemId: string) {
+  const [row] = await db
+    .select(souvenirItemColumns)
+    .from(souvenirItems)
+    .innerJoin(users, eq(souvenirItems.userId, users.id))
+    .where(eq(souvenirItems.id, itemId));
+  return row;
+}
+
+// GET /api/trips/:tripId/souvenirs — own items + other members' shared items
 souvenirRoutes.get("/:tripId/souvenirs", requireTripAccess(), async (c) => {
   const tripId = getParam(c, "tripId");
   const user = c.get("user");
 
-  const items = await db.query.souvenirItems.findMany({
-    where: and(eq(souvenirItems.tripId, tripId), eq(souvenirItems.userId, user.id)),
-    orderBy: (souvenirItems, { asc }) => [asc(souvenirItems.createdAt)],
-  });
+  const rows = await db
+    .select(souvenirItemColumns)
+    .from(souvenirItems)
+    .innerJoin(users, eq(souvenirItems.userId, users.id))
+    .where(
+      and(
+        eq(souvenirItems.tripId, tripId),
+        or(eq(souvenirItems.userId, user.id), eq(souvenirItems.isShared, true)),
+      ),
+    )
+    .orderBy(souvenirItems.createdAt);
 
-  return c.json({ items });
+  return c.json({ items: rows });
 });
 
 // POST /api/trips/:tripId/souvenirs
@@ -49,12 +83,25 @@ souvenirRoutes.post("/:tripId/souvenirs", requireTripAccess(), async (c) => {
     return c.json({ error: ERROR_MSG.LIMIT_SOUVENIRS }, 409);
   }
 
-  const { name, recipient, urls, addresses, memo, priority } = parsed.data;
-  const [item] = await db
+  const { name, recipient, urls, addresses, memo, priority, isShared, shareStyle } = parsed.data;
+  const resolvedIsShared = isShared ?? false;
+  const [inserted] = await db
     .insert(souvenirItems)
-    .values({ tripId, userId: user.id, name, recipient, urls, addresses, memo, priority })
-    .returning();
+    .values({
+      tripId,
+      userId: user.id,
+      name,
+      recipient,
+      urls,
+      addresses,
+      memo,
+      priority,
+      isShared: resolvedIsShared,
+      shareStyle: resolvedIsShared ? (shareStyle ?? null) : null,
+    })
+    .returning({ id: souvenirItems.id });
 
+  const item = await findSouvenirWithUser(inserted.id);
   return c.json(item, 201);
 });
 
@@ -81,12 +128,15 @@ souvenirRoutes.patch("/:tripId/souvenirs/:itemId", requireTripAccess(), async (c
     return c.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, 400);
   }
 
-  const [updated] = await db
-    .update(souvenirItems)
-    .set(parsed.data)
-    .where(eq(souvenirItems.id, itemId))
-    .returning();
+  const updateData = { ...parsed.data };
+  const resolvedIsShared = updateData.isShared ?? existing.isShared;
+  if (!resolvedIsShared) {
+    updateData.shareStyle = null;
+  }
 
+  await db.update(souvenirItems).set(updateData).where(eq(souvenirItems.id, itemId));
+
+  const updated = await findSouvenirWithUser(itemId);
   return c.json(updated);
 });
 

@@ -100,4 +100,59 @@ describe("useReaction", () => {
 
     expect(result.current.reactions).toHaveLength(0);
   });
+
+  it("sendReaction is no-op during 1s cooldown", () => {
+    vi.useFakeTimers();
+    const channel = createMockChannel();
+    const { result } = renderHook(() => useReaction(channel as never, user));
+
+    act(() => result.current.sendReaction("🎉"));
+    channel.send.mockClear();
+
+    act(() => result.current.sendReaction("❤️"));
+    expect(channel.send).not.toHaveBeenCalled();
+
+    vi.useRealTimers();
+  });
+
+  it("cooldown flag resets after 1s", () => {
+    vi.useFakeTimers();
+    const channel = createMockChannel();
+    const { result } = renderHook(() => useReaction(channel as never, user));
+
+    act(() => result.current.sendReaction("🎉"));
+    expect(result.current.cooldown).toBe(true);
+
+    act(() => vi.advanceTimersByTime(1000));
+    expect(result.current.cooldown).toBe(false);
+
+    vi.useRealTimers();
+  });
+
+  it("caps active reactions at 20 — oldest removed when exceeded", () => {
+    const channel = createMockChannel();
+    const { result } = renderHook(() => useReaction(channel as never, user));
+
+    act(() => {
+      for (let i = 0; i < 25; i++) {
+        channel._emit("trip:reaction", {
+          emoji: "🔥",
+          userId: `user-${i}`,
+          name: `User ${i}`,
+          color: "bg-blue-500",
+        });
+      }
+    });
+
+    expect(result.current.reactions).toHaveLength(20);
+    expect(result.current.reactions[0].name).toBe("User 5");
+  });
+
+  it("does not send when channel is null", () => {
+    const { result } = renderHook(() => useReaction(null, user));
+
+    act(() => result.current.sendReaction("🎉"));
+
+    expect(result.current.reactions).toHaveLength(0);
+  });
 });

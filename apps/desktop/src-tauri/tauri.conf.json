@@ -4,6 +4,7 @@
   "version": "0.1.0",
   "identifier": "app.sugara.desktop",
   "build": {
+    "devUrl": "https://sugara.vercel.app",
     "frontendDist": "https://sugara.vercel.app"
   },
   "app": {
@@ -17,17 +18,8 @@
         "minHeight": 600,
         "decorations": true,
         "visible": false,
-        "userAgent": "sugara-desktop/0.1.0"
-      },
-      {
-        "label": "splashscreen",
-        "url": "splashscreen.html",
-        "width": 300,
-        "height": 400,
-        "decorations": false,
-        "resizable": false,
-        "alwaysOnTop": true,
-        "center": true
+        "backgroundColor": "#09090b",
+        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) sugara-desktop/0.1.0"
       }
     ],
     "security": {

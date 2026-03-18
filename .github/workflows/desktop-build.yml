@@ -54,3 +54,43 @@ jobs:
           prerelease: false
           includeUpdaterJson: true
           args: ${{ matrix.args }}
+
+  publish:
+    needs: [build-tauri]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Get tag version
+        id: version
+        run: echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+
+      - name: Download artifacts from private draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p dist
+          gh release download "${{ steps.version.outputs.tag }}" \
+            --repo u-stem/sugara \
+            --dir dist
+
+      - name: Create published release in public repository
+        env:
+          GH_TOKEN: ${{ secrets.GH_RELEASES_TOKEN }}
+        run: |
+          gh release create "${{ steps.version.outputs.tag }}" \
+            --repo u-stem/sugara-releases \
+            --title "sugara Desktop ${{ steps.version.outputs.tag }}" \
+            --notes "デスクトップアプリの新しいバージョンです。Assets からダウンロードしてインストールしてください。" \
+            dist/*
+
+      - name: Delete private draft release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release delete "${{ steps.version.outputs.tag }}" \
+            --repo u-stem/sugara \
+            --yes

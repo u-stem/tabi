@@ -60,12 +60,18 @@ feedbackRoutes.post("/feedback", requireAuth, async (c) => {
   });
 
   if (!res.ok) {
-    const errorBody = await res.json().catch(() => ({}));
+    const errorBody = await res.json().catch((err) => {
+      logger.debug({ err }, "Failed to parse GitHub error response");
+      return {};
+    });
     logger.error({ status: res.status, errorBody }, "GitHub API error");
     return c.json({ error: ERROR_MSG.GITHUB_API_FAILED }, 502);
   }
 
-  const data = await res.json().catch(() => null);
+  const data = await res.json().catch((err) => {
+    logger.error({ err }, "Failed to parse GitHub success response");
+    return null;
+  });
   if (!data?.html_url) {
     return c.json({ error: ERROR_MSG.GITHUB_API_FAILED }, 502);
   }

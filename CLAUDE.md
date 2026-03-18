@@ -93,18 +93,20 @@ bun run --filter @sugara/shared check-types
 
 ## デスクトップアプリのリリース
 
-`apps/desktop/` 配下のファイルを変更して main に push するだけでリリースできる。
+`tauri.conf.json` の `version` を変更して main に push するとリリースできる。
 
 ```
-1. apps/desktop/ 配下のファイルを変更してコミット & push
-2. desktop-tag.yml がパッチバージョンを自動で +1（tauri.conf.json, Cargo.toml を更新・コミット）
-3. desktop-v<version> タグを自動作成
-4. desktop-build.yml がタグをトリガーにビルド・リリース
-5. バイナリが u-stem/sugara-releases に公開される
+1. tauri.conf.json の version を更新 (例: "0.1.0" → "0.2.0")
+2. Cargo.toml の version も同じ値に更新
+3. コミット & push
+4. desktop-tag.yml が自動で desktop-v<version> タグを作成
+5. desktop-build.yml がタグをトリガーにビルド・リリース
+6. バイナリが u-stem/sugara-releases に公開される
 ```
 
-- メジャー/マイナーバージョンを上げたい場合は手動で `tauri.conf.json` と `Cargo.toml` を変更する
+- バージョンが既にタグ済みの場合は何もしない（冪等）
 - `apps/desktop/` のみの変更は Vercel の `turbo-ignore` がスキップするため Web ビルドは不要
+- バージョン方針: patch（0.1.x）= バグ修正・軽微な改善、minor（0.x.0）= 新機能、major（x.0.0）= 破壊的変更
 
 ## 規約
 

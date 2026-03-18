@@ -2,6 +2,7 @@
 
 旅行計画Webアプリケーション。Turborepo + bun workspaces によるモノレポ構成。
 
+[![CI](https://img.shields.io/github/actions/workflow/status/u-stem/sugara/ci.yml?label=CI&logo=github)](https://github.com/u-stem/sugara/actions/workflows/ci.yml)
 [![Vercel](https://img.shields.io/github/deployments/u-stem/sugara/Production?label=Vercel&logo=vercel&logoColor=white)](https://sugara.vercel.app)
 [![Desktop Build](https://img.shields.io/github/actions/workflow/status/u-stem/sugara/desktop-build.yml?label=Desktop%20Build&logo=github)](https://github.com/u-stem/sugara/actions/workflows/desktop-build.yml)
 [![Desktop Tag](https://img.shields.io/github/actions/workflow/status/u-stem/sugara/desktop-tag.yml?label=Desktop%20Tag&logo=github)](https://github.com/u-stem/sugara/actions/workflows/desktop-tag.yml)

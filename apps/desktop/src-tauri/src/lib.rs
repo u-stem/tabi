@@ -1,5 +1,6 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
+use chrono::Datelike;
 use tauri::webview::PageLoadEvent;
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
 
@@ -38,8 +39,6 @@ border-top-color:#fafafa;border-radius:50%;animation:spin .8s linear infinite}}
 </body>
 </html>"#)
 }
-
-use chrono::Datelike;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

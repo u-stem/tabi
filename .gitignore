@@ -52,5 +52,8 @@ lefthook-local.yml
 .superpowers/
 docs/superpowers/
 
+# Tauri generated files
+apps/desktop/src-tauri/gen/
+
 # Misc
 *.tsbuildinfo

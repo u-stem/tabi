@@ -19,7 +19,7 @@
         "decorations": true,
         "visible": false,
         "backgroundColor": "#09090b",
-        "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) sugara-desktop/0.1.0"
+        "userAgent": "sugara-desktop/0.1.0"
       }
     ],
     "security": {

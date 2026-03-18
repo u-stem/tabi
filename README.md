@@ -5,7 +5,6 @@
 [![Vercel](https://img.shields.io/github/deployments/u-stem/sugara/Production?label=Vercel&logo=vercel&logoColor=white)](https://sugara.vercel.app)
 [![Desktop Build](https://img.shields.io/github/actions/workflow/status/u-stem/sugara/desktop-build.yml?label=Desktop%20Build&logo=github)](https://github.com/u-stem/sugara/actions/workflows/desktop-build.yml)
 [![Desktop Tag](https://img.shields.io/github/actions/workflow/status/u-stem/sugara/desktop-tag.yml?label=Desktop%20Tag&logo=github)](https://github.com/u-stem/sugara/actions/workflows/desktop-tag.yml)
-[![Lines of Code](https://img.shields.io/tokei/lines/github/u-stem/sugara)](https://github.com/u-stem/sugara)
 
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
 [![Hono](https://img.shields.io/badge/Hono-4-E36002?logo=hono&logoColor=white)](https://hono.dev)

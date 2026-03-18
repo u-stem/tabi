@@ -139,6 +139,13 @@ bun run --filter @sugara/shared check-types
 - 新機能の追加 → 新しい記事を作成
 - 既存機能の変更 → 影響する過去の記事を修正
 
+## README バッジメンテナンス
+
+README の静的バッジ (Next.js, Hono, Tauri 等) はメジャーバージョン更新時に手動で更新する。
+動的バッジ (CI, Vercel, Commit Activity 等) は自動更新されるため対応不要。
+
+- 依存パッケージのメジャーバージョンアップ → README のバッジのバージョン番号を更新
+
 ## DB スキーマ変更
 
 スキーマ変更は必ず migration 経由で行う。`db:push` は削除済み (migration 追跡が壊れるため)。

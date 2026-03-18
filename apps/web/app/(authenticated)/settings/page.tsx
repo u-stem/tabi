@@ -56,6 +56,7 @@ import {
   validatePassword,
 } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
+import { DESKTOP_RELEASES_URL, useDesktopDownload } from "@/lib/hooks/use-desktop-download";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
 import { MSG } from "@/lib/messages";
@@ -789,6 +790,7 @@ function DeleteAccountSection({ username }: { username: string }) {
 function OtherSection() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { canInstall, promptInstall } = useInstallPrompt();
+  const { showLink: showDesktopDownload } = useDesktopDownload();
   return (
     <>
       <div className="overflow-hidden rounded-lg border divide-y">
@@ -801,6 +803,17 @@ function OtherSection() {
             <Download className="h-4 w-4" />
             アプリをインストール
           </button>
+        )}
+        {showDesktopDownload && (
+          <a
+            href={DESKTOP_RELEASES_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex h-12 items-center gap-3 px-4 hover:bg-accent"
+          >
+            <Download className="h-4 w-4" />
+            デスクトップアプリをダウンロード
+          </a>
         )}
         <a
           href="/faq"

@@ -798,10 +798,13 @@ function OtherSection() {
           <button
             type="button"
             onClick={() => void promptInstall()}
-            className="flex h-12 w-full items-center gap-3 px-4 hover:bg-accent"
+            className="flex w-full items-center gap-3 px-4 py-3 hover:bg-accent"
           >
-            <Download className="h-4 w-4" />
-            アプリをインストール
+            <Download className="h-4 w-4 shrink-0" />
+            <div className="text-left">
+              <div className="text-sm">アプリをインストール</div>
+              <div className="text-xs text-muted-foreground">ブラウザにそのまま追加</div>
+            </div>
           </button>
         )}
         {showDesktopDownload && (
@@ -809,10 +812,13 @@ function OtherSection() {
             href={DESKTOP_RELEASES_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex h-12 items-center gap-3 px-4 hover:bg-accent"
+            className="flex items-center gap-3 px-4 py-3 hover:bg-accent"
           >
-            <Download className="h-4 w-4" />
-            デスクトップアプリをダウンロード
+            <Download className="h-4 w-4 shrink-0" />
+            <div>
+              <div className="text-sm">デスクトップアプリをダウンロード</div>
+              <div className="text-xs text-muted-foreground">macOS / Windows ネイティブアプリ</div>
+            </div>
           </a>
         )}
         <a

@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { routeCache, trips } from "../db/schema";
 import { getAppSettings } from "../lib/app-settings";
+import { logger } from "../lib/logger";
 import { checkTripAccess } from "../lib/permissions";
 import { getAdminUserId } from "../lib/resolve-is-admin";
 import { requireAuth } from "../middleware/auth";
@@ -118,7 +119,7 @@ directionsRoutes.get("/", requireAuth, async (c) => {
     .onConflictDoNothing()
     .then(
       () => {},
-      (err) => console.error("Route cache insert failed:", err),
+      (err) => logger.error({ err }, "Route cache insert failed"),
     );
 
   return c.json({ durationSeconds, encodedPolyline });

@@ -2,6 +2,7 @@ import { createFeedbackSchema } from "@sugara/shared";
 import { Hono } from "hono";
 import { ERROR_MSG } from "../lib/constants";
 import { env } from "../lib/env";
+import { logger } from "../lib/logger";
 import { requireAuth } from "../middleware/auth";
 
 const TITLE_MAX_LENGTH = 50;
@@ -60,7 +61,7 @@ feedbackRoutes.post("/feedback", requireAuth, async (c) => {
 
   if (!res.ok) {
     const errorBody = await res.json().catch(() => ({}));
-    console.error("GitHub API error:", res.status, errorBody);
+    logger.error({ status: res.status, errorBody }, "GitHub API error");
     return c.json({ error: ERROR_MSG.GITHUB_API_FAILED }, 502);
   }
 

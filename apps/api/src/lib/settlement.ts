@@ -1,3 +1,5 @@
+import { logger } from "./logger";
+
 type ExpenseData = {
   paidByUserId: string;
   amount: number;
@@ -46,7 +48,7 @@ export function calculateSettlement(expenses: ExpenseData[], members: UserInfo[]
   for (const [userId, net] of netMap) {
     const user = memberMap.get(userId);
     if (!user) {
-      console.warn(`[settlement] userId ${userId} found in expenses but not in member list`);
+      logger.warn({ userId }, "User found in expenses but not in member list");
       continue;
     }
     if (net > 0) creditors.push({ user, amount: net });

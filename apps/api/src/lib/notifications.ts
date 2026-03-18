@@ -10,6 +10,7 @@ import {
   trips,
 } from "../db/schema";
 import { env } from "./env";
+import { logger } from "./logger";
 
 const MAX_NOTIFICATIONS_PER_USER = 100;
 
@@ -98,7 +99,7 @@ export function notifyTripMembersExcluding(params: {
  */
 export function createNotification(params: CreateNotificationParams): Promise<void> {
   return createNotificationInternal(params).catch((err) => {
-    console.error("[createNotification]", params.type, err);
+    logger.error({ err, type: params.type }, "Notification creation failed");
   });
 }
 
@@ -127,12 +128,12 @@ async function createNotificationInternal(params: CreateNotificationParams): Pro
   if (inAppEnabled) {
     await db.insert(notifications).values({ userId, tripId, type, payload });
     pruneOldNotifications(userId).catch((err) => {
-      console.error("[pruneOldNotifications]", err);
+      logger.error({ err }, "Notification pruning failed");
     });
   }
 
   sendPushToUser(userId, type, payload, tripId).catch((err) => {
-    console.error("[sendPushToUser]", err);
+    logger.error({ err }, "Push notification failed");
   });
 }
 

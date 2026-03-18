@@ -23,6 +23,7 @@ import type { MapsMode } from "../lib/app-settings";
 import { getAppSettings } from "../lib/app-settings";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
+import { logger } from "../lib/logger";
 import { getParam } from "../lib/params";
 import { getAdminUserId } from "../lib/resolve-is-admin";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
@@ -551,7 +552,7 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
       });
 
       if (!sourcePoll) {
-        console.warn(`Scheduling trip ${source.id} has no poll, skipping poll copy`);
+        logger.warn({ tripId: source.id }, "Scheduling trip has no poll, skipping poll copy");
       } else {
         const [newPoll] = await tx
           .insert(schedulePolls)
@@ -680,7 +681,7 @@ tripRoutes.post("/:id/cover-image", requireTripAccess("editor", "id"), async (c)
     const buffer = Buffer.from(await file.arrayBuffer());
     coverImageUrl = await uploadCoverImage(tripId, buffer, file.type);
   } catch (err) {
-    console.error("Cover image upload failed:", err);
+    logger.error({ err }, "Cover image upload failed");
     return c.json({ error: ERROR_MSG.INTERNAL_ERROR }, 500);
   }
 

@@ -1,5 +1,6 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { ERROR_MSG } from "./constants";
+import { logger } from "./logger";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "http://127.0.0.1:54321";
 
@@ -92,7 +93,7 @@ export async function copyCoverImage(
   const { error } = await supabaseAdmin.storage.from(TRIP_COVERS_BUCKET).copy(sourcePath, destPath);
 
   if (error) {
-    console.error("Storage copy failed:", error.message);
+    logger.error({ err: error.message }, "Storage copy failed");
     return null;
   }
 
@@ -108,6 +109,6 @@ export async function deleteCoverImage(url: string): Promise<void> {
   const { error } = await supabaseAdmin.storage.from(TRIP_COVERS_BUCKET).remove([path]);
 
   if (error) {
-    console.error("Storage delete failed:", error.message);
+    logger.error({ err: error.message }, "Storage delete failed");
   }
 }

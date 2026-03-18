@@ -14,6 +14,7 @@ export type AppEnv = {
     user: AuthUser;
     session: Session;
     tripRole: import("@sugara/shared").MemberRole;
+    requestId: string;
   };
 };
 

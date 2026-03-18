@@ -1,5 +1,6 @@
 import type { Context, Next } from "hono";
 import { auth } from "../lib/auth";
+import { logger } from "../lib/logger";
 
 // Unlike requireAuth, this middleware does not reject unauthenticated requests.
 // It attaches user/session to context when a valid session exists.
@@ -13,7 +14,7 @@ export async function optionalAuth(c: Context, next: Next) {
       c.set("session", session.session);
     }
   } catch (err) {
-    console.debug("[optionalAuth] session check failed, proceeding unauthenticated:", err);
+    logger.debug({ err }, "Session check failed, proceeding unauthenticated");
   }
   await next();
 }

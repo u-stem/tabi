@@ -13,6 +13,7 @@ import {
   users,
 } from "../db/schema";
 import { getAppSettings, isValidMapsMode } from "../lib/app-settings";
+import { logger } from "../lib/logger";
 import { getParam } from "../lib/params";
 import { hashPassword } from "../lib/password";
 import { requireAuth } from "../middleware/auth";
@@ -146,7 +147,7 @@ adminRoutes.get("/api/admin/stats", requireAuth, requireAdmin, async (c) => {
     stats = await withTimeout(fetchStats(sevenDaysAgo, thirtyDaysAgo), 20_000);
   } catch (err) {
     if (err instanceof Error && err.message === "query_timeout") {
-      console.error("[admin/stats] query timeout after 20s");
+      logger.error("Admin stats query timeout after 20s");
       return c.json({ error: "Query timeout" }, 504);
     }
     throw err;

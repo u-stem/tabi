@@ -2,6 +2,8 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { ERROR_MSG } from "./lib/constants";
 import { env } from "./lib/env";
+import { logger } from "./lib/logger";
+import { requestLogger } from "./middleware/request-logger";
 import { accountRoutes } from "./routes/account";
 import { activityLogRoutes } from "./routes/activity-logs";
 import { adminRoutes } from "./routes/admin";
@@ -35,7 +37,7 @@ import { souvenirRoutes } from "./routes/souvenirs";
 import { tripDayRoutes } from "./routes/trip-days";
 import { tripRoutes } from "./routes/trips";
 
-const app = new Hono();
+const app = new Hono<{ Variables: { requestId: string } }>();
 
 app.use(
   "*",
@@ -45,6 +47,8 @@ app.use(
   }),
 );
 
+app.use("*", requestLogger());
+
 app.onError((err, c) => {
   if (err instanceof SyntaxError) {
     return c.json({ error: ERROR_MSG.INVALID_JSON }, 400);
@@ -52,7 +56,7 @@ app.onError((err, c) => {
   if (err.message?.includes("invalid input syntax for type uuid")) {
     return c.json({ error: ERROR_MSG.INVALID_ID_FORMAT }, 400);
   }
-  console.error("Unhandled error:", err.stack || err);
+  logger.error({ err, requestId: c.get("requestId") }, "Unhandled error");
   return c.json({ error: ERROR_MSG.INTERNAL_ERROR }, 500);
 });
 

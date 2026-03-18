@@ -2,6 +2,7 @@ import { and, desc, eq, notInArray } from "drizzle-orm";
 import { db } from "../db/index";
 import { activityLogs } from "../db/schema";
 import { MAX_LOGS_PER_TRIP } from "./constants";
+import { logger } from "./logger";
 
 /** "2025-02-07" → "2/7" */
 export function formatShortDate(iso: string): string {
@@ -29,7 +30,10 @@ type LogActivityParams = {
  */
 export function logActivity(params: LogActivityParams): Promise<void> {
   return logActivityInternal(params).catch((err) => {
-    console.error("[logActivity]", params.entityType, params.action, err);
+    logger.error(
+      { err, entityType: params.entityType, action: params.action },
+      "Activity log failed",
+    );
   });
 }
 

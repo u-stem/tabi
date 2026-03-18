@@ -148,8 +148,9 @@ describe("calculateSettlement", () => {
     expect(result.transfers).toEqual([]);
   });
 
-  it("warns when expense references a user not in member list", () => {
-    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  it("warns when expense references a user not in member list", async () => {
+    const { logger } = await import("../lib/logger");
+    const warnSpy = vi.spyOn(logger, "warn").mockImplementation(() => {});
     const unknownUserId = "unknown-id";
     const result = calculateSettlement(
       [
@@ -165,7 +166,10 @@ describe("calculateSettlement", () => {
       [alice, bob],
     );
 
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(unknownUserId));
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.objectContaining({ userId: unknownUserId }),
+      expect.any(String),
+    );
     // unknown user's net balance is ignored in transfers
     expect(result.transfers).toHaveLength(0);
     warnSpy.mockRestore();

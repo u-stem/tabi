@@ -29,12 +29,13 @@
   "dependencies": {
     "@sugara/shared": "workspace:*",
     "@supabase/supabase-js": "^2.99.1",
+    "@vercel/edge-config": "^1.4.0",
     "better-auth": "^1.5.5",
     "drizzle-orm": "^0.45.1",
     "hono": "^4.12.8",
     "nodemailer": "^8.0.2",
+    "pino": "^10.3.1",
     "postgres": "^3.4.8",
-    "@vercel/edge-config": "^1.4.0",
     "web-push": "^3.6.7"
   },
   "devDependencies": {

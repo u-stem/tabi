@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - 'apps/desktop/src-tauri/tauri.conf.json'
+      - 'apps/desktop/**'
   workflow_dispatch:
 
 jobs:
@@ -16,25 +16,63 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_RELEASES_TOKEN }}
 
-      - name: Read version
+      - name: Read current version
         id: version
         run: |
           VERSION=$(jq -r '.version' apps/desktop/src-tauri/tauri.conf.json)
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "tag=desktop-v${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: Check if tag already exists
         id: check
         run: |
-          if git ls-remote --tags origin "refs/tags/${{ steps.version.outputs.tag }}" | grep -q .; then
+          TAG="desktop-v${{ steps.version.outputs.version }}"
+          if git ls-remote --tags origin "refs/tags/${TAG}" | grep -q .; then
             echo "exists=true" >> "$GITHUB_OUTPUT"
           else
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create and push tag
-        if: steps.check.outputs.exists == 'false'
+      - name: Bump patch version
+        if: steps.check.outputs.exists == 'true'
+        id: bump
         run: |
-          git tag "${{ steps.version.outputs.tag }}"
-          git push origin "${{ steps.version.outputs.tag }}"
+          CURRENT="${{ steps.version.outputs.version }}"
+          MAJOR=$(echo "$CURRENT" | cut -d. -f1)
+          MINOR=$(echo "$CURRENT" | cut -d. -f2)
+          PATCH=$(echo "$CURRENT" | cut -d. -f3)
+          NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
+          echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
+
+          # Update tauri.conf.json
+          jq --arg v "$NEW_VERSION" '.version = $v' apps/desktop/src-tauri/tauri.conf.json > tmp.json
+          mv tmp.json apps/desktop/src-tauri/tauri.conf.json
+
+          # Update Cargo.toml
+          sed -i "s/^version = \"${CURRENT}\"/version = \"${NEW_VERSION}\"/" apps/desktop/src-tauri/Cargo.toml
+
+          # Commit
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add apps/desktop/src-tauri/tauri.conf.json apps/desktop/src-tauri/Cargo.toml
+          git commit -m "chore: デスクトップアプリ v${NEW_VERSION} にバージョンアップ [skip deploy]"
+          git push origin main
+
+      - name: Determine version to tag
+        id: final
+        run: |
+          if [ "${{ steps.check.outputs.exists }}" = "true" ]; then
+            echo "version=${{ steps.bump.outputs.version }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "version=${{ steps.version.outputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create and push tag
+        env:
+          GH_TOKEN: ${{ secrets.GH_RELEASES_TOKEN }}
+        run: |
+          TAG="desktop-v${{ steps.final.outputs.version }}"
+          git tag "$TAG"
+          git push origin "$TAG"

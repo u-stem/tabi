@@ -121,6 +121,71 @@ describe("Feedback routes", () => {
     expect(res.status).toBe(502);
   });
 
+  it("sanitizes @mentions in body", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ html_url: "https://github.com/owner/repo/issues/3" }), {
+        status: 201,
+      }),
+    );
+    const app = createTestApp(feedbackRoutes, "/api");
+    await app.request("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "Hey @admin please fix" }),
+    });
+    const reqBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(reqBody.body).not.toContain("@admin");
+    expect(reqBody.body).toContain("@ admin");
+  });
+
+  it("strips javascript: protocol from markdown links", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ html_url: "https://github.com/owner/repo/issues/4" }), {
+        status: 201,
+      }),
+    );
+    const app = createTestApp(feedbackRoutes, "/api");
+    await app.request("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "[click](javascript:alert(1))" }),
+    });
+    const reqBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(reqBody.body).not.toContain("javascript:");
+  });
+
+  it("strips URL-encoded javascript: protocol from markdown links", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ html_url: "https://github.com/owner/repo/issues/5" }), {
+        status: 201,
+      }),
+    );
+    const app = createTestApp(feedbackRoutes, "/api");
+    await app.request("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "[click](&#106;avascript:alert(1))" }),
+    });
+    const reqBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(reqBody.body).not.toContain("avascript:");
+  });
+
+  it("strips data: protocol from markdown links", async () => {
+    mockFetch.mockResolvedValue(
+      new Response(JSON.stringify({ html_url: "https://github.com/owner/repo/issues/6" }), {
+        status: 201,
+      }),
+    );
+    const app = createTestApp(feedbackRoutes, "/api");
+    await app.request("/api/feedback", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body: "[click](data:text/html,<script>)" }),
+    });
+    const reqBody = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(reqBody.body).not.toContain("data:");
+  });
+
   it("returns 500 when GitHub env vars are not configured", async () => {
     vi.stubEnv("GITHUB_TOKEN", "");
     vi.stubEnv("GITHUB_FEEDBACK_REPO", "");

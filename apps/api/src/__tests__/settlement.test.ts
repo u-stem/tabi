@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { calculateEqualSplit, calculateSettlement } from "../lib/settlement";
 
 const alice = { id: "alice-id", name: "Alice" };
@@ -146,6 +146,29 @@ describe("calculateSettlement", () => {
     );
 
     expect(result.transfers).toEqual([]);
+  });
+
+  it("warns when expense references a user not in member list", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const unknownUserId = "unknown-id";
+    const result = calculateSettlement(
+      [
+        {
+          paidByUserId: unknownUserId,
+          amount: 1000,
+          splits: [
+            { userId: alice.id, amount: 500 },
+            { userId: bob.id, amount: 500 },
+          ],
+        },
+      ],
+      [alice, bob],
+    );
+
+    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining(unknownUserId));
+    // unknown user's net balance is ignored in transfers
+    expect(result.transfers).toHaveLength(0);
+    warnSpy.mockRestore();
   });
 
   it("handles rounding with equal split of 1000 among 3", () => {

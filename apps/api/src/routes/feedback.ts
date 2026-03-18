@@ -27,7 +27,20 @@ feedbackRoutes.post("/feedback", requireAuth, async (c) => {
   // Sanitize to prevent @mention spam and markdown injection
   const sanitized = body
     .replace(/@/g, "@ ")
-    .replace(/\[([^\]]*)\]\((javascript|data|vbscript):/gi, "[$1](");
+    .replace(/\[([^\]]*)\]\(([^)]*)\)/gi, (_match, text, url) => {
+      // Decode HTML numeric entities to detect obfuscated protocols
+      const decoded = url
+        .replace(/&#x([\da-f]+);?/gi, (_: string, hex: string) =>
+          String.fromCharCode(Number.parseInt(hex, 16)),
+        )
+        .replace(/&#(\d+);?/g, (_: string, dec: string) =>
+          String.fromCharCode(Number.parseInt(dec, 10)),
+        );
+      if (/^\s*(javascript|data|vbscript)\s*:/i.test(decoded)) {
+        return `[${text}]()`;
+      }
+      return `[${text}](${url})`;
+    });
   const title =
     sanitized.length > TITLE_MAX_LENGTH ? `${sanitized.slice(0, TITLE_MAX_LENGTH)}...` : sanitized;
 

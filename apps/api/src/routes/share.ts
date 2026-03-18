@@ -130,7 +130,7 @@ shareRoutes.get("/api/shared/:token", sharedTripRateLimit, async (c) => {
     return c.json({ error: ERROR_MSG.SHARED_NOT_FOUND }, 404);
   }
 
-  if (trip.shareTokenExpiresAt && trip.shareTokenExpiresAt < new Date()) {
+  if (trip.shareTokenExpiresAt && trip.shareTokenExpiresAt <= new Date()) {
     return c.json({ error: ERROR_MSG.SHARED_NOT_FOUND }, 404);
   }
 

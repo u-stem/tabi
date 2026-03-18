@@ -12,8 +12,8 @@ export async function optionalAuth(c: Context, next: Next) {
       c.set("user", session.user);
       c.set("session", session.session);
     }
-  } catch {
-    // Proceed as unauthenticated
+  } catch (err) {
+    console.debug("[optionalAuth] session check failed, proceeding unauthenticated:", err);
   }
   await next();
 }

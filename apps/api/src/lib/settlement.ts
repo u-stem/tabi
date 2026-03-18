@@ -45,7 +45,10 @@ export function calculateSettlement(expenses: ExpenseData[], members: UserInfo[]
 
   for (const [userId, net] of netMap) {
     const user = memberMap.get(userId);
-    if (!user) continue;
+    if (!user) {
+      console.warn(`[settlement] userId ${userId} found in expenses but not in member list`);
+      continue;
+    }
     if (net > 0) creditors.push({ user, amount: net });
     if (net < 0) debtors.push({ user, amount: -net });
   }

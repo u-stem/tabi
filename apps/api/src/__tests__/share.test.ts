@@ -239,6 +239,28 @@ describe("Share routes", () => {
       expect(body.shareTokenExpiresAt).toBeUndefined();
     });
 
+    it("returns 404 when share link expires at exactly current time", async () => {
+      vi.useFakeTimers();
+      const now = new Date("2025-06-01T12:00:00.000Z");
+      vi.setSystemTime(now);
+
+      mockDbQuery.trips.findFirst.mockResolvedValue({
+        id: "trip-1",
+        ownerId: "user-1",
+        shareToken: "exact-expiry-token",
+        shareTokenExpiresAt: now,
+        title: "Tokyo Trip",
+        destination: "Tokyo",
+        days: [],
+      });
+
+      const app = createTestApp(shareRoutes, "/");
+      const res = await app.request("/api/shared/exact-expiry-token");
+
+      expect(res.status).toBe(404);
+      vi.useRealTimers();
+    });
+
     it("returns 404 for expired share link", async () => {
       mockDbQuery.trips.findFirst.mockResolvedValue({
         id: "trip-1",

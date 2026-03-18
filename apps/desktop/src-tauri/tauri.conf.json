@@ -16,7 +16,18 @@
         "minWidth": 900,
         "minHeight": 600,
         "decorations": true,
+        "visible": false,
         "userAgent": "sugara-desktop/0.1.0"
+      },
+      {
+        "label": "splashscreen",
+        "url": "splashscreen.html",
+        "width": 300,
+        "height": 400,
+        "decorations": false,
+        "resizable": false,
+        "alwaysOnTop": true,
+        "center": true
       }
     ],
     "security": {

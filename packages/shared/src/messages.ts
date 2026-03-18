@@ -100,6 +100,14 @@ export const ERROR_MSG = {
   QUICK_POLL_SINGLE_VOTE_ONLY: "Only one option allowed",
   QUICK_POLL_INVALID_OPTION: "Some options do not belong to this poll",
   LIMIT_QUICK_POLLS: "Quick poll limit reached",
+  FORBIDDEN: "Forbidden",
+  NOT_FOUND: "Not found",
+  SIGNUP_DISABLED: "新規利用の受付を停止しています",
+  INVALID_INPUT: "Invalid input",
+  VOTER_ID_REQUIRED: "userId or anonymousId required",
+  SETTLEMENT_PAYMENT_NOT_FOUND: "Settlement payment not found",
+  SETTLEMENT_ALREADY_CHECKED: "Settlement already checked",
+  SETTLEMENT_TRANSFER_NOT_FOUND: "Transfer not found in current settlement",
 } as const;
 
 // ─── UI messages (Japanese, used in toasts and UI feedback) ───────────────────

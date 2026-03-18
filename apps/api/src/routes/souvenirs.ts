@@ -71,7 +71,7 @@ souvenirRoutes.post("/:tripId/souvenirs", requireTripAccess(), async (c) => {
   const body = await c.req.json();
   const parsed = createSouvenirSchema.safeParse(body);
   if (!parsed.success) {
-    return c.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, 400);
+    return c.json({ error: parsed.error.issues[0]?.message ?? ERROR_MSG.INVALID_INPUT }, 400);
   }
 
   const [{ itemCount }] = await db
@@ -125,7 +125,7 @@ souvenirRoutes.patch("/:tripId/souvenirs/:itemId", requireTripAccess(), async (c
   const body = await c.req.json();
   const parsed = updateSouvenirSchema.safeParse(body);
   if (!parsed.success) {
-    return c.json({ error: parsed.error.issues[0]?.message ?? "Invalid input" }, 400);
+    return c.json({ error: parsed.error.issues[0]?.message ?? ERROR_MSG.INVALID_INPUT }, 400);
   }
 
   const updateData = { ...parsed.data };

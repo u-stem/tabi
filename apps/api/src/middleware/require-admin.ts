@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import type { Context, Next } from "hono";
 import { db } from "../db/index";
 import { users } from "../db/schema";
+import { ERROR_MSG } from "../lib/constants";
 import type { AppEnv } from "../types";
 
 export async function requireAdmin(c: Context<AppEnv>, next: Next) {
@@ -11,7 +12,7 @@ export async function requireAdmin(c: Context<AppEnv>, next: Next) {
   const adminUserId = process.env.ADMIN_USER_ID;
   if (adminUserId) {
     if (user.id !== adminUserId) {
-      return c.json({ error: "Forbidden" }, 403);
+      return c.json({ error: ERROR_MSG.FORBIDDEN }, 403);
     }
     await next();
     return;
@@ -20,7 +21,7 @@ export async function requireAdmin(c: Context<AppEnv>, next: Next) {
   // Fallback: username-based check for backward compatibility
   const adminUsername = process.env.ADMIN_USERNAME;
   if (!adminUsername) {
-    return c.json({ error: "Forbidden" }, 403);
+    return c.json({ error: ERROR_MSG.FORBIDDEN }, 403);
   }
 
   // Better Auth's cookieCache may omit plugin-added fields (username) from the cached
@@ -36,7 +37,7 @@ export async function requireAdmin(c: Context<AppEnv>, next: Next) {
   }
 
   if (username !== adminUsername) {
-    return c.json({ error: "Forbidden" }, 403);
+    return c.json({ error: ERROR_MSG.FORBIDDEN }, 403);
   }
 
   await next();

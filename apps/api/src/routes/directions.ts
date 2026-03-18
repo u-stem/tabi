@@ -3,6 +3,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { routeCache, trips } from "../db/schema";
 import { getAppSettings } from "../lib/app-settings";
+import { ERROR_MSG } from "../lib/constants";
 import { logger } from "../lib/logger";
 import { checkTripAccess } from "../lib/permissions";
 import { getAdminUserId } from "../lib/resolve-is-admin";
@@ -33,13 +34,13 @@ directionsRoutes.get("/", requireAuth, async (c) => {
 
   const role = await checkTripAccess(tripId, user.id);
   if (!role) {
-    return c.json({ error: "Forbidden" }, 403);
+    return c.json({ error: ERROR_MSG.FORBIDDEN }, 403);
   }
 
   const settings = await getAppSettings();
 
   if (settings.mapsMode === "off") {
-    return c.json({ error: "Forbidden" }, 403);
+    return c.json({ error: ERROR_MSG.FORBIDDEN }, 403);
   }
 
   if (settings.mapsMode === "admin_only") {
@@ -49,7 +50,7 @@ directionsRoutes.get("/", requireAuth, async (c) => {
     });
     const adminUserId = await getAdminUserId();
     if (!trip || trip.ownerId !== adminUserId) {
-      return c.json({ error: "Forbidden" }, 403);
+      return c.json({ error: ERROR_MSG.FORBIDDEN }, 403);
     }
   }
 

@@ -8,6 +8,7 @@ import { and, asc, count, eq, ne } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
 import { pushSubscriptions } from "../db/schema";
+import { ERROR_MSG } from "../lib/constants";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
 
@@ -88,7 +89,7 @@ pushSubscriptionRoutes.get("/preferences", async (c) => {
   const sub = await db.query.pushSubscriptions.findFirst({
     where: and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.endpoint, endpoint)),
   });
-  if (!sub) return c.json({ error: "Not found" }, 404);
+  if (!sub) return c.json({ error: ERROR_MSG.NOT_FOUND }, 404);
 
   const prefs = sub.preferences as Record<string, boolean>;
   const ALL_TYPES = notificationTypeSchema.options;
@@ -112,7 +113,7 @@ pushSubscriptionRoutes.put("/preferences", async (c) => {
   const sub = await db.query.pushSubscriptions.findFirst({
     where: and(eq(pushSubscriptions.userId, user.id), eq(pushSubscriptions.endpoint, endpoint)),
   });
-  if (!sub) return c.json({ error: "Not found" }, 404);
+  if (!sub) return c.json({ error: ERROR_MSG.NOT_FOUND }, 404);
 
   const currentPrefs = sub.preferences as Record<string, boolean>;
   await db

@@ -102,7 +102,7 @@ quickPollShareRoutes.post("/api/shared/quick-polls/:shareToken/vote", rateLimit,
   const voterAnonymousId = !voterId ? anonymousId : undefined;
 
   if (!voterId && !voterAnonymousId) {
-    return c.json({ error: "userId or anonymousId required" }, 400);
+    return c.json({ error: ERROR_MSG.VOTER_ID_REQUIRED }, 400);
   }
 
   // Remove existing votes for this user/anonymous
@@ -151,7 +151,7 @@ quickPollShareRoutes.delete("/api/shared/quick-polls/:shareToken/vote", rateLimi
   const voterAnonymousId = !voterId ? anonymousId : undefined;
 
   if (!voterId && !voterAnonymousId) {
-    return c.json({ error: "userId or anonymousId required" }, 400);
+    return c.json({ error: ERROR_MSG.VOTER_ID_REQUIRED }, 400);
   }
 
   const deleteCondition = voterId

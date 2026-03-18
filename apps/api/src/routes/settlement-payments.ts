@@ -4,7 +4,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { expenses, settlementPayments, tripMembers } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
-import { PG_UNIQUE_VIOLATION } from "../lib/constants";
+import { ERROR_MSG, PG_UNIQUE_VIOLATION } from "../lib/constants";
 import { notifyUsers } from "../lib/notifications";
 import { getParam } from "../lib/params";
 import { calculateSettlement } from "../lib/settlement";
@@ -30,7 +30,7 @@ settlementPaymentRoutes.post("/:tripId/settlement-payments", requireTripAccess()
 
   // Authorization: caller must be fromUserId or toUserId
   if (user.id !== fromUserId && user.id !== toUserId) {
-    return c.json({ error: "Unauthorized" }, 403);
+    return c.json({ error: ERROR_MSG.FORBIDDEN }, 403);
   }
 
   // Validate the transfer exists in current settlement
@@ -57,7 +57,7 @@ settlementPaymentRoutes.post("/:tripId/settlement-payments", requireTripAccess()
     (t) => t.from.id === fromUserId && t.to.id === toUserId && t.amount === amount,
   );
   if (!matchingTransfer) {
-    return c.json({ error: "Transfer not found in current settlement" }, 400);
+    return c.json({ error: ERROR_MSG.SETTLEMENT_TRANSFER_NOT_FOUND }, 400);
   }
 
   try {
@@ -100,7 +100,7 @@ settlementPaymentRoutes.post("/:tripId/settlement-payments", requireTripAccess()
     return c.json(payment, 201);
   } catch (err: unknown) {
     if (err instanceof Error && "code" in err && err.code === PG_UNIQUE_VIOLATION) {
-      return c.json({ error: "Settlement already checked" }, 409);
+      return c.json({ error: ERROR_MSG.SETTLEMENT_ALREADY_CHECKED }, 409);
     }
     throw err;
   }
@@ -120,12 +120,12 @@ settlementPaymentRoutes.delete(
     });
 
     if (!existing) {
-      return c.json({ error: "Settlement payment not found" }, 404);
+      return c.json({ error: ERROR_MSG.SETTLEMENT_PAYMENT_NOT_FOUND }, 404);
     }
 
     // Authorization: caller must be fromUserId or toUserId
     if (user.id !== existing.fromUserId && user.id !== existing.toUserId) {
-      return c.json({ error: "Unauthorized" }, 403);
+      return c.json({ error: ERROR_MSG.FORBIDDEN }, 403);
     }
 
     await db.delete(settlementPayments).where(eq(settlementPayments.id, id));
@@ -160,7 +160,7 @@ unsettledSummaryRoutes.get("/:userId/unsettled-summary", async (c) => {
   const userId = getParam(c, "userId");
 
   if (user.id !== userId) {
-    return c.json({ error: "Unauthorized" }, 403);
+    return c.json({ error: ERROR_MSG.FORBIDDEN }, 403);
   }
 
   // Find all trips where user is a member

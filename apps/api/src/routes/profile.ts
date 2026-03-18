@@ -75,7 +75,7 @@ profileRoutes.get("/:userId/bookmark-lists", optionalAuth, async (c) => {
 // Minimal public profile for friend request confirmation
 profileRoutes.get("/:userId/profile", optionalAuth, async (c) => {
   const viewer = c.get("user");
-  if (!viewer) return c.json({ error: "Unauthorized" }, 401);
+  if (!viewer) return c.json({ error: ERROR_MSG.UNAUTHORIZED }, 401);
 
   const userId = getParam(c, "userId");
 

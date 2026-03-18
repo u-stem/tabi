@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { getAppSettings } from "../lib/app-settings";
 import { auth } from "../lib/auth";
+import { ERROR_MSG } from "../lib/constants";
 
 const authRoutes = new Hono();
 
@@ -12,7 +13,7 @@ authRoutes.post("/api/auth/sign-up/*", async (c, next) => {
   // blocking signup rather than silently allowing registrations.
   const { signupEnabled } = await getAppSettings().catch(() => ({ signupEnabled: false }));
   if (!signupEnabled) {
-    return c.json({ error: "新規利用の受付を停止しています" }, 403);
+    return c.json({ error: ERROR_MSG.SIGNUP_DISABLED }, 403);
   }
   return next();
 });

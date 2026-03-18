@@ -54,6 +54,7 @@ docs/superpowers/
 
 # Tauri generated files
 apps/desktop/src-tauri/gen/
+apps/desktop/src-tauri/target/
 
 # Misc
 *.tsbuildinfo

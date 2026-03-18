@@ -1,32 +1,70 @@
 # sugara
 
-旅行計画Webアプリケーション。
+旅行計画Webアプリケーション。Turborepo + bun workspaces によるモノレポ構成。
+
+[![Vercel](https://img.shields.io/github/deployments/u-stem/sugara/production?label=Vercel&logo=vercel&logoColor=white)](https://github.com/u-stem/sugara/deployments)
+[![Desktop Build](https://img.shields.io/github/actions/workflow/status/u-stem/sugara/desktop-build.yml?label=Desktop%20Build&logo=github)](https://github.com/u-stem/sugara/actions/workflows/desktop-build.yml)
+[![Desktop Tag](https://img.shields.io/github/actions/workflow/status/u-stem/sugara/desktop-tag.yml?label=Desktop%20Tag&logo=github)](https://github.com/u-stem/sugara/actions/workflows/desktop-tag.yml)
+
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org)
+[![Hono](https://img.shields.io/badge/Hono-4-E36002?logo=hono&logoColor=white)](https://hono.dev)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com)
+[![Tauri](https://img.shields.io/badge/Tauri-2-24C8D8?logo=tauri&logoColor=white)](https://v2.tauri.app)
+[![Turborepo](https://img.shields.io/badge/Turborepo-EF4444?logo=turborepo&logoColor=white)](https://turbo.build)
+[![Bun](https://img.shields.io/badge/Bun-1.3-FBF0DF?logo=bun&logoColor=black)](https://bun.sh)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
+[![Biome](https://img.shields.io/badge/Biome-60A5FA?logo=biome&logoColor=white)](https://biomejs.dev)
+
+---
 
 ## 主な機能
 
-- **旅行計画**: 日程・スケジュール管理、メンバー招待、ロールベースの権限制御 (owner / editor / viewer)
-- **リアルタイム共同編集**: メンバー間でスケジュールの変更がリアルタイムに同期
-- **費用管理**: 費用の記録・カテゴリ分類・割り勘計算・精算チェック
-- **投票**: 旅行内のスケジュール投票、独立したかんたん投票 (リンク共有対応)
-- **ブックマーク**: 行き先のブックマークリスト管理
-- **お土産管理**: 贈り先ごとの購入リスト・優先度設定
-- **ルーレット**: 行き先をランダムに決定
-- **通知**: アプリ内通知・Web Push 通知
-- **共有**: トークンベースの旅行共有 (未登録ユーザーにも閲覧可)
-- **モバイル対応**: SP 専用レイアウトによるモバイルフレンドリーな UI
+| 機能 | 説明 |
+|------|------|
+| 旅行計画 | 日程・スケジュール管理、メンバー招待、ロールベースの権限制御 (owner / editor / viewer) |
+| リアルタイム共同編集 | メンバー間でスケジュールの変更がリアルタイムに同期 |
+| 費用管理 | 費用の記録・カテゴリ分類・割り勘計算・精算チェック |
+| 投票 | 旅行内のスケジュール投票、独立したかんたん投票 (リンク共有対応) |
+| ブックマーク | 行き先のブックマークリスト管理 |
+| お土産管理 | 贈り先ごとの購入リスト・優先度設定 |
+| ルーレット | 行き先をランダムに決定 |
+| 通知 | アプリ内通知・Web Push 通知 |
+| 共有 | トークンベースの旅行共有 (未登録ユーザーにも閲覧可) |
+| デスクトップアプリ | Tauri 製ネイティブアプリ (macOS / Windows)、自動更新対応 |
+| モバイル対応 | SP 専用レイアウトによるモバイルフレンドリーな UI |
+
+## アーキテクチャ
+
+```
+sugara/
+├── apps/
+│   ├── web/          # Next.js フロントエンド + API Route Handler
+│   ├── api/          # Hono API ルート・DB スキーマ・認証
+│   └── desktop/      # Tauri デスクトップアプリ (macOS / Windows)
+├── packages/
+│   └── shared/       # 共有 Zod スキーマ・型定義
+├── supabase/         # Supabase CLI 設定・マイグレーション
+├── biome.json        # Biome 設定 (lint / format)
+├── lefthook.yml      # Git フック設定
+└── turbo.json        # Turborepo 設定
+```
 
 ## 技術スタック
 
-- **モノレポ**: Turborepo + bun workspaces
-- **フロントエンド**: Next.js 15 (App Router) + Tailwind CSS v4 + shadcn/ui
-- **API**: Hono (Next.js Route Handler 統合)
-- **データベース**: Supabase PostgreSQL + Drizzle ORM
-- **リアルタイム同期**: Supabase Realtime (Broadcast + Presence)
-- **認証**: Better Auth (メール/パスワード、招待制)
-- **バリデーション**: Zod (共有スキーマ)
-- **リンター/フォーマッター**: Biome
-- **Git フック**: lefthook (pre-commit / commit-msg / pre-push)
-- **デプロイ**: Vercel
+| レイヤー | 技術 |
+|----------|------|
+| モノレポ | Turborepo + bun workspaces |
+| フロントエンド | Next.js 16 (App Router) + Tailwind CSS v4 + shadcn/ui |
+| API | Hono (Next.js Route Handler 統合) |
+| データベース | Supabase PostgreSQL + Drizzle ORM |
+| リアルタイム同期 | Supabase Realtime (Broadcast + Presence) |
+| 認証 | Better Auth (メール/パスワード、招待制) |
+| バリデーション | Zod (共有スキーマ) |
+| デスクトップ | Tauri v2 (macOS / Windows、自動更新) |
+| テスト | Vitest (ユニット / 統合) + Playwright (E2E) |
+| リンター / フォーマッター | Biome |
+| Git フック | lefthook (pre-commit / commit-msg / pre-push) |
+| デプロイ | Vercel (Web) + GitHub Actions (Desktop) |
 
 ## セットアップ
 
@@ -68,7 +106,7 @@ bun run --filter @sugara/web dev      # Next.js 開発サーバーを起動
 ```
 
 - Web: http://localhost:3000
-- API: http://localhost:3000/api (Next.js Route Handler)
+- API: http://localhost:3000/api
 - Supabase Studio: http://127.0.0.1:54323
 
 ### データベースリセット
@@ -83,19 +121,18 @@ bun run db:seed
 
 プロジェクトルートから実行:
 
-```bash
-bun run build        # 全パッケージビルド
-bun run test         # 全テスト実行 (Vitest)
-bun run lint         # 全パッケージ lint (Biome)
-bun run format       # 全パッケージ format (Biome)
-bun run check        # lint + format + import sort (Biome)
-bun run check-types  # TypeScript 型チェック
-bun run db:generate  # マイグレーション生成 (スキーマ変更後)
-bun run db:migrate   # マイグレーション実行
-bun run db:studio    # Drizzle Studio 起動
-bun run db:seed      # 開発用シードデータ投入
-bun run db:seed-user # 本番用ユーザー作成 (環境変数で指定)
-```
+| コマンド | 説明 |
+|----------|------|
+| `bun run build` | 全パッケージビルド |
+| `bun run test` | 全テスト実行 (Vitest) |
+| `bun run lint` | 全パッケージ lint (Biome) |
+| `bun run format` | 全パッケージ format (Biome) |
+| `bun run check` | lint + format + import sort (Biome) |
+| `bun run check-types` | TypeScript 型チェック |
+| `bun run db:generate` | マイグレーション生成 (スキーマ変更後) |
+| `bun run db:migrate` | マイグレーション実行 |
+| `bun run db:studio` | Drizzle Studio 起動 |
+| `bun run db:seed` | 開発用シードデータ投入 |
 
 パッケージ単位の実行:
 
@@ -105,17 +142,38 @@ bun run --filter @sugara/web lint
 bun run --filter @sugara/shared check-types
 ```
 
-## プロジェクト構成
+## 開発ルール
+
+### Git フック (lefthook)
+
+`bun install` で自動セットアップされる。
+
+| フック | 内容 |
+|--------|------|
+| pre-commit | `bun run check` (Biome) + `bun run check-types` (TypeScript) |
+| commit-msg | Conventional Commits 形式を強制 |
+| pre-push | `bun run test` |
+
+### コミットメッセージ
 
 ```
-sugara/
-├── apps/
-│   ├── web/          # Next.js フロントエンド + API Route Handler
-│   └── api/          # Hono API (Route Handler として統合)
-├── packages/
-│   └── shared/       # 共有 Zod スキーマ・型定義
-├── supabase/         # Supabase CLI 設定
-├── biome.json        # Biome 設定 (lint/format)
-├── lefthook.yml      # Git フック設定
-└── turbo.json        # Turborepo 設定
+<type>: <日本語の説明>
 ```
+
+| type | 用途 |
+|------|------|
+| feat | 新機能 |
+| fix | バグ修正 |
+| docs | ドキュメント |
+| refactor | リファクタリング |
+| test | テスト |
+| chore | ビルド、CI |
+
+### CI / デプロイのスキップ
+
+コミットメッセージにタグを付けることでスキップできる。
+
+| タグ | 効果 | 用途 |
+|------|------|------|
+| `[skip ci]` | Vercel + GitHub Actions 両方スキップ | ドキュメントのみの変更 |
+| `[skip deploy]` | Vercel のみスキップ (GitHub Actions は動く) | デスクトップリリース時 |

@@ -95,4 +95,4 @@ jobs:
           gh release delete "${{ steps.version.outputs.tag }}" \
             --repo u-stem/sugara \
             --yes \
-            --delete-tag
+            --cleanup-tag

@@ -23,6 +23,7 @@ import {
 import { formatShortDateRange, logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
+import { logger } from "../lib/logger";
 import { createNotification } from "../lib/notifications";
 import { getParam } from "../lib/params";
 import { findPollAsEditor, findPollAsOwner, findPollAsParticipant } from "../lib/poll-access";
@@ -716,7 +717,9 @@ pollRoutes.post("/:pollId/confirm", async (c) => {
           }),
         ),
     );
-  })();
+  })().catch((err) => {
+    logger.error({ err, pollId }, "Failed to notify poll participants of closure");
+  });
 
   return c.json(formatPollResponse(result, trip));
 });

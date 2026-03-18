@@ -5,6 +5,7 @@ import { db } from "../db/index";
 import { quickPolls, quickPollVotes } from "../db/schema";
 import { auth } from "../lib/auth";
 import { ERROR_MSG, RATE_LIMIT_PUBLIC_RESOURCE } from "../lib/constants";
+import { logger } from "../lib/logger";
 import { getParam } from "../lib/params";
 import { rateLimitByIp } from "../middleware/rate-limit";
 import type { AuthUser } from "../types";
@@ -170,7 +171,8 @@ async function getOptionalUser(c: {
   try {
     const session = await auth.api.getSession({ headers: c.req.raw.headers });
     return (session?.user as AuthUser) ?? null;
-  } catch {
+  } catch (err) {
+    logger.debug({ err }, "Public poll auth check failed, proceeding anonymous");
     return null;
   }
 }

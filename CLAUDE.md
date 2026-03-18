@@ -66,6 +66,10 @@ bun run --filter @sugara/shared check-types
 - 旅行作成時に日付範囲から trip_days を自動生成し、作成者を trip_member として追加
 - 旅行/スポットの権限は trip_members テーブルで検証 (checkTripAccess -> canEdit/isOwner)
 - メンバーロール: owner (全権限), editor (スポット/旅行の CRUD), viewer (閲覧のみ)
+- API のログは pino (`apps/api/src/lib/logger.ts`) を使う。`console.*` は禁止
+  - `logger.error({ err, key: val }, "message")` — 第1引数に構造化データ、第2引数にメッセージ
+  - エラーオブジェクトは `{ err }` キーで渡す (pino がスタックトレースをシリアライズする)
+  - `requestLogger` middleware が requestId/method/path/status/duration を自動記録
 
 ## 開発環境
 

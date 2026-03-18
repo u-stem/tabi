@@ -85,10 +85,11 @@ bun run --filter @sugara/shared check-types
 
 - Vercel へのデプロイは push 時に自動実行
 - `turbo-ignore` により `@sugara/web` とその依存 (`@sugara/api`, `@sugara/shared`) に変更がない場合はスキップされる
-- `[skip ci]` をコミットメッセージに含めると Vercel と GitHub Actions の両方をスキップできる
+- コミットメッセージで CI / デプロイをスキップできる
+  - `[skip ci]`: Vercel **と** GitHub Actions の両方をスキップ（ドキュメントのみの変更に使う）
+  - `[skip deploy]`: Vercel のみスキップ、GitHub Actions は動く（デスクトップリリース時に使う）
   - 例: `docs: CLAUDE.mdを更新 [skip ci]`
-  - デスクトップのみの変更・ドキュメントのみの変更に使う
-  - ただし `tauri.conf.json` のバージョン変更時は付けない（自動タグ付けが動かなくなる）
+  - 例: `chore: デスクトップアプリ v0.2.0 にバージョンアップ [skip deploy]`
 
 ## デスクトップアプリのリリース
 

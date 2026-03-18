@@ -31,8 +31,7 @@
     "createUpdaterArtifacts": true,
     "targets": [
       "dmg",
-      "nsis",
-      "updater"
+      "nsis"
     ],
     "windows": {
       "nsis": {

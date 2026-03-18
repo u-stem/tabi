@@ -177,3 +177,7 @@ bun run --filter @sugara/shared check-types
 |------|------|------|
 | `[skip ci]` | Vercel + GitHub Actions 両方スキップ | ドキュメントのみの変更 |
 | `[skip deploy]` | Vercel のみスキップ (GitHub Actions は動く) | デスクトップリリース時 |
+
+## リンク
+
+- デスクトップアプリ: [sugara-releases](https://github.com/u-stem/sugara-releases/releases/latest)

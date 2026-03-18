@@ -37,4 +37,13 @@ jobs:
         if: steps.check.outputs.exists == 'false'
         run: |
           git tag "${{ steps.version.outputs.tag }}"
-          git push "https://x-access-token:${{ secrets.GH_RELEASES_TOKEN }}@github.com/${{ github.repository }}.git" "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Trigger Desktop Build
+        if: steps.check.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GH_RELEASES_TOKEN }}
+        run: |
+          gh workflow run "Desktop Build" \
+            --repo "${{ github.repository }}" \
+            --ref "${{ steps.version.outputs.tag }}"

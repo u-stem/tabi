@@ -2,7 +2,7 @@
 
 旅行計画Webアプリケーション。Turborepo + bun workspaces によるモノレポ構成。
 
-[![Vercel](https://img.shields.io/github/deployments/u-stem/sugara/production?label=Vercel&logo=vercel&logoColor=white)](https://github.com/u-stem/sugara/deployments)
+[![Vercel](https://img.shields.io/github/deployments/u-stem/sugara/Production?label=Vercel&logo=vercel&logoColor=white)](https://sugara.vercel.app)
 [![Desktop Build](https://img.shields.io/github/actions/workflow/status/u-stem/sugara/desktop-build.yml?label=Desktop%20Build&logo=github)](https://github.com/u-stem/sugara/actions/workflows/desktop-build.yml)
 [![Desktop Tag](https://img.shields.io/github/actions/workflow/status/u-stem/sugara/desktop-tag.yml?label=Desktop%20Tag&logo=github)](https://github.com/u-stem/sugara/actions/workflows/desktop-tag.yml)
 
@@ -58,7 +58,7 @@ sugara/
 | API | Hono (Next.js Route Handler 統合) |
 | データベース | Supabase PostgreSQL + Drizzle ORM |
 | リアルタイム同期 | Supabase Realtime (Broadcast + Presence) |
-| 認証 | Better Auth (メール/パスワード、招待制) |
+| 認証 | Better Auth (メール/パスワード) |
 | バリデーション | Zod (共有スキーマ) |
 | デスクトップ | Tauri v2 (macOS / Windows、自動更新) |
 | テスト | Vitest (ユニット / 統合) + Playwright (E2E) |

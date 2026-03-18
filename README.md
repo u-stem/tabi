@@ -6,6 +6,7 @@
 [![Vercel](https://img.shields.io/github/deployments/u-stem/sugara/Production?label=Vercel&logo=vercel&logoColor=white)](https://sugara.vercel.app)
 [![Desktop Build](https://img.shields.io/github/actions/workflow/status/u-stem/sugara/desktop-build.yml?label=Desktop%20Build&logo=github)](https://github.com/u-stem/sugara/actions/workflows/desktop-build.yml)
 [![Desktop Tag](https://img.shields.io/github/actions/workflow/status/u-stem/sugara/desktop-tag.yml?label=Desktop%20Tag&logo=github)](https://github.com/u-stem/sugara/actions/workflows/desktop-tag.yml)
+
 [![Commit Activity](https://img.shields.io/github/commit-activity/m/u-stem/sugara)](https://github.com/u-stem/sugara/graphs/commit-activity)
 [![Last Commit](https://img.shields.io/github/last-commit/u-stem/sugara)](https://github.com/u-stem/sugara/commits/main)
 

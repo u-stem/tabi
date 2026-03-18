@@ -5,6 +5,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    commit-message:
+      prefix: "chore(deps)"
     groups:
       minor-and-patch:
         update-types:
@@ -17,6 +19,8 @@ updates:
     schedule:
       interval: "weekly"
       day: "monday"
+    commit-message:
+      prefix: "chore(deps)"
     groups:
       actions:
         patterns:

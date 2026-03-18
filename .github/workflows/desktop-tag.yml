@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - 'apps/desktop/src-tauri/tauri.conf.json'
+  workflow_dispatch:
 
 jobs:
   tag:

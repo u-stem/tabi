@@ -2,7 +2,7 @@
 
 import type { UserProfileResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Html5Qrcode } from "html5-qrcode";
+import type { Html5Qrcode } from "html5-qrcode";
 import { ArrowLeft, ImageIcon, ScanLine, UserPlus } from "lucide-react";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -277,6 +277,7 @@ export function QrScannerDialog({
       // Permissions API not supported — proceed and let getUserMedia handle it
     }
 
+    const { Html5Qrcode } = await import("html5-qrcode");
     const scanner = new Html5Qrcode(CAMERA_READER_ID);
     scannerRef.current = scanner;
 
@@ -319,6 +320,7 @@ export function QrScannerDialog({
     setError(null);
 
     // Use a separate hidden element for file scanning
+    const { Html5Qrcode } = await import("html5-qrcode");
     const fileScannerInstance = new Html5Qrcode(FILE_READER_ID);
 
     try {

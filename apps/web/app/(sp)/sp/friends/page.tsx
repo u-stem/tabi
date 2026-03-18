@@ -22,12 +22,8 @@ import { useFriendsSync } from "@/lib/hooks/use-friends-sync";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
-const QrScannerDialog = dynamic(
-  () =>
-    import("@/components/qr-scanner-dialog").then((m) => ({
-      default: m.QrScannerDialog,
-    })),
-  { ssr: false },
+const QrScannerDialog = dynamic(() =>
+  import("@/components/qr-scanner-dialog").then((m) => m.QrScannerDialog),
 );
 
 type Tab = "friends" | "groups";

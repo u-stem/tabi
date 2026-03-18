@@ -24,12 +24,8 @@ import { FriendsTab } from "./_components/friends-tab";
 import { GroupsTab } from "./_components/groups-tab";
 import { SendRequestSection } from "./_components/send-request-section";
 
-const QrScannerDialog = dynamic(
-  () =>
-    import("@/components/qr-scanner-dialog").then((m) => ({
-      default: m.QrScannerDialog,
-    })),
-  { ssr: false },
+const QrScannerDialog = dynamic(() =>
+  import("@/components/qr-scanner-dialog").then((m) => m.QrScannerDialog),
 );
 
 function FriendsSkeleton() {

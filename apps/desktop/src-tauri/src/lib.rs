@@ -1,8 +1,11 @@
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;
 use chrono::Datelike;
+use tauri::menu::{AboutMetadata, MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder};
 use tauri::webview::PageLoadEvent;
 use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
+use tauri_plugin_updater::UpdaterExt;
 
 fn seasonal_colors() -> (&'static str, &'static str) {
     let month = chrono::Local::now().month();
@@ -47,6 +50,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .register_uri_scheme_protocol("splash", move |_req, _responder| {
             tauri::http::Response::builder()
@@ -55,6 +59,48 @@ pub fn run() {
                 .unwrap()
         })
         .setup(|app| {
+            // Menu
+            let about = PredefinedMenuItem::about(
+                app,
+                Some("sugara について"),
+                Some(AboutMetadata {
+                    version: Some(app.package_info().version.to_string()),
+                    website: Some("https://sugara.vercel.app".to_string()),
+                    website_label: Some("sugara.vercel.app".to_string()),
+                    ..Default::default()
+                }),
+            )?;
+            let check_update = MenuItemBuilder::with_id("check_update", "アップデートを確認...")
+                .build(app)?;
+            let separator = PredefinedMenuItem::separator(app)?;
+            let quit = PredefinedMenuItem::quit(app, Some("sugara を終了"))?;
+
+            let app_menu = SubmenuBuilder::new(app, "sugara")
+                .item(&about)
+                .item(&separator)
+                .item(&check_update)
+                .item(&separator)
+                .item(&quit)
+                .build()?;
+
+            let edit_menu = SubmenuBuilder::new(app, "編集")
+                .undo()
+                .redo()
+                .separator()
+                .cut()
+                .copy()
+                .paste()
+                .select_all()
+                .build()?;
+
+            let menu = MenuBuilder::new(app)
+                .item(&app_menu)
+                .item(&edit_menu)
+                .build()?;
+
+            app.set_menu(menu)?;
+
+            // Splash screen
             WebviewWindowBuilder::new(
                 app,
                 "splashscreen",
@@ -69,6 +115,31 @@ pub fn run() {
             .build()?;
 
             Ok(())
+        })
+        .on_menu_event(|app, event| {
+            if event.id().as_ref() == "check_update" {
+                let handle = app.clone();
+                tauri::async_runtime::spawn(async move {
+                    let msg = match handle
+                        .updater()
+                        .expect("updater not configured")
+                        .check()
+                        .await
+                    {
+                        Ok(Some(update)) => {
+                            format!("新しいバージョン {} が利用可能です。", update.version)
+                        }
+                        Ok(None) => "最新バージョンです。".to_string(),
+                        Err(e) => format!("確認に失敗しました: {}", e),
+                    };
+                    handle
+                        .dialog()
+                        .message(msg)
+                        .title("アップデート")
+                        .buttons(MessageDialogButtons::Ok)
+                        .show(|_| {});
+                });
+            }
         })
         .on_page_load({
             let splash_closed = splash_closed.clone();

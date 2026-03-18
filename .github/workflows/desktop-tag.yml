@@ -16,8 +16,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_RELEASES_TOKEN }}
 
       - name: Read current version
         id: version
@@ -46,18 +44,15 @@ jobs:
           NEW_VERSION="${MAJOR}.${MINOR}.$((PATCH + 1))"
           echo "version=${NEW_VERSION}" >> "$GITHUB_OUTPUT"
 
-          # Update tauri.conf.json
           jq --arg v "$NEW_VERSION" '.version = $v' apps/desktop/src-tauri/tauri.conf.json > tmp.json
           mv tmp.json apps/desktop/src-tauri/tauri.conf.json
 
-          # Update Cargo.toml
           sed -i "s/^version = \"${CURRENT}\"/version = \"${NEW_VERSION}\"/" apps/desktop/src-tauri/Cargo.toml
 
-          # Commit
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add apps/desktop/src-tauri/tauri.conf.json apps/desktop/src-tauri/Cargo.toml
-          git commit -m "chore: デスクトップアプリ v${NEW_VERSION} にバージョンアップ [skip ci]"
+          git commit -m "chore: デスクトップアプリ v${NEW_VERSION} にバージョンアップ [skip deploy]"
           git push origin main
 
       - name: Determine version to tag
@@ -70,9 +65,7 @@ jobs:
           fi
 
       - name: Create and push tag
-        env:
-          GH_TOKEN: ${{ secrets.GH_RELEASES_TOKEN }}
         run: |
           TAG="desktop-v${{ steps.final.outputs.version }}"
           git tag "$TAG"
-          git push origin "$TAG"
+          git push "https://x-access-token:${{ secrets.GH_RELEASES_TOKEN }}@github.com/${{ github.repository }}.git" "$TAG"

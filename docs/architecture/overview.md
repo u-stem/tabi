@@ -2,7 +2,47 @@
 
 ## システム構成図
 
-<img src="./system-architecture.drawio.svg" alt="システム構成図" width="100%">
+```mermaid
+graph TB
+    subgraph client["クライアント"]
+        Web["Web ブラウザ<br/>(PWA / Web Push)"]
+        Desktop["デスクトップアプリ<br/>(Tauri v2 WebView)"]
+    end
+
+    subgraph vercel["Vercel"]
+        NextJS["Next.js 16<br/>(App Router / SSR / Middleware)"]
+        Hono["Hono API<br/>(Route Handler + Better Auth)"]
+        NextJS --> Hono
+    end
+
+    subgraph supabase["Supabase"]
+        PG[("PostgreSQL<br/>(Drizzle ORM)")]
+        Realtime["Realtime<br/>(Broadcast + Presence)"]
+        Storage["Storage<br/>(画像)"]
+    end
+
+    subgraph external["外部サービス"]
+        Edge["Vercel Edge Config<br/>(アナウンス / 機能フラグ)"]
+        Maps["Google Maps API<br/>(ルート検索 / 地図)"]
+        GitHub["GitHub API<br/>(フィードバック Issue)"]
+    end
+
+    subgraph cicd["CI/CD"]
+        Actions["GitHub Actions<br/>(CI / Desktop Build)"]
+        Dependabot["Dependabot<br/>(npm / Cargo / Actions)"]
+    end
+
+    Web -->|HTTPS| NextJS
+    Desktop -->|HTTPS| NextJS
+    Web <-.->|WebSocket| Realtime
+    Hono -->|SQL| PG
+    Hono -->|REST| Storage
+    Hono -->|REST| Edge
+    Hono -->|REST| Maps
+    Hono -->|REST| GitHub
+    Actions -.->|deploy| vercel
+    Actions -.->|release| Desktop
+```
 
 ## 技術スタック
 
@@ -60,16 +100,21 @@ sequenceDiagram
 認証ユーザーと共有リンク閲覧者を2種類のチャンネルで分離:
 
 ```mermaid
-graph LR
-    subgraph "認証ユーザー (旅行メンバー)"
-        M1[メンバー A] <-->|Presence + Broadcast| CH1["trip:{tripId}"]
-        M2[メンバー B] <-->|Presence + Broadcast| CH1
+graph TB
+    subgraph members["認証ユーザー (旅行メンバー)"]
+        M1[メンバー A]
+        M2[メンバー B]
+        CH1["trip:{tripId}"]
     end
 
-    subgraph "共有リンク閲覧者"
-        SV[閲覧者] -->|Broadcast 受信のみ| CH2["trip-shared:{shareToken}"]
+    subgraph shared["共有リンク閲覧者"]
+        SV[閲覧者]
+        CH2["trip-shared:{shareToken}"]
     end
 
+    M1 <-->|Presence + Broadcast| CH1
+    M2 <-->|Presence + Broadcast| CH1
+    SV -->|Broadcast 受信のみ| CH2
     M1 -.->|broadcastChange| CH2
 ```
 
@@ -86,10 +131,10 @@ graph LR
 ## デプロイ
 
 ```mermaid
-graph LR
+graph TD
     Push[git push main] --> CI[GitHub Actions<br/>lint + 型チェック + テスト]
     Push --> Vercel[Vercel Build<br/>migrate + seed-faqs + next build]
-    Push --> Tag{tauri.conf.json の<br/>version が変わった?}
+    Push --> Tag{version 変更?}
     Tag -->|yes| TagCI[desktop-tag.yml<br/>タグ作成]
     TagCI --> Build[desktop-build.yml<br/>Tauri ビルド]
     Build --> Release[GitHub Release<br/>公開リポジトリ]

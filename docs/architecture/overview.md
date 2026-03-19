@@ -1,133 +1,100 @@
-# sugara Architecture Overview
+# 全体設計
 
-## System Architecture
+## システム構成図
 
-```mermaid
-graph TB
-    subgraph Client
-        Web[Web Browser<br/>Next.js SSR + SPA]
-        Desktop[Desktop App<br/>Tauri WebView]
-    end
+![システム構成図](./system-architecture.drawio.svg)
 
-    subgraph Vercel
-        NextJS[Next.js 15<br/>App Router]
-        HonoAPI[Hono API<br/>Route Handler]
-        NextJS --> HonoAPI
-    end
+## 技術スタック
 
-    subgraph Supabase
-        PG[(PostgreSQL)]
-        Realtime[Realtime<br/>Broadcast + Presence]
-        Storage[Storage<br/>Cover Images]
-    end
-
-    subgraph External
-        EdgeConfig[Vercel Edge Config<br/>Announcements / Feature Flags]
-        GoogleMaps[Google Maps API<br/>Routes / Places]
-        GitHub[GitHub API<br/>Feedback Issues]
-    end
-
-    Web -->|HTTPS| NextJS
-    Desktop -->|HTTPS| NextJS
-    Web <-->|WebSocket| Realtime
-    HonoAPI -->|SQL| PG
-    HonoAPI -->|REST| Storage
-    HonoAPI -->|REST| EdgeConfig
-    HonoAPI -->|REST| GoogleMaps
-    HonoAPI -->|REST| GitHub
-```
-
-## Tech Stack
-
-| Layer | Technology |
-|-------|-----------|
-| Frontend | Next.js 15 (App Router), React 19, Tailwind CSS v4, shadcn/ui |
+| レイヤー | 技術 |
+|---------|------|
+| フロントエンド | Next.js 16 (App Router), React 19, Tailwind CSS v4, shadcn/ui |
 | API | Hono (Next.js Route Handler として統合) |
-| Database | Supabase PostgreSQL + Drizzle ORM |
-| Realtime | Supabase Realtime (Broadcast + Presence) |
-| Auth | Better Auth (email/password, invite-only) |
-| Validation | Zod (shared package) |
-| Desktop | Tauri (macOS + Windows) |
+| データベース | Supabase PostgreSQL + Drizzle ORM |
+| リアルタイム | Supabase Realtime (Broadcast + Presence) |
+| 認証 | Better Auth (メール/パスワード、招待制) |
+| バリデーション | Zod (shared パッケージで共有) |
+| デスクトップ | Tauri (macOS + Windows) |
 | CI/CD | GitHub Actions, Vercel, Dependabot |
-| Linter | Biome |
-| Test | Vitest (unit/integration), Playwright (E2E) |
+| リンター | Biome |
+| テスト | Vitest (単体/結合), Playwright (E2E) |
 
-## Monorepo Structure
+## モノレポ構成
 
 ```
 sugara/
   apps/
-    web/          Next.js frontend + API route handler
-    api/          Hono API routes, DB schema, auth
-    desktop/      Tauri desktop app (WebView wrapper)
+    web/          Next.js フロントエンド + API ルートハンドラ
+    api/          Hono API ルート, DB スキーマ, 認証
+    desktop/      Tauri デスクトップアプリ (WebView ラッパー)
   packages/
-    shared/       Zod schemas, types, constants
+    shared/       Zod スキーマ, 型定義, 定数
 ```
 
-`apps/web` is the deployment target. `apps/api` is imported by `apps/web` as a Route Handler at `apps/web/app/api/[[...route]]/route.ts`. They share types and validation schemas via `packages/shared`.
+`apps/web` がデプロイ対象。`apps/api` は `apps/web/app/api/[[...route]]/route.ts` で Route Handler として統合される。`packages/shared` で型とバリデーションスキーマを共有。
 
-## Request Flow
+## リクエストフロー
 
 ```mermaid
 sequenceDiagram
-    participant B as Browser
+    participant B as ブラウザ
     participant M as Next.js Middleware<br/>(proxy.ts)
-    participant P as Next.js Page<br/>(SSR/CSR)
+    participant P as Next.js ページ<br/>(SSR/CSR)
     participant H as Hono API<br/>(Route Handler)
     participant DB as PostgreSQL
 
     B->>M: GET /home
-    M->>M: Session check via /api/auth/get-session
-    M->>P: Authenticated -> render page
+    M->>M: /api/auth/get-session でセッション確認
+    M->>P: 認証済み → ページ描画
     P->>B: HTML + JS
 
     B->>H: GET /api/trips
-    H->>H: requireAuth middleware
+    H->>H: requireAuth ミドルウェア
     H->>DB: SELECT trips...
     DB-->>H: rows
-    H-->>B: JSON response
+    H-->>B: JSON レスポンス
 ```
 
-## Realtime Communication
+## リアルタイム通信
 
-Two channel types isolate authenticated members from shared-link viewers:
+認証ユーザーと共有リンク閲覧者を2種類のチャンネルで分離:
 
 ```mermaid
 graph LR
-    subgraph "Authenticated Users"
-        M1[Member A] <-->|Presence + Broadcast| CH1["trip:{tripId}"]
-        M2[Member B] <-->|Presence + Broadcast| CH1
+    subgraph "認証ユーザー (旅行メンバー)"
+        M1[メンバー A] <-->|Presence + Broadcast| CH1["trip:{tripId}"]
+        M2[メンバー B] <-->|Presence + Broadcast| CH1
     end
 
-    subgraph "Shared Viewers"
-        SV[Shared Link Viewer] -->|Broadcast receive only| CH2["trip-shared:{shareToken}"]
+    subgraph "共有リンク閲覧者"
+        SV[閲覧者] -->|Broadcast 受信のみ| CH2["trip-shared:{shareToken}"]
     end
 
     M1 -.->|broadcastChange| CH2
 ```
 
-- `trip:{tripId}` -- Members-only channel for Presence (who's online) and mutual broadcast
-- `trip-shared:{shareToken}` -- Shared viewers receive update notifications without accessing tripId
+- `trip:{tripId}` -- メンバー専用チャンネル。Presence (オンライン状況) と相互 Broadcast
+- `trip-shared:{shareToken}` -- 共有閲覧者が更新通知を受信。tripId を知らないため Presence 汚染を防止
 
-## Auth Model
+## 認証モデル
 
-- **Better Auth** with email/password credentials
-- Signup is invite-only (admin-controlled toggle via Edge Config)
-- Guest accounts: limited to 1 trip, no friends/bookmarks/groups
-- Admin: identified by `ADMIN_USER_ID` env var
+- **Better Auth** によるメール/パスワード認証
+- サインアップは招待制 (管理者が Edge Config でトグル)
+- ゲストアカウント: 旅行1件まで、フレンド/ブックマーク/グループは利用不可
+- 管理者: 環境変数 `ADMIN_USER_ID` で識別
 
-## Deployment
+## デプロイ
 
 ```mermaid
 graph LR
-    Push[git push main] --> CI[GitHub Actions<br/>lint + types + test]
+    Push[git push main] --> CI[GitHub Actions<br/>lint + 型チェック + テスト]
     Push --> Vercel[Vercel Build<br/>migrate + seed-faqs + next build]
-    Push --> Tag{tauri.conf.json<br/>version changed?}
-    Tag -->|yes| TagCI[desktop-tag.yml<br/>create tag]
-    TagCI --> Build[desktop-build.yml<br/>Tauri build]
-    Build --> Release[GitHub Release<br/>public repo]
+    Push --> Tag{tauri.conf.json の<br/>version が変わった?}
+    Tag -->|yes| TagCI[desktop-tag.yml<br/>タグ作成]
+    TagCI --> Build[desktop-build.yml<br/>Tauri ビルド]
+    Build --> Release[GitHub Release<br/>公開リポジトリ]
 ```
 
-- Web: Vercel auto-deploy on push to main. `turbo-ignore` skips if no relevant changes.
-- Desktop: Version bump in `tauri.conf.json` triggers tag -> build -> release pipeline.
-- DB migrations run automatically during Vercel build via `MIGRATION_URL` (direct connection).
+- Web: main への push で Vercel が自動デプロイ。`turbo-ignore` で関連変更がなければスキップ
+- デスクトップ: `tauri.conf.json` のバージョン変更 → タグ作成 → ビルド → リリース
+- DB マイグレーションは Vercel ビルド時に `MIGRATION_URL` (Direct Connection) 経由で自動実行

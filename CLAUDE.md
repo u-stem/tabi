@@ -7,7 +7,7 @@
 ## 構成
 
 ```
-apps/web/         Next.js 15 (App Router) + Tailwind CSS v4 + shadcn/ui + Hono API (Route Handler)
+apps/web/         Next.js 16 (App Router) + Tailwind CSS v4 + shadcn/ui + Hono API (Route Handler)
 apps/api/         Hono API ルート・DB スキーマ・認証 (Next.js Route Handler として統合)
 packages/shared/  共有 Zod スキーマ・型定義
 ```
@@ -44,7 +44,7 @@ bun run --filter @sugara/shared check-types
 ## 技術スタック
 
 - ランタイム: bun
-- フロントエンド: Next.js 15, React 19, Tailwind CSS v4, shadcn/ui (New York, Zinc)
+- フロントエンド: Next.js 16, React 19, Tailwind CSS v4, shadcn/ui (New York, Zinc)
 - API: Hono (Next.js Route Handler `apps/web/app/api/[[...route]]/route.ts` として統合)
 - DB: Supabase PostgreSQL + Drizzle ORM
 - リアルタイム同期: Supabase Realtime (Broadcast + Presence)

@@ -48,35 +48,6 @@ graph LR
     Actions -.->|release| Desktop["デスクトップアプリ"]
 ```
 
-## 技術スタック
-
-| レイヤー | 技術 |
-|---------|------|
-| フロントエンド | Next.js 16 (App Router), React 19, Tailwind CSS v4, shadcn/ui |
-| API | Hono (Next.js Route Handler として統合) |
-| データベース | Supabase PostgreSQL + Drizzle ORM |
-| リアルタイム | Supabase Realtime (Broadcast + Presence) |
-| 認証 | Better Auth (メール/パスワード、管理者が新規登録を制御) |
-| バリデーション | Zod (shared パッケージで共有) |
-| デスクトップ | Tauri (macOS + Windows) |
-| CI/CD | GitHub Actions, Vercel, Dependabot |
-| リンター | Biome |
-| テスト | Vitest (単体/結合), Playwright (E2E) |
-
-## モノレポ構成
-
-```
-sugara/
-  apps/
-    web/          Next.js フロントエンド + API ルートハンドラ
-    api/          Hono API ルート, DB スキーマ, 認証
-    desktop/      Tauri デスクトップアプリ (WebView ラッパー)
-  packages/
-    shared/       Zod スキーマ, 型定義, 定数
-```
-
-`apps/web` がデプロイ対象。`apps/api` は `apps/web/app/api/[[...route]]/route.ts` で Route Handler として統合される。`packages/shared` で型とバリデーションスキーマを共有。
-
 ## リクエストフロー
 
 ```mermaid

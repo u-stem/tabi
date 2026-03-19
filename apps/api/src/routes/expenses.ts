@@ -252,6 +252,18 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
     }
   }
 
+  // When only splits change (no amount provided), verify new splits sum matches existing amount.
+  // "equal" is skipped because calculateEqualSplit recalculates amounts from existing.amount.
+  if (splits && updateFields.amount === undefined) {
+    const effectiveSplitType = updateFields.splitType ?? existing.splitType;
+    if (effectiveSplitType === "custom" || effectiveSplitType === "itemized") {
+      const splitsTotal = splits.reduce((sum, s) => sum + (s.amount ?? 0), 0);
+      if (splitsTotal !== existing.amount) {
+        return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_AMOUNT_MISMATCH }, 400);
+      }
+    }
+  }
+
   // Reject empty lineItems when splitType remains itemized
   if (lineItems !== undefined) {
     const effectiveSplitType = updateFields.splitType ?? existing.splitType;

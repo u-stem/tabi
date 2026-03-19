@@ -903,6 +903,29 @@ describe("Expense routes", () => {
 
       expect(res.status).toBe(400);
     });
+
+    it("splits のみ更新で既存 amount と合計不一致の場合 400 を返す", async () => {
+      mockDbQuery.expenses.findFirst.mockResolvedValue({
+        id: "exp-1",
+        tripId,
+        amount: 1000,
+        splitType: "custom",
+      });
+
+      const res = await makeApp().request(`/api/trips/${tripId}/expenses/exp-1`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          splitType: "custom",
+          splits: [
+            { userId: userId1, amount: 700 },
+            { userId: userId2, amount: 500 },
+          ],
+        }),
+      });
+
+      expect(res.status).toBe(400);
+    });
   });
 
   describe("DELETE /api/trips/:tripId/expenses/:expenseId", () => {

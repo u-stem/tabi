@@ -525,7 +525,8 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
       .select({ count: count() })
       .from(trips)
       .where(eq(trips.ownerId, user.id));
-    if (tripCount.count >= MAX_TRIPS_PER_USER) {
+    const limit = user.isAnonymous ? 1 : MAX_TRIPS_PER_USER;
+    if (tripCount.count >= limit) {
       return null;
     }
 

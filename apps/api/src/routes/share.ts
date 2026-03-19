@@ -136,7 +136,6 @@ shareRoutes.get("/api/shared/:token", sharedTripRateLimit, async (c) => {
 
   c.header("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
   return c.json({
-    id: trip.id,
     title: trip.title,
     destination: trip.destination,
     startDate: trip.startDate,

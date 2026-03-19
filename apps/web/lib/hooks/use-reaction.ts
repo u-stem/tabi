@@ -59,6 +59,7 @@ export function useReaction(
   channelRef.current = channel;
   const userRef = useRef(user);
   userRef.current = user;
+  const registeredChannelRef = useRef<RealtimeChannel | null>(null);
 
   const addReaction = useCallback((event: ReactionEvent) => {
     const floating: FloatingReaction = {
@@ -76,10 +77,10 @@ export function useReaction(
   }, []);
 
   useEffect(() => {
-    if (!channel) return;
-    // Supabase SDK does not expose off() for broadcast handlers.
-    // Cleanup is unnecessary because the channel itself is removed
-    // and recreated by useTripSync on reconnection.
+    // Supabase SDK does not expose off() for broadcast handlers, so guard
+    // against duplicate registration when the channel ref changes.
+    if (!channel || channel === registeredChannelRef.current) return;
+    registeredChannelRef.current = channel;
     channel.on("broadcast", { event: "trip:reaction" }, (msg: { payload: ReactionEvent }) => {
       addReaction(msg.payload);
     });

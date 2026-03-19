@@ -23,6 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     // Cache OGP data for 60s to balance freshness with server load on social crawlers
     const res = await fetch(`${baseUrl}/api/shared/${token}`, {
       next: { revalidate: 60 },
+      signal: AbortSignal.timeout(5000),
     });
     if (!res.ok) return fallback;
 
@@ -61,6 +62,7 @@ export default async function SharedTripPage({ params }: Props) {
   const baseUrl = process.env.BETTER_AUTH_BASE_URL ?? "http://localhost:3000";
   const res = await fetch(`${baseUrl}/api/shared/${token}`, {
     next: { revalidate: 60 },
+    signal: AbortSignal.timeout(5000),
   });
   if (!res.ok) notFound();
 

@@ -47,7 +47,7 @@ vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
 }));
 
-import { MAX_PATTERNS_PER_DAY } from "@sugara/shared";
+import { MAX_PATTERNS_PER_DAY, MAX_SCHEDULES_PER_TRIP } from "@sugara/shared";
 import { patternRoutes } from "../routes/patterns";
 
 const fakeUser = TEST_USER;
@@ -462,6 +462,61 @@ describe("Pattern routes", () => {
       });
 
       expect(res.status).toBe(400);
+    });
+
+    it("returns 409 when overwrite would exceed schedule limit", async () => {
+      const sourceSchedules = Array.from({ length: 10 }, (_, i) => ({
+        id: `s-${i}`,
+        name: `Spot ${i}`,
+        category: "sightseeing",
+        address: null,
+        startTime: null,
+        endTime: null,
+        sortOrder: i,
+        memo: null,
+        urls: null,
+        departurePlace: null,
+        arrivalPlace: null,
+        transportMethod: null,
+        color: null,
+        endDayOffset: 0,
+      }));
+
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValueOnce({
+        id: patternId,
+        tripDayId: dayId,
+        label: "Target",
+      });
+      mockDbQuery.dayPatterns.findFirst.mockResolvedValueOnce({
+        id: "00000000-0000-0000-0000-000000000001",
+        tripDayId: dayId,
+        label: "Source",
+        schedules: sourceSchedules,
+      });
+
+      // First select: getScheduleCount returns total = MAX - 1
+      // Second select: target pattern has 2 schedules
+      // After overwrite: (MAX - 1) - 2 + 10 = MAX + 7 > MAX
+      mockDbSelect
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([{ count: MAX_SCHEDULES_PER_TRIP - 1 }]),
+          }),
+        })
+        .mockReturnValueOnce({
+          from: vi.fn().mockReturnValue({
+            where: vi.fn().mockResolvedValue([{ count: 2 }]),
+          }),
+        });
+
+      const app = createTestApp(patternRoutes, "/api/trips");
+      const res = await app.request(`${basePath}/${patternId}/overwrite`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sourcePatternId: "00000000-0000-0000-0000-000000000001" }),
+      });
+
+      expect(res.status).toBe(409);
     });
   });
 });

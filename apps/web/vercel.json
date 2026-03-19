@@ -1,5 +1,5 @@
 {
-  "buildCommand": "sh -c 'cd ../.. && bun run db:migrate && DATABASE_URL=$MIGRATION_URL bun run db:ensure-faqs-table && DATABASE_URL=$MIGRATION_URL bun run db:seed-faqs' && next build --webpack",
+  "buildCommand": "sh -c 'cd ../.. && bun run db:migrate && bun run db:ensure-faqs-table && bun run db:seed-faqs' && next build --webpack",
   "framework": "nextjs",
   "fluid": true,
   "ignoreCommand": "git log -1 --pretty=%B | grep -qE '\\[skip (ci|deploy)\\]' && exit 0; [[ \"$VERCEL_GIT_COMMIT_REF\" == dependabot/* ]] && exit 0; npx --yes turbo-ignore"

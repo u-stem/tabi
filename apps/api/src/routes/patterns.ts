@@ -1,6 +1,7 @@
 import {
   createDayPatternSchema,
   MAX_PATTERNS_PER_DAY,
+  MAX_SCHEDULES_PER_TRIP,
   overwriteDayPatternSchema,
   updateDayPatternSchema,
 } from "@sugara/shared";
@@ -14,6 +15,7 @@ import { hasChanges } from "../lib/has-changes";
 import { getParam } from "../lib/params";
 import { canEdit, verifyDayAccess } from "../lib/permissions";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
+import { getScheduleCount } from "../lib/schedule-count";
 import { getNextSortOrder } from "../lib/sort-order";
 import { requireAuth } from "../middleware/auth";
 import type { AppEnv } from "../types";
@@ -274,19 +276,36 @@ patternRoutes.post("/:tripId/days/:dayId/patterns/:patternId/overwrite", async (
     return c.json({ error: ERROR_MSG.PATTERN_NOT_FOUND }, 404);
   }
 
-  await db.transaction(async (tx) => {
-    await tx.delete(schedules).where(eq(schedules.dayPatternId, patternId));
+  try {
+    await db.transaction(async (tx) => {
+      // Schedule limit: totalCount includes target's schedules, subtract them before adding source's
+      const totalCount = await getScheduleCount(tx, tripId);
+      const [{ count: targetCount }] = await tx
+        .select({ count: count() })
+        .from(schedules)
+        .where(eq(schedules.dayPatternId, patternId));
+      if (totalCount - targetCount + source.schedules.length > MAX_SCHEDULES_PER_TRIP) {
+        throw new Error("SCHEDULE_LIMIT");
+      }
 
-    if (source.schedules.length > 0) {
-      await tx.insert(schedules).values(
-        source.schedules.map((schedule) => ({
-          tripId,
-          dayPatternId: patternId,
-          ...buildScheduleCloneValues(schedule),
-        })),
-      );
+      await tx.delete(schedules).where(eq(schedules.dayPatternId, patternId));
+
+      if (source.schedules.length > 0) {
+        await tx.insert(schedules).values(
+          source.schedules.map((schedule) => ({
+            tripId,
+            dayPatternId: patternId,
+            ...buildScheduleCloneValues(schedule),
+          })),
+        );
+      }
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === "SCHEDULE_LIMIT") {
+      return c.json({ error: ERROR_MSG.LIMIT_SCHEDULES }, 409);
     }
-  });
+    throw err;
+  }
 
   logActivity({
     tripId,

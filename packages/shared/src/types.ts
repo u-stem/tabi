@@ -347,7 +347,6 @@ export type NotificationsResponse = {
 // Shared trip view types
 
 export type SharedTripResponse = {
-  id: string;
   title: string;
   destination: string | null;
   startDate: string | null;

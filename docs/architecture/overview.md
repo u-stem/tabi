@@ -2,7 +2,7 @@
 
 ## システム構成図
 
-![システム構成図](./system-architecture.drawio.svg)
+<img src="./system-architecture.drawio.svg" alt="システム構成図" width="100%">
 
 ## 技術スタック
 

@@ -3,33 +3,28 @@
 ## システム構成図
 
 ```mermaid
-graph TB
+graph LR
     subgraph client["クライアント"]
         Web["Web ブラウザ<br/>(PWA / Web Push)"]
-        Desktop["デスクトップアプリ<br/>(Tauri v2 WebView)"]
+        Desktop["デスクトップアプリ<br/>(Tauri v2)"]
     end
 
     subgraph vercel["Vercel"]
-        NextJS["Next.js 16<br/>(App Router / SSR / Middleware)"]
-        Hono["Hono API<br/>(Route Handler + Better Auth)"]
+        NextJS["Next.js 16<br/>(App Router / SSR)"]
+        Hono["Hono API<br/>(Route Handler / Better Auth)"]
         NextJS --> Hono
     end
 
     subgraph supabase["Supabase"]
         PG[("PostgreSQL<br/>(Drizzle ORM)")]
-        Realtime["Realtime<br/>(Broadcast + Presence)"]
-        Storage["Storage<br/>(画像)"]
+        Realtime["Realtime<br/>(Broadcast / Presence)"]
+        Storage["Storage"]
     end
 
     subgraph external["外部サービス"]
-        Edge["Vercel Edge Config<br/>(アナウンス / 機能フラグ)"]
-        Maps["Google Maps API<br/>(ルート検索 / 地図)"]
-        GitHub["GitHub API<br/>(フィードバック Issue)"]
-    end
-
-    subgraph cicd["CI/CD"]
-        Actions["GitHub Actions<br/>(CI / Desktop Build)"]
-        Dependabot["Dependabot<br/>(npm / Cargo / Actions)"]
+        Edge["Vercel Edge Config"]
+        Maps["Google Maps API"]
+        GitHub["GitHub API"]
     end
 
     Web -->|HTTPS| NextJS
@@ -40,8 +35,17 @@ graph TB
     Hono -->|REST| Edge
     Hono -->|REST| Maps
     Hono -->|REST| GitHub
-    Actions -.->|deploy| vercel
-    Actions -.->|release| Desktop
+```
+
+```mermaid
+graph LR
+    subgraph cicd["CI/CD"]
+        Actions["GitHub Actions"]
+        Dependabot["Dependabot<br/>(npm / Cargo / Actions)"]
+    end
+
+    Actions -.->|deploy| Vercel["Vercel"]
+    Actions -.->|release| Desktop["デスクトップアプリ"]
 ```
 
 ## 技術スタック

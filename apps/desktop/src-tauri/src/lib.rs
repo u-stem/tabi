@@ -5,7 +5,7 @@ use tauri::menu::{
     AboutMetadata, MenuBuilder, MenuItemBuilder, PredefinedMenuItem, SubmenuBuilder,
 };
 use tauri::webview::PageLoadEvent;
-use tauri::{Manager, WebviewUrl, WebviewWindowBuilder};
+use tauri::{AppHandle, Manager, WebviewUrl, WebviewWindowBuilder};
 use tauri_plugin_dialog::{DialogExt, MessageDialogButtons};
 use tauri_plugin_opener::OpenerExt;
 use tauri_plugin_updater::UpdaterExt;
@@ -48,6 +48,95 @@ border-top-color:#fafafa;border-radius:50%;animation:spin .8s linear infinite}}
 </html>"#)
 }
 
+fn show_update_dialog(handle: &AppHandle, message: &str) {
+    handle
+        .dialog()
+        .message(message)
+        .title("アップデート")
+        .buttons(MessageDialogButtons::Ok)
+        .show(|_| {});
+}
+
+async fn perform_update_check(handle: AppHandle, updating: Arc<AtomicBool>) {
+    // Prevent concurrent update checks
+    if updating.swap(true, Ordering::SeqCst) {
+        return;
+    }
+
+    let result = async {
+        let updater = handle.updater().map_err(|e| {
+            format!("アップデートの確認に失敗しました。しばらくしてからもう一度お試しください。\n\n詳細: {e}")
+        })?;
+
+        let update = updater.check().await.map_err(|e| {
+            format!("インターネット接続を確認してください。\n\n詳細: {e}")
+        })?;
+
+        Ok::<_, String>(update)
+    }
+    .await;
+
+    match result {
+        Ok(Some(update)) => {
+            let version = update.version.clone();
+            let install_handle = handle.clone();
+            let updating_for_dialog = updating.clone();
+
+            handle
+                .dialog()
+                .message(format!(
+                    "新しいバージョン {version} が利用可能です。今すぐ更新しますか？"
+                ))
+                .title("アップデート")
+                .buttons(MessageDialogButtons::OkCancelCustom(
+                    "更新する".to_string(),
+                    "後で".to_string(),
+                ))
+                .show(move |confirmed| {
+                    if !confirmed {
+                        updating_for_dialog.store(false, Ordering::SeqCst);
+                        return;
+                    }
+                    let h = install_handle;
+                    let updating_flag = updating_for_dialog;
+                    // Download progress: show a non-interactive message during download
+                    show_update_dialog(&h, "ダウンロード中...");
+                    let _ = tauri::async_runtime::spawn(async move {
+                        let install_result =
+                            update.download_and_install(|_, _| {}, || {}).await;
+                        updating_flag.store(false, Ordering::SeqCst);
+
+                        match install_result {
+                            Ok(()) => {
+                                h.dialog()
+                                    .message("更新が完了しました。アプリを再起動します。")
+                                    .title("アップデート")
+                                    .buttons(MessageDialogButtons::Ok)
+                                    .show(move |_| {
+                                        h.restart();
+                                    });
+                            }
+                            Err(e) => {
+                                show_update_dialog(
+                                    &h,
+                                    &format!("更新に失敗しました。しばらくしてからもう一度お試しください。\n\n詳細: {e}"),
+                                );
+                            }
+                        }
+                    });
+                });
+        }
+        Ok(None) => {
+            show_update_dialog(&handle, "最新バージョンです。");
+            updating.store(false, Ordering::SeqCst);
+        }
+        Err(msg) => {
+            show_update_dialog(&handle, &msg);
+            updating.store(false, Ordering::SeqCst);
+        }
+    }
+}
+
 fn eval_main_webview(app: &tauri::AppHandle, js: &str) {
     if let Some(win) = app.get_webview_window("main") {
         if let Err(e) = win.eval(js) {
@@ -59,6 +148,7 @@ fn eval_main_webview(app: &tauri::AppHandle, js: &str) {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     let splash_closed = Arc::new(AtomicBool::new(false));
+    let updating = Arc::new(AtomicBool::new(false));
     let splash_html = build_splash_html();
 
     tauri::Builder::default()
@@ -196,37 +286,16 @@ pub fn run() {
 
             Ok(())
         })
-        .on_menu_event(|app, event| {
+        .on_menu_event({
+            let updating = updating.clone();
+            move |app, event| {
             let id = event.id().as_ref();
             match id {
                 "check_update" => {
                     let handle = app.clone();
-                    tauri::async_runtime::spawn(async move {
-                        let updater = match handle.updater() {
-                            Ok(u) => u,
-                            Err(e) => {
-                                handle
-                                    .dialog()
-                                    .message(format!("アップデート機能の初期化に失敗しました: {e}"))
-                                    .title("アップデート")
-                                    .buttons(MessageDialogButtons::Ok)
-                                    .show(|_| {});
-                                return;
-                            }
-                        };
-                        let msg = match updater.check().await {
-                            Ok(Some(update)) => {
-                                format!("新しいバージョン {} が利用可能です。", update.version)
-                            }
-                            Ok(None) => "最新バージョンです。".to_string(),
-                            Err(e) => format!("確認に失敗しました: {e}"),
-                        };
-                        handle
-                            .dialog()
-                            .message(msg)
-                            .title("アップデート")
-                            .buttons(MessageDialogButtons::Ok)
-                            .show(|_| {});
+                    let updating = updating.clone();
+                    let _ = tauri::async_runtime::spawn(async move {
+                        perform_update_check(handle, updating).await;
                     });
                 }
                 "reload" => eval_main_webview(app, "location.reload()"),
@@ -252,7 +321,7 @@ pub fn run() {
                 }
                 _ => {}
             }
-        })
+        }})
         .on_page_load({
             let splash_closed = splash_closed.clone();
             move |webview, payload| {

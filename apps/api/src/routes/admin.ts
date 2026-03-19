@@ -214,10 +214,15 @@ const TEMP_PASSWORD_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz2345
 const TEMP_PASSWORD_LENGTH = 12;
 
 function generateTempPassword(): string {
-  return Array.from(
-    { length: TEMP_PASSWORD_LENGTH },
-    () => TEMP_PASSWORD_CHARS[randomBytes(1)[0] % TEMP_PASSWORD_CHARS.length],
-  ).join("");
+  // Rejection sampling to avoid modulo bias
+  const maxValid = 256 - (256 % TEMP_PASSWORD_CHARS.length);
+  return Array.from({ length: TEMP_PASSWORD_LENGTH }, () => {
+    let byte: number;
+    do {
+      byte = randomBytes(1)[0];
+    } while (byte >= maxValid);
+    return TEMP_PASSWORD_CHARS[byte % TEMP_PASSWORD_CHARS.length];
+  }).join("");
 }
 
 // GET /api/admin/users — ユーザー一覧（管理者専用）

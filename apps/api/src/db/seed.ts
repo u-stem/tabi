@@ -1115,7 +1115,7 @@ async function main() {
   const memberRoles = ["owner", "editor", "viewer"] as const;
   for (let i = 0; i < DEV_USERS.length; i++) {
     const user = DEV_USERS[i];
-    console.log(`  ${user.username} / ${user.password} (${memberRoles[i]})`);
+    console.log(`  ${user.username} / ${"*".repeat(user.password.length)} (${memberRoles[i]})`);
   }
   console.log("");
 }

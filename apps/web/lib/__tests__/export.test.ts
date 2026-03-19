@@ -401,12 +401,7 @@ describe("exportTripToExcel", () => {
       createObjectURL: vi.fn().mockReturnValue("blob:test"),
       revokeObjectURL: vi.fn(),
     });
-    vi.stubGlobal(
-      "Blob",
-      class {
-        constructor() {}
-      },
-    );
+    vi.stubGlobal("Blob", class {});
     const mockLink = { href: "", download: "", click: vi.fn() };
     vi.spyOn(document, "createElement").mockReturnValue(mockLink as unknown as HTMLElement);
   });
@@ -1068,12 +1063,7 @@ describe("exportTripToExcel - expenses", () => {
       createObjectURL: vi.fn().mockReturnValue("blob:test"),
       revokeObjectURL: vi.fn(),
     });
-    vi.stubGlobal(
-      "Blob",
-      class {
-        constructor() {}
-      },
-    );
+    vi.stubGlobal("Blob", class {});
     const mockLink = { href: "", download: "", click: vi.fn() };
     vi.spyOn(document, "createElement").mockReturnValue(mockLink as unknown as HTMLElement);
   });

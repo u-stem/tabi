@@ -97,11 +97,12 @@ bun run --filter @sugara/shared check-types
 
 ```
 1. tauri.conf.json の version を更新 (例: "0.1.0" → "0.2.0")
-2. Cargo.toml の version も同じ値に更新
-3. コミット & push
-4. desktop-tag.yml が自動で desktop-v<version> タグを作成
-5. desktop-build.yml がタグをトリガーにビルド・リリース
-6. バイナリが u-stem/sugara-releases に公開される
+2. tauri.conf.json の userAgent も同じバージョンに更新
+3. Cargo.toml の version も同じ値に更新
+4. コミット & push
+5. desktop-tag.yml が自動で desktop-v<version> タグを作成
+6. desktop-build.yml がタグをトリガーにビルド・リリース
+7. バイナリが u-stem/sugara-releases に公開される
 ```
 
 - バージョンが既にタグ済みの場合は何もしない（冪等）

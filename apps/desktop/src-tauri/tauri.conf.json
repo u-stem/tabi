@@ -19,7 +19,7 @@
         "decorations": true,
         "visible": false,
         "backgroundColor": "#09090b",
-        "userAgent": "sugara-desktop/0.1.0"
+        "userAgent": "sugara-desktop/0.2.1"
       }
     ],
     "security": {

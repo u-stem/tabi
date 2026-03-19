@@ -42,8 +42,8 @@ border-top-color:#fafafa;border-radius:50%;animation:spin .8s linear infinite}}
 </style>
 </head>
 <body>
-<div class="name">sugara</div>
-<div class="spinner"></div>
+<div class="name" aria-label="sugara">sugara</div>
+<div class="spinner" aria-label="読み込み中" role="status"></div>
 </body>
 </html>"#)
 }

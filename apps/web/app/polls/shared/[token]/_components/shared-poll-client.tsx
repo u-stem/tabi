@@ -117,8 +117,8 @@ export function SharedPollClient({ token }: { token: string }) {
             )}
           </div>
         )}
+        <SharedFooter />
       </LoadingBoundary>
-      <SharedFooter />
     </div>
   );
 }

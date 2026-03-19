@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/logo";
+import { SharedFooter } from "@/components/shared-footer";
 import { Badge } from "@/components/ui/badge";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,7 +29,7 @@ function ProfileHeader() {
   return (
     <header className="border-b">
       <div className="container flex h-14 items-center">
-        <Logo />
+        <Logo href="/" />
         <span className="ml-2 text-sm text-muted-foreground">公開プロフィール</span>
       </div>
     </header>
@@ -248,6 +249,7 @@ export default function PublicProfilePage() {
           ) : (
             <ProfileContent profile={profile} userId={userId ?? ""} />
           )}
+          <SharedFooter />
         </LoadingBoundary>
       </div>
     </div>

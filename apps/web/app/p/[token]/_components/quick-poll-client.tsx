@@ -6,6 +6,7 @@ import { Check, Vote } from "lucide-react";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { Logo } from "@/components/logo";
+import { SharedFooter } from "@/components/shared-footer";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
@@ -78,7 +79,7 @@ export function QuickPollClient({ token }: { token: string }) {
     <div className="min-h-screen">
       <header className="border-b">
         <div className="container flex h-14 items-center">
-          <Logo />
+          <Logo href="/" />
           <span className="ml-2 text-sm text-muted-foreground">投票</span>
         </div>
       </header>
@@ -163,6 +164,7 @@ export function QuickPollClient({ token }: { token: string }) {
             )}
           </div>
         )}
+        <SharedFooter />
       </LoadingBoundary>
     </div>
   );

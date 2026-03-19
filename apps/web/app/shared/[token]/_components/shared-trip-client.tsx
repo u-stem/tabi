@@ -289,8 +289,8 @@ export function SharedTripClient({ token }: { token: string }) {
             </div>
           </>
         )}
+        <SharedFooter />
       </LoadingBoundary>
-      <SharedFooter />
     </div>
   );
 }

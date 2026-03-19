@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Calendar, Circle, MapPin, MessageSquare, Triangle, X } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { SharedFooter } from "@/components/shared-footer";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
@@ -29,7 +30,7 @@ function SharedPollHeader() {
   return (
     <header className="border-b">
       <div className="container flex h-14 items-center">
-        <Logo />
+        <Logo href="/" />
         <span className="ml-2 text-sm text-muted-foreground">日程調整</span>
       </div>
     </header>
@@ -117,6 +118,7 @@ export function SharedPollClient({ token }: { token: string }) {
           </div>
         )}
       </LoadingBoundary>
+      <SharedFooter />
     </div>
   );
 }

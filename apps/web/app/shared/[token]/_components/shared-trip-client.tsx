@@ -14,6 +14,7 @@ import { Calendar, ExternalLink, MapPin, RefreshCw, Route, StickyNote } from "lu
 import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/logo";
+import { SharedFooter } from "@/components/shared-footer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
@@ -43,7 +44,7 @@ function SharedHeader() {
   return (
     <header className="border-b">
       <div className="container flex h-14 items-center">
-        <Logo />
+        <Logo href="/" />
         <span className="ml-2 text-sm text-muted-foreground">共有プラン</span>
       </div>
     </header>
@@ -289,6 +290,7 @@ export function SharedTripClient({ token }: { token: string }) {
           </>
         )}
       </LoadingBoundary>
+      <SharedFooter />
     </div>
   );
 }

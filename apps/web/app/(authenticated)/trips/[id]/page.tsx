@@ -506,6 +506,7 @@ export default function TripDetailPage() {
     tripId,
     syncUser,
     invalidateTrip,
+    trip?.shareToken,
   );
 
   const reactionUser = useMemo(

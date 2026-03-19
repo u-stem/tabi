@@ -69,6 +69,7 @@ export type TripResponse = {
   status: TripStatus;
   coverImageUrl: string | null;
   coverImagePosition: number;
+  shareToken: string | null;
   role: MemberRole;
   days: DayResponse[];
   candidates: CandidateResponse[];

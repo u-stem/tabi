@@ -144,6 +144,7 @@ export default function SpTripDetailPage() {
     tripId ?? "",
     syncUser,
     invalidateTrip,
+    trip?.shareToken,
   );
 
   const reactionUser = useMemo(

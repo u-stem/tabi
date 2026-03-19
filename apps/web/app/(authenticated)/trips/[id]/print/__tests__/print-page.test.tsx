@@ -47,6 +47,7 @@ const tripFixture: TripResponse = {
   status: "planned",
   coverImageUrl: null,
   coverImagePosition: 50,
+  shareToken: null,
   role: "owner",
   candidates: [],
   scheduleCount: 2,

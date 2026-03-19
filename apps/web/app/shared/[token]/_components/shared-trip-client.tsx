@@ -10,13 +10,13 @@ import type {
 } from "@sugara/shared";
 import { STATUS_LABELS, TRANSPORT_METHOD_LABELS, WEATHER_LABELS } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, ExternalLink, MapPin, Route, StickyNote } from "lucide-react";
-import { useEffect } from "react";
+import { Calendar, ExternalLink, MapPin, RefreshCw, Route, StickyNote } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/logo";
 import { SharedFooter } from "@/components/shared-footer";
 import { Badge } from "@/components/ui/badge";
-
+import { Button } from "@/components/ui/button";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ApiError, api } from "@/lib/api";
@@ -35,7 +35,7 @@ import { CATEGORY_ICONS } from "@/lib/icons";
 import { buildMergedTimeline } from "@/lib/merge-timeline";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
-
+import { supabase } from "@/lib/supabase";
 import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
 import { WEATHER_ICON, WEATHER_ICON_COLOR } from "@/lib/weather-icons";
@@ -93,6 +93,7 @@ function SharedTripBodySkeleton() {
 
 export function SharedTripClient({ token }: { token: string }) {
   const queryClient = useQueryClient();
+  const [hasUpdate, setHasUpdate] = useState(false);
 
   const {
     data: trip,
@@ -112,15 +113,25 @@ export function SharedTripClient({ token }: { token: string }) {
         ? MSG.SHARED_TRIP_FETCH_FAILED
         : null;
 
-  // Poll for updates periodically (tripId is not exposed to shared viewers
-  // to prevent Realtime Presence pollution by unauthenticated viewers)
+  function handleRefresh() {
+    setHasUpdate(false);
+    queryClient.invalidateQueries({ queryKey: queryKeys.shared.trip(token) });
+  }
+
+  // Subscribe to broadcast updates via share-token channel.
+  // Shared viewers use trip-shared:${token} (not trip:${tripId}) to prevent
+  // Presence pollution — they cannot see or pollute the members-only channel.
   useEffect(() => {
-    if (!trip) return;
-    const interval = setInterval(() => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.shared.trip(token) });
-    }, 60_000);
-    return () => clearInterval(interval);
-  }, [trip, token, queryClient]);
+    const channel = supabase
+      .channel(`trip-shared:${token}`)
+      .on("broadcast", { event: "trip:updated" }, () => {
+        setHasUpdate(true);
+      })
+      .subscribe();
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [token]);
 
   const dayCount = trip?.startDate && trip?.endDate ? getDayCount(trip.startDate, trip.endDate) : 0;
 
@@ -141,127 +152,142 @@ export function SharedTripClient({ token }: { token: string }) {
             <p className="text-lg font-medium text-destructive">{MSG.SHARED_TRIP_NOT_FOUND}</p>
           </div>
         ) : (
-          <div className="container max-w-3xl py-8">
-            {/* Hero */}
-            <div className="mb-8 rounded-xl border bg-card px-6 py-6 shadow-sm">
-              <Badge variant="outline" className={cn("mb-3 w-fit", STATUS_COLORS[trip.status])}>
-                {STATUS_LABELS[trip.status]}
-              </Badge>
-              <h1 className="break-words text-2xl font-bold sm:text-3xl">{trip.title}</h1>
-              <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
-                {trip.destination && (
-                  <span className="flex items-center gap-1.5">
-                    <MapPin className="h-4 w-4 shrink-0" />
-                    {trip.destination}
-                  </span>
-                )}
-                <span className="flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4 shrink-0" />
-                  {trip.startDate && trip.endDate ? (
-                    <>
-                      {formatDateRange(trip.startDate, trip.endDate)}
-                      <span className="text-xs">（{dayCount}日間）</span>
-                    </>
-                  ) : (
-                    <span className="text-muted-foreground">日程未定</span>
-                  )}
-                </span>
+          <>
+            {hasUpdate && (
+              <div className="sticky top-0 z-10 border-b bg-blue-50 px-4 py-2 text-center dark:bg-blue-950">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5 text-blue-700 hover:text-blue-800 dark:text-blue-300 dark:hover:text-blue-200"
+                  onClick={handleRefresh}
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  内容が更新されました。タップして最新を表示
+                </Button>
               </div>
-              {trip.shareExpiresAt && (
-                <p className="mt-3 text-xs text-muted-foreground">
-                  共有リンクの有効期限: {formatDateFromISO(trip.shareExpiresAt)}
-                </p>
-              )}
-            </div>
-            <div className="space-y-6">
-              {(trip.days ?? []).length === 0 && (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  スケジュールはまだありません
-                </p>
-              )}
-              {(trip.days ?? []).map((day) => {
-                const crossDayEntries = getCrossDayEntries(trip.days ?? [], day.dayNumber);
-                return (
-                  <section
-                    key={day.id}
-                    className="overflow-hidden rounded-xl border bg-card shadow-sm"
-                  >
-                    <div className="border-b bg-muted/40 px-4 py-3 sm:px-5">
-                      <h3 className="flex items-center gap-2 text-sm font-semibold">
-                        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-bold text-background">
-                          {day.dayNumber}
-                        </span>
-                        <span>{formatDate(day.date)}</span>
-                        <span className="font-normal text-muted-foreground">
-                          {(() => {
-                            const d = new Date(day.date);
-                            return ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
-                          })()}曜日
-                        </span>
-                        {day.weatherType != null &&
-                          (() => {
-                            const weatherType = day.weatherType as WeatherType;
-                            const weatherTypeSecondary =
-                              day.weatherTypeSecondary as WeatherType | null;
-                            const PrimaryIcon = WEATHER_ICON[weatherType];
-                            return (
-                              <span className="ml-auto flex items-center gap-1 font-normal text-xs text-muted-foreground">
-                                <PrimaryIcon
-                                  className={cn(
-                                    "h-4 w-4 shrink-0",
-                                    WEATHER_ICON_COLOR[weatherType],
+            )}
+            <div className="container max-w-3xl py-8">
+              {/* Hero */}
+              <div className="mb-8 rounded-xl border bg-card px-6 py-6 shadow-sm">
+                <Badge variant="outline" className={cn("mb-3 w-fit", STATUS_COLORS[trip.status])}>
+                  {STATUS_LABELS[trip.status]}
+                </Badge>
+                <h1 className="break-words text-2xl font-bold sm:text-3xl">{trip.title}</h1>
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
+                  {trip.destination && (
+                    <span className="flex items-center gap-1.5">
+                      <MapPin className="h-4 w-4 shrink-0" />
+                      {trip.destination}
+                    </span>
+                  )}
+                  <span className="flex items-center gap-1.5">
+                    <Calendar className="h-4 w-4 shrink-0" />
+                    {trip.startDate && trip.endDate ? (
+                      <>
+                        {formatDateRange(trip.startDate, trip.endDate)}
+                        <span className="text-xs">（{dayCount}日間）</span>
+                      </>
+                    ) : (
+                      <span className="text-muted-foreground">日程未定</span>
+                    )}
+                  </span>
+                </div>
+                {trip.shareExpiresAt && (
+                  <p className="mt-3 text-xs text-muted-foreground">
+                    共有リンクの有効期限: {formatDateFromISO(trip.shareExpiresAt)}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-6">
+                {(trip.days ?? []).length === 0 && (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    スケジュールはまだありません
+                  </p>
+                )}
+                {(trip.days ?? []).map((day) => {
+                  const crossDayEntries = getCrossDayEntries(trip.days ?? [], day.dayNumber);
+                  return (
+                    <section
+                      key={day.id}
+                      className="overflow-hidden rounded-xl border bg-card shadow-sm"
+                    >
+                      <div className="border-b bg-muted/40 px-4 py-3 sm:px-5">
+                        <h3 className="flex items-center gap-2 text-sm font-semibold">
+                          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-bold text-background">
+                            {day.dayNumber}
+                          </span>
+                          <span>{formatDate(day.date)}</span>
+                          <span className="font-normal text-muted-foreground">
+                            {(() => {
+                              const d = new Date(day.date);
+                              return ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
+                            })()}曜日
+                          </span>
+                          {day.weatherType != null &&
+                            (() => {
+                              const weatherType = day.weatherType as WeatherType;
+                              const weatherTypeSecondary =
+                                day.weatherTypeSecondary as WeatherType | null;
+                              const PrimaryIcon = WEATHER_ICON[weatherType];
+                              return (
+                                <span className="ml-auto flex items-center gap-1 font-normal text-xs text-muted-foreground">
+                                  <PrimaryIcon
+                                    className={cn(
+                                      "h-4 w-4 shrink-0",
+                                      WEATHER_ICON_COLOR[weatherType],
+                                    )}
+                                  />
+                                  <span>{WEATHER_LABELS[weatherType]}</span>
+                                  {weatherTypeSecondary != null &&
+                                    (() => {
+                                      const SecondaryIcon = WEATHER_ICON[weatherTypeSecondary];
+                                      return (
+                                        <>
+                                          <span>→</span>
+                                          <SecondaryIcon
+                                            className={cn(
+                                              "h-4 w-4 shrink-0",
+                                              WEATHER_ICON_COLOR[weatherTypeSecondary],
+                                            )}
+                                          />
+                                          <span>{WEATHER_LABELS[weatherTypeSecondary]}</span>
+                                        </>
+                                      );
+                                    })()}
+                                  {(day.tempHigh != null || day.tempLow != null) && (
+                                    <span>
+                                      {day.tempHigh != null ? `${day.tempHigh}` : "-"}/
+                                      {day.tempLow != null ? `${day.tempLow}` : "-"}°
+                                    </span>
                                   )}
-                                />
-                                <span>{WEATHER_LABELS[weatherType]}</span>
-                                {weatherTypeSecondary != null &&
-                                  (() => {
-                                    const SecondaryIcon = WEATHER_ICON[weatherTypeSecondary];
-                                    return (
-                                      <>
-                                        <span>→</span>
-                                        <SecondaryIcon
-                                          className={cn(
-                                            "h-4 w-4 shrink-0",
-                                            WEATHER_ICON_COLOR[weatherTypeSecondary],
-                                          )}
-                                        />
-                                        <span>{WEATHER_LABELS[weatherTypeSecondary]}</span>
-                                      </>
-                                    );
-                                  })()}
-                                {(day.tempHigh != null || day.tempLow != null) && (
-                                  <span>
-                                    {day.tempHigh != null ? `${day.tempHigh}` : "-"}/
-                                    {day.tempLow != null ? `${day.tempLow}` : "-"}°
-                                  </span>
-                                )}
-                              </span>
-                            );
-                          })()}
-                      </h3>
-                    </div>
-                    <div className="p-4 sm:p-5">
-                      {(day.patterns ?? []).map((pattern, i) => (
-                        <PatternSection
-                          key={pattern.id}
-                          pattern={pattern}
-                          dayDate={day.date}
-                          showLabel={(day.patterns ?? []).length > 1}
-                          crossDayEntries={i === 0 ? crossDayEntries : undefined}
-                        />
-                      ))}
-                      {day.memo && (
-                        <div className="mt-3 flex items-start gap-2 border-t pt-3 text-sm text-muted-foreground">
-                          <StickyNote className="mt-0.5 h-4 w-4 shrink-0" />
-                          <p className="whitespace-pre-line">{day.memo}</p>
-                        </div>
-                      )}
-                    </div>
-                  </section>
-                );
-              })}
+                                </span>
+                              );
+                            })()}
+                        </h3>
+                      </div>
+                      <div className="p-4 sm:p-5">
+                        {(day.patterns ?? []).map((pattern, i) => (
+                          <PatternSection
+                            key={pattern.id}
+                            pattern={pattern}
+                            dayDate={day.date}
+                            showLabel={(day.patterns ?? []).length > 1}
+                            crossDayEntries={i === 0 ? crossDayEntries : undefined}
+                          />
+                        ))}
+                        {day.memo && (
+                          <div className="mt-3 flex items-start gap-2 border-t pt-3 text-sm text-muted-foreground">
+                            <StickyNote className="mt-0.5 h-4 w-4 shrink-0" />
+                            <p className="whitespace-pre-line">{day.memo}</p>
+                          </div>
+                        )}
+                      </div>
+                    </section>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          </>
         )}
         <SharedFooter />
       </LoadingBoundary>

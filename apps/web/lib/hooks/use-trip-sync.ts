@@ -18,6 +18,7 @@ export function useTripSync(
   tripId: string,
   user: { id: string; name: string; image?: string | null } | null,
   onSync: () => void,
+  shareToken?: string | null,
 ): {
   presence: PresenceUser[];
   isConnected: boolean;
@@ -152,11 +153,35 @@ export function useTripSync(
     });
   }, []);
 
+  const shareTokenRef = useRef(shareToken);
+  shareTokenRef.current = shareToken;
+
   const broadcastChange = useCallback(() => {
     channelRef.current?.send({
       type: "broadcast",
       event: "trip:updated",
       payload: {},
+    });
+
+    // Also notify shared-link viewers via a separate channel keyed by shareToken.
+    // This keeps tripId private (Presence isolation) while providing real-time updates.
+    const token = shareTokenRef.current;
+    if (!token) return;
+    const channelName = `trip-shared:${token}`;
+    let cleaned = false;
+    const temp = supabase.channel(channelName);
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      supabase.removeChannel(temp);
+    };
+    temp.subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        temp.send({ type: "broadcast", event: "trip:updated", payload: {} });
+        setTimeout(cleanup, 500);
+      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        cleanup();
+      }
     });
   }, []);
 

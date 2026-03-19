@@ -48,7 +48,7 @@ bun run --filter @sugara/shared check-types
 - API: Hono (Next.js Route Handler `apps/web/app/api/[[...route]]/route.ts` として統合)
 - DB: Supabase PostgreSQL + Drizzle ORM
 - リアルタイム同期: Supabase Realtime (Broadcast + Presence)
-- 認証: Better Auth (メール/パスワード, 招待制, `advanced.database.generateId: "uuid"`)
+- 認証: Better Auth (メール/パスワード, 管理者が新規登録を制御, `advanced.database.generateId: "uuid"`)
 - バリデーション: Zod (packages/shared で共有)
 - リンター/フォーマッター: Biome (ルートに biome.json、各パッケージから turbo 経由で実行)
 - テスト: Vitest

@@ -56,7 +56,7 @@ graph LR
 | API | Hono (Next.js Route Handler として統合) |
 | データベース | Supabase PostgreSQL + Drizzle ORM |
 | リアルタイム | Supabase Realtime (Broadcast + Presence) |
-| 認証 | Better Auth (メール/パスワード、招待制) |
+| 認証 | Better Auth (メール/パスワード、管理者が新規登録を制御) |
 | バリデーション | Zod (shared パッケージで共有) |
 | デスクトップ | Tauri (macOS + Windows) |
 | CI/CD | GitHub Actions, Vercel, Dependabot |
@@ -128,7 +128,7 @@ graph TB
 ## 認証モデル
 
 - **Better Auth** によるメール/パスワード認証
-- サインアップは招待制 (管理者が Edge Config でトグル)
+- サインアップは管理者が開放/停止を制御 (appSettings テーブル)
 - ゲストアカウント: 旅行1件まで、フレンド/ブックマーク/グループは利用不可
 - 管理者: 環境変数 `ADMIN_USER_ID` で識別
 

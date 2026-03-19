@@ -301,9 +301,24 @@ export function buildExpenseExport(data: ExpenseExportData): ExpenseExportResult
   return { headers, rows };
 }
 
+function addRowsToWorksheet(
+  wb: import("exceljs").Workbook,
+  sheetName: string,
+  rows: Record<string, string | number>[],
+  headers?: string[],
+): void {
+  const ws = wb.addWorksheet(sheetName.slice(0, 31));
+  if (rows.length === 0) return;
+  const cols = headers ?? Object.keys(rows[0]);
+  ws.columns = cols.map((key) => ({ header: key, key }));
+  for (const row of rows) {
+    ws.addRow(row);
+  }
+}
+
 export async function exportTripToExcel(trip: TripResponse, options: ExportOptions): Promise<void> {
-  const XLSX = await import("xlsx");
-  const wb = XLSX.utils.book_new();
+  const ExcelJS = await import("exceljs");
+  const wb = new ExcelJS.Workbook();
 
   // Exclude pattern field unless patternColumn mode
   const fields =
@@ -323,34 +338,38 @@ export async function exportTripToExcel(trip: TripResponse, options: ExportOptio
         }
       }
       for (const [label, rows] of labelMap) {
-        const ws = XLSX.utils.json_to_sheet(rows);
-        // Sheet name max 31 chars in xlsx
-        XLSX.utils.book_append_sheet(wb, ws, label.slice(0, 31));
+        addRowsToWorksheet(wb, label, rows);
       }
       break;
     }
     case "patternColumn": {
       const rows = trip.days.flatMap((day) => buildScheduleRows(day, day.patterns, fields));
-      const ws = XLSX.utils.json_to_sheet(rows);
-      XLSX.utils.book_append_sheet(wb, ws, "旅程");
+      addRowsToWorksheet(wb, "旅程", rows);
       break;
     }
   }
 
   if (options.includeCandidates && trip.candidates.length > 0) {
     const candidateRows = buildCandidateRows(trip.candidates, fields);
-    const ws = XLSX.utils.json_to_sheet(candidateRows);
-    XLSX.utils.book_append_sheet(wb, ws, "候補");
+    addRowsToWorksheet(wb, "候補", candidateRows);
   }
 
   if (options.includeExpenses && options.expenseData && options.expenseData.expenses.length > 0) {
     const { headers: expenseHeaders, rows: expenseRows } = buildExpenseExport(options.expenseData);
-    const ws = XLSX.utils.json_to_sheet(expenseRows, { header: expenseHeaders });
-    XLSX.utils.book_append_sheet(wb, ws, "費用");
+    addRowsToWorksheet(wb, "費用", expenseRows, expenseHeaders);
   }
 
   const name = options.fileName || `${trip.title}_${toDateString(new Date())}`;
-  XLSX.writeFile(wb, `${name}.xlsx`);
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `${name}.xlsx`;
+  link.click();
+  URL.revokeObjectURL(url);
 }
 
 // --- CSV ---

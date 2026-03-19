@@ -359,31 +359,56 @@ describe("buildPreviewRows", () => {
   });
 });
 
-const { mockWriteFile, mockBookNew, mockJsonToSheet, mockBookAppendSheet } = vi.hoisted(() => {
-  const mockWriteFile = vi.fn();
-  const mockBookNew = vi.fn().mockReturnValue({ SheetNames: [], Sheets: {} });
-  const mockJsonToSheet = vi.fn().mockReturnValue({});
-  const mockBookAppendSheet = vi.fn();
-  return { mockWriteFile, mockBookNew, mockJsonToSheet, mockBookAppendSheet };
+const { mockAddWorksheet, mockAddRow, mockWriteBuffer, mockWorkbookSheets } = vi.hoisted(() => {
+  const mockAddRow = vi.fn();
+  const mockWorkbookSheets: {
+    name: string;
+    columns: unknown[];
+    rows: Record<string, unknown>[];
+  }[] = [];
+  const mockAddWorksheet = vi.fn((name: string) => {
+    const sheet = { name, columns: [] as unknown[], rows: [] as Record<string, unknown>[] };
+    mockWorkbookSheets.push(sheet);
+    return {
+      set columns(cols: unknown[]) {
+        sheet.columns = cols;
+      },
+      addRow: (row: Record<string, unknown>) => {
+        sheet.rows.push(row);
+        mockAddRow(row);
+      },
+    };
+  });
+  const mockWriteBuffer = vi.fn().mockResolvedValue(new ArrayBuffer(0));
+  return { mockAddWorksheet, mockAddRow, mockWriteBuffer, mockWorkbookSheets };
 });
 
-vi.mock("xlsx", () => ({
-  writeFile: (...args: unknown[]) => mockWriteFile(...args),
-  utils: {
-    book_new: (...args: unknown[]) => mockBookNew(...args),
-    json_to_sheet: (...args: unknown[]) => mockJsonToSheet(...args),
-    book_append_sheet: (...args: unknown[]) => mockBookAppendSheet(...args),
+vi.mock("exceljs", () => ({
+  Workbook: class {
+    addWorksheet = mockAddWorksheet;
+    xlsx = { writeBuffer: mockWriteBuffer };
   },
 }));
 
 describe("exportTripToExcel", () => {
   beforeEach(() => {
-    mockWriteFile.mockClear();
-    mockBookNew.mockClear();
-    mockJsonToSheet.mockClear();
-    mockBookAppendSheet.mockClear();
-    mockBookNew.mockReturnValue({ SheetNames: [], Sheets: {} });
-    mockJsonToSheet.mockReturnValue({});
+    mockAddWorksheet.mockClear();
+    mockAddRow.mockClear();
+    mockWriteBuffer.mockClear();
+    mockWorkbookSheets.length = 0;
+
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn().mockReturnValue("blob:test"),
+      revokeObjectURL: vi.fn(),
+    });
+    vi.stubGlobal(
+      "Blob",
+      class {
+        constructor() {}
+      },
+    );
+    const mockLink = { href: "", download: "", click: vi.fn() };
+    vi.spyOn(document, "createElement").mockReturnValue(mockLink as unknown as HTMLElement);
   });
 
   function makeOptions(overrides: Partial<ExportOptions> = {}): ExportOptions {
@@ -422,12 +447,9 @@ describe("exportTripToExcel", () => {
 
     await exportTripToExcel(trip, makeOptions({ patternMode: "separateSheets" }));
 
-    expect(mockBookAppendSheet).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.anything(),
-      "Default",
-    );
-    expect(mockBookAppendSheet).toHaveBeenCalledWith(expect.anything(), expect.anything(), "Rain");
+    const sheetNames = mockWorkbookSheets.map((s) => s.name);
+    expect(sheetNames).toContain("Default");
+    expect(sheetNames).toContain("Rain");
   });
 
   it("creates a single sheet with pattern column for patternColumn mode", async () => {
@@ -462,7 +484,8 @@ describe("exportTripToExcel", () => {
       }),
     );
 
-    expect(mockBookAppendSheet).toHaveBeenCalledWith(expect.anything(), expect.anything(), "旅程");
+    const sheetNames = mockWorkbookSheets.map((s) => s.name);
+    expect(sheetNames).toContain("旅程");
   });
 
   it("adds a candidates sheet when includeCandidates is true", async () => {
@@ -478,7 +501,7 @@ describe("exportTripToExcel", () => {
 
     await exportTripToExcel(trip, makeOptions({ includeCandidates: true }));
 
-    const sheetNames = mockBookAppendSheet.mock.calls.map((call: unknown[]) => call[2]);
+    const sheetNames = mockWorkbookSheets.map((s) => s.name);
     expect(sheetNames).toContain("候補");
   });
 
@@ -495,20 +518,22 @@ describe("exportTripToExcel", () => {
 
     await exportTripToExcel(trip, makeOptions({ includeCandidates: false }));
 
-    const sheetNames = mockBookAppendSheet.mock.calls.map((call: unknown[]) => call[2]);
+    const sheetNames = mockWorkbookSheets.map((s) => s.name);
     expect(sheetNames).not.toContain("候補");
   });
 
   it("generates the correct file name", async () => {
     const trip = makeTrip({ title: "Tokyo Trip" });
-    // Mock Date to control output
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2025-04-15"));
 
+    const mockClick = vi.fn();
+    const mockLink = { href: "", download: "", click: mockClick };
+    vi.spyOn(document, "createElement").mockReturnValue(mockLink as unknown as HTMLElement);
+
     await exportTripToExcel(trip, makeOptions());
 
-    const fileNameArg = mockWriteFile.mock.calls.at(-1)?.[1] as string;
-    expect(fileNameArg).toBe("Tokyo Trip_2025-04-15.xlsx");
+    expect(mockLink.download).toBe("Tokyo Trip_2025-04-15.xlsx");
 
     vi.useRealTimers();
   });
@@ -523,19 +548,22 @@ describe("exportTripToExcel", () => {
       }),
     );
 
-    // json_to_sheet receives rows without pattern column
-    const rows = mockJsonToSheet.mock.calls.at(-1)?.[0] as Record<string, unknown>[];
-    if (rows && rows.length > 0) {
-      expect(rows[0]).not.toHaveProperty(EXPORT_FIELD_LABELS.pattern);
+    const sheet = mockWorkbookSheets[0];
+    if (sheet && sheet.rows.length > 0) {
+      expect(sheet.rows[0]).not.toHaveProperty(EXPORT_FIELD_LABELS.pattern);
     }
   });
 
   it("uses custom fileName when provided", async () => {
     const trip = makeTrip({ title: "Tokyo Trip" });
+
+    const mockClick = vi.fn();
+    const mockLink = { href: "", download: "", click: mockClick };
+    vi.spyOn(document, "createElement").mockReturnValue(mockLink as unknown as HTMLElement);
+
     await exportTripToExcel(trip, makeOptions({ fileName: "my-custom-name" }));
 
-    const fileNameArg = mockWriteFile.mock.calls.at(-1)?.[1] as string;
-    expect(fileNameArg).toBe("my-custom-name.xlsx");
+    expect(mockLink.download).toBe("my-custom-name.xlsx");
   });
 });
 
@@ -1031,12 +1059,23 @@ describe("buildExpenseExport", () => {
 
 describe("exportTripToExcel - expenses", () => {
   beforeEach(() => {
-    mockWriteFile.mockClear();
-    mockBookNew.mockClear();
-    mockJsonToSheet.mockClear();
-    mockBookAppendSheet.mockClear();
-    mockBookNew.mockReturnValue({ SheetNames: [], Sheets: {} });
-    mockJsonToSheet.mockReturnValue({});
+    mockAddWorksheet.mockClear();
+    mockAddRow.mockClear();
+    mockWriteBuffer.mockClear();
+    mockWorkbookSheets.length = 0;
+
+    vi.stubGlobal("URL", {
+      createObjectURL: vi.fn().mockReturnValue("blob:test"),
+      revokeObjectURL: vi.fn(),
+    });
+    vi.stubGlobal(
+      "Blob",
+      class {
+        constructor() {}
+      },
+    );
+    const mockLink = { href: "", download: "", click: vi.fn() };
+    vi.spyOn(document, "createElement").mockReturnValue(mockLink as unknown as HTMLElement);
   });
 
   it("adds expense sheet when includeExpenses is true", async () => {
@@ -1049,7 +1088,7 @@ describe("exportTripToExcel - expenses", () => {
       expenseData: makeExpenseData(),
     });
 
-    const sheetNames = mockBookAppendSheet.mock.calls.map((call: unknown[]) => call[2]);
+    const sheetNames = mockWorkbookSheets.map((s) => s.name);
     expect(sheetNames).toContain("費用");
   });
 
@@ -1062,7 +1101,7 @@ describe("exportTripToExcel - expenses", () => {
       includeExpenses: false,
     });
 
-    const sheetNames = mockBookAppendSheet.mock.calls.map((call: unknown[]) => call[2]);
+    const sheetNames = mockWorkbookSheets.map((s) => s.name);
     expect(sheetNames).not.toContain("費用");
   });
 
@@ -1076,7 +1115,7 @@ describe("exportTripToExcel - expenses", () => {
       expenseData: makeExpenseData({ expenses: [] }),
     });
 
-    const sheetNames = mockBookAppendSheet.mock.calls.map((call: unknown[]) => call[2]);
+    const sheetNames = mockWorkbookSheets.map((s) => s.name);
     expect(sheetNames).not.toContain("費用");
   });
 });

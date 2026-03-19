@@ -78,6 +78,13 @@ jobs:
             --repo u-stem/sugara \
             --dir dist
 
+      - name: Rewrite latest.json URLs to public repository
+        run: |
+          if [ -f dist/latest.json ]; then
+            sed -i 's|https://github.com/u-stem/sugara/releases/download/|https://github.com/u-stem/sugara-releases/releases/download/|g' dist/latest.json
+            cat dist/latest.json
+          fi
+
       - name: Create published release in public repository
         env:
           GH_TOKEN: ${{ secrets.GH_RELEASES_TOKEN }}

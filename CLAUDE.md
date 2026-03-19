@@ -161,4 +161,28 @@ bun run db:migrate
 ```
 
 本番 DB への適用は **Vercel デプロイ時に自動実行** される (`apps/web/vercel.json` の buildCommand)。
-`MIGRATION_URL` 環境変数が Vercel に設定されていること (Supabase の Transaction Pooler URL)。
+`MIGRATION_URL` 環境変数が Vercel に設定されていること (Supabase の Direct Connection URL)。
+
+## ドキュメント構成
+
+```
+docs/
+  architecture/
+    overview.md    全体像・インフラ構成図・技術スタック
+    external.md    外部設計 (ページ一覧・API・認証・認可モデル)
+    internal.md    内部設計 (DB スキーマ・モジュール構成・Realtime・テスト)
+```
+
+- 設計ドキュメントは「現在の状態」を反映する。古い計画書は git 履歴に残し、docs/ には置かない
+- コード変更時にドキュメントが乖離したら同じコミットで更新する
+
+## 計画ドキュメントの運用
+
+大きな機能開発や設計変更を行う場合、計画ドキュメントを作成して実装する。
+
+1. **計画を作成** → `docs/plans/<topic>.md` に保存
+2. **計画に沿って実装** → タスクごとにチェックボックスを更新
+3. **実装完了後に計画を削除** → 完了した計画は git 履歴に残る
+4. **必要に応じて設計ドキュメントを更新** → `docs/architecture/` を最新に保つ
+
+計画ファイルは一時的な作業用ドキュメントであり、リポジトリに残すべき永続的な資料ではない。

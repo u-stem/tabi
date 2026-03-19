@@ -168,9 +168,7 @@ bun run db:migrate
 ```
 docs/
   architecture/
-    overview.md    全体像・インフラ構成図・技術スタック
-    external.md    外部設計 (ページ一覧・API・認証・認可モデル)
-    internal.md    内部設計 (DB スキーマ・モジュール構成・Realtime・テスト)
+    overview.md    全体像・インフラ構成図・技術スタック・デプロイ
 ```
 
 - 設計ドキュメントは「現在の状態」を反映する。古い計画書は git 履歴に残し、docs/ には置かない

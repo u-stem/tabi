@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Fragment, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -92,6 +92,7 @@ export function DayTimeline({
   onReorderSchedule,
   mapsEnabled = false,
 }: DayTimelineProps) {
+  const locale = useLocale();
   const tm = useTranslations("messages");
   const tc = useTranslations("common");
   const tsch = useTranslations("schedule");
@@ -353,7 +354,9 @@ export function DayTimeline({
         </div>
       ) : (
         <div className="mb-2 flex select-none items-center gap-1.5">
-          <span className="hidden text-sm text-muted-foreground lg:inline">{formatDate(date)}</span>
+          <span className="hidden text-sm text-muted-foreground lg:inline">
+            {formatDate(date, { locale })}
+          </span>
           <div className="flex flex-1 items-center gap-1.5 [&>*]:flex-1 lg:ml-auto lg:flex-initial lg:[&>*]:flex-initial">
             {!disabled &&
               !isMobile &&

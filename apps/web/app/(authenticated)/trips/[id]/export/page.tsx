@@ -5,7 +5,7 @@ import { EXPENSE_CATEGORY_LABELS } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCheck, Download, X } from "lucide-react";
 import { useParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -134,6 +134,7 @@ function ExportSkeleton() {
 }
 
 export default function TripExportPage() {
+  const locale = useLocale();
   const tm = useTranslations("messages");
   const te = useTranslations("exportPage");
   const tel = useTranslations("exportLabels");
@@ -279,18 +280,20 @@ export default function TripExportPage() {
         for (const pattern of day.patterns) {
           const existing = sheets.get(pattern.label);
           if (existing) {
-            existing.rows.push(...buildScheduleRows(day, [pattern], effectiveFields, fieldLabels));
+            existing.rows.push(
+              ...buildScheduleRows(day, [pattern], effectiveFields, fieldLabels, locale),
+            );
           } else {
             sheets.set(pattern.label, {
               fields: effectiveFields,
-              rows: buildScheduleRows(day, [pattern], effectiveFields, fieldLabels),
+              rows: buildScheduleRows(day, [pattern], effectiveFields, fieldLabels, locale),
             });
           }
         }
       }
     } else {
       const rows = trip.days.flatMap((day) =>
-        buildScheduleRows(day, day.patterns, effectiveFields, fieldLabels),
+        buildScheduleRows(day, day.patterns, effectiveFields, fieldLabels, locale),
       );
       sheets.set(exportSheetNames.itinerary, { fields: effectiveFields, rows });
     }
@@ -299,12 +302,12 @@ export default function TripExportPage() {
       const candidateFields = filterCandidateFields(effectiveFields);
       sheets.set(exportSheetNames.candidates, {
         fields: candidateFields,
-        rows: buildCandidateRows(trip.candidates, effectiveFields, fieldLabels),
+        rows: buildCandidateRows(trip.candidates, effectiveFields, fieldLabels, locale),
       });
     }
 
     return sheets;
-  }, [trip, effectiveFields, effectivePatternMode, includeCandidates]);
+  }, [trip, effectiveFields, effectivePatternMode, includeCandidates, locale]);
 
   const expenseExportData = useMemo(
     () => (expensesData ? toExpenseExportData(expensesData) : null),
@@ -361,6 +364,7 @@ export default function TripExportPage() {
         fieldLabels,
         expenseLabels,
         sheetNames: exportSheetNames,
+        locale,
       });
       toast.success(tm("exportSuccess"));
     } catch {

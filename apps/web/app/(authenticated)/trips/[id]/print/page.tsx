@@ -11,7 +11,7 @@ import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Printer } from "lucide-react";
 import { useParams, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ function PrintSkeleton() {
 }
 
 export default function TripPrintPage() {
+  const locale = useLocale();
   const tm = useTranslations("messages");
   const tdf = useTranslations("dateFormat");
   const params = useParams();
@@ -94,7 +95,7 @@ export default function TripPrintPage() {
               <span className="mr-3">{trip.destination}</span>
               {trip.startDate && trip.endDate && (
                 <>
-                  {formatDateRange(trip.startDate, trip.endDate)}
+                  {formatDateRange(trip.startDate, trip.endDate, locale)}
                   <span className="ml-1">
                     ({tdf("dayCount", { count: getDayCount(trip.startDate, trip.endDate) })})
                   </span>
@@ -122,6 +123,7 @@ function DaySection({
   day: DayResponse;
   crossDayEntries: CrossDayEntry[];
 }) {
+  const locale = useLocale();
   const tm = useTranslations("messages");
   const tdf = useTranslations("dateFormat");
   const showPatternLabels = day.patterns.length > 1;
@@ -130,7 +132,9 @@ function DaySection({
     <section>
       <h2 className="mb-1.5 flex items-baseline gap-2 border-b pb-1.5 text-sm font-semibold print:font-medium">
         {tdf("dayNumber", { n: day.dayNumber })}
-        <span className="text-xs font-normal text-muted-foreground">{formatDate(day.date)}</span>
+        <span className="text-xs font-normal text-muted-foreground">
+          {formatDate(day.date, { locale })}
+        </span>
       </h2>
       {day.patterns.map((pattern, i) => {
         const merged = buildMergedTimeline(

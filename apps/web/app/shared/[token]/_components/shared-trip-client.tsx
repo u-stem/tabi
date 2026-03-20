@@ -11,7 +11,7 @@ import type {
 import { STATUS_LABELS, TRANSPORT_METHOD_LABELS, WEATHER_LABELS } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, ExternalLink, MapPin, RefreshCw, Route, StickyNote } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/logo";
 import { SharedFooter } from "@/components/shared-footer";
@@ -92,6 +92,7 @@ function SharedTripBodySkeleton() {
 }
 
 export function SharedTripClient({ token }: { token: string }) {
+  const locale = useLocale();
   const tsh = useTranslations("shared");
   const tm = useTranslations("messages");
   const queryClient = useQueryClient();
@@ -184,7 +185,7 @@ export function SharedTripClient({ token }: { token: string }) {
                     <Calendar className="h-4 w-4 shrink-0" />
                     {trip.startDate && trip.endDate ? (
                       <>
-                        {formatDateRange(trip.startDate, trip.endDate)}
+                        {formatDateRange(trip.startDate, trip.endDate, locale)}
                         <span className="text-xs">（{tsh("dayCount", { count: dayCount })}）</span>
                       </>
                     ) : (
@@ -194,7 +195,9 @@ export function SharedTripClient({ token }: { token: string }) {
                 </div>
                 {trip.shareExpiresAt && (
                   <p className="mt-3 text-xs text-muted-foreground">
-                    {tsh("shareExpiry", { date: formatDateFromISO(trip.shareExpiresAt) })}
+                    {tsh("shareExpiry", {
+                      date: formatDateFromISO(trip.shareExpiresAt, { locale }),
+                    })}
                   </p>
                 )}
               </div>
@@ -216,7 +219,7 @@ export function SharedTripClient({ token }: { token: string }) {
                           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-foreground text-[11px] font-bold text-background">
                             {day.dayNumber}
                           </span>
-                          <span>{formatDate(day.date)}</span>
+                          <span>{formatDate(day.date, { locale })}</span>
                           <span className="font-normal text-muted-foreground">
                             {(() => {
                               const d = new Date(day.date);

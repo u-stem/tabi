@@ -18,7 +18,7 @@ import {
   Triangle,
   X,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -109,6 +109,7 @@ export function PollTab({
   addOptionOpen,
   onAddOptionOpenChange,
 }: PollTabProps) {
+  const locale = useLocale();
   const tm = useTranslations("messages");
   const tp = useTranslations("poll");
   const tc = useTranslations("common");
@@ -479,7 +480,7 @@ export function PollTab({
                   )}
                   <div className="flex items-center gap-1">
                     <span className="text-sm tabular-nums font-medium">
-                      {formatDateRangeShort(opt.startDate, opt.endDate)}
+                      {formatDateRangeShort(opt.startDate, opt.endDate, undefined, locale)}
                     </span>
                     {isConfirmedOption && (
                       <Badge
@@ -637,7 +638,7 @@ export function PollTab({
                   }}
                 >
                   <span className="font-medium">
-                    {formatDateRangeShort(opt.startDate, opt.endDate)}
+                    {formatDateRangeShort(opt.startDate, opt.endDate, undefined, locale)}
                   </span>
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     {counts.map(({ value, count }) => {
@@ -675,7 +676,7 @@ export function PollTab({
                 const opt = poll.options.find((o) => o.id === confirmOptionId);
                 return opt ? (
                   <span className="mt-1 block font-medium">
-                    {formatDateRangeShort(opt.startDate, opt.endDate)}
+                    {formatDateRangeShort(opt.startDate, opt.endDate, undefined, locale)}
                   </span>
                 ) : null;
               })()}
@@ -713,7 +714,7 @@ export function PollTab({
                 const opt = poll.options.find((o) => o.id === deleteOptionId);
                 return opt ? (
                   <span className="mt-1 block font-medium">
-                    {formatDateRangeShort(opt.startDate, opt.endDate)}
+                    {formatDateRangeShort(opt.startDate, opt.endDate, undefined, locale)}
                   </span>
                 ) : null;
               })()}

@@ -26,7 +26,7 @@ import {
 import dynamic from "next/dynamic";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
@@ -117,6 +117,7 @@ export function TripActions({
   onOpenActivity,
   onOpenMap,
 }: TripActionsProps) {
+  const locale = useLocale();
   const tm = useTranslations("messages");
   const tt = useTranslations("trip");
   const tc = useTranslations("common");
@@ -396,7 +397,7 @@ export function TripActions({
                 <span className="text-xs text-muted-foreground">
                   {new Date(shareExpiresAt) < new Date()
                     ? tt("expired")
-                    : tt("expiresAt", { date: formatDateFromISO(shareExpiresAt) })}
+                    : tt("expiresAt", { date: formatDateFromISO(shareExpiresAt, { locale }) })}
                 </span>
               )}
             </div>

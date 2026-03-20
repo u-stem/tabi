@@ -15,23 +15,32 @@ export function toDateString(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+const DATE_PATTERNS = {
+  ja: "yyyy年M月d日",
+  en: "MMM d, yyyy",
+} as const;
+
+function getDatePattern(locale?: string): string {
+  return DATE_PATTERNS[(locale as keyof typeof DATE_PATTERNS) ?? "ja"] ?? DATE_PATTERNS.ja;
+}
+
 // Parse YYYY-MM-DD directly to avoid timezone issues with Date constructor
-export function formatDate(dateStr: string, pattern?: string): string {
+export function formatDate(dateStr: string, opts?: { pattern?: string; locale?: string }): string {
   const [year, month, day] = dateStr.split("-").map(Number);
   if (!year || !month || !day) return dateStr;
-  if (pattern) {
-    const d = new Date(year, month - 1, day);
-    return format(d, pattern);
-  }
-  // Default fallback (used by export and non-i18n contexts)
-  return `${year}年${month}月${day}日`;
+  const d = new Date(year, month - 1, day);
+  const pat = opts?.pattern ?? getDatePattern(opts?.locale);
+  return format(d, pat, { locale: getDateFnsLocale(opts?.locale ?? "ja") });
 }
 
 // Format ISO datetime string (e.g. "2026-02-18T00:00:00Z") using local timezone
-export function formatDateFromISO(isoStr: string, pattern?: string): string {
+export function formatDateFromISO(
+  isoStr: string,
+  opts?: { pattern?: string; locale?: string },
+): string {
   const d = new Date(isoStr);
-  if (pattern) return format(d, pattern);
-  return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+  const pat = opts?.pattern ?? getDatePattern(opts?.locale);
+  return format(d, pat, { locale: getDateFnsLocale(opts?.locale ?? "ja") });
 }
 
 export function formatTime(time: string): string {
@@ -43,8 +52,8 @@ export function formatDateShort(dateStr: string): string {
   return `${month}/${day}`;
 }
 
-export function formatDateRange(startDate: string, endDate: string): string {
-  return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+export function formatDateRange(startDate: string, endDate: string, locale?: string): string {
+  return `${formatDate(startDate, { locale })} - ${formatDate(endDate, { locale })}`;
 }
 
 export function getDayCount(startDate: string, endDate: string): number {
@@ -103,7 +112,8 @@ export function stripProtocol(url: string): string {
 export function formatDateWithDay(dateStr: string, pattern?: string, locale?: string): string {
   const d = parse(dateStr, "yyyy-MM-dd", new Date());
   if (!isValid(d)) return dateStr;
-  const fmt = pattern ?? "M月d日 (E)";
+  const defaultPattern = (locale ?? "ja") === "en" ? "EEE, MMM d" : "M月d日 (E)";
+  const fmt = pattern ?? defaultPattern;
   return format(d, fmt, { locale: getDateFnsLocale(locale ?? "ja") });
 }
 

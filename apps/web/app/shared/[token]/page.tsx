@@ -1,6 +1,7 @@
 import type { SharedTripResponse } from "@sugara/shared";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import { pageTitle } from "@/lib/constants";
 import { formatDateRange } from "@/lib/format";
 import { getSeason } from "@/lib/season";
@@ -19,6 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 
   try {
+    const locale = await getLocale();
     const baseUrl = process.env.BETTER_AUTH_BASE_URL ?? "http://localhost:3000";
     // Cache OGP data for 60s to balance freshness with server load on social crawlers
     const res = await fetch(`${baseUrl}/api/shared/${token}`, {
@@ -30,7 +32,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const trip = (await res.json()) as SharedTripResponse;
     const description = [
       trip.destination,
-      trip.startDate && trip.endDate ? formatDateRange(trip.startDate, trip.endDate) : null,
+      trip.startDate && trip.endDate ? formatDateRange(trip.startDate, trip.endDate, locale) : null,
     ]
       .filter(Boolean)
       .join(" · ");

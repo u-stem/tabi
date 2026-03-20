@@ -136,6 +136,7 @@ export type ExportOptions = {
   fieldLabels?: ExportFieldLabels;
   expenseLabels?: ExpenseExportLabels;
   sheetNames?: ExportSheetNames;
+  locale?: string;
 };
 
 export function buildDefaultFileName(tripTitle: string): string {
@@ -155,6 +156,7 @@ export function scheduleToRow(
   patternLabel: string | null,
   fields: ExportField[],
   fieldLabels?: ExportFieldLabels,
+  locale?: string,
 ): Record<string, string | number> {
   const labels = fieldLabels ?? DEFAULT_EXPORT_FIELD_LABELS;
   const row: Record<string, string | number> = {};
@@ -162,7 +164,7 @@ export function scheduleToRow(
     const label = labels[field];
     switch (field) {
       case "date":
-        row[label] = formatDate(day.date);
+        row[label] = formatDate(day.date, { locale });
         break;
       case "dayNumber":
         row[label] = day.dayNumber;
@@ -202,12 +204,13 @@ export function buildScheduleRows(
   patterns: DayPatternResponse[],
   fields: ExportField[],
   fieldLabels?: ExportFieldLabels,
+  locale?: string,
 ): Record<string, string | number>[] {
   const rows: Record<string, string | number>[] = [];
   for (const pattern of patterns) {
     const sorted = [...pattern.schedules].sort((a, b) => a.sortOrder - b.sortOrder);
     for (const schedule of sorted) {
-      rows.push(scheduleToRow(schedule, day, pattern.label, fields, fieldLabels));
+      rows.push(scheduleToRow(schedule, day, pattern.label, fields, fieldLabels, locale));
     }
   }
   return rows;
@@ -217,6 +220,7 @@ export function buildCandidateRows(
   candidates: CandidateResponse[],
   fields: ExportField[],
   fieldLabels?: ExportFieldLabels,
+  locale?: string,
 ): Record<string, string | number>[] {
   const candidateFields = filterCandidateFields(fields);
   const stubDay: DayResponse = {
@@ -228,7 +232,7 @@ export function buildCandidateRows(
   };
 
   return candidates.map((candidate) =>
-    scheduleToRow(candidate, stubDay, null, candidateFields, fieldLabels),
+    scheduleToRow(candidate, stubDay, null, candidateFields, fieldLabels, locale),
   );
 }
 
@@ -239,6 +243,7 @@ export function buildPreviewRows(
   trip: TripResponse,
   fields: ExportField[],
   maxRows: number = DEFAULT_MAX_PREVIEW_ROWS,
+  locale?: string,
 ): Record<string, string | number>[] {
   const rows: Record<string, string | number>[] = [];
   for (const day of trip.days) {
@@ -248,7 +253,7 @@ export function buildPreviewRows(
       const sorted = [...pattern.schedules].sort((a, b) => a.sortOrder - b.sortOrder);
       for (const schedule of sorted) {
         if (rows.length >= maxRows) break;
-        rows.push(scheduleToRow(schedule, day, pattern.label, fields));
+        rows.push(scheduleToRow(schedule, day, pattern.label, fields, undefined, locale));
       }
     }
   }
@@ -396,6 +401,7 @@ export async function exportTripToExcel(trip: TripResponse, options: ExportOptio
     csvExpensesSeparator: "--- 費用 ---",
   };
   const fl = options.fieldLabels;
+  const loc = options.locale;
 
   switch (options.patternMode) {
     case "separateSheets": {
@@ -404,7 +410,7 @@ export async function exportTripToExcel(trip: TripResponse, options: ExportOptio
       for (const day of trip.days) {
         for (const pattern of day.patterns) {
           const existing = labelMap.get(pattern.label) ?? [];
-          existing.push(...buildScheduleRows(day, [pattern], fields, fl));
+          existing.push(...buildScheduleRows(day, [pattern], fields, fl, loc));
           labelMap.set(pattern.label, existing);
         }
       }
@@ -414,14 +420,16 @@ export async function exportTripToExcel(trip: TripResponse, options: ExportOptio
       break;
     }
     case "patternColumn": {
-      const rows = trip.days.flatMap((day) => buildScheduleRows(day, day.patterns, fields, fl));
+      const rows = trip.days.flatMap((day) =>
+        buildScheduleRows(day, day.patterns, fields, fl, loc),
+      );
       addRowsToWorksheet(wb, sn.itinerary, rows);
       break;
     }
   }
 
   if (options.includeCandidates && trip.candidates.length > 0) {
-    const candidateRows = buildCandidateRows(trip.candidates, fields, fl);
+    const candidateRows = buildCandidateRows(trip.candidates, fields, fl, loc);
     addRowsToWorksheet(wb, sn.candidates, candidateRows);
   }
 
@@ -499,6 +507,7 @@ export async function exportTripToCSV(trip: TripResponse, options: ExportOptions
       : options.fields.filter((f) => f !== "pattern");
 
   const fl = options.fieldLabels ?? DEFAULT_EXPORT_FIELD_LABELS;
+  const loc = options.locale;
   const sn = options.sheetNames ?? {
     itinerary: "旅程",
     candidates: "候補",
@@ -508,7 +517,7 @@ export async function exportTripToCSV(trip: TripResponse, options: ExportOptions
   };
 
   const headers = fields.map((f) => fl[f]);
-  const rows = trip.days.flatMap((day) => buildScheduleRows(day, day.patterns, fields, fl));
+  const rows = trip.days.flatMap((day) => buildScheduleRows(day, day.patterns, fields, fl, loc));
   let csv = rowsToCSV(headers, rows, delimiter, lineEnding);
 
   const eol = lineEnding === "lf" ? "\n" : "\r\n";
@@ -516,7 +525,7 @@ export async function exportTripToCSV(trip: TripResponse, options: ExportOptions
   if (options.includeCandidates && trip.candidates.length > 0) {
     const candidateFields = filterCandidateFields(fields);
     const candidateHeaders = candidateFields.map((f) => fl[f]);
-    const candidateRows = buildCandidateRows(trip.candidates, fields, fl);
+    const candidateRows = buildCandidateRows(trip.candidates, fields, fl, loc);
     csv += `${eol}${eol}${sn.csvCandidatesSeparator}${eol}${rowsToCSV(candidateHeaders, candidateRows, delimiter, lineEnding)}`;
   }
 

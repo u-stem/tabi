@@ -1,6 +1,7 @@
 import type { SharedPollResponse } from "@sugara/shared";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getLocale } from "next-intl/server";
 import { pageTitle } from "@/lib/constants";
 import { formatDateFromISO } from "@/lib/format";
 import { getSeason } from "@/lib/season";
@@ -19,6 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 
   try {
+    const locale = await getLocale();
     const baseUrl = process.env.BETTER_AUTH_BASE_URL ?? "http://localhost:3000";
     const res = await fetch(`${baseUrl}/api/shared/polls/${token}`, {
       next: { revalidate: 60 },
@@ -28,7 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const poll = (await res.json()) as SharedPollResponse;
     const descriptionParts = [
       poll.destination,
-      poll.deadline ? formatDateFromISO(poll.deadline) : null,
+      poll.deadline ? formatDateFromISO(poll.deadline, { locale }) : null,
     ].filter(Boolean);
     const description = descriptionParts.length > 0 ? descriptionParts.join(" · ") : undefined;
 

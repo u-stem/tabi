@@ -1,6 +1,6 @@
 "use client";
 
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { QRCodeSVG } from "qrcode.react";
 import { CopyButton } from "@/components/copy-button";
 import {
@@ -27,6 +27,7 @@ export function ShareDialog({
   expiresAt,
   description,
 }: ShareDialogProps) {
+  const locale = useLocale();
   const tt = useTranslations("trip");
   const resolvedDescription = description ?? tt("shareDescription");
   return (
@@ -56,7 +57,9 @@ export function ShareDialog({
           {expiresAt && (
             <p className="text-center text-xs text-muted-foreground">
               {tt("shareExpiry")}{" "}
-              {new Date(expiresAt) < new Date() ? tt("expired") : formatDateFromISO(expiresAt)}
+              {new Date(expiresAt) < new Date()
+                ? tt("expired")
+                : formatDateFromISO(expiresAt, { locale })}
             </p>
           )}
         </div>

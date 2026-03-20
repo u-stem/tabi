@@ -3,7 +3,7 @@
 import type { TripListItem } from "@sugara/shared";
 import Image from "next/image";
 import Link from "next/link";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,7 @@ export const TripCard = memo(function TripCard({
   priority = false,
   unsettled = false,
 }: TripCardProps) {
+  const locale = useLocale();
   const tt = useTranslations("trip");
   const tlRole = useTranslations("labels.role");
   const tlStatus = useTranslations("labels.status");
@@ -93,7 +94,7 @@ export const TripCard = memo(function TripCard({
       <CardContent className="mt-auto">
         <p className="text-sm text-muted-foreground">
           {hasDates
-            ? `${formatDateRange(startDate, endDate)} (${tt("dayCount", { count: dayCount ?? 0 })})`
+            ? `${formatDateRange(startDate, endDate, locale)} (${tt("dayCount", { count: dayCount ?? 0 })})`
             : tt("noDate")}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">

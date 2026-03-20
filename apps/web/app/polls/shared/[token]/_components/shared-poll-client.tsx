@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Calendar, Circle, MapPin, MessageSquare, Triangle, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Logo } from "@/components/logo";
 import { SharedFooter } from "@/components/shared-footer";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
@@ -55,6 +55,7 @@ function SharedPollBodySkeleton() {
 }
 
 export function SharedPollClient({ token }: { token: string }) {
+  const locale = useLocale();
   const tm = useTranslations("messages");
   const tp = useTranslations("poll");
   const {
@@ -108,7 +109,7 @@ export function SharedPollClient({ token }: { token: string }) {
 
             {poll.shareExpiresAt && (
               <p className="text-xs text-muted-foreground">
-                {tp("shareExpiry", { date: formatDateFromISO(poll.shareExpiresAt) })}
+                {tp("shareExpiry", { date: formatDateFromISO(poll.shareExpiresAt, { locale }) })}
               </p>
             )}
 
@@ -133,6 +134,7 @@ export function SharedPollClient({ token }: { token: string }) {
 }
 
 function OptionList({ poll }: { poll: SharedPollResponse }) {
+  const locale = useLocale();
   return (
     <div className="divide-y rounded-lg border">
       {poll.options.map((opt) => {
@@ -146,7 +148,7 @@ function OptionList({ poll }: { poll: SharedPollResponse }) {
         return (
           <div key={opt.id} className="flex items-center gap-2 px-3 py-2">
             <span className="min-w-[11rem] whitespace-nowrap text-sm tabular-nums font-medium">
-              {formatDateRangeShort(opt.startDate, opt.endDate)}
+              {formatDateRangeShort(opt.startDate, opt.endDate, undefined, locale)}
             </span>
 
             <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">

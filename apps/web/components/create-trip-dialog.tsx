@@ -4,7 +4,7 @@ import { TRIP_DESTINATION_MAX_LENGTH, TRIP_TITLE_MAX_LENGTH } from "@sugara/shar
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Plus, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -39,6 +39,7 @@ type CreateTripDialogProps = {
 };
 
 export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDialogProps) {
+  const locale = useLocale();
   const tm = useTranslations("messages");
   const tt = useTranslations("trip");
   const tc = useTranslations("common");
@@ -321,7 +322,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
                           className="flex items-center justify-between px-3 py-1.5"
                         >
                           <span className="text-sm">
-                            {formatDateRangeShort(opt.startDate, opt.endDate)}
+                            {formatDateRangeShort(opt.startDate, opt.endDate, undefined, locale)}
                           </span>
                           <Button
                             type="button"

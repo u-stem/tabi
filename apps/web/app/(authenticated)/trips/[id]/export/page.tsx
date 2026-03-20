@@ -138,7 +138,6 @@ function ExportSkeleton() {
 
 export default function TripExportPage() {
   const tm = useTranslations("messages");
-  const tex = useTranslations("export");
   const params = useParams();
   const tripId = typeof params.id === "string" ? params.id : null;
 

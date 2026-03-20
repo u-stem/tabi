@@ -46,8 +46,6 @@ export function PatternTabs({
   onSelectPattern: (dayId: string, index: number) => void;
 }) {
   const tm = useTranslations("messages");
-  const tsch = useTranslations("schedule");
-  const tc = useTranslations("common");
   const isMobile = useMobile();
 
   if (isMobile) {

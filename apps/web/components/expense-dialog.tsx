@@ -538,7 +538,7 @@ export function ExpenseDialog({
                             itemsTotal: itemsTotal.toLocaleString(),
                             total: parsedAmount.toLocaleString(),
                           })
-                        : te("totalSpending") + `: ${parsedAmount.toLocaleString()}円`}
+                        : te("totalSpendingAmount", { amount: parsedAmount.toLocaleString() })}
                     </p>
                     {restAmount > 0 && (
                       <Button

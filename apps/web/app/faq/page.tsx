@@ -1,6 +1,7 @@
 import { getFaqs } from "@sugara/api/lib/faqs";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { Logo } from "@/components/logo";
 import { pageTitle } from "@/lib/constants";
 import { FaqSearch } from "./_components/faq-search";
@@ -11,6 +12,8 @@ export const metadata: Metadata = {
 
 export default async function FaqPage() {
   const faqs = await getFaqs();
+  const t = await getTranslations("faq");
+  const tl = await getTranslations("legal");
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -33,19 +36,19 @@ export default async function FaqPage() {
       </header>
 
       <main className="container max-w-3xl flex-1 px-4 py-8">
-        <h1 className="text-2xl font-bold">よくある質問</h1>
+        <h1 className="text-2xl font-bold">{t("title")}</h1>
         <FaqSearch faqs={faqs} />
       </main>
 
       <footer className="container flex flex-wrap items-center justify-center gap-x-4 gap-y-1 py-4 text-sm text-muted-foreground">
         <Link href="/news" className="underline underline-offset-4 hover:text-foreground">
-          お知らせ
+          {tl("footer.news")}
         </Link>
         <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
-          利用規約
+          {tl("footer.terms")}
         </Link>
         <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
-          プライバシーポリシー
+          {tl("footer.privacy")}
         </Link>
       </footer>
     </div>

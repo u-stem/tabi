@@ -46,8 +46,6 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
   const tm = useTranslations("messages");
   const te = useTranslations("expense");
   const tc = useTranslations("common");
-  const tlExpCat = useTranslations("labels.expenseCategory");
-  const tlSplit = useTranslations("labels.splitType");
   const isMobile = useMobile();
   const queryClient = useQueryClient();
   const { data: session } = useSession();

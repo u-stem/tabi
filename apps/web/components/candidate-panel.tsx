@@ -89,8 +89,6 @@ export function CandidatePanel({
   days,
 }: CandidatePanelProps) {
   const tm = useTranslations("messages");
-  const tc = useTranslations("common");
-  const tsch = useTranslations("schedule");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
 

@@ -1,6 +1,7 @@
 "use client";
 
 import type { SearchResult } from "minisearch";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import type { SearchableFaq } from "@/lib/faq-search";
 import { buildFaqIndex } from "@/lib/faq-search";
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function FaqSearch({ faqs }: Props) {
+  const t = useTranslations("faq");
   const [query, setQuery] = useState("");
 
   const index = useMemo(() => buildFaqIndex(faqs), [faqs]);
@@ -23,14 +25,14 @@ export function FaqSearch({ faqs }: Props) {
     <div className="mt-6 space-y-4">
       <input
         type="search"
-        placeholder="質問を入力..."
+        placeholder={t("searchPlaceholder")}
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       />
 
       {query.trim() !== "" && results.length === 0 && (
-        <p className="text-sm text-muted-foreground">見つかりませんでした</p>
+        <p className="text-sm text-muted-foreground">{t("noResults")}</p>
       )}
 
       <div className="space-y-3">

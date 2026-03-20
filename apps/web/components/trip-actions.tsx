@@ -1,7 +1,7 @@
 "use client";
 
 import type { MemberRole, TripResponse, TripStatus } from "@sugara/shared";
-import { canEdit, isOwner, STATUS_LABELS } from "@sugara/shared";
+import { canEdit, isOwner } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
@@ -26,6 +26,7 @@ import {
 import dynamic from "next/dynamic";
 import NextLink from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { toast } from "sonner";
 
@@ -74,7 +75,6 @@ import { copyToClipboard } from "@/lib/clipboard";
 import { formatDateFromISO } from "@/lib/format";
 import { isGuestUser } from "@/lib/guest";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type TripActionsProps = {
@@ -93,10 +93,7 @@ type TripActionsProps = {
   onOpenMap?: () => void;
 };
 
-// "scheduling" is system-managed and should not appear in the manual status dropdown
-const statuses = (Object.entries(STATUS_LABELS) as [TripStatus, string][]).filter(
-  ([value]) => value !== "scheduling",
-);
+const MANUAL_STATUSES: TripStatus[] = ["draft", "planned", "active", "completed"];
 
 const STATUS_ICONS: Record<string, ReactNode> = {
   draft: <PenLine className="h-4 w-4" />,
@@ -120,6 +117,10 @@ export function TripActions({
   onOpenActivity,
   onOpenMap,
 }: TripActionsProps) {
+  const tm = useTranslations("messages");
+  const tt = useTranslations("trip");
+  const tc = useTranslations("common");
+  const tlStatus = useTranslations("labels.status");
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
   const isOwnerRole = isOwner(role);
@@ -150,7 +151,7 @@ export function TripActions({
     if (prev) {
       queryClient.setQueryData(cacheKey, { ...prev, status: newStatus });
     }
-    toast.success(MSG.TRIP_STATUS_CHANGED);
+    toast.success(tm("tripStatusChanged"));
 
     try {
       await api(`/api/trips/${tripId}`, {
@@ -160,7 +161,7 @@ export function TripActions({
       onStatusChange?.();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.TRIP_STATUS_CHANGE_FAILED);
+      toast.error(tm("tripStatusChangeFailed"));
     }
   }
 
@@ -168,10 +169,10 @@ export function TripActions({
     setDeleting(true);
     try {
       await api(`/api/trips/${tripId}`, { method: "DELETE" });
-      toast.success(MSG.TRIP_DELETED);
+      toast.success(tm("tripDeleted"));
       router.push("/home");
     } catch {
-      toast.error(MSG.TRIP_DELETE_FAILED);
+      toast.error(tm("tripDeleteFailed"));
     } finally {
       setDeleting(false);
     }
@@ -200,12 +201,12 @@ export function TripActions({
       setShareDialogOpen(true);
       try {
         await copyToClipboard(url);
-        toast.success(MSG.SHARE_LINK_COPIED);
+        toast.success(tm("shareLinkCopied"));
       } catch {
         // Clipboard may not be available
       }
     } catch {
-      toast.error(MSG.SHARE_LINK_FAILED);
+      toast.error(tm("shareLinkFailed"));
     } finally {
       setSharing(false);
     }
@@ -227,12 +228,12 @@ export function TripActions({
       setShareUrl(url);
       try {
         await copyToClipboard(url);
-        toast.success(MSG.SHARE_LINK_REGENERATED);
+        toast.success(tm("shareLinkRegenerated"));
       } catch {
-        toast.success(MSG.SHARE_LINK_REGENERATED_NO_COPY);
+        toast.success(tm("shareLinkRegeneratedNoCopy"));
       }
     } catch {
-      toast.error(MSG.SHARE_LINK_REGENERATE_FAILED);
+      toast.error(tm("shareLinkRegenerateFailed"));
     } finally {
       setRegenerating(false);
     }
@@ -242,7 +243,7 @@ export function TripActions({
     ...(onOpenMap
       ? [
           {
-            label: "地図 β",
+            label: tt("map"),
             icon: <MapIcon className="h-4 w-4" />,
             onClick: onOpenMap,
           },
@@ -251,7 +252,7 @@ export function TripActions({
     ...(onOpenBookmarks
       ? [
           {
-            label: "ブックマーク",
+            label: tt("bookmarks"),
             icon: <Bookmark className="h-4 w-4" />,
             onClick: onOpenBookmarks,
           },
@@ -260,7 +261,7 @@ export function TripActions({
     ...(onOpenActivity
       ? [
           {
-            label: "履歴",
+            label: tt("history"),
             icon: <History className="h-4 w-4" />,
             onClick: onOpenActivity,
           },
@@ -269,7 +270,7 @@ export function TripActions({
     ...(canEditRole && status !== "scheduling"
       ? [
           {
-            label: `ステータス: ${STATUS_LABELS[status]}`,
+            label: `${tt("status")}: ${tlStatus(status)}`,
             icon: <ArrowUpDown className="h-4 w-4" />,
             onClick: () => setStatusSheetOpen(true),
           },
@@ -278,7 +279,7 @@ export function TripActions({
     ...(!isGuest
       ? [
           {
-            label: "メンバー",
+            label: tt("members"),
             icon: <Users className="h-4 w-4" />,
             onClick: () => {
               if (isMobile) {
@@ -293,7 +294,7 @@ export function TripActions({
     ...(isOwnerRole && !isGuest
       ? [
           {
-            label: sharing ? "生成中..." : "共有リンク",
+            label: sharing ? tt("generating") : tt("shareLink"),
             icon: <Link className="h-4 w-4" />,
             onClick: handleShare,
           },
@@ -302,21 +303,21 @@ export function TripActions({
     ...(canEditRole
       ? [
           {
-            label: "印刷 / PDF",
+            label: tt("printPdf"),
             icon: <Printer className="h-4 w-4" />,
             href: isMobile ? `/sp/trips/${tripId}/print` : `/trips/${tripId}/print`,
           },
         ]
       : []),
     {
-      label: "エクスポート",
+      label: tt("export"),
       icon: <FileDown className="h-4 w-4" />,
       href: isMobile ? `/sp/trips/${tripId}/export` : `/trips/${tripId}/export`,
     },
     ...(onEdit
       ? [
           {
-            label: "編集",
+            label: tc("edit"),
             icon: <Pencil className="h-4 w-4" />,
             onClick: onEdit,
           },
@@ -325,7 +326,7 @@ export function TripActions({
     ...(isOwnerRole
       ? [
           {
-            label: deleting ? "削除中..." : "削除",
+            label: deleting ? tt("deleting") : tc("delete"),
             icon: <Trash2 className="h-4 w-4" />,
             onClick: () => setDeleteOpen(true),
             variant: "destructive" as const,
@@ -340,19 +341,19 @@ export function TripActions({
         <>
           {canEditRole && status !== "scheduling" ? (
             <Select value={status} onValueChange={handleStatusChange} disabled={disabled}>
-              <SelectTrigger className="h-8 w-[130px] text-xs" aria-label="ステータス変更">
+              <SelectTrigger className="h-8 w-[130px] text-xs" aria-label={tt("statusChange")}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {statuses.map(([value, label]) => (
+                {MANUAL_STATUSES.map((value) => (
                   <SelectItem key={value} value={value}>
-                    {label}
+                    {tlStatus(value)}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           ) : (
-            <span className="text-xs text-muted-foreground">{STATUS_LABELS[status]}</span>
+            <span className="text-xs text-muted-foreground">{tlStatus(status)}</span>
           )}
           {/* Desktop inline buttons (sm+) */}
           {!isGuest && (
@@ -364,7 +365,7 @@ export function TripActions({
               disabled={disabled}
             >
               <Users className="h-4 w-4" />
-              メンバー
+              {tt("members")}
             </Button>
           )}
           {isOwnerRole && !isGuest && (
@@ -376,7 +377,7 @@ export function TripActions({
               disabled={disabled || sharing}
             >
               <Link className="h-4 w-4" />
-              {sharing ? "生成中..." : "共有リンク"}
+              {sharing ? tt("generating") : tt("shareLink")}
             </Button>
           )}
           {/* Share expiry + regenerate */}
@@ -387,15 +388,15 @@ export function TripActions({
                 size="sm"
                 onClick={handleRegenerate}
                 disabled={disabled || regenerating}
-                aria-label="共有リンクを再生成"
+                aria-label={tt("regenerateShareLink")}
               >
                 <RefreshCw className={`h-3.5 w-3.5 ${regenerating ? "animate-spin" : ""}`} />
               </Button>
               {shareExpiresAt && (
                 <span className="text-xs text-muted-foreground">
                   {new Date(shareExpiresAt) < new Date()
-                    ? "期限切れ"
-                    : `${formatDateFromISO(shareExpiresAt)}まで`}
+                    ? tt("expired")
+                    : tt("expiresAt", { date: formatDateFromISO(shareExpiresAt) })}
                 </span>
               )}
             </div>
@@ -412,7 +413,7 @@ export function TripActions({
             onClick={() => setSheetOpen(true)}
           >
             <MoreHorizontal className="h-4 w-4" />
-            <span className="sr-only">旅行メニュー</span>
+            <span className="sr-only">{tt("tripMenu")}</span>
           </Button>
           <ActionSheet open={sheetOpen} onOpenChange={setSheetOpen} actions={sheetActions} />
         </>
@@ -427,7 +428,7 @@ export function TripActions({
               disabled={disabled}
             >
               <MoreHorizontal className="h-4 w-4" />
-              <span className="sr-only">旅行メニュー</span>
+              <span className="sr-only">{tt("tripMenu")}</span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -436,32 +437,32 @@ export function TripActions({
                 {onOpenMap && (
                   <DropdownMenuItem onClick={onOpenMap}>
                     <MapIcon />
-                    地図 β
+                    {tt("map")}
                   </DropdownMenuItem>
                 )}
                 {onOpenBookmarks && (
                   <DropdownMenuItem onClick={onOpenBookmarks}>
                     <Bookmark />
-                    ブックマーク
+                    {tt("bookmarks")}
                   </DropdownMenuItem>
                 )}
                 {onOpenActivity && (
                   <DropdownMenuItem onClick={onOpenActivity}>
                     <History />
-                    履歴
+                    {tt("history")}
                   </DropdownMenuItem>
                 )}
                 {canEditRole && status !== "scheduling" ? (
                   <DropdownMenuSub>
                     <DropdownMenuSubTrigger>
                       <ArrowUpDown />
-                      ステータス: {STATUS_LABELS[status]}
+                      {tt("status")}: {tlStatus(status)}
                     </DropdownMenuSubTrigger>
                     <DropdownMenuSubContent>
-                      {statuses.map(([value, label]) => (
+                      {MANUAL_STATUSES.map((value) => (
                         <DropdownMenuItem key={value} onClick={() => handleStatusChange(value)}>
                           {STATUS_ICONS[value]}
-                          {label}
+                          {tlStatus(value)}
                           {value === status && <Check className="ml-auto h-4 w-4" />}
                         </DropdownMenuItem>
                       ))}
@@ -469,7 +470,7 @@ export function TripActions({
                   </DropdownMenuSub>
                 ) : (
                   <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-                    {STATUS_LABELS[status]}
+                    {tlStatus(status)}
                   </DropdownMenuLabel>
                 )}
                 <DropdownMenuSeparator />
@@ -481,7 +482,7 @@ export function TripActions({
                 onClick={() => setMemberOpen(true)}
               >
                 <Users />
-                メンバー
+                {tt("members")}
               </DropdownMenuItem>
             )}
             {isOwnerRole && !isGuest && (
@@ -491,27 +492,27 @@ export function TripActions({
                 disabled={sharing}
               >
                 <Link />
-                {sharing ? "生成中..." : "共有リンク"}
+                {sharing ? tt("generating") : tt("shareLink")}
               </DropdownMenuItem>
             )}
             {canEditRole && (
               <DropdownMenuItem asChild>
                 <NextLink href={isMobile ? `/sp/trips/${tripId}/print` : `/trips/${tripId}/print`}>
                   <Printer />
-                  印刷 / PDF
+                  {tt("printPdf")}
                 </NextLink>
               </DropdownMenuItem>
             )}
             <DropdownMenuItem asChild>
               <NextLink href={isMobile ? `/sp/trips/${tripId}/export` : `/trips/${tripId}/export`}>
                 <FileDown />
-                エクスポート
+                {tt("export")}
               </NextLink>
             </DropdownMenuItem>
             {onEdit && (
               <DropdownMenuItem onClick={onEdit}>
                 <Pencil />
-                編集
+                {tc("edit")}
               </DropdownMenuItem>
             )}
             {isOwnerRole && (
@@ -521,7 +522,7 @@ export function TripActions({
                 onClick={() => setDeleteOpen(true)}
               >
                 <Trash2 />
-                {deleting ? "削除中..." : "削除"}
+                {deleting ? tt("deleting") : tc("delete")}
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
@@ -544,10 +545,10 @@ export function TripActions({
       )}
       <Drawer open={statusSheetOpen} onOpenChange={setStatusSheetOpen}>
         <DrawerContent>
-          <DrawerTitle className="sr-only">ステータス変更</DrawerTitle>
-          <DrawerDescription className="sr-only">ステータスを選択してください</DrawerDescription>
+          <DrawerTitle className="sr-only">{tt("statusChange")}</DrawerTitle>
+          <DrawerDescription className="sr-only">{tt("statusChangeSelect")}</DrawerDescription>
           <div className="flex flex-col gap-2 pb-4 pt-2">
-            {statuses.map(([value, label]) => (
+            {MANUAL_STATUSES.map((value) => (
               <Button
                 key={value}
                 variant={value === status ? "default" : "outline"}
@@ -558,7 +559,7 @@ export function TripActions({
                 }}
               >
                 <span className="mr-2">{STATUS_ICONS[value]}</span>
-                {label}
+                {tlStatus(value)}
                 {value === status && <Check className="ml-auto h-4 w-4" />}
               </Button>
             ))}
@@ -568,7 +569,7 @@ export function TripActions({
               onClick={() => setStatusSheetOpen(false)}
             >
               <X className="mr-2 h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </Button>
           </div>
         </DrawerContent>
@@ -576,19 +577,19 @@ export function TripActions({
       <ResponsiveAlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>旅行を削除しますか？</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogTitle>{tt("deleteConfirmTitle")}</ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              「{tripTitle}」とすべての予定が削除されます。この操作は取り消せません。
+              {tt("deleteConfirmDescription", { title: tripTitle })}
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={handleDelete}>
               <Trash2 className="h-4 w-4" />
-              削除する
+              {tc("deletConfirm")}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>

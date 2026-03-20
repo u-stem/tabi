@@ -1,9 +1,9 @@
 import type { TripResponse } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type UseDayMemoArgs = {
@@ -13,6 +13,7 @@ type UseDayMemoArgs = {
 };
 
 export function useDayMemo({ tripId, currentDayId, onDone }: UseDayMemoArgs) {
+  const tm = useTranslations("messages");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
 
@@ -44,7 +45,7 @@ export function useDayMemo({ tripId, currentDayId, onDone }: UseDayMemoArgs) {
         days: prev.days.map((d) => (d.id !== dayId ? d : { ...d, memo: newMemo })),
       });
     }
-    toast.success(MSG.DAY_MEMO_UPDATED);
+    toast.success(tm("dayMemoUpdated"));
     setEditingDayId(null);
     setText("");
 
@@ -56,7 +57,7 @@ export function useDayMemo({ tripId, currentDayId, onDone }: UseDayMemoArgs) {
       onDone();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.DAY_MEMO_UPDATE_FAILED);
+      toast.error(tm("dayMemoUpdateFailed"));
     } finally {
       setSaving(false);
     }

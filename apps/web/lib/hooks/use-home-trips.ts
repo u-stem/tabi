@@ -1,11 +1,11 @@
 import type { TripListItem } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { SortKey, StatusFilter } from "@/components/trip-toolbar";
 import { ApiError, api } from "@/lib/api";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 export type HomeTab = "owned" | "shared";
@@ -42,6 +42,7 @@ export type UseHomeTripsReturn = {
 };
 
 export function useHomeTrips(): UseHomeTripsReturn {
+  const tm = useTranslations("messages");
   const queryClient = useQueryClient();
 
   const {
@@ -180,9 +181,9 @@ export function useHomeTrips(): UseHomeTripsReturn {
 
     if (failed > 0) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.TRIP_BULK_DELETE_FAILED(failed));
+      toast.error(tm("tripBulkDeleteFailed", { count: failed }));
     } else {
-      toast.success(MSG.TRIP_BULK_DELETED(count));
+      toast.success(tm("tripBulkDeleted", { count }));
     }
     await invalidateAll();
     setDeleting(false);
@@ -203,9 +204,9 @@ export function useHomeTrips(): UseHomeTripsReturn {
     }
 
     if (failed > 0) {
-      toast.error(MSG.TRIP_BULK_DUPLICATE_FAILED(failed));
+      toast.error(tm("tripBulkDuplicateFailed", { count: failed }));
     } else {
-      toast.success(MSG.TRIP_BULK_DUPLICATED(succeeded));
+      toast.success(tm("tripBulkDuplicated", { count: succeeded }));
     }
 
     setSelectedIds(new Set());

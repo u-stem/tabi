@@ -1,9 +1,9 @@
 import type { DayPatternResponse, TripResponse } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type UsePatternOperationsArgs = {
@@ -19,6 +19,7 @@ export function usePatternOperations({
   onDone,
   onPatternDeleted,
 }: UsePatternOperationsArgs) {
+  const tm = useTranslations("messages");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
 
@@ -39,12 +40,12 @@ export function usePatternOperations({
         method: "POST",
         body: JSON.stringify({ label: addLabel.trim() }),
       });
-      toast.success(MSG.PATTERN_ADDED);
+      toast.success(tm("patternAdded"));
       setAddOpen(false);
       setAddLabel("");
       onDone();
     } catch {
-      toast.error(MSG.PATTERN_ADD_FAILED);
+      toast.error(tm("patternAddFailed"));
     } finally {
       setAddLoading(false);
     }
@@ -56,10 +57,10 @@ export function usePatternOperations({
       await api(`/api/trips/${tripId}/days/${currentDayId}/patterns/${patternId}/duplicate`, {
         method: "POST",
       });
-      toast.success(MSG.PATTERN_DUPLICATED);
+      toast.success(tm("patternDuplicated"));
       onDone();
     } catch {
-      toast.error(MSG.PATTERN_DUPLICATE_FAILED);
+      toast.error(tm("patternDuplicateFailed"));
     }
   }
 
@@ -77,7 +78,7 @@ export function usePatternOperations({
         ),
       });
     }
-    toast.success(MSG.PATTERN_DELETED);
+    toast.success(tm("patternDeleted"));
     onPatternDeleted(dayId);
 
     try {
@@ -87,7 +88,7 @@ export function usePatternOperations({
       onDone();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.PATTERN_DELETE_FAILED);
+      toast.error(tm("patternDeleteFailed"));
     }
   }
 
@@ -115,7 +116,7 @@ export function usePatternOperations({
         ),
       });
     }
-    toast.success(MSG.PATTERN_RENAMED);
+    toast.success(tm("patternRenamed"));
     setRenameTarget(null);
     setRenameLabel("");
 
@@ -127,7 +128,7 @@ export function usePatternOperations({
       onDone();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.PATTERN_RENAME_FAILED);
+      toast.error(tm("patternRenameFailed"));
     }
   }
 
@@ -138,11 +139,11 @@ export function usePatternOperations({
         method: "POST",
         body: JSON.stringify({ sourcePatternId }),
       });
-      toast.success(MSG.PATTERN_OVERWRITTEN);
+      toast.success(tm("patternOverwritten"));
       setOverwriteSource(null);
       onDone();
     } catch {
-      toast.error(MSG.PATTERN_OVERWRITE_FAILED);
+      toast.error(tm("patternOverwriteFailed"));
     }
   }
 

@@ -2,6 +2,7 @@
 
 import { MAX_TRIPS_PER_USER } from "@sugara/shared";
 import { Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { CreateTripDialog } from "@/components/create-trip-dialog";
@@ -19,7 +20,6 @@ import { type HomeTab, useHomeTrips } from "@/lib/hooks/use-home-trips";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { useUnsettledTripIds } from "@/lib/hooks/use-unsettled-trip-ids";
 import { isDialogOpen } from "@/lib/hotkeys";
-import { MSG } from "@/lib/messages";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
 
@@ -60,6 +60,9 @@ function HomeSkeleton() {
 }
 
 export default function HomePage() {
+  const tm = useTranslations("messages");
+  const tt = useTranslations("trip");
+  const tc = useTranslations("common");
   const {
     ownedTrips,
     isLoading,
@@ -189,27 +192,27 @@ export default function HomePage() {
         <span>
           <Button size="sm" disabled={!online} onClick={() => setCreateTripOpen(true)}>
             <Plus className="h-4 w-4" />
-            新規作成
+            {tt("newTrip")}
             <span className="hidden text-xs text-muted-foreground lg:inline">(N)</span>
           </Button>
         </span>
       </TooltipTrigger>
       {ownedTrips.length >= MAX_TRIPS_PER_USER && (
-        <TooltipContent>{MSG.LIMIT_TRIPS}</TooltipContent>
+        <TooltipContent>{tm("limitTrips", { max: MAX_TRIPS_PER_USER })}</TooltipContent>
       )}
     </Tooltip>
   );
 
   const tabs = [
-    { value: "owned", label: "自分の旅行" },
-    { value: "shared", label: "共有された旅行" },
+    { value: "owned", label: tt("ownedTrips") },
+    { value: "shared", label: tt("sharedTrips") },
   ] as const;
 
   const errorFallback = error ? (
     <div className="mt-8 text-center">
-      <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+      <p className="text-destructive">{tm("tripFetchFailed")}</p>
       <Button variant="outline" size="sm" className="mt-4" onClick={() => invalidateAll()}>
-        再試行
+        {tc("retry")}
       </Button>
     </div>
   ) : undefined;
@@ -268,11 +271,11 @@ export default function HomePage() {
         </div>
         {baseTrips.length === 0 ? (
           <EmptyState
-            message={tab === "shared" ? MSG.EMPTY_TRIP_SHARED : MSG.EMPTY_TRIP}
+            message={tab === "shared" ? tm("emptyTripShared") : tm("emptyTrip")}
             variant="page"
           />
         ) : filteredTrips.length === 0 ? (
-          <EmptyState message={MSG.EMPTY_TRIP_FILTER} variant="page" />
+          <EmptyState message={tm("emptyTripFilter")} variant="page" />
         ) : (
           <div className="mt-4 grid items-start gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredTrips.map((trip, index) => (
@@ -304,7 +307,7 @@ export default function HomePage() {
       />
       <Fab
         onClick={() => setCreateTripOpen(true)}
-        label="旅行を新規作成"
+        label={tt("createTrip")}
         hidden={!online || tab === "shared"}
       />
     </>

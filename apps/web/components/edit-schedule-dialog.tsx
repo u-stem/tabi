@@ -10,6 +10,7 @@ import type {
 import { computeTimeDelta } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { ScheduleFormFields } from "@/components/schedule-form-fields";
@@ -25,7 +26,6 @@ import {
 } from "@/components/ui/responsive-dialog";
 import { ApiError, api } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { buildSchedulePayload } from "@/lib/schedule-form-utils";
 import { toScheduleResponse, updateScheduleInPattern } from "@/lib/trip-cache";
@@ -55,6 +55,9 @@ export function EditScheduleDialog({
   onShiftProposal,
   mapsEnabled = false,
 }: EditScheduleDialogProps) {
+  const tm = useTranslations("messages");
+  const ts = useTranslations("schedule");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
 
@@ -162,7 +165,7 @@ export function EditScheduleDialog({
       );
     }
     onOpenChange(false);
-    toast.success(MSG.SCHEDULE_UPDATED);
+    toast.success(tm("scheduleUpdated"));
 
     try {
       await api(
@@ -185,10 +188,10 @@ export function EditScheduleDialog({
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
       if (err instanceof ApiError && (err.status === 409 || err.status === 404)) {
-        toast.error(err.status === 409 ? MSG.CONFLICT : MSG.CONFLICT_DELETED);
+        toast.error(err.status === 409 ? tm("conflict") : tm("conflictDeleted"));
         onUpdate();
       } else {
-        toast.error(MSG.SCHEDULE_UPDATE_FAILED);
+        toast.error(tm("scheduleUpdateFailed"));
       }
     } finally {
       setLoading(false);
@@ -199,8 +202,8 @@ export function EditScheduleDialog({
     <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>予定を編集</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>予定の情報を変更します</ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{ts("editSchedule")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{ts("editScheduleDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <ScheduleFormFields
@@ -240,12 +243,12 @@ export function EditScheduleDialog({
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={loading}>
               <Check className="h-4 w-4" />
-              {loading ? "更新中..." : "予定を更新"}
+              {loading ? ts("adding") : ts("updateSchedule")}
             </Button>
           </ResponsiveDialogFooter>
         </form>

@@ -9,6 +9,7 @@ import type {
 import { DEFAULT_SCHEDULE_CATEGORY } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { ScheduleFormFields } from "@/components/schedule-form-fields";
@@ -25,7 +26,6 @@ import {
 } from "@/components/ui/responsive-dialog";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { buildSchedulePayload } from "@/lib/schedule-form-utils";
 import { addScheduleToPattern, toScheduleResponse } from "@/lib/trip-cache";
@@ -55,6 +55,9 @@ export function AddScheduleDialog({
   hideTrigger,
   mapsEnabled = false,
 }: AddScheduleDialogProps) {
+  const tm = useTranslations("messages");
+  const ts = useTranslations("schedule");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
 
@@ -140,10 +143,10 @@ export function AddScheduleDialog({
         );
       }
       setOpen(false);
-      toast.success(MSG.SCHEDULE_ADDED);
+      toast.success(tm("scheduleAdded"));
       onAdd();
     } catch (err) {
-      setError(getApiErrorMessage(err, MSG.SCHEDULE_ADD_FAILED));
+      setError(getApiErrorMessage(err, tm("scheduleAddFailed")));
     } finally {
       setLoading(false);
     }
@@ -174,15 +177,15 @@ export function AddScheduleDialog({
         <ResponsiveDialogTrigger asChild>
           <Button variant="outline" size="sm" disabled={disabled}>
             <Plus className="h-4 w-4" />
-            予定を追加
+            {ts("addSchedule")}
             <span className="hidden text-xs text-muted-foreground lg:inline">(A)</span>
           </Button>
         </ResponsiveDialogTrigger>
       )}
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>予定を追加</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>旅行の日程に予定を追加します</ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{ts("addSchedule")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{ts("addScheduleDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <ScheduleFormFields
@@ -214,12 +217,12 @@ export function AddScheduleDialog({
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={loading}>
               <Plus className="h-4 w-4" />
-              {loading ? "追加中..." : "予定を追加"}
+              {loading ? ts("adding") : ts("addSchedule")}
             </Button>
           </ResponsiveDialogFooter>
         </form>

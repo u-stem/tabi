@@ -16,6 +16,7 @@ import type {
   ScheduleColor,
   ScheduleResponse,
 } from "@sugara/shared";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
@@ -24,7 +25,6 @@ import {
   timelineScheduleOrder,
   timelineSortableIds,
 } from "@/lib/merge-timeline";
-import { MSG } from "@/lib/messages";
 
 type ActiveDragItem = {
   id: string;
@@ -61,6 +61,7 @@ export function useTripDragAndDrop({
   crossDayEntries,
   onDone,
 }: UseTripDragAndDropArgs) {
+  const tm = useTranslations("messages");
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
   const [overScheduleId, setOverScheduleId] = useState<string | null>(null);
   const [overCandidateId, setOverCandidateId] = useState<string | null>(null);
@@ -204,9 +205,9 @@ export function useTripDragAndDrop({
           onDone();
         } catch (err) {
           if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
-            toast.error(MSG.CONFLICT_STALE);
+            toast.error(tm("conflictStale"));
           } else {
-            toast.error(MSG.SCHEDULE_REORDER_FAILED);
+            toast.error(tm("scheduleReorderFailed"));
           }
           onDone();
         }
@@ -226,7 +227,7 @@ export function useTripDragAndDrop({
         const insertedCandidates = [...currentCandidates];
         insertedCandidates.splice(insertIdx, 0, newCandidate);
         setLocalCandidates(insertedCandidates);
-        toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
+        toast.success(tm("scheduleMovedToCandidate"));
 
         try {
           await api(`/api/trips/${tripId}/schedules/${active.id}/unassign`, {
@@ -234,9 +235,9 @@ export function useTripDragAndDrop({
           });
         } catch (err) {
           if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
-            toast.error(MSG.CONFLICT_STALE);
+            toast.error(tm("conflictStale"));
           } else {
-            toast.error(MSG.SCHEDULE_MOVE_FAILED);
+            toast.error(tm("scheduleMoveFailed"));
           }
           onDone();
           return;
@@ -331,7 +332,7 @@ export function useTripDragAndDrop({
         const insertedSchedules = [...currentSchedules];
         insertedSchedules.splice(insertIdx, 0, newSchedule);
         setLocalSchedules(insertedSchedules);
-        toast.success(MSG.CANDIDATE_ASSIGNED);
+        toast.success(tm("candidateAssigned"));
 
         try {
           await api(`/api/trips/${tripId}/candidates/${active.id}/assign`, {
@@ -340,9 +341,9 @@ export function useTripDragAndDrop({
           });
         } catch (err) {
           if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
-            toast.error(MSG.CONFLICT_STALE);
+            toast.error(tm("conflictStale"));
           } else {
-            toast.error(MSG.CANDIDATE_ASSIGN_FAILED);
+            toast.error(tm("candidateAssignFailed"));
           }
           onDone();
           return;
@@ -388,9 +389,9 @@ export function useTripDragAndDrop({
           onDone();
         } catch (err) {
           if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
-            toast.error(MSG.CONFLICT_STALE);
+            toast.error(tm("conflictStale"));
           } else {
-            toast.error(MSG.SCHEDULE_REORDER_FAILED);
+            toast.error(tm("scheduleReorderFailed"));
           }
           onDone();
         }
@@ -426,9 +427,9 @@ export function useTripDragAndDrop({
       onDone();
     } catch (err) {
       if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
-        toast.error(MSG.CONFLICT_STALE);
+        toast.error(tm("conflictStale"));
       } else {
-        toast.error(MSG.SCHEDULE_REORDER_FAILED);
+        toast.error(tm("scheduleReorderFailed"));
       }
       onDone();
     } finally {
@@ -454,9 +455,9 @@ export function useTripDragAndDrop({
       onDone();
     } catch (err) {
       if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
-        toast.error(MSG.CONFLICT_STALE);
+        toast.error(tm("conflictStale"));
       } else {
-        toast.error(MSG.SCHEDULE_REORDER_FAILED);
+        toast.error(tm("scheduleReorderFailed"));
       }
       onDone();
     } finally {

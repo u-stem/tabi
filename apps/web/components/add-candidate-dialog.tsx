@@ -9,6 +9,7 @@ import type {
 import { DEFAULT_SCHEDULE_CATEGORY } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ScheduleFormFields } from "@/components/schedule-form-fields";
@@ -24,7 +25,6 @@ import {
 } from "@/components/ui/responsive-dialog";
 import { api } from "@/lib/api";
 import { validateTimeRange } from "@/lib/format";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { buildSchedulePayload } from "@/lib/schedule-form-utils";
 import { addCandidate, toCandidateResponse } from "@/lib/trip-cache";
@@ -44,6 +44,9 @@ export function AddCandidateDialog({
   onAdd,
   maxEndDayOffset = 0,
 }: AddCandidateDialogProps) {
+  const tm = useTranslations("messages");
+  const ts = useTranslations("schedule");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
 
@@ -95,10 +98,10 @@ export function AddCandidateDialog({
         queryClient.setQueryData(cacheKey, addCandidate(prev, toCandidateResponse(result)));
       }
       onOpenChange(false);
-      toast.success(MSG.CANDIDATE_ADDED);
+      toast.success(tm("candidateAdded"));
       onAdd();
     } catch {
-      setError(MSG.CANDIDATE_ADD_FAILED);
+      setError(tm("candidateAddFailed"));
     } finally {
       setLoading(false);
     }
@@ -124,10 +127,8 @@ export function AddCandidateDialog({
     >
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>候補を追加</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            気になる場所を候補に追加しましょう
-          </ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{ts("addCandidate")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{ts("addCandidateDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <ScheduleFormFields
@@ -158,12 +159,12 @@ export function AddCandidateDialog({
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={loading}>
               <Plus className="h-4 w-4" />
-              {loading ? "追加中..." : "追加"}
+              {loading ? ts("adding") : ts("add")}
             </Button>
           </ResponsiveDialogFooter>
         </form>

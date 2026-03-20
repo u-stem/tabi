@@ -1,9 +1,9 @@
 import type { TripResponse, WeatherType } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type WeatherState = {
@@ -20,6 +20,7 @@ type UseDayWeatherArgs = {
 };
 
 export function useDayWeather({ tripId, currentDayId, onDone }: UseDayWeatherArgs) {
+  const tm = useTranslations("messages");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
 
@@ -61,7 +62,7 @@ export function useDayWeather({ tripId, currentDayId, onDone }: UseDayWeatherArg
         days: prev.days.map((d) => (d.id !== dayId ? d : { ...d, ...next })),
       });
     }
-    toast.success(MSG.DAY_WEATHER_UPDATED);
+    toast.success(tm("dayWeatherUpdated"));
     setEditingDayId(null);
     setWeather({ weatherType: null, weatherTypeSecondary: null, tempHigh: null, tempLow: null });
 
@@ -78,7 +79,7 @@ export function useDayWeather({ tripId, currentDayId, onDone }: UseDayWeatherArg
       onDone();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.DAY_WEATHER_UPDATE_FAILED);
+      toast.error(tm("dayWeatherUpdateFailed"));
     } finally {
       setSaving(false);
     }

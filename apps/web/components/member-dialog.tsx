@@ -8,6 +8,7 @@ import type {
 } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserPlus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -42,7 +43,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { MSG } from "@/lib/messages";
@@ -64,6 +64,10 @@ export function MemberDialog({
   onOpenChange,
   memberLimitReached,
 }: MemberDialogProps) {
+  const tm = useTranslations("messages");
+  const tme = useTranslations("member");
+  const tc = useTranslations("common");
+  const tlRole = useTranslations("labels.role");
   const queryClient = useQueryClient();
   const [userId, setUserId] = useState("");
   const [role, setRole] = useState("editor");
@@ -112,7 +116,7 @@ export function MemberDialog({
         method: "POST",
         body: JSON.stringify({ userId, role }),
       });
-      toast.success(MSG.MEMBER_ADDED);
+      toast.success(tm("memberAdded"));
       if (sendFriendRequest) {
         // Send friend request silently - ignore errors (already friends, etc.)
         api("/api/friends/requests", {
@@ -123,7 +127,7 @@ export function MemberDialog({
       setUserId("");
       invalidateMembers();
     } catch (err) {
-      const message = getApiErrorMessage(err, MSG.MEMBER_ADD_FAILED);
+      const message = getApiErrorMessage(err, tm("memberAddFailed"));
       toast.error(message);
     } finally {
       setAdding(false);
@@ -137,10 +141,10 @@ export function MemberDialog({
         method: "POST",
         body: JSON.stringify({ userId: friendUserId, role: friendRole }),
       });
-      toast.success(MSG.MEMBER_ADDED);
+      toast.success(tm("memberAdded"));
       invalidateMembers();
     } catch (err) {
-      const message = getApiErrorMessage(err, MSG.MEMBER_ADD_FAILED);
+      const message = getApiErrorMessage(err, tm("memberAddFailed"));
       toast.error(message);
     } finally {
       setAdding(false);
@@ -167,7 +171,7 @@ export function MemberDialog({
     } else if (added > 0) {
       toast.warning(MSG.GROUP_BULK_ADD_PARTIAL(added, failed));
     } else {
-      toast.error(MSG.MEMBER_ADD_FAILED);
+      toast.error(tm("memberAddFailed"));
     }
     invalidateMembers();
     setAdding(false);
@@ -183,7 +187,7 @@ export function MemberDialog({
         prev.map((m) => (m.userId !== memberId ? m : { ...m, role: newRole })),
       );
     }
-    toast.success(MSG.MEMBER_ROLE_CHANGED);
+    toast.success(tm("memberRoleChanged"));
 
     try {
       await api(`/api/trips/${tripId}/members/${memberId}`, {
@@ -193,7 +197,7 @@ export function MemberDialog({
       invalidateMembers();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.MEMBER_ROLE_CHANGE_FAILED);
+      toast.error(tm("memberRoleChangeFailed"));
     }
   }
 
@@ -207,7 +211,7 @@ export function MemberDialog({
         prev.filter((m) => m.userId !== memberId),
       );
     }
-    toast.success(MSG.MEMBER_REMOVED);
+    toast.success(tm("memberRemoved"));
 
     try {
       await api(`/api/trips/${tripId}/members/${memberId}`, {
@@ -216,7 +220,7 @@ export function MemberDialog({
       invalidateMembers();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.MEMBER_REMOVE_FAILED);
+      toast.error(tm("memberRemoveFailed"));
     }
   }
 
@@ -238,14 +242,10 @@ export function MemberDialog({
     >
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>メンバー管理</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            旅行メンバーの招待と権限を管理します
-          </ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{tme("manageMember")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{tme("manageDescription")}</ResponsiveDialogDescription>
           {members.some((m) => m.hasExpenses) && (
-            <p className="text-sm text-muted-foreground">
-              費用が紐づいているメンバーは削除できません
-            </p>
+            <p className="text-sm text-muted-foreground">{tme("hasExpenseHint")}</p>
           )}
         </ResponsiveDialogHeader>
 
@@ -286,7 +286,7 @@ export function MemberDialog({
                   </div>
                   {member.role === "owner" ? (
                     <span className="shrink-0 select-none text-sm text-muted-foreground">
-                      オーナー
+                      {tlRole("owner")}
                     </span>
                   ) : isOwner ? (
                     <div className="flex shrink-0 items-center gap-1">
@@ -298,8 +298,8 @@ export function MemberDialog({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="editor">編集者</SelectItem>
-                          <SelectItem value="viewer">閲覧者</SelectItem>
+                          <SelectItem value="editor">{tlRole("editor")}</SelectItem>
+                          <SelectItem value="viewer">{tlRole("viewer")}</SelectItem>
                         </SelectContent>
                       </Select>
                       {member.hasExpenses ? (
@@ -309,7 +309,7 @@ export function MemberDialog({
                               削除
                             </span>
                           </TooltipTrigger>
-                          <TooltipContent>費用データがあるため削除できません</TooltipContent>
+                          <TooltipContent>{tme("cannotDeleteExpense")}</TooltipContent>
                         </Tooltip>
                       ) : (
                         <button
@@ -324,7 +324,7 @@ export function MemberDialog({
                     </div>
                   ) : (
                     <span className="shrink-0 select-none text-sm text-muted-foreground">
-                      {member.role === "editor" ? "編集者" : "閲覧者"}
+                      {tlRole(member.role)}
                     </span>
                   )}
                 </div>
@@ -334,20 +334,20 @@ export function MemberDialog({
 
           {isOwner && (
             <div className="space-y-3 border-t pt-3">
-              <Label className="text-sm font-medium">メンバーを追加</Label>
+              <Label className="text-sm font-medium">{tme("addMember")}</Label>
               {memberLimitReached ? (
-                <p className="text-sm text-muted-foreground">{MSG.LIMIT_MEMBERS}</p>
+                <p className="text-sm text-muted-foreground">{tm("limitMembers", { max: 20 })}</p>
               ) : (
                 <Tabs defaultValue="friends">
                   <TabsList className="w-full">
                     <TabsTrigger value="friends" className="flex-1">
-                      フレンドから
+                      {tme("fromFriends")}
                     </TabsTrigger>
                     <TabsTrigger value="groups" className="flex-1">
-                      グループから
+                      {tme("fromGroups")}
                     </TabsTrigger>
                     <TabsTrigger value="userId" className="flex-1">
-                      IDで追加
+                      {tme("byId")}
                     </TabsTrigger>
                   </TabsList>
 
@@ -364,14 +364,14 @@ export function MemberDialog({
                       if (addable.length === 0) {
                         return (
                           <p className="py-4 text-center text-sm text-muted-foreground">
-                            {MSG.MEMBER_ALL_ADDED}
+                            {tm("memberAllAdded")}
                           </p>
                         );
                       }
                       return (
                         <div className="space-y-2">
                           <div className="flex select-none items-center justify-end gap-2 py-1">
-                            <span className="text-sm text-muted-foreground">ロール:</span>
+                            <span className="text-sm text-muted-foreground">{tme("role")}</span>
                             <Select value={friendRole} onValueChange={setFriendRole}>
                               <SelectTrigger className="h-8 w-[100px] text-sm">
                                 <SelectValue />
@@ -423,7 +423,7 @@ export function MemberDialog({
                         <div className="flex select-none items-center justify-between gap-2 py-1">
                           <Select value={selectedGroupId ?? ""} onValueChange={setSelectedGroupId}>
                             <SelectTrigger className="h-8 flex-1 text-sm">
-                              <SelectValue placeholder="グループを選択" />
+                              <SelectValue placeholder={tme("selectGroup")} />
                             </SelectTrigger>
                             <SelectContent>
                               {groups.map((g) => (
@@ -433,7 +433,7 @@ export function MemberDialog({
                               ))}
                             </SelectContent>
                           </Select>
-                          <span className="text-sm text-muted-foreground">ロール:</span>
+                          <span className="text-sm text-muted-foreground">{tme("role")}</span>
                           <Select value={groupRole} onValueChange={setGroupRole}>
                             <SelectTrigger className="h-8 w-[100px] text-sm">
                               <SelectValue />
@@ -452,7 +452,7 @@ export function MemberDialog({
                             if (addable.length === 0) {
                               return (
                                 <p className="py-4 text-center text-sm text-muted-foreground">
-                                  {MSG.MEMBER_ALL_ADDED}
+                                  {tm("memberAllAdded")}
                                 </p>
                               );
                             }
@@ -486,7 +486,7 @@ export function MemberDialog({
                                     disabled={adding}
                                     onClick={handleAddGroupMembers}
                                   >
-                                    {adding ? "追加中..." : "全員追加"}
+                                    {adding ? tme("addingMember") : tme("addAll")}
                                   </Button>
                                 </div>
                               </>
@@ -509,10 +509,10 @@ export function MemberDialog({
                             htmlFor="send-friend-request"
                             className="text-sm text-muted-foreground"
                           >
-                            フレンド申請も送る
+                            {tme("sendFriendRequest")}
                           </Label>
                         </div>
-                        <span className="text-sm text-muted-foreground">ロール:</span>
+                        <span className="text-sm text-muted-foreground">{tme("role")}</span>
                         <Select value={role} onValueChange={setRole}>
                           <SelectTrigger className="h-8 w-[100px] text-sm">
                             <SelectValue />
@@ -539,9 +539,7 @@ export function MemberDialog({
                           {adding ? "追加中..." : "追加"}
                         </Button>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        ユーザーIDは相手のプロフィールページで確認できます。
-                      </p>
+                      <p className="text-sm text-muted-foreground">{tme("userIdHint")}</p>
                     </form>
                   </TabsContent>
                 </Tabs>
@@ -556,15 +554,15 @@ export function MemberDialog({
       >
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>メンバーを削除しますか？</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogTitle>{tme("deleteConfirmTitle")}</ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              「{removeMember?.name}」を旅行から削除します。この操作は取り消せません。
+              {tme("deleteConfirmDescription", { name: removeMember?.name ?? "" })}
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
@@ -572,7 +570,7 @@ export function MemberDialog({
                 setRemoveMember(null);
               }}
             >
-              削除する
+              {tc("deletConfirm")}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>

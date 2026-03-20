@@ -3,6 +3,7 @@
 import type { ScheduleResponse } from "@sugara/shared";
 import { shiftTime } from "@sugara/shared";
 import { TriangleAlert } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -17,7 +18,6 @@ import {
 } from "@/components/ui/responsive-alert-dialog";
 import { api } from "@/lib/api";
 import { formatTime } from "@/lib/format";
-import { MSG } from "@/lib/messages";
 
 type BatchShiftDialogProps = {
   open: boolean;
@@ -46,11 +46,14 @@ export function BatchShiftDialog({
   skippedSchedules,
   onDone,
 }: BatchShiftDialogProps) {
+  const tm = useTranslations("messages");
+  const ts = useTranslations("schedule");
   const [loading, setLoading] = useState(false);
 
-  const direction = deltaMinutes > 0 ? "遅く" : "早く";
+  const direction = deltaMinutes > 0 ? ts("batchShiftLater") : ts("batchShiftEarlier");
   const absDelta = Math.abs(deltaMinutes);
-  const sourceLabel = deltaSource === "end" ? "終了" : "開始";
+  const sourceLabel =
+    deltaSource === "end" ? ts("batchShiftSourceEnd") : ts("batchShiftSourceStart");
 
   // Preview shifted times
   const previews = targetSchedules.slice(0, 3).map((s) => {
@@ -85,14 +88,16 @@ export function BatchShiftDialog({
         },
       );
       if (result.skippedCount > 0) {
-        toast.success(MSG.BATCH_SHIFT_PARTIAL(result.updatedCount, result.skippedCount));
+        toast.success(
+          tm("batchShiftPartial", { updated: result.updatedCount, skipped: result.skippedCount }),
+        );
       } else {
-        toast.success(MSG.BATCH_SHIFT_SUCCESS(result.updatedCount));
+        toast.success(tm("batchShiftSuccess", { count: result.updatedCount }));
       }
       onOpenChange(false);
       onDone();
     } catch {
-      toast.error(MSG.BATCH_SHIFT_FAILED);
+      toast.error(tm("batchShiftFailed"));
     } finally {
       setLoading(false);
     }
@@ -102,10 +107,15 @@ export function BatchShiftDialog({
     <ResponsiveAlertDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveAlertDialogContent>
         <ResponsiveAlertDialogHeader>
-          <ResponsiveAlertDialogTitle>以降の予定の時間を調整</ResponsiveAlertDialogTitle>
+          <ResponsiveAlertDialogTitle>{ts("batchShiftTitle")}</ResponsiveAlertDialogTitle>
           <ResponsiveAlertDialogDescription>
-            「{scheduleName}」の{sourceLabel}時間が{absDelta}分{direction}なりました。以降の
-            {targetSchedules.length}件の予定も同じ分だけずらしますか？
+            {ts("batchShiftDescription", {
+              name: scheduleName,
+              source: sourceLabel,
+              delta: absDelta,
+              direction,
+              count: targetSchedules.length,
+            })}
           </ResponsiveAlertDialogDescription>
         </ResponsiveAlertDialogHeader>
         <div className="space-y-1.5 text-sm">
@@ -119,7 +129,11 @@ export function BatchShiftDialog({
               )}
             </div>
           ))}
-          {remaining > 0 && <p className="text-xs text-muted-foreground">他{remaining}件</p>}
+          {remaining > 0 && (
+            <p className="text-xs text-muted-foreground">
+              {ts("batchShiftOthers", { count: remaining })}
+            </p>
+          )}
         </div>
         {skippedSchedules.length > 0 && (
           <div className="flex items-start gap-2 rounded-md bg-muted p-2 text-xs text-muted-foreground">
@@ -127,17 +141,21 @@ export function BatchShiftDialog({
             <div>
               {skippedSchedules.map((s) => (
                 <p key={s.id}>
-                  「{s.name}」{s.startTime ? `(${formatTime(s.startTime)})` : ""}
-                  は範囲外のためスキップされます
+                  {ts("batchShiftSkipped", {
+                    name: s.name,
+                    time: s.startTime ? `(${formatTime(s.startTime)})` : "",
+                  })}
                 </p>
               ))}
             </div>
           </div>
         )}
         <ResponsiveAlertDialogFooter>
-          <ResponsiveAlertDialogCancel disabled={loading}>この予定だけ</ResponsiveAlertDialogCancel>
+          <ResponsiveAlertDialogCancel disabled={loading}>
+            {ts("batchShiftOnlyThis")}
+          </ResponsiveAlertDialogCancel>
           <ResponsiveAlertDialogAction onClick={handleShift} disabled={loading}>
-            {loading ? "更新中..." : "以降もずらす"}
+            {loading ? ts("adding") : ts("batchShiftAll")}
           </ResponsiveAlertDialogAction>
         </ResponsiveAlertDialogFooter>
       </ResponsiveAlertDialogContent>

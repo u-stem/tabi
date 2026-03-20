@@ -2,6 +2,7 @@
 
 import { TRIP_DESTINATION_MAX_LENGTH, TRIP_TITLE_MAX_LENGTH } from "@sugara/shared";
 import { Check, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CoverImagePicker } from "@/components/cover-image-picker";
@@ -21,7 +22,6 @@ import {
 import { api, getApiErrorMessage } from "@/lib/api";
 import { getDayCount } from "@/lib/format";
 import { useCoverImageUpload } from "@/lib/hooks/use-cover-image-upload";
-import { MSG } from "@/lib/messages";
 
 type EditTripDialogProps = {
   tripId: string;
@@ -48,6 +48,9 @@ export function EditTripDialog({
   onOpenChange,
   onUpdate,
 }: EditTripDialogProps) {
+  const tm = useTranslations("messages");
+  const tt = useTranslations("trip");
+  const tc = useTranslations("common");
   const [editTitle, setEditTitle] = useState(title);
   const [editDestination, setEditDestination] = useState(destination ?? "");
   const [loading, setLoading] = useState(false);
@@ -89,7 +92,7 @@ export function EditTripDialog({
     const newEndDate = formData.get("endDate") as string;
 
     if (hasDates && (!newStartDate || !newEndDate)) {
-      setError(MSG.TRIP_DATE_REQUIRED);
+      setError(tm("tripDateRequired"));
       setLoading(false);
       return;
     }
@@ -98,7 +101,7 @@ export function EditTripDialog({
       const oldCount = getDayCount(startDate, endDate);
       const newCount = getDayCount(newStartDate, newEndDate);
       if (newCount < oldCount) {
-        setError(MSG.TRIP_DAYS_REDUCED);
+        setError(tm("tripDaysReduced"));
         setLoading(false);
         return;
       }
@@ -140,10 +143,10 @@ export function EditTripDialog({
         body: JSON.stringify(data),
       });
       onOpenChange(false);
-      toast.success(MSG.TRIP_UPDATED);
+      toast.success(tm("tripUpdated"));
       onUpdate();
     } catch (err) {
-      setError(getApiErrorMessage(err, MSG.TRIP_UPDATE_FAILED));
+      setError(getApiErrorMessage(err, tm("tripUpdateFailed")));
     } finally {
       setLoading(false);
     }
@@ -155,14 +158,14 @@ export function EditTripDialog({
     <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
       <ResponsiveDialogContent className="flex max-h-[90vh] flex-col overflow-hidden sm:max-w-2xl">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>旅行を編集</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>旅行の情報を変更します</ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{tt("editTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{tt("editDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-4">
           <div className="space-y-4 overflow-y-auto px-1">
             <div className="space-y-2">
               <Label htmlFor="edit-title">
-                タイトル <span className="text-destructive">*</span>
+                {tt("title")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="edit-title"
@@ -178,7 +181,7 @@ export function EditTripDialog({
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-destination">目的地</Label>
+              <Label htmlFor="edit-destination">{tt("destination")}</Label>
               <Input
                 id="edit-destination"
                 name="destination"
@@ -214,7 +217,7 @@ export function EditTripDialog({
             {hasDates && (
               <div className="space-y-2">
                 <Label>
-                  旅行期間 <span className="text-destructive">*</span>
+                  {tt("period")} <span className="text-destructive">*</span>
                 </Label>
                 <DateRangePicker
                   startDate={editStartDate}
@@ -236,12 +239,12 @@ export function EditTripDialog({
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={busy}>
               <Check className="h-4 w-4" />
-              {busy ? "更新中..." : "更新"}
+              {busy ? tt("updating") : tc("update")}
             </Button>
           </ResponsiveDialogFooter>
         </form>

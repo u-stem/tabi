@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef } from "react";
 import { CreateTripDialog } from "@/components/create-trip-dialog";
 import { Fab } from "@/components/fab";
@@ -14,12 +15,6 @@ import { pageTitle } from "@/lib/constants";
 import { type HomeTab, useHomeTrips } from "@/lib/hooks/use-home-trips";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { useUnsettledTripIds } from "@/lib/hooks/use-unsettled-trip-ids";
-import { MSG } from "@/lib/messages";
-
-const HOME_TABS: SwipeTab<HomeTab>[] = [
-  { id: "owned", label: "自分の旅行" },
-  { id: "shared", label: "共有された旅行" },
-];
 
 function SpHomeSkeleton() {
   return (
@@ -56,6 +51,15 @@ function SpHomeSkeleton() {
 }
 
 export default function SpHomePage() {
+  const tm = useTranslations("messages");
+  const tt = useTranslations("trip");
+  const tc = useTranslations("common");
+
+  const HOME_TABS: SwipeTab<HomeTab>[] = [
+    { id: "owned", label: tt("ownedTrips") },
+    { id: "shared", label: tt("sharedTrips") },
+  ];
+
   const {
     ownedTrips,
     sharedTrips,
@@ -114,14 +118,14 @@ export default function SpHomePage() {
       if (baseData.length === 0) {
         return (
           <EmptyState
-            message={targetTab === "shared" ? MSG.EMPTY_TRIP_SHARED : MSG.EMPTY_TRIP}
+            message={targetTab === "shared" ? tm("emptyTripShared") : tm("emptyTrip")}
             variant="page"
           />
         );
       }
 
       if (displayTrips.length === 0) {
-        return <EmptyState message={MSG.EMPTY_TRIP_FILTER} variant="page" />;
+        return <EmptyState message={tm("emptyTripFilter")} variant="page" />;
       }
 
       return (
@@ -155,9 +159,9 @@ export default function SpHomePage() {
 
   const errorFallback = error ? (
     <div className="mt-8 text-center">
-      <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+      <p className="text-destructive">{tm("tripFetchFailed")}</p>
       <Button variant="outline" size="sm" className="mt-4" onClick={() => invalidateAll()}>
-        再試行
+        {tc("retry")}
       </Button>
     </div>
   ) : undefined;
@@ -210,7 +214,7 @@ export default function SpHomePage() {
       />
       <Fab
         onClick={() => setCreateTripOpen(true)}
-        label="旅行を新規作成"
+        label={tt("createTrip")}
         hidden={!online || tab === "shared"}
       />
     </>

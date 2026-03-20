@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { QRCodeSVG } from "qrcode.react";
 import { CopyButton } from "@/components/copy-button";
 import {
@@ -24,14 +25,16 @@ export function ShareDialog({
   onOpenChange,
   shareUrl,
   expiresAt,
-  description = "URLまたはQRコードで共有できます",
+  description,
 }: ShareDialogProps) {
+  const tt = useTranslations("trip");
+  const resolvedDescription = description ?? tt("shareDescription");
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="sm:max-w-sm">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>共有リンク</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>{description}</ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{tt("shareTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{resolvedDescription}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
         <div className="space-y-4">
@@ -43,7 +46,7 @@ export function ShareDialog({
               className="min-w-0 flex-1 rounded-md border bg-muted px-3 py-2 text-sm"
               onFocus={(e) => e.currentTarget.select()}
             />
-            <CopyButton value={shareUrl} label="URLをコピー" />
+            <CopyButton value={shareUrl} label={tt("copyUrl")} />
           </div>
 
           <div className="flex justify-center rounded-md border bg-white p-4 dark:border-0 dark:shadow-sm">
@@ -52,8 +55,8 @@ export function ShareDialog({
 
           {expiresAt && (
             <p className="text-center text-xs text-muted-foreground">
-              有効期限:{" "}
-              {new Date(expiresAt) < new Date() ? "期限切れ" : formatDateFromISO(expiresAt)}
+              {tt("shareExpiry")}{" "}
+              {new Date(expiresAt) < new Date() ? tt("expired") : formatDateFromISO(expiresAt)}
             </p>
           )}
         </div>

@@ -4,6 +4,7 @@ import { TRIP_DESTINATION_MAX_LENGTH, TRIP_TITLE_MAX_LENGTH } from "@sugara/shar
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -39,6 +40,9 @@ type CreateTripDialogProps = {
 };
 
 export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDialogProps) {
+  const tm = useTranslations("messages");
+  const tt = useTranslations("trip");
+  const tc = useTranslations("common");
   const [dateMode, setDateMode] = useState<DateMode>("direct");
   const [title, setTitle] = useState("");
   const [destination, setDestination] = useState("");
@@ -127,13 +131,13 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
           }
         }
         onOpenChange(false);
-        toast.success(MSG.TRIP_CREATED);
+        toast.success(tm("tripCreated"));
         onCreated();
       } catch (err) {
         if (err instanceof ApiError && err.status === 403 && err.message.includes("Guest")) {
           setError(MSG.AUTH_GUEST_TRIP_LIMIT);
         } else {
-          setError(getApiErrorMessage(err, MSG.TRIP_CREATE_FAILED));
+          setError(getApiErrorMessage(err, tm("tripCreateFailed")));
         }
       } finally {
         setLoading(false);
@@ -143,7 +147,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
       const ed = formData.get("endDate") as string;
 
       if (!sd || !ed) {
-        setError(MSG.TRIP_DATE_REQUIRED);
+        setError(tm("tripDateRequired"));
         return;
       }
 
@@ -168,13 +172,13 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
           }
         }
         onOpenChange(false);
-        toast.success(MSG.TRIP_CREATED);
+        toast.success(tm("tripCreated"));
         onCreated();
       } catch (err) {
         if (err instanceof ApiError && err.status === 403 && err.message.includes("Guest")) {
           setError(MSG.AUTH_GUEST_TRIP_LIMIT);
         } else {
-          setError(getApiErrorMessage(err, MSG.TRIP_CREATE_FAILED));
+          setError(getApiErrorMessage(err, tm("tripCreateFailed")));
         }
       } finally {
         setLoading(false);
@@ -186,16 +190,14 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
     <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
       <ResponsiveDialogContent className="flex max-h-[90vh] flex-col overflow-hidden sm:max-w-2xl">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>新しい旅行を作成</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            旅行の基本情報を入力してください
-          </ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{tt("createTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{tt("createDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-4">
           <div className="space-y-4 overflow-y-auto px-1">
             <div className="space-y-2">
               <Label htmlFor="create-title">
-                旅行タイトル <span className="text-destructive">*</span>
+                {tt("tripTitle")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="create-title"
@@ -211,7 +213,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="create-destination">目的地</Label>
+              <Label htmlFor="create-destination">{tt("destination")}</Label>
               <Input
                 id="create-destination"
                 name="destination"
@@ -247,10 +249,10 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
             <Tabs value={dateMode} onValueChange={(v) => setDateMode(v as DateMode)}>
               <TabsList className="w-full">
                 <TabsTrigger value="direct" className="flex-1">
-                  日程を決定する
+                  {tt("decideDates")}
                 </TabsTrigger>
                 <TabsTrigger value="poll" className="flex-1">
-                  日程を調整する
+                  {tt("adjustDates")}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -258,7 +260,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
             {dateMode === "direct" ? (
               <div className="space-y-2">
                 <Label>
-                  旅行期間 <span className="text-destructive">*</span>
+                  {tt("period")} <span className="text-destructive">*</span>
                 </Label>
                 <DateRangePicker
                   startDate={startDate}
@@ -273,7 +275,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label>
-                    日程案 <span className="text-destructive">*</span>
+                    {tt("pollOptions")} <span className="text-destructive">*</span>
                   </Label>
                   <Button
                     type="button"
@@ -283,12 +285,10 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
                     disabled={!pendingRange?.from}
                   >
                     <Plus className="h-4 w-4" />
-                    日程案に追加
+                    {tt("addPollOption")}
                   </Button>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  カレンダーで日付範囲を選択し「日程案に追加」で追加
-                </p>
+                <p className="text-xs text-muted-foreground">{tt("pollOptionHint")}</p>
                 <div className="flex flex-col items-center">
                   <CalendarNav
                     month={calendarMonth}
@@ -313,7 +313,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
                 {candidates.length > 0 && (
                   <div className="space-y-1">
                     <p className="text-xs font-medium text-muted-foreground">
-                      追加済みの日程案 ({candidates.length}件)
+                      {tt("addedOptions", { count: candidates.length })}
                     </p>
                     <div className="divide-y rounded-md border">
                       {candidates.map((opt, i) => (
@@ -351,12 +351,12 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={loading || uploading}>
               <Plus className="h-4 w-4" />
-              {loading || uploading ? "作成中..." : "作成"}
+              {loading || uploading ? tt("creating") : tt("create")}
             </Button>
           </ResponsiveDialogFooter>
         </form>

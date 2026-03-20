@@ -1,9 +1,9 @@
 "use client";
 
 import type { TripListItem } from "@sugara/shared";
-import { ROLE_LABELS, STATUS_LABELS } from "@sugara/shared";
 import Image from "next/image";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,6 +41,9 @@ export const TripCard = memo(function TripCard({
   priority = false,
   unsettled = false,
 }: TripCardProps) {
+  const tt = useTranslations("trip");
+  const tlRole = useTranslations("labels.role");
+  const tlStatus = useTranslations("labels.status");
   const hasDates = startDate && endDate;
   const dayCount = hasDates ? getDayCount(startDate, endDate) : null;
   const showRole = role !== "owner";
@@ -51,7 +54,7 @@ export const TripCard = memo(function TripCard({
         <div className="relative aspect-[16/9] w-full overflow-hidden rounded-t-xl">
           <Image
             src={coverImageUrl}
-            alt={`${title}のカバー画像`}
+            alt={tt("coverAlt", { title })}
             fill
             priority={priority}
             className="object-cover"
@@ -72,16 +75,16 @@ export const TripCard = memo(function TripCard({
                 variant="outline"
                 className="text-xs border-red-200 text-red-600 dark:border-red-800 dark:text-red-400"
               >
-                未精算
+                {tt("unsettled")}
               </Badge>
             )}
             {showRole && (
               <Badge variant="outline" className={cn("text-xs", ROLE_COLORS[role])}>
-                {ROLE_LABELS[role]}
+                {tlRole(role)}
               </Badge>
             )}
             <Badge variant="outline" className={STATUS_COLORS[status]}>
-              {STATUS_LABELS[status]}
+              {tlStatus(status)}
             </Badge>
           </div>
         </div>
@@ -89,10 +92,12 @@ export const TripCard = memo(function TripCard({
       </CardHeader>
       <CardContent className="mt-auto">
         <p className="text-sm text-muted-foreground">
-          {hasDates ? `${formatDateRange(startDate, endDate)} (${dayCount}日間)` : "日程未定"}
+          {hasDates
+            ? `${formatDateRange(startDate, endDate)} (${tt("dayCount", { count: dayCount ?? 0 })})`
+            : tt("noDate")}
         </p>
         <p className="mt-1 text-xs text-muted-foreground">
-          {totalSchedules > 0 ? `${totalSchedules}件の予定` : "予定なし"}
+          {totalSchedules > 0 ? tt("scheduleCount", { count: totalSchedules }) : tt("noSchedule")}
         </p>
       </CardContent>
     </div>

@@ -1,9 +1,9 @@
 import type { TripResponse } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import {
   moveCandidateToSchedule,
@@ -31,6 +31,7 @@ export function useScheduleSelection({
   candidateIds,
   onDone,
 }: UseScheduleSelectionArgs) {
+  const tm = useTranslations("messages");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
 
@@ -101,7 +102,7 @@ export function useScheduleSelection({
       }
       queryClient.setQueryData(cacheKey, next);
     }
-    toast.success(MSG.BATCH_ASSIGNED(count));
+    toast.success(tm("batchAssigned", { count }));
     exit();
 
     try {
@@ -115,7 +116,7 @@ export function useScheduleSelection({
       onDone();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.BATCH_ASSIGN_FAILED);
+      toast.error(tm("batchAssignFailed"));
     } finally {
       setBatchLoading(false);
     }
@@ -136,7 +137,7 @@ export function useScheduleSelection({
       }
       queryClient.setQueryData(cacheKey, next);
     }
-    toast.success(MSG.BATCH_UNASSIGNED(count));
+    toast.success(tm("batchUnassigned", { count }));
     exit();
 
     try {
@@ -147,7 +148,7 @@ export function useScheduleSelection({
       onDone();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.BATCH_UNASSIGN_FAILED);
+      toast.error(tm("batchUnassignFailed"));
     } finally {
       setBatchLoading(false);
     }
@@ -175,7 +176,7 @@ export function useScheduleSelection({
       }
       queryClient.setQueryData(cacheKey, next);
     }
-    toast.success(MSG.BATCH_DELETED(count));
+    toast.success(tm("batchDeleted", { count }));
     exit();
 
     try {
@@ -196,7 +197,7 @@ export function useScheduleSelection({
       onDone();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.BATCH_DELETE_FAILED);
+      toast.error(tm("batchDeleteFailed"));
     } finally {
       setBatchLoading(false);
       setBatchDeleteOpen(false);
@@ -211,11 +212,11 @@ export function useScheduleSelection({
         method: "POST",
         body: JSON.stringify({ scheduleIds: [...selectedIds] }),
       });
-      toast.success(MSG.BATCH_DUPLICATED(selectedIds.size));
+      toast.success(tm("batchDuplicated", { count: selectedIds.size }));
       exit();
       onDone();
     } catch {
-      toast.error(MSG.BATCH_DUPLICATE_FAILED);
+      toast.error(tm("batchDuplicateFailed"));
     } finally {
       setBatchLoading(false);
     }
@@ -232,11 +233,11 @@ export function useScheduleSelection({
           body: JSON.stringify({ scheduleIds: [...selectedIds] }),
         },
       );
-      toast.success(MSG.BATCH_DUPLICATED(selectedIds.size));
+      toast.success(tm("batchDuplicated", { count: selectedIds.size }));
       exit();
       onDone();
     } catch {
-      toast.error(MSG.BATCH_DUPLICATE_FAILED);
+      toast.error(tm("batchDuplicateFailed"));
     } finally {
       setBatchLoading(false);
     }

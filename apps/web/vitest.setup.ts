@@ -1,5 +1,6 @@
 import { vi } from "vitest";
 
+
 // bun's jsdom integration doesn't provide a complete localStorage implementation
 const localStorageStore: Record<string, string> = {};
 Object.defineProperty(window, "localStorage", {

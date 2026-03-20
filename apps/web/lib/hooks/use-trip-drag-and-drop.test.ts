@@ -18,6 +18,10 @@ vi.mock("sonner", () => ({
   toast: { success: vi.fn(), error: vi.fn() },
 }));
 
+vi.mock("next-intl", () => ({
+  useTranslations: () => (key: string) => key,
+}));
+
 vi.mock("@dnd-kit/core", () => ({
   useSensor: vi.fn(() => ({})),
   useSensors: vi.fn((...sensors: unknown[]) => sensors),

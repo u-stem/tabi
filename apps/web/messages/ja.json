@@ -1043,7 +1043,9 @@
     "feedback": "フィードバック",
     "terms": "利用規約",
     "privacyPolicy": "プライバシーポリシー",
-    "emailVerified": "メールアドレスを設定しました。"
+    "emailVerified": "メールアドレスを設定しました。",
+    "language": "言語",
+    "languageDescription": "表示言語を切り替えます"
   },
   "profile": {
     "pageTitle": "プロフィール",

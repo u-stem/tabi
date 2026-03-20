@@ -6,6 +6,7 @@ import {
   Download,
   FileText,
   HelpCircle,
+  Languages,
   MessageSquare,
   MoreHorizontal,
   Newspaper,
@@ -18,8 +19,8 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useTranslations } from "next-intl";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { EmailSection } from "@/components/email-section";
 import { NotificationPreferencesSection } from "@/components/notification-preferences-section";
@@ -60,6 +61,7 @@ import { isGuestUser } from "@/lib/guest";
 import { DESKTOP_RELEASES_URL, useDesktopDownload } from "@/lib/hooks/use-desktop-download";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
+import { setLocale } from "@/lib/locale";
 import { cn } from "@/lib/utils";
 
 const FeedbackDialog = dynamic(() =>
@@ -790,6 +792,39 @@ function DeleteAccountSection({ username }: { username: string }) {
   );
 }
 
+function LanguageRow() {
+  const ts = useTranslations("settings");
+  const locale = useLocale();
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+
+  const nextLocale = locale === "ja" ? "en" : "ja";
+  const currentLabel = locale === "ja" ? "日本語" : "English";
+
+  function handleSwitch() {
+    startTransition(async () => {
+      await setLocale(nextLocale);
+      router.refresh();
+    });
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleSwitch}
+      disabled={isPending}
+      className="flex w-full items-center gap-3 px-4 py-3 hover:bg-accent"
+    >
+      <Languages className="h-4 w-4 shrink-0" />
+      <div className="text-left flex-1">
+        <div className="text-sm">{ts("language")}</div>
+        <div className="text-xs text-muted-foreground">{ts("languageDescription")}</div>
+      </div>
+      <span className="text-sm text-muted-foreground">{currentLabel}</span>
+    </button>
+  );
+}
+
 function OtherSection() {
   const ts = useTranslations("settings");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -798,6 +833,7 @@ function OtherSection() {
   return (
     <>
       <div className="overflow-hidden rounded-lg border divide-y">
+        <LanguageRow />
         {canInstall && (
           <button
             type="button"

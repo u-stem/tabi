@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
+import { LocaleSwitcher } from "@/components/locale-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -119,6 +120,7 @@ export function HeaderMenu() {
               <TooltipContent>{t("switchToSp")}</TooltipContent>
             </Tooltip>
           )}
+          <LocaleSwitcher />
           <ThemeToggle />
           <Tooltip>
             <TooltipTrigger asChild>
@@ -174,6 +176,7 @@ export function SpHeaderMenu() {
             </TooltipTrigger>
             <TooltipContent>{t("switchToPc")}</TooltipContent>
           </Tooltip>
+          <LocaleSwitcher />
           <ThemeToggle iconClassName="h-6 w-6" />
           <Tooltip>
             <TooltipTrigger asChild>

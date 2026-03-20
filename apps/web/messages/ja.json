@@ -1,0 +1,44 @@
+{
+  "metadata": {
+    "description": "旅行の計画を作成・共有できる共同編集アプリ。"
+  },
+  "home": {
+    "heroTitle": "計画もまた、旅の楽しみだ。",
+    "description": "旅行の計画を作成・共有できる共同編集アプリ。",
+    "signup": "新規登録",
+    "login": "ログイン",
+    "signupDisabled": "現在、新規利用の受付を停止しています",
+    "features": {
+      "schedule": {
+        "title": "スケジュール管理",
+        "description": "日程ごとに行き先を整理。ドラッグで並べ替えも。"
+      },
+      "realtime": {
+        "title": "リアルタイム共同編集",
+        "description": "メンバーの変更がリアルタイムに反映。誰がどこを見ているかも分かる。"
+      },
+      "expense": {
+        "title": "費用管理・精算",
+        "description": "費用を記録して自動で割り勘計算。精算チェックで支払い状況も管理。"
+      },
+      "poll": {
+        "title": "投票",
+        "description": "日程調整やかんたん投票で意見を集約。リンク共有で外部の人も参加可能。"
+      },
+      "souvenir": {
+        "title": "お土産リスト",
+        "description": "贈り先ごとに買うものを整理。優先度や購入済みの管理も。"
+      },
+      "roulette": {
+        "title": "ルーレット",
+        "description": "迷ったらルーレットで決定。行き先選びに遊び心を。"
+      }
+    },
+    "footer": {
+      "faq": "よくある質問",
+      "news": "お知らせ",
+      "terms": "利用規約",
+      "privacy": "プライバシーポリシー"
+    }
+  }
+}

@@ -63,6 +63,8 @@ export default function HomePage() {
   const tm = useTranslations("messages");
   const tt = useTranslations("trip");
   const tc = useTranslations("common");
+  const ts = useTranslations("shortcuts");
+  const tpt = useTranslations("pageTitle");
   const {
     ownedTrips,
     isLoading,
@@ -100,25 +102,25 @@ export default function HomePage() {
   const homeShortcuts: ShortcutGroup[] = useMemo(
     () => [
       {
-        group: "全般",
+        group: ts("general"),
         items: [
-          { key: "/", description: "検索にフォーカス" },
-          { key: "n", description: "新規作成" },
-          { key: "1", description: "「自分の旅行」タブ" },
-          { key: "2", description: "「共有された旅行」タブ" },
-          { key: "s", description: "選択モード切替" },
-          { key: "Escape", description: "選択モード解除" },
-          { key: "a", description: "全選択 / 全解除" },
+          { key: "/", description: ts("focusSearch") },
+          { key: "n", description: ts("create") },
+          { key: "1", description: ts("ownedTripsTab") },
+          { key: "2", description: ts("sharedTripsTab") },
+          { key: "s", description: ts("toggleSelection") },
+          { key: "Escape", description: ts("exitSelection") },
+          { key: "a", description: ts("toggleSelectAll") },
         ],
       },
     ],
-    [],
+    [ts],
   );
   useRegisterShortcuts(homeShortcuts);
 
   useEffect(() => {
-    document.title = pageTitle("ホーム");
-  }, []);
+    document.title = pageTitle(tpt("home"));
+  }, [tpt]);
 
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
   useHotkeys(

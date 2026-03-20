@@ -91,6 +91,7 @@ export default function BookmarksPage() {
   const tb = useTranslations("bookmark");
   const tc = useTranslations("common");
   const tlVis = useTranslations("labels.visibility");
+  const tsc = useTranslations("shortcuts");
   const online = useOnlineStatus();
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
@@ -119,16 +120,16 @@ export default function BookmarksPage() {
   const shortcuts: ShortcutGroup[] = useMemo(
     () => [
       {
-        group: "全般",
+        group: tsc("general"),
         items: [
-          { key: "n", description: "新規作成" },
-          { key: "s", description: "選択モード切替" },
-          { key: "Escape", description: "選択モード解除" },
-          { key: "a", description: "全選択 / 全解除" },
+          { key: "n", description: tsc("create") },
+          { key: "s", description: tsc("toggleSelection") },
+          { key: "Escape", description: tsc("exitSelection") },
+          { key: "a", description: tsc("toggleSelectAll") },
         ],
       },
     ],
-    [],
+    [tsc],
   );
   useRegisterShortcuts(shortcuts);
 

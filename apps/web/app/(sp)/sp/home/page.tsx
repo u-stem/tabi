@@ -54,6 +54,7 @@ export default function SpHomePage() {
   const tm = useTranslations("messages");
   const tt = useTranslations("trip");
   const tc = useTranslations("common");
+  const tpt = useTranslations("pageTitle");
 
   const HOME_TABS: SwipeTab<HomeTab>[] = [
     { id: "owned", label: tt("ownedTrips") },
@@ -94,8 +95,8 @@ export default function SpHomePage() {
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    document.title = pageTitle("ホーム");
-  }, []);
+    document.title = pageTitle(tpt("home"));
+  }, [tpt]);
 
   const handleTabChange = useCallback(
     (newTab: HomeTab) => {

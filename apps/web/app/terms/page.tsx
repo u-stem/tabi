@@ -4,9 +4,10 @@ import { getTranslations } from "next-intl/server";
 import { Logo } from "@/components/logo";
 import { pageTitle } from "@/lib/constants";
 
-export const metadata: Metadata = {
-  title: pageTitle("利用規約"),
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("pageTitle");
+  return { title: pageTitle(t("terms")) };
+}
 
 export default async function TermsPage() {
   const t = await getTranslations("legal");

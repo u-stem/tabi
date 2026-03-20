@@ -70,6 +70,7 @@ function FriendsSkeleton() {
 export default function FriendsPage() {
   const tm = useTranslations("messages");
   const tf = useTranslations("friend");
+  const tsc = useTranslations("shortcuts");
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
   const { friends, requests, sentRequests, groups, isLoading } = useFriendsPage(isGuest);
@@ -92,14 +93,14 @@ export default function FriendsPage() {
   const shortcuts: ShortcutGroup[] = useMemo(
     () => [
       {
-        group: "全般",
+        group: tsc("general"),
         items: [
-          { key: "a", description: "フレンド追加" },
-          { key: "n", description: "グループ新規作成" },
+          { key: "a", description: tsc("addFriend") },
+          { key: "n", description: tsc("createGroup") },
         ],
       },
     ],
-    [],
+    [tsc],
   );
   useRegisterShortcuts(shortcuts);
 

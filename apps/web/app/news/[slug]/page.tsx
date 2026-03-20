@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import Markdown from "react-markdown";
 import { Logo } from "@/components/logo";
 import { pageTitle } from "@/lib/constants";
@@ -20,7 +21,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const article = getNewsBySlug(slug);
   const ogImage = `/icons/apple-touch-icon-${getSeason()}.png`;
-  if (!article) return { title: pageTitle("お知らせ") };
+  if (!article) {
+    const t = await getTranslations("pageTitle");
+    return { title: pageTitle(t("news")) };
+  }
   return {
     title: pageTitle(article.title),
     description: article.summary,

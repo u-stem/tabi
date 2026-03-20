@@ -86,6 +86,7 @@ function BookmarkDetailSkeleton() {
 export default function BookmarkListDetailPage() {
   const tm = useTranslations("messages");
   const tb = useTranslations("bookmark");
+  const tsc = useTranslations("shortcuts");
   const { listId } = useParams<{ listId: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -167,17 +168,17 @@ export default function BookmarkListDetailPage() {
   const detailShortcuts: ShortcutGroup[] = useMemo(
     () => [
       {
-        group: "全般",
+        group: tsc("general"),
         items: [
-          { key: "n", description: "ブックマーク追加" },
-          { key: "e", description: "リスト編集" },
-          { key: "s", description: "選択モード切替" },
-          { key: "Escape", description: "選択 / 並び替えモード解除" },
-          { key: "a", description: "全選択 / 全解除" },
+          { key: "n", description: tsc("addBookmark") },
+          { key: "e", description: tsc("editList") },
+          { key: "s", description: tsc("toggleSelection") },
+          { key: "Escape", description: tsc("exitSelectionOrReorder") },
+          { key: "a", description: tsc("toggleSelectAll") },
         ],
       },
     ],
-    [],
+    [tsc],
   );
   useRegisterShortcuts(detailShortcuts);
 

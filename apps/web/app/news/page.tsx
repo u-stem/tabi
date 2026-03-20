@@ -5,9 +5,10 @@ import { Logo } from "@/components/logo";
 import { pageTitle } from "@/lib/constants";
 import { getAllNews } from "@/lib/news";
 
-export const metadata: Metadata = {
-  title: pageTitle("お知らせ"),
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("pageTitle");
+  return { title: pageTitle(t("news")) };
+}
 
 export default async function NewsPage() {
   const articles = getAllNews();

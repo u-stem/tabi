@@ -15,6 +15,7 @@ import { queryKeys } from "@/lib/query-keys";
 
 export default function SpProfilePage() {
   const tup = useTranslations("userProfile");
+  const tpt = useTranslations("pageTitle");
   const params = useParams();
   const userId = typeof params.userId === "string" ? params.userId : null;
 
@@ -31,7 +32,7 @@ export default function SpProfilePage() {
 
   useEffect(() => {
     if (profile) {
-      document.title = pageTitle(`${profile.name} のプロフィール`);
+      document.title = pageTitle(tpt("userProfile", { name: profile.name }));
     }
   }, [profile]);
 

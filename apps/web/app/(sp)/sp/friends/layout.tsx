@@ -1,7 +1,11 @@
 import type { Metadata } from "next";
+import { getTranslations } from "next-intl/server";
 import { pageTitle } from "@/lib/constants";
 
-export const metadata: Metadata = { title: pageTitle("フレンド") };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("pageTitle");
+  return { title: pageTitle(t("friends")) };
+}
 
 export default function SpFriendsLayout({ children }: { children: React.ReactNode }) {
   return children;

@@ -1,7 +1,7 @@
 import type { SharedPollResponse } from "@sugara/shared";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getLocale } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { pageTitle } from "@/lib/constants";
 import { formatDateFromISO } from "@/lib/format";
 import { getSeason } from "@/lib/season";
@@ -13,8 +13,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
   const season = getSeason();
   const ogImage = `/icons/apple-touch-icon-${season}.png`;
+  const tpt = await getTranslations("pageTitle");
   const fallback: Metadata = {
-    title: pageTitle("日程調整"),
+    title: pageTitle(tpt("datePoll")),
     openGraph: { images: [ogImage] },
     twitter: { card: "summary", images: [ogImage] },
   };

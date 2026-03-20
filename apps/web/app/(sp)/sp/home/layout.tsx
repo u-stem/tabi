@@ -1,9 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getTranslations } from "next-intl/server";
 import { pageTitle } from "@/lib/constants";
 import { getAllNews } from "@/lib/news";
 
-export const metadata: Metadata = { title: pageTitle("ホーム") };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("pageTitle");
+  return { title: pageTitle(t("home")) };
+}
 
 export default async function SpHomeLayout({ children }: { children: React.ReactNode }) {
   const articles = getAllNews();

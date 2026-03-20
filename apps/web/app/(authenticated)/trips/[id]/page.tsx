@@ -220,6 +220,7 @@ export default function TripDetailPage() {
   const te = useTranslations("expense");
   const ts = useTranslations("souvenir");
   const tp = useTranslations("poll");
+  const tsc = useTranslations("shortcuts");
   const params = useParams();
   const tripId = params.id as string;
   const online = useOnlineStatus();
@@ -285,30 +286,30 @@ export default function TripDetailPage() {
   const tripShortcuts: ShortcutGroup[] = useMemo(
     () => [
       {
-        group: "ナビゲーション",
+        group: tsc("navigation"),
         items: [
-          { key: "1-9", description: "N日目に切替" },
-          { key: "[", description: "前の日へ" },
-          { key: "]", description: "次の日へ" },
-          ...(trip?.poll ? [{ key: "p", description: "日程調整タブ" }] : []),
+          { key: "1-9", description: tsc("switchToDay") },
+          { key: "[", description: tsc("prevDay") },
+          { key: "]", description: tsc("nextDay") },
+          ...(trip?.poll ? [{ key: "p", description: tsc("pollTab") }] : []),
         ],
       },
       {
-        group: "パターン",
+        group: tsc("pattern"),
         items: [
-          { key: "{", description: "前のパターンへ" },
-          { key: "}", description: "次のパターンへ" },
+          { key: "{", description: tsc("prevPattern") },
+          { key: "}", description: tsc("nextPattern") },
         ],
       },
       ...(canEditEarly
         ? [
             {
-              group: "操作",
+              group: tsc("actions"),
               items: [
-                { key: "a", description: "予定を追加" },
-                { key: "c", description: "候補を追加" },
-                { key: "s", description: "お土産を追加" },
-                { key: "e", description: "旅行を編集" },
+                { key: "a", description: tsc("addSchedule") },
+                { key: "c", description: tsc("addCandidate") },
+                { key: "s", description: tsc("addSouvenir") },
+                { key: "e", description: tsc("editTrip") },
               ],
             },
           ]
@@ -316,20 +317,20 @@ export default function TripDetailPage() {
       ...(isLg
         ? [
             {
-              group: "パネル",
+              group: tsc("panel"),
               items: [
-                { key: "g c", description: "候補" },
-                { key: "g x", description: "費用" },
-                { key: "g s", description: "お土産" },
-                { key: "g l", description: "履歴" },
-                ...(!isGuestEarly ? [{ key: "g b", description: "ブックマーク" }] : []),
-                ...(trip?.mapsEnabled ? [{ key: "g m", description: "地図" }] : []),
+                { key: "g c", description: tsc("candidates") },
+                { key: "g x", description: tsc("expenses") },
+                { key: "g s", description: tsc("souvenirs") },
+                { key: "g l", description: tsc("activityLog") },
+                ...(!isGuestEarly ? [{ key: "g b", description: tsc("bookmarks") }] : []),
+                ...(trip?.mapsEnabled ? [{ key: "g m", description: tsc("map") }] : []),
               ],
             },
           ]
         : []),
     ],
-    [trip?.poll, trip?.mapsEnabled, isLg, canEditEarly, isGuestEarly],
+    [trip?.poll, trip?.mapsEnabled, isLg, canEditEarly, isGuestEarly, tsc],
   );
   useRegisterShortcuts(tripShortcuts);
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });

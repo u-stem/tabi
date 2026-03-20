@@ -6,9 +6,10 @@ import { Logo } from "@/components/logo";
 import { pageTitle } from "@/lib/constants";
 import { FaqSearch } from "./_components/faq-search";
 
-export const metadata: Metadata = {
-  title: pageTitle("よくある質問"),
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("pageTitle");
+  return { title: pageTitle(t("faq")) };
+}
 
 export default async function FaqPage() {
   const faqs = await getFaqs();

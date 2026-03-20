@@ -195,6 +195,7 @@ export function ErrorMessage({ message }: { message: string }) {
 
 export default function PublicProfilePage() {
   const tup = useTranslations("userProfile");
+  const tpt = useTranslations("pageTitle");
   const params = useParams();
   const userId = typeof params.userId === "string" ? params.userId : null;
   const { data: session, isPending: isSessionPending } = useSession();
@@ -214,7 +215,7 @@ export default function PublicProfilePage() {
   // Set document title when profile is loaded
   useEffect(() => {
     if (profile) {
-      document.title = pageTitle(`${profile.name} のプロフィール`);
+      document.title = pageTitle(tpt("userProfile", { name: profile.name }));
     }
   }, [profile]);
 

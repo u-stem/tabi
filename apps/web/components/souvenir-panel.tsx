@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  SOUVENIR_PRIORITY_LABELS,
-  SOUVENIR_SHARE_STYLE_LABELS,
-  type SouvenirItem,
-  type SouvenirPriority,
-} from "@sugara/shared";
+import type { SouvenirItem, SouvenirPriority } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowUpDown,
@@ -479,7 +474,7 @@ function SouvenirItemRow({
           </p>
           {item.priority && (
             <IconBadgeWithTooltip
-              label={SOUVENIR_PRIORITY_LABELS[item.priority]}
+              label={ts(item.priority === "high" ? "priorityHigh" : "priorityMedium")}
               isMobile={isMobile}
               className={
                 item.priority === "high"
@@ -496,7 +491,9 @@ function SouvenirItemRow({
           )}
           {(isOwnItem ? item.isShared : true) && item.shareStyle != null && (
             <IconBadgeWithTooltip
-              label={SOUVENIR_SHARE_STYLE_LABELS[item.shareStyle]}
+              label={ts(
+                item.shareStyle === "recommend" ? "shareStyleRecommend" : "shareStyleErrand",
+              )}
               isMobile={isMobile}
               className={
                 item.shareStyle === "errand"

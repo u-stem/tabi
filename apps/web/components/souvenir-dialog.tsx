@@ -5,9 +5,7 @@ import {
   MAX_URLS_PER_SOUVENIR,
   SOUVENIR_ADDRESS_MAX_LENGTH,
   SOUVENIR_NAME_MAX_LENGTH,
-  SOUVENIR_PRIORITY_LABELS,
   SOUVENIR_RECIPIENT_MAX_LENGTH,
-  SOUVENIR_SHARE_STYLE_LABELS,
   SOUVENIR_URL_MAX_LENGTH,
   type SouvenirItem,
   type SouvenirPriority,
@@ -294,7 +292,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
                 onClick={() => setPriority("high")}
               >
                 <Flame className="h-3.5 w-3.5" />
-                {SOUVENIR_PRIORITY_LABELS.high}
+                {ts("priorityHigh")}
               </Button>
               <Button
                 type="button"
@@ -308,7 +306,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
                 onClick={() => setPriority("medium")}
               >
                 <Star className="h-3.5 w-3.5" />
-                {SOUVENIR_PRIORITY_LABELS.medium}
+                {ts("priorityMedium")}
               </Button>
             </div>
           </div>
@@ -362,7 +360,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
                   onClick={() => setShareStyle("recommend")}
                 >
                   <Heart className="h-3.5 w-3.5" />
-                  {SOUVENIR_SHARE_STYLE_LABELS.recommend}
+                  {ts("shareStyleRecommend")}
                 </Button>
                 <Button
                   type="button"
@@ -376,7 +374,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
                   onClick={() => setShareStyle("errand")}
                 >
                   <ShoppingBag className="h-3.5 w-3.5" />
-                  {SOUVENIR_SHARE_STYLE_LABELS.errand}
+                  {ts("shareStyleErrand")}
                 </Button>
               </div>
             )}

@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { api } from "@/lib/api";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
@@ -15,6 +16,7 @@ type UnsettledSummarySectionProps = {
 };
 
 export function UnsettledSummarySection({ userId, isOwnProfile }: UnsettledSummarySectionProps) {
+  const te = useTranslations("expense");
   const pathname = usePathname();
   const { data } = useQuery({
     queryKey: queryKeys.settlement.unsettled(userId),
@@ -31,7 +33,9 @@ export function UnsettledSummarySection({ userId, isOwnProfile }: UnsettledSumma
 
   return (
     <div className="space-y-2">
-      <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">未精算</h2>
+      <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+        {te("unsettled")}
+      </h2>
       {data.trips.map((trip) => {
         const owed = trip.transfers
           .filter((t) => t.fromUser.id === userId)

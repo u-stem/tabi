@@ -438,8 +438,8 @@ export function MemberDialog({
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="editor">編集者</SelectItem>
-                              <SelectItem value="viewer">閲覧者</SelectItem>
+                              <SelectItem value="editor">{tlRole("editor")}</SelectItem>
+                              <SelectItem value="viewer">{tlRole("viewer")}</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
@@ -517,8 +517,8 @@ export function MemberDialog({
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="editor">編集者</SelectItem>
-                            <SelectItem value="viewer">閲覧者</SelectItem>
+                            <SelectItem value="editor">{tlRole("editor")}</SelectItem>
+                            <SelectItem value="viewer">{tlRole("viewer")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>

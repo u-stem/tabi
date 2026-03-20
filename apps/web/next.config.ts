@@ -1,5 +1,6 @@
 import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
+import createNextIntlPlugin from "next-intl/plugin";
 
 // CSP is now set in proxy.ts with per-request nonce for XSS protection.
 
@@ -66,9 +67,13 @@ const nextConfig: NextConfig = {
   ],
 };
 
-export default withSerwistInit({
-  swSrc: "app/sw.ts",
-  swDest: "public/sw.js",
-  // Bump revision when app/offline/page.tsx content changes
-  additionalPrecacheEntries: [{ url: "/offline", revision: "1" }],
-})(nextConfig);
+const withNextIntl = createNextIntlPlugin();
+
+export default withNextIntl(
+  withSerwistInit({
+    swSrc: "app/sw.ts",
+    swDest: "public/sw.js",
+    // Bump revision when app/offline/page.tsx content changes
+    additionalPrecacheEntries: [{ url: "/offline", revision: "1" }],
+  })(nextConfig),
+);

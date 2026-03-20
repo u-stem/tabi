@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import type { SortKey, StatusFilter } from "@/components/trip-toolbar";
-import { api } from "@/lib/api";
+import { ApiError, api } from "@/lib/api";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
@@ -64,8 +64,12 @@ export function useHomeTrips(): UseHomeTripsReturn {
   });
   useAuthRedirect(sharedError);
 
-  const isLoading = ownedLoading || sharedLoading;
-  const error = ownedError || sharedError;
+  // Treat 401 as loading (useAuthRedirect handles the redirect)
+  const isUnauthorized =
+    (ownedError instanceof ApiError && ownedError.status === 401) ||
+    (sharedError instanceof ApiError && sharedError.status === 401);
+  const isLoading = ownedLoading || sharedLoading || isUnauthorized;
+  const error = isUnauthorized ? null : ownedError || sharedError;
 
   const [tab, setTab] = useState<HomeTab>("owned");
   const [search, setSearch] = useState("");

@@ -1,11 +1,9 @@
 "use client";
 
-import { useQueryClient } from "@tanstack/react-query";
 import { Keyboard, LogOut, Monitor, Settings, Smartphone, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +18,6 @@ import {
 } from "@/components/ui/responsive-alert-dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { authClient } from "@/lib/auth-client";
-import { MSG } from "@/lib/messages";
 import { useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
 import { switchViewMode } from "@/lib/view-mode";
@@ -204,21 +201,13 @@ export function SpHeaderMenu() {
 }
 
 function SignOutButton() {
-  const router = useRouter();
-  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSignOut() {
     setLoading(true);
-    try {
-      await authClient.signOut();
-      queryClient.clear();
-      router.push("/");
-    } catch {
-      toast.error(MSG.AUTH_LOGOUT_FAILED);
-      setLoading(false);
-    }
+    await authClient.signOut();
+    window.location.href = "/auth/login";
   }
 
   return (

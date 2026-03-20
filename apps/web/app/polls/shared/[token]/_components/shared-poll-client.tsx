@@ -100,13 +100,15 @@ export function SharedPollClient({ token }: { token: string }) {
 
             {poll.deadline && (
               <p className="text-xs text-muted-foreground">
-                回答期限: {format(new Date(poll.deadline), "yyyy/MM/dd HH:mm", { locale: ja })}
+                {tp("responseDeadline", {
+                  date: format(new Date(poll.deadline), "yyyy/MM/dd HH:mm", { locale: ja }),
+                })}
               </p>
             )}
 
             {poll.shareExpiresAt && (
               <p className="text-xs text-muted-foreground">
-                共有リンクの有効期限: {formatDateFromISO(poll.shareExpiresAt)}
+                {tp("shareExpiry", { date: formatDateFromISO(poll.shareExpiresAt) })}
               </p>
             )}
 

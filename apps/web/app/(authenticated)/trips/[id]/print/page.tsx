@@ -46,6 +46,7 @@ function PrintSkeleton() {
 
 export default function TripPrintPage() {
   const tm = useTranslations("messages");
+  const tdf = useTranslations("dateFormat");
   const params = useParams();
   const searchParams = useSearchParams();
   const tripId = typeof params.id === "string" ? params.id : null;
@@ -94,7 +95,9 @@ export default function TripPrintPage() {
               {trip.startDate && trip.endDate && (
                 <>
                   {formatDateRange(trip.startDate, trip.endDate)}
-                  <span className="ml-1">({getDayCount(trip.startDate, trip.endDate)}日間)</span>
+                  <span className="ml-1">
+                    ({tdf("dayCount", { count: getDayCount(trip.startDate, trip.endDate) })})
+                  </span>
                 </>
               )}
             </p>
@@ -120,12 +123,13 @@ function DaySection({
   crossDayEntries: CrossDayEntry[];
 }) {
   const tm = useTranslations("messages");
+  const tdf = useTranslations("dateFormat");
   const showPatternLabels = day.patterns.length > 1;
 
   return (
     <section>
       <h2 className="mb-1.5 flex items-baseline gap-2 border-b pb-1.5 text-sm font-semibold print:font-medium">
-        {day.dayNumber}日目
+        {tdf("dayNumber", { n: day.dayNumber })}
         <span className="text-xs font-normal text-muted-foreground">{formatDate(day.date)}</span>
       </h2>
       {day.patterns.map((pattern, i) => {
@@ -207,11 +211,20 @@ function PrintTableRow({
     ? `${crossDayDisplay ? "~ " : ""}${displayTime.slice(0, 5)}${showEndTime ? ` - ${schedule.endTime?.slice(0, 5)}` : ""}${!crossDayDisplay && schedule.endDayOffset ? " ~" : ""}`
     : "";
 
+  const tc = useTranslations("crossDay");
+  const crossDayT = {
+    hotelCheckin: tc("hotelCheckin"),
+    hotelStaying: tc("hotelStaying"),
+    hotelCheckout: tc("hotelCheckout"),
+    genericStart: tc("genericStart"),
+    genericContinuing: tc("genericContinuing"),
+    genericEnd: tc("genericEnd"),
+  };
   const roleLabel =
     crossDayDisplay && crossDayPosition
-      ? getCrossDayLabel(schedule.category, crossDayPosition)
+      ? getCrossDayLabel(schedule.category, crossDayPosition, crossDayT)
       : !crossDayDisplay && schedule.endDayOffset
-        ? getStartDayLabel(schedule.category)
+        ? getStartDayLabel(schedule.category, crossDayT)
         : null;
 
   const transportLabel =

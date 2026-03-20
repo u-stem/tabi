@@ -374,11 +374,20 @@ function ScheduleCard({
   const displayTime = crossDayDisplay ? schedule.endTime : schedule.startTime;
   const showEndTime = !crossDayDisplay && !schedule.endDayOffset && schedule.endTime;
 
+  const tc = useTranslations("crossDay");
+  const crossDayT = {
+    hotelCheckin: tc("hotelCheckin"),
+    hotelStaying: tc("hotelStaying"),
+    hotelCheckout: tc("hotelCheckout"),
+    genericStart: tc("genericStart"),
+    genericContinuing: tc("genericContinuing"),
+    genericEnd: tc("genericEnd"),
+  };
   const roleLabel =
     crossDayDisplay && crossDayPosition
-      ? getCrossDayLabel(schedule.category, crossDayPosition)
+      ? getCrossDayLabel(schedule.category, crossDayPosition, crossDayT)
       : !crossDayDisplay && schedule.endDayOffset
-        ? getStartDayLabel(schedule.category)
+        ? getStartDayLabel(schedule.category, crossDayT)
         : null;
 
   const safeUrls = schedule.urls.filter(isSafeUrl);

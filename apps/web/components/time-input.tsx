@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Select,
   SelectContent,
@@ -28,6 +29,7 @@ function parseTime(value?: string): { hour: string; minute: string } | null {
 }
 
 export function TimeInput({ value, onChange, disabled, className }: TimeInputProps) {
+  const ti = useTranslations("timeInput");
   const parsed = parseTime(value);
 
   function handleHourChange(hour: string) {
@@ -47,7 +49,7 @@ export function TimeInput({ value, onChange, disabled, className }: TimeInputPro
   return (
     <div className={cn("flex items-center gap-1", className)}>
       <Select value={parsed?.hour ?? ""} onValueChange={handleHourChange} disabled={disabled}>
-        <SelectTrigger className="w-[70px]" aria-label="時">
+        <SelectTrigger className="w-[70px]" aria-label={ti("hour")}>
           <SelectValue placeholder="--" />
         </SelectTrigger>
         <SelectContent>
@@ -60,7 +62,7 @@ export function TimeInput({ value, onChange, disabled, className }: TimeInputPro
       </Select>
       <span className="text-muted-foreground">:</span>
       <Select value={parsed?.minute ?? ""} onValueChange={handleMinuteChange} disabled={disabled}>
-        <SelectTrigger className="w-[70px]" aria-label="分">
+        <SelectTrigger className="w-[70px]" aria-label={ti("minute")}>
           <SelectValue placeholder="--" />
         </SelectTrigger>
         <SelectContent>
@@ -77,7 +79,7 @@ export function TimeInput({ value, onChange, disabled, className }: TimeInputPro
           onClick={handleClear}
           disabled={disabled}
           className="ml-1 rounded p-1 text-muted-foreground hover:text-foreground disabled:pointer-events-none disabled:opacity-50"
-          aria-label="時刻をクリア"
+          aria-label={ti("clear")}
         >
           <X className="h-3.5 w-3.5" />
         </button>

@@ -1,6 +1,12 @@
 import type { ScheduleCategory } from "@sugara/shared";
 import { format, isValid, parse } from "date-fns";
-import { ja } from "date-fns/locale";
+import { enUS, ja } from "date-fns/locale";
+
+const DATE_FNS_LOCALES = { ja, en: enUS } as const;
+
+function getDateFnsLocale(locale: string) {
+  return DATE_FNS_LOCALES[locale as keyof typeof DATE_FNS_LOCALES] ?? ja;
+}
 
 export function toDateString(date: Date): string {
   const y = date.getFullYear();
@@ -10,15 +16,21 @@ export function toDateString(date: Date): string {
 }
 
 // Parse YYYY-MM-DD directly to avoid timezone issues with Date constructor
-export function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string, pattern?: string): string {
   const [year, month, day] = dateStr.split("-").map(Number);
   if (!year || !month || !day) return dateStr;
+  if (pattern) {
+    const d = new Date(year, month - 1, day);
+    return format(d, pattern);
+  }
+  // Default fallback (used by export and non-i18n contexts)
   return `${year}年${month}月${day}日`;
 }
 
 // Format ISO datetime string (e.g. "2026-02-18T00:00:00Z") using local timezone
-export function formatDateFromISO(isoStr: string): string {
+export function formatDateFromISO(isoStr: string, pattern?: string): string {
   const d = new Date(isoStr);
+  if (pattern) return format(d, pattern);
   return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
 }
 
@@ -87,17 +99,23 @@ export function stripProtocol(url: string): string {
   return url.replace(/^https?:\/\//, "");
 }
 
-/** Format "yyyy-MM-dd" to "M/d (E)" with Japanese locale */
-export function formatDateWithDay(dateStr: string): string {
+/** Format "yyyy-MM-dd" using a date-fns pattern with locale support */
+export function formatDateWithDay(dateStr: string, pattern?: string, locale?: string): string {
   const d = parse(dateStr, "yyyy-MM-dd", new Date());
   if (!isValid(d)) return dateStr;
-  return format(d, "M月d日 (E)", { locale: ja });
+  const fmt = pattern ?? "M月d日 (E)";
+  return format(d, fmt, { locale: getDateFnsLocale(locale ?? "ja") });
 }
 
-/** Format a date range like "2/7 (土) - 2/8 (日)" or single date "2/7 (土)" */
-export function formatDateRangeShort(startDate: string, endDate: string): string {
-  if (startDate === endDate) return formatDateWithDay(startDate);
-  return `${formatDateWithDay(startDate)} - ${formatDateWithDay(endDate)}`;
+/** Format a date range like "2/7 (Sat) - 2/8 (Sun)" or single date "2/7 (Sat)" */
+export function formatDateRangeShort(
+  startDate: string,
+  endDate: string,
+  pattern?: string,
+  locale?: string,
+): string {
+  if (startDate === endDate) return formatDateWithDay(startDate, pattern, locale);
+  return `${formatDateWithDay(startDate, pattern, locale)} - ${formatDateWithDay(endDate, pattern, locale)}`;
 }
 
 /** Defense-in-depth: only allow http/https URLs in href attributes */

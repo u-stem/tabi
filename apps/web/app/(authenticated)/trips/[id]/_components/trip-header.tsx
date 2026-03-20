@@ -3,6 +3,7 @@
 import type { TripResponse } from "@sugara/shared";
 import { MAX_MEMBERS_PER_TRIP } from "@sugara/shared";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 
 import { PresenceAvatars } from "@/components/presence-avatars";
 import { ReactionButton } from "@/components/reaction-button";
@@ -55,6 +56,7 @@ export function TripHeader({
   } as const;
 
   // Show reaction button only when co-editing (other members are present)
+  const tdf = useTranslations("dateFormat");
   const showReaction = onReaction && otherPresence.length > 0;
 
   return (
@@ -93,7 +95,7 @@ export function TripHeader({
               {trip.destination ? `${trip.destination} / ` : null}
               {formatDateRange(trip.startDate, trip.endDate)}
               <span className="ml-2 text-sm">
-                ({getDayCount(trip.startDate, trip.endDate)}日間)
+                ({tdf("dayCount", { count: getDayCount(trip.startDate, trip.endDate) })})
               </span>
             </>
           ) : (

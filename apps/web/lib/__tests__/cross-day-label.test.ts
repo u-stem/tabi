@@ -1,39 +1,48 @@
 import { describe, expect, it } from "vitest";
 import { getCrossDayLabel, getStartDayLabel } from "../cross-day-label";
 
+const t = {
+  hotelCheckin: "Check-in",
+  hotelStaying: "Staying",
+  hotelCheckout: "Checkout",
+  genericStart: "Start",
+  genericContinuing: "Continuing",
+  genericEnd: "End",
+};
+
 describe("getStartDayLabel", () => {
   it("returns check-in for hotel", () => {
-    expect(getStartDayLabel("hotel")).toBe("チェックイン");
+    expect(getStartDayLabel("hotel", t)).toBe("Check-in");
   });
 
   it("returns null for transport", () => {
-    expect(getStartDayLabel("transport")).toBeNull();
+    expect(getStartDayLabel("transport", t)).toBeNull();
   });
 
   it("returns generic start for other categories", () => {
-    expect(getStartDayLabel("sightseeing")).toBe("開始");
-    expect(getStartDayLabel("restaurant")).toBe("開始");
-    expect(getStartDayLabel("activity")).toBe("開始");
-    expect(getStartDayLabel("other")).toBe("開始");
+    expect(getStartDayLabel("sightseeing", t)).toBe("Start");
+    expect(getStartDayLabel("restaurant", t)).toBe("Start");
+    expect(getStartDayLabel("activity", t)).toBe("Start");
+    expect(getStartDayLabel("other", t)).toBe("Start");
   });
 });
 
 describe("getCrossDayLabel", () => {
   it("returns check-out for hotel final day", () => {
-    expect(getCrossDayLabel("hotel", "final")).toBe("チェックアウト");
+    expect(getCrossDayLabel("hotel", "final", t)).toBe("Checkout");
   });
 
   it("returns staying for hotel intermediate day", () => {
-    expect(getCrossDayLabel("hotel", "intermediate")).toBe("滞在中");
+    expect(getCrossDayLabel("hotel", "intermediate", t)).toBe("Staying");
   });
 
   it("returns null for transport", () => {
-    expect(getCrossDayLabel("transport", "final")).toBeNull();
-    expect(getCrossDayLabel("transport", "intermediate")).toBeNull();
+    expect(getCrossDayLabel("transport", "final", t)).toBeNull();
+    expect(getCrossDayLabel("transport", "intermediate", t)).toBeNull();
   });
 
   it("returns generic labels for other categories", () => {
-    expect(getCrossDayLabel("sightseeing", "final")).toBe("終了");
-    expect(getCrossDayLabel("sightseeing", "intermediate")).toBe("継続中");
+    expect(getCrossDayLabel("sightseeing", "final", t)).toBe("End");
+    expect(getCrossDayLabel("sightseeing", "intermediate", t)).toBe("Continuing");
   });
 });

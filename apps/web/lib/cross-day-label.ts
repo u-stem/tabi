@@ -2,31 +2,34 @@ import type { ScheduleCategory } from "@sugara/shared";
 
 type CrossDayPosition = "intermediate" | "final";
 
-const START_LABELS: Partial<Record<ScheduleCategory, string>> = {
-  hotel: "チェックイン",
+type CrossDayTranslations = {
+  hotelCheckin: string;
+  hotelStaying: string;
+  hotelCheckout: string;
+  genericStart: string;
+  genericContinuing: string;
+  genericEnd: string;
 };
 
-const CROSS_DAY_LABELS: Partial<Record<ScheduleCategory, Record<CrossDayPosition, string>>> = {
-  hotel: { intermediate: "滞在中", final: "チェックアウト" },
-};
-
-const GENERIC_START = "開始";
-const GENERIC_LABELS: Record<CrossDayPosition, string> = {
-  intermediate: "継続中",
-  final: "終了",
-};
-
-/** Label for the start day of a multi-day schedule (e.g. "チェックイン"). Null for transport. */
-export function getStartDayLabel(category: ScheduleCategory): string | null {
+/** Label for the start day of a multi-day schedule (e.g. "Check-in"). Null for transport. */
+export function getStartDayLabel(
+  category: ScheduleCategory,
+  t: CrossDayTranslations,
+): string | null {
   if (category === "transport") return null;
-  return START_LABELS[category] ?? GENERIC_START;
+  if (category === "hotel") return t.hotelCheckin;
+  return t.genericStart;
 }
 
-/** Label for a cross-day entry (e.g. "チェックアウト", "滞在中"). Null for transport. */
+/** Label for a cross-day entry (e.g. "Checkout", "Staying"). Null for transport. */
 export function getCrossDayLabel(
   category: ScheduleCategory,
   position: CrossDayPosition,
+  t: CrossDayTranslations,
 ): string | null {
   if (category === "transport") return null;
-  return CROSS_DAY_LABELS[category]?.[position] ?? GENERIC_LABELS[position];
+  if (category === "hotel") {
+    return position === "intermediate" ? t.hotelStaying : t.hotelCheckout;
+  }
+  return position === "intermediate" ? t.genericContinuing : t.genericEnd;
 }

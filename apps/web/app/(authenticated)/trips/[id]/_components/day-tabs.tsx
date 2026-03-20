@@ -1,6 +1,7 @@
 "use client";
 
 import type { TripResponse, WeatherType } from "@sugara/shared";
+import { useTranslations } from "next-intl";
 import { hashColor } from "@/components/presence-avatars";
 import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
 import { cn } from "@/lib/utils";
@@ -25,8 +26,9 @@ export function DayTabs({
   otherPresence: PresenceUser[];
   hasPoll?: boolean;
 }) {
+  const tdt = useTranslations("dayTabs");
   return (
-    <div className="flex shrink-0 select-none" role="tablist" aria-label="日程タブ">
+    <div className="flex shrink-0 select-none" role="tablist" aria-label={tdt("ariaLabel")}>
       <div
         className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto px-3 pb-0 pt-3 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         data-swipe-ignore="true"
@@ -39,7 +41,7 @@ export function DayTabs({
             onClick={() => onSelectDay(-1)}
             className={cn(CHIP_BASE, selectedDay === -1 ? CHIP_ACTIVE : CHIP_INACTIVE)}
           >
-            日程調整
+            {tdt("pollTab")}
             <span className="hidden text-xs text-muted-foreground lg:inline">(P)</span>
             {otherPresence
               .filter((u) => u.dayId === "poll")
@@ -67,7 +69,7 @@ export function DayTabs({
               className={cn(CHIP_BASE, selectedDay === index ? CHIP_ACTIVE : CHIP_INACTIVE)}
             >
               <span className="flex items-center gap-1">
-                <span>{day.dayNumber}日目</span>
+                <span>{tdt("dayNumber", { n: day.dayNumber })}</span>
                 {weatherType != null &&
                   (() => {
                     const WeatherIconComp = WEATHER_ICON[weatherType];

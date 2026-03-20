@@ -37,6 +37,12 @@ export function GuestUpgradeDialog({
   const tm = useTranslations("messages");
   const te = useTranslations("authErrors");
   const tc = useTranslations("common");
+  const tpr = useTranslations("passwordRules");
+  const pwT = {
+    rules: (key: string, params?: Record<string, string | number | Date>) =>
+      tpr(key as "minLength", params),
+    separator: tpr("separator"),
+  };
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -51,9 +57,9 @@ export function GuestUpgradeDialog({
     const password = formData.get("password") as string;
     const confirmPassword = formData.get("confirmPassword") as string;
 
-    const { valid, errors } = validatePassword(password);
+    const { valid, errors } = validatePassword(password, pwT);
     if (!valid) {
-      setError(`${tm("authPasswordTooWeak")}: ${errors.join("、")}`);
+      setError(`${tm("authPasswordTooWeak")}: ${errors.join(pwT.separator)}`);
       setLoading(false);
       return;
     }
@@ -155,7 +161,7 @@ export function GuestUpgradeDialog({
                 minLength={MIN_PASSWORD_LENGTH}
                 required
               />
-              <p className="text-xs text-muted-foreground">{getPasswordRequirementsText()}</p>
+              <p className="text-xs text-muted-foreground">{getPasswordRequirementsText(pwT)}</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="upgrade-confirmPassword">

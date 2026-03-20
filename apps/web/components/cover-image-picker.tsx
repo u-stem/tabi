@@ -1,6 +1,7 @@
 "use client";
 
 import { ImagePlus, Move, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -10,8 +11,8 @@ import { cn } from "@/lib/utils";
 const ALLOWED_TYPES = "image/jpeg,image/png,image/webp";
 
 const PREVIEW_MODES = {
-  home: { label: "ホーム", aspect: "aspect-video" },
-  detail: { label: "詳細", aspect: "aspect-[3/1]" },
+  home: { labelKey: "home" as const, aspect: "aspect-video" },
+  detail: { labelKey: "detail" as const, aspect: "aspect-[3/1]" },
 } as const;
 
 type PreviewMode = keyof typeof PREVIEW_MODES;
@@ -35,6 +36,7 @@ export function CoverImagePicker({
   onRemove,
   disabled = false,
 }: CoverImagePickerProps) {
+  const tci = useTranslations("coverImage");
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -103,7 +105,7 @@ export function CoverImagePicker({
 
   return (
     <div className="space-y-2">
-      <Label>カバー画像</Label>
+      <Label>{tci("label")}</Label>
       {previewUrl ? (
         <div className="space-y-1">
           <Tabs value={previewMode} onValueChange={(v) => setPreviewMode(v as PreviewMode)}>
@@ -113,9 +115,9 @@ export function CoverImagePicker({
                   PreviewMode,
                   (typeof PREVIEW_MODES)[PreviewMode],
                 ][]
-              ).map(([key, { label }]) => (
+              ).map(([key, { labelKey }]) => (
                 <TabsTrigger key={key} value={key} className="flex-1">
-                  {label}
+                  {tci(labelKey)}
                 </TabsTrigger>
               ))}
             </TabsList>
@@ -136,7 +138,7 @@ export function CoverImagePicker({
           >
             <img
               src={previewUrl}
-              alt="カバー画像プレビュー"
+              alt={tci("alt")}
               className="pointer-events-none h-full w-full object-cover"
               style={{ objectPosition: `center ${position}%` }}
               draggable={false}
@@ -145,7 +147,7 @@ export function CoverImagePicker({
             {!disabled && (
               <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-1 bg-black/30 py-1 text-xs text-white">
                 <Move className="h-3 w-3" />
-                ドラッグで位置を調整
+                {tci("dragHint")}
               </div>
             )}
           </div>
@@ -158,7 +160,7 @@ export function CoverImagePicker({
               onClick={() => inputRef.current?.click()}
               disabled={disabled}
             >
-              画像を変更
+              {tci("changeImage")}
             </Button>
             <Button
               type="button"
@@ -168,7 +170,7 @@ export function CoverImagePicker({
               disabled={disabled}
             >
               <X className="h-3.5 w-3.5" />
-              削除
+              {tci("removeImage")}
             </Button>
           </div>
         </div>
@@ -185,8 +187,8 @@ export function CoverImagePicker({
           )}
         >
           <ImagePlus className="h-8 w-8" />
-          <span className="text-sm">クリックまたはドラッグ&ドロップで画像を選択</span>
-          <span className="text-xs">JPEG, PNG, WebP (3MB以下)</span>
+          <span className="text-sm">{tci("uploadHint")}</span>
+          <span className="text-xs">{tci("uploadSizeHint")}</span>
         </button>
       )}
       <input

@@ -24,6 +24,12 @@ export function SignupForm() {
   const t = useTranslations("auth");
   const tm = useTranslations("messages");
   const te = useTranslations("authErrors");
+  const tpr = useTranslations("passwordRules");
+  const pwT = {
+    rules: (key: string, params?: Record<string, string | number | Date>) =>
+      tpr(key as "minLength", params),
+    separator: tpr("separator"),
+  };
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
@@ -55,9 +61,9 @@ export function SignupForm() {
       return;
     }
 
-    const { valid, errors } = validatePassword(password);
+    const { valid, errors } = validatePassword(password, pwT);
     if (!valid) {
-      setError(`${tm("authPasswordTooWeak")}: ${errors.join("、")}`);
+      setError(`${tm("authPasswordTooWeak")}: ${errors.join(pwT.separator)}`);
       setLoading(false);
       return;
     }
@@ -129,7 +135,7 @@ export function SignupForm() {
               id="name"
               name="name"
               type="text"
-              placeholder="たろう"
+              placeholder={t("displayNamePlaceholder")}
               autoComplete="name"
               required
               minLength={1}
@@ -154,7 +160,7 @@ export function SignupForm() {
             {passwordInput.length > 0 ? (
               <PasswordStrength password={passwordInput} />
             ) : (
-              <p className="text-xs text-muted-foreground">{getPasswordRequirementsText()}</p>
+              <p className="text-xs text-muted-foreground">{getPasswordRequirementsText(pwT)}</p>
             )}
           </div>
           <div className="space-y-2">
@@ -189,7 +195,7 @@ export function SignupForm() {
               >
                 {t("termsLink")}
               </a>
-              {"と"}
+              {t("termsAnd")}
               <a
                 href="/privacy"
                 target="_blank"
@@ -238,13 +244,19 @@ export function SignupForm() {
 
 function PasswordStrength({ password }: { password: string }) {
   const t = useTranslations("auth");
-  const { errors } = validatePassword(password);
+  const tpr = useTranslations("passwordRules");
+  const pwT = {
+    rules: (key: string, params?: Record<string, string | number | Date>) =>
+      tpr(key as "minLength", params),
+    separator: tpr("separator"),
+  };
+  const { errors } = validatePassword(password, pwT);
   if (errors.length === 0) {
     return <p className="text-xs text-green-600 dark:text-green-400">{t("passwordStrengthOk")}</p>;
   }
   return (
     <p className="text-xs text-muted-foreground">
-      {t("passwordStrengthFail")}: {errors.join("、")}
+      {t("passwordStrengthFail")}: {errors.join(pwT.separator)}
     </p>
   );
 }

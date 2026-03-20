@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const poll = (await res.json()) as SharedPollResponse;
     const descriptionParts = [
       poll.destination,
-      poll.deadline ? `回答期限: ${formatDateFromISO(poll.deadline)}` : null,
+      poll.deadline ? formatDateFromISO(poll.deadline) : null,
     ].filter(Boolean);
     const description = descriptionParts.length > 0 ? descriptionParts.join(" · ") : undefined;
 

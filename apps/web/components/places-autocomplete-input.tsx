@@ -1,6 +1,7 @@
 "use client";
 
 import { useMapsLibrary } from "@vis.gl/react-google-maps";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 import { Input } from "@/components/ui/input";
 
@@ -19,6 +20,7 @@ type Props = {
 };
 
 export function PlacesAutocompleteInput({ id, defaultValue, onPlaceSelect }: Props) {
+  const tps = useTranslations("placesSearch");
   const inputRef = useRef<HTMLInputElement>(null);
   const placesLib = useMapsLibrary("places");
 
@@ -71,7 +73,7 @@ export function PlacesAutocompleteInput({ id, defaultValue, onPlaceSelect }: Pro
       id={id}
       name="address"
       defaultValue={defaultValue}
-      placeholder="場所を検索..."
+      placeholder={tps("placeholder")}
       onKeyDown={(e) => {
         // Prevent Enter from submitting the form — autocomplete consumes Enter
         // to select a suggestion, so the user must use the submit button.

@@ -5,6 +5,7 @@ import type { ScheduleCategory, ScheduleColor, ScheduleResponse, TimeDelta } fro
 import { shiftTime } from "@sugara/shared";
 import { Bookmark, Clock, ExternalLink, Pencil, StickyNote, Trash2, Undo2, X } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 import { useState } from "react";
 import {
@@ -380,6 +381,18 @@ export function ScheduleItemDialogs({
   );
 }
 
+function useCrossDayTranslations() {
+  const tc = useTranslations("crossDay");
+  return {
+    hotelCheckin: tc("hotelCheckin"),
+    hotelStaying: tc("hotelStaying"),
+    hotelCheckout: tc("hotelCheckout"),
+    genericStart: tc("genericStart"),
+    genericContinuing: tc("genericContinuing"),
+    genericEnd: tc("genericEnd"),
+  };
+}
+
 export function ScheduleTimeLabel({
   crossDayDisplay,
   crossDayPosition,
@@ -393,12 +406,13 @@ export function ScheduleTimeLabel({
   category: ScheduleCategory;
   timeStr: string;
 }) {
+  const crossDayT = useCrossDayTranslations();
   const labelText = crossDayDisplay
     ? crossDayPosition
-      ? getCrossDayLabel(category, crossDayPosition)
+      ? getCrossDayLabel(category, crossDayPosition, crossDayT)
       : null
     : endDayOffset != null && endDayOffset > 0
-      ? getStartDayLabel(category)
+      ? getStartDayLabel(category, crossDayT)
       : null;
 
   const labelEl = labelText ? (
@@ -466,6 +480,14 @@ export function cardBodyProps(
   crossDaySourceDayNumber?: number,
   crossDayPosition?: "intermediate" | "final",
   crossDayAriaFallback?: string,
+  crossDayTranslations?: {
+    hotelCheckin: string;
+    hotelStaying: string;
+    hotelCheckout: string;
+    genericStart: string;
+    genericContinuing: string;
+    genericEnd: string;
+  },
 ): Record<string, unknown> {
   if (selectable) {
     return {
@@ -474,9 +496,17 @@ export function cardBodyProps(
     };
   }
   if (crossDayDisplay && crossDaySourceDayNumber) {
+    const t = crossDayTranslations ?? {
+      hotelCheckin: "Check-in",
+      hotelStaying: "Staying",
+      hotelCheckout: "Checkout",
+      genericStart: "Start",
+      genericContinuing: "Continuing",
+      genericEnd: "End",
+    };
     return {
       role: "group" as const,
-      "aria-label": `${getCrossDayLabel(category, crossDayPosition ?? "intermediate") ?? (crossDayAriaFallback || `${crossDaySourceDayNumber}日目から`)}: ${name}`,
+      "aria-label": `${getCrossDayLabel(category, crossDayPosition ?? "intermediate", t) ?? crossDayAriaFallback ?? ""}: ${name}`,
     };
   }
   return {};

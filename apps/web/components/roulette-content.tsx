@@ -20,7 +20,7 @@ import { api } from "@/lib/api";
 import { useBookmarkLists } from "@/lib/hooks/use-bookmark-lists";
 import { useRoulette } from "@/lib/hooks/use-roulette";
 import { isDialogOpen } from "@/lib/hotkeys";
-import { ALL_PREFECTURES, REGIONS } from "@/lib/prefectures";
+import { ALL_PREFECTURE_KEYS, REGIONS } from "@/lib/prefectures";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
@@ -102,24 +102,31 @@ function RouletteDisplay({
 
 function PrefectureMode() {
   const tt = useTranslations("tools");
+  const tp = useTranslations("prefectures");
   const [selectedRegions, setSelectedRegions] = useState<Set<string>>(new Set());
 
-  const candidates = useMemo(() => {
-    if (selectedRegions.size === 0) return ALL_PREFECTURES;
-    return REGIONS.filter((r) => selectedRegions.has(r.name)).flatMap((r) => r.prefectures);
+  const candidateKeys = useMemo(() => {
+    if (selectedRegions.size === 0) return ALL_PREFECTURE_KEYS;
+    return REGIONS.filter((r) => selectedRegions.has(r.nameKey)).flatMap((r) => r.prefectureKeys);
   }, [selectedRegions]);
+
+  // Translate keys to display names for the roulette
+  const candidates = useMemo(
+    () => candidateKeys.map((key) => tp(key as "hokkaido")),
+    [candidateKeys, tp],
+  );
 
   const { state, display, spin, reset } = useRoulette(candidates);
 
   const toggleRegion = useCallback(
-    (name: string) => {
+    (nameKey: string) => {
       reset();
       setSelectedRegions((prev) => {
         const next = new Set(prev);
-        if (next.has(name)) {
-          next.delete(name);
+        if (next.has(nameKey)) {
+          next.delete(nameKey);
         } else {
-          next.add(name);
+          next.add(nameKey);
         }
         return next;
       });
@@ -134,17 +141,17 @@ function PrefectureMode() {
         <div className="flex flex-wrap gap-1.5">
           {REGIONS.map((r) => (
             <button
-              key={r.name}
+              key={r.nameKey}
               type="button"
-              onClick={() => toggleRegion(r.name)}
+              onClick={() => toggleRegion(r.nameKey)}
               className={cn(
                 "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-                selectedRegions.has(r.name)
+                selectedRegions.has(r.nameKey)
                   ? "border-primary bg-primary text-primary-foreground"
                   : "border-input bg-background text-muted-foreground hover:bg-accent",
               )}
             >
-              {r.name}
+              {tp(r.nameKey as "regionHokkaido")}
             </button>
           ))}
         </div>

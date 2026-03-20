@@ -537,6 +537,12 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
 function PasswordSection({ username }: { username: string }) {
   const ts = useTranslations("settings");
   const tm = useTranslations("messages");
+  const tpr = useTranslations("passwordRules");
+  const pwT = {
+    rules: (key: string, params?: Record<string, string | number | Date>) =>
+      tpr(key as "minLength", params),
+    separator: tpr("separator"),
+  };
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -549,9 +555,9 @@ function PasswordSection({ username }: { username: string }) {
     setError(null);
     setLoading(true);
 
-    const { valid, errors } = validatePassword(newPassword);
+    const { valid, errors } = validatePassword(newPassword, pwT);
     if (!valid) {
-      setError(`${tm("authPasswordTooWeak")}: ${errors.join("、")}`);
+      setError(`${tm("authPasswordTooWeak")}: ${errors.join(pwT.separator)}`);
       setLoading(false);
       return;
     }
@@ -620,7 +626,7 @@ function PasswordSection({ username }: { username: string }) {
               onChange={(e) => setNewPassword(e.target.value)}
             />
             <p className="select-none text-xs text-muted-foreground">
-              {getPasswordRequirementsText()}
+              {getPasswordRequirementsText(pwT)}
             </p>
           </div>
           <div className="space-y-2">

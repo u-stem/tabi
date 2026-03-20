@@ -32,11 +32,13 @@ import {
   type CSVDelimiter,
   type CSVLineEnding,
   DEFAULT_CSV_OPTIONS,
-  EXPORT_FIELD_LABELS,
   EXPORT_FIELDS,
   type ExpenseExportData,
+  type ExpenseExportLabels,
   type ExportField,
+  type ExportFieldLabels,
   type ExportFormat,
+  type ExportSheetNames,
   exportTrip,
   filterCandidateFields,
   type PatternMode,
@@ -44,11 +46,6 @@ import {
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
-
-const PATTERN_MODE_LABELS: Record<PatternMode, string> = {
-  separateSheets: "パターンごとにシート分け",
-  patternColumn: "1シートにまとめる (パターン列あり)",
-};
 
 const FORMAT_LABELS: Record<ExportFormat, string> = {
   xlsx: "Excel (.xlsx)",
@@ -138,6 +135,46 @@ function ExportSkeleton() {
 
 export default function TripExportPage() {
   const tm = useTranslations("messages");
+  const te = useTranslations("exportPage");
+  const tel = useTranslations("exportLabels");
+
+  const fieldLabels: ExportFieldLabels = {
+    date: tel("date"),
+    dayNumber: tel("dayNumber"),
+    startTime: tel("startTime"),
+    endTime: tel("endTime"),
+    name: tel("name"),
+    category: tel("category"),
+    address: tel("address"),
+    departurePlace: tel("departurePlace"),
+    arrivalPlace: tel("arrivalPlace"),
+    transportMethod: tel("transportMethod"),
+    urls: tel("urls"),
+    memo: tel("memo"),
+    pattern: tel("pattern"),
+  };
+
+  const expenseLabels: ExpenseExportLabels = {
+    title: tel("expenseTitle"),
+    category: tel("expenseCategory"),
+    amount: tel("expenseAmount"),
+    paidBy: tel("expensePaidBy"),
+    splitType: tel("expenseSplitType"),
+    total: tel("total"),
+    balanceSection: tel("balanceSection"),
+    settlementSection: tel("settlementSection"),
+    transferArrow: (from, to) => tel("transferArrow", { from, to }),
+  };
+
+  const tex = useTranslations("export");
+  const exportSheetNames: ExportSheetNames = {
+    itinerary: tex("sheetItinerary"),
+    candidates: tex("sheetCandidates"),
+    expenses: tex("sheetExpenses"),
+    csvCandidatesSeparator: tel("csvCandidatesSeparator"),
+    csvExpensesSeparator: tel("csvExpensesSeparator"),
+  };
+
   const params = useParams();
   const tripId = typeof params.id === "string" ? params.id : null;
 
@@ -242,27 +279,27 @@ export default function TripExportPage() {
         for (const pattern of day.patterns) {
           const existing = sheets.get(pattern.label);
           if (existing) {
-            existing.rows.push(...buildScheduleRows(day, [pattern], effectiveFields));
+            existing.rows.push(...buildScheduleRows(day, [pattern], effectiveFields, fieldLabels));
           } else {
             sheets.set(pattern.label, {
               fields: effectiveFields,
-              rows: buildScheduleRows(day, [pattern], effectiveFields),
+              rows: buildScheduleRows(day, [pattern], effectiveFields, fieldLabels),
             });
           }
         }
       }
     } else {
       const rows = trip.days.flatMap((day) =>
-        buildScheduleRows(day, day.patterns, effectiveFields),
+        buildScheduleRows(day, day.patterns, effectiveFields, fieldLabels),
       );
-      sheets.set("旅程", { fields: effectiveFields, rows });
+      sheets.set(exportSheetNames.itinerary, { fields: effectiveFields, rows });
     }
 
     if (includeCandidates && trip.candidates.length > 0) {
       const candidateFields = filterCandidateFields(effectiveFields);
-      sheets.set("候補", {
+      sheets.set(exportSheetNames.candidates, {
         fields: candidateFields,
-        rows: buildCandidateRows(trip.candidates, effectiveFields),
+        rows: buildCandidateRows(trip.candidates, effectiveFields, fieldLabels),
       });
     }
 
@@ -278,14 +315,14 @@ export default function TripExportPage() {
     if (!includeExpenses || !expenseExportData || expenseExportData.expenses.length === 0) {
       return null;
     }
-    return buildExpenseExport(expenseExportData);
-  }, [includeExpenses, expenseExportData]);
+    return buildExpenseExport(expenseExportData, expenseLabels);
+  }, [includeExpenses, expenseExportData, expenseLabels]);
 
   const sheetNames = useMemo(() => {
     const names = [...previewSheets.keys()];
-    if (expensePreviewData) names.push("費用");
+    if (expensePreviewData) names.push(exportSheetNames.expenses);
     return names;
-  }, [previewSheets, expensePreviewData]);
+  }, [previewSheets, expensePreviewData, exportSheetNames.expenses]);
 
   // CSV: no sheet tabs, show candidates/expenses inline
   const showSheetTabs = format !== "csv" && sheetNames.length > 1;
@@ -301,7 +338,8 @@ export default function TripExportPage() {
   const activeRows = activeSheetData?.rows ?? [];
 
   // For CSV preview: show candidates/expenses inline below the schedule table
-  const candidateSheetData = format === "csv" ? previewSheets.get("候補") : undefined;
+  const candidateSheetData =
+    format === "csv" ? previewSheets.get(exportSheetNames.candidates) : undefined;
   const expenseInlineData = format === "csv" ? expensePreviewData : undefined;
 
   const fileExtension =
@@ -320,6 +358,9 @@ export default function TripExportPage() {
         expenseData: includeExpenses && expenseExportData ? expenseExportData : undefined,
         fileName: fileName.trim() || undefined,
         csvOptions: format === "csv" ? { delimiter, bom, lineEnding } : undefined,
+        fieldLabels,
+        expenseLabels,
+        sheetNames: exportSheetNames,
       });
       toast.success(tm("exportSuccess"));
     } catch {
@@ -341,7 +382,7 @@ export default function TripExportPage() {
           <div className="rounded-lg border p-5 space-y-6 self-start">
             {/* Format selection */}
             <div className="flex flex-col gap-4">
-              <Label htmlFor="export-format">フォーマット</Label>
+              <Label htmlFor="export-format">{te("formatLabel")}</Label>
               <Select value={format} onValueChange={handleFormatChange}>
                 <SelectTrigger id="export-format" className="w-full">
                   <SelectValue />
@@ -361,11 +402,11 @@ export default function TripExportPage() {
             {/* Field selection */}
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <Label>出力する列</Label>
+                <Label>{te("columnsLabel")}</Label>
                 <div className="flex gap-2">
                   <Button type="button" variant="outline" size="sm" onClick={selectAll}>
                     <CheckCheck className="h-3.5 w-3.5" />
-                    全選択
+                    {te("selectAll")}
                   </Button>
                   <Button
                     type="button"
@@ -375,7 +416,7 @@ export default function TripExportPage() {
                     disabled={selectedFields.length === 0}
                   >
                     <X className="h-3.5 w-3.5" />
-                    選択解除
+                    {te("deselectAll")}
                   </Button>
                 </div>
               </div>
@@ -400,7 +441,7 @@ export default function TripExportPage() {
                         onCheckedChange={() => toggleField(field)}
                       />
                       <Label htmlFor={id} className="flex-1 font-normal">
-                        {EXPORT_FIELD_LABELS[field]}
+                        {fieldLabels[field]}
                       </Label>
                       <span
                         className={cn(
@@ -418,7 +459,7 @@ export default function TripExportPage() {
 
             {/* Pattern mode */}
             <div className="flex flex-col gap-4">
-              <Label htmlFor="export-pattern-mode">パターン</Label>
+              <Label htmlFor="export-pattern-mode">{te("patternLabel")}</Label>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span>
@@ -431,29 +472,26 @@ export default function TripExportPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {(Object.entries(PATTERN_MODE_LABELS) as [PatternMode, string][]).map(
-                          ([value, label]) => (
-                            <SelectItem key={value} value={value}>
-                              {label}
-                            </SelectItem>
-                          ),
-                        )}
+                        <SelectItem value="separateSheets">
+                          {te("patternSeparateSheets")}
+                        </SelectItem>
+                        <SelectItem value="patternColumn">{te("patternSingleSheet")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </span>
                 </TooltipTrigger>
-                {format === "csv" && <TooltipContent>CSV ではシート分けできません</TooltipContent>}
+                {format === "csv" && <TooltipContent>{te("csvNoSheetSplit")}</TooltipContent>}
               </Tooltip>
             </div>
 
             {/* CSV options */}
             {format === "csv" && (
               <div className="flex flex-col gap-4">
-                <Label>CSV 設定</Label>
+                <Label>{te("csvSettings")}</Label>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="csv-delimiter" className="text-xs text-muted-foreground">
-                      区切り文字
+                      {te("delimiterLabel")}
                     </Label>
                     <Select
                       value={delimiter}
@@ -463,14 +501,14 @@ export default function TripExportPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="comma">カンマ (,)</SelectItem>
-                        <SelectItem value="tab">タブ</SelectItem>
+                        <SelectItem value="comma">{te("delimiterComma")}</SelectItem>
+                        <SelectItem value="tab">{te("delimiterTab")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="csv-line-ending" className="text-xs text-muted-foreground">
-                      改行コード
+                      {te("lineEndingLabel")}
                     </Label>
                     <Select
                       value={lineEnding}
@@ -480,8 +518,8 @@ export default function TripExportPage() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="crlf">CRLF (Windows)</SelectItem>
-                        <SelectItem value="lf">LF (Mac/Linux)</SelectItem>
+                        <SelectItem value="crlf">{te("lineEndingCrlf")}</SelectItem>
+                        <SelectItem value="lf">{te("lineEndingLf")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -493,7 +531,7 @@ export default function TripExportPage() {
                     onCheckedChange={(checked) => setBom(checked === true)}
                   />
                   <Label htmlFor="csv-bom" className="select-none font-normal">
-                    BOM を付与 (Excel で日本語を正しく表示)
+                    {te("bomLabel")}
                   </Label>
                 </div>
               </div>
@@ -508,7 +546,7 @@ export default function TripExportPage() {
                   onCheckedChange={(checked) => setIncludeCandidates(checked === true)}
                 />
                 <Label htmlFor="export-include-candidates" className="select-none">
-                  候補を含める ({trip.candidates.length}件)
+                  {te("includeCandidates", { count: trip.candidates.length })}
                 </Label>
               </div>
             )}
@@ -522,7 +560,7 @@ export default function TripExportPage() {
                   onCheckedChange={(checked) => setIncludeExpenses(checked === true)}
                 />
                 <Label htmlFor="export-include-expenses" className="select-none">
-                  費用を含める ({expensesData.expenses.length}件)
+                  {te("includeExpenses", { count: expensesData.expenses.length })}
                 </Label>
               </div>
             )}
@@ -535,7 +573,7 @@ export default function TripExportPage() {
                 id="export-filename"
                 value={fileName}
                 onChange={(e) => setFileName(e.target.value)}
-                placeholder="ファイル名"
+                placeholder={tex("filenamePlaceholder")}
                 className="flex-1"
               />
               <span className="shrink-0 text-sm text-muted-foreground">{fileExtension}</span>
@@ -546,7 +584,7 @@ export default function TripExportPage() {
                 className="shrink-0"
               >
                 <Download className="h-4 w-4" />
-                {exporting ? "エクスポート中..." : "エクスポート"}
+                {exporting ? tex("exporting") : tex("exportButton")}
               </Button>
             </div>
 
@@ -571,7 +609,7 @@ export default function TripExportPage() {
                 </div>
               )}
               <div className="overflow-x-auto overscroll-x-contain">
-                {activeSheet === "費用" && expensePreviewData ? (
+                {activeSheet === exportSheetNames.expenses && expensePreviewData ? (
                   <ExpensePreviewTable data={expensePreviewData} />
                 ) : activeFields.length > 0 && activeRows.length > 0 ? (
                   <>
@@ -583,14 +621,14 @@ export default function TripExportPage() {
                               key={field}
                               className="whitespace-nowrap px-3 py-2 text-left font-medium"
                             >
-                              {EXPORT_FIELD_LABELS[field]}
+                              {fieldLabels[field]}
                             </th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {activeRows.map((row, index) => {
-                          const nameLabel = EXPORT_FIELD_LABELS.name;
+                          const nameLabel = fieldLabels.name;
                           const rowKey = `${activeSheet}-${row[nameLabel]}-${index}`;
                           return (
                             <tr key={rowKey} className="border-b last:border-b-0">
@@ -604,7 +642,7 @@ export default function TripExportPage() {
                                       : "h-8 max-w-[200px] whitespace-nowrap truncate",
                                   )}
                                 >
-                                  {row[EXPORT_FIELD_LABELS[field]] ?? ""}
+                                  {row[fieldLabels[field]] ?? ""}
                                 </td>
                               ))}
                             </tr>
@@ -616,7 +654,7 @@ export default function TripExportPage() {
                     {candidateSheetData && candidateSheetData.rows.length > 0 && (
                       <>
                         <div className="border-t px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/30">
-                          --- 候補 ---
+                          {exportSheetNames.csvCandidatesSeparator}
                         </div>
                         <table className="text-xs">
                           <thead>
@@ -626,14 +664,14 @@ export default function TripExportPage() {
                                   key={field}
                                   className="whitespace-nowrap px-3 py-2 text-left font-medium"
                                 >
-                                  {EXPORT_FIELD_LABELS[field]}
+                                  {fieldLabels[field]}
                                 </th>
                               ))}
                             </tr>
                           </thead>
                           <tbody>
                             {candidateSheetData.rows.map((row, index) => {
-                              const nameLabel = EXPORT_FIELD_LABELS.name;
+                              const nameLabel = fieldLabels.name;
                               const rowKey = `candidate-${row[nameLabel]}-${index}`;
                               return (
                                 <tr key={rowKey} className="border-b last:border-b-0">
@@ -647,7 +685,7 @@ export default function TripExportPage() {
                                           : "h-8 max-w-[200px] whitespace-nowrap truncate",
                                       )}
                                     >
-                                      {row[EXPORT_FIELD_LABELS[field]] ?? ""}
+                                      {row[fieldLabels[field]] ?? ""}
                                     </td>
                                   ))}
                                 </tr>
@@ -661,7 +699,7 @@ export default function TripExportPage() {
                     {expenseInlineData && (
                       <>
                         <div className="border-t px-3 py-2 text-xs font-medium text-muted-foreground bg-muted/30">
-                          --- 費用 ---
+                          {exportSheetNames.csvExpensesSeparator}
                         </div>
                         <ExpensePreviewTable data={expenseInlineData} />
                       </>
@@ -670,7 +708,7 @@ export default function TripExportPage() {
                 ) : (
                   <p className="px-3 py-8 text-center text-sm text-muted-foreground">
                     {effectiveFields.length === 0
-                      ? "出力する列を選択するとプレビューが表示されます"
+                      ? tex("selectColumnsHint")
                       : tm("emptyExportSheet")}
                   </p>
                 )}

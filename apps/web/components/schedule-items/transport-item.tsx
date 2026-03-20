@@ -3,6 +3,7 @@
 import type { TransportMethod } from "@sugara/shared";
 import { TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import { Route } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { memo, useState } from "react";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
@@ -68,6 +69,15 @@ export const TransportItem = memo(function TransportItem({
 }: TransportItemProps) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
+  const tc = useTranslations("crossDay");
+  const crossDayT = {
+    hotelCheckin: tc("hotelCheckin"),
+    hotelStaying: tc("hotelStaying"),
+    hotelCheckout: tc("hotelCheckout"),
+    genericStart: tc("genericStart"),
+    genericContinuing: tc("genericContinuing"),
+    genericEnd: tc("genericEnd"),
+  };
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
   const TransportIcon = transportMethod
     ? TRANSPORT_ICONS[transportMethod as TransportMethod]
@@ -125,6 +135,8 @@ export const TransportItem = memo(function TransportItem({
         crossDayDisplay,
         crossDaySourceDayNumber,
         crossDayPosition,
+        undefined,
+        crossDayT,
       )}
     >
       <div className="flex items-center gap-2">

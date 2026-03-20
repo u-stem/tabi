@@ -19,6 +19,12 @@ export default function ResetPasswordPage() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
   const t = useTranslations("auth");
+  const tpr = useTranslations("passwordRules");
+  const pwT = {
+    rules: (key: string, params?: Record<string, string | number | Date>) =>
+      tpr(key as "minLength", params),
+    separator: tpr("separator"),
+  };
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -59,9 +65,9 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     setError(null);
 
-    const { valid, errors } = validatePassword(newPassword);
+    const { valid, errors } = validatePassword(newPassword, pwT);
     if (!valid) {
-      setError(`${t("passwordRequirementsFailed")}: ${errors.join("、")}`);
+      setError(`${t("passwordRequirementsFailed")}: ${errors.join(pwT.separator)}`);
       return;
     }
     if (newPassword !== confirmPassword) {

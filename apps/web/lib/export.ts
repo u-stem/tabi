@@ -27,7 +27,10 @@ export const EXPORT_FIELDS = [
 
 export type ExportField = (typeof EXPORT_FIELDS)[number];
 
-export const EXPORT_FIELD_LABELS: Record<ExportField, string> = {
+export type ExportFieldLabels = Record<ExportField, string>;
+
+// Default labels (Japanese) used when no translation is provided
+const DEFAULT_EXPORT_FIELD_LABELS: ExportFieldLabels = {
   date: "日付",
   dayNumber: "日目",
   startTime: "開始時間",
@@ -42,6 +45,9 @@ export const EXPORT_FIELD_LABELS: Record<ExportField, string> = {
   memo: "メモ",
   pattern: "パターン",
 };
+
+/** @deprecated Use translated labels from exportLabels namespace instead */
+export const EXPORT_FIELD_LABELS = DEFAULT_EXPORT_FIELD_LABELS;
 
 export const DEFAULT_SELECTED_FIELDS: ExportField[] = [
   "date",
@@ -91,13 +97,32 @@ export type ExpenseExportData = {
   settlement: ExpenseSettlement;
 };
 
-export const EXPENSE_EXPORT_HEADERS = {
+export type ExpenseExportHeaders = {
+  title: string;
+  category: string;
+  amount: string;
+  paidBy: string;
+  splitType: string;
+};
+
+const DEFAULT_EXPENSE_EXPORT_HEADERS: ExpenseExportHeaders = {
   title: "タイトル",
   category: "カテゴリ",
   amount: "金額",
   paidBy: "支払者",
   splitType: "分担方法",
-} as const;
+};
+
+/** @deprecated Use translated labels from exportLabels namespace instead */
+export const EXPENSE_EXPORT_HEADERS = DEFAULT_EXPENSE_EXPORT_HEADERS;
+
+export type ExportSheetNames = {
+  itinerary: string;
+  candidates: string;
+  expenses: string;
+  csvCandidatesSeparator: string;
+  csvExpensesSeparator: string;
+};
 
 export type ExportOptions = {
   format?: ExportFormat;
@@ -108,6 +133,9 @@ export type ExportOptions = {
   expenseData?: ExpenseExportData;
   fileName?: string;
   csvOptions?: CSVOptions;
+  fieldLabels?: ExportFieldLabels;
+  expenseLabels?: ExpenseExportLabels;
+  sheetNames?: ExportSheetNames;
 };
 
 export function buildDefaultFileName(tripTitle: string): string {
@@ -126,10 +154,12 @@ export function scheduleToRow(
   day: DayResponse,
   patternLabel: string | null,
   fields: ExportField[],
+  fieldLabels?: ExportFieldLabels,
 ): Record<string, string | number> {
+  const labels = fieldLabels ?? DEFAULT_EXPORT_FIELD_LABELS;
   const row: Record<string, string | number> = {};
   for (const field of fields) {
-    const label = EXPORT_FIELD_LABELS[field];
+    const label = labels[field];
     switch (field) {
       case "date":
         row[label] = formatDate(day.date);
@@ -171,12 +201,13 @@ export function buildScheduleRows(
   day: DayResponse,
   patterns: DayPatternResponse[],
   fields: ExportField[],
+  fieldLabels?: ExportFieldLabels,
 ): Record<string, string | number>[] {
   const rows: Record<string, string | number>[] = [];
   for (const pattern of patterns) {
     const sorted = [...pattern.schedules].sort((a, b) => a.sortOrder - b.sortOrder);
     for (const schedule of sorted) {
-      rows.push(scheduleToRow(schedule, day, pattern.label, fields));
+      rows.push(scheduleToRow(schedule, day, pattern.label, fields, fieldLabels));
     }
   }
   return rows;
@@ -185,6 +216,7 @@ export function buildScheduleRows(
 export function buildCandidateRows(
   candidates: CandidateResponse[],
   fields: ExportField[],
+  fieldLabels?: ExportFieldLabels,
 ): Record<string, string | number>[] {
   const candidateFields = filterCandidateFields(fields);
   const stubDay: DayResponse = {
@@ -195,7 +227,9 @@ export function buildCandidateRows(
     patterns: [],
   };
 
-  return candidates.map((candidate) => scheduleToRow(candidate, stubDay, null, candidateFields));
+  return candidates.map((candidate) =>
+    scheduleToRow(candidate, stubDay, null, candidateFields, fieldLabels),
+  );
 }
 
 const DEFAULT_MAX_PREVIEW_ROWS = 3;
@@ -226,8 +260,32 @@ export type ExpenseExportResult = {
   rows: Record<string, string | number>[];
 };
 
-export function buildExpenseExport(data: ExpenseExportData): ExpenseExportResult {
-  const H = EXPENSE_EXPORT_HEADERS;
+export type ExpenseExportLabels = ExpenseExportHeaders & {
+  total: string;
+  balanceSection: string;
+  settlementSection: string;
+  transferArrow: (from: string, to: string) => string;
+};
+
+export function buildExpenseExport(
+  data: ExpenseExportData,
+  labels?: ExpenseExportLabels,
+): ExpenseExportResult {
+  const defaultLabels: ExpenseExportLabels = {
+    ...DEFAULT_EXPENSE_EXPORT_HEADERS,
+    total: "合計",
+    balanceSection: "[過不足]",
+    settlementSection: "[精算]",
+    transferArrow: (from, to) => `${from} → ${to}`,
+  };
+  const L = labels ?? defaultLabels;
+  const H = {
+    title: L.title,
+    category: L.category,
+    amount: L.amount,
+    paidBy: L.paidBy,
+    splitType: L.splitType,
+  };
 
   // Collect unique member names in sorted order for stable output
   const memberNameSet = new Set<string>();
@@ -271,7 +329,7 @@ export function buildExpenseExport(data: ExpenseExportData): ExpenseExportResult
   rows.push(blank());
   rows.push({
     ...blank(),
-    [H.title]: "合計",
+    [H.title]: L.total,
     [H.amount]: data.settlement.totalAmount,
   });
 
@@ -282,7 +340,7 @@ export function buildExpenseExport(data: ExpenseExportData): ExpenseExportResult
 
   if (nonZeroBalances.length > 0) {
     rows.push(blank());
-    rows.push({ ...blank(), [H.title]: "[過不足]" });
+    rows.push({ ...blank(), [H.title]: L.balanceSection });
     for (const b of nonZeroBalances) {
       rows.push({ ...blank(), [H.title]: b.name, [H.amount]: b.net });
     }
@@ -292,9 +350,13 @@ export function buildExpenseExport(data: ExpenseExportData): ExpenseExportResult
   if (data.settlement.transfers.length > 0) {
     const sorted = [...data.settlement.transfers].sort((a, b) => b.amount - a.amount);
     rows.push(blank());
-    rows.push({ ...blank(), [H.title]: "[精算]" });
+    rows.push({ ...blank(), [H.title]: L.settlementSection });
     for (const t of sorted) {
-      rows.push({ ...blank(), [H.title]: `${t.fromName} → ${t.toName}`, [H.amount]: t.amount });
+      rows.push({
+        ...blank(),
+        [H.title]: L.transferArrow(t.fromName, t.toName),
+        [H.amount]: t.amount,
+      });
     }
   }
 
@@ -326,6 +388,15 @@ export async function exportTripToExcel(trip: TripResponse, options: ExportOptio
       ? options.fields
       : options.fields.filter((f) => f !== "pattern");
 
+  const sn = options.sheetNames ?? {
+    itinerary: "旅程",
+    candidates: "候補",
+    expenses: "費用",
+    csvCandidatesSeparator: "--- 候補 ---",
+    csvExpensesSeparator: "--- 費用 ---",
+  };
+  const fl = options.fieldLabels;
+
   switch (options.patternMode) {
     case "separateSheets": {
       // Collect all unique pattern labels across all days
@@ -333,7 +404,7 @@ export async function exportTripToExcel(trip: TripResponse, options: ExportOptio
       for (const day of trip.days) {
         for (const pattern of day.patterns) {
           const existing = labelMap.get(pattern.label) ?? [];
-          existing.push(...buildScheduleRows(day, [pattern], fields));
+          existing.push(...buildScheduleRows(day, [pattern], fields, fl));
           labelMap.set(pattern.label, existing);
         }
       }
@@ -343,20 +414,23 @@ export async function exportTripToExcel(trip: TripResponse, options: ExportOptio
       break;
     }
     case "patternColumn": {
-      const rows = trip.days.flatMap((day) => buildScheduleRows(day, day.patterns, fields));
-      addRowsToWorksheet(wb, "旅程", rows);
+      const rows = trip.days.flatMap((day) => buildScheduleRows(day, day.patterns, fields, fl));
+      addRowsToWorksheet(wb, sn.itinerary, rows);
       break;
     }
   }
 
   if (options.includeCandidates && trip.candidates.length > 0) {
-    const candidateRows = buildCandidateRows(trip.candidates, fields);
-    addRowsToWorksheet(wb, "候補", candidateRows);
+    const candidateRows = buildCandidateRows(trip.candidates, fields, fl);
+    addRowsToWorksheet(wb, sn.candidates, candidateRows);
   }
 
   if (options.includeExpenses && options.expenseData && options.expenseData.expenses.length > 0) {
-    const { headers: expenseHeaders, rows: expenseRows } = buildExpenseExport(options.expenseData);
-    addRowsToWorksheet(wb, "費用", expenseRows, expenseHeaders);
+    const { headers: expenseHeaders, rows: expenseRows } = buildExpenseExport(
+      options.expenseData,
+      options.expenseLabels,
+    );
+    addRowsToWorksheet(wb, sn.expenses, expenseRows, expenseHeaders);
   }
 
   const name = options.fileName || `${trip.title}_${toDateString(new Date())}`;
@@ -424,22 +498,34 @@ export async function exportTripToCSV(trip: TripResponse, options: ExportOptions
       ? options.fields
       : options.fields.filter((f) => f !== "pattern");
 
-  const headers = fields.map((f) => EXPORT_FIELD_LABELS[f]);
-  const rows = trip.days.flatMap((day) => buildScheduleRows(day, day.patterns, fields));
+  const fl = options.fieldLabels ?? DEFAULT_EXPORT_FIELD_LABELS;
+  const sn = options.sheetNames ?? {
+    itinerary: "旅程",
+    candidates: "候補",
+    expenses: "費用",
+    csvCandidatesSeparator: "--- 候補 ---",
+    csvExpensesSeparator: "--- 費用 ---",
+  };
+
+  const headers = fields.map((f) => fl[f]);
+  const rows = trip.days.flatMap((day) => buildScheduleRows(day, day.patterns, fields, fl));
   let csv = rowsToCSV(headers, rows, delimiter, lineEnding);
 
   const eol = lineEnding === "lf" ? "\n" : "\r\n";
 
   if (options.includeCandidates && trip.candidates.length > 0) {
     const candidateFields = filterCandidateFields(fields);
-    const candidateHeaders = candidateFields.map((f) => EXPORT_FIELD_LABELS[f]);
-    const candidateRows = buildCandidateRows(trip.candidates, fields);
-    csv += `${eol}${eol}--- 候補 ---${eol}${rowsToCSV(candidateHeaders, candidateRows, delimiter, lineEnding)}`;
+    const candidateHeaders = candidateFields.map((f) => fl[f]);
+    const candidateRows = buildCandidateRows(trip.candidates, fields, fl);
+    csv += `${eol}${eol}${sn.csvCandidatesSeparator}${eol}${rowsToCSV(candidateHeaders, candidateRows, delimiter, lineEnding)}`;
   }
 
   if (options.includeExpenses && options.expenseData && options.expenseData.expenses.length > 0) {
-    const { headers: expenseHeaders, rows: expenseRows } = buildExpenseExport(options.expenseData);
-    csv += `${eol}${eol}--- 費用 ---${eol}${rowsToCSV(expenseHeaders, expenseRows, delimiter, lineEnding)}`;
+    const { headers: expenseHeaders, rows: expenseRows } = buildExpenseExport(
+      options.expenseData,
+      options.expenseLabels,
+    );
+    csv += `${eol}${eol}${sn.csvExpensesSeparator}${eol}${rowsToCSV(expenseHeaders, expenseRows, delimiter, lineEnding)}`;
   }
 
   const name = options.fileName || `${trip.title}_${toDateString(new Date())}`;

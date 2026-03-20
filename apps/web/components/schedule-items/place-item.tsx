@@ -1,6 +1,7 @@
 "use client";
 
 import { MapPin } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { memo, useState } from "react";
 import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { SCHEDULE_COLOR_CLASSES, SELECTED_RING } from "@/lib/colors";
@@ -65,6 +66,16 @@ export const PlaceItem = memo(function PlaceItem({
 }: PlaceItemProps) {
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
+  const tc = useTranslations("crossDay");
+  const tdt = useTranslations("dayTabs");
+  const crossDayT = {
+    hotelCheckin: tc("hotelCheckin"),
+    hotelStaying: tc("hotelStaying"),
+    hotelCheckout: tc("hotelCheckout"),
+    genericStart: tc("genericStart"),
+    genericContinuing: tc("genericContinuing"),
+    genericEnd: tc("genericEnd"),
+  };
   const CategoryIcon = CATEGORY_ICONS[category];
   const colorClasses = SCHEDULE_COLOR_CLASSES[color];
 
@@ -93,7 +104,8 @@ export const PlaceItem = memo(function PlaceItem({
         crossDayDisplay,
         crossDaySourceDayNumber,
         crossDayPosition,
-        `${crossDaySourceDayNumber}日目から継続`,
+        tdt("dayNumber", { n: crossDaySourceDayNumber ?? 0 }),
+        crossDayT,
       )}
     >
       <div className="flex items-center gap-2">

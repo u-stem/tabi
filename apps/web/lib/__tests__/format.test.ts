@@ -11,7 +11,6 @@ import {
   isSafeUrl,
   validateTimeRange,
 } from "../format";
-import { MSG } from "../messages";
 
 describe("formatDate", () => {
   it("formats a date string to Japanese format", () => {
@@ -102,16 +101,16 @@ describe("validateTimeRange", () => {
     expect(validateTimeRange(undefined, undefined)).toBeNull();
   });
 
-  it("returns error when end time is set without start time", () => {
-    expect(validateTimeRange(undefined, "17:00")).toBe(MSG.TIME_START_REQUIRED);
+  it("returns message key when end time is set without start time", () => {
+    expect(validateTimeRange(undefined, "17:00")).toBe("timeStartRequired");
   });
 
-  it("returns error when start time equals end time", () => {
-    expect(validateTimeRange("09:00", "09:00")).toBe(MSG.TIME_END_BEFORE_START);
+  it("returns message key when start time equals end time", () => {
+    expect(validateTimeRange("09:00", "09:00")).toBe("timeEndBeforeStart");
   });
 
-  it("returns error when start time is after end time", () => {
-    expect(validateTimeRange("18:00", "09:00")).toBe(MSG.TIME_END_BEFORE_START);
+  it("returns message key when start time is after end time", () => {
+    expect(validateTimeRange("18:00", "09:00")).toBe("timeEndBeforeStart");
   });
 
   it("allows overnight time range for hotel category", () => {
@@ -120,31 +119,31 @@ describe("validateTimeRange", () => {
 
   it("still requires start time for hotel when only end time is set", () => {
     expect(validateTimeRange(undefined, "10:00", { allowOvernight: true })).toBe(
-      MSG.TIME_START_REQUIRED,
+      "timeStartRequired",
     );
   });
 
-  it("returns hotel-specific error when end time is set without start time", () => {
+  it("returns hotel-specific key when end time is set without start time", () => {
     expect(validateTimeRange(undefined, "10:00", { category: "hotel" })).toBe(
-      MSG.TIME_HOTEL_CHECKIN_REQUIRED,
+      "timeHotelCheckinRequired",
     );
   });
 
-  it("returns transport-specific error when end time is set without start time", () => {
+  it("returns transport-specific key when end time is set without start time", () => {
     expect(validateTimeRange(undefined, "10:00", { category: "transport" })).toBe(
-      MSG.TIME_TRANSPORT_DEPARTURE_REQUIRED,
+      "timeTransportDepartureRequired",
     );
   });
 
-  it("returns hotel-specific error when end time is before start time", () => {
+  it("returns hotel-specific key when end time is before start time", () => {
     expect(validateTimeRange("18:00", "09:00", { category: "hotel" })).toBe(
-      MSG.TIME_HOTEL_CHECKOUT_AFTER,
+      "timeHotelCheckoutAfter",
     );
   });
 
-  it("returns transport-specific error when end time is before start time", () => {
+  it("returns transport-specific key when end time is before start time", () => {
     expect(validateTimeRange("18:00", "09:00", { category: "transport" })).toBe(
-      MSG.TIME_TRANSPORT_ARRIVAL_AFTER,
+      "timeTransportArrivalAfter",
     );
   });
 });

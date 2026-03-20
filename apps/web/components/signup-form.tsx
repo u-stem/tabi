@@ -81,7 +81,10 @@ export function SignupForm() {
         msg = tm("authSignupDisabled");
       } else {
         const code = result.error.code;
-        msg = code && te.has(code as any) ? te(code as any) : tm("authSignupFailed");
+        msg =
+          code && (te.has as (k: string) => boolean)(code)
+            ? (te as (k: string) => string)(code)
+            : tm("authSignupFailed");
       }
       setError(msg);
       setLoading(false);
@@ -111,7 +114,7 @@ export function SignupForm() {
               placeholder="taro_123"
               autoComplete="username"
               pattern="^[a-zA-Z0-9_]+$"
-              title="英数字とアンダースコアのみ使用できます"
+              title={t("usernameHint")}
               minLength={3}
               maxLength={20}
               required

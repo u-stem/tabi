@@ -83,12 +83,12 @@ export function EditCandidateDialog({
     e.preventDefault();
     setTimeError(null);
 
-    const timeValidation = validateTimeRange(startTime, endTime, {
+    const timeValidationKey = validateTimeRange(startTime, endTime, {
       allowOvernight: endDayOffset > 0,
       category,
     });
-    if (timeValidation) {
-      setTimeError(timeValidation);
+    if (timeValidationKey) {
+      setTimeError((tm as (k: string) => string)(timeValidationKey));
       return;
     }
 

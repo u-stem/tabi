@@ -1,7 +1,6 @@
 import type { ScheduleCategory } from "@sugara/shared";
 import { format, isValid, parse } from "date-fns";
 import { ja } from "date-fns/locale";
-import { MSG } from "@/lib/messages";
 
 export function toDateString(date: Date): string {
   const y = date.getFullYear();
@@ -65,20 +64,21 @@ export function compareByStartTime(
   return 0;
 }
 
+/** Returns a message key (e.g. "timeStartRequired") or null. Callers translate via tm(key). */
 export function validateTimeRange(
   startTime?: string,
   endTime?: string,
   options?: { allowOvernight?: boolean; category?: ScheduleCategory },
 ): string | null {
   if (!startTime && endTime) {
-    if (options?.category === "hotel") return MSG.TIME_HOTEL_CHECKIN_REQUIRED;
-    if (options?.category === "transport") return MSG.TIME_TRANSPORT_DEPARTURE_REQUIRED;
-    return MSG.TIME_START_REQUIRED;
+    if (options?.category === "hotel") return "timeHotelCheckinRequired";
+    if (options?.category === "transport") return "timeTransportDepartureRequired";
+    return "timeStartRequired";
   }
   if (startTime && endTime && !options?.allowOvernight && startTime >= endTime) {
-    if (options?.category === "hotel") return MSG.TIME_HOTEL_CHECKOUT_AFTER;
-    if (options?.category === "transport") return MSG.TIME_TRANSPORT_ARRIVAL_AFTER;
-    return MSG.TIME_END_BEFORE_START;
+    if (options?.category === "hotel") return "timeHotelCheckoutAfter";
+    if (options?.category === "transport") return "timeTransportArrivalAfter";
+    return "timeEndBeforeStart";
   }
   return null;
 }

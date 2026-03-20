@@ -6,11 +6,11 @@ import type {
   GroupResponse,
   MemberResponse,
 } from "@sugara/shared";
-import { ROLE_LABELS } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ChevronRight, Pencil, UserMinus, UserPlus, Users, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
@@ -34,7 +34,6 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { ROLE_COLORS } from "@/lib/colors";
 import { pageTitle } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -42,6 +41,10 @@ export default function SpTripMembersPage() {
   const { id: tripId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
+  const tm = useTranslations("messages");
+  const tme = useTranslations("member");
+  const tc = useTranslations("common");
+  const tlRole = useTranslations("labels.role");
 
   const [sheetMember, setSheetMember] = useState<MemberResponse | null>(null);
   const [removeMember, setRemoveMember] = useState<MemberResponse | null>(null);
@@ -52,8 +55,8 @@ export default function SpTripMembersPage() {
   const [groupPickerOpen, setGroupPickerOpen] = useState(false);
 
   useEffect(() => {
-    document.title = pageTitle("メンバー管理");
-  }, []);
+    document.title = pageTitle(tme("manageMember"));
+  }, [tme]);
 
   const { data: members = [], isLoading: membersLoading } = useQuery({
     queryKey: queryKeys.trips.members(tripId),
@@ -102,7 +105,7 @@ export default function SpTripMembersPage() {
         method: "POST",
         body: JSON.stringify({ userId: trimmed, role: "editor" }),
       });
-      toast.success(MSG.MEMBER_ADDED);
+      toast.success(tm("memberAdded"));
       // Already-friends or duplicate request are expected — ignore errors
       api("/api/friends/requests", {
         method: "POST",
@@ -112,10 +115,10 @@ export default function SpTripMembersPage() {
       invalidateMembers();
     } catch (err) {
       toast.error(
-        getApiErrorMessage(err, MSG.MEMBER_ADD_FAILED, {
-          badRequest: MSG.INVALID_USER_ID,
-          notFound: MSG.USER_NOT_FOUND,
-          conflict: MSG.MEMBER_ALREADY,
+        getApiErrorMessage(err, tm("memberAddFailed"), {
+          badRequest: tm("invalidUserId"),
+          notFound: tm("userNotFound"),
+          conflict: tm("memberAlready"),
         }),
       );
     } finally {
@@ -130,12 +133,12 @@ export default function SpTripMembersPage() {
         method: "POST",
         body: JSON.stringify({ userId: friendUserId, role: "editor" }),
       });
-      toast.success(MSG.MEMBER_ADDED);
+      toast.success(tm("memberAdded"));
       invalidateMembers();
     } catch (err) {
       toast.error(
-        getApiErrorMessage(err, MSG.MEMBER_ADD_FAILED, {
-          conflict: MSG.MEMBER_ALREADY,
+        getApiErrorMessage(err, tm("memberAddFailed"), {
+          conflict: tm("memberAlready"),
         }),
       );
     } finally {
@@ -159,11 +162,11 @@ export default function SpTripMembersPage() {
     const added = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.filter((r) => r.status === "rejected").length;
     if (failed === 0) {
-      toast.success(MSG.GROUP_BULK_ADDED(added));
+      toast.success(tm("groupBulkAdded", { count: added }));
     } else if (added > 0) {
-      toast.warning(MSG.GROUP_BULK_ADD_PARTIAL(added, failed));
+      toast.warning(tm("groupBulkAddPartial", { added, failed }));
     } else {
-      toast.error(MSG.MEMBER_ADD_FAILED);
+      toast.error(tm("memberAddFailed"));
     }
     invalidateMembers();
     setAdding(false);
@@ -179,7 +182,7 @@ export default function SpTripMembersPage() {
         prev.map((m) => (m.userId !== memberId ? m : { ...m, role: newRole })),
       );
     }
-    toast.success(MSG.MEMBER_ROLE_CHANGED);
+    toast.success(tm("memberRoleChanged"));
     setRoleChangeMember(null);
 
     try {
@@ -190,7 +193,7 @@ export default function SpTripMembersPage() {
       invalidateMembers();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.MEMBER_ROLE_CHANGE_FAILED);
+      toast.error(tm("memberRoleChangeFailed"));
     }
   }
 
@@ -204,14 +207,14 @@ export default function SpTripMembersPage() {
         prev.filter((m) => m.userId !== memberId),
       );
     }
-    toast.success(MSG.MEMBER_REMOVED);
+    toast.success(tm("memberRemoved"));
 
     try {
       await api(`/api/trips/${tripId}/members/${memberId}`, { method: "DELETE" });
       invalidateMembers();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.MEMBER_REMOVE_FAILED);
+      toast.error(tm("memberRemoveFailed"));
     }
   }
 
@@ -220,7 +223,7 @@ export default function SpTripMembersPage() {
         ...(sheetMember.role !== "owner"
           ? [
               {
-                label: "ロールを変更",
+                label: tme("changeRole"),
                 icon: <Pencil className="h-4 w-4" />,
                 onClick: () => {
                   setRoleChangeMember(sheetMember);
@@ -232,7 +235,7 @@ export default function SpTripMembersPage() {
         ...(!sheetMember.hasExpenses && sheetMember.role !== "owner"
           ? [
               {
-                label: "メンバーを削除",
+                label: tme("removeMember"),
                 icon: <UserMinus className="h-4 w-4" />,
                 variant: "destructive" as const,
                 onClick: () => {
@@ -256,7 +259,7 @@ export default function SpTripMembersPage() {
           <ArrowLeft className="h-4 w-4" />
         </Link>
         <span className="absolute inset-x-16 truncate text-center text-sm font-semibold">
-          メンバー
+          {tme("title")}
         </span>
       </div>
 
@@ -270,25 +273,23 @@ export default function SpTripMembersPage() {
                 <Input
                   value={userId}
                   onChange={(e) => setUserId(e.target.value)}
-                  placeholder="ユーザーIDで追加"
+                  placeholder={tme("userIdPlaceholder")}
                   required
                   className="flex-1"
                 />
                 <Button type="submit" variant="outline" disabled={adding || !userId.trim()}>
                   <UserPlus className="h-4 w-4" />
-                  {adding ? "..." : "追加"}
+                  {adding ? "..." : tme("add")}
                 </Button>
               </form>
-              <p className="mt-1.5 text-sm text-muted-foreground">
-                編集者として追加されます。ロールはあとから変更できます。
-              </p>
+              <p className="mt-1.5 text-sm text-muted-foreground">{tme("addAsEditorHint")}</p>
             </div>
 
             {/* Friends */}
             {addableFriends.length > 0 && (
               <div className="border-b pb-3">
                 <p className="pt-4 pb-2 text-sm font-medium text-muted-foreground">
-                  フレンドから追加
+                  {tme("fromFriendsAdd")}
                 </p>
                 <div className="divide-y divide-border">
                   {addableFriends.map((friend) => (
@@ -306,7 +307,7 @@ export default function SpTripMembersPage() {
                         onClick={() => handleAddFriend(friend.userId)}
                       >
                         <UserPlus className="h-4 w-4" />
-                        追加
+                        {tme("add")}
                       </Button>
                     </div>
                   ))}
@@ -315,7 +316,7 @@ export default function SpTripMembersPage() {
             )}
             {friends.length > 0 && addableFriends.length === 0 && (
               <div className="border-b py-4">
-                <p className="text-center text-sm text-muted-foreground">{MSG.MEMBER_ALL_ADDED}</p>
+                <p className="text-center text-sm text-muted-foreground">{tm("memberAllAdded")}</p>
               </div>
             )}
 
@@ -323,7 +324,7 @@ export default function SpTripMembersPage() {
             {groups.length > 0 && (
               <div className="border-b pb-4">
                 <p className="pt-4 pb-2 text-sm font-medium text-muted-foreground">
-                  グループから追加
+                  {tme("fromGroupsAdd")}
                 </p>
                 <button
                   type="button"
@@ -333,7 +334,7 @@ export default function SpTripMembersPage() {
                   <span>
                     {selectedGroupId
                       ? groups.find((g) => g.id === selectedGroupId)?.name
-                      : "グループを選択"}
+                      : tme("selectGroup")}
                   </span>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                 </button>
@@ -357,13 +358,15 @@ export default function SpTripMembersPage() {
                       disabled={adding}
                       onClick={handleAddGroupMembers}
                     >
-                      {adding ? "追加中..." : `${addableGroupMembers.length}人を全員追加`}
+                      {adding
+                        ? tme("addingMember")
+                        : tme("addAllCount", { count: addableGroupMembers.length })}
                     </Button>
                   </div>
                 )}
                 {selectedGroupId && addableGroupMembers.length === 0 && groupMembers.length > 0 && (
                   <p className="mt-2 text-center text-xs text-muted-foreground">
-                    {MSG.MEMBER_ALL_ADDED}
+                    {tm("memberAllAdded")}
                   </p>
                 )}
               </div>
@@ -374,7 +377,7 @@ export default function SpTripMembersPage() {
         {/* Member list */}
         <div className="pb-[calc(5rem+env(safe-area-inset-bottom,0px))]">
           <p className="px-4 pt-4 pb-2 text-sm font-medium text-muted-foreground">
-            メンバー ({members.length})
+            {tme("memberCount", { count: members.length })}
           </p>
           {membersLoading ? (
             <div className="px-4">
@@ -400,7 +403,7 @@ export default function SpTripMembersPage() {
                     variant="outline"
                     className={`shrink-0 text-xs ${member.role === "owner" ? "" : (ROLE_COLORS[member.role as keyof typeof ROLE_COLORS] ?? "")}`}
                   >
-                    {ROLE_LABELS[member.role as keyof typeof ROLE_LABELS] ?? member.role}
+                    {tlRole(member.role)}
                   </Badge>
                   {isOwner && member.role !== "owner" && (
                     <ItemMenuButton
@@ -440,12 +443,12 @@ export default function SpTripMembersPage() {
           onOpenChange={(v) => !v && setRoleChangeMember(null)}
           actions={[
             {
-              label: "編集者に変更",
+              label: tme("changeToEditor"),
               icon: <Pencil className="h-4 w-4" />,
               onClick: () => handleRoleChange(roleChangeMember.userId, "editor"),
             },
             {
-              label: "閲覧者に変更",
+              label: tme("changeToViewer"),
               icon: <Pencil className="h-4 w-4" />,
               onClick: () => handleRoleChange(roleChangeMember.userId, "viewer"),
             },
@@ -460,15 +463,15 @@ export default function SpTripMembersPage() {
       >
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>メンバーを削除しますか？</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogTitle>{tme("deleteConfirmTitle")}</ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              「{removeMember?.name}」を旅行から削除します。この操作は取り消せません。
+              {tme("deleteConfirmDescription", { name: removeMember?.name ?? "" })}
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
@@ -476,7 +479,7 @@ export default function SpTripMembersPage() {
                 setRemoveMember(null);
               }}
             >
-              削除する
+              {tc("deletConfirm")}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>

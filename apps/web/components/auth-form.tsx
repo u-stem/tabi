@@ -38,7 +38,10 @@ export function AuthForm() {
     const result = await signIn.username({ username, password });
     if (result.error) {
       const code = result.error.code;
-      const errorMsg = code && te.has(code as any) ? te(code as any) : tm("authLoginFailed");
+      const errorMsg =
+        code && (te.has as (k: string) => boolean)(code)
+          ? (te as (k: string) => string)(code)
+          : tm("authLoginFailed");
       setError(errorMsg);
       setLoading(false);
       return;

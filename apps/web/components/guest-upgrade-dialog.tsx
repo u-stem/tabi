@@ -78,7 +78,10 @@ export function GuestUpgradeDialog({
         msg = tm("authSignupDisabled");
       } else {
         const code = result.error.code;
-        msg = code && te.has(code as any) ? te(code as any) : tm("authGuestUpgradeFailed");
+        msg =
+          code && (te.has as (k: string) => boolean)(code)
+            ? (te as (k: string) => string)(code)
+            : tm("authGuestUpgradeFailed");
       }
       setError(msg);
       setLoading(false);
@@ -128,7 +131,7 @@ export function GuestUpgradeDialog({
                 id="upgrade-username"
                 name="username"
                 pattern="^[a-zA-Z0-9_]+$"
-                title="英数字とアンダースコアのみ"
+                title={t("usernameHint")}
                 minLength={3}
                 maxLength={20}
                 required

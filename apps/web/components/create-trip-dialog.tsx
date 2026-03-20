@@ -28,7 +28,6 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiError, api, getApiErrorMessage } from "@/lib/api";
 import { formatDateRangeShort } from "@/lib/format";
 import { useCoverImageUpload } from "@/lib/hooks/use-cover-image-upload";
-import { MSG } from "@/lib/messages";
 
 type DateMode = "direct" | "poll";
 type CandidateOption = { startDate: string; endDate: string };
@@ -105,7 +104,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
 
     if (dateMode === "poll") {
       if (candidates.length === 0) {
-        setError(MSG.POLL_CANDIDATE_REQUIRED);
+        setError(tm("pollCandidateRequired"));
         return;
       }
 
@@ -135,7 +134,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
         onCreated();
       } catch (err) {
         if (err instanceof ApiError && err.status === 403 && err.message.includes("Guest")) {
-          setError(MSG.AUTH_GUEST_TRIP_LIMIT);
+          setError(tm("authGuestTripLimit"));
         } else {
           setError(getApiErrorMessage(err, tm("tripCreateFailed")));
         }
@@ -176,7 +175,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
         onCreated();
       } catch (err) {
         if (err instanceof ApiError && err.status === 403 && err.message.includes("Guest")) {
-          setError(MSG.AUTH_GUEST_TRIP_LIMIT);
+          setError(tm("authGuestTripLimit"));
         } else {
           setError(getApiErrorMessage(err, tm("tripCreateFailed")));
         }

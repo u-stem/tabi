@@ -45,7 +45,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -167,9 +166,9 @@ export function MemberDialog({
     const added = results.filter((r) => r.status === "fulfilled").length;
     const failed = results.filter((r) => r.status === "rejected").length;
     if (failed === 0) {
-      toast.success(MSG.GROUP_BULK_ADDED(added));
+      toast.success(tm("groupBulkAdded", { count: added }));
     } else if (added > 0) {
-      toast.warning(MSG.GROUP_BULK_ADD_PARTIAL(added, failed));
+      toast.warning(tm("groupBulkAddPartial", { added, failed }));
     } else {
       toast.error(tm("memberAddFailed"));
     }
@@ -306,7 +305,7 @@ export function MemberDialog({
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <span className="cursor-not-allowed select-none text-sm text-muted-foreground/50">
-                              削除
+                              {tc("delete")}
                             </span>
                           </TooltipTrigger>
                           <TooltipContent>{tme("cannotDeleteExpense")}</TooltipContent>
@@ -318,7 +317,7 @@ export function MemberDialog({
                           aria-label={`${member.name}を削除`}
                           onClick={() => setRemoveMember(member)}
                         >
-                          削除
+                          {tc("delete")}
                         </button>
                       )}
                     </div>
@@ -357,7 +356,7 @@ export function MemberDialog({
                       if (friends.length === 0) {
                         return (
                           <p className="py-4 text-center text-sm text-muted-foreground">
-                            {MSG.EMPTY_FRIEND}
+                            {tm("emptyFriend")}
                           </p>
                         );
                       }
@@ -377,8 +376,8 @@ export function MemberDialog({
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="editor">編集者</SelectItem>
-                                <SelectItem value="viewer">閲覧者</SelectItem>
+                                <SelectItem value="editor">{tlRole("editor")}</SelectItem>
+                                <SelectItem value="viewer">{tlRole("viewer")}</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -403,7 +402,7 @@ export function MemberDialog({
                                   disabled={adding}
                                   onClick={() => handleAddFriend(friend.userId)}
                                 >
-                                  追加
+                                  {tme("add")}
                                 </Button>
                               </div>
                             ))}
@@ -416,7 +415,7 @@ export function MemberDialog({
                   <TabsContent value="groups">
                     {groups.length === 0 ? (
                       <p className="py-4 text-center text-sm text-muted-foreground">
-                        {MSG.EMPTY_GROUP}
+                        {tm("emptyGroup")}
                       </p>
                     ) : (
                       <div className="space-y-2">
@@ -536,7 +535,7 @@ export function MemberDialog({
                         />
                         <Button type="submit" size="sm" variant="outline" disabled={adding}>
                           <UserPlus className="h-4 w-4" />
-                          {adding ? "追加中..." : "追加"}
+                          {adding ? tme("addingMember") : tme("add")}
                         </Button>
                       </div>
                       <p className="text-sm text-muted-foreground">{tme("userIdHint")}</p>

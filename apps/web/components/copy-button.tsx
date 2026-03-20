@@ -6,7 +6,6 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { copyToClipboard } from "@/lib/clipboard";
-import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 interface CopyButtonProps {
@@ -16,24 +15,21 @@ interface CopyButtonProps {
   className?: string;
 }
 
-export function CopyButton({
-  value,
-  successMessage = MSG.SHARE_LINK_COPIED,
-  label,
-  className,
-}: CopyButtonProps) {
+export function CopyButton({ value, successMessage, label, className }: CopyButtonProps) {
   const t = useTranslations("common");
+  const tm = useTranslations("messages");
   const resolvedLabel = label ?? t("copy");
+  const resolvedSuccessMessage = successMessage ?? tm("shareLinkCopied");
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
     try {
       await copyToClipboard(value);
       setCopied(true);
-      toast.success(successMessage);
+      toast.success(resolvedSuccessMessage);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error(MSG.COPY_FAILED);
+      toast.error(tm("copyFailed"));
     }
   }
 

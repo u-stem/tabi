@@ -46,6 +46,8 @@ export function PatternTabs({
   onSelectPattern: (dayId: string, index: number) => void;
 }) {
   const tm = useTranslations("messages");
+  const tsch = useTranslations("schedule");
+  const tc = useTranslations("common");
   const isMobile = useMobile();
 
   if (isMobile) {
@@ -101,19 +103,19 @@ export function PatternTabs({
                 <DropdownMenuContent align="start">
                   <DropdownMenuItem onClick={() => patternOps.rename.start(pattern)}>
                     <Pencil />
-                    名前変更
+                    {tsch("rename")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => patternOps.handleDuplicate(pattern.id)}
                     disabled={patterns.length >= MAX_PATTERNS_PER_DAY}
                   >
                     <Copy />
-                    複製
+                    {tc("duplicate")}
                   </DropdownMenuItem>
                   {patterns.length > 1 && (
                     <DropdownMenuItem onClick={() => patternOps.setOverwriteSource(pattern)}>
                       <ClipboardPaste />
-                      上書き
+                      {tsch("overwrite")}
                     </DropdownMenuItem>
                   )}
                   {!pattern.isDefault && (
@@ -122,7 +124,7 @@ export function PatternTabs({
                       onClick={() => patternOps.setDeleteTarget(pattern)}
                     >
                       <Trash2 />
-                      削除
+                      {tc("delete")}
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -142,7 +144,7 @@ export function PatternTabs({
                   disabled
                   className="shrink-0 cursor-not-allowed rounded-full border border-dashed border-muted-foreground/20 px-3 py-1.5 text-xs text-muted-foreground/50"
                 >
-                  <Plus className="inline h-3 w-3" /> パターン追加
+                  <Plus className="inline h-3 w-3" /> {tsch("addPattern")}
                 </button>
               </span>
             </TooltipTrigger>
@@ -154,7 +156,7 @@ export function PatternTabs({
             onClick={() => patternOps.add.setOpen(true)}
             className="shrink-0 rounded-full border border-dashed border-muted-foreground/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-muted-foreground hover:text-foreground"
           >
-            <Plus className="inline h-3 w-3" /> パターン追加
+            <Plus className="inline h-3 w-3" /> {tsch("addPattern")}
           </button>
         ))}
     </div>
@@ -179,7 +181,6 @@ function MobilePatternTabs({
   patternOps: PatternOps;
   onSelectPattern: (dayId: string, index: number) => void;
 }) {
-  const tm = useTranslations("messages");
   const tsch = useTranslations("schedule");
   const tc = useTranslations("common");
   const [pickerOpen, setPickerOpen] = useState(false);

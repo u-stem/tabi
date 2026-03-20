@@ -3,6 +3,7 @@
 import type { UserProfileResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Search, UserPlus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type RefObject, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,6 @@ import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { broadcastFriendsUpdate } from "@/lib/hooks/use-friends-sync";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 function ConfirmDialog({
@@ -31,6 +31,8 @@ function ConfirmDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const tm = useTranslations("messages");
+  const tf = useTranslations("friend");
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
@@ -57,7 +59,7 @@ function ConfirmDialog({
         method: "POST",
         body: JSON.stringify({ addresseeId: userId }),
       });
-      toast.success(MSG.FRIEND_REQUEST_SENT);
+      toast.success(tm("friendRequestSent"));
       queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
       broadcastFriendsUpdate(userId);
       onOpenChange(false);
@@ -66,8 +68,8 @@ function ConfirmDialog({
         setAlreadyFriend(true);
       }
       toast.error(
-        getApiErrorMessage(err, MSG.FRIEND_REQUEST_SEND_FAILED, {
-          conflict: "すでにフレンドか申請済みです",
+        getApiErrorMessage(err, tm("friendRequestSendFailed") as string, {
+          conflict: tf("alreadyFriend") as string,
         }),
       );
     } finally {
@@ -85,14 +87,14 @@ function ConfirmDialog({
   if (isSelf) {
     content = (
       <div className="flex flex-col items-center gap-4 py-4">
-        <p className="text-sm text-muted-foreground">自分自身にフレンド申請はできません</p>
+        <p className="text-sm text-muted-foreground">{tf("cannotFriendSelf")}</p>
       </div>
     );
     footer = (
       <ResponsiveDialogFooter className="[&>*]:flex-1">
         <Button variant="outline" onClick={handleClose}>
           <X className="h-4 w-4" />
-          閉じる
+          {tf("close")}
         </Button>
       </ResponsiveDialogFooter>
     );
@@ -108,14 +110,14 @@ function ConfirmDialog({
   } else if (error || !profile) {
     content = (
       <div className="flex flex-col items-center gap-4 py-4">
-        <p className="text-sm text-muted-foreground">ユーザーが見つかりません</p>
+        <p className="text-sm text-muted-foreground">{tf("userNotFound")}</p>
       </div>
     );
     footer = (
       <ResponsiveDialogFooter className="[&>*]:flex-1">
         <Button variant="outline" onClick={handleClose}>
           <X className="h-4 w-4" />
-          閉じる
+          {tf("close")}
         </Button>
       </ResponsiveDialogFooter>
     );
@@ -134,11 +136,11 @@ function ConfirmDialog({
     footer = (
       <ResponsiveDialogFooter className="[&>*]:flex-1">
         {alreadyFriend ? (
-          <Button disabled>すでにフレンドか申請済みです</Button>
+          <Button disabled>{tf("alreadyFriend")}</Button>
         ) : (
           <Button onClick={handleSend} disabled={sending} className="w-full">
             <UserPlus className="mr-1 h-4 w-4" />
-            {sending ? "送信中..." : "フレンド申請を送る"}
+            {sending ? tf("sending") : tf("sendRequest")}
           </Button>
         )}
       </ResponsiveDialogFooter>
@@ -149,7 +151,7 @@ function ConfirmDialog({
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="sm:max-w-xs">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>フレンド申請</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{tf("friendRequest")}</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
         {content}
         {footer}
@@ -165,6 +167,7 @@ export function SendRequestSection({
   inputRef?: RefObject<HTMLInputElement | null>;
   trailing?: React.ReactNode;
 }) {
+  const tf = useTranslations("friend");
   const [value, setValue] = useState("");
   const [confirmUserId, setConfirmUserId] = useState<string | null>(null);
   const fallbackRef = useRef<HTMLInputElement>(null);
@@ -190,12 +193,12 @@ export function SendRequestSection({
           ref={resolvedRef}
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="ユーザーIDを入力"
+          placeholder={tf("userIdPlaceholder")}
           className="flex-1"
         />
         <Button type="submit" disabled={!value.trim()} className="shrink-0">
           <Search className="mr-1 h-4 w-4" />
-          検索
+          {tf("searchButton")}
         </Button>
         {trailing}
       </form>

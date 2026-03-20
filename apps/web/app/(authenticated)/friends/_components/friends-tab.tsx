@@ -4,6 +4,7 @@ import type { FriendResponse } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { UserMinus, X } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
@@ -24,7 +25,6 @@ import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { broadcastFriendsUpdate } from "@/lib/hooks/use-friends-sync";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 export function FriendsTab({
@@ -54,6 +54,9 @@ function FriendListSection({
   profileHrefPrefix: string;
   onRemoved: () => void;
 }) {
+  const tm = useTranslations("messages");
+  const tf = useTranslations("friend");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const isMobile = useMobile();
   const [removingFriend, setRemovingFriend] = useState<FriendResponse | null>(null);
@@ -70,7 +73,7 @@ function FriendListSection({
         prev.filter((f) => f.friendId !== friendId),
       );
     }
-    toast.success(MSG.FRIEND_REMOVED);
+    toast.success(tm("friendRemoved"));
 
     try {
       await api(`/api/friends/${friendId}`, { method: "DELETE" });
@@ -78,7 +81,7 @@ function FriendListSection({
       broadcastFriendsUpdate(friendUserId);
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.FRIEND_REMOVE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("friendRemoveFailed") as string));
     } finally {
       setLoadingId(null);
     }
@@ -91,7 +94,7 @@ function FriendListSection({
       {isMobile ? (
         // Native-app-like list for mobile
         friends.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">{MSG.EMPTY_FRIEND}</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">{tm("emptyFriend")}</p>
         ) : (
           <div className="divide-y divide-border">
             {friends.map((friend) => (
@@ -118,11 +121,11 @@ function FriendListSection({
       ) : (
         <Card className="border-0 shadow-none sm:border sm:shadow-sm">
           <CardHeader>
-            <CardTitle>フレンド一覧</CardTitle>
+            <CardTitle>{tf("friendList")}</CardTitle>
           </CardHeader>
           <CardContent>
             {friends.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{MSG.EMPTY_FRIEND}</p>
+              <p className="text-sm text-muted-foreground">{tm("emptyFriend")}</p>
             ) : (
               <div className="max-h-80 space-y-3 overflow-y-auto">
                 {friends.map((friend) => (
@@ -138,7 +141,7 @@ function FriendListSection({
                     </div>
                     <div className="flex gap-2 shrink-0">
                       <Button size="sm" variant="outline" asChild>
-                        <Link href={`${profileHrefPrefix}/${friend.userId}`}>プロフィール</Link>
+                        <Link href={`${profileHrefPrefix}/${friend.userId}`}>{tf("profile")}</Link>
                       </Button>
                       <Button
                         size="sm"
@@ -146,7 +149,7 @@ function FriendListSection({
                         disabled={loadingId === friend.friendId}
                         onClick={() => setRemovingFriend(friend)}
                       >
-                        解除
+                        {tf("unfriend")}
                       </Button>
                     </div>
                   </div>
@@ -164,7 +167,7 @@ function FriendListSection({
           onOpenChange={(v) => !v && setSheetTarget(null)}
           actions={[
             {
-              label: "フレンドを解除",
+              label: tf("removeFriend"),
               icon: <UserMinus className="h-4 w-4" />,
               variant: "destructive",
               onClick: () => {
@@ -181,16 +184,15 @@ function FriendListSection({
       >
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>フレンドを解除しますか？</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogTitle>{tf("removeConfirmTitle")}</ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              「{removingFriend?.name}
-              」をフレンドから解除します。この操作は取り消せません。
+              {tf("removeConfirmDescription", { name: removingFriend?.name ?? "" })}
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
@@ -198,7 +200,7 @@ function FriendListSection({
                 setRemovingFriend(null);
               }}
             >
-              解除する
+              {tf("removeConfirm")}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>

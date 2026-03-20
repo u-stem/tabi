@@ -4,6 +4,7 @@ import type { UserProfileResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { Html5Qrcode } from "html5-qrcode";
 import { ArrowLeft, ImageIcon, ScanLine, UserPlus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { RefObject } from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -23,7 +24,6 @@ import { ApiError, api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { broadcastFriendsUpdate } from "@/lib/hooks/use-friends-sync";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
-import { MSG } from "@/lib/messages";
 import { parseQrFriendUrl } from "@/lib/qr-utils";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -32,22 +32,19 @@ const FILE_READER_ID = "qr-file-reader";
 
 type ScanTabId = "camera" | "image";
 
-const MOBILE_TABS: DialogTab<ScanTabId>[] = [
-  { id: "camera", label: "カメラ" },
-  { id: "image", label: "画像" },
-];
-
 function ImageUploadArea({
   fileInputRef,
   onFileChange,
+  selectImageLabel,
 }: {
   fileInputRef: RefObject<HTMLInputElement | null>;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  selectImageLabel?: string;
 }) {
   return (
     <label className="flex w-full cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-muted-foreground/25 py-6 transition-colors hover:border-muted-foreground/50">
       <ImageIcon className="h-8 w-8 text-muted-foreground" />
-      <span className="text-sm text-muted-foreground">タップして画像を選択</span>
+      <span className="text-sm text-muted-foreground">{selectImageLabel}</span>
       <input
         ref={fileInputRef}
         type="file"
@@ -68,6 +65,8 @@ function ConfirmStep({
   onBack: () => void;
   onComplete: () => void;
 }) {
+  const tm = useTranslations("messages");
+  const tf = useTranslations("friend");
   const queryClient = useQueryClient();
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
@@ -94,7 +93,7 @@ function ConfirmStep({
         method: "POST",
         body: JSON.stringify({ addresseeId: userId }),
       });
-      toast.success(MSG.FRIEND_REQUEST_SENT);
+      toast.success(tm("friendRequestSent"));
       queryClient.invalidateQueries({ queryKey: queryKeys.friends.all });
       broadcastFriendsUpdate(userId);
       onComplete();
@@ -103,8 +102,8 @@ function ConfirmStep({
         setAlreadyFriend(true);
       }
       toast.error(
-        getApiErrorMessage(err, MSG.FRIEND_REQUEST_SEND_FAILED, {
-          conflict: "すでにフレンドか申請済みです",
+        getApiErrorMessage(err, tm("friendRequestSendFailed") as string, {
+          conflict: tf("alreadyFriend") as string,
         }),
       );
     } finally {
@@ -116,12 +115,12 @@ function ConfirmStep({
     return (
       <>
         <div className="flex flex-col items-center gap-4 py-4">
-          <p className="text-sm text-muted-foreground">自分自身にフレンド申請はできません</p>
+          <p className="text-sm text-muted-foreground">{tf("cannotFriendSelf")}</p>
         </div>
         <ResponsiveDialogFooter className="[&>*]:flex-1">
           <Button variant="outline" onClick={onBack}>
             <ArrowLeft className="mr-1 h-4 w-4" />
-            戻る
+            {tf("back")}
           </Button>
         </ResponsiveDialogFooter>
       </>
@@ -142,12 +141,12 @@ function ConfirmStep({
     return (
       <>
         <div className="flex flex-col items-center gap-4 py-4">
-          <p className="text-sm text-muted-foreground">ユーザーが見つかりません</p>
+          <p className="text-sm text-muted-foreground">{tf("userNotFound")}</p>
         </div>
         <ResponsiveDialogFooter className="[&>*]:flex-1">
           <Button variant="outline" onClick={onBack}>
             <ArrowLeft className="mr-1 h-4 w-4" />
-            戻る
+            {tf("back")}
           </Button>
         </ResponsiveDialogFooter>
       </>
@@ -167,11 +166,11 @@ function ConfirmStep({
       </div>
       <ResponsiveDialogFooter className="[&>*]:flex-1">
         {alreadyFriend ? (
-          <Button disabled>すでにフレンドか申請済みです</Button>
+          <Button disabled>{tf("alreadyFriend")}</Button>
         ) : (
           <Button onClick={handleSend} disabled={sending} className="w-full">
             <UserPlus className="mr-1 h-4 w-4" />
-            {sending ? "送信中..." : "フレンド申請を送る"}
+            {sending ? tf("sending") : tf("sendRequest")}
           </Button>
         )}
       </ResponsiveDialogFooter>
@@ -192,6 +191,7 @@ export function QrScannerDialog({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 } = {}) {
+  const tf = useTranslations("friend");
   const isMobile = useMobile();
   const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
@@ -244,7 +244,7 @@ export function QrScannerDialog({
         await stopScanner();
         setTargetUserId(userId);
       } else {
-        setError("このQRコードはフレンド申請には使用できません");
+        setError(tf("qrInvalid") as string);
       }
     },
     [stopScanner],
@@ -261,7 +261,7 @@ export function QrScannerDialog({
 
     // Check camera availability before requesting access
     if (!navigator.mediaDevices?.getUserMedia) {
-      setError("カメラが見つかりません。画像アップロードをお試しください");
+      setError(tf("cameraNotFound") as string);
       return;
     }
 
@@ -270,7 +270,7 @@ export function QrScannerDialog({
         name: "camera" as PermissionName,
       });
       if (permission.state === "denied") {
-        setError("カメラへのアクセスが許可されていません。画像アップロードをお試しください");
+        setError(tf("cameraDenied") as string);
         return;
       }
     } catch {
@@ -294,11 +294,7 @@ export function QrScannerDialog({
       );
     } catch (err) {
       const isNotFound = err instanceof DOMException && err.name === "NotFoundError";
-      setError(
-        isNotFound
-          ? "カメラが見つかりません。画像アップロードをお試しください"
-          : "カメラへのアクセスが許可されていません。画像アップロードをお試しください",
-      );
+      setError(isNotFound ? (tf("cameraNotFound") as string) : (tf("cameraDenied") as string));
     }
   }, [handleScanSuccess, stopScanner]);
 
@@ -327,7 +323,7 @@ export function QrScannerDialog({
       const result = await fileScannerInstance.scanFileV2(file, false);
       await handleScanSuccess(result.decodedText);
     } catch {
-      setError("QRコードを検出できませんでした。別の画像を試してください");
+      setError(tf("qrDetectFailed") as string);
     }
 
     // Reset file input so same file can be re-selected
@@ -357,16 +353,27 @@ export function QrScannerDialog({
             />
           );
         case "image":
-          return <ImageUploadArea fileInputRef={fileInputRef} onFileChange={handleFileChange} />;
+          return (
+            <ImageUploadArea
+              fileInputRef={fileInputRef}
+              onFileChange={handleFileChange}
+              selectImageLabel={tf("selectImage")}
+            />
+          );
       }
     },
-    [handleFileChange],
+    [handleFileChange, tf],
   );
+
+  const mobileTabs: DialogTab<ScanTabId>[] = [
+    { id: "camera", label: tf("tabCamera") },
+    { id: "image", label: tf("tabImage") },
+  ];
 
   const defaultTrigger = (
     <Button variant="outline">
       <ScanLine className="mr-1 h-4 w-4" />
-      QR読み取り
+      {tf("scanQr")}
     </Button>
   );
   const resolvedTrigger = trigger ?? defaultTrigger;
@@ -378,7 +385,7 @@ export function QrScannerDialog({
       )}
       <ResponsiveDialogContent className="sm:max-w-sm">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>QR読み取り</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{tf("scanTitle")}</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
         <div id={FILE_READER_ID} className="hidden" />
         {targetUserId ? (
@@ -394,13 +401,17 @@ export function QrScannerDialog({
           <>
             {isMobile ? (
               <DialogSwipeTabs
-                tabs={MOBILE_TABS}
+                tabs={mobileTabs}
                 activeTab={tab}
                 onTabChange={handleTabChange}
                 renderContent={renderScanContent}
               />
             ) : (
-              <ImageUploadArea fileInputRef={fileInputRef} onFileChange={handleFileChange} />
+              <ImageUploadArea
+                fileInputRef={fileInputRef}
+                onFileChange={handleFileChange}
+                selectImageLabel={tf("selectImage")}
+              />
             )}
             {error && <p className="text-sm text-destructive text-center">{error}</p>}
           </>

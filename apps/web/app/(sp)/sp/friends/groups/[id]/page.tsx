@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, UserMinus, X } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
@@ -24,11 +25,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
 export default function SpGroupDetailPage() {
+  const tm = useTranslations("messages");
+  const tf = useTranslations("friend");
+  const tc = useTranslations("common");
   const { id: groupId } = useParams<{ id: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -50,7 +53,7 @@ export default function SpGroupDetailPage() {
   });
 
   useEffect(() => {
-    document.title = pageTitle(group?.name ?? "グループ");
+    document.title = pageTitle(group?.name ?? tf("group"));
   }, [group?.name]);
 
   const invalidateAll = () => {
@@ -71,7 +74,7 @@ export default function SpGroupDetailPage() {
         prev.filter((m) => m.userId !== memberId),
       );
     }
-    toast.success(MSG.GROUP_MEMBER_REMOVED);
+    toast.success(tm("groupMemberRemoved"));
     setRemovingMember(null);
 
     try {
@@ -79,7 +82,7 @@ export default function SpGroupDetailPage() {
       invalidateAll();
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.GROUP_MEMBER_REMOVE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("groupMemberRemoveFailed") as string));
     }
   }
 
@@ -92,10 +95,10 @@ export default function SpGroupDetailPage() {
           className="z-10 inline-flex items-center gap-0.5 text-sm text-muted-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          戻る
+          {tf("back")}
         </Link>
         <span className="absolute inset-x-16 truncate text-center text-sm font-semibold">
-          {group?.name ?? "グループ"}
+          {group?.name ?? tf("group")}
         </span>
       </div>
 
@@ -110,7 +113,9 @@ export default function SpGroupDetailPage() {
           ))}
         </div>
       ) : members.length === 0 ? (
-        <p className="py-12 text-center text-sm text-muted-foreground">{MSG.EMPTY_MEMBER}</p>
+        <p className="py-12 text-center text-sm text-muted-foreground">
+          {tm("emptyMember") as string}
+        </p>
       ) : (
         <div className="mt-3 divide-y divide-border">
           {members.map((member) => (
@@ -138,7 +143,7 @@ export default function SpGroupDetailPage() {
       {/* FAB → add page */}
       <Fab
         onClick={() => router.push(`/sp/friends/groups/${groupId}/add`)}
-        label="メンバーを追加"
+        label={tf("addMember")}
       />
 
       {/* Member action sheet */}
@@ -147,7 +152,7 @@ export default function SpGroupDetailPage() {
         onOpenChange={(v) => !v && setSheetMember(null)}
         actions={[
           {
-            label: "メンバーを削除",
+            label: tf("deleteMember"),
             icon: <UserMinus className="h-4 w-4" />,
             variant: "destructive",
             onClick: () => {
@@ -165,18 +170,18 @@ export default function SpGroupDetailPage() {
       >
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>メンバーを削除しますか？</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogTitle>{tf("deleteMemberTitle")}</ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              「{removingMember?.name}」をグループから削除します。この操作は取り消せません。
+              {tf("deleteMemberDescription", { name: removingMember?.name ?? "" })}
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={handleRemoveMember}>
-              削除する
+              {tc("deletConfirm")}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>

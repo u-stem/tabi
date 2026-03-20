@@ -3,6 +3,7 @@
 import type { BookmarkListResponse, BookmarkResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, ExternalLink, Plus, SquareMousePointer, StickyNote, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -29,7 +30,6 @@ import { SelectionIndicator } from "@/components/ui/selection-indicator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +40,9 @@ type BookmarkPanelProps = {
 };
 
 export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPanelProps) {
+  const tm = useTranslations("messages");
+  const tb = useTranslations("bookmark");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const [selectedListId, setSelectedListId] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -95,13 +98,13 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
         method: "POST",
         body: JSON.stringify({ bookmarkIds }),
       });
-      toast.success(MSG.BOOKMARK_SAVED_TO_CANDIDATES(bookmarkIds.length));
+      toast.success(tm("bookmarkSavedToCandidates", { count: bookmarkIds.length }));
       setConfirmIds([]);
       exitSelection();
       onCandidateAdded();
       queryClient.invalidateQueries({ queryKey: queryKeys.trips.detail(tripId) });
     } catch (err) {
-      toast.error(getApiErrorMessage(err, MSG.BOOKMARK_SAVE_TO_CANDIDATES_FAILED));
+      toast.error(getApiErrorMessage(err, tm("bookmarkSaveToCandidatesFailed") as string));
     } finally {
       setLoading(false);
     }
@@ -124,7 +127,7 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
       }
     >
       {lists.length === 0 ? (
-        <EmptyState message={MSG.EMPTY_BOOKMARK_LIST} variant="inline" />
+        <EmptyState message={tm("emptyBookmarkList")} variant="inline" />
       ) : (
         <div className="space-y-3">
           {selectionMode ? (
@@ -132,14 +135,16 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={exitSelection}>
                 <X className="h-3.5 w-3.5" />
               </Button>
-              <span className="text-xs font-medium">{selectedCount}件選択中</span>
+              <span className="text-xs font-medium">
+                {tb("selectedCount", { count: selectedCount })}
+              </span>
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-8 px-2 text-xs"
                 onClick={selectedCount === bookmarks.length ? deselectAll : selectAll}
               >
-                {selectedCount === bookmarks.length ? "全解除" : "全選択"}
+                {selectedCount === bookmarks.length ? tc("deselectAll") : tc("selectAll")}
               </Button>
               <div className="ml-auto">
                 <Button
@@ -150,7 +155,7 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
                   disabled={selectedCount === 0 || loading}
                 >
                   <ArrowLeft className="h-3.5 w-3.5" />
-                  {loading ? "追加中..." : "候補に追加"}
+                  {loading ? tb("addingToCandidates") : tb("addToCandidates")}
                 </Button>
               </div>
             </div>
@@ -164,7 +169,7 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
                 }}
               >
                 <SelectTrigger className="h-8 min-w-0 flex-1">
-                  <SelectValue placeholder="リストを選択" />
+                  <SelectValue placeholder={tb("selectList")} />
                 </SelectTrigger>
                 <SelectContent>
                   {lists.map((list) => (
@@ -182,7 +187,7 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
                   onClick={() => setSelectionMode(true)}
                 >
                   <SquareMousePointer className="h-4 w-4" />
-                  選択
+                  {tc("select")}
                 </Button>
               )}
             </div>
@@ -198,7 +203,9 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
             }
           >
             {bookmarks.length === 0 ? (
-              <p className="py-4 text-center text-sm text-muted-foreground">{MSG.EMPTY_BOOKMARK}</p>
+              <p className="py-4 text-center text-sm text-muted-foreground">
+                {tm("emptyBookmark")}
+              </p>
             ) : (
               <div className="space-y-2">
                 {bookmarks.map((bm) => {
@@ -241,23 +248,23 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
             <ResponsiveAlertDialogContent>
               <ResponsiveAlertDialogHeader>
                 <ResponsiveAlertDialogTitle>
-                  {confirmIds.length}件を候補に追加しますか？
+                  {tb("confirmAddTitle", { count: confirmIds.length })}
                 </ResponsiveAlertDialogTitle>
                 <ResponsiveAlertDialogDescription>
-                  選択した{confirmIds.length}件のブックマークを旅行の候補に追加します。
+                  {tb("confirmAddDescription", { count: confirmIds.length })}
                 </ResponsiveAlertDialogDescription>
               </ResponsiveAlertDialogHeader>
               <ResponsiveAlertDialogFooter>
                 <ResponsiveAlertDialogCancel>
                   <X className="h-4 w-4" />
-                  キャンセル
+                  {tc("cancel")}
                 </ResponsiveAlertDialogCancel>
                 <ResponsiveAlertDialogAction
                   onClick={() => addToCandidates(confirmIds)}
                   disabled={loading}
                 >
                   <Plus className="h-4 w-4" />
-                  {loading ? "追加中..." : "追加する"}
+                  {loading ? tb("addingToCandidates") : tb("addButton")}
                 </ResponsiveAlertDialogAction>
               </ResponsiveAlertDialogFooter>
             </ResponsiveAlertDialogContent>

@@ -4,6 +4,7 @@ import type { FriendRequestResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, X as XIcon } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,6 @@ import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { broadcastFriendsUpdate } from "@/lib/hooks/use-friends-sync";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
-import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -23,6 +23,8 @@ export function FriendRequestsCard({
   requests?: FriendRequestResponse[];
   profileHrefPrefix?: string;
 }) {
+  const tm = useTranslations("messages");
+  const tf = useTranslations("friend");
   const queryClient = useQueryClient();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -51,7 +53,7 @@ export function FriendRequestsCard({
         prev.filter((r) => r.id !== id),
       );
     }
-    toast.success(MSG.FRIEND_REQUEST_ACCEPTED);
+    toast.success(tm("friendRequestAccepted"));
 
     try {
       await api(`/api/friends/requests/${id}`, {
@@ -62,7 +64,7 @@ export function FriendRequestsCard({
       broadcastFriendsUpdate(requesterId);
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.FRIEND_REQUEST_ACCEPT_FAILED));
+      toast.error(getApiErrorMessage(err, tm("friendRequestAcceptFailed") as string));
     } finally {
       setLoadingId(null);
     }
@@ -79,7 +81,7 @@ export function FriendRequestsCard({
         prev.filter((r) => r.id !== id),
       );
     }
-    toast.success(MSG.FRIEND_REQUEST_REJECTED);
+    toast.success(tm("friendRequestRejected"));
 
     try {
       await api(`/api/friends/requests/${id}`, { method: "DELETE" });
@@ -87,7 +89,7 @@ export function FriendRequestsCard({
       broadcastFriendsUpdate(requesterId);
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.FRIEND_REQUEST_REJECT_FAILED));
+      toast.error(getApiErrorMessage(err, tm("friendRequestRejectFailed") as string));
     } finally {
       setLoadingId(null);
     }
@@ -99,7 +101,7 @@ export function FriendRequestsCard({
     return (
       <div className="rounded-lg border bg-card">
         <div className="px-4 py-3">
-          <h3 className="text-sm font-semibold">フレンドリクエスト</h3>
+          <h3 className="text-sm font-semibold">{tf("friendRequests")}</h3>
         </div>
         <div className="divide-y divide-border">
           {resolved.map((req) => (
@@ -117,7 +119,7 @@ export function FriendRequestsCard({
                   className="h-9 w-9"
                   disabled={loadingId === req.id}
                   onClick={() => handleReject(req.id, req.requesterId)}
-                  aria-label="拒否"
+                  aria-label={tf("reject")}
                 >
                   <XIcon className="h-4 w-4" />
                 </Button>
@@ -126,7 +128,7 @@ export function FriendRequestsCard({
                   className="h-9 w-9"
                   disabled={loadingId === req.id}
                   onClick={() => handleAccept(req.id, req.requesterId)}
-                  aria-label="承認"
+                  aria-label={tf("accept")}
                 >
                   <Check className="h-4 w-4" />
                 </Button>
@@ -141,7 +143,7 @@ export function FriendRequestsCard({
   return (
     <Card className="border-0 shadow-none sm:border sm:shadow-sm">
       <CardHeader>
-        <CardTitle>フレンドリクエスト</CardTitle>
+        <CardTitle>{tf("friendRequests")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {resolved.map((req) => (
@@ -157,14 +159,14 @@ export function FriendRequestsCard({
             </div>
             <div className="flex gap-2 shrink-0">
               <Button size="sm" variant="outline" asChild>
-                <Link href={`${profileHrefPrefix}/${req.requesterId}`}>プロフィール</Link>
+                <Link href={`${profileHrefPrefix}/${req.requesterId}`}>{tf("profile")}</Link>
               </Button>
               <Button
                 size="sm"
                 disabled={loadingId === req.id}
                 onClick={() => handleAccept(req.id, req.requesterId)}
               >
-                承認
+                {tf("accept")}
               </Button>
               <Button
                 size="sm"
@@ -172,7 +174,7 @@ export function FriendRequestsCard({
                 disabled={loadingId === req.id}
                 onClick={() => handleReject(req.id, req.requesterId)}
               >
-                拒否
+                {tf("reject")}
               </Button>
             </div>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { MAX_BOOKMARK_LISTS_PER_USER, VISIBILITY_LABELS } from "@sugara/shared";
+import { MAX_BOOKMARK_LISTS_PER_USER } from "@sugara/shared";
 import {
   Copy,
   Globe,
@@ -13,6 +13,7 @@ import {
   Users,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type React from "react";
 import { useEffect, useMemo } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -54,19 +55,7 @@ import { isGuestUser } from "@/lib/guest";
 import { useBookmarkLists, type VisibilityFilter } from "@/lib/hooks/use-bookmark-lists";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { isDialogOpen } from "@/lib/hotkeys";
-import { MSG } from "@/lib/messages";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
-
-const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.ReactNode }[] = [
-  { value: "all", label: "すべて", icon: <ListFilter className="h-4 w-4" /> },
-  { value: "public", label: "公開", icon: <Globe className="h-4 w-4" /> },
-  {
-    value: "friends_only",
-    label: VISIBILITY_LABELS.friends_only,
-    icon: <Users className="h-4 w-4" />,
-  },
-  { value: "private", label: VISIBILITY_LABELS.private, icon: <Lock className="h-4 w-4" /> },
-];
 
 function BookmarksSkeleton() {
   return (
@@ -98,9 +87,20 @@ function BookmarksSkeleton() {
 }
 
 export default function BookmarksPage() {
+  const tm = useTranslations("messages");
+  const tb = useTranslations("bookmark");
+  const tc = useTranslations("common");
+  const tlVis = useTranslations("labels.visibility");
   const online = useOnlineStatus();
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
+
+  const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.ReactNode }[] = [
+    { value: "all", label: tb("filterAll"), icon: <ListFilter className="h-4 w-4" /> },
+    { value: "public", label: tb("filterPublic"), icon: <Globe className="h-4 w-4" /> },
+    { value: "friends_only", label: tlVis("friends_only"), icon: <Users className="h-4 w-4" /> },
+    { value: "private", label: tlVis("private"), icon: <Lock className="h-4 w-4" /> },
+  ];
 
   const {
     bookmarkLists,
@@ -133,7 +133,7 @@ export default function BookmarksPage() {
   useRegisterShortcuts(shortcuts);
 
   useEffect(() => {
-    document.title = pageTitle("ブックマーク");
+    document.title = pageTitle(tb("pageTitle"));
   }, []);
 
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
@@ -176,7 +176,7 @@ export default function BookmarksPage() {
     return (
       <div className="mt-4 mx-auto max-w-2xl">
         <div className="rounded-lg border bg-muted/50 p-8 text-center">
-          <p className="text-sm text-muted-foreground">{MSG.AUTH_GUEST_FEATURE_UNAVAILABLE}</p>
+          <p className="text-sm text-muted-foreground">{tm("authGuestFeatureUnavailable")}</p>
         </div>
       </div>
     );
@@ -184,14 +184,14 @@ export default function BookmarksPage() {
 
   const errorFallback = error ? (
     <div className="mt-8 text-center">
-      <p className="text-destructive">{MSG.BOOKMARK_LIST_FETCH_FAILED}</p>
+      <p className="text-destructive">{tm("bookmarkListFetchFailed")}</p>
       <Button
         variant="outline"
         size="sm"
         className="mt-4"
         onClick={() => invalidateBookmarkLists()}
       >
-        再試行
+        {tc("retry")}
       </Button>
     </div>
   ) : undefined;
@@ -213,11 +213,13 @@ export default function BookmarksPage() {
                 className="h-8 w-8"
                 onClick={sel.exit}
                 disabled={sel.batchLoading}
-                aria-label="選択を終了"
+                aria-label={tc("endSelection")}
               >
                 <X className="h-4 w-4" />
               </Button>
-              <span className="text-xs font-medium">{sel.selectedIds.size}件選択中</span>
+              <span className="text-xs font-medium">
+                {tc("selectedCount", { count: sel.selectedIds.size })}
+              </span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -229,7 +231,9 @@ export default function BookmarksPage() {
                 }
                 disabled={sel.batchLoading}
               >
-                {sel.selectedIds.size === filteredBookmarkLists.length ? "全解除" : "全選択"}
+                {sel.selectedIds.size === filteredBookmarkLists.length
+                  ? tc("deselectAll")
+                  : tc("selectAll")}
               </Button>
               <div className="ml-auto flex items-center gap-1">
                 <DropdownMenu>
@@ -239,7 +243,7 @@ export default function BookmarksPage() {
                       size="icon"
                       className="h-8 w-8"
                       disabled={sel.selectedIds.size === 0 || sel.batchLoading}
-                      aria-label="選択操作メニュー"
+                      aria-label={tb("selectionMenu")}
                     >
                       <MoreHorizontal className="h-4 w-4" />
                     </Button>
@@ -247,14 +251,14 @@ export default function BookmarksPage() {
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={sel.handleBatchDuplicate}>
                       <Copy className="h-4 w-4" />
-                      複製
+                      {tc("duplicate")}
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       className="text-destructive"
                       onClick={() => sel.setBatchDeleteOpen(true)}
                     >
                       <Trash2 className="h-4 w-4" />
-                      削除
+                      {tc("delete")}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -266,7 +270,10 @@ export default function BookmarksPage() {
                 value={visibilityFilter}
                 onValueChange={(v) => setVisibilityFilter(v as VisibilityFilter)}
               >
-                <SelectTrigger className="h-8 w-[130px] text-xs" aria-label="公開状態で絞り込み">
+                <SelectTrigger
+                  className="h-8 w-[130px] text-xs"
+                  aria-label={tb("filterByVisibility")}
+                >
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -288,7 +295,7 @@ export default function BookmarksPage() {
                   disabled={!online || filteredBookmarkLists.length === 0}
                 >
                   <SquareMousePointer className="h-4 w-4" />
-                  選択
+                  {tc("select")}
                   <span className="hidden text-xs text-muted-foreground lg:inline">(S)</span>
                 </Button>
                 <Tooltip>
@@ -300,13 +307,13 @@ export default function BookmarksPage() {
                         onClick={() => setCreateDialogOpen(true)}
                       >
                         <Plus className="h-4 w-4" />
-                        新規作成
+                        {tb("newList")}
                         <span className="hidden text-xs text-muted-foreground lg:inline">(N)</span>
                       </Button>
                     </span>
                   </TooltipTrigger>
                   {bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER && (
-                    <TooltipContent>{MSG.LIMIT_BOOKMARK_LISTS}</TooltipContent>
+                    <TooltipContent>{tm("limitBookmarkLists")}</TooltipContent>
                   )}
                 </Tooltip>
               </div>
@@ -314,9 +321,9 @@ export default function BookmarksPage() {
           )}
         </div>
         {bookmarkLists.length === 0 ? (
-          <EmptyState message={MSG.EMPTY_BOOKMARK_LIST} variant="page" />
+          <EmptyState message={tm("emptyBookmarkList")} variant="page" />
         ) : filteredBookmarkLists.length === 0 ? (
-          <EmptyState message={MSG.EMPTY_BOOKMARK_LIST_FILTER} variant="page" />
+          <EmptyState message={tm("emptyBookmarkListFilter")} variant="page" />
         ) : (
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {filteredBookmarkLists.map((list, index) => (
@@ -343,20 +350,20 @@ export default function BookmarksPage() {
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
             <ResponsiveAlertDialogTitle>
-              {sel.selectedIds.size}件のリストを削除しますか？
+              {tb("batchDeleteTitle", { count: sel.selectedIds.size })}
             </ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              選択したリストとすべてのブックマークが削除されます。この操作は取り消せません。
+              {tb("batchDeleteDescription")}
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={sel.handleBatchDelete}>
               <Trash2 className="h-4 w-4" />
-              削除する
+              {tb("deleteConfirm")}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>
@@ -368,7 +375,7 @@ export default function BookmarksPage() {
       />
       <Fab
         onClick={() => setCreateDialogOpen(true)}
-        label="リストを新規作成"
+        label={tb("createListFab")}
         hidden={!online || sel.selectionMode}
       />
     </>

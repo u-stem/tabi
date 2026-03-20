@@ -1,7 +1,8 @@
 "use client";
 
-import { MAX_BOOKMARK_LISTS_PER_USER, VISIBILITY_LABELS } from "@sugara/shared";
+import { MAX_BOOKMARK_LISTS_PER_USER } from "@sugara/shared";
 import { Copy, Globe, ListFilter, Lock, SquareMousePointer, Trash2, Users, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type React from "react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -28,18 +29,6 @@ import { pageTitle } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
 import { useBookmarkLists, type VisibilityFilter } from "@/lib/hooks/use-bookmark-lists";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
-import { MSG } from "@/lib/messages";
-
-const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.ReactNode }[] = [
-  { value: "all", label: "すべて", icon: <ListFilter className="h-4 w-4" /> },
-  { value: "public", label: "公開", icon: <Globe className="h-4 w-4" /> },
-  {
-    value: "friends_only",
-    label: VISIBILITY_LABELS.friends_only,
-    icon: <Users className="h-4 w-4" />,
-  },
-  { value: "private", label: VISIBILITY_LABELS.private, icon: <Lock className="h-4 w-4" /> },
-];
 
 function SpBookmarksSkeleton() {
   return (
@@ -66,9 +55,20 @@ function SpBookmarksSkeleton() {
 }
 
 export default function SpBookmarksPage() {
+  const tm = useTranslations("messages");
+  const tb = useTranslations("bookmark");
+  const tc = useTranslations("common");
+  const tlVis = useTranslations("labels.visibility");
   const online = useOnlineStatus();
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
+
+  const visibilityFilters: { value: VisibilityFilter; label: string; icon: React.ReactNode }[] = [
+    { value: "all", label: tb("filterAll"), icon: <ListFilter className="h-4 w-4" /> },
+    { value: "public", label: tb("filterPublic"), icon: <Globe className="h-4 w-4" /> },
+    { value: "friends_only", label: tlVis("friends_only"), icon: <Users className="h-4 w-4" /> },
+    { value: "private", label: tlVis("private"), icon: <Lock className="h-4 w-4" /> },
+  ];
 
   const {
     bookmarkLists,
@@ -86,14 +86,14 @@ export default function SpBookmarksPage() {
   const [visibilitySheetOpen, setVisibilitySheetOpen] = useState(false);
 
   useEffect(() => {
-    document.title = pageTitle("ブックマーク");
+    document.title = pageTitle(tb("pageTitle"));
   }, []);
 
   if (isGuest) {
     return (
       <div className="mt-4 mx-auto max-w-2xl">
         <div className="rounded-lg border bg-muted/50 p-8 text-center">
-          <p className="text-sm text-muted-foreground">{MSG.AUTH_GUEST_FEATURE_UNAVAILABLE}</p>
+          <p className="text-sm text-muted-foreground">{tm("authGuestFeatureUnavailable")}</p>
         </div>
       </div>
     );
@@ -101,7 +101,7 @@ export default function SpBookmarksPage() {
 
   const errorFallback = error ? (
     <div className="mt-8 text-center">
-      <p className="text-destructive">{MSG.BOOKMARK_LIST_FETCH_FAILED}</p>
+      <p className="text-destructive">{tm("bookmarkListFetchFailed")}</p>
       <Button
         variant="outline"
         size="sm"
@@ -130,11 +130,13 @@ export default function SpBookmarksPage() {
                 className="h-8 w-8"
                 onClick={sel.exit}
                 disabled={sel.batchLoading}
-                aria-label="選択を終了"
+                aria-label={tc("endSelection")}
               >
                 <X className="h-4 w-4" />
               </Button>
-              <span className="text-xs font-medium">{sel.selectedIds.size}件選択中</span>
+              <span className="text-xs font-medium">
+                {tc("selectedCount", { count: sel.selectedIds.size })}
+              </span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -146,7 +148,9 @@ export default function SpBookmarksPage() {
                 }
                 disabled={sel.batchLoading}
               >
-                {sel.selectedIds.size === filteredBookmarkLists.length ? "全解除" : "全選択"}
+                {sel.selectedIds.size === filteredBookmarkLists.length
+                  ? tc("deselectAll")
+                  : tc("selectAll")}
               </Button>
               <div className="ml-auto flex items-center gap-1">
                 <Button
@@ -157,7 +161,7 @@ export default function SpBookmarksPage() {
                   onClick={sel.handleBatchDuplicate}
                 >
                   <Copy className="h-4 w-4" />
-                  複製
+                  {tc("duplicate")}
                 </Button>
                 <Button
                   variant="ghost"
@@ -167,7 +171,7 @@ export default function SpBookmarksPage() {
                   onClick={() => sel.setBatchDeleteOpen(true)}
                 >
                   <Trash2 className="h-4 w-4" />
-                  削除
+                  {tc("delete")}
                 </Button>
               </div>
             </div>
@@ -175,7 +179,7 @@ export default function SpBookmarksPage() {
             <div className="flex gap-2">
               <button
                 type="button"
-                aria-label="公開状態で絞り込み"
+                aria-label={tb("filterByVisibility")}
                 onClick={(e) => {
                   e.currentTarget.blur();
                   setVisibilitySheetOpen(true);
@@ -183,7 +187,8 @@ export default function SpBookmarksPage() {
                 className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-md border bg-background px-2 text-xs"
               >
                 {visibilityFilters.find((f) => f.value === visibilityFilter)?.icon}
-                {visibilityFilters.find((f) => f.value === visibilityFilter)?.label ?? "すべて"}
+                {visibilityFilters.find((f) => f.value === visibilityFilter)?.label ??
+                  tb("filterAll")}
               </button>
               <ActionSheet
                 open={visibilitySheetOpen}
@@ -200,18 +205,18 @@ export default function SpBookmarksPage() {
                 className="h-9 flex-1"
                 onClick={sel.enter}
                 disabled={!online || filteredBookmarkLists.length === 0}
-                aria-label="選択モード"
+                aria-label={tc("selectionMode")}
               >
                 <SquareMousePointer className="h-4 w-4" />
-                選択
+                {tc("select")}
               </Button>
             </div>
           )}
         </div>
         {bookmarkLists.length === 0 ? (
-          <EmptyState message={MSG.EMPTY_BOOKMARK_LIST} variant="page" />
+          <EmptyState message={tm("emptyBookmarkList")} variant="page" />
         ) : filteredBookmarkLists.length === 0 ? (
-          <EmptyState message={MSG.EMPTY_BOOKMARK_LIST_FILTER} variant="page" />
+          <EmptyState message={tm("emptyBookmarkListFilter")} variant="page" />
         ) : (
           <div className="mt-4 grid gap-4">
             {filteredBookmarkLists.map((list) => (
@@ -231,20 +236,20 @@ export default function SpBookmarksPage() {
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
             <ResponsiveAlertDialogTitle>
-              {sel.selectedIds.size}件のリストを削除しますか？
+              {tb("batchDeleteTitle", { count: sel.selectedIds.size })}
             </ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              選択したリストとすべてのブックマークが削除されます。この操作は取り消せません。
+              {tb("batchDeleteDescription")}
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={sel.handleBatchDelete}>
               <Trash2 className="h-4 w-4" />
-              削除する
+              {tb("deleteConfirm")}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>
@@ -257,12 +262,12 @@ export default function SpBookmarksPage() {
       <Fab
         onClick={() => {
           if (bookmarkLists.length >= MAX_BOOKMARK_LISTS_PER_USER) {
-            toast.info(MSG.LIMIT_BOOKMARK_LISTS);
+            toast.info(tm("limitBookmarkLists"));
             return;
           }
           setCreateDialogOpen(true);
         }}
-        label="リストを新規作成"
+        label={tb("createListFab")}
         hidden={!online || sel.selectionMode}
       />
     </>

@@ -1,7 +1,8 @@
 "use client";
 
-import { type BookmarkListResponse, VISIBILITY_LABELS } from "@sugara/shared";
+import type { BookmarkListResponse } from "@sugara/shared";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +28,8 @@ export const BookmarkListCard = memo(function BookmarkListCard({
   selected = false,
   onSelect,
 }: BookmarkListCardProps) {
+  const tb = useTranslations("bookmark");
+  const tlVis = useTranslations("labels.visibility");
   const inner = (
     <>
       <CardHeader>
@@ -45,13 +48,13 @@ export const BookmarkListCard = memo(function BookmarkListCard({
             }
             className="text-xs"
           >
-            {VISIBILITY_LABELS[visibility]}
+            {tlVis(visibility)}
           </Badge>
         </div>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">
-          {bookmarkCount > 0 ? `${bookmarkCount}件のブックマーク` : "ブックマークなし"}
+          {bookmarkCount > 0 ? tb("bookmarkCount", { count: bookmarkCount }) : tb("noBookmarks")}
         </p>
       </CardContent>
     </>

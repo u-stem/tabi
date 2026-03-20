@@ -1,9 +1,9 @@
 import type { BookmarkListResponse, BookmarkListVisibility } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type UseBookmarkListOperationsArgs = {
@@ -17,6 +17,7 @@ export function useBookmarkListOperations({
   invalidateLists,
   onDeleted,
 }: UseBookmarkListOperationsArgs) {
+  const tm = useTranslations("messages");
   const queryClient = useQueryClient();
   const listsCacheKey = queryKeys.bookmarks.lists();
 
@@ -45,7 +46,7 @@ export function useBookmarkListOperations({
         ),
       );
     }
-    toast.success(MSG.BOOKMARK_LIST_UPDATED);
+    toast.success(tm("bookmarkListUpdated"));
     setEditingList(false);
 
     try {
@@ -56,7 +57,7 @@ export function useBookmarkListOperations({
       invalidateLists();
     } catch (err) {
       if (prev) queryClient.setQueryData(listsCacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.BOOKMARK_LIST_UPDATE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("bookmarkListUpdateFailed") as string));
     }
   }
 
@@ -69,7 +70,7 @@ export function useBookmarkListOperations({
         prev.filter((l) => l.id !== listId),
       );
     }
-    toast.success(MSG.BOOKMARK_LIST_DELETED);
+    toast.success(tm("bookmarkListDeleted"));
     setDeletingList(false);
     onDeleted();
 
@@ -78,7 +79,7 @@ export function useBookmarkListOperations({
       await invalidateLists();
     } catch (err) {
       if (prev) queryClient.setQueryData(listsCacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.BOOKMARK_LIST_DELETE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("bookmarkListDeleteFailed") as string));
     }
   }
 

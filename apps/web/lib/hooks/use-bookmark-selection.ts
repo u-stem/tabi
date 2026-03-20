@@ -1,9 +1,9 @@
 import type { BookmarkResponse } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type UseBookmarkSelectionArgs = {
@@ -19,6 +19,7 @@ export function useBookmarkSelection({
   invalidateBookmarks,
   invalidateLists,
 }: UseBookmarkSelectionArgs) {
+  const tm = useTranslations("messages");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.bookmarks.list(listId);
 
@@ -68,7 +69,7 @@ export function useBookmarkSelection({
         prev.filter((b) => !idSet.has(b.id)),
       );
     }
-    toast.success(MSG.BATCH_DELETED(count));
+    toast.success(tm("batchDeleted", { count }));
     exit();
 
     try {
@@ -80,7 +81,7 @@ export function useBookmarkSelection({
       invalidateLists();
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.BATCH_DELETE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("batchDeleteFailed") as string));
     } finally {
       setBatchLoading(false);
       setBatchDeleteOpen(false);
@@ -96,12 +97,12 @@ export function useBookmarkSelection({
         method: "POST",
         body: JSON.stringify({ bookmarkIds: ids }),
       });
-      toast.success(MSG.BATCH_DUPLICATED(ids.length));
+      toast.success(tm("batchDuplicated", { count: ids.length }));
       exit();
       invalidateBookmarks();
       invalidateLists();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, MSG.BATCH_DUPLICATE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("batchDuplicateFailed") as string));
     } finally {
       setBatchLoading(false);
     }

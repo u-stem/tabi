@@ -7,15 +7,17 @@ import {
 } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
 import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 export default function SpNotificationsPage() {
+  const tm = useTranslations("messages");
+  const tn = useTranslations("notification");
   const router = useRouter();
   const queryClient = useQueryClient();
 
@@ -29,17 +31,17 @@ export default function SpNotificationsPage() {
   const markAllRead = useMutation({
     mutationFn: () => api("/api/notifications/read-all", { method: "PUT" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() }),
-    onError: () => toast.error(MSG.NOTIFICATION_MARK_ALL_READ_FAILED),
+    onError: () => toast.error(tm("notificationMarkAllReadFailed")),
   });
 
   const markRead = useMutation({
     mutationFn: (id: string) => api(`/api/notifications/${id}/read`, { method: "PUT" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() }),
-    onError: () => toast.error(MSG.NOTIFICATION_MARK_READ_FAILED),
+    onError: () => toast.error(tm("notificationMarkReadFailed")),
   });
 
   useEffect(() => {
-    document.title = pageTitle("通知");
+    document.title = pageTitle(tn("pageTitle"));
   }, []);
 
   const unreadCount = data?.unreadCount ?? 0;
@@ -58,12 +60,12 @@ export default function SpNotificationsPage() {
             onClick={() => markAllRead.mutate()}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
-            すべて既読
+            {tn("markAllRead")}
           </button>
         </div>
       )}
       {!data?.notifications.length ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">{MSG.EMPTY_NOTIFICATION}</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{tm("emptyNotification")}</p>
       ) : (
         <div className="divide-y overflow-hidden rounded-lg border">
           {data.notifications.map((n: Notification) => (

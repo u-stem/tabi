@@ -2,11 +2,11 @@
 
 import { NOTIFICATION_DEFAULTS, type NotificationType } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../lib/api";
 import { requestPushPermission } from "../lib/hooks/use-push-subscription";
-import { MSG } from "../lib/messages";
 import { QUERY_CONFIG } from "../lib/query-config";
 import { queryKeys } from "../lib/query-keys";
 import { Button } from "./ui/button";
@@ -15,30 +15,30 @@ import { Switch } from "./ui/switch";
 
 type InAppPref = { type: string; inApp: boolean };
 
-const CATEGORIES = [
+const CATEGORY_KEYS = [
   {
-    label: "メンバー",
-    description: "招待・削除・ロール変更",
+    labelKey: "categoryMember" as const,
+    descKey: "categoryMemberDesc" as const,
     types: ["member_added", "member_removed", "role_changed"] as const,
   },
   {
-    label: "予定",
-    description: "追加・更新・削除",
+    labelKey: "categorySchedule" as const,
+    descKey: "categoryScheduleDesc" as const,
     types: ["schedule_created", "schedule_updated", "schedule_deleted"] as const,
   },
   {
-    label: "日程投票",
-    description: "開始・終了",
+    labelKey: "categoryPoll" as const,
+    descKey: "categoryPollDesc" as const,
     types: ["poll_started", "poll_closed"] as const,
   },
   {
-    label: "費用",
-    description: "追加",
+    labelKey: "categoryExpense" as const,
+    descKey: "categoryExpenseDesc" as const,
     types: ["expense_added"] as const,
   },
 ] as const;
 
-type CategoryType = (typeof CATEGORIES)[number]["types"][number];
+type CategoryType = (typeof CATEGORY_KEYS)[number]["types"][number];
 
 function isInAppCategoryOn(prefs: InAppPref[], types: readonly CategoryType[]): boolean {
   return types.every((type) => {
@@ -60,6 +60,8 @@ function isPushCategoryOn(
 }
 
 export function NotificationPreferencesSection() {
+  const tm = useTranslations("messages");
+  const tn = useTranslations("notification");
   const queryClient = useQueryClient();
   const [pushPermission, setPushPermission] = useState<NotificationPermission>(
     typeof Notification !== "undefined" ? Notification.permission : "default",
@@ -118,7 +120,7 @@ export function NotificationPreferencesSection() {
       if (context?.previous !== undefined) {
         queryClient.setQueryData(queryKeys.notifications.preferences(), context.previous);
       }
-      toast.error(MSG.NOTIFICATION_PREF_UPDATE_FAILED);
+      toast.error(tm("notificationPrefUpdateFailed"));
     },
     onSettled: () => {
       // Re-fetch to confirm server state after partial-failure recovery
@@ -154,7 +156,7 @@ export function NotificationPreferencesSection() {
           context.previous,
         );
       }
-      toast.error(MSG.NOTIFICATION_PREF_UPDATE_FAILED);
+      toast.error(tm("notificationPrefUpdateFailed"));
     },
     onSettled: () => {
       // Re-fetch to confirm server state after partial-failure recovery
@@ -186,13 +188,11 @@ export function NotificationPreferencesSection() {
         <Card>
           <CardContent className="flex items-center justify-between gap-4 pt-6">
             <p className="text-sm text-muted-foreground">
-              {pushPermission === "denied"
-                ? "ブラウザの設定でプッシュ通知が拒否されています"
-                : "プッシュ通知を有効にすると旅行の更新をリアルタイムで受け取れます"}
+              {pushPermission === "denied" ? tn("pushDenied") : tn("pushPrompt")}
             </p>
             {pushPermission !== "denied" && (
               <Button size="sm" variant="outline" onClick={handleEnablePush} className="shrink-0">
-                有効にする
+                {tn("enablePush")}
               </Button>
             )}
           </CardContent>
@@ -201,42 +201,47 @@ export function NotificationPreferencesSection() {
 
       <Card>
         <CardHeader>
-          <CardTitle>通知の種類</CardTitle>
-          <CardDescription>イベントごとに通知チャンネルを設定します</CardDescription>
+          <CardTitle>{tn("notificationTypes")}</CardTitle>
+          <CardDescription>{tn("notificationTypesDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-1">
             <div className="grid grid-cols-[1fr_auto_auto] items-center gap-x-6 px-1 pb-2 text-xs text-muted-foreground">
               <span />
-              <span>アプリ内</span>
-              <span>Push</span>
+              <span>{tn("inApp")}</span>
+              <span>{tn("push")}</span>
             </div>
 
-            {CATEGORIES.map((cat) => (
-              <div
-                key={cat.label}
-                className="grid grid-cols-[1fr_auto_auto] items-center gap-x-6 rounded-lg px-1 py-2.5"
-              >
-                <div>
-                  <p className="text-sm font-medium leading-none">{cat.label}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">{cat.description}</p>
+            {CATEGORY_KEYS.map((cat) => {
+              const label = tn(cat.labelKey);
+              return (
+                <div
+                  key={cat.labelKey}
+                  className="grid grid-cols-[1fr_auto_auto] items-center gap-x-6 rounded-lg px-1 py-2.5"
+                >
+                  <div>
+                    <p className="text-sm font-medium leading-none">{label}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{tn(cat.descKey)}</p>
+                  </div>
+                  <Switch
+                    checked={isInAppCategoryOn(inAppPrefs, cat.types)}
+                    disabled={inAppLoading}
+                    onCheckedChange={(v) =>
+                      updateInAppCategory.mutate({ types: cat.types, value: v })
+                    }
+                    aria-label={tn("inAppLabel", { label })}
+                  />
+                  <Switch
+                    checked={isPushCategoryOn(pushPrefsData, cat.types)}
+                    onCheckedChange={(v) =>
+                      updatePushCategory.mutate({ types: cat.types, value: v })
+                    }
+                    disabled={!pushSwitchesEnabled}
+                    aria-label={tn("pushLabel", { label })}
+                  />
                 </div>
-                <Switch
-                  checked={isInAppCategoryOn(inAppPrefs, cat.types)}
-                  disabled={inAppLoading}
-                  onCheckedChange={(v) =>
-                    updateInAppCategory.mutate({ types: cat.types, value: v })
-                  }
-                  aria-label={`${cat.label} アプリ内通知`}
-                />
-                <Switch
-                  checked={isPushCategoryOn(pushPrefsData, cat.types)}
-                  onCheckedChange={(v) => updatePushCategory.mutate({ types: cat.types, value: v })}
-                  disabled={!pushSwitchesEnabled}
-                  aria-label={`${cat.label} プッシュ通知`}
-                />
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>

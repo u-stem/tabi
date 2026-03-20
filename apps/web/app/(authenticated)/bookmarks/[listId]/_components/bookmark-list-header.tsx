@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  type BookmarkListResponse,
-  MAX_BOOKMARKS_PER_LIST,
-  VISIBILITY_LABELS,
-} from "@sugara/shared";
+import { type BookmarkListResponse, MAX_BOOKMARKS_PER_LIST } from "@sugara/shared";
 import {
   Copy,
   GripVertical,
@@ -15,6 +11,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { ActionSheet } from "@/components/action-sheet";
 import { ItemMenuButton } from "@/components/item-menu-button";
@@ -31,7 +28,6 @@ import type { useBookmarkListOperations } from "@/lib/hooks/use-bookmark-list-op
 import type { useBookmarkOperations } from "@/lib/hooks/use-bookmark-operations";
 import type { useBookmarkSelection } from "@/lib/hooks/use-bookmark-selection";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
-import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 type ListOps = ReturnType<typeof useBookmarkListOperations>;
@@ -57,17 +53,21 @@ export function BookmarkListHeader({
   reorderMode?: boolean;
   onReorderModeChange?: (mode: boolean) => void;
 }) {
+  const tm = useTranslations("messages");
+  const tb = useTranslations("bookmark");
+  const tc = useTranslations("common");
+  const tlVis = useTranslations("labels.visibility");
   const isMobile = useMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const sheetActions = [
     {
-      label: "編集",
+      label: tc("edit"),
       icon: <Pencil className="h-4 w-4" />,
       onClick: () => listOps.openEdit(list),
     },
     {
-      label: "削除",
+      label: tc("delete"),
       icon: <Trash2 className="h-4 w-4" />,
       onClick: () => listOps.setDeletingList(true),
       variant: "destructive" as const,
@@ -88,12 +88,12 @@ export function BookmarkListHeader({
           }
           className="text-xs"
         >
-          {VISIBILITY_LABELS[list.visibility]}
+          {tlVis(list.visibility)}
         </Badge>
         {isMobile ? (
           <div className="ml-auto">
             <ItemMenuButton
-              ariaLabel="リストメニュー"
+              ariaLabel={tb("listMenu")}
               disabled={!online}
               onClick={() => setSheetOpen(true)}
             />
@@ -107,7 +107,7 @@ export function BookmarkListHeader({
                 size="icon"
                 className="ml-auto h-8 w-8"
                 disabled={!online}
-                aria-label="リストメニュー"
+                aria-label={tb("listMenu")}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
@@ -115,7 +115,7 @@ export function BookmarkListHeader({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => listOps.openEdit(list)}>
                 <Pencil className="h-4 w-4" />
-                編集
+                {tc("edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
@@ -128,7 +128,9 @@ export function BookmarkListHeader({
           </DropdownMenu>
         )}
       </div>
-      <p className="text-sm text-muted-foreground">{list.bookmarkCount}件のブックマーク</p>
+      <p className="text-sm text-muted-foreground">
+        {tb("bookmarkCount", { count: list.bookmarkCount })}
+      </p>
       {sel.selectionMode ? (
         <div className="mt-3 flex h-8 select-none items-center gap-1.5 rounded-lg bg-muted px-1.5">
           <Button
@@ -136,11 +138,13 @@ export function BookmarkListHeader({
             size="icon"
             className="h-8 w-8"
             onClick={sel.exit}
-            aria-label="選択を終了"
+            aria-label={tc("endSelection")}
           >
             <X className="h-4 w-4" />
           </Button>
-          <span className="text-xs font-medium">{sel.selectedIds.size}件選択中</span>
+          <span className="text-xs font-medium">
+            {tc("selectedCount", { count: sel.selectedIds.size })}
+          </span>
           <Button
             variant="ghost"
             size="sm"
@@ -148,7 +152,7 @@ export function BookmarkListHeader({
             onClick={sel.selectedIds.size === bookmarkCount ? sel.deselectAll : sel.selectAll}
             disabled={sel.batchLoading}
           >
-            {sel.selectedIds.size === bookmarkCount ? "全解除" : "全選択"}
+            {sel.selectedIds.size === bookmarkCount ? tc("deselectAll") : tc("selectAll")}
           </Button>
           <div className="ml-auto flex items-center gap-1">
             {isMobile ? (
@@ -161,7 +165,7 @@ export function BookmarkListHeader({
                   onClick={sel.handleBatchDuplicate}
                 >
                   <Copy className="h-4 w-4" />
-                  複製
+                  {tc("duplicate")}
                 </Button>
                 <Button
                   variant="ghost"
@@ -182,7 +186,7 @@ export function BookmarkListHeader({
                     size="icon"
                     className="h-8 w-8"
                     disabled={sel.selectedIds.size === 0 || sel.batchLoading}
-                    aria-label="選択操作メニュー"
+                    aria-label={tb("selectionMenu")}
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
@@ -190,14 +194,14 @@ export function BookmarkListHeader({
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={sel.handleBatchDuplicate}>
                     <Copy className="h-4 w-4" />
-                    複製
+                    {tc("duplicate")}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     className="text-destructive"
                     onClick={() => sel.setBatchDeleteOpen(true)}
                   >
                     <Trash2 className="h-4 w-4" />
-                    削除
+                    {tc("delete")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -207,7 +211,7 @@ export function BookmarkListHeader({
       ) : reorderMode ? (
         <div className="mt-3 flex h-8 select-none items-center gap-1.5 rounded-lg bg-muted px-1.5">
           <GripVertical className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium">並び替え中</span>
+          <span className="text-xs font-medium">{tb("reordering")}</span>
           <div className="ml-auto">
             <Button
               variant="ghost"
@@ -215,7 +219,7 @@ export function BookmarkListHeader({
               className="h-8 px-2 text-xs"
               onClick={() => onReorderModeChange?.(false)}
             >
-              完了
+              {tb("reorderDone")}
             </Button>
           </div>
         </div>
@@ -237,7 +241,7 @@ export function BookmarkListHeader({
               }}
             >
               <SquareMousePointer className="h-4 w-4" />
-              選択
+              {tc("select")}
               <span className="hidden text-xs text-muted-foreground lg:inline">(S)</span>
             </Button>
           )}
@@ -252,7 +256,7 @@ export function BookmarkListHeader({
               }}
             >
               <GripVertical className="h-4 w-4" />
-              並び替え
+              {tb("reorder")}
             </Button>
           )}
           {!isMobile && (
@@ -266,13 +270,13 @@ export function BookmarkListHeader({
                     disabled={!online || bookmarkCount >= MAX_BOOKMARKS_PER_LIST}
                   >
                     <Plus className="h-4 w-4" />
-                    追加
+                    {tb("add")}
                     <span className="hidden text-xs text-muted-foreground lg:inline">(N)</span>
                   </Button>
                 </span>
               </TooltipTrigger>
               {bookmarkCount >= MAX_BOOKMARKS_PER_LIST && (
-                <TooltipContent>{MSG.LIMIT_BOOKMARKS}</TooltipContent>
+                <TooltipContent>{tm("limitBookmarks")}</TooltipContent>
               )}
             </Tooltip>
           )}

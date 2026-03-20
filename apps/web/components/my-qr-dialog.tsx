@@ -1,6 +1,7 @@
 "use client";
 
 import { Download, QrCode } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { QRCodeSVG } from "qrcode.react";
 import { useCallback, useRef } from "react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ interface MyQrDialogProps {
 }
 
 export function MyQrDialog({ userId }: MyQrDialogProps) {
+  const tf = useTranslations("friend");
   const qrRef = useRef<HTMLDivElement>(null);
 
   const url =
@@ -71,27 +73,25 @@ export function MyQrDialog({ userId }: MyQrDialogProps) {
       <ResponsiveDialogTrigger asChild>
         <Button variant="outline" size="sm" className="gap-1.5 whitespace-nowrap rounded-full">
           <QrCode className="h-3.5 w-3.5" />
-          QRコード
+          {tf("qrCode")}
         </Button>
       </ResponsiveDialogTrigger>
       <ResponsiveDialogContent className="sm:max-w-xs">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>フレンド追加用QRコード</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{tf("qrTitle")}</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
         <div className="flex flex-col items-center gap-4 py-4">
           <div ref={qrRef} className="rounded-lg border bg-white p-4 dark:border-0 dark:shadow-sm">
             <QRCodeSVG value={url} size={QR_SIZE} level="M" />
           </div>
-          <p className="text-sm text-muted-foreground text-center">
-            相手がスキャンすると
-            <br />
-            あなたにフレンド申請を送れます
+          <p className="whitespace-pre-line text-sm text-muted-foreground text-center">
+            {tf("qrDescription")}
           </p>
         </div>
         <ResponsiveDialogFooter className="[&>*]:flex-1">
           <Button variant="outline" onClick={handleDownload}>
             <Download className="mr-1 h-4 w-4" />
-            画像を保存
+            {tf("saveImage")}
           </Button>
         </ResponsiveDialogFooter>
       </ResponsiveDialogContent>

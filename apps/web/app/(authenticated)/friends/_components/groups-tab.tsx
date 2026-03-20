@@ -4,6 +4,7 @@ import type { GroupResponse } from "@sugara/shared";
 import { GROUP_NAME_MAX_LENGTH } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Check, MoreHorizontal, Pencil, Plus, Trash2, Users, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { ActionSheet } from "@/components/action-sheet";
@@ -39,7 +40,6 @@ import {
 } from "@/components/ui/responsive-dialog";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { CreateGroupDialog } from "./create-group-dialog";
 import { GroupDetailModal } from "./group-detail-modal";
@@ -53,6 +53,9 @@ export function GroupsTab({
   createOpen?: boolean;
   onCreateOpenChange?: (v: boolean) => void;
 }) {
+  const tm = useTranslations("messages");
+  const tf = useTranslations("friend");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const isMobile = useMobile();
   const [internalCreateOpen, setInternalCreateOpen] = useState(false);
@@ -67,7 +70,7 @@ export function GroupsTab({
   const sheetActions = sheetGroup
     ? [
         {
-          label: "編集",
+          label: tc("edit"),
           icon: <Pencil className="h-4 w-4" />,
           onClick: () => {
             setEditName(sheetGroup.name);
@@ -75,7 +78,7 @@ export function GroupsTab({
           },
         },
         {
-          label: "削除",
+          label: tc("delete"),
           icon: <Trash2 className="h-4 w-4" />,
           onClick: () => setDeleteGroup(sheetGroup),
           variant: "destructive" as const,
@@ -98,7 +101,7 @@ export function GroupsTab({
         prev.map((g) => (g.id !== editGroup.id ? g : { ...g, name: trimmed })),
       );
     }
-    toast.success(MSG.GROUP_UPDATED);
+    toast.success(tm("groupUpdated"));
     setEditGroup(null);
 
     try {
@@ -109,7 +112,7 @@ export function GroupsTab({
       queryClient.invalidateQueries({ queryKey: queryKeys.groups.list() });
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.GROUP_UPDATE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("groupUpdateFailed") as string));
     }
   }
 
@@ -126,7 +129,7 @@ export function GroupsTab({
         prev.filter((g) => g.id !== groupId),
       );
     }
-    toast.success(MSG.GROUP_DELETED);
+    toast.success(tm("groupDeleted"));
     setDeleteGroup(null);
 
     try {
@@ -134,7 +137,7 @@ export function GroupsTab({
       queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.GROUP_DELETE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("groupDeleteFailed") as string));
     }
   }
 
@@ -142,7 +145,7 @@ export function GroupsTab({
     <div className="space-y-4">
       {isMobile ? (
         groups.length === 0 ? (
-          <p className="py-8 text-center text-sm text-muted-foreground">{MSG.EMPTY_GROUP}</p>
+          <p className="py-8 text-center text-sm text-muted-foreground">{tm("emptyGroup")}</p>
         ) : (
           <div className="divide-y divide-border">
             {groups.map((group) => (
@@ -157,7 +160,9 @@ export function GroupsTab({
                   </div>
                   <div className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-medium">{group.name}</span>
-                    <span className="text-xs text-muted-foreground">{group.memberCount}人</span>
+                    <span className="text-xs text-muted-foreground">
+                      {tf("memberCount", { count: group.memberCount })}
+                    </span>
                   </div>
                 </button>
                 <ItemMenuButton
@@ -171,16 +176,16 @@ export function GroupsTab({
       ) : (
         <Card className="border-0 shadow-none sm:border sm:shadow-sm">
           <CardHeader className="flex-row items-center justify-between space-y-0">
-            <CardTitle>グループ</CardTitle>
+            <CardTitle>{tf("groupTitle")}</CardTitle>
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               <Plus className="mr-1 h-4 w-4" />
-              新規作成
+              {tf("createGroup")}
               <span className="hidden text-xs text-muted-foreground lg:inline">(N)</span>
             </Button>
           </CardHeader>
           <CardContent>
             {groups.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{MSG.EMPTY_GROUP}</p>
+              <p className="text-sm text-muted-foreground">{tm("emptyGroup")}</p>
             ) : (
               <div className="max-h-80 space-y-3 overflow-y-auto">
                 {groups.map((group) => (
@@ -210,7 +215,7 @@ export function GroupsTab({
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem onClick={() => setDetailGroup(group)}>
                           <Users className="h-4 w-4" />
-                          メンバー管理
+                          {tf("memberManagement")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() => {
@@ -219,14 +224,14 @@ export function GroupsTab({
                           }}
                         >
                           <Pencil className="h-4 w-4" />
-                          編集
+                          {tc("edit")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => setDeleteGroup(group)}
                         >
                           <Trash2 className="h-4 w-4" />
-                          削除
+                          {tc("delete")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -246,14 +251,14 @@ export function GroupsTab({
       <ResponsiveDialog open={editGroup !== null} onOpenChange={(v) => !v && setEditGroup(null)}>
         <ResponsiveDialogContent>
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>グループを編集</ResponsiveDialogTitle>
-            <ResponsiveDialogDescription>グループ名を変更します。</ResponsiveDialogDescription>
+            <ResponsiveDialogTitle>{tf("editGroupTitle")}</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>{tf("editGroupDescription")}</ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
           <form onSubmit={handleRename}>
             <div className="space-y-4 py-2">
               <div className="space-y-2">
                 <Label htmlFor="edit-group-name">
-                  グループ名 <span className="text-destructive">*</span>
+                  {tf("groupName")} <span className="text-destructive">*</span>
                 </Label>
                 <Input
                   id="edit-group-name"
@@ -270,11 +275,11 @@ export function GroupsTab({
             <ResponsiveDialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditGroup(null)}>
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
               <Button type="submit" disabled={!editName.trim()}>
                 <Check className="h-4 w-4" />
-                保存
+                {tc("save")}
               </Button>
             </ResponsiveDialogFooter>
           </form>
@@ -288,18 +293,18 @@ export function GroupsTab({
       >
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>グループを削除しますか？</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogTitle>{tf("deleteGroupTitle")}</ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              「{deleteGroup?.name}」を削除します。この操作は取り消せません。
+              {tf("deleteGroupDescription", { name: deleteGroup?.name ?? "" })}
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={handleDelete}>
-              削除する
+              {tc("deletConfirm")}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>
@@ -313,7 +318,7 @@ export function GroupsTab({
 
       {/* Only show internal FAB when page doesn't control the state externally */}
       {!onCreateOpenChange && (
-        <Fab onClick={() => setCreateOpen(true)} label="グループを作成" hidden={!isMobile} />
+        <Fab onClick={() => setCreateOpen(true)} label={tf("createGroupFab")} hidden={!isMobile} />
       )}
     </div>
   );

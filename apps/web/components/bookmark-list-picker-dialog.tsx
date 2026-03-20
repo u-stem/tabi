@@ -4,6 +4,7 @@ import type { BookmarkListResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Bookmark, X } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import {
@@ -17,7 +18,6 @@ import {
 } from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type BookmarkListPickerDialogProps = {
@@ -31,6 +31,9 @@ export function BookmarkListPickerDialog({
   onOpenChange,
   onSelect,
 }: BookmarkListPickerDialogProps) {
+  const tb = useTranslations("bookmark");
+  const tm = useTranslations("messages");
+  const tc = useTranslations("common");
   const { data: lists = [], isLoading } = useQuery({
     queryKey: queryKeys.bookmarks.lists(),
     queryFn: () => api<BookmarkListResponse[]>("/api/bookmark-lists"),
@@ -40,10 +43,8 @@ export function BookmarkListPickerDialog({
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="sm:max-w-sm">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>リストを選択</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            保存先のブックマークリストを選択してください。
-          </ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{tb("pickerTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{tb("pickerDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <div className="max-h-60 overflow-y-auto">
           <LoadingBoundary
@@ -58,12 +59,12 @@ export function BookmarkListPickerDialog({
           >
             {lists.length === 0 ? (
               <div className="py-6 text-center">
-                <p className="text-sm text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
+                <p className="text-sm text-muted-foreground">{tm("emptyBookmarkList")}</p>
                 <Link
                   href="/bookmarks"
                   className="mt-2 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"
                 >
-                  ブックマークページで作成
+                  {tb("createOnBookmarkPage")}
                 </Link>
               </div>
             ) : (
@@ -81,7 +82,7 @@ export function BookmarkListPickerDialog({
                     <Bookmark className="h-4 w-4 shrink-0 text-muted-foreground" />
                     <span className="min-w-0 flex-1 truncate">{list.name}</span>
                     <span className="shrink-0 text-xs text-muted-foreground">
-                      {list.bookmarkCount}件
+                      {tb("countSuffix", { count: list.bookmarkCount })}
                     </span>
                   </button>
                 ))}
@@ -93,7 +94,7 @@ export function BookmarkListPickerDialog({
           <ResponsiveDialogClose asChild>
             <Button type="button" variant="outline">
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </Button>
           </ResponsiveDialogClose>
         </ResponsiveDialogFooter>

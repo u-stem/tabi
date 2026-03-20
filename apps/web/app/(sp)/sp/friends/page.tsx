@@ -4,6 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ScanLine } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import { FriendsTab } from "@/app/(authenticated)/friends/_components/friends-tab";
 import { GroupsTab } from "@/app/(authenticated)/friends/_components/groups-tab";
@@ -19,7 +20,6 @@ import { pageTitle } from "@/lib/constants";
 import { isGuestUser } from "@/lib/guest";
 import { useFriendsPage } from "@/lib/hooks/use-friends-page";
 import { useFriendsSync } from "@/lib/hooks/use-friends-sync";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 const QrScannerDialog = dynamic(() =>
@@ -28,10 +28,7 @@ const QrScannerDialog = dynamic(() =>
 
 type Tab = "friends" | "groups";
 
-const FRIEND_TABS: SwipeTab<Tab>[] = [
-  { id: "friends", label: "フレンド" },
-  { id: "groups", label: "グループ" },
-];
+// Tabs are defined inside the component to use translations
 
 function SpFriendsSkeleton() {
   return (
@@ -51,7 +48,14 @@ function SpFriendsSkeleton() {
 }
 
 export default function SpFriendsPage() {
+  const tm = useTranslations("messages");
+  const tf = useTranslations("friend");
   const { data: session } = useSession();
+
+  const FRIEND_TABS: SwipeTab<Tab>[] = [
+    { id: "friends", label: tf("tabFriends") },
+    { id: "groups", label: tf("tabGroups") },
+  ];
   const isGuest = isGuestUser(session);
   const { friends, requests, sentRequests, groups, isLoading } = useFriendsPage(isGuest);
   const queryClient = useQueryClient();
@@ -71,7 +75,7 @@ export default function SpFriendsPage() {
   const handleInitialUserIdConsumed = useCallback(() => setAddUserId(null), []);
 
   useEffect(() => {
-    document.title = pageTitle("フレンド");
+    document.title = pageTitle(tf("pageTitle"));
   }, []);
 
   const changeTab = useCallback((t: Tab) => {
@@ -107,7 +111,7 @@ export default function SpFriendsPage() {
     return (
       <div className="mt-4 mx-auto max-w-2xl">
         <div className="rounded-lg border bg-muted/50 p-8 text-center">
-          <p className="text-sm text-muted-foreground">{MSG.AUTH_GUEST_FEATURE_UNAVAILABLE}</p>
+          <p className="text-sm text-muted-foreground">{tm("authGuestFeatureUnavailable")}</p>
         </div>
       </div>
     );
@@ -129,14 +133,14 @@ export default function SpFriendsPage() {
       {/* FABs are rendered outside the swipe container to avoid will-change-transform breaking fixed positioning */}
       <Fab
         onClick={() => setGroupsCreateOpen(true)}
-        label="グループを作成"
+        label={tf("createGroupFab")}
         hidden={tab !== "groups"}
       />
       <QrScannerDialog
         initialUserId={addUserId}
         onInitialUserIdConsumed={handleInitialUserIdConsumed}
         trigger={
-          <Fab label="QR読み取り" hidden={tab !== "friends"}>
+          <Fab label={tf("scanQr")} hidden={tab !== "friends"}>
             <ScanLine className="h-6 w-6" />
           </Fab>
         }

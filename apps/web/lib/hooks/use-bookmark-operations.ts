@@ -1,9 +1,9 @@
 import type { BookmarkResponse } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type UseBookmarkOperationsArgs = {
@@ -21,6 +21,7 @@ export function useBookmarkOperations({
   invalidateBookmarks,
   invalidateLists,
 }: UseBookmarkOperationsArgs) {
+  const tm = useTranslations("messages");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.bookmarks.list(listId);
 
@@ -55,7 +56,7 @@ export function useBookmarkOperations({
     const trimmed = bookmarkName.trim();
     if (!trimmed) return;
     if (bookmarkCount >= maxBookmarks) {
-      toast.error(MSG.LIMIT_BOOKMARKS);
+      toast.error(tm("limitBookmarks"));
       return;
     }
     setSubmitting(true);
@@ -68,13 +69,13 @@ export function useBookmarkOperations({
           urls: bookmarkUrls.filter((u) => u.trim()),
         }),
       });
-      toast.success(MSG.BOOKMARK_ADDED);
+      toast.success(tm("bookmarkAdded"));
       resetForm();
       setAddBookmarkOpen(false);
       invalidateBookmarks();
       invalidateLists();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, MSG.BOOKMARK_ADD_FAILED));
+      toast.error(getApiErrorMessage(err, tm("bookmarkAddFailed") as string));
     } finally {
       setSubmitting(false);
     }
@@ -101,7 +102,7 @@ export function useBookmarkOperations({
         prev.map((b) => (b.id !== editingBookmark.id ? b : { ...b, ...updatedFields })),
       );
     }
-    toast.success(MSG.BOOKMARK_UPDATED);
+    toast.success(tm("bookmarkUpdated"));
     resetForm();
     setEditingBookmark(null);
 
@@ -113,7 +114,7 @@ export function useBookmarkOperations({
       invalidateBookmarks();
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.BOOKMARK_UPDATE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("bookmarkUpdateFailed") as string));
     } finally {
       setSubmitting(false);
     }
@@ -131,7 +132,7 @@ export function useBookmarkOperations({
         prev.filter((b) => b.id !== bookmarkId),
       );
     }
-    toast.success(MSG.BOOKMARK_DELETED);
+    toast.success(tm("bookmarkDeleted"));
     setDeletingBookmark(null);
 
     try {
@@ -142,7 +143,7 @@ export function useBookmarkOperations({
       invalidateLists();
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.BOOKMARK_DELETE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("bookmarkDeleteFailed") as string));
     }
   }
 

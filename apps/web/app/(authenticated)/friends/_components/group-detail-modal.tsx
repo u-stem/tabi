@@ -3,6 +3,7 @@
 import type { FriendResponse, GroupMemberResponse, GroupResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { UserMinus, UserPlus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -26,6 +26,8 @@ type Props = {
 };
 
 export function GroupDetailModal({ group, onOpenChange }: Props) {
+  const tm = useTranslations("messages");
+  const tf = useTranslations("friend");
   const queryClient = useQueryClient();
 
   const [userId, setUserId] = useState("");
@@ -69,14 +71,14 @@ export function GroupDetailModal({ group, onOpenChange }: Props) {
         prev.filter((m) => m.userId !== memberId),
       );
     }
-    toast.success(MSG.GROUP_MEMBER_REMOVED);
+    toast.success(tm("groupMemberRemoved"));
 
     try {
       await api(`/api/groups/${groupId}/members/${memberId}`, { method: "DELETE" });
       invalidateAll();
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.GROUP_MEMBER_REMOVE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("groupMemberRemoveFailed") as string));
     } finally {
       setRemovingMemberId(null);
     }
@@ -93,15 +95,15 @@ export function GroupDetailModal({ group, onOpenChange }: Props) {
         method: "POST",
         body: JSON.stringify({ userId: trimmed }),
       });
-      toast.success(MSG.GROUP_MEMBER_ADDED);
+      toast.success(tm("groupMemberAdded"));
       setUserId("");
       invalidateAll();
     } catch (err) {
       toast.error(
-        getApiErrorMessage(err, MSG.GROUP_MEMBER_ADD_FAILED, {
-          badRequest: MSG.INVALID_USER_ID,
-          notFound: MSG.USER_NOT_FOUND,
-          conflict: MSG.GROUP_MEMBER_ALREADY,
+        getApiErrorMessage(err, tm("groupMemberAddFailed") as string, {
+          badRequest: tm("invalidUserId") as string,
+          notFound: tm("userNotFound") as string,
+          conflict: tm("groupMemberAlready") as string,
         }),
       );
     } finally {
@@ -116,10 +118,10 @@ export function GroupDetailModal({ group, onOpenChange }: Props) {
         method: "POST",
         body: JSON.stringify({ userId: friendUserId }),
       });
-      toast.success(MSG.GROUP_MEMBER_ADDED);
+      toast.success(tm("groupMemberAdded"));
       invalidateAll();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, MSG.GROUP_MEMBER_ADD_FAILED));
+      toast.error(getApiErrorMessage(err, tm("groupMemberAddFailed") as string));
     } finally {
       setAddingFriendId(null);
     }
@@ -129,7 +131,7 @@ export function GroupDetailModal({ group, onOpenChange }: Props) {
     <ResponsiveDialog open={group !== null} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="flex min-h-[92vh] max-h-[92vh] flex-col overflow-hidden">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{group?.name ?? "グループ"}</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{group?.name ?? tf("group")}</ResponsiveDialogTitle>
         </ResponsiveDialogHeader>
 
         {/* Add by ID */}
@@ -138,13 +140,13 @@ export function GroupDetailModal({ group, onOpenChange }: Props) {
             <Input
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
-              placeholder="ユーザーIDで追加"
+              placeholder={tf("userIdForAdd")}
               required
               className="flex-1"
             />
             <Button type="submit" variant="outline" disabled={adding || !userId.trim()}>
               <UserPlus className="h-4 w-4" />
-              {adding ? "..." : "追加"}
+              {adding ? "..." : tf("add")}
             </Button>
           </form>
         </div>
@@ -153,7 +155,9 @@ export function GroupDetailModal({ group, onOpenChange }: Props) {
           {/* Addable friends */}
           {addableFriends.length > 0 && (
             <div className="border-b pb-2">
-              <p className="py-2 text-sm font-medium text-muted-foreground">フレンドから追加</p>
+              <p className="py-2 text-sm font-medium text-muted-foreground">
+                {tf("addFromFriends")}
+              </p>
               <div className="divide-y divide-border">
                 {addableFriends.map((friend) => (
                   <div key={friend.friendId} className="flex items-center gap-3 py-2">
@@ -170,7 +174,7 @@ export function GroupDetailModal({ group, onOpenChange }: Props) {
                       onClick={() => handleAddFriend(friend.userId)}
                     >
                       <UserPlus className="h-4 w-4" />
-                      {addingFriendId === friend.userId ? "..." : "追加"}
+                      {addingFriendId === friend.userId ? "..." : tf("add")}
                     </Button>
                   </div>
                 ))}
@@ -181,7 +185,7 @@ export function GroupDetailModal({ group, onOpenChange }: Props) {
           {/* Member list */}
           <div>
             <p className="py-2 text-sm font-medium text-muted-foreground">
-              メンバー ({members.length})
+              {tf("memberSection", { count: members.length })}
             </p>
             {membersLoading ? (
               <div className="px-1">
@@ -193,7 +197,9 @@ export function GroupDetailModal({ group, onOpenChange }: Props) {
                 ))}
               </div>
             ) : members.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">{MSG.EMPTY_MEMBER}</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">
+                {tm("emptyMember") as string}
+              </p>
             ) : (
               <div className="divide-y divide-border">
                 {members.map((member) => (
@@ -213,7 +219,7 @@ export function GroupDetailModal({ group, onOpenChange }: Props) {
                       onClick={() => handleRemoveMember(member.userId)}
                     >
                       <UserMinus className="h-4 w-4" />
-                      削除
+                      {tf("deleteMember")}
                     </Button>
                   </div>
                 ))}

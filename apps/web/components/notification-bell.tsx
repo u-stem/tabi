@@ -8,10 +8,10 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Bell } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { api } from "../lib/api";
-import { MSG } from "../lib/messages";
 import { queryKeys } from "../lib/query-keys";
 import {
   DropdownMenu,
@@ -23,6 +23,9 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function NotificationBell() {
+  const tm = useTranslations("messages");
+  const tn = useTranslations("notification");
+  const tNav = useTranslations("nav");
   const router = useRouter();
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
@@ -46,13 +49,13 @@ export function NotificationBell() {
   const markAllRead = useMutation({
     mutationFn: () => api("/api/notifications/read-all", { method: "PUT" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() }),
-    onError: () => toast.error(MSG.NOTIFICATION_MARK_ALL_READ_FAILED),
+    onError: () => toast.error(tm("notificationMarkAllReadFailed")),
   });
 
   const markRead = useMutation({
     mutationFn: (id: string) => api(`/api/notifications/${id}/read`, { method: "PUT" }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: queryKeys.notifications.list() }),
-    onError: () => toast.error(MSG.NOTIFICATION_MARK_READ_FAILED),
+    onError: () => toast.error(tm("notificationMarkReadFailed")),
   });
 
   const unreadCount = data?.unreadCount ?? 0;
@@ -72,7 +75,7 @@ export function NotificationBell() {
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              aria-label="通知"
+              aria-label={tNav("notifications")}
               className="group relative flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               onFocus={(e) => {
                 // Radix composeEventHandlers checks defaultPrevented:
@@ -92,7 +95,7 @@ export function NotificationBell() {
             </button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent>通知</TooltipContent>
+        <TooltipContent>{tNav("notifications")}</TooltipContent>
         <DropdownMenuContent align="end" className="w-80 max-h-[min(70vh,500px)] overflow-y-auto">
           {unreadCount > 0 && (
             <>
@@ -102,7 +105,7 @@ export function NotificationBell() {
                   onClick={() => markAllRead.mutate()}
                   className="text-xs text-muted-foreground hover:text-foreground"
                 >
-                  すべて既読
+                  {tn("markAllRead")}
                 </button>
               </div>
               <DropdownMenuSeparator />
@@ -110,7 +113,7 @@ export function NotificationBell() {
           )}
           {!data?.notifications.length ? (
             <div className="px-3 py-4 text-center text-sm text-muted-foreground">
-              {MSG.EMPTY_NOTIFICATION}
+              {tm("emptyNotification")}
             </div>
           ) : (
             data.notifications.map((n: Notification) => (

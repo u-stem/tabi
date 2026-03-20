@@ -4,6 +4,7 @@ import type { GroupResponse } from "@sugara/shared";
 import { GROUP_NAME_MAX_LENGTH } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
 import { Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -19,7 +20,6 @@ import {
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type CreateGroupDialogProps = {
@@ -29,6 +29,9 @@ type CreateGroupDialogProps = {
 };
 
 export function CreateGroupDialog({ open, onOpenChange, onCreated }: CreateGroupDialogProps) {
+  const tm = useTranslations("messages");
+  const tf = useTranslations("friend");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
@@ -44,13 +47,13 @@ export function CreateGroupDialog({ open, onOpenChange, onCreated }: CreateGroup
         method: "POST",
         body: JSON.stringify({ name: trimmed }),
       });
-      toast.success(MSG.GROUP_CREATED);
+      toast.success(tm("groupCreated"));
       await queryClient.invalidateQueries({ queryKey: queryKeys.groups.all });
       setName("");
       onOpenChange(false);
       onCreated?.(created.id);
     } catch (err) {
-      toast.error(getApiErrorMessage(err, MSG.GROUP_CREATE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("groupCreateFailed") as string));
     } finally {
       setCreating(false);
     }
@@ -66,22 +69,20 @@ export function CreateGroupDialog({ open, onOpenChange, onCreated }: CreateGroup
     >
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>グループを作成</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            グループを作成して、旅行にメンバーを一括追加できます
-          </ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{tf("createGroupTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{tf("createGroupDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="group-name">
-                グループ名 <span className="text-destructive">*</span>
+                {tf("groupName")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="group-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="例: 家族、同僚"
+                placeholder={tf("groupNamePlaceholder")}
                 maxLength={GROUP_NAME_MAX_LENGTH}
                 required
               />
@@ -91,12 +92,12 @@ export function CreateGroupDialog({ open, onOpenChange, onCreated }: CreateGroup
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={creating || !name.trim()}>
               <Plus className="h-4 w-4" />
-              {creating ? "作成中..." : "作成"}
+              {creating ? tf("creating") : tf("create")}
             </Button>
           </ResponsiveDialogFooter>
         </form>

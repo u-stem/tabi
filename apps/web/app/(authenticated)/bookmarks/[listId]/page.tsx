@@ -18,6 +18,7 @@ import {
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
@@ -38,7 +39,6 @@ import { useBookmarkOperations } from "@/lib/hooks/use-bookmark-operations";
 import { useBookmarkSelection } from "@/lib/hooks/use-bookmark-selection";
 import { useOnlineStatus } from "@/lib/hooks/use-online-status";
 import { isDialogOpen } from "@/lib/hotkeys";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { cn } from "@/lib/utils";
@@ -84,6 +84,8 @@ function BookmarkDetailSkeleton() {
 }
 
 export default function BookmarkListDetailPage() {
+  const tm = useTranslations("messages");
+  const tb = useTranslations("bookmark");
   const { listId } = useParams<{ listId: string }>();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -127,7 +129,7 @@ export default function BookmarkListDetailPage() {
   }, [bookmarks]);
 
   useEffect(() => {
-    document.title = pageTitle(list ? list.name : "ブックマーク");
+    document.title = pageTitle(list ? list.name : tb("pageTitle"));
   }, [list]);
 
   const invalidateLists = () =>
@@ -248,7 +250,7 @@ export default function BookmarkListDetailPage() {
       });
     } catch {
       setLocalBookmarks(snapshot);
-      toast.error(MSG.BOOKMARK_REORDER_FAILED);
+      toast.error(tm("bookmarkReorderFailed"));
     }
   }
 
@@ -269,7 +271,7 @@ export default function BookmarkListDetailPage() {
       });
     } catch {
       setLocalBookmarks(snapshot);
-      toast.error(MSG.BOOKMARK_REORDER_FAILED);
+      toast.error(tm("bookmarkReorderFailed"));
     }
   }
 
@@ -277,9 +279,9 @@ export default function BookmarkListDetailPage() {
     <LoadingBoundary isLoading={isLoading} skeleton={<BookmarkDetailSkeleton />}>
       {!list ? (
         <div className="mt-8 text-center">
-          <p className="text-muted-foreground">リストが見つかりません</p>
+          <p className="text-muted-foreground">{tb("listNotFound")}</p>
           <Button variant="outline" size="sm" className="mt-4" asChild>
-            <Link href="/bookmarks">ブックマーク一覧に戻る</Link>
+            <Link href="/bookmarks">{tb("backToList")}</Link>
           </Button>
         </div>
       ) : (
@@ -298,7 +300,7 @@ export default function BookmarkListDetailPage() {
           {/* Bookmark list */}
           <div>
             {localBookmarks.length === 0 ? (
-              <EmptyState message={MSG.EMPTY_BOOKMARK} variant="page" />
+              <EmptyState message={tm("emptyBookmark")} variant="page" />
             ) : sel.selectionMode ? (
               <div className="space-y-3">
                 {localBookmarks.map((bm) => (
@@ -371,7 +373,7 @@ export default function BookmarkListDetailPage() {
           <BatchDeleteDialog sel={sel} />
           <Fab
             onClick={bmOps.openAdd}
-            label="ブックマークを追加"
+            label={tb("addBookmark")}
             hidden={!online || sel.selectionMode}
           />
         </div>

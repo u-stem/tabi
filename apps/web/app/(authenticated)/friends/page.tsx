@@ -3,6 +3,7 @@
 import { useQueryClient } from "@tanstack/react-query";
 import dynamic from "next/dynamic";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { FriendRequestsCard } from "@/components/friend-requests-card";
@@ -17,7 +18,6 @@ import { isGuestUser } from "@/lib/guest";
 import { useFriendsPage } from "@/lib/hooks/use-friends-page";
 import { useFriendsSync } from "@/lib/hooks/use-friends-sync";
 import { isDialogOpen } from "@/lib/hotkeys";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 import { FriendsTab } from "./_components/friends-tab";
@@ -68,6 +68,8 @@ function FriendsSkeleton() {
 }
 
 export default function FriendsPage() {
+  const tm = useTranslations("messages");
+  const tf = useTranslations("friend");
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
   const { friends, requests, sentRequests, groups, isLoading } = useFriendsPage(isGuest);
@@ -102,7 +104,7 @@ export default function FriendsPage() {
   useRegisterShortcuts(shortcuts);
 
   useEffect(() => {
-    document.title = pageTitle("フレンド");
+    document.title = pageTitle(tf("pageTitle"));
   }, []);
 
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
@@ -125,7 +127,7 @@ export default function FriendsPage() {
     return (
       <div className="mt-4 mx-auto max-w-2xl">
         <div className="rounded-lg border bg-muted/50 p-8 text-center">
-          <p className="text-sm text-muted-foreground">{MSG.AUTH_GUEST_FEATURE_UNAVAILABLE}</p>
+          <p className="text-sm text-muted-foreground">{tm("authGuestFeatureUnavailable")}</p>
         </div>
       </div>
     );
@@ -136,7 +138,7 @@ export default function FriendsPage() {
       <div className="mt-4 mx-auto max-w-2xl space-y-8">
         <Card className="border-0 shadow-none sm:border sm:shadow-sm">
           <CardHeader>
-            <CardTitle>フレンド追加</CardTitle>
+            <CardTitle>{tf("addFriend")}</CardTitle>
           </CardHeader>
           <CardContent>
             <SendRequestSection

@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CheckCheck, SquareMousePointer, UserPlus, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,11 +19,13 @@ import { Input } from "@/components/ui/input";
 import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
 export default function SpGroupAddMemberPage() {
+  const tm = useTranslations("messages");
+  const tf = useTranslations("friend");
+  const tc = useTranslations("common");
   const { id: groupId } = useParams<{ id: string }>();
   const queryClient = useQueryClient();
 
@@ -51,7 +54,7 @@ export default function SpGroupAddMemberPage() {
   });
 
   useEffect(() => {
-    document.title = pageTitle(group?.name ?? "メンバーを追加");
+    document.title = pageTitle(group?.name ?? tf("addMember"));
   }, [group?.name]);
 
   const memberUserIds = new Set(members.map((m) => m.userId));
@@ -84,10 +87,10 @@ export default function SpGroupAddMemberPage() {
         method: "POST",
         body: JSON.stringify({ userId: friendUserId }),
       });
-      toast.success(MSG.GROUP_MEMBER_ADDED);
+      toast.success(tm("groupMemberAdded"));
       invalidateAll();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, MSG.GROUP_MEMBER_ADD_FAILED));
+      toast.error(getApiErrorMessage(err, tm("groupMemberAddFailed") as string));
     } finally {
       setAdding(false);
     }
@@ -102,14 +105,14 @@ export default function SpGroupAddMemberPage() {
         body: JSON.stringify({ userIds: [...selectedIds] }),
       });
       if (result.failed === 0) {
-        toast.success(MSG.GROUP_BULK_ADDED(result.added));
+        toast.success(tm("groupBulkAdded", { count: result.added }));
       } else {
-        toast.warning(MSG.GROUP_BULK_ADD_PARTIAL(result.added, result.failed));
+        toast.warning(tm("groupBulkAddPartial", { added: result.added, failed: result.failed }));
       }
       exitSelectionMode();
       invalidateAll();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, MSG.GROUP_MEMBER_ADD_FAILED));
+      toast.error(getApiErrorMessage(err, tm("groupMemberAddFailed") as string));
     } finally {
       setAdding(false);
     }
@@ -126,11 +129,11 @@ export default function SpGroupAddMemberPage() {
         method: "POST",
         body: JSON.stringify({ userId: trimmed }),
       });
-      toast.success(MSG.GROUP_MEMBER_ADDED);
+      toast.success(tm("groupMemberAdded"));
       setUserId("");
       invalidateAll();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, MSG.GROUP_MEMBER_ADD_FAILED));
+      toast.error(getApiErrorMessage(err, tm("groupMemberAddFailed") as string));
     } finally {
       setAdding(false);
     }
@@ -145,21 +148,23 @@ export default function SpGroupAddMemberPage() {
           className="z-10 inline-flex items-center gap-0.5 text-sm text-muted-foreground"
         >
           <ArrowLeft className="h-4 w-4" />
-          戻る
+          {tf("back")}
         </Link>
         <span className="absolute inset-x-16 truncate text-center text-sm font-semibold">
-          メンバーを追加
+          {tf("addMember")}
         </span>
       </div>
 
       <div className="mt-3 space-y-6 px-4">
         {/* Friend list */}
         <section>
-          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">フレンドから追加</h3>
+          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">
+            {tf("addFromFriends")}
+          </h3>
           {friends.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">{MSG.EMPTY_FRIEND}</p>
+            <p className="py-4 text-center text-sm text-muted-foreground">{tm("emptyFriend")}</p>
           ) : addable.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">{MSG.MEMBER_ALL_ADDED}</p>
+            <p className="py-4 text-center text-sm text-muted-foreground">{tm("memberAllAdded")}</p>
           ) : (
             <>
               {/* Selection toolbar */}
@@ -171,7 +176,7 @@ export default function SpGroupAddMemberPage() {
                     onClick={() => setSelectedIds(new Set(addable.map((f) => f.userId)))}
                   >
                     <CheckCheck className="h-4 w-4" />
-                    全選択
+                    {tc("selectAll")}
                   </Button>
                   <Button
                     variant="outline"
@@ -180,7 +185,7 @@ export default function SpGroupAddMemberPage() {
                     disabled={selectedCount === 0}
                   >
                     <X className="h-4 w-4" />
-                    解除
+                    {tf("deselect")}
                   </Button>
                   <div className="ml-auto flex items-center gap-1.5">
                     <Button
@@ -189,10 +194,10 @@ export default function SpGroupAddMemberPage() {
                       onClick={handleBulkAdd}
                     >
                       <UserPlus className="h-4 w-4" />
-                      {adding ? "追加中..." : `${selectedCount}人を追加`}
+                      {adding ? tf("bulkAdding") : tf("bulkAddCount", { count: selectedCount })}
                     </Button>
                     <Button variant="outline" size="sm" onClick={exitSelectionMode}>
-                      キャンセル
+                      {tc("cancel")}
                     </Button>
                   </div>
                 </div>

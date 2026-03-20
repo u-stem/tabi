@@ -4,6 +4,7 @@ import type { BookmarkListResponse, BookmarkResponse, PublicProfileResponse } fr
 import { useQuery } from "@tanstack/react-query";
 import { Bookmark, ChevronRight, ExternalLink, List } from "lucide-react";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 
 import { Logo } from "@/components/logo";
@@ -17,7 +18,6 @@ import { ApiError, api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
-import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -26,11 +26,12 @@ type BookmarkListDetail = BookmarkListResponse & {
 };
 
 function ProfileHeader() {
+  const tb = useTranslations("bookmark");
   return (
     <header className="border-b">
       <div className="container flex h-14 items-center">
         <Logo href="/" />
-        <span className="ml-2 text-sm text-muted-foreground">公開プロフィール</span>
+        <span className="ml-2 text-sm text-muted-foreground">{tb("publicProfile")}</span>
       </div>
     </header>
   );
@@ -53,6 +54,8 @@ export function ProfileSkeletonContent() {
 }
 
 export function BookmarkListCard({ list, userId }: { list: BookmarkListResponse; userId: string }) {
+  const tb = useTranslations("bookmark");
+  const tm = useTranslations("messages");
   const [expanded, setExpanded] = useState(false);
 
   const {
@@ -91,12 +94,10 @@ export function BookmarkListCard({ list, userId }: { list: BookmarkListResponse;
             </div>
           )}
 
-          {error && (
-            <p className="text-sm text-destructive">ブックマークの読み込みに失敗しました</p>
-          )}
+          {error && <p className="text-sm text-destructive">{tb("bookmarkLoadFailed")}</p>}
 
           {detail && detail.bookmarks.length === 0 && (
-            <p className="text-sm text-muted-foreground">{MSG.EMPTY_BOOKMARK}</p>
+            <p className="text-sm text-muted-foreground">{tm("emptyBookmark")}</p>
           )}
 
           {detail && detail.bookmarks.length > 0 && (
@@ -146,6 +147,8 @@ export function ProfileContent({
   profile: PublicProfileResponse;
   userId: string;
 }) {
+  const tb = useTranslations("bookmark");
+  const tm = useTranslations("messages");
   const { data: session } = useSession();
   const isOwnProfile = session?.user?.id === userId;
 
@@ -159,14 +162,16 @@ export function ProfileContent({
           fallbackClassName="text-3xl"
         />
         <h1 className="text-xl font-bold">{profile.name}</h1>
-        <p className="text-sm text-muted-foreground">{profile.bookmarkLists.length} リスト</p>
+        <p className="text-sm text-muted-foreground">
+          {tb("listCount", { count: profile.bookmarkLists.length })}
+        </p>
       </div>
 
       <UnsettledSummarySection userId={userId} isOwnProfile={isOwnProfile} />
 
       {profile.bookmarkLists.length === 0 ? (
         <div className="flex flex-col items-center py-12 text-center">
-          <p className="text-muted-foreground">{MSG.EMPTY_BOOKMARK_LIST}</p>
+          <p className="text-muted-foreground">{tm("emptyBookmarkList")}</p>
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border divide-y">
@@ -189,6 +194,7 @@ export function ErrorMessage({ message }: { message: string }) {
 }
 
 export default function PublicProfilePage() {
+  const tup = useTranslations("userProfile");
   const params = useParams();
   const userId = typeof params.userId === "string" ? params.userId : null;
   const { data: session, isPending: isSessionPending } = useSession();
@@ -214,9 +220,9 @@ export default function PublicProfilePage() {
 
   const error =
     queryError instanceof ApiError && queryError.status === 404
-      ? "ユーザーが見つかりません"
+      ? tup("userNotFound")
       : queryError
-        ? "プロフィールの読み込みに失敗しました"
+        ? tup("profileLoadFailed")
         : null;
 
   // Authenticated: layout provides Header + BottomNav + container
@@ -225,9 +231,9 @@ export default function PublicProfilePage() {
       <div className="mx-auto max-w-2xl">
         <LoadingBoundary isLoading={isLoading} skeleton={<ProfileSkeletonContent />}>
           {error ? (
-            <ErrorMessage message={error} />
+            <ErrorMessage message={error as string} />
           ) : !profile ? (
-            <ErrorMessage message="ユーザーが見つかりません" />
+            <ErrorMessage message={tup("userNotFound") as string} />
           ) : (
             <ProfileContent profile={profile} userId={userId ?? ""} />
           )}
@@ -243,9 +249,9 @@ export default function PublicProfilePage() {
       <div className="container max-w-2xl py-8">
         <LoadingBoundary isLoading={isLoading} skeleton={<ProfileSkeletonContent />}>
           {error ? (
-            <ErrorMessage message={error} />
+            <ErrorMessage message={error as string} />
           ) : !profile ? (
-            <ErrorMessage message="ユーザーが見つかりません" />
+            <ErrorMessage message={tup("userNotFound") as string} />
           ) : (
             <ProfileContent profile={profile} userId={userId ?? ""} />
           )}

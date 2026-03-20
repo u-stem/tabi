@@ -4,9 +4,9 @@ import {
   BOOKMARK_LIST_NAME_MAX_LENGTH,
   type BookmarkListResponse,
   type BookmarkListVisibility,
-  VISIBILITY_LABELS,
 } from "@sugara/shared";
 import { Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -29,7 +29,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 
 type CreateBookmarkListDialogProps = {
   open: boolean;
@@ -42,6 +41,10 @@ export function CreateBookmarkListDialog({
   onOpenChange,
   onCreated,
 }: CreateBookmarkListDialogProps) {
+  const tb = useTranslations("bookmark");
+  const tm = useTranslations("messages");
+  const tc = useTranslations("common");
+  const tlVis = useTranslations("labels.visibility");
   const [name, setName] = useState("");
   const [visibility, setVisibility] = useState<BookmarkListVisibility>("private");
   const [submitting, setSubmitting] = useState(false);
@@ -64,11 +67,11 @@ export function CreateBookmarkListDialog({
         method: "POST",
         body: JSON.stringify({ name: trimmed, visibility }),
       });
-      toast.success(MSG.BOOKMARK_LIST_CREATED);
+      toast.success(tm("bookmarkListCreated"));
       handleOpenChange(false);
       onCreated();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, MSG.BOOKMARK_LIST_CREATE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("bookmarkListCreateFailed") as string));
     } finally {
       setSubmitting(false);
     }
@@ -78,22 +81,20 @@ export function CreateBookmarkListDialog({
     <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>リストを作成</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            ブックマークを整理するリストを作成します。
-          </ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{tb("createListTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{tb("createListDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="new-list-name">
-                リスト名 <span className="text-destructive">*</span>
+                {tb("listName")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="new-list-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="行きたい場所"
+                placeholder={tb("listNamePlaceholder")}
                 maxLength={BOOKMARK_LIST_NAME_MAX_LENGTH}
                 required
               />
@@ -102,7 +103,7 @@ export function CreateBookmarkListDialog({
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="new-list-visibility">公開設定</Label>
+              <Label htmlFor="new-list-visibility">{tb("visibilityLabel")}</Label>
               <Select
                 value={visibility}
                 onValueChange={(v) => setVisibility(v as BookmarkListVisibility)}
@@ -111,9 +112,9 @@ export function CreateBookmarkListDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="private">{VISIBILITY_LABELS.private}</SelectItem>
-                  <SelectItem value="friends_only">{VISIBILITY_LABELS.friends_only}</SelectItem>
-                  <SelectItem value="public">{VISIBILITY_LABELS.public}</SelectItem>
+                  <SelectItem value="private">{tlVis("private")}</SelectItem>
+                  <SelectItem value="friends_only">{tlVis("friends_only")}</SelectItem>
+                  <SelectItem value="public">{tlVis("public")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -122,12 +123,12 @@ export function CreateBookmarkListDialog({
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={submitting || !name.trim()}>
               <Plus className="h-4 w-4" />
-              {submitting ? "作成中..." : "作成"}
+              {submitting ? tb("creating") : tb("create")}
             </Button>
           </ResponsiveDialogFooter>
         </form>

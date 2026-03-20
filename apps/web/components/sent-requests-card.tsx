@@ -4,6 +4,7 @@ import type { SentFriendRequestResponse } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,6 @@ import { UserAvatar } from "@/components/user-avatar";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { broadcastFriendsUpdate } from "@/lib/hooks/use-friends-sync";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
-import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -23,6 +23,8 @@ export function SentRequestsCard({
   sentRequests?: SentFriendRequestResponse[];
   profileHrefPrefix?: string;
 }) {
+  const tm = useTranslations("messages");
+  const tf = useTranslations("friend");
   const queryClient = useQueryClient();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -51,7 +53,7 @@ export function SentRequestsCard({
         prev.filter((r) => r.id !== id),
       );
     }
-    toast.success(MSG.FRIEND_REQUEST_CANCELLED);
+    toast.success(tm("friendRequestCancelled"));
 
     try {
       await api(`/api/friends/requests/${id}`, { method: "DELETE" });
@@ -59,7 +61,7 @@ export function SentRequestsCard({
       broadcastFriendsUpdate(addresseeId);
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(getApiErrorMessage(err, MSG.FRIEND_REQUEST_CANCEL_FAILED));
+      toast.error(getApiErrorMessage(err, tm("friendRequestCancelFailed") as string));
     } finally {
       setLoadingId(null);
     }
@@ -71,7 +73,7 @@ export function SentRequestsCard({
     return (
       <div className="rounded-lg border bg-card">
         <div className="px-4 py-3">
-          <h3 className="text-sm font-semibold">送信済み申請</h3>
+          <h3 className="text-sm font-semibold">{tf("sentRequests")}</h3>
         </div>
         <div className="divide-y divide-border">
           {resolved.map((req) => (
@@ -89,7 +91,7 @@ export function SentRequestsCard({
                   className="h-9 w-9"
                   disabled={loadingId === req.id}
                   onClick={() => handleCancel(req.id, req.addresseeId)}
-                  aria-label="取り消し"
+                  aria-label={tf("cancel")}
                 >
                   <XIcon className="h-4 w-4" />
                 </Button>
@@ -104,7 +106,7 @@ export function SentRequestsCard({
   return (
     <Card className="border-0 shadow-none sm:border sm:shadow-sm">
       <CardHeader>
-        <CardTitle>送信済み申請</CardTitle>
+        <CardTitle>{tf("sentRequests")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         {resolved.map((req) => (
@@ -120,7 +122,7 @@ export function SentRequestsCard({
             </div>
             <div className="flex gap-2 shrink-0">
               <Button size="sm" variant="outline" asChild>
-                <Link href={`${profileHrefPrefix}/${req.addresseeId}`}>プロフィール</Link>
+                <Link href={`${profileHrefPrefix}/${req.addresseeId}`}>{tf("profile")}</Link>
               </Button>
               <Button
                 size="sm"
@@ -128,7 +130,7 @@ export function SentRequestsCard({
                 disabled={loadingId === req.id}
                 onClick={() => handleCancel(req.id, req.addresseeId)}
               >
-                取り消し
+                {tf("cancel")}
               </Button>
             </div>
           </div>

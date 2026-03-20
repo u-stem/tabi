@@ -3,6 +3,7 @@
 import type { PublicProfileResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 import { ErrorMessage, ProfileContent, ProfileSkeletonContent } from "@/app/users/[userId]/page";
@@ -13,6 +14,7 @@ import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
 export default function SpProfilePage() {
+  const tup = useTranslations("userProfile");
   const params = useParams();
   const userId = typeof params.userId === "string" ? params.userId : null;
 
@@ -35,9 +37,9 @@ export default function SpProfilePage() {
 
   const error =
     queryError instanceof ApiError && queryError.status === 404
-      ? "ユーザーが見つかりません"
+      ? tup("userNotFound")
       : queryError
-        ? "プロフィールの読み込みに失敗しました"
+        ? tup("profileLoadFailed")
         : null;
 
   return (
@@ -51,7 +53,7 @@ export default function SpProfilePage() {
     >
       <div className="mx-auto mt-4 max-w-2xl">
         {error || !profile ? (
-          <ErrorMessage message={error ?? "ユーザーが見つかりません"} />
+          <ErrorMessage message={error ?? tup("userNotFound")} />
         ) : (
           <ProfileContent profile={profile} userId={userId ?? ""} />
         )}

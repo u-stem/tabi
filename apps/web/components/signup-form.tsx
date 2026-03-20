@@ -3,6 +3,7 @@
 import { UserPlus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { GuestButton } from "@/components/guest-button";
@@ -12,16 +13,17 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signUp } from "@/lib/auth-client";
-import { translateAuthError } from "@/lib/auth-error";
 import {
   getPasswordRequirementsText,
   MIN_PASSWORD_LENGTH,
   validatePassword,
 } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 
 export function SignupForm() {
   const router = useRouter();
+  const t = useTranslations("auth");
+  const tm = useTranslations("messages");
+  const te = useTranslations("authErrors");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
@@ -33,7 +35,7 @@ export function SignupForm() {
     setLoading(true);
 
     if (!agreed) {
-      setError(MSG.AUTH_SIGNUP_TERMS_REQUIRED);
+      setError(tm("authSignupTermsRequired"));
       setLoading(false);
       return;
     }
@@ -55,13 +57,13 @@ export function SignupForm() {
 
     const { valid, errors } = validatePassword(password);
     if (!valid) {
-      setError(`${MSG.AUTH_PASSWORD_TOO_WEAK}: ${errors.join("、")}`);
+      setError(`${tm("authPasswordTooWeak")}: ${errors.join("、")}`);
       setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError(MSG.AUTH_SIGNUP_PASSWORD_MISMATCH);
+      setError(tm("authSignupPasswordMismatch"));
       setLoading(false);
       return;
     }
@@ -74,15 +76,18 @@ export function SignupForm() {
     });
     if (result.error) {
       // 403 = signup disabled by admin
-      const msg =
-        result.error.status === 403
-          ? MSG.AUTH_SIGNUP_DISABLED
-          : translateAuthError(result.error, MSG.AUTH_SIGNUP_FAILED);
+      let msg: string;
+      if (result.error.status === 403) {
+        msg = tm("authSignupDisabled");
+      } else {
+        const code = result.error.code;
+        msg = code && te.has(code as any) ? te(code as any) : tm("authSignupFailed");
+      }
       setError(msg);
       setLoading(false);
       return;
     }
-    toast.success(MSG.AUTH_SIGNUP_SUCCESS);
+    toast.success(tm("authSignupSuccess"));
     setLoading(false);
     router.push("/home");
   }
@@ -90,14 +95,14 @@ export function SignupForm() {
   return (
     <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow-sm">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">新規登録</CardTitle>
-        <CardDescription>アカウントを作成してはじめる</CardDescription>
+        <CardTitle className="text-2xl">{t("signupTitle")}</CardTitle>
+        <CardDescription>{t("signupDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username">
-              ユーザー名 <span className="text-destructive">*</span>
+              {t("username")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="username"
@@ -111,11 +116,11 @@ export function SignupForm() {
               maxLength={20}
               required
             />
-            <p className="text-xs text-muted-foreground">3〜20文字、英数字とアンダースコアのみ</p>
+            <p className="text-xs text-muted-foreground">{t("usernameHint")}</p>
           </div>
           <div className="space-y-2">
             <Label htmlFor="name">
-              表示名 <span className="text-destructive">*</span>
+              {t("displayName")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="name"
@@ -130,13 +135,13 @@ export function SignupForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">
-              パスワード <span className="text-destructive">*</span>
+              {t("password")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="password"
               name="password"
               type="password"
-              placeholder="8文字以上"
+              placeholder={t("passwordMinLength")}
               autoComplete="new-password"
               minLength={MIN_PASSWORD_LENGTH}
               required
@@ -151,7 +156,7 @@ export function SignupForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">
-              パスワード（確認） <span className="text-destructive">*</span>
+              {t("passwordConfirm")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="confirmPassword"
@@ -179,18 +184,18 @@ export function SignupForm() {
                 rel="noopener noreferrer"
                 className="text-foreground underline underline-offset-4"
               >
-                利用規約
+                {t("termsLink")}
               </a>
-              と
+              {"と"}
               <a
                 href="/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-foreground underline underline-offset-4"
               >
-                プライバシーポリシー
+                {t("privacyLink")}
               </a>
-              に同意する
+              {t("agreeTerms")}
             </Label>
           </div>
           {error && (
@@ -203,23 +208,21 @@ export function SignupForm() {
           )}
           <Button type="submit" className="h-11 w-full" disabled={loading || !agreed}>
             <UserPlus className="h-4 w-4" />
-            {loading ? "登録中..." : "新規登録"}
+            {loading ? t("signingUp") : t("signupTitle")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            すでにアカウントをお持ちの方は{" "}
+            {t("haveAccount")}{" "}
             <Link href="/auth/login" className="text-foreground underline underline-offset-4">
-              ログイン
+              {t("loginLink")}
             </Link>
           </p>
           <p className="text-center text-xs text-muted-foreground">
-            ユーザー名・パスワードを忘れてしまうと
-            <br />
-            ログインができなくなりますのでご注意ください。
+            {t("usernamePasswordWarning")}
           </p>
         </form>
         <div className="mt-4 flex items-center gap-4">
           <div className="flex-1 border-t" />
-          <span className="text-xs text-muted-foreground">または</span>
+          <span className="text-xs text-muted-foreground">{t("or")}</span>
           <div className="flex-1 border-t" />
         </div>
         <div className="mt-4">
@@ -231,9 +234,14 @@ export function SignupForm() {
 }
 
 function PasswordStrength({ password }: { password: string }) {
+  const t = useTranslations("auth");
   const { errors } = validatePassword(password);
   if (errors.length === 0) {
-    return <p className="text-xs text-green-600 dark:text-green-400">要件を満たしています</p>;
+    return <p className="text-xs text-green-600 dark:text-green-400">{t("passwordStrengthOk")}</p>;
   }
-  return <p className="text-xs text-muted-foreground">未達: {errors.join("、")}</p>;
+  return (
+    <p className="text-xs text-muted-foreground">
+      {t("passwordStrengthFail")}: {errors.join("、")}
+    </p>
+  );
 }

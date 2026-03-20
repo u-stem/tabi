@@ -1,14 +1,16 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth-client";
-import { MSG } from "@/lib/messages";
 
 export function GuestButton() {
   const router = useRouter();
+  const t = useTranslations("auth");
+  const tm = useTranslations("messages");
   const [loading, setLoading] = useState(false);
 
   async function handleGuest() {
@@ -16,10 +18,10 @@ export function GuestButton() {
     try {
       const result = await authClient.signIn.anonymous();
       if (result.error) {
-        toast.error(MSG.AUTH_GUEST_FAILED);
+        toast.error(tm("authGuestFailed"));
         return;
       }
-      toast.success(MSG.AUTH_GUEST_STARTED);
+      toast.success(tm("authGuestStarted"));
       router.push("/home");
     } finally {
       setLoading(false);
@@ -28,7 +30,7 @@ export function GuestButton() {
 
   return (
     <Button variant="outline" className="h-11 w-full" onClick={handleGuest} disabled={loading}>
-      {loading ? "作成中..." : "ゲストで試す"}
+      {loading ? t("guestCreating") : t("guestButton")}
     </Button>
   );
 }

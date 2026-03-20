@@ -3,6 +3,7 @@
 import { LogIn } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { GuestButton } from "@/components/guest-button";
@@ -11,12 +12,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { signIn } from "@/lib/auth-client";
-import { translateAuthError } from "@/lib/auth-error";
 import { MIN_PASSWORD_LENGTH } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 
 export function AuthForm() {
   const router = useRouter();
+  const t = useTranslations("auth");
+  const tm = useTranslations("messages");
+  const te = useTranslations("authErrors");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -35,11 +37,13 @@ export function AuthForm() {
 
     const result = await signIn.username({ username, password });
     if (result.error) {
-      setError(translateAuthError(result.error, MSG.AUTH_LOGIN_FAILED));
+      const code = result.error.code;
+      const errorMsg = code && te.has(code as any) ? te(code as any) : tm("authLoginFailed");
+      setError(errorMsg);
       setLoading(false);
       return;
     }
-    toast.success(MSG.AUTH_LOGIN_SUCCESS);
+    toast.success(tm("authLoginSuccess"));
     setLoading(false);
     router.push("/home");
   }
@@ -47,14 +51,14 @@ export function AuthForm() {
   return (
     <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow-sm">
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">ログイン</CardTitle>
-        <CardDescription>ユーザー名でログイン</CardDescription>
+        <CardTitle className="text-2xl">{t("loginTitle")}</CardTitle>
+        <CardDescription>{t("loginDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username">
-              ユーザー名 <span className="text-destructive">*</span>
+              {t("username")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="username"
@@ -67,13 +71,13 @@ export function AuthForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">
-              パスワード <span className="text-destructive">*</span>
+              {t("password")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="password"
               name="password"
               type="password"
-              placeholder="パスワード"
+              placeholder={t("password")}
               minLength={MIN_PASSWORD_LENGTH}
               autoComplete="current-password"
               required
@@ -89,31 +93,27 @@ export function AuthForm() {
           )}
           <Button type="submit" className="h-11 w-full" disabled={loading}>
             <LogIn className="h-4 w-4" />
-            {loading ? "ログイン中..." : "ログイン"}
+            {loading ? t("loggingIn") : t("loginTitle")}
           </Button>
           <div className="text-right">
             <Link
               href="/auth/forgot-password"
               className="text-xs text-muted-foreground hover:underline"
             >
-              パスワードを忘れた方
+              {t("forgotPassword")}
             </Link>
           </div>
           <p className="text-center text-sm text-muted-foreground">
-            アカウントをお持ちでない方は{" "}
+            {t("noAccount")}{" "}
             <Link href="/auth/signup" className="text-foreground underline underline-offset-4">
-              新規登録
+              {t("signupLink")}
             </Link>
           </p>
-          <p className="text-center text-xs text-muted-foreground">
-            ユーザー名を忘れてしまうと
-            <br />
-            ログインができなくなりますのでご注意ください。
-          </p>
+          <p className="text-center text-xs text-muted-foreground">{t("usernameWarning")}</p>
         </form>
         <div className="mt-4 flex items-center gap-4">
           <div className="flex-1 border-t" />
-          <span className="text-xs text-muted-foreground">または</span>
+          <span className="text-xs text-muted-foreground">{t("or")}</span>
           <div className="flex-1 border-t" />
         </div>
         <div className="mt-4">

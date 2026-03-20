@@ -1,5 +1,6 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl } from "@/lib/test-utils";
 
 const mockUseSearchParams = vi.fn();
 
@@ -27,14 +28,14 @@ describe("ResetPasswordPage", () => {
   it("token がない場合はエラーメッセージを表示する", async () => {
     mockUseSearchParams.mockReturnValue(new URLSearchParams(""));
     const { default: ResetPasswordPage } = await import("./page");
-    render(<ResetPasswordPage />);
+    renderWithIntl(<ResetPasswordPage />);
     expect(screen.getByText(/無効なリンク/)).toBeDefined();
   });
 
   it("パスワードが一致しない場合はエラーを表示する", async () => {
     mockUseSearchParams.mockReturnValue(new URLSearchParams("token=valid-token"));
     const { default: ResetPasswordPage } = await import("./page");
-    render(<ResetPasswordPage />);
+    renderWithIntl(<ResetPasswordPage />);
     fireEvent.change(screen.getByLabelText(/新しいパスワード/), {
       target: { value: "Password1!" },
     });

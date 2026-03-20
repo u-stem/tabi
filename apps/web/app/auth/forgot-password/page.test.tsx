@@ -1,5 +1,6 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl } from "@/lib/test-utils";
 
 vi.mock("@/lib/auth-client", () => ({
   authClient: {
@@ -15,7 +16,7 @@ describe("ForgotPasswordPage", () => {
 
   it("送信後は常に成功メッセージを表示する（メール未登録でも）", async () => {
     const { default: ForgotPasswordPage } = await import("./page");
-    render(<ForgotPasswordPage />);
+    renderWithIntl(<ForgotPasswordPage />);
     fireEvent.change(screen.getByLabelText(/メールアドレス/), {
       target: { value: "test@example.com" },
     });
@@ -28,7 +29,7 @@ describe("ForgotPasswordPage", () => {
   it("authClient.requestPasswordReset が呼ばれる", async () => {
     const { authClient } = await import("@/lib/auth-client");
     const { default: ForgotPasswordPage } = await import("./page");
-    render(<ForgotPasswordPage />);
+    renderWithIntl(<ForgotPasswordPage />);
     fireEvent.change(screen.getByLabelText(/メールアドレス/), {
       target: { value: "test@example.com" },
     });

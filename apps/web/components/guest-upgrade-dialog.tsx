@@ -2,6 +2,7 @@
 
 import { X } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,13 +17,11 @@ import {
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
 import { signUp } from "@/lib/auth-client";
-import { translateAuthError } from "@/lib/auth-error";
 import {
   getPasswordRequirementsText,
   MIN_PASSWORD_LENGTH,
   validatePassword,
 } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 
 export function GuestUpgradeDialog({
   open,
@@ -34,6 +33,10 @@ export function GuestUpgradeDialog({
   signupEnabled?: boolean;
 }) {
   const router = useRouter();
+  const t = useTranslations("auth");
+  const tm = useTranslations("messages");
+  const te = useTranslations("authErrors");
+  const tc = useTranslations("common");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -50,13 +53,13 @@ export function GuestUpgradeDialog({
 
     const { valid, errors } = validatePassword(password);
     if (!valid) {
-      setError(`${MSG.AUTH_PASSWORD_TOO_WEAK}: ${errors.join("、")}`);
+      setError(`${tm("authPasswordTooWeak")}: ${errors.join("、")}`);
       setLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
-      setError(MSG.AUTH_SIGNUP_PASSWORD_MISMATCH);
+      setError(tm("authSignupPasswordMismatch"));
       setLoading(false);
       return;
     }
@@ -70,16 +73,19 @@ export function GuestUpgradeDialog({
 
     if (result.error) {
       // 403 = signup disabled by admin
-      const msg =
-        result.error.status === 403
-          ? MSG.AUTH_SIGNUP_DISABLED
-          : translateAuthError(result.error, MSG.AUTH_GUEST_UPGRADE_FAILED);
+      let msg: string;
+      if (result.error.status === 403) {
+        msg = tm("authSignupDisabled");
+      } else {
+        const code = result.error.code;
+        msg = code && te.has(code as any) ? te(code as any) : tm("authGuestUpgradeFailed");
+      }
       setError(msg);
       setLoading(false);
       return;
     }
 
-    toast.success(MSG.AUTH_GUEST_UPGRADE_SUCCESS);
+    toast.success(tm("authGuestUpgradeSuccess"));
     setLoading(false);
     onOpenChange(false);
     router.refresh();
@@ -90,14 +96,14 @@ export function GuestUpgradeDialog({
       <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
         <ResponsiveDialogContent>
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>アカウント登録</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>{t("guestUpgradeTitle")}</ResponsiveDialogTitle>
           </ResponsiveDialogHeader>
           <p className="px-1 py-2 text-sm text-muted-foreground">
-            {MSG.AUTH_SIGNUP_DISABLED_DETAIL}
+            {tm("authSignupDisabledDetail")}
           </p>
           <ResponsiveDialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              閉じる
+              {t("close")}
             </Button>
           </ResponsiveDialogFooter>
         </ResponsiveDialogContent>
@@ -109,16 +115,14 @@ export function GuestUpgradeDialog({
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>アカウント登録</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            登録するとデータが保持され、全機能が使えるようになります。
-          </ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{t("guestUpgradeTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{t("guestUpgradeDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="upgrade-username">
-                ユーザー名 <span className="text-destructive">*</span>
+                {t("username")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="upgrade-username"
@@ -129,17 +133,17 @@ export function GuestUpgradeDialog({
                 maxLength={20}
                 required
               />
-              <p className="text-xs text-muted-foreground">3〜20文字、英数字とアンダースコアのみ</p>
+              <p className="text-xs text-muted-foreground">{t("usernameHint")}</p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="upgrade-name">
-                表示名 <span className="text-destructive">*</span>
+                {t("displayName")} <span className="text-destructive">*</span>
               </Label>
               <Input id="upgrade-name" name="name" minLength={1} maxLength={50} required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="upgrade-password">
-                パスワード <span className="text-destructive">*</span>
+                {t("password")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="upgrade-password"
@@ -152,7 +156,7 @@ export function GuestUpgradeDialog({
             </div>
             <div className="space-y-2">
               <Label htmlFor="upgrade-confirmPassword">
-                パスワード（確認） <span className="text-destructive">*</span>
+                {t("passwordConfirm")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="upgrade-confirmPassword"
@@ -174,10 +178,10 @@ export function GuestUpgradeDialog({
           <ResponsiveDialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "登録中..." : "登録"}
+              {loading ? t("signingUp") : t("register")}
             </Button>
           </ResponsiveDialogFooter>
         </form>

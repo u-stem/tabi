@@ -2,6 +2,7 @@
 
 import { ArrowLeft, Send } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Logo } from "@/components/logo";
 import { Button } from "@/components/ui/button";
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 
 export default function ForgotPasswordPage() {
+  const t = useTranslations("auth");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
@@ -39,8 +41,8 @@ export default function ForgotPasswordPage() {
       <main className="flex flex-1 flex-col items-center justify-center px-0 sm:px-4">
         <Card className="w-full max-w-md border-0 shadow-none sm:border sm:shadow-sm">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">パスワードのリセット</CardTitle>
-            <CardDescription>登録済みのメールアドレスを入力してください。</CardDescription>
+            <CardTitle className="text-2xl">{t("resetPasswordTitle")}</CardTitle>
+            <CardDescription>{t("resetPasswordDescription")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {sent ? (
@@ -48,16 +50,14 @@ export default function ForgotPasswordPage() {
                 aria-live="polite"
                 className="block space-y-1 rounded-md bg-green-50 px-3 py-3 text-sm text-green-700 dark:bg-green-950/20 dark:text-green-400"
               >
-                <p>送信しました。メールをご確認ください。</p>
-                <p className="text-xs opacity-80">
-                  メールが届かない場合は迷惑メールフォルダをご確認ください。
-                </p>
+                <p>{t("resetPasswordSent")}</p>
+                <p className="text-xs opacity-80">{t("resetPasswordSpamHint")}</p>
               </output>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="email">
-                    メールアドレス <span className="text-destructive">*</span>
+                    {t("emailLabel")} <span className="text-destructive">*</span>
                   </Label>
                   <Input
                     id="email"
@@ -71,19 +71,17 @@ export default function ForgotPasswordPage() {
                 </div>
                 <Button type="submit" className="w-full" disabled={loading || !email.trim()}>
                   <Send className="h-4 w-4" />
-                  {loading ? "送信中..." : "送信する"}
+                  {loading ? t("sending") : t("sendButton")}
                 </Button>
               </form>
             )}
 
-            <p className="text-center text-xs text-muted-foreground">
-              メールアドレスを設定していない場合は管理者にお問い合わせください。
-            </p>
+            <p className="text-center text-xs text-muted-foreground">{t("noEmailHint")}</p>
 
             <Button variant="outline" className="w-full" asChild>
               <Link href="/auth/login">
                 <ArrowLeft className="h-4 w-4" />
-                ログインに戻る
+                {t("backToLogin")}
               </Link>
             </Button>
           </CardContent>

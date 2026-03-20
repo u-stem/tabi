@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { useSession } from "@/lib/auth-client";
 import { isGuestUser } from "@/lib/guest";
 import { cn } from "@/lib/utils";
@@ -30,12 +31,13 @@ export function RightPanelTabs({
 }) {
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
+  const t = useTranslations("schedule");
 
   return (
     <div
       className="flex shrink-0 select-none gap-1.5 overflow-x-auto border-b px-3 pb-2.5 pt-3"
       role="tablist"
-      aria-label="候補・履歴タブ"
+      aria-label={t("panelTabs")}
     >
       <button
         type="button"
@@ -44,7 +46,7 @@ export function RightPanelTabs({
         onClick={() => onChange("candidates")}
         className={cn(CHIP_BASE, current === "candidates" ? CHIP_ACTIVE : CHIP_INACTIVE)}
       >
-        候補
+        {t("candidates")}
         {candidateCount > 0 && <span className="ml-1 text-xs">{candidateCount}</span>}
       </button>
       {mapsEnabled && (
@@ -55,7 +57,7 @@ export function RightPanelTabs({
           onClick={() => onChange("map")}
           className={cn(CHIP_BASE, current === "map" ? CHIP_ACTIVE : CHIP_INACTIVE)}
         >
-          地図
+          {t("map")}
           <span className="ml-1 text-[10px] font-semibold opacity-60">β</span>
         </button>
       )}
@@ -66,7 +68,7 @@ export function RightPanelTabs({
         onClick={() => onChange("expenses")}
         className={cn(CHIP_BASE, current === "expenses" ? CHIP_ACTIVE : CHIP_INACTIVE)}
       >
-        費用
+        {t("expenses")}
       </button>
       <button
         type="button"
@@ -75,7 +77,7 @@ export function RightPanelTabs({
         onClick={() => onChange("activity")}
         className={cn(CHIP_BASE, current === "activity" ? CHIP_ACTIVE : CHIP_INACTIVE)}
       >
-        履歴
+        {t("history")}
       </button>
       <div className="shrink-0 self-stretch w-px bg-border" />
       <button
@@ -85,7 +87,7 @@ export function RightPanelTabs({
         onClick={() => onChange("souvenirs")}
         className={cn(CHIP_BASE, current === "souvenirs" ? CHIP_ACTIVE : CHIP_INACTIVE)}
       >
-        お土産
+        {t("souvenirs")}
       </button>
       {!isGuest && (
         <button
@@ -95,7 +97,7 @@ export function RightPanelTabs({
           onClick={() => onChange("bookmarks")}
           className={cn(CHIP_BASE, current === "bookmarks" ? CHIP_ACTIVE : CHIP_INACTIVE)}
         >
-          ブックマーク
+          {t("bookmarks")}
         </button>
       )}
     </div>

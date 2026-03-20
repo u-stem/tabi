@@ -89,6 +89,8 @@ export function CandidatePanel({
   days,
 }: CandidatePanelProps) {
   const tm = useTranslations("messages");
+  const tc = useTranslations("common");
+  const tsch = useTranslations("schedule");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
 
@@ -245,14 +247,16 @@ export function CandidatePanel({
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={sel.exit}>
             <X className="h-3.5 w-3.5" />
           </Button>
-          <span className="text-xs font-medium">{selectedCount}件選択中</span>
+          <span className="text-xs font-medium">
+            {tc("selectedCount", { count: selectedCount })}
+          </span>
           <Button
             variant="ghost"
             size="sm"
             className="h-8 px-2 text-xs"
             onClick={selectedCount === candidates.length ? sel.deselectAll : sel.selectAll}
           >
-            {selectedCount === candidates.length ? "全解除" : "全選択"}
+            {selectedCount === candidates.length ? tc("deselectAll") : tc("selectAll")}
           </Button>
           <div className="ml-auto flex items-center gap-1">
             {hasDayContext && (
@@ -264,7 +268,7 @@ export function CandidatePanel({
                 disabled={selectedCount === 0 || sel.batchLoading}
               >
                 <ArrowLeft className="h-3.5 w-3.5" />
-                予定に追加
+                {tsch("addToSchedule")}
               </Button>
             )}
             <DropdownMenu>
@@ -281,12 +285,12 @@ export function CandidatePanel({
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={sel.batchDuplicateCandidates}>
                   <Copy />
-                  複製
+                  {tc("duplicate")}
                 </DropdownMenuItem>
                 {onSaveToBookmark && (
                   <DropdownMenuItem onClick={() => onSaveToBookmark(Array.from(selectedIds ?? []))}>
                     <Bookmark />
-                    ブックマークに保存
+                    {tsch("saveToBookmark")}
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem
@@ -294,7 +298,7 @@ export function CandidatePanel({
                   onClick={() => sel.setBatchDeleteOpen(true)}
                 >
                   <Trash2 />
-                  削除
+                  {tc("delete")}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -303,7 +307,7 @@ export function CandidatePanel({
       ) : reorderMode ? (
         <div className="mb-2 flex items-center gap-1.5 rounded-lg bg-muted px-1.5 py-1">
           <GripVertical className="ml-1 h-3.5 w-3.5 text-muted-foreground" />
-          <span className="text-xs font-medium">並び替え中</span>
+          <span className="text-xs font-medium">{tsch("reordering")}</span>
           <div className="ml-auto">
             <Button
               variant="ghost"
@@ -311,7 +315,7 @@ export function CandidatePanel({
               className="h-8 px-2 text-xs"
               onClick={() => setReorderMode(false)}
             >
-              完了
+              {tsch("done")}
             </Button>
           </div>
         </div>
@@ -326,7 +330,7 @@ export function CandidatePanel({
                     <span>
                       <Button variant="outline" size="sm" className="w-full" disabled>
                         <Plus className="h-4 w-4" />
-                        候補を追加
+                        {tsch("addCandidate")}
                         <span className="hidden text-xs text-muted-foreground lg:inline">(C)</span>
                       </Button>
                     </span>
@@ -336,7 +340,7 @@ export function CandidatePanel({
               ) : (
                 <Button variant="outline" size="sm" onClick={() => setAddOpen(true)}>
                   <Plus className="h-4 w-4" />
-                  候補を追加
+                  {tsch("addCandidate")}
                   <span className="hidden text-xs text-muted-foreground lg:inline">(C)</span>
                 </Button>
               ))}
@@ -351,7 +355,7 @@ export function CandidatePanel({
                 }}
               >
                 <SquareMousePointer className="h-4 w-4" />
-                選択
+                {tc("select")}
               </Button>
             )}
             {!disabled && isMobile && candidates.length > 1 && onReorderCandidate && (
@@ -366,7 +370,7 @@ export function CandidatePanel({
                 }}
               >
                 <GripVertical className="h-4 w-4" />
-                並び替え
+                {tc("sort")}
               </Button>
             )}
             {candidates.length > 0 && (
@@ -377,7 +381,7 @@ export function CandidatePanel({
                 onClick={() => setSortBy(sortBy === "popular" ? "order" : "popular")}
               >
                 <ArrowUpDown className="h-4 w-4" />
-                {sortBy === "popular" ? "人気順" : "作成順"}
+                {sortBy === "popular" ? tsch("popular") : tsch("newest")}
               </Button>
             )}
           </div>

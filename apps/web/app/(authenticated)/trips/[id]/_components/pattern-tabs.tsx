@@ -50,6 +50,10 @@ export function PatternTabs({
   const tc = useTranslations("common");
   const isMobile = useMobile();
 
+  const DEFAULT_PATTERN_LABEL = "デフォルト";
+  const patternDisplayLabel = (label: string) =>
+    label === DEFAULT_PATTERN_LABEL ? tsch("defaultPattern") : label;
+
   if (isMobile) {
     return (
       <MobilePatternTabs
@@ -87,7 +91,7 @@ export function PatternTabs({
                 canEdit ? "pl-3 pr-0.5" : "px-3",
               )}
             >
-              {pattern.label}
+              {patternDisplayLabel(pattern.label)}
             </button>
             {canEdit && (
               <DropdownMenu>
@@ -188,6 +192,10 @@ function MobilePatternTabs({
   const currentPattern = patterns[currentPatternIndex];
   const multiplePatterns = patterns.length > 1;
 
+  const DEFAULT_PATTERN_LABEL = "デフォルト";
+  const patternDisplayLabel = (label: string) =>
+    label === DEFAULT_PATTERN_LABEL ? tsch("defaultPattern") : label;
+
   const menuActions = currentPattern
     ? [
         {
@@ -235,7 +243,9 @@ function MobilePatternTabs({
         disabled={!multiplePatterns}
         className="flex min-h-[36px] min-w-0 flex-1 items-center gap-1 rounded-full border border-transparent bg-muted px-3 py-1.5 text-xs font-medium disabled:pointer-events-none"
       >
-        <span className="truncate">{currentPattern?.label}</span>
+        <span className="truncate">
+          {currentPattern ? patternDisplayLabel(currentPattern.label) : null}
+        </span>
         {multiplePatterns && <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />}
       </button>
 

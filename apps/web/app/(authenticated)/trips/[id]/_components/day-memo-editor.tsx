@@ -2,6 +2,7 @@
 
 import { DAY_MEMO_MAX_LENGTH } from "@sugara/shared";
 import { Check, MessageSquare, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { useDayMemo } from "@/lib/hooks/use-day-memo";
@@ -22,6 +23,9 @@ export function DayMemoEditor({
   canEdit: boolean;
   online: boolean;
 }) {
+  const tc = useTranslations("common");
+  const tsch = useTranslations("schedule");
+
   return (
     <div className="mb-3">
       {memo.editingDayId === currentDayId ? (
@@ -29,7 +33,7 @@ export function DayMemoEditor({
           <Textarea
             value={memo.text}
             onChange={(e) => memo.setText(e.target.value)}
-            placeholder="メモを入力..."
+            placeholder={tsch("memoPlaceholder")}
             maxLength={DAY_MEMO_MAX_LENGTH}
             rows={3}
             className="resize-none"
@@ -42,11 +46,11 @@ export function DayMemoEditor({
             <div className="flex gap-1.5">
               <Button variant="ghost" size="sm" onClick={memo.cancelEdit} disabled={memo.saving}>
                 <X className="h-3.5 w-3.5" />
-                キャンセル
+                {tc("cancel")}
               </Button>
               <Button size="sm" onClick={memo.save} disabled={memo.saving}>
                 <Check className="h-3.5 w-3.5" />
-                {memo.saving ? "保存中..." : "保存"}
+                {memo.saving ? tsch("memoSaving") : tsch("memoSave")}
               </Button>
             </div>
           </div>
@@ -68,7 +72,7 @@ export function DayMemoEditor({
           )}
         >
           <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-          <span className="whitespace-pre-wrap">{currentDayMemo || "メモを追加"}</span>
+          <span className="whitespace-pre-wrap">{currentDayMemo || tsch("memoAdd")}</span>
         </button>
       )}
     </div>

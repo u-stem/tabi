@@ -587,7 +587,21 @@
     "patternLabel": "Pattern",
     "addPattern": "Add Pattern",
     "rename": "Rename",
-    "overwrite": "Overwrite"
+    "overwrite": "Overwrite",
+    "panelTabs": "Candidates & History Tabs",
+    "map": "Map",
+    "history": "History",
+    "bookmarks": "Bookmarks",
+    "sortByTime": "By Time",
+    "moveToCandidate": "Move to Candidates",
+    "saveToBookmark": "Save to Bookmarks",
+    "defaultPattern": "Default",
+    "reordering": "Reordering",
+    "done": "Done",
+    "addToSchedule": "Add to Schedule",
+    "deleteScheduleTitle": "Delete schedule?",
+    "deleteScheduleDescription": "Delete \"{name}\". This action cannot be undone.",
+    "deleteScheduleConfirm": "Delete"
   },
   "member": {
     "title": "Members",

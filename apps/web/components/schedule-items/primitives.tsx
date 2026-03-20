@@ -113,25 +113,33 @@ export function ScheduleMenu({
   onSaveToBookmark?: () => void;
 }) {
   const isMobile = useMobile();
+  const tc = useTranslations("common");
+  const tsch = useTranslations("schedule");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const sheetActions = [
-    { label: "編集", icon: <Pencil className="h-4 w-4" />, onClick: onEdit },
+    { label: tc("edit"), icon: <Pencil className="h-4 w-4" />, onClick: onEdit },
     ...(onUnassign
-      ? [{ label: "候補に戻す", icon: <Undo2 className="h-4 w-4" />, onClick: onUnassign }]
+      ? [
+          {
+            label: tsch("moveToCandidate"),
+            icon: <Undo2 className="h-4 w-4" />,
+            onClick: onUnassign,
+          },
+        ]
       : []),
     ...(onSaveToBookmark
       ? [
           {
-            label: "ブックマークに保存",
+            label: tsch("saveToBookmark"),
             icon: <Bookmark className="h-4 w-4" />,
             onClick: onSaveToBookmark,
           },
         ]
       : []),
     {
-      label: "削除",
+      label: tc("delete"),
       icon: <Trash2 className="h-4 w-4" />,
       onClick: () => setDeleteOpen(true),
       variant: "destructive" as const,
@@ -157,23 +165,23 @@ export function ScheduleMenu({
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onEdit}>
               <Pencil />
-              編集
+              {tc("edit")}
             </DropdownMenuItem>
             {onUnassign && (
               <DropdownMenuItem onClick={onUnassign}>
                 <Undo2 />
-                候補に戻す
+                {tsch("moveToCandidate")}
               </DropdownMenuItem>
             )}
             {onSaveToBookmark && (
               <DropdownMenuItem onClick={onSaveToBookmark}>
                 <Bookmark />
-                ブックマークに保存
+                {tsch("saveToBookmark")}
               </DropdownMenuItem>
             )}
             <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
               <Trash2 />
-              削除
+              {tc("delete")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -181,19 +189,19 @@ export function ScheduleMenu({
       <ResponsiveAlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>予定を削除しますか？</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogTitle>{tsch("deleteScheduleTitle")}</ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              「{name}」を削除します。この操作は取り消せません。
+              {tsch("deleteScheduleDescription", { name })}
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={onDelete}>
               <Trash2 className="h-4 w-4" />
-              削除する
+              {tsch("deleteScheduleConfirm")}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>

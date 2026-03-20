@@ -587,7 +587,21 @@
     "patternLabel": "パターン",
     "addPattern": "パターン追加",
     "rename": "名前変更",
-    "overwrite": "上書き"
+    "overwrite": "上書き",
+    "panelTabs": "候補・履歴タブ",
+    "map": "地図",
+    "history": "履歴",
+    "bookmarks": "ブックマーク",
+    "sortByTime": "時刻順",
+    "moveToCandidate": "候補に戻す",
+    "saveToBookmark": "ブックマークに保存",
+    "defaultPattern": "デフォルト",
+    "reordering": "並び替え中",
+    "done": "完了",
+    "addToSchedule": "予定に追加",
+    "deleteScheduleTitle": "予定を削除しますか？",
+    "deleteScheduleDescription": "「{name}」を削除します。この操作は取り消せません。",
+    "deleteScheduleConfirm": "削除する"
   },
   "member": {
     "title": "メンバー",

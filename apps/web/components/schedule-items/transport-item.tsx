@@ -1,7 +1,6 @@
 "use client";
 
 import type { TransportMethod } from "@sugara/shared";
-import { TRANSPORT_METHOD_LABELS } from "@sugara/shared";
 import { Route } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { memo, useState } from "react";
@@ -70,6 +69,7 @@ export const TransportItem = memo(function TransportItem({
   const [editOpen, setEditOpen] = useState(false);
   const shift = useShiftProposal(siblingSchedules);
   const tc = useTranslations("crossDay");
+  const tLabel = useTranslations("labels.transportMethod");
   const crossDayT = {
     hotelCheckin: tc("hotelCheckin"),
     hotelStaying: tc("hotelStaying"),
@@ -89,9 +89,7 @@ export const TransportItem = memo(function TransportItem({
       ? `${departurePlace} → ${arrivalPlace}`
       : departurePlace || arrivalPlace || "";
 
-  const methodLabel = transportMethod
-    ? TRANSPORT_METHOD_LABELS[transportMethod as TransportMethod]
-    : "";
+  const methodLabel = transportMethod ? tLabel(transportMethod as TransportMethod) : "";
 
   const timeStr = crossDayDisplay
     ? endTime

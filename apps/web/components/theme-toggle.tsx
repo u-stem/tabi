@@ -1,6 +1,7 @@
 "use client";
 
 import { Moon, Sun } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -8,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 export function ThemeToggle({ iconClassName = "h-5 w-5" }: { iconClassName?: string }) {
   const { resolvedTheme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const t = useTranslations("nav");
 
   useEffect(() => setMounted(true), []);
 
@@ -16,7 +18,7 @@ export function ThemeToggle({ iconClassName = "h-5 w-5" }: { iconClassName?: str
   }
 
   const isDark = resolvedTheme === "dark";
-  const label = isDark ? "ライトモードに切り替え" : "ダークモードに切り替え";
+  const label = isDark ? t("switchToLight") : t("switchToDark");
 
   return (
     <TooltipProvider>

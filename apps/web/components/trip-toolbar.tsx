@@ -17,6 +17,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
 import { ActionSheet } from "@/components/action-sheet";
 import { Button } from "@/components/ui/button";
@@ -84,18 +85,17 @@ const STATUS_ICONS: Record<string, ReactNode> = {
   completed: <CheckCircle className="h-4 w-4" />,
 };
 
-const statusFilters: { value: StatusFilter; label: string; icon: ReactNode }[] = [
-  { value: "all", label: "すべて", icon: <ListFilter className="h-4 w-4" /> },
-  ...Object.entries(STATUS_LABELS).map(([value, label]) => ({
+const statusFilterDefs: { value: StatusFilter; icon: ReactNode }[] = [
+  { value: "all", icon: <ListFilter className="h-4 w-4" /> },
+  ...Object.keys(STATUS_LABELS).map((value) => ({
     value: value as TripStatus,
-    label,
     icon: STATUS_ICONS[value],
   })),
 ];
 
-const sortOptions: { value: SortKey; label: string; icon: ReactNode }[] = [
-  { value: "updatedAt", label: "更新日", icon: <Clock className="h-4 w-4" /> },
-  { value: "startDate", label: "出発日", icon: <PlaneTakeoff className="h-4 w-4" /> },
+const sortOptionDefs: { value: SortKey; icon: ReactNode }[] = [
+  { value: "updatedAt", icon: <Clock className="h-4 w-4" /> },
+  { value: "startDate", icon: <PlaneTakeoff className="h-4 w-4" /> },
 ];
 
 export function TripToolbar({
@@ -122,13 +122,28 @@ export function TripToolbar({
   hideDelete,
   hideStatusFilter,
   hideSortKey,
-  deleteLabel = "旅行",
+  deleteLabel,
 }: TripToolbarProps) {
+  const tc = useTranslations("common");
+  const tt = useTranslations("tripToolbar");
+  const tl = useTranslations("labels.status");
   const isMobile = useMobile();
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [statusSheetOpen, setStatusSheetOpen] = useState(false);
-  const currentStatusLabel = statusFilters.find((f) => f.value === statusFilter)?.label ?? "すべて";
-  const currentSortLabel = sortOptions.find((s) => s.value === sortKey)?.label ?? "更新日";
+  const resolvedDeleteLabel = deleteLabel ?? tt("trip");
+
+  const statusFilters = statusFilterDefs.map((f) => ({
+    ...f,
+    label: f.value === "all" ? tc("all") : tl(f.value),
+  }));
+  const sortOptions = sortOptionDefs.map((s) => ({
+    ...s,
+    label: s.value === "updatedAt" ? tt("updatedAt") : tt("startDate"),
+  }));
+
+  const currentStatusLabel =
+    statusFilters.find((f) => f.value === statusFilter)?.label ?? tc("all");
+  const currentSortLabel = sortOptions.find((s) => s.value === sortKey)?.label ?? tt("updatedAt");
 
   if (selectionMode) {
     return (
@@ -140,11 +155,13 @@ export function TripToolbar({
             className="h-8 w-8"
             onClick={() => onSelectionModeChange?.(false)}
             disabled={deleting || duplicating}
-            aria-label="選択を終了"
+            aria-label={tc("endSelection")}
           >
             <X className="h-4 w-4" />
           </Button>
-          <span className="whitespace-nowrap text-xs font-medium">{selectedCount}件選択中</span>
+          <span className="whitespace-nowrap text-xs font-medium">
+            {tc("selectedCount", { count: selectedCount })}
+          </span>
           <Button
             variant="ghost"
             size="sm"
@@ -152,7 +169,7 @@ export function TripToolbar({
             onClick={selectedCount === totalCount ? onDeselectAll : onSelectAll}
             disabled={deleting || duplicating}
           >
-            {selectedCount === totalCount ? "全解除" : "全選択"}
+            {selectedCount === totalCount ? tc("deselectAll") : tc("selectAll")}
           </Button>
           <div className="ml-auto flex items-center gap-1">
             {isMobile ? (
@@ -166,7 +183,7 @@ export function TripToolbar({
                     onClick={onDuplicateSelected}
                   >
                     <Copy className="h-4 w-4" />
-                    複製
+                    {tc("duplicate")}
                   </Button>
                 )}
                 {!hideDelete && (
@@ -178,7 +195,7 @@ export function TripToolbar({
                     onClick={() => setDeleteOpen(true)}
                   >
                     <Trash2 className="h-4 w-4" />
-                    削除
+                    {tc("delete")}
                   </Button>
                 )}
               </>
@@ -199,7 +216,7 @@ export function TripToolbar({
                   {!hideDuplicate && (
                     <DropdownMenuItem onClick={onDuplicateSelected}>
                       <Copy />
-                      複製
+                      {tc("duplicate")}
                     </DropdownMenuItem>
                   )}
                   {!hideDelete && (
@@ -208,7 +225,7 @@ export function TripToolbar({
                       onClick={() => setDeleteOpen(true)}
                     >
                       <Trash2 />
-                      削除
+                      {tc("delete")}
                     </DropdownMenuItem>
                   )}
                 </DropdownMenuContent>
@@ -221,20 +238,20 @@ export function TripToolbar({
             <ResponsiveAlertDialogContent>
               <ResponsiveAlertDialogHeader>
                 <ResponsiveAlertDialogTitle>
-                  {selectedCount}件の{deleteLabel}を削除しますか？
+                  {tc("deleteConfirmTitle", { count: selectedCount, label: resolvedDeleteLabel })}
                 </ResponsiveAlertDialogTitle>
                 <ResponsiveAlertDialogDescription>
-                  選択した{deleteLabel}が削除されます。この操作は取り消せません。
+                  {tc("deleteConfirmDescription", { label: resolvedDeleteLabel })}
                 </ResponsiveAlertDialogDescription>
               </ResponsiveAlertDialogHeader>
               <ResponsiveAlertDialogFooter>
                 <ResponsiveAlertDialogCancel>
                   <X className="h-4 w-4" />
-                  キャンセル
+                  {tc("cancel")}
                 </ResponsiveAlertDialogCancel>
                 <ResponsiveAlertDialogDestructiveAction onClick={onDeleteSelected}>
                   <Trash2 className="h-4 w-4" />
-                  削除する
+                  {tc("deletConfirm")}
                 </ResponsiveAlertDialogDestructiveAction>
               </ResponsiveAlertDialogFooter>
             </ResponsiveAlertDialogContent>
@@ -246,14 +263,14 @@ export function TripToolbar({
 
   if (isMobile) {
     return (
-      <div role="toolbar" aria-label="旅行フィルター" className="flex flex-col gap-2">
+      <div role="toolbar" aria-label={tt("tripFilter")} className="flex flex-col gap-2">
         <Input
           ref={searchInputRef}
           id="trips-search"
           name="search"
           type="search"
-          placeholder="検索..."
-          aria-label="旅行を検索"
+          placeholder={tc("search")}
+          aria-label={tt("searchTrips")}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
           className="h-10 w-full"
@@ -263,7 +280,7 @@ export function TripToolbar({
             <>
               <button
                 type="button"
-                aria-label="ステータスで絞り込み"
+                aria-label={tt("filterByStatus")}
                 onClick={(e) => {
                   e.currentTarget.blur();
                   setStatusSheetOpen(true);
@@ -287,7 +304,7 @@ export function TripToolbar({
           {!hideSortKey && (
             <button
               type="button"
-              aria-label="並び替え"
+              aria-label={tc("sort")}
               onClick={() => onSortKeyChange(sortKey === "updatedAt" ? "startDate" : "updatedAt")}
               className="flex h-9 flex-1 items-center justify-center gap-1.5 whitespace-nowrap rounded-md border bg-background px-2 text-xs"
             >
@@ -302,10 +319,10 @@ export function TripToolbar({
               className="h-9 flex-1"
               onClick={() => onSelectionModeChange(true)}
               disabled={disabled || totalCount === 0}
-              aria-label="選択モード"
+              aria-label={tc("selectionMode")}
             >
               <SquareMousePointer className="h-4 w-4" />
-              選択
+              {tc("select")}
             </Button>
           )}
           {newTripSlot && <div className="shrink-0">{newTripSlot}</div>}
@@ -315,15 +332,15 @@ export function TripToolbar({
   }
 
   return (
-    <div role="toolbar" aria-label="旅行フィルター" className="flex flex-wrap items-center gap-2">
+    <div role="toolbar" aria-label={tt("tripFilter")} className="flex flex-wrap items-center gap-2">
       {/* Takes full row on narrow viewports, fixed width on sm+ */}
       <Input
         ref={searchInputRef}
         id="trips-search"
         name="search"
         type="search"
-        placeholder="検索..."
-        aria-label="旅行を検索"
+        placeholder={tc("search")}
+        aria-label={tt("searchTrips")}
         value={search}
         onChange={(e) => onSearchChange(e.target.value)}
         className="h-8 w-full min-w-0 sm:w-40 sm:flex-none"
@@ -332,7 +349,7 @@ export function TripToolbar({
         <Select value={statusFilter} onValueChange={(v) => onStatusFilterChange(v as StatusFilter)}>
           <SelectTrigger
             className="h-8 flex-1 text-xs sm:w-[120px] sm:flex-none"
-            aria-label="ステータスで絞り込み"
+            aria-label={tt("filterByStatus")}
           >
             <SelectValue />
           </SelectTrigger>
@@ -351,7 +368,7 @@ export function TripToolbar({
       {!hideSortKey && (
         <button
           type="button"
-          aria-label="並び替え"
+          aria-label={tc("sort")}
           onClick={() => onSortKeyChange(sortKey === "updatedAt" ? "startDate" : "updatedAt")}
           className="flex h-8 flex-1 items-center justify-center gap-1 whitespace-nowrap rounded-md border bg-background px-2.5 text-xs sm:flex-none"
         >
@@ -367,10 +384,10 @@ export function TripToolbar({
             className="h-8 px-3"
             onClick={() => onSelectionModeChange(true)}
             disabled={disabled || totalCount === 0}
-            aria-label="選択モード"
+            aria-label={tc("selectionMode")}
           >
             <SquareMousePointer className="h-4 w-4" />
-            選択
+            {tc("select")}
             <span className="hidden text-xs text-muted-foreground lg:inline">(S)</span>
           </Button>
         </div>

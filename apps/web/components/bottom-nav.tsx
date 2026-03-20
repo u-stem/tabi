@@ -4,6 +4,7 @@ import type { FriendRequestResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import type React from "react";
 import { api } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
@@ -14,7 +15,7 @@ import { cn } from "@/lib/utils";
 
 type NavLink = {
   href: string;
-  label: string;
+  labelKey: "home" | "bookmarks" | "friends";
   icon: React.ComponentType<{ className?: string }>;
 };
 
@@ -25,6 +26,7 @@ type BottomNavBaseProps = {
 };
 
 export function BottomNavBase({ className, links, friendHref }: BottomNavBaseProps) {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const { data: session } = useSession();
 
@@ -46,7 +48,7 @@ export function BottomNavBase({ className, links, friendHref }: BottomNavBasePro
 
   return (
     <nav
-      aria-label="ボトムナビゲーション"
+      aria-label={t("bottomNav")}
       className={cn(
         "fixed inset-x-0 bottom-0 z-40 select-none border-t bg-background print:hidden",
         className,
@@ -68,7 +70,7 @@ export function BottomNavBase({ className, links, friendHref }: BottomNavBasePro
                 <link.icon
                   className={cn("h-5 w-5 transition-transform duration-200", active && "scale-110")}
                 />
-                <span className="sr-only">{link.label}</span>
+                <span className="sr-only">{t(link.labelKey)}</span>
                 {link.href === friendHref && friendRequestCount > 0 && (
                   <span className="absolute top-1.5 left-1/2 ml-2 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground">
                     {friendRequestCount}

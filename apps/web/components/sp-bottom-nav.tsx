@@ -6,6 +6,7 @@ import type { LucideIcon } from "lucide-react";
 import { Bell, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { type ReactNode, useEffect, useState } from "react";
 import { UserAvatar } from "@/components/user-avatar";
 import { api } from "@/lib/api";
@@ -65,6 +66,7 @@ function NavItem({
 }
 
 export function SpBottomNav() {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const { data: session } = useSession();
   const [mounted, setMounted] = useState(false);
@@ -100,7 +102,7 @@ export function SpBottomNav() {
 
   return (
     <nav
-      aria-label="ボトムナビゲーション"
+      aria-label={t("bottomNav")}
       className={cn(
         "fixed inset-x-0 bottom-0 z-40 select-none border-t bg-background print:hidden transition-transform duration-300",
         navHidden && "translate-y-full",
@@ -115,7 +117,7 @@ export function SpBottomNav() {
               <NavItem
                 href={link.href}
                 active={active}
-                label={link.label}
+                label={t(link.labelKey)}
                 badge={link.href === friendHref ? friendRequestCount : undefined}
               >
                 <NavIcon icon={link.icon} active={active} />
@@ -128,7 +130,7 @@ export function SpBottomNav() {
             <NavItem
               href="/sp/notifications"
               active={pathname === "/sp/notifications"}
-              label="通知"
+              label={t("notifications")}
               badge={unreadCount}
             >
               <NavIcon icon={Bell} active={pathname === "/sp/notifications"} />
@@ -136,7 +138,7 @@ export function SpBottomNav() {
           </li>
         )}
         <li className="flex flex-1">
-          <NavItem href="/sp/my" active={pathname === "/sp/my"} label="プロフィール">
+          <NavItem href="/sp/my" active={pathname === "/sp/my"} label={t("profile")}>
             {mounted && session?.user ? (
               <UserAvatar
                 name={session.user.name ?? ""}

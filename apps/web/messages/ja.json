@@ -40,5 +40,133 @@
       "terms": "利用規約",
       "privacy": "プライバシーポリシー"
     }
+  },
+  "common": {
+    "cancel": "キャンセル",
+    "save": "保存",
+    "delete": "削除",
+    "deletConfirm": "削除する",
+    "retry": "再試行",
+    "send": "送信",
+    "edit": "編集",
+    "update": "更新",
+    "search": "検索...",
+    "loading": "読み込み中...",
+    "select": "選択",
+    "selectAll": "全選択",
+    "deselectAll": "全解除",
+    "endSelection": "選択を終了",
+    "selectionMode": "選択モード",
+    "selectedCount": "{count}件選択中",
+    "duplicate": "複製",
+    "copy": "コピー",
+    "copyDone": "コピー完了",
+    "returnHome": "ホームに戻る",
+    "sort": "並び替え",
+    "all": "すべて",
+    "offline": "オフラインです",
+    "offlineRetry": "インターネット接続を確認してから再度お試しください",
+    "deleteConfirmTitle": "{count}件の{label}を削除しますか？",
+    "deleteConfirmDescription": "選択した{label}が削除されます。この操作は取り消せません。",
+    "shortcuts": "キーボードショートカット",
+    "shortcutsDescription": "このページで使えるショートカット一覧",
+    "noShortcuts": "このページにはショートカットがありません"
+  },
+  "nav": {
+    "home": "ホーム",
+    "bookmarks": "ブックマーク",
+    "friends": "フレンド",
+    "mainNav": "メインナビゲーション",
+    "bottomNav": "ボトムナビゲーション",
+    "myPage": "マイページ",
+    "notifications": "通知",
+    "profile": "プロフィール",
+    "settings": "設定",
+    "openMenu": "メニューを開く",
+    "closeMenu": "メニューを閉じる",
+    "shortcutList": "ショートカットキー一覧",
+    "switchToSp": "SP版で表示",
+    "switchToPc": "PC版で表示",
+    "switchToLight": "ライトモードに切り替え",
+    "switchToDark": "ダークモードに切り替え",
+    "logout": "ログアウト",
+    "logoutConfirm": "ログアウトしますか？",
+    "logoutDescription": "このデバイスからサインアウトされます。",
+    "loggingOut": "ログアウト中..."
+  },
+  "error": {
+    "title": "エラーが発生しました",
+    "description": "予期しないエラーが発生しました。もう一度お試しください。",
+    "notFound": "ページが見つかりません",
+    "offlineTitle": "オフライン"
+  },
+  "tripToolbar": {
+    "searchTrips": "旅行を検索",
+    "filterByStatus": "ステータスで絞り込み",
+    "updatedAt": "更新日",
+    "startDate": "出発日",
+    "tripFilter": "旅行フィルター",
+    "trip": "旅行"
+  },
+  "labels": {
+    "category": {
+      "sightseeing": "観光",
+      "restaurant": "飲食",
+      "hotel": "宿泊",
+      "transport": "移動",
+      "activity": "アクティビティ",
+      "other": "その他"
+    },
+    "transportMethod": {
+      "train": "電車",
+      "shinkansen": "新幹線",
+      "bus": "バス",
+      "taxi": "タクシー",
+      "walk": "徒歩",
+      "car": "車",
+      "airplane": "飛行機"
+    },
+    "status": {
+      "scheduling": "日程調整中",
+      "draft": "下書き",
+      "planned": "計画済み",
+      "active": "進行中",
+      "completed": "完了"
+    },
+    "role": {
+      "owner": "オーナー",
+      "editor": "編集者",
+      "viewer": "閲覧者"
+    },
+    "scheduleColor": {
+      "blue": "青",
+      "red": "赤",
+      "green": "緑",
+      "yellow": "黄",
+      "purple": "紫",
+      "pink": "ピンク",
+      "orange": "オレンジ",
+      "gray": "グレー"
+    },
+    "expenseCategory": {
+      "transportation": "交通費",
+      "accommodation": "宿泊費",
+      "meals": "食費",
+      "communication": "通信費",
+      "supplies": "消耗品費",
+      "entertainment": "交際費",
+      "conference": "会議費",
+      "other": "その他"
+    },
+    "splitType": {
+      "equal": "均等",
+      "custom": "カスタム",
+      "itemized": "アイテム別"
+    },
+    "visibility": {
+      "private": "非公開",
+      "friends_only": "フレンド限定",
+      "public": "全体公開"
+    }
   }
 }

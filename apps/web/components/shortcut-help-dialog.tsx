@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import {
   Dialog,
   DialogContent,
@@ -47,18 +48,17 @@ function ShortcutKeys({ keys }: { keys: string }) {
 }
 
 export function ShortcutHelpDialog({ open, onOpenChange, shortcuts }: ShortcutHelpDialogProps) {
+  const t = useTranslations("common");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>キーボードショートカット</DialogTitle>
-          <DialogDescription>このページで使えるショートカット一覧</DialogDescription>
+          <DialogTitle>{t("shortcuts")}</DialogTitle>
+          <DialogDescription>{t("shortcutsDescription")}</DialogDescription>
         </DialogHeader>
         <div className="select-none space-y-4">
           {shortcuts.length === 0 ? (
-            <p className="py-4 text-center text-sm text-muted-foreground">
-              このページにはショートカットがありません
-            </p>
+            <p className="py-4 text-center text-sm text-muted-foreground">{t("noShortcuts")}</p>
           ) : (
             shortcuts.map((group) => (
               <div key={group.group}>

@@ -3,6 +3,7 @@
 import { Keyboard, LogOut, Monitor, Settings, Smartphone, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
@@ -78,6 +79,7 @@ function HamburgerIcon({ open, className }: { open: boolean; className?: string 
  * Click the hamburger to reveal: SP toggle, theme, settings, logout.
  */
 export function HeaderMenu() {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const router = useRouter();
   const { expanded, toggle, ref } = useMenuState();
@@ -93,28 +95,28 @@ export function HeaderMenu() {
             <TooltipTrigger asChild>
               <button
                 type="button"
-                aria-label="ショートカットキー一覧"
+                aria-label={t("shortcutList")}
                 onClick={openShortcutHelp}
                 className="group flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               >
                 <Keyboard className="h-5 w-5 transition-transform duration-200 group-hover:scale-110" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>ショートカットキー一覧</TooltipContent>
+            <TooltipContent>{t("shortcutList")}</TooltipContent>
           </Tooltip>
           {showSpToggle && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
                   type="button"
-                  aria-label="SP版で表示"
+                  aria-label={t("switchToSp")}
                   onClick={() => void switchViewMode("sp", (url) => router.push(url))}
                   className="group flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
                 >
                   <Smartphone className="h-5 w-5 transition-transform duration-200 group-hover:-rotate-12" />
                 </button>
               </TooltipTrigger>
-              <TooltipContent>SP版で表示</TooltipContent>
+              <TooltipContent>{t("switchToSp")}</TooltipContent>
             </Tooltip>
           )}
           <ThemeToggle />
@@ -122,20 +124,20 @@ export function HeaderMenu() {
             <TooltipTrigger asChild>
               <Link
                 href="/settings"
-                aria-label="設定"
+                aria-label={t("settings")}
                 className="group flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
               >
                 <Settings className="h-5 w-5 transition-transform duration-300 group-hover:rotate-90" />
               </Link>
             </TooltipTrigger>
-            <TooltipContent>設定</TooltipContent>
+            <TooltipContent>{t("settings")}</TooltipContent>
           </Tooltip>
           <SignOutButton />
         </div>
       )}
       <button
         type="button"
-        aria-label={expanded ? "メニューを閉じる" : "メニューを開く"}
+        aria-label={expanded ? t("closeMenu") : t("openMenu")}
         aria-expanded={expanded}
         onClick={toggle}
         className="flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
@@ -151,6 +153,7 @@ export function HeaderMenu() {
  * Tap the hamburger to toggle: PC toggle, theme, settings, logout.
  */
 export function SpHeaderMenu() {
+  const t = useTranslations("nav");
   const router = useRouter();
   const { expanded, toggle, ref } = useMenuState();
 
@@ -162,34 +165,34 @@ export function SpHeaderMenu() {
             <TooltipTrigger asChild>
               <button
                 type="button"
-                aria-label="PC版で表示"
+                aria-label={t("switchToPc")}
                 onClick={() => void switchViewMode("desktop", (url) => router.push(url))}
                 className="group flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <Monitor className="h-6 w-6 transition-transform duration-200 group-hover:scale-110" />
               </button>
             </TooltipTrigger>
-            <TooltipContent>PC版で表示</TooltipContent>
+            <TooltipContent>{t("switchToPc")}</TooltipContent>
           </Tooltip>
           <ThemeToggle iconClassName="h-6 w-6" />
           <Tooltip>
             <TooltipTrigger asChild>
               <Link
                 href="/sp/settings"
-                aria-label="設定"
+                aria-label={t("settings")}
                 className="group flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
               >
                 <Settings className="h-6 w-6 transition-transform duration-300 group-hover:rotate-90" />
               </Link>
             </TooltipTrigger>
-            <TooltipContent>設定</TooltipContent>
+            <TooltipContent>{t("settings")}</TooltipContent>
           </Tooltip>
           <SignOutButton />
         </div>
       )}
       <button
         type="button"
-        aria-label={expanded ? "メニューを閉じる" : "メニューを開く"}
+        aria-label={expanded ? t("closeMenu") : t("openMenu")}
         aria-expanded={expanded}
         onClick={toggle}
         className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground hover:bg-accent hover:text-foreground"
@@ -201,6 +204,8 @@ export function SpHeaderMenu() {
 }
 
 function SignOutButton() {
+  const t = useTranslations("nav");
+  const tc = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -217,30 +222,30 @@ function SignOutButton() {
           <ResponsiveAlertDialogTrigger asChild>
             <button
               type="button"
-              aria-label="ログアウト"
+              aria-label={t("logout")}
               className="group flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
             >
               <LogOut className="h-5 w-5 transition-transform duration-200 group-hover:translate-x-0.5" />
             </button>
           </ResponsiveAlertDialogTrigger>
         </TooltipTrigger>
-        <TooltipContent>ログアウト</TooltipContent>
+        <TooltipContent>{t("logout")}</TooltipContent>
       </Tooltip>
       <ResponsiveAlertDialogContent>
         <ResponsiveAlertDialogHeader>
-          <ResponsiveAlertDialogTitle>ログアウトしますか？</ResponsiveAlertDialogTitle>
+          <ResponsiveAlertDialogTitle>{t("logoutConfirm")}</ResponsiveAlertDialogTitle>
           <ResponsiveAlertDialogDescription>
-            このデバイスからサインアウトされます。
+            {t("logoutDescription")}
           </ResponsiveAlertDialogDescription>
         </ResponsiveAlertDialogHeader>
         <ResponsiveAlertDialogFooter>
           <ResponsiveAlertDialogCancel disabled={loading}>
             <X className="h-4 w-4" />
-            キャンセル
+            {tc("cancel")}
           </ResponsiveAlertDialogCancel>
           <Button disabled={loading} onClick={handleSignOut}>
             <LogOut className="h-4 w-4" />
-            {loading ? "ログアウト中..." : "ログアウト"}
+            {loading ? t("loggingOut") : t("logout")}
           </Button>
         </ResponsiveAlertDialogFooter>
       </ResponsiveAlertDialogContent>

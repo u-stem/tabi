@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { renderWithIntl as render } from "@/lib/test-utils";
 import { type ShortcutGroup, ShortcutHelpDialog } from "../../components/shortcut-help-dialog";
 
 const shortcuts: ShortcutGroup[] = [

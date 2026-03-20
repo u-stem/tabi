@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Copy } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -18,9 +19,11 @@ interface CopyButtonProps {
 export function CopyButton({
   value,
   successMessage = MSG.SHARE_LINK_COPIED,
-  label = "コピー",
+  label,
   className,
 }: CopyButtonProps) {
+  const t = useTranslations("common");
+  const resolvedLabel = label ?? t("copy");
   const [copied, setCopied] = useState(false);
 
   async function handleCopy() {
@@ -40,7 +43,7 @@ export function CopyButton({
       size="icon"
       className={cn("shrink-0 relative", className)}
       onClick={handleCopy}
-      aria-label={copied ? "コピー完了" : label}
+      aria-label={copied ? t("copyDone") : resolvedLabel}
     >
       <Copy
         className={cn(

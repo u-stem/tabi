@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { AnnouncementBanner } from "@/components/announcement-banner";
 import { GuestBanner } from "@/components/guest-banner";
 import { SpHeaderMenu } from "@/components/header-menu";
@@ -12,13 +13,14 @@ import { OfflineBanner } from "@/components/offline-banner";
  * Navigation is handled by SpBottomNav (including notification and account menu).
  */
 export function SpHeader() {
+  const t = useTranslations("nav");
   return (
     <header className="shrink-0 z-30 select-none border-b bg-background pt-[env(safe-area-inset-top,0px)]">
       <AnnouncementBanner />
       <OfflineBanner />
       <GuestBanner />
       <InstallBanner />
-      <nav aria-label="メインナビゲーション" className="container flex h-14 items-center">
+      <nav aria-label={t("mainNav")} className="container flex h-14 items-center">
         <Logo href="/sp/home" />
         <div className="ml-auto flex items-center gap-1">
           <SpHeaderMenu />

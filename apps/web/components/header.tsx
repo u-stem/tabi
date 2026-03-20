@@ -4,6 +4,7 @@ import type { FriendRequestResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { AnnouncementBanner } from "@/components/announcement-banner";
 import { GuestBanner } from "@/components/guest-banner";
@@ -23,6 +24,7 @@ import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
 export function Header() {
+  const t = useTranslations("nav");
   const pathname = usePathname();
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
@@ -50,10 +52,7 @@ export function Header() {
       <AnnouncementBanner />
       <OfflineBanner />
       <GuestBanner />
-      <nav
-        aria-label="メインナビゲーション"
-        className="container flex h-14 items-center justify-between"
-      >
+      <nav aria-label={t("mainNav")} className="container flex h-14 items-center justify-between">
         <TooltipProvider>
           <div className="flex items-center gap-1 sm:gap-4 md:gap-6">
             <Logo href="/home" className="mr-2 sm:mr-0" />
@@ -66,7 +65,7 @@ export function Header() {
                   <TooltipTrigger asChild>
                     <Link
                       href={link.href}
-                      aria-label={link.label}
+                      aria-label={t(link.labelKey)}
                       className={cn(
                         "relative inline-flex items-center gap-1 rounded-md text-sm transition-colors",
                         "p-2 md:px-3 md:py-1.5",
@@ -76,7 +75,7 @@ export function Header() {
                       )}
                     >
                       <Icon className="h-5 w-5 md:hidden" />
-                      <span className="hidden md:inline">{link.label}</span>
+                      <span className="hidden md:inline">{t(link.labelKey)}</span>
                       {badge && (
                         <span className="absolute -top-1 -right-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive text-[10px] font-medium tabular-nums text-destructive-foreground md:static md:top-auto md:right-auto md:ml-1 md:h-5 md:min-w-5 md:text-xs">
                           {friendRequestCount}
@@ -84,7 +83,7 @@ export function Header() {
                       )}
                     </Link>
                   </TooltipTrigger>
-                  <TooltipContent className="md:hidden">{link.label}</TooltipContent>
+                  <TooltipContent className="md:hidden">{t(link.labelKey)}</TooltipContent>
                 </Tooltip>
               );
             })}
@@ -101,7 +100,7 @@ export function Header() {
                 <TooltipTrigger asChild>
                   <Link
                     href="/my"
-                    aria-label="マイページ"
+                    aria-label={t("myPage")}
                     className="group flex h-9 w-9 items-center justify-center"
                   >
                     <UserAvatar
@@ -111,7 +110,7 @@ export function Header() {
                     />
                   </Link>
                 </TooltipTrigger>
-                <TooltipContent>マイページ</TooltipContent>
+                <TooltipContent>{t("myPage")}</TooltipContent>
               </Tooltip>
             )}
           </div>

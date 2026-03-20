@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Noto_Sans_JP } from "next/font/google";
 import { headers } from "next/headers";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getMessages, getTranslations } from "next-intl/server";
 import { QueryProvider } from "@/components/query-provider";
 import { SwProvider } from "@/components/sw-provider";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -35,9 +37,10 @@ export const viewport: Viewport = {
   ],
 };
 
-export function generateMetadata(): Metadata {
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("metadata");
   const season = getSeason();
-  const description = "旅行の計画を作成・共有できる共同編集アプリ。";
+  const description = t("description");
   const ogImage = `/icons/apple-touch-icon-${season}.png`;
   return {
     metadataBase: new URL(process.env.BETTER_AUTH_BASE_URL ?? "https://sugara.vercel.app"),
@@ -68,9 +71,11 @@ export function generateMetadata(): Metadata {
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const nonce = (await headers()).get("x-nonce") ?? "";
+  const locale = await getLocale();
+  const messages = await getMessages();
 
   return (
-    <html lang="ja" suppressHydrationWarning>
+    <html lang={locale} suppressHydrationWarning>
       <body
         className={`${inter.variable} ${notoSansJP.variable} min-h-screen bg-background font-sans antialiased`}
       >
@@ -82,7 +87,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           nonce={nonce}
         >
           <SwProvider swUrl="/sw.js" disable={process.env.NODE_ENV !== "production"}>
-            <QueryProvider>{children}</QueryProvider>
+            <NextIntlClientProvider messages={messages}>
+              <QueryProvider>{children}</QueryProvider>
+            </NextIntlClientProvider>
           </SwProvider>
           <Toaster />
         </ThemeProvider>

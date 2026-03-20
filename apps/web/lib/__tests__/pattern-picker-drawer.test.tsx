@@ -1,7 +1,8 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PatternPickerDrawer } from "../../components/pattern-picker-drawer";
+import { renderWithIntl } from "../test-utils";
 
 const MOCK_PATTERNS = [
   { id: "p1", label: "プランA", isDefault: true },
@@ -15,7 +16,7 @@ describe("PatternPickerDrawer", () => {
   });
 
   it("renders pattern options", () => {
-    render(
+    renderWithIntl(
       <PatternPickerDrawer
         open
         onOpenChange={vi.fn()}
@@ -30,7 +31,7 @@ describe("PatternPickerDrawer", () => {
   });
 
   it("marks current pattern as selected", () => {
-    render(
+    renderWithIntl(
       <PatternPickerDrawer
         open
         onOpenChange={vi.fn()}
@@ -45,7 +46,7 @@ describe("PatternPickerDrawer", () => {
 
   it("calls onSelect when a pattern is clicked", () => {
     const onSelect = vi.fn();
-    render(
+    renderWithIntl(
       <PatternPickerDrawer
         open
         onOpenChange={vi.fn()}

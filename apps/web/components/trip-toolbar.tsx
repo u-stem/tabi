@@ -1,7 +1,6 @@
 "use client";
 
-import type { TripStatus } from "@sugara/shared";
-import { STATUS_LABELS } from "@sugara/shared";
+import { type TripStatus, tripStatusSchema } from "@sugara/shared";
 import {
   CalendarCheck,
   CalendarClock,
@@ -87,8 +86,8 @@ const STATUS_ICONS: Record<string, ReactNode> = {
 
 const statusFilterDefs: { value: StatusFilter; icon: ReactNode }[] = [
   { value: "all", icon: <ListFilter className="h-4 w-4" /> },
-  ...Object.keys(STATUS_LABELS).map((value) => ({
-    value: value as TripStatus,
+  ...tripStatusSchema.options.map((value) => ({
+    value,
     icon: STATUS_ICONS[value],
   })),
 ];
@@ -207,7 +206,7 @@ export function TripToolbar({
                     size="icon"
                     className="h-8 w-8"
                     disabled={selectedCount === 0 || deleting || duplicating}
-                    aria-label="選択操作メニュー"
+                    aria-label={tc("selectionMenu")}
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>

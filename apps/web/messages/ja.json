@@ -71,7 +71,8 @@
     "deleteConfirmDescription": "選択した{label}が削除されます。この操作は取り消せません。",
     "shortcuts": "キーボードショートカット",
     "shortcutsDescription": "このページで使えるショートカット一覧",
-    "noShortcuts": "このページにはショートカットがありません"
+    "noShortcuts": "このページにはショートカットがありません",
+    "selectionMenu": "選択操作メニュー"
   },
   "nav": {
     "home": "ホーム",
@@ -416,7 +417,10 @@
     "limitGroupMembers": "グループメンバーは最大{max}人まで追加できます",
     "userNotFound": "ユーザーが見つかりません",
     "invalidUserId": "正しいユーザーIDを入力してください",
-    "emptyNews": "お知らせはまだありません"
+    "emptyNews": "お知らせはまだありません",
+    "coverImageInvalidType": "JPEG、PNG、WebP のみアップロードできます",
+    "coverImageTooLarge": "ファイルサイズは3MB以下にしてください",
+    "coverImageUploadFailed": "アップロードに失敗しました"
   },
   "authErrors": {
     "INVALID_USERNAME_OR_PASSWORD": "ユーザー名またはパスワードが正しくありません",
@@ -601,6 +605,8 @@
     "memoAdd": "メモを追加",
     "patternLabel": "パターン",
     "addPattern": "パターン追加",
+    "selectPattern": "パターン選択",
+    "selectPatternDescription": "表示するパターンを選択してください",
     "rename": "名前変更",
     "overwrite": "上書き",
     "panelTabs": "候補・履歴タブ",
@@ -648,6 +654,15 @@
     "sendFriendRequest": "フレンド申請も送る",
     "userIdHint": "ユーザーIDは相手のプロフィールページで確認できます。"
   },
+  "candidateItem": {
+    "like": "いいね",
+    "hmm": "うーん",
+    "menu": "{name}のメニュー",
+    "addToSchedule": "予定に追加",
+    "saveToBookmark": "ブックマークに保存",
+    "deleteTitle": "候補を削除しますか？",
+    "deleteDescription": "「{name}」を削除します。この操作は取り消せません。"
+  },
   "expense": {
     "addTitle": "費用を追加",
     "editTitle": "費用を編集",
@@ -679,6 +694,7 @@
     "lineItemAmountRequired": "金額を入力してください",
     "lineItemMembersRequired": "対象メンバーを選択してください",
     "lineItemsTotal": "品目合計: {itemsTotal}円 / {total}円",
+    "restLabel": "その他",
     "splitRestActive": "残り {amount}円 均等割り中",
     "splitRestButton": "残り {amount}円を均等割り",
     "perMemberAmount": "負担額",
@@ -767,7 +783,8 @@
     "deleteSelectedDescription": "選択した日程案と回答が削除されます。この操作は取り消せません。",
     "voteHeader": "投票",
     "pollClosed": "この投票は終了しています",
-    "shortcutGeneral": "全般"
+    "shortcutGeneral": "全般",
+    "optionsCount": "{count}つの選択肢"
   },
   "souvenir": {
     "addTitle": "お土産を追加",

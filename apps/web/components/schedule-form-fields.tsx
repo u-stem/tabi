@@ -4,7 +4,6 @@ import type { ScheduleCategory, ScheduleColor, TransportMethod } from "@sugara/s
 import {
   MAX_URLS_PER_SCHEDULE,
   SCHEDULE_ADDRESS_MAX_LENGTH,
-  SCHEDULE_COLOR_LABELS,
   SCHEDULE_COLORS,
   SCHEDULE_MEMO_MAX_LENGTH,
   SCHEDULE_NAME_MAX_LENGTH,
@@ -92,6 +91,7 @@ export function ScheduleFormFields({
   const tsf = useTranslations("scheduleForm");
   const tlCat = useTranslations("labels.category");
   const tlTransport = useTranslations("labels.transportMethod");
+  const tlColor = useTranslations("labels.scheduleColor");
 
   const categoryOptions = (
     ["sightseeing", "restaurant", "hotel", "transport", "activity", "other"] as const
@@ -214,7 +214,7 @@ export function ScheduleFormFields({
                 SCHEDULE_COLOR_CLASSES[c].bg,
                 color === c && `ring-2 ring-offset-1 ${SCHEDULE_COLOR_CLASSES[c].ring}`,
               )}
-              aria-label={SCHEDULE_COLOR_LABELS[c]}
+              aria-label={tlColor(c)}
             />
           ))}
         </div>

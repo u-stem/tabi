@@ -71,7 +71,8 @@
     "deleteConfirmDescription": "The selected {label} will be deleted. This action cannot be undone.",
     "shortcuts": "Keyboard Shortcuts",
     "shortcutsDescription": "Shortcuts available on this page",
-    "noShortcuts": "No shortcuts available on this page"
+    "noShortcuts": "No shortcuts available on this page",
+    "selectionMenu": "Selection actions menu"
   },
   "nav": {
     "home": "Home",
@@ -416,7 +417,10 @@
     "limitGroupMembers": "Up to {max} members per group",
     "userNotFound": "User not found",
     "invalidUserId": "Please enter a valid user ID",
-    "emptyNews": "No news yet"
+    "emptyNews": "No news yet",
+    "coverImageInvalidType": "Only JPEG, PNG, and WebP files are supported",
+    "coverImageTooLarge": "File size must be 3MB or less",
+    "coverImageUploadFailed": "Upload failed"
   },
   "authErrors": {
     "INVALID_USERNAME_OR_PASSWORD": "Invalid username or password",
@@ -601,6 +605,8 @@
     "memoAdd": "Add Memo",
     "patternLabel": "Pattern",
     "addPattern": "Add Pattern",
+    "selectPattern": "Select Pattern",
+    "selectPatternDescription": "Choose a pattern to display",
     "rename": "Rename",
     "overwrite": "Overwrite",
     "panelTabs": "Candidates & History Tabs",
@@ -648,6 +654,15 @@
     "sendFriendRequest": "Also send friend request",
     "userIdHint": "You can find the user ID on their profile page."
   },
+  "candidateItem": {
+    "like": "Like",
+    "hmm": "Hmm",
+    "menu": "Menu for {name}",
+    "addToSchedule": "Add to Schedule",
+    "saveToBookmark": "Save to Bookmarks",
+    "deleteTitle": "Delete this candidate?",
+    "deleteDescription": "\"{name}\" will be deleted. This action cannot be undone."
+  },
   "expense": {
     "addTitle": "Add Expense",
     "editTitle": "Edit Expense",
@@ -679,6 +694,7 @@
     "lineItemAmountRequired": "Please enter an amount",
     "lineItemMembersRequired": "Please select members",
     "lineItemsTotal": "Items total: {itemsTotal} JPY / {total} JPY",
+    "restLabel": "Other",
     "splitRestActive": "Splitting remaining {amount} JPY equally",
     "splitRestButton": "Split remaining {amount} JPY equally",
     "perMemberAmount": "Share",
@@ -767,7 +783,8 @@
     "deleteSelectedDescription": "The selected date options and responses will be deleted. This action cannot be undone.",
     "voteHeader": "Vote",
     "pollClosed": "This poll is closed",
-    "shortcutGeneral": "General"
+    "shortcutGeneral": "General",
+    "optionsCount": "{count} options"
   },
   "souvenir": {
     "addTitle": "Add Souvenir",

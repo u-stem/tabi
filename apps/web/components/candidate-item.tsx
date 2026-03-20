@@ -2,13 +2,7 @@
 
 import { defaultAnimateLayoutChanges, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import {
-  CATEGORY_LABELS,
-  type CandidateResponse,
-  type ScheduleCategory,
-  TRANSPORT_METHOD_LABELS,
-  type TransportMethod,
-} from "@sugara/shared";
+import type { CandidateResponse, TransportMethod } from "@sugara/shared";
 import {
   ArrowLeft,
   Bookmark,
@@ -21,6 +15,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 import { memo, useState } from "react";
 import {
@@ -90,6 +85,10 @@ export const CandidateItem = memo(function CandidateItem({
   isLast,
 }: CandidateItemProps) {
   const isMobile = useMobile();
+  const tlCat = useTranslations("labels.category");
+  const tlTransport = useTranslations("labels.transportMethod");
+  const tci = useTranslations("candidateItem");
+  const tc = useTranslations("common");
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -106,7 +105,7 @@ export const CandidateItem = memo(function CandidateItem({
 
   const timeStr = formatTimeRange(spot.startTime, spot.endTime);
   const transportLabel = spot.transportMethod
-    ? TRANSPORT_METHOD_LABELS[spot.transportMethod as TransportMethod]
+    ? tlTransport(spot.transportMethod as TransportMethod)
     : null;
   const CardWrapper = selectable ? "button" : "div";
   const cardElement = (
@@ -144,9 +143,7 @@ export const CandidateItem = memo(function CandidateItem({
       <div className="min-w-0 flex-1 space-y-1">
         <p className="flex items-baseline gap-1.5 text-sm">
           <span className="truncate font-medium">{spot.name}</span>
-          <span className="shrink-0 text-xs text-muted-foreground">
-            {CATEGORY_LABELS[spot.category as ScheduleCategory]}
-          </span>
+          <span className="shrink-0 text-xs text-muted-foreground">{tlCat(spot.category)}</span>
         </p>
         {timeStr && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -241,7 +238,7 @@ export const CandidateItem = memo(function CandidateItem({
               "inline-flex min-h-[36px] items-center gap-1 rounded px-2 py-1 text-xs transition-colors",
               spot.myReaction === "like" ? "bg-accent font-medium" : "hover:bg-muted",
             )}
-            aria-label="いいね"
+            aria-label={tci("like")}
             aria-pressed={spot.myReaction === "like"}
           >
             <span className="text-base" aria-hidden="true">
@@ -256,7 +253,7 @@ export const CandidateItem = memo(function CandidateItem({
               "inline-flex min-h-[36px] items-center gap-1 rounded px-2 py-1 text-xs transition-colors",
               spot.myReaction === "hmm" ? "bg-accent font-medium" : "hover:bg-muted",
             )}
-            aria-label="うーん"
+            aria-label={tci("hmm")}
             aria-pressed={spot.myReaction === "hmm"}
           >
             <span className="text-base" aria-hidden="true">
@@ -271,7 +268,7 @@ export const CandidateItem = memo(function CandidateItem({
         (isMobile ? (
           <>
             <ItemMenuButton
-              ariaLabel={`${spot.name}のメニュー`}
+              ariaLabel={tci("menu", { name: spot.name })}
               onClick={() => setSheetOpen(true)}
             />
             <ActionSheet
@@ -279,14 +276,14 @@ export const CandidateItem = memo(function CandidateItem({
               onOpenChange={setSheetOpen}
               actions={[
                 {
-                  label: "編集",
+                  label: tc("edit"),
                   icon: <Pencil className="h-4 w-4" />,
                   onClick: onEdit,
                 },
                 ...(onAssign
                   ? [
                       {
-                        label: "予定に追加",
+                        label: tci("addToSchedule"),
                         icon: <ArrowLeft className="h-4 w-4" />,
                         onClick: onAssign,
                       },
@@ -295,14 +292,14 @@ export const CandidateItem = memo(function CandidateItem({
                 ...(onSaveToBookmark
                   ? [
                       {
-                        label: "ブックマークに保存",
+                        label: tci("saveToBookmark"),
                         icon: <Bookmark className="h-4 w-4" />,
                         onClick: onSaveToBookmark,
                       },
                     ]
                   : []),
                 {
-                  label: "削除",
+                  label: tc("delete"),
                   icon: <Trash2 className="h-4 w-4" />,
                   onClick: () => setDeleteOpen(true),
                   variant: "destructive" as const,
@@ -313,28 +310,28 @@ export const CandidateItem = memo(function CandidateItem({
         ) : (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <ItemMenuButton ariaLabel={`${spot.name}のメニュー`} />
+              <ItemMenuButton ariaLabel={tci("menu", { name: spot.name })} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onEdit}>
                 <Pencil />
-                編集
+                {tc("edit")}
               </DropdownMenuItem>
               {onAssign && (
                 <DropdownMenuItem onClick={onAssign}>
                   <ArrowLeft />
-                  予定に追加
+                  {tci("addToSchedule")}
                 </DropdownMenuItem>
               )}
               {onSaveToBookmark && (
                 <DropdownMenuItem onClick={onSaveToBookmark}>
                   <Bookmark />
-                  ブックマークに保存
+                  {tci("saveToBookmark")}
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem className="text-destructive" onClick={() => setDeleteOpen(true)}>
                 <Trash2 />
-                削除
+                {tc("delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -348,19 +345,19 @@ export const CandidateItem = memo(function CandidateItem({
       <ResponsiveAlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>候補を削除しますか？</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogTitle>{tci("deleteTitle")}</ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              「{spot.name}」を削除します。この操作は取り消せません。
+              {tci("deleteDescription", { name: spot.name })}
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={onDelete}>
               <Trash2 className="h-4 w-4" />
-              削除する
+              {tc("deletConfirm")}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>

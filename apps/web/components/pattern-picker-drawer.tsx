@@ -1,6 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { useTranslations } from "next-intl";
 import {
   Drawer,
   DrawerContent,
@@ -31,13 +32,14 @@ export function PatternPickerDrawer({
   currentPatternIndex,
   onSelect,
 }: PatternPickerDrawerProps) {
+  const ts = useTranslations("schedule");
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>パターン選択</DrawerTitle>
+          <DrawerTitle>{ts("selectPattern")}</DrawerTitle>
           <DrawerDescription className="sr-only">
-            表示するパターンを選択してください
+            {ts("selectPatternDescription")}
           </DrawerDescription>
         </DrawerHeader>
         <div className="pb-4" role="radiogroup">

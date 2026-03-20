@@ -1,6 +1,7 @@
 import type { QuickPollResponse } from "@sugara/shared";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 import { pageTitle } from "@/lib/constants";
 import { getSeason } from "@/lib/season";
 import { QuickPollClient } from "./_components/quick-poll-client";
@@ -9,10 +10,11 @@ type Props = { params: Promise<{ token: string }> };
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { token } = await params;
+  const tp = await getTranslations("poll");
   const season = getSeason();
   const ogImage = `/icons/apple-touch-icon-${season}.png`;
   const fallback: Metadata = {
-    title: pageTitle("かんたん投票"),
+    title: pageTitle(tp("pageTitle")),
     openGraph: { images: [ogImage] },
     twitter: { card: "summary", images: [ogImage] },
   };
@@ -27,7 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (!res.ok) return fallback;
 
     const poll = (await res.json()) as QuickPollResponse;
-    const description = `${poll.options.length}つの選択肢`;
+    const description = tp("optionsCount", { count: poll.options.length });
 
     return {
       title: pageTitle(poll.question),

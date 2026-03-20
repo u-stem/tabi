@@ -167,7 +167,7 @@ export function ExpenseDialog({
     splitTheRest && restAmount > 0
       ? [
           ...lineItems,
-          { id: "__rest__", name: "その他", amount: restAmount, memberIds: allMemberIds },
+          { id: "__rest__", name: te("restLabel"), amount: restAmount, memberIds: allMemberIds },
         ]
       : lineItems;
 

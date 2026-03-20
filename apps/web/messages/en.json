@@ -42,6 +42,7 @@
     }
   },
   "common": {
+    "menu": "menu",
     "cancel": "Cancel",
     "save": "Save",
     "saving": "Saving...",

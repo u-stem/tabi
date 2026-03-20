@@ -564,7 +564,7 @@ function SouvenirItemRow({
         (isMobile ? (
           <>
             <ItemMenuButton
-              ariaLabel={`${item.name}のメニュー`}
+              ariaLabel={`${item.name} ${tc("menu")}`}
               onClick={() => setSheetOpen(true)}
             />
             <ActionSheet
@@ -588,7 +588,7 @@ function SouvenirItemRow({
         ) : (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <ItemMenuButton ariaLabel={`${item.name}のメニュー`} />
+              <ItemMenuButton ariaLabel={`${item.name} ${tc("menu")}`} />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onEdit}>

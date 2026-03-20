@@ -1,6 +1,6 @@
 "use client";
 
-import { WEATHER_LABELS, WEATHER_TYPES, type WeatherType } from "@sugara/shared";
+import { WEATHER_TYPES, type WeatherType } from "@sugara/shared";
 import { ArrowRight, Check, Cloud, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
@@ -51,6 +51,7 @@ function WeatherTrigger({
   onClick: () => void;
 }) {
   const tw = useTranslations("weather");
+  const tlWeather = useTranslations("labels.weather");
   const hasWeather = currentWeatherType != null;
   return (
     <button
@@ -84,7 +85,7 @@ function WeatherTrigger({
             );
           })()}
           <span className="flex items-center gap-1">
-            <span>{WEATHER_LABELS[currentWeatherType]}</span>
+            <span>{tlWeather(currentWeatherType)}</span>
             {currentWeatherTypeSecondary != null && (
               <>
                 <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
@@ -99,7 +100,7 @@ function WeatherTrigger({
                     />
                   );
                 })()}
-                <span>{WEATHER_LABELS[currentWeatherTypeSecondary]}</span>
+                <span>{tlWeather(currentWeatherTypeSecondary)}</span>
               </>
             )}
             {(currentTempHigh != null || currentTempLow != null) && (
@@ -129,6 +130,7 @@ function WeatherPickerForm({
   gridLayout?: boolean;
 }) {
   const tw = useTranslations("weather");
+  const tlWeather = useTranslations("labels.weather");
   const primary = weatherHook.weather.weatherType;
   const secondary = weatherHook.weather.weatherTypeSecondary;
 
@@ -167,7 +169,7 @@ function WeatherPickerForm({
               const Icon = WEATHER_ICON[primary];
               return <Icon className="h-5 w-5 shrink-0" />;
             })()}
-            <span>{WEATHER_LABELS[primary]}</span>
+            <span>{tlWeather(primary)}</span>
             {secondary != null ? (
               <>
                 <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -175,7 +177,7 @@ function WeatherPickerForm({
                   const Icon = WEATHER_ICON[secondary];
                   return <Icon className="h-5 w-5 shrink-0" />;
                 })()}
-                <span>{WEATHER_LABELS[secondary]}</span>
+                <span>{tlWeather(secondary)}</span>
               </>
             ) : (
               <span className="text-muted-foreground">{tw("secondaryHint")}</span>
@@ -214,9 +216,7 @@ function WeatherPickerForm({
                     )}
                   />
                   {gridLayout && (
-                    <span className="text-center text-xs leading-tight">
-                      {WEATHER_LABELS[type]}
-                    </span>
+                    <span className="text-center text-xs leading-tight">{tlWeather(type)}</span>
                   )}
                 </button>
               );
@@ -224,7 +224,7 @@ function WeatherPickerForm({
               return (
                 <Tooltip key={type}>
                   <TooltipTrigger asChild>{btn}</TooltipTrigger>
-                  <TooltipContent>{WEATHER_LABELS[type]}</TooltipContent>
+                  <TooltipContent>{tlWeather(type)}</TooltipContent>
                 </Tooltip>
               );
             })}

@@ -2,6 +2,7 @@
 
 import { FEEDBACK_BODY_MAX_LENGTH } from "@sugara/shared";
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ import {
 } from "@/components/ui/responsive-dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { api } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 
 type FeedbackDialogProps = {
   open: boolean;
@@ -26,6 +26,9 @@ type FeedbackDialogProps = {
 const COOLDOWN_MS = 5000;
 
 export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
+  const tf = useTranslations("feedback");
+  const tm = useTranslations("messages");
+  const tc = useTranslations("common");
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,14 +54,14 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
         method: "POST",
         body: JSON.stringify({ body: body.trim() }),
       });
-      toast.success(MSG.FEEDBACK_SENT);
+      toast.success(tm("feedbackSent"));
       setBody("");
       onOpenChange(false);
 
       setCooldown(true);
       cooldownTimer.current = setTimeout(() => setCooldown(false), COOLDOWN_MS);
     } catch {
-      setError(MSG.FEEDBACK_SEND_FAILED);
+      setError(tm("feedbackSendFailed"));
     } finally {
       setLoading(false);
     }
@@ -68,22 +71,20 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="sm:max-w-md">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>フィードバック</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            バグ報告や改善要望をお聞かせください
-          </ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{tf("title")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{tf("description")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit}>
           <Textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="バグ報告や改善要望など"
+            placeholder={tf("placeholder")}
             maxLength={FEEDBACK_BODY_MAX_LENGTH}
             rows={5}
             required
           />
           <div className="mt-1 flex select-none items-start justify-between gap-2">
-            <p className="text-xs text-muted-foreground">個人情報は含めないでください</p>
+            <p className="text-xs text-muted-foreground">{tf("privacyNote")}</p>
             <p className="shrink-0 text-xs text-muted-foreground">
               {body.length}/{FEEDBACK_BODY_MAX_LENGTH}
             </p>
@@ -100,11 +101,11 @@ export function FeedbackDialog({ open, onOpenChange }: FeedbackDialogProps) {
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={loading || !body.trim() || cooldown}>
-              {loading ? "送信中..." : "送信"}
+              {loading ? tf("sending") : tf("send")}
             </Button>
           </ResponsiveDialogFooter>
         </form>

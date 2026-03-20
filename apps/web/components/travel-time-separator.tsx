@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { api } from "@/lib/api";
 
 type Props = {
@@ -13,13 +14,16 @@ type Props = {
   destPlaceId?: string | null;
 };
 
-function formatDuration(seconds: number): string {
-  if (seconds < 60) return `${seconds}秒`;
-  const minutes = Math.round(seconds / 60);
-  if (minutes < 60) return `${minutes}分`;
-  const hours = Math.floor(minutes / 60);
-  const rem = minutes % 60;
-  return rem > 0 ? `${hours}時間${rem}分` : `${hours}時間`;
+function useFormatDuration() {
+  const tt = useTranslations("travelTime");
+  return (seconds: number): string => {
+    if (seconds < 60) return tt("seconds", { count: seconds });
+    const minutes = Math.round(seconds / 60);
+    if (minutes < 60) return tt("minutes", { count: minutes });
+    const hours = Math.floor(minutes / 60);
+    const rem = minutes % 60;
+    return rem > 0 ? tt("hoursAndMinutes", { hours, minutes: rem }) : tt("hours", { hours });
+  };
 }
 
 export function TravelTimeSeparator({
@@ -31,6 +35,8 @@ export function TravelTimeSeparator({
   destLng,
   destPlaceId,
 }: Props) {
+  const tt = useTranslations("travelTime");
+  const formatDuration = useFormatDuration();
   // Use placeId as cache key when available for stability across re-renders
   const queryKey =
     originPlaceId && destPlaceId
@@ -60,7 +66,7 @@ export function TravelTimeSeparator({
   return (
     <div className="flex items-center gap-2 py-1 text-xs text-muted-foreground">
       <div className="h-px flex-1 bg-border" />
-      <span>車で {formatDuration(data.durationSeconds)}</span>
+      <span>{tt("byCar", { duration: formatDuration(data.durationSeconds) })}</span>
       <span>→</span>
       <div className="h-px flex-1 bg-border" />
     </div>

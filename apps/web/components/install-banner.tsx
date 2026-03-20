@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import {
   Drawer,
@@ -12,6 +13,7 @@ import {
 import { useInstallBanner } from "@/lib/hooks/use-install-banner";
 
 export function InstallBanner() {
+  const ti = useTranslations("install");
   const { showBanner, isIos, promptInstall, dismiss } = useInstallBanner();
   const [iosDrawerOpen, setIosDrawerOpen] = useState(false);
 
@@ -22,7 +24,7 @@ export function InstallBanner() {
       <div className="animate-in slide-in-from-top fade-in duration-300 border-b bg-blue-50 dark:bg-blue-950/30">
         <div className="container flex items-center justify-between gap-2 px-4 py-1.5 text-sm">
           <span className="min-w-0 truncate text-blue-900 dark:text-blue-200">
-            アプリをホーム画面に追加できます
+            {ti("bannerText")}
           </span>
           <div className="flex shrink-0 items-center gap-2">
             {isIos ? (
@@ -31,7 +33,7 @@ export function InstallBanner() {
                 className="whitespace-nowrap rounded-full bg-blue-600 px-3 py-0.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:text-blue-950 dark:hover:bg-blue-400"
                 onClick={() => setIosDrawerOpen(true)}
               >
-                追加方法を見る
+                {ti("showHow")}
               </button>
             ) : (
               <button
@@ -39,12 +41,12 @@ export function InstallBanner() {
                 className="whitespace-nowrap rounded-full bg-blue-600 px-3 py-0.5 text-xs font-medium text-white transition-colors hover:bg-blue-700 dark:bg-blue-500 dark:text-blue-950 dark:hover:bg-blue-400"
                 onClick={promptInstall}
               >
-                ホーム画面に追加
+                {ti("addToHome")}
               </button>
             )}
             <button
               type="button"
-              aria-label="バナーを閉じる"
+              aria-label={ti("closeBanner")}
               className="text-blue-600 transition-colors hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-200"
               onClick={dismiss}
             >
@@ -57,8 +59,8 @@ export function InstallBanner() {
       <Drawer open={iosDrawerOpen} onOpenChange={setIosDrawerOpen}>
         <DrawerContent>
           <DrawerHeader>
-            <DrawerTitle>ホーム画面に追加する方法</DrawerTitle>
-            <DrawerDescription>以下の手順でホーム画面に追加できます</DrawerDescription>
+            <DrawerTitle>{ti("drawerTitle")}</DrawerTitle>
+            <DrawerDescription>{ti("drawerDescription")}</DrawerDescription>
           </DrawerHeader>
           <ol className="px-4 pb-8 space-y-3 text-sm">
             <li className="flex items-start gap-3">
@@ -66,11 +68,11 @@ export function InstallBanner() {
                 1
               </span>
               <span>
-                ブラウザの{" "}
+                {ti("step1")}{" "}
                 <span className="inline-flex items-center rounded bg-muted px-1 font-mono text-xs">
-                  共有
+                  {ti("step1Share")}
                 </span>{" "}
-                ボタン（四角から上矢印が出たアイコン）をタップ
+                {ti("step1Suffix")}
               </span>
             </li>
             <li className="flex items-start gap-3">
@@ -78,8 +80,8 @@ export function InstallBanner() {
                 2
               </span>
               <span>
-                メニューをスクロールして <span className="font-medium">「ホーム画面に追加」</span>{" "}
-                をタップ
+                {ti("step2Prefix")} <span className="font-medium">{ti("step2Action")}</span>{" "}
+                {ti("step2Suffix")}
               </span>
             </li>
             <li className="flex items-start gap-3">
@@ -87,7 +89,8 @@ export function InstallBanner() {
                 3
               </span>
               <span>
-                右上の <span className="font-medium">「追加」</span> をタップ
+                {ti("step3Prefix")} <span className="font-medium">{ti("step3Action")}</span>{" "}
+                {ti("step3Suffix")}
               </span>
             </li>
           </ol>

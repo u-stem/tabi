@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { EmailSection } from "@/components/email-section";
@@ -59,7 +60,6 @@ import { isGuestUser } from "@/lib/guest";
 import { DESKTOP_RELEASES_URL, useDesktopDownload } from "@/lib/hooks/use-desktop-download";
 import { useInstallPrompt } from "@/lib/hooks/use-install-prompt";
 import { useSwipeTab } from "@/lib/hooks/use-swipe-tab";
-import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 const FeedbackDialog = dynamic(() =>
@@ -70,17 +70,19 @@ type Section = "notifications" | "account" | "other";
 
 const SECTIONS = ["account", "notifications", "other"] as const satisfies readonly Section[];
 
-const NAV_ITEMS: { id: Section; label: string; Icon: React.ElementType }[] = [
-  { id: "account", label: "アカウント", Icon: Settings2 },
-  { id: "notifications", label: "通知", Icon: Bell },
-  { id: "other", label: "その他", Icon: MoreHorizontal },
-];
+const NAV_ITEM_KEYS = [
+  { id: "account", labelKey: "account", Icon: Settings2 },
+  { id: "notifications", labelKey: "notifications", Icon: Bell },
+  { id: "other", labelKey: "other", Icon: MoreHorizontal },
+] as const satisfies readonly { id: Section; labelKey: string; Icon: React.ElementType }[];
 
 export default function SettingsPage({
   availableSections = SECTIONS,
 }: {
   availableSections?: readonly Section[];
 } = {}) {
+  const ts = useTranslations("settings");
+  const tm = useTranslations("messages");
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
   const [section, setSection] = useState<Section>(availableSections[0]);
@@ -91,14 +93,14 @@ export default function SettingsPage({
   const swipeRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    document.title = pageTitle("設定");
+    document.title = pageTitle(ts("pageTitle"));
   }, []);
 
   const emailVerifiedShown = useRef(false);
   useEffect(() => {
     if (!emailVerifiedShown.current && searchParams.get("emailVerified") === "1") {
       emailVerifiedShown.current = true;
-      toast.success("メールアドレスを設定しました。");
+      toast.success(ts("emailVerified"));
       router.replace("/settings");
     }
   }, [searchParams, router]);
@@ -136,8 +138,8 @@ export default function SettingsPage({
         : undefined;
 
   const visibleNavItems = availableSections
-    .map((id) => NAV_ITEMS.find((item) => item.id === id))
-    .filter((item): item is (typeof NAV_ITEMS)[number] => item !== undefined);
+    .map((id) => NAV_ITEM_KEYS.find((item) => item.id === id))
+    .filter((item): item is (typeof NAV_ITEM_KEYS)[number] => item !== undefined);
   function renderSectionContent(s: Section) {
     switch (s) {
       case "notifications":
@@ -164,7 +166,7 @@ export default function SettingsPage({
     return (
       <div className="mt-4 mx-auto max-w-2xl">
         <div className="rounded-lg border bg-muted/50 p-8 text-center">
-          <p className="text-sm text-muted-foreground">{MSG.AUTH_GUEST_FEATURE_UNAVAILABLE}</p>
+          <p className="text-sm text-muted-foreground">{tm("authGuestFeatureUnavailable")}</p>
         </div>
       </div>
     );
@@ -182,7 +184,7 @@ export default function SettingsPage({
             "grid gap-1 rounded-lg bg-muted p-1 md:flex md:flex-col md:grid-cols-none md:w-48 md:shrink-0 md:rounded-none md:bg-transparent md:p-0",
           )}
         >
-          {visibleNavItems.map(({ id, label, Icon }) => (
+          {visibleNavItems.map(({ id, labelKey, Icon }) => (
             <button
               key={id}
               type="button"
@@ -199,7 +201,7 @@ export default function SettingsPage({
               )}
             >
               <Icon className="hidden md:block h-4 w-4 shrink-0" />
-              {label}
+              {ts(labelKey)}
             </button>
           ))}
         </div>
@@ -244,6 +246,9 @@ export function ProfileSection({
   onSuccess?: () => void;
   noCard?: boolean;
 }) {
+  const ts = useTranslations("settings");
+  const tm = useTranslations("messages");
+  const tc = useTranslations("common");
   const { refetch } = useSession();
   const [style, setStyle] = useState<DiceBearStyle>("glass");
   const [seeds, setSeeds] = useState<string[]>(() => generateSeeds(CANDIDATE_COUNT));
@@ -277,13 +282,13 @@ export function ProfileSection({
 
     const result = await authClient.updateUser(updates);
     if (result.error) {
-      setError(translateAuthError(result.error, MSG.SETTINGS_PROFILE_UPDATE_FAILED));
+      setError(translateAuthError(result.error, tm("settingsProfileUpdateFailed")));
       setLoading(false);
       return;
     }
 
     await refreshSession();
-    toast.success(MSG.SETTINGS_PROFILE_UPDATED);
+    toast.success(tm("settingsProfileUpdated"));
     setSelectedSeed(null);
     setLoading(false);
     onSuccess?.();
@@ -294,14 +299,14 @@ export function ProfileSection({
     try {
       const result = await authClient.updateUser({ image: null });
       if (result.error) {
-        toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
+        toast.error(tm("settingsAvatarUpdateFailed"));
         return;
       }
       await refreshSession();
-      toast.success(MSG.SETTINGS_AVATAR_RESET);
+      toast.success(tm("settingsAvatarReset"));
       setSelectedSeed(null);
     } catch {
-      toast.error(MSG.SETTINGS_AVATAR_UPDATE_FAILED);
+      toast.error(tm("settingsAvatarUpdateFailed"));
     } finally {
       setLoading(false);
     }
@@ -315,15 +320,15 @@ export function ProfileSection({
           <UserAvatar name={defaultName} image={previewImage} className="h-16 w-16" />
           <div className="text-sm text-muted-foreground">
             {selectedSeed
-              ? "新しいアバターをプレビュー中"
+              ? ts("avatarPreview")
               : currentImage
-                ? "カスタムアバターを設定中"
-                : "デフォルト（イニシャル）"}
+                ? ts("avatarCustom")
+                : ts("avatarDefault")}
           </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="avatar-style">スタイル</Label>
+          <Label htmlFor="avatar-style">{ts("avatarStyle")}</Label>
           <div className="flex gap-2">
             <Select
               value={style}
@@ -345,7 +350,7 @@ export function ProfileSection({
             </Select>
             <Button type="button" variant="outline" onClick={shuffle} className="shrink-0">
               <RefreshCw className="h-4 w-4" />
-              シャッフル
+              {ts("avatarShuffle")}
             </Button>
           </div>
         </div>
@@ -381,7 +386,7 @@ export function ProfileSection({
       {/* Display name */}
       <div className="space-y-2">
         <Label htmlFor="name">
-          表示名 <span className="text-destructive">*</span>
+          {ts("displayName")} <span className="text-destructive">*</span>
         </Label>
         <Input
           id="name"
@@ -416,7 +421,7 @@ export function ProfileSection({
             onClick={handleReset}
           >
             <RotateCcw className="h-4 w-4" />
-            アバターをリセット
+            {ts("avatarReset")}
           </Button>
         )}
         <Tooltip>
@@ -424,11 +429,11 @@ export function ProfileSection({
             <span className="inline-flex flex-1">
               <Button type="submit" className="w-full" disabled={loading || !dirty}>
                 <Save className="h-4 w-4" />
-                {loading ? "保存中..." : "保存"}
+                {loading ? ts("saving") : tc("save")}
               </Button>
             </span>
           </TooltipTrigger>
-          {!dirty && !loading && <TooltipContent>{MSG.NO_CHANGES}</TooltipContent>}
+          {!dirty && !loading && <TooltipContent>{tm("noChanges")}</TooltipContent>}
         </Tooltip>
       </div>
     </form>
@@ -439,8 +444,8 @@ export function ProfileSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>プロフィール</CardTitle>
-        <CardDescription>アバターと表示名を変更します</CardDescription>
+        <CardTitle>{ts("profile")}</CardTitle>
+        <CardDescription>{ts("profileDescription")}</CardDescription>
       </CardHeader>
       <CardContent>{form}</CardContent>
     </Card>
@@ -448,6 +453,9 @@ export function ProfileSection({
 }
 
 function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
+  const ts = useTranslations("settings");
+  const tm = useTranslations("messages");
+  const tc = useTranslations("common");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState(defaultUsername);
@@ -464,26 +472,26 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
       username: trimmed,
     });
     if (result.error) {
-      setError(translateAuthError(result.error, MSG.SETTINGS_USERNAME_UPDATE_FAILED));
+      setError(translateAuthError(result.error, tm("settingsUsernameUpdateFailed")));
       setLoading(false);
       return;
     }
 
-    toast.success(MSG.SETTINGS_USERNAME_UPDATED);
+    toast.success(tm("settingsUsernameUpdated"));
     setLoading(false);
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>ユーザー名</CardTitle>
-        <CardDescription>ログインに使用するユーザー名を変更します</CardDescription>
+        <CardTitle>{ts("username")}</CardTitle>
+        <CardDescription>{ts("usernameDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="username">
-              ユーザー名 <span className="text-destructive">*</span>
+              {ts("username")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="username"
@@ -491,14 +499,12 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               pattern="^[a-zA-Z0-9_]+$"
-              title="英数字とアンダースコアのみ使用できます"
+              title={ts("usernamePattern")}
               minLength={3}
               maxLength={20}
               required
             />
-            <p className="select-none text-xs text-muted-foreground">
-              3〜20文字、英数字とアンダースコアのみ
-            </p>
+            <p className="select-none text-xs text-muted-foreground">{ts("usernameHint")}</p>
           </div>
           {error && (
             <div
@@ -513,11 +519,11 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
               <TooltipTrigger asChild>
                 <span className="inline-flex">
                   <Button type="submit" disabled={loading || !dirty}>
-                    {loading ? "更新中..." : "更新"}
+                    {loading ? ts("updating") : tc("update")}
                   </Button>
                 </span>
               </TooltipTrigger>
-              {!dirty && !loading && <TooltipContent>{MSG.NO_CHANGES}</TooltipContent>}
+              {!dirty && !loading && <TooltipContent>{tm("noChanges")}</TooltipContent>}
             </Tooltip>
           </div>
         </form>
@@ -527,6 +533,8 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
 }
 
 function PasswordSection({ username }: { username: string }) {
+  const ts = useTranslations("settings");
+  const tm = useTranslations("messages");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [currentPassword, setCurrentPassword] = useState("");
@@ -541,13 +549,13 @@ function PasswordSection({ username }: { username: string }) {
 
     const { valid, errors } = validatePassword(newPassword);
     if (!valid) {
-      setError(`${MSG.AUTH_PASSWORD_TOO_WEAK}: ${errors.join("、")}`);
+      setError(`${tm("authPasswordTooWeak")}: ${errors.join("、")}`);
       setLoading(false);
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError(MSG.AUTH_PASSWORD_MISMATCH);
+      setError(tm("authPasswordMismatch"));
       setLoading(false);
       return;
     }
@@ -559,12 +567,12 @@ function PasswordSection({ username }: { username: string }) {
     });
 
     if (result.error) {
-      setError(translateAuthError(result.error, MSG.SETTINGS_PASSWORD_CHANGE_FAILED));
+      setError(translateAuthError(result.error, tm("settingsPasswordChangeFailed")));
       setLoading(false);
       return;
     }
 
-    toast.success(MSG.SETTINGS_PASSWORD_CHANGED);
+    toast.success(tm("settingsPasswordChanged"));
     setCurrentPassword("");
     setNewPassword("");
     setConfirmPassword("");
@@ -574,17 +582,15 @@ function PasswordSection({ username }: { username: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>パスワード変更</CardTitle>
-        <CardDescription>
-          パスワードを変更すると他のセッションからログアウトされます
-        </CardDescription>
+        <CardTitle>{ts("passwordChange")}</CardTitle>
+        <CardDescription>{ts("passwordChangeDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input type="hidden" name="username" autoComplete="username" value={username} />
           <div className="space-y-2">
             <Label htmlFor="currentPassword">
-              現在のパスワード <span className="text-destructive">*</span>
+              {ts("currentPassword")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="currentPassword"
@@ -599,7 +605,7 @@ function PasswordSection({ username }: { username: string }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="newPassword">
-              新しいパスワード <span className="text-destructive">*</span>
+              {ts("newPassword")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="newPassword"
@@ -617,7 +623,7 @@ function PasswordSection({ username }: { username: string }) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">
-              新しいパスワード（確認） <span className="text-destructive">*</span>
+              {ts("newPasswordConfirm")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="confirmPassword"
@@ -643,13 +649,11 @@ function PasswordSection({ username }: { username: string }) {
               <TooltipTrigger asChild>
                 <span className="inline-flex">
                   <Button type="submit" disabled={loading || !filled}>
-                    {loading ? "変更中..." : "パスワードを変更"}
+                    {loading ? ts("changing") : ts("changePassword")}
                   </Button>
                 </span>
               </TooltipTrigger>
-              {!filled && !loading && (
-                <TooltipContent>パスワードをすべて入力してください</TooltipContent>
-              )}
+              {!filled && !loading && <TooltipContent>{ts("passwordAllRequired")}</TooltipContent>}
             </Tooltip>
           </div>
         </form>
@@ -680,6 +684,9 @@ function generateSeeds(count: number): string[] {
 }
 
 function DeleteAccountSection({ username }: { username: string }) {
+  const ts = useTranslations("settings");
+  const tm = useTranslations("messages");
+  const tc = useTranslations("common");
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -694,7 +701,7 @@ function DeleteAccountSection({ username }: { username: string }) {
         method: "DELETE",
         body: JSON.stringify({ password }),
       });
-      toast.success(MSG.ACCOUNT_DELETED);
+      toast.success(tm("accountDeleted"));
       // Clear session cookie before redirect to prevent cookieCache from keeping the user logged in
       try {
         await authClient.signOut();
@@ -704,9 +711,9 @@ function DeleteAccountSection({ username }: { username: string }) {
       window.location.href = "/auth/login";
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
-        setError("パスワードが正しくありません");
+        setError(ts("deletePasswordWrong"));
       } else {
-        setError(MSG.ACCOUNT_DELETE_FAILED);
+        setError(tm("accountDeleteFailed"));
       }
       setLoading(false);
     }
@@ -723,31 +730,27 @@ function DeleteAccountSection({ username }: { username: string }) {
   return (
     <Card className="border-destructive">
       <CardHeader>
-        <CardTitle>アカウント削除</CardTitle>
-        <CardDescription>
-          アカウントと全てのデータが完全に削除されます。この操作は取り消せません。
-        </CardDescription>
+        <CardTitle>{ts("deleteAccount")}</CardTitle>
+        <CardDescription>{ts("deleteAccountDescription")}</CardDescription>
       </CardHeader>
       <CardContent>
         <ResponsiveAlertDialog open={open} onOpenChange={handleOpenChange}>
           <div className="flex justify-end">
             <ResponsiveAlertDialogTrigger asChild>
-              <Button variant="destructive">アカウントを削除</Button>
+              <Button variant="destructive">{ts("deleteAccountButton")}</Button>
             </ResponsiveAlertDialogTrigger>
           </div>
           <ResponsiveAlertDialogContent>
             <ResponsiveAlertDialogHeader>
-              <ResponsiveAlertDialogTitle>
-                本当にアカウントを削除しますか？
-              </ResponsiveAlertDialogTitle>
+              <ResponsiveAlertDialogTitle>{ts("deleteConfirmTitle")}</ResponsiveAlertDialogTitle>
               <ResponsiveAlertDialogDescription>
-                全ての旅行、メンバーシップ、フレンド情報が完全に削除されます。この操作は元に戻せません。
+                {ts("deleteConfirmDescription")}
               </ResponsiveAlertDialogDescription>
             </ResponsiveAlertDialogHeader>
             <div className="space-y-2">
               <input type="hidden" name="username" autoComplete="username" value={username} />
               <Label htmlFor="deletePassword">
-                パスワードを入力して確認 <span className="text-destructive">*</span>
+                {ts("deletePasswordLabel")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="deletePassword"
@@ -770,14 +773,14 @@ function DeleteAccountSection({ username }: { username: string }) {
             <ResponsiveAlertDialogFooter>
               <ResponsiveAlertDialogCancel disabled={loading}>
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </ResponsiveAlertDialogCancel>
               <Button
                 variant="destructive"
                 disabled={loading || password.length === 0}
                 onClick={handleDelete}
               >
-                {loading ? "削除中..." : "削除する"}
+                {loading ? ts("deleting") : ts("deleteConfirm")}
               </Button>
             </ResponsiveAlertDialogFooter>
           </ResponsiveAlertDialogContent>
@@ -788,6 +791,7 @@ function DeleteAccountSection({ username }: { username: string }) {
 }
 
 function OtherSection() {
+  const ts = useTranslations("settings");
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const { canInstall, promptInstall } = useInstallPrompt();
   const { showLink: showDesktopDownload } = useDesktopDownload();
@@ -802,8 +806,8 @@ function OtherSection() {
           >
             <Download className="h-4 w-4 shrink-0" />
             <div className="text-left">
-              <div className="text-sm">アプリをインストール</div>
-              <div className="text-xs text-muted-foreground">ブラウザにそのまま追加</div>
+              <div className="text-sm">{ts("installApp")}</div>
+              <div className="text-xs text-muted-foreground">{ts("installAppDescription")}</div>
             </div>
           </button>
         )}
@@ -816,8 +820,8 @@ function OtherSection() {
           >
             <Download className="h-4 w-4 shrink-0" />
             <div>
-              <div className="text-sm">デスクトップアプリをダウンロード</div>
-              <div className="text-xs text-muted-foreground">macOS / Windows ネイティブアプリ</div>
+              <div className="text-sm">{ts("desktopApp")}</div>
+              <div className="text-xs text-muted-foreground">{ts("desktopAppDescription")}</div>
             </div>
           </a>
         )}
@@ -828,7 +832,7 @@ function OtherSection() {
           className="flex h-12 items-center gap-3 px-4 hover:bg-accent"
         >
           <HelpCircle className="h-4 w-4" />
-          よくある質問
+          {ts("faq")}
         </a>
         <a
           href="/news"
@@ -837,7 +841,7 @@ function OtherSection() {
           className="flex h-12 items-center gap-3 px-4 hover:bg-accent"
         >
           <Newspaper className="h-4 w-4" />
-          お知らせ
+          {ts("news")}
         </a>
         <button
           type="button"
@@ -845,7 +849,7 @@ function OtherSection() {
           className="flex h-12 w-full items-center gap-3 px-4 hover:bg-accent"
         >
           <MessageSquare className="h-4 w-4" />
-          フィードバック
+          {ts("feedback")}
         </button>
         <a
           href="/terms"
@@ -854,7 +858,7 @@ function OtherSection() {
           className="flex h-12 items-center gap-3 px-4 hover:bg-accent"
         >
           <FileText className="h-4 w-4" />
-          利用規約
+          {ts("terms")}
         </a>
         <a
           href="/privacy"
@@ -863,7 +867,7 @@ function OtherSection() {
           className="flex h-12 items-center gap-3 px-4 hover:bg-accent"
         >
           <Shield className="h-4 w-4" />
-          プライバシーポリシー
+          {ts("privacyPolicy")}
         </a>
       </div>
       <FeedbackDialog open={feedbackOpen} onOpenChange={setFeedbackOpen} />

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl } from "@/lib/test-utils";
 import { TravelTimeSeparator } from "./travel-time-separator";
 
 vi.mock("@/lib/api", () => ({
@@ -26,7 +27,7 @@ describe("TravelTimeSeparator", () => {
   });
 
   it("データがない場合（ローディング中）は何も表示しない", () => {
-    const { container } = render(<TravelTimeSeparator {...baseProps} />);
+    const { container } = renderWithIntl(<TravelTimeSeparator {...baseProps} />);
     expect(container.firstChild).toBeNull();
   });
 
@@ -36,7 +37,7 @@ describe("TravelTimeSeparator", () => {
       isLoading: false,
       isError: true,
     } as ReturnType<typeof useQuery>);
-    const { container } = render(<TravelTimeSeparator {...baseProps} />);
+    const { container } = renderWithIntl(<TravelTimeSeparator {...baseProps} />);
     expect(container.firstChild).toBeNull();
   });
 
@@ -45,7 +46,7 @@ describe("TravelTimeSeparator", () => {
       data: { durationSeconds: 900, encodedPolyline: null },
       isLoading: false,
     } as ReturnType<typeof useQuery>);
-    render(<TravelTimeSeparator {...baseProps} />);
+    renderWithIntl(<TravelTimeSeparator {...baseProps} />);
     expect(screen.getByText("車で 15分")).toBeDefined();
   });
 
@@ -54,7 +55,7 @@ describe("TravelTimeSeparator", () => {
       data: { durationSeconds: 5400, encodedPolyline: null },
       isLoading: false,
     } as ReturnType<typeof useQuery>);
-    render(<TravelTimeSeparator {...baseProps} />);
+    renderWithIntl(<TravelTimeSeparator {...baseProps} />);
     expect(screen.getByText("車で 1時間30分")).toBeDefined();
   });
 
@@ -63,7 +64,7 @@ describe("TravelTimeSeparator", () => {
       data: { durationSeconds: 45, encodedPolyline: null },
       isLoading: false,
     } as ReturnType<typeof useQuery>);
-    render(<TravelTimeSeparator {...baseProps} />);
+    renderWithIntl(<TravelTimeSeparator {...baseProps} />);
     expect(screen.getByText("車で 45秒")).toBeDefined();
   });
 });

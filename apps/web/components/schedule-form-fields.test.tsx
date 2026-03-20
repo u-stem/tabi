@@ -1,7 +1,8 @@
 "use client";
 
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl } from "@/lib/test-utils";
 import { ScheduleFormFields } from "./schedule-form-fields";
 
 vi.mock("@vis.gl/react-google-maps", () => ({
@@ -67,19 +68,19 @@ describe("ScheduleFormFields - address フィールド", () => {
   });
 
   it("mapsEnabled=false のとき通常の Input が表示される", () => {
-    render(<ScheduleFormFields {...baseProps} mapsEnabled={false} />);
+    renderWithIntl(<ScheduleFormFields {...baseProps} mapsEnabled={false} />);
     const input = screen.getByRole("textbox", { name: /住所/ });
     expect(input.tagName).toBe("INPUT");
   });
 
   it("mapsEnabled=true のとき Places Autocomplete コンテナが表示される", () => {
-    render(<ScheduleFormFields {...baseProps} mapsEnabled={true} />);
+    renderWithIntl(<ScheduleFormFields {...baseProps} mapsEnabled={true} />);
     expect(screen.getByTestId("places-autocomplete")).toBeDefined();
   });
 
   it("onLocationSelected が呼ばれると親に lat/lng が伝わる", () => {
     const onLocationSelected = vi.fn();
-    render(
+    renderWithIntl(
       <ScheduleFormFields
         {...baseProps}
         mapsEnabled={true}

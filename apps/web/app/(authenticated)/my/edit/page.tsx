@@ -1,18 +1,20 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { ProfileSection } from "@/app/(authenticated)/settings/page";
 import { useSession } from "@/lib/auth-client";
 import { pageTitle } from "@/lib/constants";
 
 export default function MyEditPage() {
+  const tp = useTranslations("profile");
   const router = useRouter();
   const { data: session } = useSession();
 
   useEffect(() => {
-    document.title = pageTitle("プロフィールを編集");
-  }, []);
+    document.title = pageTitle(tp("editPageTitle"));
+  }, [tp]);
 
   const user = session?.user;
 

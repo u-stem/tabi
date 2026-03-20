@@ -3,6 +3,7 @@
 import type { BookmarkResponse } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Dices, Plus, RotateCcw, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,7 @@ function RouletteDisplay({
   onReset: () => void;
   disabled: boolean;
 }) {
+  const tt = useTranslations("tools");
   useHotkeys(
     "space",
     () => {
@@ -77,17 +79,17 @@ function RouletteDisplay({
         {state === "result" ? (
           <>
             <Button variant="outline" onClick={onReset}>
-              <RotateCcw className="h-4 w-4" /> リセット
+              <RotateCcw className="h-4 w-4" /> {tt("reset")}
               <span className="hidden text-xs text-muted-foreground lg:inline">(R)</span>
             </Button>
             <Button onClick={onSpin}>
-              <Dices className="h-4 w-4" /> もう一回
+              <Dices className="h-4 w-4" /> {tt("spinAgain")}
               <span className="hidden text-xs text-muted-foreground lg:inline">(Space)</span>
             </Button>
           </>
         ) : (
           <Button onClick={onSpin} disabled={disabled || state === "spinning"}>
-            <Dices className="h-4 w-4" /> {state === "spinning" ? "選択中..." : "回す"}
+            <Dices className="h-4 w-4" /> {state === "spinning" ? tt("spinning") : tt("spin")}
             {state === "idle" && (
               <span className="hidden text-xs text-muted-foreground lg:inline">(Space)</span>
             )}
@@ -99,6 +101,7 @@ function RouletteDisplay({
 }
 
 function PrefectureMode() {
+  const tt = useTranslations("tools");
   const [selectedRegions, setSelectedRegions] = useState<Set<string>>(new Set());
 
   const candidates = useMemo(() => {
@@ -127,7 +130,7 @@ function PrefectureMode() {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">地域で絞り込み（未選択で全国）</p>
+        <p className="text-sm text-muted-foreground">{tt("regionFilter")}</p>
         <div className="flex flex-wrap gap-1.5">
           {REGIONS.map((r) => (
             <button
@@ -145,7 +148,9 @@ function PrefectureMode() {
             </button>
           ))}
         </div>
-        <p className="text-xs text-muted-foreground">{candidates.length}件</p>
+        <p className="text-xs text-muted-foreground">
+          {tt("itemCount", { count: candidates.length })}
+        </p>
       </div>
       <RouletteDisplay
         state={state}
@@ -161,6 +166,7 @@ function PrefectureMode() {
 type Item = { id: number; text: string };
 
 function CustomMode() {
+  const tt = useTranslations("tools");
   const [items, setItems] = useState<Item[]>([]);
   const [input, setInput] = useState("");
   const nextId = useRef(0);
@@ -197,11 +203,11 @@ function CustomMode() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="選択肢を入力"
+            placeholder={tt("inputPlaceholder")}
             className="flex-1"
           />
           <Button type="button" variant="outline" onClick={addItem} disabled={!input.trim()}>
-            <Plus className="h-4 w-4" /> 追加
+            <Plus className="h-4 w-4" /> {tt("add")}
           </Button>
         </div>
         {items.length > 0 && (
@@ -221,7 +227,9 @@ function CustomMode() {
                 </button>
               </div>
             ))}
-            <p className="text-xs text-muted-foreground">{items.length}件</p>
+            <p className="text-xs text-muted-foreground">
+              {tt("itemCount", { count: items.length })}
+            </p>
           </div>
         )}
       </div>
@@ -237,6 +245,7 @@ function CustomMode() {
 }
 
 function BookmarkMode() {
+  const tt = useTranslations("tools");
   const { bookmarkLists, isLoading } = useBookmarkLists(false);
   const [selectedListId, setSelectedListId] = useState<string>("");
 
@@ -255,7 +264,7 @@ function BookmarkMode() {
       <div className="space-y-2">
         <Select value={selectedListId} onValueChange={setSelectedListId}>
           <SelectTrigger>
-            <SelectValue placeholder={isLoading ? "読み込み中..." : "リストを選択"} />
+            <SelectValue placeholder={isLoading ? tt("loadingList") : tt("selectList")} />
           </SelectTrigger>
           <SelectContent>
             {bookmarkLists.map((list) => (
@@ -266,7 +275,9 @@ function BookmarkMode() {
           </SelectContent>
         </Select>
         {candidates.length > 0 && (
-          <p className="text-xs text-muted-foreground">{candidates.length}件のアイテム</p>
+          <p className="text-xs text-muted-foreground">
+            {tt("itemCountBookmark", { count: candidates.length })}
+          </p>
         )}
       </div>
       <RouletteDisplay
@@ -281,9 +292,9 @@ function BookmarkMode() {
 }
 
 export const ROULETTE_MODES = [
-  { value: "prefecture", label: "都道府県" },
-  { value: "custom", label: "カスタム" },
-  { value: "bookmark", label: "ブックマーク" },
+  { value: "prefecture", labelKey: "prefecture" },
+  { value: "custom", labelKey: "custom" },
+  { value: "bookmark", labelKey: "bookmark" },
 ] as const;
 
 export function RouletteModeContent({ mode }: { mode: Mode }) {
@@ -298,6 +309,7 @@ export function RouletteModeContent({ mode }: { mode: Mode }) {
 }
 
 export function RouletteContent() {
+  const tt = useTranslations("tools");
   const [mode, setMode] = useState<Mode>("prefecture");
 
   return (
@@ -305,7 +317,7 @@ export function RouletteContent() {
       <TabsList className="w-full">
         {ROULETTE_MODES.map((m) => (
           <TabsTrigger key={m.value} value={m.value} className="flex-1">
-            {m.label}
+            {tt(m.labelKey)}
           </TabsTrigger>
         ))}
       </TabsList>

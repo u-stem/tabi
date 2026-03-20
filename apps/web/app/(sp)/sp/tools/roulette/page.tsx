@@ -1,21 +1,28 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ROULETTE_MODES, RouletteModeContent } from "@/components/roulette-content";
 import { SpSwipeTabs, type SwipeTab } from "@/components/sp-swipe-tabs";
 import { pageTitle } from "@/lib/constants";
 
 type Mode = (typeof ROULETTE_MODES)[number]["value"];
 
-const ROULETTE_TABS: SwipeTab<Mode>[] = ROULETTE_MODES.map((m) => ({
-  id: m.value,
-  label: m.label,
-}));
-
 export default function SpRoulettePage() {
+  const tt = useTranslations("tools");
+
+  const rouletteTabs: SwipeTab<Mode>[] = useMemo(
+    () =>
+      ROULETTE_MODES.map((m) => ({
+        id: m.value,
+        label: tt(m.labelKey),
+      })),
+    [tt],
+  );
+
   useEffect(() => {
-    document.title = pageTitle("ルーレット");
-  }, []);
+    document.title = pageTitle(tt("roulette"));
+  }, [tt]);
 
   const [mode, setMode] = useState<Mode>("prefecture");
 
@@ -28,7 +35,7 @@ export default function SpRoulettePage() {
   return (
     <div className="mt-4 mx-auto max-w-2xl space-y-6">
       <SpSwipeTabs<Mode>
-        tabs={ROULETTE_TABS}
+        tabs={rouletteTabs}
         activeTab={mode}
         onTabChange={changeMode}
         renderContent={renderContent}

@@ -1,6 +1,7 @@
 "use client";
 
 import { DUMMY_EMAIL_DOMAIN } from "@sugara/shared";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ function isRealEmail(email: string): boolean {
 }
 
 export function EmailSection({ currentEmail, emailVerified }: Props) {
+  const te = useTranslations("email");
   const [newEmail, setNewEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +40,7 @@ export function EmailSection({ currentEmail, emailVerified }: Props) {
 
     if (!newEmail.trim()) return;
     if (newEmail === currentEmail) {
-      setError("現在のメールアドレスと同じです。");
+      setError(te("sameEmail"));
       return;
     }
 
@@ -49,13 +51,13 @@ export function EmailSection({ currentEmail, emailVerified }: Props) {
         callbackURL: "/settings?emailVerified=1",
       });
       if (result.error) {
-        setError(result.error.message ?? "メールアドレスの変更に失敗しました。");
+        setError(result.error.message ?? te("changeFailed"));
         return;
       }
       setSent(true);
       setNewEmail("");
     } catch {
-      setError("メールアドレスの変更に失敗しました。");
+      setError(te("changeFailed"));
     } finally {
       setLoading(false);
     }
@@ -64,18 +66,18 @@ export function EmailSection({ currentEmail, emailVerified }: Props) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>メールアドレス</CardTitle>
-        <CardDescription>パスワードリセット時に使用します。</CardDescription>
+        <CardTitle>{te("title")}</CardTitle>
+        <CardDescription>{te("description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center gap-2">
           {hasRealEmail ? (
             <>
               <span className="text-sm">{maskEmail(currentEmail)}</span>
-              {!emailVerified && <Badge variant="secondary">未確認</Badge>}
+              {!emailVerified && <Badge variant="secondary">{te("unverified")}</Badge>}
             </>
           ) : (
-            <span className="text-sm text-muted-foreground">未設定</span>
+            <span className="text-sm text-muted-foreground">{te("notSet")}</span>
           )}
         </div>
 
@@ -84,13 +86,13 @@ export function EmailSection({ currentEmail, emailVerified }: Props) {
             aria-live="polite"
             className="block rounded-md bg-green-50 px-3 py-2 text-sm text-green-700 dark:bg-green-950/20 dark:text-green-400"
           >
-            確認メールを送信しました。メールのリンクをクリックして設定を完了してください。
+            {te("verificationSent")}
           </output>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-3">
             <div className="space-y-1">
               <Label htmlFor="new-email">
-                {hasRealEmail ? "新しいメールアドレス" : "メールアドレス"}{" "}
+                {hasRealEmail ? te("newEmail") : te("emailLabel")}{" "}
                 <span className="text-destructive">*</span>
               </Label>
               <Input
@@ -113,7 +115,7 @@ export function EmailSection({ currentEmail, emailVerified }: Props) {
             )}
             <div className="flex justify-end">
               <Button type="submit" disabled={loading || !newEmail.trim()}>
-                {loading ? "送信中..." : "確認メールを送信"}
+                {loading ? te("sending") : te("sendVerification")}
               </Button>
             </div>
           </form>

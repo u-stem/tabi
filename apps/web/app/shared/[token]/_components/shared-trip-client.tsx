@@ -11,8 +11,8 @@ import type {
 import { STATUS_LABELS, TRANSPORT_METHOD_LABELS, WEATHER_LABELS } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, ExternalLink, MapPin, RefreshCw, Route, StickyNote } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
-
 import { Logo } from "@/components/logo";
 import { SharedFooter } from "@/components/shared-footer";
 import { Badge } from "@/components/ui/badge";
@@ -33,7 +33,6 @@ import {
 } from "@/lib/format";
 import { CATEGORY_ICONS } from "@/lib/icons";
 import { buildMergedTimeline } from "@/lib/merge-timeline";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { supabase } from "@/lib/supabase";
 import { buildMapsSearchUrl, buildTransportUrl } from "@/lib/transport-link";
@@ -41,11 +40,12 @@ import { cn } from "@/lib/utils";
 import { WEATHER_ICON, WEATHER_ICON_COLOR } from "@/lib/weather-icons";
 
 function SharedHeader() {
+  const tsh = useTranslations("shared");
   return (
     <header className="border-b">
       <div className="container flex h-14 items-center">
         <Logo href="/" />
-        <span className="ml-2 text-sm text-muted-foreground">共有プラン</span>
+        <span className="ml-2 text-sm text-muted-foreground">{tsh("sharedPlan")}</span>
       </div>
     </header>
   );
@@ -92,6 +92,8 @@ function SharedTripBodySkeleton() {
 }
 
 export function SharedTripClient({ token }: { token: string }) {
+  const tsh = useTranslations("shared");
+  const tm = useTranslations("messages");
   const queryClient = useQueryClient();
   const [hasUpdate, setHasUpdate] = useState(false);
 
@@ -108,9 +110,9 @@ export function SharedTripClient({ token }: { token: string }) {
   // Derive error message from query error
   const error =
     queryError instanceof ApiError && queryError.status === 404
-      ? MSG.SHARED_LINK_INVALID
+      ? tm("sharedLinkInvalid")
       : queryError
-        ? MSG.SHARED_TRIP_FETCH_FAILED
+        ? tm("sharedTripFetchFailed")
         : null;
 
   function handleRefresh() {
@@ -143,13 +145,11 @@ export function SharedTripClient({ token }: { token: string }) {
           <div className="container flex max-w-3xl flex-col items-center py-16 text-center">
             <Calendar className="mb-4 h-12 w-12 text-muted-foreground" />
             <p className="text-lg font-medium text-destructive">{error}</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              リンクが正しいか確認するか、共有元に問い合わせてください
-            </p>
+            <p className="mt-2 text-sm text-muted-foreground">{tsh("checkLink")}</p>
           </div>
         ) : !trip ? (
           <div className="container flex max-w-3xl flex-col items-center py-16 text-center">
-            <p className="text-lg font-medium text-destructive">{MSG.SHARED_TRIP_NOT_FOUND}</p>
+            <p className="text-lg font-medium text-destructive">{tm("sharedTripNotFound")}</p>
           </div>
         ) : (
           <>
@@ -162,7 +162,7 @@ export function SharedTripClient({ token }: { token: string }) {
                   onClick={handleRefresh}
                 >
                   <RefreshCw className="h-3.5 w-3.5" />
-                  内容が更新されました。タップして最新を表示
+                  {tsh("updateAvailable")}
                 </Button>
               </div>
             )}
@@ -185,23 +185,23 @@ export function SharedTripClient({ token }: { token: string }) {
                     {trip.startDate && trip.endDate ? (
                       <>
                         {formatDateRange(trip.startDate, trip.endDate)}
-                        <span className="text-xs">（{dayCount}日間）</span>
+                        <span className="text-xs">（{tsh("dayCount", { count: dayCount })}）</span>
                       </>
                     ) : (
-                      <span className="text-muted-foreground">日程未定</span>
+                      <span className="text-muted-foreground">{tsh("noDate")}</span>
                     )}
                   </span>
                 </div>
                 {trip.shareExpiresAt && (
                   <p className="mt-3 text-xs text-muted-foreground">
-                    共有リンクの有効期限: {formatDateFromISO(trip.shareExpiresAt)}
+                    {tsh("shareExpiry", { date: formatDateFromISO(trip.shareExpiresAt) })}
                   </p>
                 )}
               </div>
               <div className="space-y-6">
                 {(trip.days ?? []).length === 0 && (
                   <p className="py-8 text-center text-sm text-muted-foreground">
-                    スケジュールはまだありません
+                    {tsh("noScheduleYet")}
                   </p>
                 )}
                 {(trip.days ?? []).map((day) => {
@@ -220,8 +220,18 @@ export function SharedTripClient({ token }: { token: string }) {
                           <span className="font-normal text-muted-foreground">
                             {(() => {
                               const d = new Date(day.date);
-                              return ["日", "月", "火", "水", "木", "金", "土"][d.getDay()];
-                            })()}曜日
+                              const dayKeys = [
+                                "dayOfWeekSun",
+                                "dayOfWeekMon",
+                                "dayOfWeekTue",
+                                "dayOfWeekWed",
+                                "dayOfWeekThu",
+                                "dayOfWeekFri",
+                                "dayOfWeekSat",
+                              ] as const;
+                              return tsh(dayKeys[d.getDay()]);
+                            })()}
+                            {tsh("dayOfWeek")}
                           </span>
                           {day.weatherType != null &&
                             (() => {
@@ -306,6 +316,7 @@ function PatternSection({
   showLabel: boolean;
   crossDayEntries?: CrossDayEntry[];
 }) {
+  const tm = useTranslations("messages");
   const schedules = pattern.schedules ?? [];
   const merged = buildMergedTimeline(schedules, crossDayEntries);
 
@@ -315,7 +326,7 @@ function PatternSection({
         <p className="mb-2 text-sm font-medium text-muted-foreground">{pattern.label}</p>
       )}
       {merged.length === 0 ? (
-        <p className="py-2 text-center text-sm text-muted-foreground">{MSG.EMPTY_SCHEDULE}</p>
+        <p className="py-2 text-center text-sm text-muted-foreground">{tm("emptySchedule")}</p>
       ) : (
         <div className="relative space-y-1">
           {/* Vertical timeline line */}

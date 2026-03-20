@@ -2,6 +2,7 @@
 
 import { WEATHER_LABELS, WEATHER_TYPES, type WeatherType } from "@sugara/shared";
 import { ArrowRight, Check, Cloud, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import {
   Drawer,
@@ -49,6 +50,7 @@ function WeatherTrigger({
   online: boolean;
   onClick: () => void;
 }) {
+  const tw = useTranslations("weather");
   const hasWeather = currentWeatherType != null;
   return (
     <button
@@ -112,7 +114,7 @@ function WeatherTrigger({
       ) : (
         <>
           <Cloud className="h-3.5 w-3.5 shrink-0" />
-          <span>天気を追加</span>
+          <span>{tw("addWeather")}</span>
         </>
       )}
     </button>
@@ -126,6 +128,7 @@ function WeatherPickerForm({
   weatherHook: Weather;
   gridLayout?: boolean;
 }) {
+  const tw = useTranslations("weather");
   const primary = weatherHook.weather.weatherType;
   const secondary = weatherHook.weather.weatherTypeSecondary;
 
@@ -175,17 +178,17 @@ function WeatherPickerForm({
                 <span>{WEATHER_LABELS[secondary]}</span>
               </>
             ) : (
-              <span className="text-muted-foreground">（2つ目でのちを設定）</span>
+              <span className="text-muted-foreground">{tw("secondaryHint")}</span>
             )}
           </>
         ) : (
-          <span className="text-muted-foreground">天気を選択してください</span>
+          <span className="text-muted-foreground">{tw("selectWeather")}</span>
         )}
       </div>
 
       {/* Weather grid */}
       <div className="space-y-2">
-        <Label>天気</Label>
+        <Label>{tw("weatherLabel")}</Label>
         <TooltipProvider>
           <div className={pickerClass}>
             {WEATHER_TYPES.map((type) => {
@@ -231,10 +234,10 @@ function WeatherPickerForm({
 
       {/* Temperature inputs */}
       <div className="space-y-2">
-        <Label>気温</Label>
+        <Label>{tw("temperature")}</Label>
         <div className="space-y-2">
           <div className="flex items-center gap-2">
-            <span className="shrink-0 text-sm text-muted-foreground">最高</span>
+            <span className="shrink-0 text-sm text-muted-foreground">{tw("tempHigh")}</span>
             <Input
               type="number"
               min={-50}
@@ -252,7 +255,7 @@ function WeatherPickerForm({
             <span className="text-sm text-muted-foreground">°C</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="shrink-0 text-sm text-muted-foreground">最低</span>
+            <span className="shrink-0 text-sm text-muted-foreground">{tw("tempLow")}</span>
             <Input
               type="number"
               min={-50}
@@ -286,6 +289,8 @@ export function DayWeatherEditor({
   online,
   variant = "inline",
 }: DayWeatherEditorProps) {
+  const tw = useTranslations("weather");
+  const tc = useTranslations("common");
   const isEditing = weatherHook.editingDayId === currentDayId;
 
   const startEdit = () =>
@@ -316,9 +321,9 @@ export function DayWeatherEditor({
         >
           <DrawerContent>
             <DrawerHeader>
-              <DrawerTitle>天気を設定</DrawerTitle>
+              <DrawerTitle>{tw("setWeather")}</DrawerTitle>
               <DrawerDescription className="sr-only">
-                天気と気温を選択してください
+                {tw("setWeatherDescription")}
               </DrawerDescription>
             </DrawerHeader>
             <div className="px-4 pb-2">
@@ -331,11 +336,11 @@ export function DayWeatherEditor({
                 disabled={weatherHook.saving}
               >
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
               <Button onClick={weatherHook.save} disabled={weatherHook.saving}>
                 <Check className="h-4 w-4" />
-                {weatherHook.saving ? "保存中..." : "保存"}
+                {weatherHook.saving ? tc("saving") : tc("save")}
               </Button>
             </DrawerFooter>
           </DrawerContent>
@@ -359,11 +364,11 @@ export function DayWeatherEditor({
               disabled={weatherHook.saving}
             >
               <X className="h-3.5 w-3.5" />
-              キャンセル
+              {tc("cancel")}
             </Button>
             <Button size="sm" onClick={weatherHook.save} disabled={weatherHook.saving}>
               <Check className="h-3.5 w-3.5" />
-              {weatherHook.saving ? "保存中..." : "保存"}
+              {weatherHook.saving ? tc("saving") : tc("save")}
             </Button>
           </div>
         </div>

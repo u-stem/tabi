@@ -2,6 +2,7 @@
 
 import { Check, ChevronRight, Copy, Dices, Pencil, Vote } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { MyQrDialog } from "@/components/my-qr-dialog";
@@ -10,7 +11,6 @@ import { UserAvatar } from "@/components/user-avatar";
 import { useSession } from "@/lib/auth-client";
 import { copyToClipboard } from "@/lib/clipboard";
 import { pageTitle } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
@@ -21,12 +21,14 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 }
 
 export default function SpMyPage() {
+  const tp = useTranslations("profile");
+  const tm = useTranslations("messages");
   const { data: session } = useSession();
   const [idCopied, setIdCopied] = useState(false);
 
   useEffect(() => {
-    document.title = pageTitle("プロフィール");
-  }, []);
+    document.title = pageTitle(tp("pageTitle"));
+  }, [tp]);
 
   const user = session?.user;
   const userId = user?.id;
@@ -35,7 +37,7 @@ export default function SpMyPage() {
     if (!userId) return;
     await copyToClipboard(userId);
     setIdCopied(true);
-    toast.success(MSG.SETTINGS_USER_ID_COPIED);
+    toast.success(tm("settingsUserIdCopied"));
     setTimeout(() => setIdCopied(false), 2000);
   }
 
@@ -56,7 +58,7 @@ export default function SpMyPage() {
               type="button"
               onClick={handleCopyId}
               className="mt-1 mx-auto flex items-center gap-1.5 rounded-md px-2 py-1.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-              aria-label="ユーザーIDをコピー"
+              aria-label={tp("copyUserId")}
             >
               <span className="sr-only" data-testid="user-id">
                 {userId}
@@ -77,7 +79,7 @@ export default function SpMyPage() {
             className="inline-flex h-8 items-center gap-1.5 whitespace-nowrap rounded-full border px-4 text-sm hover:bg-accent"
           >
             <Pencil className="h-3 w-3" />
-            編集
+            {tp("edit")}
           </Link>
           {userId && <MyQrDialog userId={userId} />}
         </div>
@@ -88,13 +90,13 @@ export default function SpMyPage() {
 
       {/* Tools */}
       <div className="space-y-2">
-        <SectionHeading>ツール</SectionHeading>
+        <SectionHeading>{tp("tools")}</SectionHeading>
         <Link
           href="/sp/polls"
           className="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm hover:bg-accent transition-colors"
         >
           <Vote className="h-5 w-5 text-muted-foreground" />
-          <span className="flex-1 font-medium">かんたん投票</span>
+          <span className="flex-1 font-medium">{tp("quickPoll")}</span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </Link>
         <Link
@@ -102,7 +104,7 @@ export default function SpMyPage() {
           className="flex items-center gap-3 rounded-lg border px-4 py-3 text-sm hover:bg-accent transition-colors"
         >
           <Dices className="h-5 w-5 text-muted-foreground" />
-          <span className="flex-1 font-medium">ルーレット</span>
+          <span className="flex-1 font-medium">{tp("roulette")}</span>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </Link>
       </div>

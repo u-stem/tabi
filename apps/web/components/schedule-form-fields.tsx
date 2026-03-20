@@ -12,6 +12,7 @@ import {
   SCHEDULE_URL_MAX_LENGTH,
 } from "@sugara/shared";
 import { Minus, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PlacesAutocompleteInput } from "@/components/places-autocomplete-input";
 import { TimeInput } from "@/components/time-input";
@@ -27,12 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
-import {
-  CATEGORY_OPTIONS,
-  getEndDayOptions,
-  getTimeLabels,
-  TRANSPORT_METHOD_OPTIONS,
-} from "@/lib/schedule-utils";
+import { CATEGORY_OPTIONS, TRANSPORT_METHOD_OPTIONS } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 
 type LocationSelectedParams = {
@@ -94,6 +90,7 @@ export function ScheduleFormFields({
   mapsEnabled = false,
   onLocationSelected,
 }: ScheduleFormFieldsProps) {
+  const tsf = useTranslations("scheduleForm");
   // Controlled state for text fields (Dialog unmounts on close, so these re-init correctly)
   const [name, setName] = useState(defaultValues?.name ?? "");
   // Ref to read current name inside handlePlaceSelect without adding name to deps
@@ -160,7 +157,7 @@ export function ScheduleFormFields({
     <>
       <div className="space-y-2">
         <Label htmlFor={`${idPrefix}name`}>
-          名前 <span className="text-destructive">*</span>
+          {tsf("name")} <span className="text-destructive">*</span>
         </Label>
         <Input
           id={`${idPrefix}name`}
@@ -176,7 +173,7 @@ export function ScheduleFormFields({
         </p>
       </div>
       <div className="space-y-2">
-        <Label>カテゴリ</Label>
+        <Label>{tsf("category")}</Label>
         <Select
           value={category}
           onValueChange={(v) => {
@@ -197,7 +194,7 @@ export function ScheduleFormFields({
         </Select>
       </div>
       <div className="space-y-2">
-        <Label>色</Label>
+        <Label>{tsf("color")}</Label>
         <div className="flex gap-2">
           {SCHEDULE_COLORS.map((c) => (
             <button
@@ -217,7 +214,7 @@ export function ScheduleFormFields({
       {category !== "transport" &&
         (mapsEnabled ? (
           <div className="space-y-2" data-testid="places-autocomplete">
-            <Label htmlFor={`${idPrefix}address`}>住所</Label>
+            <Label htmlFor={`${idPrefix}address`}>{tsf("address")}</Label>
             <PlacesAutocompleteInput
               id={`${idPrefix}address`}
               defaultValue={defaultValues?.address ?? ""}
@@ -226,7 +223,7 @@ export function ScheduleFormFields({
           </div>
         ) : (
           <div className="space-y-2">
-            <Label htmlFor={`${idPrefix}address`}>住所</Label>
+            <Label htmlFor={`${idPrefix}address`}>{tsf("address")}</Label>
             <Input
               id={`${idPrefix}address`}
               name="address"
@@ -243,7 +240,7 @@ export function ScheduleFormFields({
       {category === "transport" && (
         <>
           <div className="space-y-2">
-            <Label htmlFor={`${idPrefix}departurePlace`}>出発地</Label>
+            <Label htmlFor={`${idPrefix}departurePlace`}>{tsf("departurePlace")}</Label>
             <Input
               id={`${idPrefix}departurePlace`}
               name="departurePlace"
@@ -257,7 +254,7 @@ export function ScheduleFormFields({
             </p>
           </div>
           <div className="space-y-2">
-            <Label htmlFor={`${idPrefix}arrivalPlace`}>到着地</Label>
+            <Label htmlFor={`${idPrefix}arrivalPlace`}>{tsf("arrivalPlace")}</Label>
             <Input
               id={`${idPrefix}arrivalPlace`}
               name="arrivalPlace"
@@ -271,13 +268,13 @@ export function ScheduleFormFields({
             </p>
           </div>
           <div className="space-y-2">
-            <Label>交通手段</Label>
+            <Label>{tsf("transportMethod")}</Label>
             <Select
               value={transportMethod}
               onValueChange={(v) => onTransportMethodChange(v as TransportMethod)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="選択してください" />
+                <SelectValue placeholder={tsf("transportPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
                 {TRANSPORT_METHOD_OPTIONS.map((m) => (
@@ -291,7 +288,7 @@ export function ScheduleFormFields({
         </>
       )}
       <div className="space-y-2">
-        <Label>URL</Label>
+        <Label>{tsf("url")}</Label>
         {displayUrls.map((url, index) => (
           <div key={urlKeys[index]} className="flex items-center gap-1">
             <Input
@@ -315,7 +312,7 @@ export function ScheduleFormFields({
                   removeUrlKey(index);
                   onUrlsChange(displayUrls.filter((_, i) => i !== index));
                 }}
-                aria-label="URL を削除"
+                aria-label={tsf("removeUrl")}
               >
                 <Minus className="h-4 w-4" />
               </Button>
@@ -331,23 +328,42 @@ export function ScheduleFormFields({
               onUrlsChange([...displayUrls, ""]);
             }}
           >
-            <Plus className="inline h-3 w-3" /> URL を追加
+            <Plus className="inline h-3 w-3" /> {tsf("addUrl")}
           </button>
         )}
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label>{getTimeLabels(category).start}</Label>
+          <Label>
+            {category === "transport"
+              ? tsf("departureTime")
+              : category === "hotel"
+                ? tsf("checkIn")
+                : tsf("startTime")}
+          </Label>
           <TimeInput value={startTime} onChange={onStartTimeChange} />
         </div>
         <div className="space-y-2">
-          <Label>{getTimeLabels(category).end}</Label>
+          <Label>
+            {category === "transport"
+              ? tsf("arrivalTime")
+              : category === "hotel"
+                ? tsf("checkOut")
+                : tsf("endTime")}
+          </Label>
           <TimeInput value={endTime} onChange={onEndTimeChange} />
         </div>
       </div>
       {maxEndDayOffset > 0 && (
         <div className="space-y-2">
-          <Label>{getTimeLabels(category).end}日</Label>
+          <Label>
+            {category === "transport"
+              ? tsf("arrivalTime")
+              : category === "hotel"
+                ? tsf("checkOut")
+                : tsf("endTime")}
+            {tsf("endDay")}
+          </Label>
           <Select
             value={String(endDayOffset)}
             onValueChange={(v) => onEndDayOffsetChange(Number(v))}
@@ -356,18 +372,25 @@ export function ScheduleFormFields({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              {getEndDayOptions(maxEndDayOffset).map((opt) => (
-                <SelectItem key={opt.value} value={String(opt.value)}>
-                  {opt.label}
-                </SelectItem>
-              ))}
+              {Array.from({ length: maxEndDayOffset + 1 }, (_, offset) => {
+                const val = String(offset);
+                return (
+                  <SelectItem key={val} value={val}>
+                    {offset === 0
+                      ? tsf("sameDay")
+                      : offset === 1
+                        ? tsf("nextDay")
+                        : tsf("daysAfter", { count: offset })}
+                  </SelectItem>
+                );
+              })}
             </SelectContent>
           </Select>
         </div>
       )}
       {timeError && <p className="text-sm text-destructive">{timeError}</p>}
       <div className="space-y-2">
-        <Label htmlFor={`${idPrefix}memo`}>メモ</Label>
+        <Label htmlFor={`${idPrefix}memo`}>{tsf("memo")}</Label>
         <Textarea
           id={`${idPrefix}memo`}
           name="memo"

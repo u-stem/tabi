@@ -1,9 +1,9 @@
 "use client";
 
 import type { ExpenseItem, ExpensesResponse } from "@sugara/shared";
-import { EXPENSE_CATEGORY_LABELS } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Collapsible as CollapsiblePrimitive } from "radix-ui";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -33,7 +33,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type ExpensePanelProps = {
@@ -44,6 +43,11 @@ type ExpensePanelProps = {
 };
 
 export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: ExpensePanelProps) {
+  const tm = useTranslations("messages");
+  const te = useTranslations("expense");
+  const tc = useTranslations("common");
+  const tlExpCat = useTranslations("labels.expenseCategory");
+  const tlSplit = useTranslations("labels.splitType");
   const isMobile = useMobile();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
@@ -67,7 +71,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
       setDeleteTarget(null);
     },
     onError: (err) => {
-      toast.error(getApiErrorMessage(err, MSG.EXPENSE_DELETE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("expenseDeleteFailed")));
     },
   });
 
@@ -106,7 +110,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
       }
     >
       {isError ? (
-        <p className="py-4 text-center text-sm text-destructive">費用データの取得に失敗しました</p>
+        <p className="py-4 text-center text-sm text-destructive">{te("fetchFailed")}</p>
       ) : (
         <div className="space-y-4">
           {/* Toolbar (hidden on mobile where FAB is used) */}
@@ -114,7 +118,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
             <div className="flex justify-end">
               <Button variant="outline" size="sm" onClick={handleAdd}>
                 <Plus className="h-4 w-4" />
-                費用を追加
+                {te("addTitle")}
               </Button>
             </div>
           )}
@@ -122,18 +126,18 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
           {/* Settlement summary */}
           <CollapsiblePrimitive.Root className="rounded-md border bg-muted/50">
             <div className="flex items-center justify-between p-3">
-              <span className="text-sm font-medium">合計支出</span>
+              <span className="text-sm font-medium">{te("totalSpending")}</span>
               <span className="text-sm font-bold">{settlement.totalAmount.toLocaleString()}円</span>
             </div>
             {settlement.transfers.length > 0 && (
               <>
                 <CollapsiblePrimitive.Trigger className="flex w-full items-center gap-1 border-t px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/80 transition-colors [&[data-state=open]>svg]:rotate-180">
                   <ChevronDown className="h-3 w-3 transition-transform duration-200" />
-                  明細を表示
+                  {te("showDetails")}
                 </CollapsiblePrimitive.Trigger>
                 <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
                   <div className="space-y-1 border-t px-3 pt-2 pb-3">
-                    <p className="text-xs text-muted-foreground">立替状況</p>
+                    <p className="text-xs text-muted-foreground">{te("advanceStatus")}</p>
                     {[...settlement.balances]
                       .filter((b) => b.net !== 0)
                       .sort((a, b) => b.net - a.net)
@@ -161,7 +165,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
                   </div>
                   {categoryTotals.length > 0 && (
                     <div className="space-y-1 border-t px-3 pt-2 pb-3">
-                      <p className="text-xs text-muted-foreground">カテゴリ別</p>
+                      <p className="text-xs text-muted-foreground">{te("byCategory")}</p>
                       {categoryTotals
                         .sort((a, b) => b.total - a.total)
                         .map((ct) => (
@@ -172,7 +176,9 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
                             <span className="flex items-center gap-1.5">
                               <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
                               {ct.label}
-                              <span className="text-xs text-muted-foreground">({ct.count}件)</span>
+                              <span className="text-xs text-muted-foreground">
+                                ({te("countSuffix", { count: ct.count })})
+                              </span>
                             </span>
                             <span className="font-medium">{ct.total.toLocaleString()}円</span>
                           </div>
@@ -183,7 +189,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
               </>
             )}
             {settlement.totalAmount === 0 && (
-              <p className="px-3 pb-3 text-xs text-muted-foreground">{MSG.EMPTY_EXPENSE}</p>
+              <p className="px-3 pb-3 text-xs text-muted-foreground">{tm("emptyExpense")}</p>
             )}
           </CollapsiblePrimitive.Root>
 
@@ -231,23 +237,25 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
           >
             <ResponsiveAlertDialogContent>
               <ResponsiveAlertDialogHeader>
-                <ResponsiveAlertDialogTitle>費用を削除しますか?</ResponsiveAlertDialogTitle>
+                <ResponsiveAlertDialogTitle>{te("deleteTitle")}</ResponsiveAlertDialogTitle>
                 <ResponsiveAlertDialogDescription>
-                  「{deleteTarget?.title}」({deleteTarget?.amount.toLocaleString()}円)
-                  を削除します。この操作は取り消せません。
+                  {te("deleteDescription", {
+                    title: deleteTarget?.title ?? "",
+                    amount: deleteTarget?.amount.toLocaleString() ?? "",
+                  })}
                 </ResponsiveAlertDialogDescription>
               </ResponsiveAlertDialogHeader>
               <ResponsiveAlertDialogFooter>
                 <ResponsiveAlertDialogCancel>
                   <X className="h-4 w-4" />
-                  キャンセル
+                  {tc("cancel")}
                 </ResponsiveAlertDialogCancel>
                 <ResponsiveAlertDialogDestructiveAction
                   onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
                   disabled={deleteMutation.isPending}
                 >
                   <Trash2 className="h-4 w-4" />
-                  削除する
+                  {tc("deletConfirm")}
                 </ResponsiveAlertDialogDestructiveAction>
               </ResponsiveAlertDialogFooter>
             </ResponsiveAlertDialogContent>
@@ -272,6 +280,10 @@ function ExpenseRow({
   onDelete: (expense: ExpenseItem) => void;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const te = useTranslations("expense");
+  const tc = useTranslations("common");
+  const tlExpCat = useTranslations("labels.expenseCategory");
+  const tlSplit = useTranslations("labels.splitType");
 
   return (
     <CollapsiblePrimitive.Root className="rounded-md border">
@@ -279,14 +291,10 @@ function ExpenseRow({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{expense.title}</p>
           <p className="text-xs text-muted-foreground">
-            {expense.paidByUser.name}が支払い
-            {expense.splitType === "equal"
-              ? " / 均等"
-              : expense.splitType === "itemized"
-                ? " / アイテム別"
-                : " / カスタム"}
-            {expense.category &&
-              ` / ${EXPENSE_CATEGORY_LABELS[expense.category] ?? expense.category}`}
+            {te("paidBy", { name: expense.paidByUser.name })}
+            {" / "}
+            {tlSplit(expense.splitType)}
+            {expense.category && ` / ${tlExpCat(expense.category)}`}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
@@ -295,7 +303,7 @@ function ExpenseRow({
             (isMobile ? (
               <>
                 <ItemMenuButton
-                  ariaLabel={`${expense.title}のメニュー`}
+                  ariaLabel={te("menuLabel", { title: expense.title })}
                   onClick={() => setSheetOpen(true)}
                 />
                 <ActionSheet
@@ -303,12 +311,12 @@ function ExpenseRow({
                   onOpenChange={setSheetOpen}
                   actions={[
                     {
-                      label: "編集",
+                      label: tc("edit"),
                       icon: <Pencil className="h-4 w-4" />,
                       onClick: () => onEdit(expense),
                     },
                     {
-                      label: "削除",
+                      label: tc("delete"),
                       icon: <Trash2 className="h-4 w-4" />,
                       onClick: () => onDelete(expense),
                       variant: "destructive" as const,
@@ -319,14 +327,14 @@ function ExpenseRow({
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <ItemMenuButton ariaLabel={`${expense.title}のメニュー`} />
+                  <ItemMenuButton ariaLabel={te("menuLabel", { title: expense.title })} />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => onEdit(expense)}>
-                    <Pencil /> 編集
+                    <Pencil /> {tc("edit")}
                   </DropdownMenuItem>
                   <DropdownMenuItem className="text-destructive" onClick={() => onDelete(expense)}>
-                    <Trash2 /> 削除
+                    <Trash2 /> {tc("delete")}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -337,19 +345,19 @@ function ExpenseRow({
         <>
           <CollapsiblePrimitive.Trigger className="flex w-full items-center gap-1 border-t px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/80 transition-colors [&[data-state=open]>svg]:rotate-180">
             <ChevronDown className="h-3 w-3 transition-transform duration-200" />
-            内訳を表示
+            {te("showBreakdown")}
           </CollapsiblePrimitive.Trigger>
           <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
             {expense.lineItems.length > 0 && (
               <div className="space-y-1 border-t px-3 pt-2 pb-3">
-                <p className="text-xs text-muted-foreground">品目</p>
+                <p className="text-xs text-muted-foreground">{te("lineItemsSection")}</p>
                 {expense.lineItems.map((item) => (
                   <div key={item.id} className="flex items-center justify-between pl-2 text-sm">
                     <span className="flex items-center gap-1.5">
                       <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
                       {item.name}
                       <span className="text-xs text-muted-foreground">
-                        ({item.members.length}人)
+                        ({te("memberCount", { count: item.members.length })})
                       </span>
                     </span>
                     <span className="font-medium">{item.amount.toLocaleString()}円</span>
@@ -359,7 +367,7 @@ function ExpenseRow({
             )}
             <div className="space-y-1 border-t px-3 pt-2 pb-3">
               {expense.lineItems.length > 0 && (
-                <p className="text-xs text-muted-foreground">負担額</p>
+                <p className="text-xs text-muted-foreground">{te("perMemberAmount")}</p>
               )}
               {[...expense.splits]
                 .sort((a, b) => b.amount - a.amount)

@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Trash2, XCircle } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { QRCodeSVG } from "qrcode.react";
 import { useEffect } from "react";
 import { toast } from "sonner";
@@ -13,7 +14,6 @@ import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type PollDetail = {
@@ -44,6 +44,9 @@ function DetailSkeleton() {
 }
 
 export default function QuickPollDetailPage() {
+  const tm = useTranslations("messages");
+  const tp = useTranslations("poll");
+  const tc = useTranslations("common");
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -71,19 +74,19 @@ export default function QuickPollDetailPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.detail(pollId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.list() });
-      toast.success(MSG.QUICK_POLL_CLOSED);
+      toast.success(tm("quickPollClosed"));
     },
-    onError: () => toast.error(MSG.QUICK_POLL_CLOSE_FAILED),
+    onError: () => toast.error(tm("quickPollCloseFailed")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => api(`/api/quick-polls/${pollId}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.list() });
-      toast.success(MSG.QUICK_POLL_DELETED);
+      toast.success(tm("quickPollDeleted"));
       router.push("/polls");
     },
-    onError: () => toast.error(MSG.QUICK_POLL_DELETE_FAILED),
+    onError: () => toast.error(tm("quickPollDeleteFailed")),
   });
 
   const shareUrl =
@@ -96,12 +99,12 @@ export default function QuickPollDetailPage() {
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
-        一覧に戻る
+        {tp("backToList")}
       </Link>
 
       <LoadingBoundary isLoading={isLoading} skeleton={<DetailSkeleton />}>
         {error || !poll ? (
-          <p className="text-center text-destructive">{MSG.QUICK_POLL_NOT_FOUND}</p>
+          <p className="text-center text-destructive">{tm("quickPollNotFound")}</p>
         ) : (
           <div className="space-y-6">
             {/* Header */}
@@ -114,7 +117,7 @@ export default function QuickPollDetailPage() {
                     : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                 }`}
               >
-                {poll.status === "open" ? "受付中" : "終了"}
+                {poll.status === "open" ? tp("statusOpen") : tp("statusClosed")}
               </div>
             </div>
 
@@ -132,7 +135,7 @@ export default function QuickPollDetailPage() {
                     <div className="relative flex items-center justify-between">
                       <span className="text-sm font-medium">{opt.label}</span>
                       <span className="text-xs text-muted-foreground tabular-nums">
-                        {opt.voteCount}票 ({percentage}%)
+                        {tp("votesCount", { count: opt.voteCount })} ({percentage}%)
                       </span>
                     </div>
                   </div>
@@ -140,11 +143,13 @@ export default function QuickPollDetailPage() {
               })}
             </div>
 
-            <p className="text-center text-xs text-muted-foreground">合計 {poll.totalVotes} 票</p>
+            <p className="text-center text-xs text-muted-foreground">
+              {tp("totalVotes", { count: poll.totalVotes })}
+            </p>
 
             {/* Share */}
             <div className="space-y-4 rounded-lg border p-4">
-              <p className="text-sm font-medium">共有リンク</p>
+              <p className="text-sm font-medium">{tp("shareLink")}</p>
               <div className="flex items-center gap-2">
                 <input
                   type="text"
@@ -155,8 +160,8 @@ export default function QuickPollDetailPage() {
                 />
                 <CopyButton
                   value={shareUrl}
-                  successMessage={MSG.QUICK_POLL_LINK_COPIED}
-                  label="URLをコピー"
+                  successMessage={tm("quickPollLinkCopied")}
+                  label={tp("copyUrl")}
                 />
               </div>
               <div className="flex justify-center rounded-md border bg-white p-4 dark:border-0 dark:shadow-sm">
@@ -174,7 +179,7 @@ export default function QuickPollDetailPage() {
                   disabled={closeMutation.isPending}
                 >
                   <XCircle className="mr-1 h-4 w-4" />
-                  投票を終了
+                  {tp("closePoll")}
                 </Button>
               )}
               <Button
@@ -184,7 +189,7 @@ export default function QuickPollDetailPage() {
                 disabled={deleteMutation.isPending}
               >
                 <Trash2 className="mr-1 h-4 w-4" />
-                削除
+                {tc("delete")}
               </Button>
             </div>
           </div>

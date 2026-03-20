@@ -2,10 +2,10 @@
 
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import type { CandidateResponse } from "@sugara/shared";
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DROP_ZONE_ACTIVE } from "@/lib/colors";
-import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 import { CandidateItem } from "./candidate-item";
 import { DndInsertIndicator } from "./dnd-insert-indicator";
@@ -51,6 +51,7 @@ export const CandidateList = memo(function CandidateList({
   onSaveToBookmark,
   onReorderCandidate,
 }: CandidateListProps) {
+  const tm = useTranslations("messages");
   function renderItems(withDndIndicators: boolean) {
     const overlayIndicator = withDndIndicators ? <DndInsertIndicator overlay /> : null;
     const inlineIndicator = withDndIndicators ? <DndInsertIndicator /> : null;
@@ -108,7 +109,7 @@ export const CandidateList = memo(function CandidateList({
                 isOverCandidates && DROP_ZONE_ACTIVE,
               )}
             >
-              <p className="text-sm text-muted-foreground">{MSG.EMPTY_CANDIDATE}</p>
+              <p className="text-sm text-muted-foreground">{tm("emptyCandidate")}</p>
             </div>
           ) : (
             renderItems(true)
@@ -119,7 +120,7 @@ export const CandidateList = memo(function CandidateList({
   }
 
   if (candidates.length === 0) {
-    return <EmptyState message={MSG.EMPTY_CANDIDATE} variant="box" />;
+    return <EmptyState message={tm("emptyCandidate")} variant="box" />;
   }
 
   return renderItems(false);

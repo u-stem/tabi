@@ -17,6 +17,7 @@ import {
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import { Fragment, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -36,7 +37,6 @@ import { useMobile } from "@/lib/hooks/use-is-mobile";
 
 import type { TimelineItem } from "@/lib/merge-timeline";
 import { buildMergedTimeline, timelineSortableIds } from "@/lib/merge-timeline";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { moveScheduleToCandidate, removeScheduleFromPattern } from "@/lib/trip-cache";
 import { cn } from "@/lib/utils";
@@ -92,6 +92,7 @@ export function DayTimeline({
   onReorderSchedule,
   mapsEnabled = false,
 }: DayTimelineProps) {
+  const tm = useTranslations("messages");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
 
@@ -122,7 +123,7 @@ export function DayTimeline({
       queryClient.setQueryData(cacheKey, removeScheduleFromPattern(prev, dId, pId, scheduleId));
     }
 
-    toast.success(MSG.SCHEDULE_DELETED);
+    toast.success(tm("scheduleDeleted"));
 
     try {
       await api(`/api/trips/${tripId}/days/${dId}/patterns/${pId}/schedules/${scheduleId}`, {
@@ -131,7 +132,7 @@ export function DayTimeline({
       onRefresh();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.SCHEDULE_DELETE_FAILED);
+      toast.error(tm("scheduleDeleteFailed"));
     }
   }
 
@@ -144,7 +145,7 @@ export function DayTimeline({
         moveScheduleToCandidate(prev, dayId, patternId, scheduleId),
       );
     }
-    toast.success(MSG.SCHEDULE_MOVED_TO_CANDIDATE);
+    toast.success(tm("scheduleMovedToCandidate"));
 
     try {
       await api(`/api/trips/${tripId}/schedules/${scheduleId}/unassign`, {
@@ -153,7 +154,7 @@ export function DayTimeline({
       onRefresh();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.SCHEDULE_MOVE_FAILED);
+      toast.error(tm("scheduleMoveFailed"));
     }
   }
 
@@ -173,7 +174,7 @@ export function DayTimeline({
       });
       onRefresh();
     } catch {
-      toast.error(MSG.SCHEDULE_REORDER_FAILED);
+      toast.error(tm("scheduleReorderFailed"));
     }
   }
 
@@ -446,7 +447,7 @@ export function DayTimeline({
             isOverTimeline && DROP_ZONE_ACTIVE,
           )}
         >
-          <p className="text-sm text-muted-foreground">{MSG.EMPTY_SCHEDULE}</p>
+          <p className="text-sm text-muted-foreground">{tm("emptySchedule")}</p>
         </div>
       ) : selectionMode ? (
         <div className="space-y-1.5">

@@ -21,6 +21,7 @@ import {
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -34,7 +35,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { api } from "@/lib/api";
 import { useSelection } from "@/lib/hooks/selection-context";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { moveCandidateToSchedule, removeCandidate } from "@/lib/trip-cache";
 import { CandidateList } from "./candidate-list";
@@ -88,6 +88,9 @@ export function CandidatePanel({
   onReorderCandidate,
   days,
 }: CandidatePanelProps) {
+  const tm = useTranslations("messages");
+  const tc = useTranslations("common");
+  const tsch = useTranslations("schedule");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.trips.detail(tripId);
 
@@ -133,7 +136,7 @@ export function CandidatePanel({
         moveCandidateToSchedule(prev, spotId, targetDayId, targetPatternId),
       );
     }
-    toast.success(MSG.CANDIDATE_ASSIGNED);
+    toast.success(tm("candidateAssigned"));
 
     try {
       await api(`/api/trips/${tripId}/candidates/${spotId}/assign`, {
@@ -143,7 +146,7 @@ export function CandidatePanel({
       onRefresh();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.CANDIDATE_ASSIGN_FAILED);
+      toast.error(tm("candidateAssignFailed"));
     }
   }
 
@@ -153,7 +156,7 @@ export function CandidatePanel({
     if (prev) {
       queryClient.setQueryData(cacheKey, removeCandidate(prev, spotId));
     }
-    toast.success(MSG.CANDIDATE_DELETED);
+    toast.success(tm("candidateDeleted"));
 
     try {
       await api(`/api/trips/${tripId}/candidates/${spotId}`, {
@@ -162,7 +165,7 @@ export function CandidatePanel({
       onRefresh();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.CANDIDATE_DELETE_FAILED);
+      toast.error(tm("candidateDeleteFailed"));
     }
   }
 
@@ -193,7 +196,7 @@ export function CandidatePanel({
       onRefresh();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.REACTION_FAILED);
+      toast.error(tm("reactionFailed"));
     }
   }
 
@@ -222,7 +225,7 @@ export function CandidatePanel({
       onRefresh();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.REACTION_REMOVE_FAILED);
+      toast.error(tm("reactionRemoveFailed"));
     }
   }
 

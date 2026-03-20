@@ -1,9 +1,9 @@
 import type { PollDetailResponse } from "@sugara/shared";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type UsePollMemoArgs = {
@@ -12,6 +12,7 @@ type UsePollMemoArgs = {
 };
 
 export function usePollMemo({ pollId, onDone }: UsePollMemoArgs) {
+  const tm = useTranslations("messages");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.polls.detail(pollId);
 
@@ -39,7 +40,7 @@ export function usePollMemo({ pollId, onDone }: UsePollMemoArgs) {
     if (prev) {
       queryClient.setQueryData(cacheKey, { ...prev, note: newNote });
     }
-    toast.success(MSG.POLL_NOTE_UPDATED);
+    toast.success(tm("pollNoteUpdated"));
     setEditing(false);
     setText("");
 
@@ -51,7 +52,7 @@ export function usePollMemo({ pollId, onDone }: UsePollMemoArgs) {
       onDone?.();
     } catch {
       if (prev) queryClient.setQueryData(cacheKey, prev);
-      toast.error(MSG.POLL_NOTE_UPDATE_FAILED);
+      toast.error(tm("pollNoteUpdateFailed"));
     } finally {
       setSaving(false);
     }

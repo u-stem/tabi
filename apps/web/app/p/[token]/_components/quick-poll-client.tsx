@@ -3,6 +3,7 @@
 import type { QuickPollResponse } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Vote } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { toast } from "sonner";
 import { Logo } from "@/components/logo";
@@ -10,7 +11,6 @@ import { SharedFooter } from "@/components/shared-footer";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 const ANONYMOUS_ID_KEY = "sugara_quick_poll_anon_id";
@@ -26,6 +26,8 @@ function getAnonymousId(): string {
 }
 
 export function QuickPollClient({ token }: { token: string }) {
+  const tm = useTranslations("messages");
+  const tp = useTranslations("poll");
   const queryClient = useQueryClient();
 
   const anonymousId = useMemo(() => getAnonymousId(), []);
@@ -52,9 +54,9 @@ export function QuickPollClient({ token }: { token: string }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.shared(token) });
 
-      toast.success(MSG.QUICK_POLL_VOTED);
+      toast.success(tm("quickPollVoted"));
     },
-    onError: () => toast.error(MSG.QUICK_POLL_VOTE_FAILED),
+    onError: () => toast.error(tm("quickPollVoteFailed")),
   });
 
   const cancelVoteMutation = useMutation({
@@ -66,9 +68,9 @@ export function QuickPollClient({ token }: { token: string }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.shared(token) });
 
-      toast.success(MSG.QUICK_POLL_VOTE_CANCELLED);
+      toast.success(tm("quickPollVoteCancelled"));
     },
-    onError: () => toast.error(MSG.QUICK_POLL_VOTE_CANCEL_FAILED),
+    onError: () => toast.error(tm("quickPollVoteCancelFailed")),
   });
 
   const isOpen = poll?.status === "open";
@@ -80,14 +82,14 @@ export function QuickPollClient({ token }: { token: string }) {
       <header className="border-b">
         <div className="container flex h-14 items-center">
           <Logo href="/" />
-          <span className="ml-2 text-sm text-muted-foreground">投票</span>
+          <span className="ml-2 text-sm text-muted-foreground">{tp("voteHeader")}</span>
         </div>
       </header>
       <LoadingBoundary isLoading={isLoading} skeleton={<PollSkeleton />} delay={0}>
         {error || !poll ? (
           <div className="container flex max-w-lg flex-col items-center py-16 text-center">
             <Vote className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-lg font-medium text-destructive">{MSG.QUICK_POLL_NOT_FOUND}</p>
+            <p className="text-lg font-medium text-destructive">{tm("quickPollNotFound")}</p>
           </div>
         ) : (
           <div className="container max-w-lg py-8 space-y-6">
@@ -144,7 +146,7 @@ export function QuickPollClient({ token }: { token: string }) {
                       <div className="flex items-center gap-2">
                         {canSeeResults && (
                           <span className="text-xs text-muted-foreground tabular-nums">
-                            {opt.voteCount}票 ({percentage}%)
+                            {tp("votesCount", { count: opt.voteCount })} ({percentage}%)
                           </span>
                         )}
                         {isSelected && <Check className="h-4 w-4 text-primary" />}
@@ -156,11 +158,13 @@ export function QuickPollClient({ token }: { token: string }) {
             </div>
 
             {canSeeResults && (
-              <p className="text-center text-xs text-muted-foreground">合計 {poll.totalVotes} 票</p>
+              <p className="text-center text-xs text-muted-foreground">
+                {tp("totalVotes", { count: poll.totalVotes })}
+              </p>
             )}
 
             {!isOpen && (
-              <p className="text-center text-sm text-muted-foreground">この投票は終了しています</p>
+              <p className="text-center text-sm text-muted-foreground">{tp("pollClosed")}</p>
             )}
           </div>
         )}

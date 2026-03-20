@@ -6,6 +6,7 @@ import {
   QUICK_POLL_QUESTION_MAX_LENGTH,
 } from "@sugara/shared";
 import { Check, Copy, Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { QRCodeSVG } from "qrcode.react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
@@ -23,7 +24,6 @@ import {
 } from "@/components/ui/responsive-dialog";
 import { Switch } from "@/components/ui/switch";
 import { api } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 
 type CreateQuickPollDialogProps = {
   open: boolean;
@@ -36,6 +36,9 @@ export function CreateQuickPollDialog({
   onOpenChange,
   onCreated,
 }: CreateQuickPollDialogProps) {
+  const tm = useTranslations("messages");
+  const tp = useTranslations("poll");
+  const tc = useTranslations("common");
   const nextId = useRef(2);
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState(() => [
@@ -93,7 +96,7 @@ export function CreateQuickPollDialog({
     };
     const parsed = createQuickPollSchema.safeParse(data);
     if (!parsed.success) {
-      toast.error(MSG.VALIDATION_ERROR);
+      toast.error(tm("validationError"));
       return;
     }
     setSubmitting(true);
@@ -104,10 +107,10 @@ export function CreateQuickPollDialog({
       });
       const url = `${window.location.origin}/p/${result.shareToken}`;
       setShareUrl(url);
-      toast.success(MSG.QUICK_POLL_CREATED);
+      toast.success(tm("quickPollCreated"));
       onCreated();
     } catch {
-      toast.error(MSG.QUICK_POLL_CREATE_FAILED);
+      toast.error(tm("quickPollCreateFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -118,10 +121,10 @@ export function CreateQuickPollDialog({
     try {
       await navigator.clipboard.writeText(shareUrl);
       setLinkCopied(true);
-      toast.success(MSG.QUICK_POLL_LINK_COPIED);
+      toast.success(tm("quickPollLinkCopied"));
       setTimeout(() => setLinkCopied(false), 2000);
     } catch {
-      toast.error(MSG.COPY_FAILED);
+      toast.error(tm("copyFailed"));
     }
   }
 
@@ -131,10 +134,8 @@ export function CreateQuickPollDialog({
       <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
         <ResponsiveDialogContent className="sm:max-w-sm">
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>共有リンク</ResponsiveDialogTitle>
-            <ResponsiveDialogDescription>
-              URLまたはQRコードで共有できます
-            </ResponsiveDialogDescription>
+            <ResponsiveDialogTitle>{tp("shareTitle")}</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>{tp("shareDescription")}</ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
           <div className="space-y-4">
             <div className="flex items-center gap-2">
@@ -150,7 +151,7 @@ export function CreateQuickPollDialog({
                 size="icon"
                 className="shrink-0"
                 onClick={copyShareUrl}
-                aria-label={linkCopied ? "コピー完了" : "URLをコピー"}
+                aria-label={linkCopied ? tp("copyDone") : tp("copyUrl")}
               >
                 {linkCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
               </Button>
@@ -168,20 +169,20 @@ export function CreateQuickPollDialog({
     <ResponsiveDialog open={open} onOpenChange={handleOpenChange}>
       <ResponsiveDialogContent className="flex max-h-[90vh] flex-col overflow-hidden">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>投票を作成</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>質問と選択肢を入力してください</ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{tp("createTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{tp("createDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-4">
           <div className="space-y-4 overflow-y-auto px-1">
             <div className="space-y-2">
               <Label htmlFor="poll-question">
-                質問 <span className="text-destructive">*</span>
+                {tp("questionLabel")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="poll-question"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
-                placeholder="何を聞きますか？"
+                placeholder={tp("questionPlaceholder")}
                 maxLength={QUICK_POLL_QUESTION_MAX_LENGTH}
                 required
               />
@@ -192,14 +193,14 @@ export function CreateQuickPollDialog({
 
             <div className="space-y-2">
               <Label>
-                選択肢 <span className="text-destructive">*</span>
+                {tp("optionsLabel")} <span className="text-destructive">*</span>
               </Label>
               {options.map((opt, i) => (
                 <div key={opt.id} className="flex gap-2">
                   <Input
                     value={opt.label}
                     onChange={(e) => updateOption(opt.id, e.target.value)}
-                    placeholder={`選択肢 ${i + 1}`}
+                    placeholder={tp("optionPlaceholder", { index: i + 1 })}
                     maxLength={QUICK_POLL_OPTION_MAX_LENGTH}
                   />
                   {options.length > 2 && (
@@ -217,14 +218,14 @@ export function CreateQuickPollDialog({
               {options.length < 10 && (
                 <Button type="button" variant="outline" size="sm" onClick={addOption}>
                   <Plus className="mr-1 h-4 w-4" />
-                  追加
+                  {tp("addOption")}
                 </Button>
               )}
             </div>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label htmlFor="poll-allowMultiple">複数選択を許可</Label>
+                <Label htmlFor="poll-allowMultiple">{tp("allowMultiple")}</Label>
                 <Switch
                   id="poll-allowMultiple"
                   checked={allowMultiple}
@@ -232,7 +233,7 @@ export function CreateQuickPollDialog({
                 />
               </div>
               <div className="flex items-center justify-between">
-                <Label htmlFor="poll-showResults">投票前に結果を表示</Label>
+                <Label htmlFor="poll-showResults">{tp("showResultsBeforeVote")}</Label>
                 <Switch
                   id="poll-showResults"
                   checked={showResultsBeforeVote}
@@ -245,12 +246,12 @@ export function CreateQuickPollDialog({
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={submitting || !question.trim()}>
               <Plus className="h-4 w-4" />
-              {submitting ? "作成中..." : "作成"}
+              {submitting ? tp("creating") : tp("create")}
             </Button>
           </ResponsiveDialogFooter>
         </form>

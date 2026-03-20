@@ -14,6 +14,7 @@ import {
   type SouvenirShareStyle,
 } from "@sugara/shared";
 import { Check, Flame, Heart, Minus, Plus, ShoppingBag, Star, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -31,7 +32,6 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 type SouvenirDialogProps = {
@@ -68,6 +68,9 @@ function useStringArrayField(initial: string[], open: boolean) {
 
 export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: SouvenirDialogProps) {
   const isEdit = !!item;
+  const tm = useTranslations("messages");
+  const ts = useTranslations("souvenir");
+  const tc = useTranslations("common");
   const [loading, setLoading] = useState(false);
   const [name, setName] = useState("");
   const [recipient, setRecipient] = useState("");
@@ -138,7 +141,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
       onOpenChange(false);
       onSaved();
     } catch (err) {
-      toast.error(getApiErrorMessage(err, MSG.SOUVENIR_SAVE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("souvenirSaveFailed")));
     } finally {
       setLoading(false);
     }
@@ -148,37 +151,37 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent className="sm:max-w-md">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{isEdit ? "お土産を編集" : "お土産を追加"}</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{isEdit ? ts("editTitle") : ts("addTitle")}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            {isEdit ? "お土産の内容を変更します。" : "新しいお土産を追加します。"}
+            {isEdit ? ts("editDescription") : ts("addDescription")}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="souvenir-name">
-              品名 <span className="text-destructive">*</span>
+              {ts("nameLabel")} <span className="text-destructive">*</span>
             </Label>
             <Input
               id="souvenir-name"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="例: 東京バナナ"
+              placeholder={ts("namePlaceholder")}
               maxLength={SOUVENIR_NAME_MAX_LENGTH}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="souvenir-recipient">対象</Label>
+            <Label htmlFor="souvenir-recipient">{ts("recipientLabel")}</Label>
             <Input
               id="souvenir-recipient"
               value={recipient}
               onChange={(e) => setRecipient(e.target.value)}
-              placeholder="例: お母さん"
+              placeholder={ts("recipientPlaceholder")}
               maxLength={SOUVENIR_RECIPIENT_MAX_LENGTH}
             />
           </div>
           <div className="space-y-2">
-            <Label>住所・場所</Label>
+            <Label>{ts("addressLabel")}</Label>
             {displayAddresses.map((addr, index) => (
               <div key={addressField.keys[index]} className="flex items-center gap-1">
                 <Input
@@ -188,7 +191,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
                     next[index] = e.target.value;
                     setAddresses(next);
                   }}
-                  placeholder="例: 渋谷区道玄坂..."
+                  placeholder={ts("addressPlaceholder")}
                   maxLength={SOUVENIR_ADDRESS_MAX_LENGTH}
                 />
                 {index > 0 && (
@@ -201,7 +204,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
                       addressField.removeKey(index);
                       setAddresses(displayAddresses.filter((_, i) => i !== index));
                     }}
-                    aria-label="住所を削除"
+                    aria-label={ts("deleteAddress")}
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
@@ -217,7 +220,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
                   setAddresses([...displayAddresses, ""]);
                 }}
               >
-                <Plus className="inline h-3 w-3" /> 住所を追加
+                <Plus className="inline h-3 w-3" /> {ts("addAddress")}
               </button>
             )}
           </div>
@@ -246,7 +249,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
                       urlField.removeKey(index);
                       setUrls(displayUrls.filter((_, i) => i !== index));
                     }}
-                    aria-label="URL を削除"
+                    aria-label={ts("deleteUrl")}
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
@@ -262,12 +265,12 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
                   setUrls([...displayUrls, ""]);
                 }}
               >
-                <Plus className="inline h-3 w-3" /> URL を追加
+                <Plus className="inline h-3 w-3" /> {ts("addUrl")}
               </button>
             )}
           </div>
           <div className="space-y-2">
-            <Label>優先度</Label>
+            <Label>{ts("priorityLabel")}</Label>
             <div className="flex gap-2">
               <Button
                 type="button"
@@ -277,7 +280,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
                 onClick={() => setPriority(null)}
               >
                 <Minus className="h-3.5 w-3.5" />
-                未設定
+                {ts("priorityUnset")}
               </Button>
               <Button
                 type="button"
@@ -310,19 +313,19 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
             </div>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="souvenir-memo">メモ</Label>
+            <Label htmlFor="souvenir-memo">{ts("memoLabel")}</Label>
             <Textarea
               id="souvenir-memo"
               value={memo}
               onChange={(e) => setMemo(e.target.value)}
-              placeholder="自由メモ"
+              placeholder={ts("memoPlaceholder")}
               rows={2}
             />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between rounded-md border px-3 py-2">
               <Label htmlFor="souvenir-shared" className="cursor-pointer font-normal">
-                メンバーに公開
+                {ts("shareWithMembers")}
               </Label>
               <Switch
                 id="souvenir-shared"
@@ -345,7 +348,7 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
                   onClick={() => setShareStyle(null)}
                 >
                   <Minus className="h-3.5 w-3.5" />
-                  未設定
+                  {ts("shareStyleUnset")}
                 </Button>
                 <Button
                   type="button"
@@ -382,12 +385,18 @@ export function SouvenirDialog({ tripId, open, onOpenChange, item, onSaved }: So
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={loading || !name.trim()}>
               {isEdit ? <Check className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-              {loading ? (isEdit ? "更新中..." : "追加中...") : isEdit ? "更新" : "追加"}
+              {loading
+                ? isEdit
+                  ? ts("updating")
+                  : ts("adding")
+                : isEdit
+                  ? ts("updateButton")
+                  : ts("addButton")}
             </Button>
           </ResponsiveDialogFooter>
         </form>

@@ -12,6 +12,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,6 @@ import { getCrossDayLabel, getStartDayLabel } from "@/lib/cross-day-label";
 import { formatDate, formatDateRange, getDayCount } from "@/lib/format";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { buildMergedTimeline } from "@/lib/merge-timeline";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
@@ -46,6 +46,7 @@ function PrintSkeleton() {
 }
 
 export default function SpTripPrintPage() {
+  const tm = useTranslations("messages");
   const params = useParams();
   const searchParams = useSearchParams();
   const tripId = typeof params.id === "string" ? params.id : null;
@@ -77,7 +78,7 @@ export default function SpTripPrintPage() {
     <LoadingBoundary isLoading={isLoading} skeleton={<PrintSkeleton />}>
       {error || !trip ? (
         <div className="flex min-h-screen items-center justify-center">
-          <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+          <p className="text-destructive">{tm("tripFetchFailed")}</p>
         </div>
       ) : (
         <div className="mx-auto max-w-3xl px-6 py-8 print:max-w-none print:px-0 print:py-0">
@@ -127,6 +128,7 @@ function DaySection({
   day: DayResponse;
   crossDayEntries: CrossDayEntry[];
 }) {
+  const tm = useTranslations("messages");
   const showPatternLabels = day.patterns.length > 1;
 
   return (
@@ -153,7 +155,9 @@ function DaySection({
               </p>
             )}
             {merged.length === 0 ? (
-              <p className="py-2 text-center text-xs text-muted-foreground">{MSG.EMPTY_SCHEDULE}</p>
+              <p className="py-2 text-center text-xs text-muted-foreground">
+                {tm("emptySchedule")}
+              </p>
             ) : (
               <div className="overflow-x-auto print:overflow-visible">
                 <table className="w-full min-w-[600px] table-fixed border-collapse text-xs print:min-w-0 print:text-[11px]">

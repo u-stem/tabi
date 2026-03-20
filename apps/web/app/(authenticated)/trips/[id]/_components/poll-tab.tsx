@@ -18,6 +18,7 @@ import {
   Triangle,
   X,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { toast } from "sonner";
@@ -59,7 +60,6 @@ import { api, getApiErrorMessage } from "@/lib/api";
 import { formatDateRangeShort } from "@/lib/format";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { usePollMemo } from "@/lib/hooks/use-poll-memo";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
@@ -109,6 +109,10 @@ export function PollTab({
   addOptionOpen,
   onAddOptionOpenChange,
 }: PollTabProps) {
+  const tm = useTranslations("messages");
+  const tp = useTranslations("poll");
+  const tc = useTranslations("common");
+  const tsch = useTranslations("schedule");
   const queryClient = useQueryClient();
   const isMobile = useMobile();
 
@@ -166,7 +170,7 @@ export function PollTab({
       if (context?.prev) {
         queryClient.setQueryData(queryKeys.polls.detail(pollId), context.prev);
       }
-      toast.error(getApiErrorMessage(err, MSG.POLL_RESPONSE_SUBMIT_FAILED));
+      toast.error(getApiErrorMessage(err, tm("pollResponseSubmitFailed")));
     },
   });
 
@@ -177,7 +181,7 @@ export function PollTab({
         body: JSON.stringify(data),
       }),
     onSuccess: () => {
-      toast.success(MSG.POLL_OPTION_ADDED);
+      toast.success(tm("pollOptionAdded"));
       invalidate();
       onMutate();
       setShowAddOption(false);
@@ -186,8 +190,8 @@ export function PollTab({
     },
     onError: (err) =>
       toast.error(
-        getApiErrorMessage(err, MSG.POLL_OPTION_ADD_FAILED, {
-          conflict: MSG.POLL_OPTION_DUPLICATE,
+        getApiErrorMessage(err, tm("pollOptionAddFailed"), {
+          conflict: tm("pollOptionDuplicate"),
         }),
       ),
   });
@@ -196,18 +200,18 @@ export function PollTab({
     mutationFn: (optionId: string) =>
       api(`/api/polls/${pollId}/options/${optionId}`, { method: "DELETE" }),
     onSuccess: () => {
-      toast.success(MSG.POLL_OPTION_DELETED);
+      toast.success(tm("pollOptionDeleted"));
       invalidate();
       onMutate();
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, MSG.POLL_OPTION_DELETE_FAILED)),
+    onError: (err) => toast.error(getApiErrorMessage(err, tm("pollOptionDeleteFailed"))),
   });
 
   const deleteSelectedMutation = useMutation({
     mutationFn: (ids: string[]) =>
       Promise.all(ids.map((id) => api(`/api/polls/${pollId}/options/${id}`, { method: "DELETE" }))),
     onSuccess: () => {
-      toast.success(MSG.POLL_OPTION_DELETED);
+      toast.success(tm("pollOptionDeleted"));
       invalidate();
       onMutate();
       setSelectionMode(false);
@@ -215,7 +219,7 @@ export function PollTab({
     },
     onError: (err) => {
       invalidate();
-      toast.error(getApiErrorMessage(err, MSG.POLL_OPTION_DELETE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("pollOptionDeleteFailed")));
     },
   });
 
@@ -226,14 +230,14 @@ export function PollTab({
         body: JSON.stringify({ optionId }),
       }),
     onSuccess: async () => {
-      toast.success(MSG.POLL_CONFIRMED);
+      toast.success(tm("pollConfirmed"));
       invalidate();
       await onMutate();
       // Trip status changes from "scheduling" to "draft", so invalidate the home list
       await queryClient.invalidateQueries({ queryKey: queryKeys.trips.all });
       onConfirmed?.();
     },
-    onError: (err) => toast.error(getApiErrorMessage(err, MSG.POLL_CONFIRM_FAILED)),
+    onError: (err) => toast.error(getApiErrorMessage(err, tm("pollConfirmFailed"))),
   });
 
   function handleSetResponse(optionId: string, value: PollResponseValue) {
@@ -299,7 +303,7 @@ export function PollTab({
               <Textarea
                 value={memo.text}
                 onChange={(e) => memo.setText(e.target.value)}
-                placeholder="メモを入力..."
+                placeholder={tsch("memoPlaceholder")}
                 maxLength={POLL_NOTE_MAX_LENGTH}
                 rows={3}
                 className="resize-none text-sm"
@@ -316,11 +320,11 @@ export function PollTab({
                     onClick={memo.cancelEdit}
                     disabled={memo.saving}
                   >
-                    キャンセル
+                    {tc("cancel")}
                   </Button>
                   <Button size="sm" onClick={memo.save} disabled={memo.saving}>
                     <Check className="h-3.5 w-3.5" />
-                    {memo.saving ? "保存中..." : "保存"}
+                    {memo.saving ? tsch("memoSaving") : tsch("memoSave")}
                   </Button>
                 </div>
               </div>
@@ -340,7 +344,7 @@ export function PollTab({
               )}
             >
               <MessageSquare className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-              <span className="whitespace-pre-wrap">{poll.note || "メモを追加"}</span>
+              <span className="whitespace-pre-wrap">{poll.note || tsch("memoAdd")}</span>
             </button>
           )}
         </div>
@@ -370,7 +374,9 @@ export function PollTab({
               >
                 <X className="h-3.5 w-3.5" />
               </Button>
-              <span className="text-xs font-medium">{selectedOptionIds.size}件選択中</span>
+              <span className="text-xs font-medium">
+                {tc("selectedCount", { count: selectedOptionIds.size })}
+              </span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -384,7 +390,9 @@ export function PollTab({
                 }}
                 disabled={deleteSelectedMutation.isPending}
               >
-                {selectedOptionIds.size === poll.options.length ? "全解除" : "全選択"}
+                {selectedOptionIds.size === poll.options.length
+                  ? tc("deselectAll")
+                  : tc("selectAll")}
               </Button>
               <div className="ml-auto flex items-center gap-1">
                 <Button
@@ -395,7 +403,7 @@ export function PollTab({
                   disabled={selectedOptionIds.size === 0 || deleteSelectedMutation.isPending}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  削除
+                  {tc("delete")}
                 </Button>
               </div>
             </div>
@@ -409,30 +417,30 @@ export function PollTab({
                   onClick={() => setSelectionMode(true)}
                 >
                   <SquareMousePointer className="h-4 w-4" />
-                  選択
+                  {tp("selectMode")}
                 </Button>
                 <Button size="sm" className="flex-1" onClick={() => setShowConfirmSelect(true)}>
                   <Check className="h-4 w-4" />
-                  確定
+                  {tp("confirm")}
                 </Button>
               </div>
             ) : null
           ) : (
             <>
-              <h3 className="text-sm font-semibold">回答状況</h3>
+              <h3 className="text-sm font-semibold">{tp("responseStatus")}</h3>
               {isOwner && isOpen && (
                 <div className="ml-auto flex gap-2">
                   <Button variant="outline" size="sm" onClick={() => setSelectionMode(true)}>
                     <SquareMousePointer className="h-4 w-4" />
-                    選択
+                    {tp("selectMode")}
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => setShowAddOption(true)}>
                     <Plus className="h-4 w-4" />
-                    日程案追加
+                    {tp("addOptionButton")}
                   </Button>
                   <Button size="sm" onClick={() => setShowConfirmSelect(true)}>
                     <Check className="h-4 w-4" />
-                    確定
+                    {tp("confirm")}
                   </Button>
                 </div>
               )}
@@ -478,7 +486,7 @@ export function PollTab({
                         variant="outline"
                         className="border-blue-300 px-1 py-0 text-[10px] text-blue-600 dark:border-blue-700 dark:text-blue-400"
                       >
-                        確定
+                        {tp("confirmed")}
                       </Badge>
                     )}
                   </div>
@@ -504,7 +512,7 @@ export function PollTab({
                       variant="ghost"
                       size="icon"
                       className="h-6 w-6 shrink-0 text-muted-foreground hover:text-destructive"
-                      aria-label="日程案を削除"
+                      aria-label={tp("deleteOptionLabel")}
                       onClick={() => setDeleteOptionId(opt.id)}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -525,7 +533,11 @@ export function PollTab({
                           type="button"
                           aria-pressed={isActive}
                           aria-label={
-                            value === "ok" ? "参加可能" : value === "maybe" ? "未定" : "参加不可"
+                            value === "ok"
+                              ? tp("responseOk")
+                              : value === "maybe"
+                                ? tp("responseMaybe")
+                                : tp("responseNg")
                           }
                           className={`flex h-8 flex-1 items-center justify-center rounded border transition-colors ${
                             isActive
@@ -558,10 +570,8 @@ export function PollTab({
       >
         <ResponsiveDialogContent className="sm:max-w-2xl">
           <ResponsiveDialogHeader>
-            <ResponsiveDialogTitle>日程案を追加</ResponsiveDialogTitle>
-            <ResponsiveDialogDescription>
-              カレンダーで日付範囲を選択してください
-            </ResponsiveDialogDescription>
+            <ResponsiveDialogTitle>{tp("addOptionTitle")}</ResponsiveDialogTitle>
+            <ResponsiveDialogDescription>{tp("addOptionDescription")}</ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
           <div className="flex flex-col items-center">
             <CalendarNav
@@ -587,7 +597,7 @@ export function PollTab({
             <ResponsiveDialogClose asChild>
               <Button variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button
@@ -595,7 +605,7 @@ export function PollTab({
               disabled={!pendingRange?.from || addOptionMutation.isPending}
             >
               <Plus className="h-4 w-4" />
-              {addOptionMutation.isPending ? "追加中..." : "追加"}
+              {addOptionMutation.isPending ? tsch("adding") : tp("addOption")}
             </Button>
           </ResponsiveDialogFooter>
         </ResponsiveDialogContent>
@@ -605,8 +615,8 @@ export function PollTab({
       <Dialog open={showConfirmSelect} onOpenChange={setShowConfirmSelect}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>日程を確定</DialogTitle>
-            <DialogDescription>確定する日程案を選択してください</DialogDescription>
+            <DialogTitle>{tp("confirmTitle")}</DialogTitle>
+            <DialogDescription>{tp("confirmDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
             {poll.options.map((opt) => {
@@ -658,9 +668,9 @@ export function PollTab({
       >
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>日程を確定</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogTitle>{tp("confirmDialogTitle")}</ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              この日程で確定しますか？旅行の日程が更新されます。
+              {tp("confirmDialogDescription")}
               {(() => {
                 const opt = poll.options.find((o) => o.id === confirmOptionId);
                 return opt ? (
@@ -674,7 +684,7 @@ export function PollTab({
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogAction
               disabled={confirmMutation.isPending}
@@ -683,7 +693,7 @@ export function PollTab({
                 setConfirmOptionId(null);
               }}
             >
-              {confirmMutation.isPending ? "確定中..." : "確定する"}
+              {confirmMutation.isPending ? tp("confirming") : tp("confirmButton")}
             </ResponsiveAlertDialogAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>
@@ -696,9 +706,9 @@ export function PollTab({
       >
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>日程案を削除</ResponsiveAlertDialogTitle>
+            <ResponsiveAlertDialogTitle>{tp("deleteOptionTitle")}</ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              この日程案を削除しますか？回答も全て削除されます。
+              {tp("deleteOptionDescription")}
               {(() => {
                 const opt = poll.options.find((o) => o.id === deleteOptionId);
                 return opt ? (
@@ -712,7 +722,7 @@ export function PollTab({
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               disabled={deleteOptionMutation.isPending}
@@ -722,7 +732,7 @@ export function PollTab({
               }}
             >
               <Trash2 className="h-4 w-4" />
-              {deleteOptionMutation.isPending ? "削除中..." : "削除する"}
+              {deleteOptionMutation.isPending ? tp("deleting") : tp("deleteButton")}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>
@@ -736,16 +746,16 @@ export function PollTab({
         <ResponsiveAlertDialogContent>
           <ResponsiveAlertDialogHeader>
             <ResponsiveAlertDialogTitle>
-              {selectedOptionIds.size}件の日程案を削除しますか？
+              {tp("deleteSelectedTitle", { count: selectedOptionIds.size })}
             </ResponsiveAlertDialogTitle>
             <ResponsiveAlertDialogDescription>
-              選択した日程案と回答が削除されます。この操作は取り消せません。
+              {tp("deleteSelectedDescription")}
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
             <ResponsiveAlertDialogCancel>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction
               onClick={() => {
@@ -754,7 +764,7 @@ export function PollTab({
               }}
             >
               <Trash2 className="h-4 w-4" />
-              削除する
+              {tp("deleteButton")}
             </ResponsiveAlertDialogDestructiveAction>
           </ResponsiveAlertDialogFooter>
         </ResponsiveAlertDialogContent>

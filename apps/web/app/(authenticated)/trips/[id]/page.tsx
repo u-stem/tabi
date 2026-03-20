@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -51,7 +52,6 @@ import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
 import { isDialogOpen } from "@/lib/hotkeys";
 import { CATEGORY_ICONS } from "@/lib/icons";
-import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
@@ -211,14 +211,15 @@ type MobileContentTab =
   | "souvenirs"
   | "map";
 
-const MOBILE_SWIPE_TABS = [
-  { id: "schedule" as const, label: "予定" },
-  { id: "candidates" as const, label: "候補" },
-  { id: "expenses" as const, label: "費用" },
-  { id: "souvenirs" as const, label: "お土産" },
-];
+// Labels assigned dynamically via useTranslations in TripDetailPage
+const MOBILE_SWIPE_TAB_IDS = ["schedule", "candidates", "expenses", "souvenirs"] as const;
 
 export default function TripDetailPage() {
+  const tm = useTranslations("messages");
+  const tsch = useTranslations("schedule");
+  const te = useTranslations("expense");
+  const ts = useTranslations("souvenir");
+  const tp = useTranslations("poll");
   const params = useParams();
   const tripId = params.id as string;
   const online = useOnlineStatus();
@@ -534,10 +535,10 @@ export default function TripDetailPage() {
           method: "POST",
           body: JSON.stringify({ tripId, scheduleIds: saveToBookmarkIds }),
         });
-        toast.success(MSG.SCHEDULE_SAVED_TO_BOOKMARKS(saveToBookmarkIds.length));
+        toast.success(tm("scheduleSavedToBookmarks", { count: saveToBookmarkIds.length }));
         queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all });
       } catch (err) {
-        toast.error(getApiErrorMessage(err, MSG.SCHEDULE_SAVE_TO_BOOKMARKS_FAILED));
+        toast.error(getApiErrorMessage(err, tm("scheduleSaveToBookmarksFailed")));
       }
     },
     [tripId, saveToBookmarkIds, queryClient],
@@ -649,13 +650,17 @@ export default function TripDetailPage() {
   const isGuest = isGuestUser(session);
 
   const scheduleLimitReached = (trip?.scheduleCount ?? 0) >= MAX_SCHEDULES_PER_TRIP;
-  const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
+  const scheduleLimitMessage = tm("limitSchedules", { max: MAX_SCHEDULES_PER_TRIP });
   const selectionValue = { ...selection, canEnter: canEdit && online };
 
-  const mobileTripTabs = MOBILE_SWIPE_TABS.map((t) =>
+  const mobileSwipeTabs = MOBILE_SWIPE_TAB_IDS.map((id) => ({
+    id,
+    label: tsch(id),
+  }));
+  const mobileTripTabs = mobileSwipeTabs.map((t) =>
     t.id === "candidates" ? { ...t, badge: dnd.localCandidates.length } : t,
   );
-  const isSwipableTab = MOBILE_SWIPE_TABS.some((t) => t.id === mobileTab);
+  const isSwipableTab = MOBILE_SWIPE_TAB_IDS.some((id) => id === mobileTab);
 
   // Capture narrowed trip for use in renderTabContent closure
   const tripData = trip;
@@ -741,9 +746,9 @@ export default function TripDetailPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
+                <p className="text-lg font-medium">{tm("schedulingStatusTitle")}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {MSG.SCHEDULING_STATUS_DESCRIPTION}
+                  {tm("schedulingStatusDescription")}
                 </p>
               </div>
             )}
@@ -771,9 +776,7 @@ export default function TripDetailPage() {
           </div>
         ) : (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            {tripData.days.length > 0
-              ? "日タブを選択すると候補を追加できます"
-              : "日程が確定すると候補を追加できます"}
+            {tsch("schedulesNotAvailable", { feature: tsch("candidates") })}
           </p>
         );
       case "expenses":
@@ -826,7 +829,7 @@ export default function TripDetailPage() {
       skeleton={<TripDetailSkeleton />}
     >
       {queryError || !trip ? (
-        <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+        <p className="text-destructive">{tm("tripFetchFailed")}</p>
       ) : (
         <MapsProvider enabled={trip.mapsEnabled}>
           <SelectionProvider value={selectionValue}>
@@ -973,9 +976,9 @@ export default function TripDetailPage() {
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-16 text-center">
-                        <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
+                        <p className="text-lg font-medium">{tm("schedulingStatusTitle")}</p>
                         <p className="mt-1 text-sm text-muted-foreground">
-                          {MSG.SCHEDULING_STATUS_DESCRIPTION}
+                          {tm("schedulingStatusDescription")}
                         </p>
                       </div>
                     )}
@@ -1055,13 +1058,13 @@ export default function TripDetailPage() {
                 label={
                   mobileTab === "schedule"
                     ? selectedDay === -1
-                      ? "日程案追加"
-                      : "予定を追加"
+                      ? tp("addOptionButton")
+                      : tsch("addSchedule")
                     : mobileTab === "candidates"
-                      ? "候補を追加"
+                      ? tsch("addCandidate")
                       : mobileTab === "expenses"
-                        ? "費用を追加"
-                        : "お土産を追加"
+                        ? te("addTitle")
+                        : ts("addSouvenir")
                 }
                 hidden={
                   !canEdit ||

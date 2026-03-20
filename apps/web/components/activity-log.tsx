@@ -9,12 +9,12 @@ import {
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRightLeft, Check, Copy, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { MAX_LOGS_PER_TRIP } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
@@ -77,63 +77,20 @@ const DEFAULT_STYLE: ActionStyle = {
   color: "bg-muted text-muted-foreground",
 };
 
-// Action verb templates: {name} is replaced with styled entity name
-const ACTION_TEMPLATES: Record<string, Record<string, string>> = {
-  trip: {
-    created: "旅行{name}を作成",
-    updated: "旅行{name}を更新",
-    duplicated: "旅行{name}を複製",
-  },
-  schedule: {
-    created: "予定{name}を追加",
-    updated: "予定{name}を更新",
-    deleted: "予定{name}を削除",
-    duplicated: "予定{name}を複製",
-    unassigned: "予定{name}を候補に戻す",
-  },
-  candidate: {
-    created: "候補{name}を追加",
-    updated: "候補{name}を更新",
-    deleted: "候補{name}を削除",
-    duplicated: "候補{name}を複製",
-    assigned: "候補{name}を予定に追加",
-  },
-  pattern: {
-    created: "パターン{name}を追加",
-    updated: "パターン{name}を更新",
-    deleted: "パターン{name}を削除",
-    duplicated: "パターン{name}を複製",
-  },
-  member: {
-    created: "メンバー{name}を追加",
-    deleted: "メンバー{name}を削除",
-    role_changed: "{name}のロールを変更",
-  },
-  day_memo: {
-    updated: "日程メモを更新",
-  },
-  day_weather: {
-    updated: "天気を更新",
-  },
-  expense: {
-    created: "費用{name}を追加",
-    updated: "費用{name}を更新",
-    deleted: "費用{name}を削除",
-  },
-  poll: {
-    created: "日程調整を開始",
-    option_added: "日程案{name}を追加",
-    option_deleted: "日程案{name}を削除",
-    confirmed: "日程{name}を確定",
-  },
-  chat_session: {
-    created: "作戦会議を開始",
-    deleted: "作戦会議を終了",
-  },
-  settlement: {
-    settle: "精算{name}をチェック",
-    unsettle: "精算{name}のチェックを解除",
-  },
+// Namespace mapping for activity log templates in ja.json
+// entity types map to activity.* sub-namespaces
+const ACTIVITY_NAMESPACE_MAP: Record<string, string> = {
+  trip: "trip",
+  schedule: "schedule",
+  candidate: "candidate",
+  pattern: "pattern",
+  member: "member",
+  day_memo: "day_memo",
+  day_weather: "day_weather",
+  expense: "expenseLog",
+  poll: "pollLog",
+  chat_session: "chat_session",
+  settlement: "settlementLog",
 };
 
 type ActionParts = {
@@ -152,47 +109,64 @@ function translateDetail(detail: string): string {
   return detail.replace(/\b(owner|editor|viewer)\b/g, (match) => translateRole(match));
 }
 
-function parseAction(log: ActivityLogResponse): ActionParts {
-  const template =
-    ACTION_TEMPLATES[log.entityType]?.[log.action] ?? `${log.entityType}を${log.action}`;
+function parseAction(
+  log: ActivityLogResponse,
+  ta: (key: string, params?: Record<string, string>) => string,
+): ActionParts {
+  const ns = ACTIVITY_NAMESPACE_MAP[log.entityType];
+  const key = ns ? `${ns}.${log.action}` : null;
   const name = log.entityName ? `「${log.entityName}」` : "";
   const detail = log.detail ? `(${translateDetail(log.detail)})` : null;
 
-  if (template.includes("{name}")) {
-    const [before, after] = template.split("{name}");
+  if (key) {
+    const template = ta(key, { name: "__NAME__" });
+    if (template.includes("__NAME__")) {
+      const [before, after] = template.split("__NAME__");
+      return {
+        before,
+        entityName: log.entityName ? name : null,
+        after,
+        detail,
+      };
+    }
     return {
-      before,
-      entityName: log.entityName ? name : null,
-      after,
+      before: template,
+      entityName: log.entityName ? ` ${name}` : null,
+      after: "",
       detail,
     };
   }
 
   return {
-    before: template,
+    before: `${log.entityType} ${log.action}`,
     entityName: log.entityName ? ` ${name}` : null,
     after: "",
     detail,
   };
 }
 
-function formatRelativeTime(dateStr: string): string {
+function formatRelativeTime(
+  dateStr: string,
+  ta: (key: string, params?: Record<string, number>) => string,
+): string {
   const now = Date.now();
   const diff = now - new Date(dateStr).getTime();
   const seconds = Math.floor(diff / 1000);
 
-  if (seconds < 60) return "たった今";
+  if (seconds < 60) return ta("justNow");
   const minutes = Math.floor(seconds / 60);
-  if (minutes < 60) return `${minutes}分前`;
+  if (minutes < 60) return ta("minutesAgo", { count: minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}時間前`;
+  if (hours < 24) return ta("hoursAgo", { count: hours });
   const days = Math.floor(hours / 24);
-  if (days < 30) return `${days}日前`;
+  if (days < 30) return ta("daysAgo", { count: days });
   const months = Math.floor(days / 30);
-  return `${months}ヶ月前`;
+  return ta("monthsAgo", { count: months });
 }
 
 export function ActivityLog({ tripId }: ActivityLogProps) {
+  const tm = useTranslations("messages");
+  const ta = useTranslations("activity");
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, isError } =
     useInfiniteQuery({
       queryKey: queryKeys.trips.activityLogs(tripId),
@@ -228,15 +202,18 @@ export function ActivityLog({ tripId }: ActivityLogProps) {
       }
     >
       {isError ? (
-        <p className="py-4 text-center text-sm text-destructive">{MSG.ACTIVITY_LOG_FETCH_FAILED}</p>
+        <p className="py-4 text-center text-sm text-destructive">{tm("activityLogFetchFailed")}</p>
       ) : logs.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">{MSG.ACTIVITY_LOG_EMPTY}</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{tm("activityLogEmpty")}</p>
       ) : (
         <div className="space-y-0">
           {logs.map((log) => {
             const style = ACTION_STYLES[log.action] ?? DEFAULT_STYLE;
             const Icon = style.icon;
-            const parts = parseAction(log);
+            const parts = parseAction(
+              log,
+              ta as (key: string, params?: Record<string, string>) => string,
+            );
 
             return (
               <div key={log.id} className="flex gap-3 py-2">
@@ -260,7 +237,10 @@ export function ActivityLog({ tripId }: ActivityLogProps) {
                       {parts.detail && <span className="ml-1">{parts.detail}</span>}
                     </span>
                     <span className="ml-2 text-xs text-muted-foreground/60">
-                      {formatRelativeTime(log.createdAt)}
+                      {formatRelativeTime(
+                        log.createdAt,
+                        ta as (key: string, params?: Record<string, number>) => string,
+                      )}
                     </span>
                   </p>
                 </div>
@@ -278,10 +258,10 @@ export function ActivityLog({ tripId }: ActivityLogProps) {
                 {isFetchingNextPage ? (
                   <>
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    読み込み中...
+                    {ta("loading")}
                   </>
                 ) : (
-                  "さらに読み込む"
+                  ta("loadMore")
                 )}
               </Button>
             </div>

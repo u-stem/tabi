@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Share2, Trash2, XCircle } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { toast } from "sonner";
@@ -16,7 +17,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
 import { isDialogOpen } from "@/lib/hotkeys";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { useRegisterShortcuts, useShortcutHelp } from "@/lib/shortcut-help-context";
 
@@ -61,6 +61,9 @@ function PollsSkeleton() {
 }
 
 export default function PollsPage() {
+  const tm = useTranslations("messages");
+  const tp = useTranslations("poll");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [shareDialogToken, setShareDialogToken] = useState<string | null>(null);
@@ -69,8 +72,8 @@ export default function PollsPage() {
   const shortcuts: ShortcutGroup[] = useMemo(
     () => [
       {
-        group: "全般",
-        items: [{ key: "n", description: "新規作成" }],
+        group: tp("shortcutGeneral"),
+        items: [{ key: "n", description: tp("newPoll") }],
       },
     ],
     [],
@@ -78,7 +81,7 @@ export default function PollsPage() {
   useRegisterShortcuts(shortcuts);
 
   useEffect(() => {
-    document.title = pageTitle("かんたん投票");
+    document.title = pageTitle(tp("pageTitle"));
   }, []);
 
   useHotkeys("?", () => openShortcutHelp(), { useKey: true, preventDefault: true });
@@ -103,18 +106,18 @@ export default function PollsPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.list() });
-      toast.success(MSG.QUICK_POLL_CLOSED);
+      toast.success(tm("quickPollClosed"));
     },
-    onError: () => toast.error(MSG.QUICK_POLL_CLOSE_FAILED),
+    onError: () => toast.error(tm("quickPollCloseFailed")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/api/quick-polls/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.list() });
-      toast.success(MSG.QUICK_POLL_DELETED);
+      toast.success(tm("quickPollDeleted"));
     },
-    onError: () => toast.error(MSG.QUICK_POLL_DELETE_FAILED),
+    onError: () => toast.error(tm("quickPollDeleteFailed")),
   });
 
   function invalidateList() {
@@ -131,12 +134,12 @@ export default function PollsPage() {
         <div className="flex items-center justify-end">
           <Button size="sm" onClick={() => setCreateDialogOpen(true)}>
             <Plus className="h-4 w-4" />
-            新規作成
+            {tp("newPoll")}
             <span className="hidden text-xs text-muted-foreground lg:inline">(N)</span>
           </Button>
         </div>
         {!polls?.length ? (
-          <EmptyState message={MSG.EMPTY_QUICK_POLL} variant="page" />
+          <EmptyState message={tm("emptyQuickPoll")} variant="page" />
         ) : (
           <div className="mt-4 space-y-3">
             {polls.map((poll) => (
@@ -148,7 +151,9 @@ export default function PollsPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{poll.question}</p>
-                    <p className="text-xs text-muted-foreground">{poll.totalVotes}票</p>
+                    <p className="text-xs text-muted-foreground">
+                      {tp("votesCount", { count: poll.totalVotes })}
+                    </p>
                   </div>
                   <div
                     className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
@@ -157,7 +162,7 @@ export default function PollsPage() {
                         : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                     }`}
                   >
-                    {poll.status === "open" ? "受付中" : "終了"}
+                    {poll.status === "open" ? tp("statusOpen") : tp("statusClosed")}
                   </div>
                 </div>
 
@@ -171,7 +176,7 @@ export default function PollsPage() {
                     }}
                   >
                     <Share2 className="mr-1 h-3.5 w-3.5" />
-                    共有
+                    {tp("share")}
                   </Button>
                   {poll.status === "open" && (
                     <Button
@@ -184,7 +189,7 @@ export default function PollsPage() {
                       disabled={closeMutation.isPending}
                     >
                       <XCircle className="mr-1 h-3.5 w-3.5" />
-                      終了
+                      {tp("close")}
                     </Button>
                   )}
                   <Button
@@ -198,7 +203,7 @@ export default function PollsPage() {
                     disabled={deleteMutation.isPending}
                   >
                     <Trash2 className="mr-1 h-3.5 w-3.5" />
-                    削除
+                    {tc("delete")}
                   </Button>
                 </div>
               </Link>

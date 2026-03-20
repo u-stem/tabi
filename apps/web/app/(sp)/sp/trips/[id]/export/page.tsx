@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CheckCheck, Download, X } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,6 @@ import {
   type PatternMode,
 } from "@/lib/export";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
@@ -96,6 +96,7 @@ function ExportSkeleton() {
 }
 
 export default function SpTripExportPage() {
+  const tm = useTranslations("messages");
   const params = useParams();
   const tripId = typeof params.id === "string" ? params.id : null;
 
@@ -276,9 +277,9 @@ export default function SpTripExportPage() {
         fileName: fileName.trim() || undefined,
         csvOptions: format === "csv" ? { delimiter, bom, lineEnding } : undefined,
       });
-      toast.success(MSG.EXPORT_SUCCESS);
+      toast.success(tm("exportSuccess"));
     } catch {
-      toast.error(MSG.EXPORT_FAILED);
+      toast.error(tm("exportFailed"));
     } finally {
       setExporting(false);
     }
@@ -288,7 +289,7 @@ export default function SpTripExportPage() {
     <LoadingBoundary isLoading={isLoading} skeleton={<ExportSkeleton />}>
       {error || !trip ? (
         <div className="flex min-h-[50vh] items-center justify-center">
-          <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+          <p className="text-destructive">{tm("tripFetchFailed")}</p>
         </div>
       ) : (
         <div className="px-4 pt-4 pb-24 space-y-6">
@@ -619,7 +620,7 @@ export default function SpTripExportPage() {
                   </>
                 ) : (
                   <p className="px-3 py-8 text-center text-sm text-muted-foreground">
-                    {MSG.EMPTY_EXPORT_SHEET}
+                    {tm("emptyExportSheet")}
                   </p>
                 )}
               </div>

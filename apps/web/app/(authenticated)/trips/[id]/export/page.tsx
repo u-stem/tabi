@@ -5,6 +5,7 @@ import { EXPENSE_CATEGORY_LABELS } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCheck, Download, X } from "lucide-react";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -41,7 +42,6 @@ import {
   type PatternMode,
 } from "@/lib/export";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { cn } from "@/lib/utils";
 
@@ -137,6 +137,8 @@ function ExportSkeleton() {
 }
 
 export default function TripExportPage() {
+  const tm = useTranslations("messages");
+  const tex = useTranslations("export");
   const params = useParams();
   const tripId = typeof params.id === "string" ? params.id : null;
 
@@ -320,9 +322,9 @@ export default function TripExportPage() {
         fileName: fileName.trim() || undefined,
         csvOptions: format === "csv" ? { delimiter, bom, lineEnding } : undefined,
       });
-      toast.success(MSG.EXPORT_SUCCESS);
+      toast.success(tm("exportSuccess"));
     } catch {
-      toast.error(MSG.EXPORT_FAILED);
+      toast.error(tm("exportFailed"));
     } finally {
       setExporting(false);
     }
@@ -332,7 +334,7 @@ export default function TripExportPage() {
     <LoadingBoundary isLoading={isLoading} skeleton={<ExportSkeleton />}>
       {error || !trip ? (
         <div className="flex min-h-[50vh] items-center justify-center">
-          <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+          <p className="text-destructive">{tm("tripFetchFailed")}</p>
         </div>
       ) : (
         <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
@@ -670,7 +672,7 @@ export default function TripExportPage() {
                   <p className="px-3 py-8 text-center text-sm text-muted-foreground">
                     {effectiveFields.length === 0
                       ? "出力する列を選択するとプレビューが表示されます"
-                      : MSG.EMPTY_EXPORT_SHEET}
+                      : tm("emptyExportSheet")}
                   </p>
                 )}
               </div>

@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
+import { useTranslations } from "next-intl";
 import { Collapsible as CollapsiblePrimitive } from "radix-ui";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -64,7 +65,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { api, getApiErrorMessage } from "@/lib/api";
 import { SELECTED_RING } from "@/lib/colors";
 import { isSafeUrl, stripProtocol } from "@/lib/format";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 import { buildMapsSearchUrl } from "@/lib/transport-link";
 import { cn } from "@/lib/utils";
@@ -78,6 +78,9 @@ type SouvenirPanelProps = {
 };
 
 export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPanelProps) {
+  const tm = useTranslations("messages");
+  const ts = useTranslations("souvenir");
+  const tc = useTranslations("common");
   const isMobile = useMobile();
   const { data: session } = useSession();
   const currentUserId = session?.user?.id;
@@ -108,7 +111,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
       queryClient.invalidateQueries({ queryKey: queryKeys.souvenirs.list(tripId) });
     },
     onError: (err) => {
-      toast.error(getApiErrorMessage(err, MSG.SOUVENIR_SAVE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("souvenirSaveFailed")));
     },
   });
 
@@ -119,7 +122,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
       setDeleteTarget(null);
     },
     onError: (err) => {
-      toast.error(getApiErrorMessage(err, MSG.SOUVENIR_DELETE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("souvenirDeleteFailed")));
     },
   });
 
@@ -135,7 +138,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
       setBulkDeleteOpen(false);
     },
     onError: (err) => {
-      toast.error(getApiErrorMessage(err, MSG.SOUVENIR_DELETE_FAILED));
+      toast.error(getApiErrorMessage(err, tm("souvenirDeleteFailed")));
     },
   });
 
@@ -187,7 +190,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
       skeleton={<Skeleton className="min-h-24 w-full rounded-md" />}
     >
       {isError ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">読み込みに失敗しました</p>
+        <p className="py-8 text-center text-sm text-muted-foreground">{ts("fetchFailed")}</p>
       ) : (
         <div>
           {selectMode ? (
@@ -195,7 +198,9 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
               <Button variant="ghost" size="icon" className="h-8 w-8" onClick={exitSelectMode}>
                 <X className="h-3.5 w-3.5" />
               </Button>
-              <span className="text-xs font-medium">{selectedCount}件選択中</span>
+              <span className="text-xs font-medium">
+                {tc("selectedCount", { count: selectedCount })}
+              </span>
               <Button
                 variant="ghost"
                 size="sm"
@@ -206,7 +211,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
                     : setSelectedIds(new Set(ownItems.map((i) => i.id)))
                 }
               >
-                {selectedCount === ownItems.length ? "全解除" : "全選択"}
+                {selectedCount === ownItems.length ? tc("deselectAll") : tc("selectAll")}
               </Button>
               <div className="ml-auto">
                 <Button
@@ -217,7 +222,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
                   onClick={() => setBulkDeleteOpen(true)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                  削除
+                  {tc("delete")}
                 </Button>
               </div>
             </div>
@@ -231,12 +236,12 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
                     className={cn(isMobile && "flex-1 h-9")}
                     aria-pressed={sortBy === "priority"}
                     aria-label={
-                      sortBy === "priority" ? "作成順に切り替える" : "優先度順に切り替える"
+                      sortBy === "priority" ? ts("switchToCreated") : ts("switchToPriority")
                     }
                     onClick={() => setSortBy(sortBy === "priority" ? "created" : "priority")}
                   >
                     <ArrowUpDown className="h-4 w-4" />
-                    {sortBy === "priority" ? "優先度順" : "作成順"}
+                    {sortBy === "priority" ? ts("sortPriority") : ts("sortCreated")}
                   </Button>
                   <Button
                     variant="outline"
@@ -245,7 +250,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
                     onClick={() => setSelectMode(true)}
                   >
                     <SquareMousePointer className="h-4 w-4" />
-                    選択
+                    {tc("select")}
                   </Button>
                 </>
               )}
@@ -257,7 +262,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
                   onClick={() => setDialogOpen(true)}
                 >
                   <Plus className="h-4 w-4" />
-                  お土産を追加
+                  {ts("addSouvenir")}
                   <span className="hidden text-xs text-muted-foreground lg:inline">(S)</span>
                 </Button>
               )}
@@ -265,7 +270,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
           )}
 
           {items.length === 0 ? (
-            <EmptyState message={MSG.EMPTY_SOUVENIR} variant="box" />
+            <EmptyState message={tm("emptySouvenir")} variant="box" />
           ) : (
             <div>
               {remaining.length > 0 && (
@@ -302,7 +307,7 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
                     className="flex w-full items-center gap-1 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/80 disabled:pointer-events-none [&[data-state=open]>svg]:rotate-180"
                   >
                     <ChevronDown className="h-3 w-3 transition-transform duration-200" />
-                    購入済み ({purchased.length}件)
+                    {ts("purchased", { count: purchased.length })}
                   </CollapsiblePrimitive.Trigger>
                   <CollapsiblePrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down overflow-hidden">
                     <div className="space-y-1 border-t p-2">
@@ -349,21 +354,21 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
           >
             <ResponsiveAlertDialogContent>
               <ResponsiveAlertDialogHeader>
-                <ResponsiveAlertDialogTitle>削除しますか？</ResponsiveAlertDialogTitle>
+                <ResponsiveAlertDialogTitle>{ts("deleteTitle")}</ResponsiveAlertDialogTitle>
                 <ResponsiveAlertDialogDescription>
-                  「{deleteTarget?.name}」を削除します。この操作は取り消せません。
+                  {ts("deleteDescription", { name: deleteTarget?.name ?? "" })}
                 </ResponsiveAlertDialogDescription>
               </ResponsiveAlertDialogHeader>
               <ResponsiveAlertDialogFooter>
                 <ResponsiveAlertDialogCancel>
                   <X className="h-4 w-4" />
-                  キャンセル
+                  {tc("cancel")}
                 </ResponsiveAlertDialogCancel>
                 <ResponsiveAlertDialogDestructiveAction
                   onClick={() => deleteTarget && deleteMutation.mutate(deleteTarget.id)}
                   disabled={deleteMutation.isPending}
                 >
-                  削除する
+                  {tc("deletConfirm")}
                 </ResponsiveAlertDialogDestructiveAction>
               </ResponsiveAlertDialogFooter>
             </ResponsiveAlertDialogContent>
@@ -375,21 +380,21 @@ export function SouvenirPanel({ tripId, addOpen, onAddOpenChange }: SouvenirPane
           >
             <ResponsiveAlertDialogContent>
               <ResponsiveAlertDialogHeader>
-                <ResponsiveAlertDialogTitle>まとめて削除しますか？</ResponsiveAlertDialogTitle>
+                <ResponsiveAlertDialogTitle>{ts("bulkDeleteTitle")}</ResponsiveAlertDialogTitle>
                 <ResponsiveAlertDialogDescription>
-                  選択した{selectedCount}件を削除します。この操作は取り消せません。
+                  {ts("bulkDeleteDescription", { count: selectedCount })}
                 </ResponsiveAlertDialogDescription>
               </ResponsiveAlertDialogHeader>
               <ResponsiveAlertDialogFooter>
                 <ResponsiveAlertDialogCancel>
                   <X className="h-4 w-4" />
-                  キャンセル
+                  {tc("cancel")}
                 </ResponsiveAlertDialogCancel>
                 <ResponsiveAlertDialogDestructiveAction
                   onClick={() => bulkDeleteMutation.mutate([...selectedIds])}
                   disabled={bulkDeleteMutation.isPending}
                 >
-                  削除する
+                  {tc("deletConfirm")}
                 </ResponsiveAlertDialogDestructiveAction>
               </ResponsiveAlertDialogFooter>
             </ResponsiveAlertDialogContent>
@@ -422,6 +427,8 @@ function SouvenirItemRow({
   onDelete: () => void;
 }) {
   const [sheetOpen, setSheetOpen] = useState(false);
+  const ts = useTranslations("souvenir");
+  const tc = useTranslations("common");
   return (
     <div
       className={cn(
@@ -460,7 +467,7 @@ function SouvenirItemRow({
           checked={item.isPurchased}
           onCheckedChange={(checked) => onToggle(checked === true)}
           className="shrink-0"
-          aria-label={item.isPurchased ? "購入済みを取り消す" : "購入済みにする"}
+          aria-label={item.isPurchased ? ts("unmarkPurchased") : ts("markPurchased")}
         />
       ) : null}
       <div className="min-w-0 flex-1">
@@ -565,12 +572,12 @@ function SouvenirItemRow({
               onOpenChange={setSheetOpen}
               actions={[
                 {
-                  label: "編集",
+                  label: tc("edit"),
                   icon: <Pencil className="h-4 w-4" />,
                   onClick: onEdit,
                 },
                 {
-                  label: "削除",
+                  label: tc("delete"),
                   icon: <Trash2 className="h-4 w-4" />,
                   onClick: onDelete,
                   variant: "destructive" as const,
@@ -586,14 +593,14 @@ function SouvenirItemRow({
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={onEdit}>
                 <Pencil />
-                編集
+                {tc("edit")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={onDelete}
                 className="text-destructive focus:text-destructive"
               >
                 <Trash2 />
-                削除
+                {tc("delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

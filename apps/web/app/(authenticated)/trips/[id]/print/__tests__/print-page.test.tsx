@@ -1,8 +1,10 @@
 import type { TripResponse } from "@sugara/shared";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { cleanup, render, screen } from "@testing-library/react";
+import { NextIntlClientProvider } from "next-intl";
 import type { ReactElement } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import messages from "@/messages/ja.json";
 
 const mockPush = vi.fn();
 const mockBack = vi.fn();
@@ -28,14 +30,17 @@ vi.mock("@/lib/api", () => ({
   },
 }));
 
-import { MSG } from "@/lib/messages";
 import TripPrintPage from "../page";
 
 function renderWithQuery(ui: ReactElement) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
-  return render(<QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>);
+  return render(
+    <NextIntlClientProvider locale="ja" messages={messages}>
+      <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>
+    </NextIntlClientProvider>,
+  );
 }
 
 const tripFixture: TripResponse = {
@@ -105,7 +110,7 @@ describe("TripPrintPage", () => {
 
     renderWithQuery(<TripPrintPage />);
 
-    expect(await screen.findByText(MSG.TRIP_FETCH_FAILED)).toBeDefined();
+    expect(await screen.findByText(messages.messages.tripFetchFailed)).toBeDefined();
   });
 
   it("calls window.print when auto=1 search param is set", async () => {

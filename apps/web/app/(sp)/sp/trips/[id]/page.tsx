@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { APIProvider } from "@vis.gl/react-google-maps";
 import dynamic from "next/dynamic";
 import { useParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ActivityLog } from "@/components/activity-log";
@@ -60,7 +61,6 @@ import { buildReactionUser, useReaction } from "@/lib/hooks/use-reaction";
 import { useScheduleSelection } from "@/lib/hooks/use-schedule-selection";
 import { useTripDragAndDrop } from "@/lib/hooks/use-trip-drag-and-drop";
 import { useTripSync } from "@/lib/hooks/use-trip-sync";
-import { MSG } from "@/lib/messages";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -73,14 +73,14 @@ type MobileContentTab =
   | "souvenirs"
   | "map";
 
-const SWIPE_TABS = [
-  { id: "schedule" as const, label: "予定" },
-  { id: "candidates" as const, label: "候補" },
-  { id: "expenses" as const, label: "費用" },
-  { id: "souvenirs" as const, label: "お土産" },
-];
+const SWIPE_TAB_IDS = ["schedule", "candidates", "expenses", "souvenirs"] as const;
 
 export default function SpTripDetailPage() {
+  const tm = useTranslations("messages");
+  const tsch = useTranslations("schedule");
+  const te = useTranslations("expense");
+  const ts = useTranslations("souvenir");
+  const tp = useTranslations("poll");
   const params = useParams();
   const tripId = typeof params.id === "string" ? params.id : null;
   const online = useOnlineStatus();
@@ -171,10 +171,10 @@ export default function SpTripDetailPage() {
           method: "POST",
           body: JSON.stringify({ tripId, scheduleIds: saveToBookmarkIds }),
         });
-        toast.success(MSG.SCHEDULE_SAVED_TO_BOOKMARKS(saveToBookmarkIds.length));
+        toast.success(tm("scheduleSavedToBookmarks", { count: saveToBookmarkIds.length }));
         queryClient.invalidateQueries({ queryKey: queryKeys.bookmarks.all });
       } catch (err) {
-        toast.error(getApiErrorMessage(err, MSG.SCHEDULE_SAVE_TO_BOOKMARKS_FAILED));
+        toast.error(getApiErrorMessage(err, tm("scheduleSaveToBookmarksFailed")));
       }
     },
     [tripId, saveToBookmarkIds, queryClient],
@@ -284,13 +284,17 @@ export default function SpTripDetailPage() {
   const canEdit = trip ? canEditRole(trip.role) : false;
   const isGuest = isGuestUser(session);
   const scheduleLimitReached = trip ? trip.scheduleCount >= MAX_SCHEDULES_PER_TRIP : false;
-  const scheduleLimitMessage = MSG.LIMIT_SCHEDULES;
+  const scheduleLimitMessage = tm("limitSchedules", { max: MAX_SCHEDULES_PER_TRIP });
   const selectionValue = { ...selection, canEnter: canEdit && online };
 
-  const spTripTabs = SWIPE_TABS.map((t) =>
+  const swipeTabs = SWIPE_TAB_IDS.map((id) => ({
+    id,
+    label: tsch(id),
+  }));
+  const spTripTabs = swipeTabs.map((t) =>
     t.id === "candidates" ? { ...t, badge: dnd.localCandidates.length } : t,
   );
-  const isSwipableTab = SWIPE_TABS.some((t) => t.id === mobileTab);
+  const isSwipableTab = SWIPE_TAB_IDS.some((id) => id === mobileTab);
 
   function renderTabContent(tabId: MobileContentTab) {
     if (!trip) return null;
@@ -374,9 +378,9 @@ export default function SpTripDetailPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <p className="text-lg font-medium">{MSG.SCHEDULING_STATUS_TITLE}</p>
+                <p className="text-lg font-medium">{tm("schedulingStatusTitle")}</p>
                 <p className="mt-1 text-sm text-muted-foreground">
-                  {MSG.SCHEDULING_STATUS_DESCRIPTION}
+                  {tm("schedulingStatusDescription")}
                 </p>
               </div>
             )}
@@ -510,7 +514,7 @@ export default function SpTripDetailPage() {
     <>
       <LoadingBoundary isLoading={isLoading || (!!pollId && isPollLoading)} skeleton={skeleton}>
         {queryError || !trip ? (
-          <p className="text-destructive">{MSG.TRIP_FETCH_FAILED}</p>
+          <p className="text-destructive">{tm("tripFetchFailed")}</p>
         ) : (
           <MapsProvider enabled={trip.mapsEnabled}>
             <SelectionProvider value={selectionValue}>
@@ -612,13 +616,13 @@ export default function SpTripDetailPage() {
         label={
           mobileTab === "schedule"
             ? selectedDay === -1
-              ? "日程案追加"
-              : "予定を追加"
+              ? tp("addOptionButton")
+              : tsch("addSchedule")
             : mobileTab === "candidates"
-              ? "候補を追加"
+              ? tsch("addCandidate")
               : mobileTab === "souvenirs"
-                ? "お土産を追加"
-                : "費用を追加"
+                ? ts("addSouvenir")
+                : te("addTitle")
         }
         hidden={
           !canEdit ||

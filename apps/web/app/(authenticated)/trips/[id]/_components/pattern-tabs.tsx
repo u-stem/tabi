@@ -11,6 +11,7 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { ActionSheet } from "@/components/action-sheet";
 import { PatternPickerDrawer } from "@/components/pattern-picker-drawer";
@@ -23,7 +24,6 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import type { usePatternOperations } from "@/lib/hooks/use-pattern-operations";
-import { MSG } from "@/lib/messages";
 import { cn } from "@/lib/utils";
 
 type PatternOps = ReturnType<typeof usePatternOperations>;
@@ -45,6 +45,9 @@ export function PatternTabs({
   patternOps: PatternOps;
   onSelectPattern: (dayId: string, index: number) => void;
 }) {
+  const tm = useTranslations("messages");
+  const tsch = useTranslations("schedule");
+  const tc = useTranslations("common");
   const isMobile = useMobile();
 
   if (isMobile) {
@@ -145,7 +148,7 @@ export function PatternTabs({
                 </button>
               </span>
             </TooltipTrigger>
-            <TooltipContent>{MSG.LIMIT_PATTERNS}</TooltipContent>
+            <TooltipContent>{tm("limitPatterns", { max: MAX_PATTERNS_PER_DAY })}</TooltipContent>
           </Tooltip>
         ) : (
           <button
@@ -178,6 +181,9 @@ function MobilePatternTabs({
   patternOps: PatternOps;
   onSelectPattern: (dayId: string, index: number) => void;
 }) {
+  const tm = useTranslations("messages");
+  const tsch = useTranslations("schedule");
+  const tc = useTranslations("common");
   const [pickerOpen, setPickerOpen] = useState(false);
   const [actionSheetOpen, setActionSheetOpen] = useState(false);
   const currentPattern = patterns[currentPatternIndex];
@@ -186,14 +192,14 @@ function MobilePatternTabs({
   const menuActions = currentPattern
     ? [
         {
-          label: "名前変更",
+          label: tsch("rename"),
           icon: <Pencil className="h-4 w-4" />,
           onClick: () => patternOps.rename.start(currentPattern),
         },
         ...(patterns.length < MAX_PATTERNS_PER_DAY
           ? [
               {
-                label: "複製",
+                label: tc("duplicate"),
                 icon: <Copy className="h-4 w-4" />,
                 onClick: () => patternOps.handleDuplicate(currentPattern.id),
               },
@@ -202,7 +208,7 @@ function MobilePatternTabs({
         ...(multiplePatterns
           ? [
               {
-                label: "上書き",
+                label: tsch("overwrite"),
                 icon: <ClipboardPaste className="h-4 w-4" />,
                 onClick: () => patternOps.setOverwriteSource(currentPattern),
               },
@@ -211,7 +217,7 @@ function MobilePatternTabs({
         ...(!currentPattern.isDefault
           ? [
               {
-                label: "削除",
+                label: tc("delete"),
                 icon: <Trash2 className="h-4 w-4" />,
                 onClick: () => patternOps.setDeleteTarget(currentPattern),
                 variant: "destructive" as const,
@@ -257,7 +263,7 @@ function MobilePatternTabs({
       {canEdit && online && (
         <button
           type="button"
-          aria-label="パターン追加"
+          aria-label={tsch("addPattern")}
           disabled={patterns.length >= MAX_PATTERNS_PER_DAY}
           onClick={() => patternOps.add.setOpen(true)}
           className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-dashed border-muted-foreground/30 text-muted-foreground transition-colors disabled:pointer-events-none disabled:opacity-50"

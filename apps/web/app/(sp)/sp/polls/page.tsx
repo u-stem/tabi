@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Share2, Trash2, XCircle } from "lucide-react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CreateQuickPollDialog } from "@/components/create-quick-poll-dialog";
@@ -14,7 +15,6 @@ import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type PollListItem = {
@@ -53,12 +53,15 @@ function SpPollsSkeleton() {
 }
 
 export default function SpPollsPage() {
+  const tm = useTranslations("messages");
+  const tp = useTranslations("poll");
+  const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [shareDialogToken, setShareDialogToken] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = pageTitle("かんたん投票");
+    document.title = pageTitle(tp("pageTitle"));
   }, []);
 
   const { data: polls, isLoading } = useQuery({
@@ -74,18 +77,18 @@ export default function SpPollsPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.list() });
-      toast.success(MSG.QUICK_POLL_CLOSED);
+      toast.success(tm("quickPollClosed"));
     },
-    onError: () => toast.error(MSG.QUICK_POLL_CLOSE_FAILED),
+    onError: () => toast.error(tm("quickPollCloseFailed")),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/api/quick-polls/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.list() });
-      toast.success(MSG.QUICK_POLL_DELETED);
+      toast.success(tm("quickPollDeleted"));
     },
-    onError: () => toast.error(MSG.QUICK_POLL_DELETE_FAILED),
+    onError: () => toast.error(tm("quickPollDeleteFailed")),
   });
 
   function invalidateList() {
@@ -100,7 +103,7 @@ export default function SpPollsPage() {
     <>
       <LoadingBoundary isLoading={isLoading} skeleton={<SpPollsSkeleton />}>
         {!polls?.length ? (
-          <EmptyState message={MSG.EMPTY_QUICK_POLL} variant="page" />
+          <EmptyState message={tm("emptyQuickPoll")} variant="page" />
         ) : (
           <div className="mt-4 space-y-3">
             {polls.map((poll) => (
@@ -112,7 +115,9 @@ export default function SpPollsPage() {
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <p className="font-medium">{poll.question}</p>
-                    <p className="text-xs text-muted-foreground">{poll.totalVotes}票</p>
+                    <p className="text-xs text-muted-foreground">
+                      {tp("votesCount", { count: poll.totalVotes })}
+                    </p>
                   </div>
                   <div
                     className={`shrink-0 rounded-full px-2 py-0.5 text-xs ${
@@ -121,7 +126,7 @@ export default function SpPollsPage() {
                         : "bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400"
                     }`}
                   >
-                    {poll.status === "open" ? "受付中" : "終了"}
+                    {poll.status === "open" ? tp("statusOpen") : tp("statusClosed")}
                   </div>
                 </div>
 
@@ -135,7 +140,7 @@ export default function SpPollsPage() {
                     }}
                   >
                     <Share2 className="mr-1 h-3.5 w-3.5" />
-                    共有
+                    {tp("share")}
                   </Button>
                   {poll.status === "open" && (
                     <Button
@@ -148,7 +153,7 @@ export default function SpPollsPage() {
                       disabled={closeMutation.isPending}
                     >
                       <XCircle className="mr-1 h-3.5 w-3.5" />
-                      終了
+                      {tp("close")}
                     </Button>
                   )}
                   <Button
@@ -162,7 +167,7 @@ export default function SpPollsPage() {
                     disabled={deleteMutation.isPending}
                   >
                     <Trash2 className="mr-1 h-3.5 w-3.5" />
-                    削除
+                    {tc("delete")}
                   </Button>
                 </div>
               </Link>
@@ -183,7 +188,7 @@ export default function SpPollsPage() {
         shareUrl={shareUrl}
         expiresAt={null}
       />
-      <Fab onClick={() => setCreateDialogOpen(true)} label="投票を新規作成" />
+      <Fab onClick={() => setCreateDialogOpen(true)} label={tp("createPollFab")} />
     </>
   );
 }

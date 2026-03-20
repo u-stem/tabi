@@ -5,13 +5,13 @@ import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { Calendar, Circle, MapPin, MessageSquare, Triangle, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Logo } from "@/components/logo";
 import { SharedFooter } from "@/components/shared-footer";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/lib/api";
 import { formatDateFromISO, formatDateRangeShort } from "@/lib/format";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 const RESPONSE_ICON_COMPONENTS = {
@@ -26,12 +26,17 @@ const RESPONSE_STYLES: Record<PollResponseValue, { countClassName: string }> = {
   ng: { countClassName: "text-red-600 dark:text-red-400" },
 };
 
+function SharedPollHeaderLabel() {
+  const tp = useTranslations("poll");
+  return <span className="ml-2 text-sm text-muted-foreground">{tp("schedulingHeader")}</span>;
+}
+
 function SharedPollHeader() {
   return (
     <header className="border-b">
       <div className="container flex h-14 items-center">
         <Logo href="/" />
-        <span className="ml-2 text-sm text-muted-foreground">日程調整</span>
+        <SharedPollHeaderLabel />
       </div>
     </header>
   );
@@ -50,6 +55,8 @@ function SharedPollBodySkeleton() {
 }
 
 export function SharedPollClient({ token }: { token: string }) {
+  const tm = useTranslations("messages");
+  const tp = useTranslations("poll");
   const {
     data: poll,
     isLoading,
@@ -67,10 +74,8 @@ export function SharedPollClient({ token }: { token: string }) {
         {error || !poll ? (
           <div className="container flex max-w-3xl flex-col items-center py-16 text-center">
             <Calendar className="mb-4 h-12 w-12 text-muted-foreground" />
-            <p className="text-lg font-medium text-destructive">{MSG.POLL_SHARED_NOT_FOUND}</p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              リンクが正しいか確認するか、共有元に問い合わせてください
-            </p>
+            <p className="text-lg font-medium text-destructive">{tm("pollSharedNotFound")}</p>
+            <p className="mt-2 text-sm text-muted-foreground">{tp("checkLinkOrContact")}</p>
           </div>
         ) : (
           <div className="container max-w-3xl py-8 space-y-6">
@@ -106,13 +111,15 @@ export function SharedPollClient({ token }: { token: string }) {
             )}
 
             <div className="space-y-2">
-              <h3 className="text-sm font-semibold">回答状況</h3>
+              <h3 className="text-sm font-semibold">{tp("responseStatus")}</h3>
               <OptionList poll={poll} />
             </div>
 
             {poll.status !== "open" && (
               <p className="text-sm text-muted-foreground text-center">
-                この日程調整は{poll.status === "confirmed" ? "確定済み" : "終了"}です
+                {tp("pollEnded", {
+                  status: poll.status === "confirmed" ? tp("statusConfirmed") : tp("statusClosed"),
+                })}
               </p>
             )}
           </div>

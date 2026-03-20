@@ -3,10 +3,10 @@
 import type { ExpensesResponse, Settlement, SettlementPayment } from "@sugara/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { api, getApiErrorMessage } from "@/lib/api";
-import { MSG } from "@/lib/messages";
 import { queryKeys } from "@/lib/query-keys";
 
 type SettlementSectionProps = {
@@ -33,6 +33,8 @@ export function SettlementSection({
   settlementPayments,
   currentUserId,
 }: SettlementSectionProps) {
+  const tm = useTranslations("messages");
+  const te = useTranslations("expense");
   const queryClient = useQueryClient();
   const transfers = [...settlement.transfers].sort((a, b) => b.amount - a.amount);
   const checkedCount = transfers.filter((t) =>
@@ -101,8 +103,8 @@ export function SettlementSection({
         queryClient.setQueryData(expenseQueryKey, context.previous);
       }
       toast.error(
-        getApiErrorMessage(err, MSG.SETTLEMENT_CHECK_FAILED, {
-          conflict: MSG.SETTLEMENT_ALREADY_CHECKED,
+        getApiErrorMessage(err, tm("settlementCheckFailed"), {
+          conflict: tm("settlementAlreadyChecked"),
         }),
       );
     },
@@ -136,7 +138,7 @@ export function SettlementSection({
       if (context?.previous) {
         queryClient.setQueryData(expenseQueryKey, context.previous);
       }
-      toast.error(getApiErrorMessage(err, MSG.SETTLEMENT_UNCHECK_FAILED));
+      toast.error(getApiErrorMessage(err, tm("settlementUncheckFailed")));
     },
   });
 
@@ -170,11 +172,13 @@ export function SettlementSection({
   return (
     <div className="space-y-2 rounded-md border bg-muted/50 px-3 pt-2 pb-3">
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">精算</span>
+        <span className="text-sm font-medium">{te("settlement")}</span>
         <span
           className={`text-xs ${allChecked ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}`}
         >
-          {allChecked ? "精算完了" : `${checkedCount}/${transfers.length} 完了`}
+          {allChecked
+            ? te("settlementComplete")
+            : te("settlementProgress", { checked: checkedCount, total: transfers.length })}
         </span>
       </div>
       {transfers.map((t) => {

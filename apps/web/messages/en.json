@@ -495,6 +495,19 @@
       "private": "Private",
       "friends_only": "Friends Only",
       "public": "Public"
+    },
+    "weather": {
+      "sunny": "Sunny",
+      "partly_cloudy": "Partly Cloudy",
+      "cloudy": "Cloudy",
+      "mostly_cloudy": "Mostly Cloudy",
+      "light_rain": "Light Rain",
+      "rainy": "Rainy",
+      "heavy_rain": "Heavy Rain",
+      "thunder": "Thunderstorm",
+      "snowy": "Snow",
+      "sleet": "Sleet",
+      "foggy": "Foggy"
     }
   },
   "trip": {
@@ -529,6 +542,8 @@
     "createTitle": "Create a New Trip",
     "createDescription": "Enter the basic information for your trip",
     "tripTitle": "Trip Title",
+    "tripTitlePlaceholder": "3-day Kyoto trip",
+    "destinationPlaceholder": "Kyoto",
     "destination": "Destination",
     "decideDates": "Set dates",
     "adjustDates": "Coordinate dates",
@@ -870,7 +885,11 @@
     "selectColumnsHint": "Select columns to see a preview"
   },
   "dayPicker": {
-    "patternLabel": "Pattern"
+    "patternLabel": "Pattern",
+    "title": "Which day to add to?",
+    "description": "Select the day to add the candidate to",
+    "dayLabel": "Day {n}",
+    "confirm": "Add"
   },
   "bookmark": {
     "pageTitle": "Bookmarks",
@@ -917,7 +936,22 @@
     "bookmarkLoadFailed": "Failed to load bookmarks",
     "listCount": "{count} lists",
     "publicProfile": "Public Profile",
-    "profileLoadFailed": "Failed to load profile"
+    "profileLoadFailed": "Failed to load profile",
+    "editListTitle": "Edit List",
+    "editListDescription": "Change the list settings.",
+    "addBookmarkTitle": "Add Bookmark",
+    "addBookmarkDescription": "Add a bookmark to \"{listName}\".",
+    "editBookmarkTitle": "Edit Bookmark",
+    "editBookmarkDescription": "Edit the bookmark details.",
+    "deleteListTitle": "Delete this list?",
+    "deleteListDescription": "\"{listName}\" and all its bookmarks will be deleted. This action cannot be undone.",
+    "deleteBookmarkTitle": "Delete this bookmark?",
+    "deleteBookmarkDescription": "\"{name}\" will be deleted. This action cannot be undone.",
+    "batchDeleteBookmarkTitle": "Delete {count} bookmarks?",
+    "batchDeleteBookmarkDescription": "All selected bookmarks will be deleted. This action cannot be undone.",
+    "adding": "Adding...",
+    "saving": "Saving...",
+    "deleting": "Deleting..."
   },
   "friend": {
     "pageTitle": "Friends",
@@ -1165,7 +1199,19 @@
     "checkOut": "Check-out",
     "sameDay": "Same day",
     "nextDay": "Next day",
-    "daysAfter": "{count} days later"
+    "daysAfter": "{count} days later",
+    "namePlaceholder": "Kinkaku-ji",
+    "addressPlaceholder": "1 Kinkakujicho, Kita-ku, Kyoto",
+    "departurePlaceholder": "Tokyo Station",
+    "arrivalPlaceholder": "Shin-Osaka Station"
+  },
+  "printPage": {
+    "printButton": "Print / Save PDF",
+    "printButtonShort": "Print",
+    "titleSuffix": " (Print)",
+    "timeHeader": "Time",
+    "nameHeader": "Name",
+    "memoHeader": "Memo"
   },
   "travelTime": {
     "seconds": "{count} sec",
@@ -1344,7 +1390,8 @@
     "bomLabel": "Add BOM (for Japanese in Excel)",
     "includeCandidates": "Include candidates ({count})",
     "includeExpenses": "Include expenses ({count})",
-    "exportTitle": "Export"
+    "exportTitle": "Export",
+    "titleSuffix": " (Export)"
   },
   "prefectures": {
     "regionHokkaido": "Hokkaido & Tohoku",

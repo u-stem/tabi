@@ -1,7 +1,8 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { DayPickerDrawer } from "../../components/day-picker-drawer";
+import { renderWithIntl } from "../test-utils";
 
 const MOCK_DAYS = [
   { id: "d1", date: "2026-11-03", dayIndex: 0 },
@@ -15,7 +16,7 @@ describe("DayPickerDrawer", () => {
   });
 
   it("renders day options", () => {
-    render(
+    renderWithIntl(
       <DayPickerDrawer
         open
         onOpenChange={vi.fn()}
@@ -30,7 +31,7 @@ describe("DayPickerDrawer", () => {
   });
 
   it("pre-selects the default day", () => {
-    render(
+    renderWithIntl(
       <DayPickerDrawer
         open
         onOpenChange={vi.fn()}
@@ -45,7 +46,7 @@ describe("DayPickerDrawer", () => {
 
   it("calls onConfirm with selected day id", () => {
     const onConfirm = vi.fn();
-    render(
+    renderWithIntl(
       <DayPickerDrawer
         open
         onOpenChange={vi.fn()}
@@ -72,7 +73,7 @@ describe("DayPickerDrawer", () => {
       ],
       d3: [{ id: "p3a", label: "パターンZ" }],
     };
-    render(
+    renderWithIntl(
       <DayPickerDrawer
         open
         onOpenChange={vi.fn()}

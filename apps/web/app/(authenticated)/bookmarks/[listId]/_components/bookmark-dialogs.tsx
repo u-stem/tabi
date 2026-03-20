@@ -1,11 +1,8 @@
 "use client";
 
-import {
-  BOOKMARK_LIST_NAME_MAX_LENGTH,
-  type BookmarkListVisibility,
-  VISIBILITY_LABELS,
-} from "@sugara/shared";
+import { BOOKMARK_LIST_NAME_MAX_LENGTH, type BookmarkListVisibility } from "@sugara/shared";
 import { Check, Plus, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -44,6 +41,9 @@ type BmOps = ReturnType<typeof useBookmarkOperations>;
 type Selection = ReturnType<typeof useBookmarkSelection>;
 
 export function EditListDialog({ listOps }: { listOps: ListOps }) {
+  const tb = useTranslations("bookmark");
+  const tc = useTranslations("common");
+  const tlVis = useTranslations("labels.visibility");
   return (
     <ResponsiveDialog
       open={listOps.editingList}
@@ -51,14 +51,14 @@ export function EditListDialog({ listOps }: { listOps: ListOps }) {
     >
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>リストを編集</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>リストの設定を変更します。</ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{tb("editListTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{tb("editListDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={listOps.handleUpdate}>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="edit-list-name">
-                リスト名 <span className="text-destructive">*</span>
+                {tb("listName")} <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="edit-list-name"
@@ -72,7 +72,7 @@ export function EditListDialog({ listOps }: { listOps: ListOps }) {
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="edit-list-visibility">公開設定</Label>
+              <Label htmlFor="edit-list-visibility">{tb("visibilityLabel")}</Label>
               <Select
                 value={listOps.editListVisibility}
                 onValueChange={(v) => listOps.setEditListVisibility(v as BookmarkListVisibility)}
@@ -81,9 +81,9 @@ export function EditListDialog({ listOps }: { listOps: ListOps }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="private">{VISIBILITY_LABELS.private}</SelectItem>
-                  <SelectItem value="friends_only">{VISIBILITY_LABELS.friends_only}</SelectItem>
-                  <SelectItem value="public">{VISIBILITY_LABELS.public}</SelectItem>
+                  <SelectItem value="private">{tlVis("private")}</SelectItem>
+                  <SelectItem value="friends_only">{tlVis("friends_only")}</SelectItem>
+                  <SelectItem value="public">{tlVis("public")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -91,11 +91,11 @@ export function EditListDialog({ listOps }: { listOps: ListOps }) {
           <ResponsiveDialogFooter>
             <Button type="button" variant="outline" onClick={() => listOps.setEditingList(false)}>
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={!listOps.editListName.trim()}>
               <Check className="h-4 w-4" />
-              保存
+              {tc("save")}
             </Button>
           </ResponsiveDialogFooter>
         </form>
@@ -105,6 +105,8 @@ export function EditListDialog({ listOps }: { listOps: ListOps }) {
 }
 
 export function AddBookmarkDialog({ bmOps, listName }: { bmOps: BmOps; listName: string }) {
+  const tb = useTranslations("bookmark");
+  const tc = useTranslations("common");
   return (
     <ResponsiveDialog
       open={bmOps.addBookmarkOpen}
@@ -117,9 +119,9 @@ export function AddBookmarkDialog({ bmOps, listName }: { bmOps: BmOps; listName:
     >
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>ブックマークを追加</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{tb("addBookmarkTitle")}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            「{listName}」にブックマークを追加します。
+            {tb("addBookmarkDescription", { listName })}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={bmOps.handleAdd}>
@@ -141,11 +143,11 @@ export function AddBookmarkDialog({ bmOps, listName }: { bmOps: BmOps; listName:
               }}
             >
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={bmOps.submitting || !bmOps.bookmarkName.trim()}>
               <Plus className="h-4 w-4" />
-              {bmOps.submitting ? "追加中..." : "追加"}
+              {bmOps.submitting ? tb("adding") : tb("add")}
             </Button>
           </ResponsiveDialogFooter>
         </form>
@@ -155,6 +157,8 @@ export function AddBookmarkDialog({ bmOps, listName }: { bmOps: BmOps; listName:
 }
 
 export function EditBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
+  const tb = useTranslations("bookmark");
+  const tc = useTranslations("common");
   return (
     <ResponsiveDialog
       open={bmOps.editingBookmark !== null}
@@ -167,10 +171,8 @@ export function EditBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
     >
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>ブックマークを編集</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>
-            ブックマークの内容を変更します。
-          </ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{tb("editBookmarkTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{tb("editBookmarkDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={bmOps.handleUpdate}>
           <BookmarkFormFields
@@ -191,11 +193,11 @@ export function EditBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
               }}
             >
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={bmOps.submitting || !bmOps.bookmarkName.trim()}>
               <Check className="h-4 w-4" />
-              {bmOps.submitting ? "保存中..." : "保存"}
+              {bmOps.submitting ? tb("saving") : tc("save")}
             </Button>
           </ResponsiveDialogFooter>
         </form>
@@ -205,6 +207,8 @@ export function EditBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
 }
 
 export function DeleteListDialog({ listOps, listName }: { listOps: ListOps; listName: string }) {
+  const tb = useTranslations("bookmark");
+  const tc = useTranslations("common");
   return (
     <ResponsiveAlertDialog
       open={listOps.deletingList}
@@ -212,19 +216,18 @@ export function DeleteListDialog({ listOps, listName }: { listOps: ListOps; list
     >
       <ResponsiveAlertDialogContent>
         <ResponsiveAlertDialogHeader>
-          <ResponsiveAlertDialogTitle>リストを削除しますか？</ResponsiveAlertDialogTitle>
+          <ResponsiveAlertDialogTitle>{tb("deleteListTitle")}</ResponsiveAlertDialogTitle>
           <ResponsiveAlertDialogDescription>
-            「{listName}
-            」とそのブックマークがすべて削除されます。この操作は取り消せません。
+            {tb("deleteListDescription", { listName })}
           </ResponsiveAlertDialogDescription>
         </ResponsiveAlertDialogHeader>
         <ResponsiveAlertDialogFooter>
           <ResponsiveAlertDialogCancel>
             <X className="h-4 w-4" />
-            キャンセル
+            {tc("cancel")}
           </ResponsiveAlertDialogCancel>
           <ResponsiveAlertDialogDestructiveAction onClick={listOps.handleDelete}>
-            削除する
+            {tb("deleteConfirm")}
           </ResponsiveAlertDialogDestructiveAction>
         </ResponsiveAlertDialogFooter>
       </ResponsiveAlertDialogContent>
@@ -233,6 +236,8 @@ export function DeleteListDialog({ listOps, listName }: { listOps: ListOps; list
 }
 
 export function DeleteBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
+  const tb = useTranslations("bookmark");
+  const tc = useTranslations("common");
   return (
     <ResponsiveAlertDialog
       open={bmOps.deletingBookmark !== null}
@@ -240,18 +245,18 @@ export function DeleteBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
     >
       <ResponsiveAlertDialogContent>
         <ResponsiveAlertDialogHeader>
-          <ResponsiveAlertDialogTitle>ブックマークを削除しますか？</ResponsiveAlertDialogTitle>
+          <ResponsiveAlertDialogTitle>{tb("deleteBookmarkTitle")}</ResponsiveAlertDialogTitle>
           <ResponsiveAlertDialogDescription>
-            「{bmOps.deletingBookmark?.name}」を削除します。この操作は取り消せません。
+            {tb("deleteBookmarkDescription", { name: bmOps.deletingBookmark?.name ?? "" })}
           </ResponsiveAlertDialogDescription>
         </ResponsiveAlertDialogHeader>
         <ResponsiveAlertDialogFooter>
           <ResponsiveAlertDialogCancel>
             <X className="h-4 w-4" />
-            キャンセル
+            {tc("cancel")}
           </ResponsiveAlertDialogCancel>
           <ResponsiveAlertDialogDestructiveAction onClick={bmOps.handleDelete}>
-            削除する
+            {tb("deleteConfirm")}
           </ResponsiveAlertDialogDestructiveAction>
         </ResponsiveAlertDialogFooter>
       </ResponsiveAlertDialogContent>
@@ -260,6 +265,8 @@ export function DeleteBookmarkDialog({ bmOps }: { bmOps: BmOps }) {
 }
 
 export function BatchDeleteDialog({ sel }: { sel: Selection }) {
+  const tb = useTranslations("bookmark");
+  const tc = useTranslations("common");
   return (
     <ResponsiveAlertDialog
       open={sel.batchDeleteOpen}
@@ -268,22 +275,22 @@ export function BatchDeleteDialog({ sel }: { sel: Selection }) {
       <ResponsiveAlertDialogContent>
         <ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogTitle>
-            {sel.selectedIds.size}件のブックマークを削除しますか？
+            {tb("batchDeleteBookmarkTitle", { count: sel.selectedIds.size })}
           </ResponsiveAlertDialogTitle>
           <ResponsiveAlertDialogDescription>
-            選択したブックマークをすべて削除します。この操作は取り消せません。
+            {tb("batchDeleteBookmarkDescription")}
           </ResponsiveAlertDialogDescription>
         </ResponsiveAlertDialogHeader>
         <ResponsiveAlertDialogFooter>
           <ResponsiveAlertDialogCancel>
             <X className="h-4 w-4" />
-            キャンセル
+            {tc("cancel")}
           </ResponsiveAlertDialogCancel>
           <ResponsiveAlertDialogDestructiveAction
             onClick={sel.handleBatchDelete}
             disabled={sel.batchLoading}
           >
-            {sel.batchLoading ? "削除中..." : "削除する"}
+            {sel.batchLoading ? tb("deleting") : tb("deleteConfirm")}
           </ResponsiveAlertDialogDestructiveAction>
         </ResponsiveAlertDialogFooter>
       </ResponsiveAlertDialogContent>

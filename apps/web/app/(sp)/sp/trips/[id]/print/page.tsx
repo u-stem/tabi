@@ -7,7 +7,7 @@ import type {
   TransportMethod,
   TripResponse,
 } from "@sugara/shared";
-import { CATEGORY_LABELS, TRANSPORT_METHOD_LABELS } from "@sugara/shared";
+
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Printer } from "lucide-react";
 import Link from "next/link";
@@ -49,6 +49,7 @@ export default function SpTripPrintPage() {
   const locale = useLocale();
   const tm = useTranslations("messages");
   const tdf = useTranslations("dateFormat");
+  const tp = useTranslations("printPage");
   const params = useParams();
   const searchParams = useSearchParams();
   const tripId = typeof params.id === "string" ? params.id : null;
@@ -66,7 +67,7 @@ export default function SpTripPrintPage() {
 
   useEffect(() => {
     if (trip) {
-      document.title = pageTitle(`${trip.title}（印刷）`);
+      document.title = pageTitle(`${trip.title}${tp("titleSuffix")}`);
     }
   }, [trip?.title]);
 
@@ -97,7 +98,7 @@ export default function SpTripPrintPage() {
               </h1>
               <Button size="sm" className="shrink-0 print:hidden" onClick={() => window.print()}>
                 <Printer className="h-4 w-4" />
-                印刷
+                {tp("printButtonShort")}
               </Button>
             </div>
             <p className="mt-3 text-sm text-muted-foreground">
@@ -135,6 +136,7 @@ function DaySection({
   const locale = useLocale();
   const tm = useTranslations("messages");
   const tdf = useTranslations("dateFormat");
+  const tp = useTranslations("printPage");
   const showPatternLabels = day.patterns.length > 1;
 
   return (
@@ -177,9 +179,9 @@ function DaySection({
                   {i === 0 || showPatternLabels ? (
                     <thead>
                       <tr className="text-left text-[10px] text-muted-foreground">
-                        <th className="py-1 pr-2 font-medium">時間</th>
-                        <th className="py-1 pr-2 font-medium">名前</th>
-                        <th className="py-1 font-medium">メモ</th>
+                        <th className="py-1 pr-2 font-medium">{tp("timeHeader")}</th>
+                        <th className="py-1 pr-2 font-medium">{tp("nameHeader")}</th>
+                        <th className="py-1 font-medium">{tp("memoHeader")}</th>
                       </tr>
                     </thead>
                   ) : null}
@@ -225,6 +227,8 @@ function PrintTableRow({
     : "";
 
   const tc = useTranslations("crossDay");
+  const tlCat = useTranslations("labels.category");
+  const tlTransport = useTranslations("labels.transportMethod");
   const crossDayT = {
     hotelCheckin: tc("hotelCheckin"),
     hotelStaying: tc("hotelStaying"),
@@ -240,10 +244,9 @@ function PrintTableRow({
         ? getStartDayLabel(schedule.category, crossDayT)
         : null;
 
-  const transportLabel =
-    schedule.transportMethod && schedule.transportMethod in TRANSPORT_METHOD_LABELS
-      ? TRANSPORT_METHOD_LABELS[schedule.transportMethod as TransportMethod]
-      : schedule.transportMethod;
+  const transportLabel = schedule.transportMethod
+    ? tlTransport(schedule.transportMethod as TransportMethod)
+    : null;
 
   const routeStr =
     schedule.category === "transport"
@@ -271,7 +274,7 @@ function PrintTableRow({
         <div className="truncate print:whitespace-normal print:overflow-visible">
           <span>{schedule.name}</span>
           {roleLabel && <span className="ml-1 text-muted-foreground">({roleLabel})</span>}
-          <span className="ml-1 text-muted-foreground">{CATEGORY_LABELS[schedule.category]}</span>
+          <span className="ml-1 text-muted-foreground">{tlCat(schedule.category)}</span>
         </div>
         {routeStr && (
           <div className="truncate print:whitespace-normal print:overflow-visible text-muted-foreground">

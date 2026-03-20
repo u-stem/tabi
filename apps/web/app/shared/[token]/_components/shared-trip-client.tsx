@@ -8,7 +8,6 @@ import type {
   TransportMethod,
   WeatherType,
 } from "@sugara/shared";
-import { STATUS_LABELS, TRANSPORT_METHOD_LABELS, WEATHER_LABELS } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Calendar, ExternalLink, MapPin, RefreshCw, Route, StickyNote } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -95,6 +94,8 @@ export function SharedTripClient({ token }: { token: string }) {
   const locale = useLocale();
   const tsh = useTranslations("shared");
   const tm = useTranslations("messages");
+  const tlStatus = useTranslations("labels.status");
+  const tlWeather = useTranslations("labels.weather");
   const queryClient = useQueryClient();
   const [hasUpdate, setHasUpdate] = useState(false);
 
@@ -171,7 +172,7 @@ export function SharedTripClient({ token }: { token: string }) {
               {/* Hero */}
               <div className="mb-8 rounded-xl border bg-card px-6 py-6 shadow-sm">
                 <Badge variant="outline" className={cn("mb-3 w-fit", STATUS_COLORS[trip.status])}>
-                  {STATUS_LABELS[trip.status]}
+                  {tlStatus(trip.status)}
                 </Badge>
                 <h1 className="break-words text-2xl font-bold sm:text-3xl">{trip.title}</h1>
                 <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-sm text-muted-foreground">
@@ -250,7 +251,7 @@ export function SharedTripClient({ token }: { token: string }) {
                                       WEATHER_ICON_COLOR[weatherType],
                                     )}
                                   />
-                                  <span>{WEATHER_LABELS[weatherType]}</span>
+                                  <span>{tlWeather(weatherType)}</span>
                                   {weatherTypeSecondary != null &&
                                     (() => {
                                       const SecondaryIcon = WEATHER_ICON[weatherTypeSecondary];
@@ -263,7 +264,7 @@ export function SharedTripClient({ token }: { token: string }) {
                                               WEATHER_ICON_COLOR[weatherTypeSecondary],
                                             )}
                                           />
-                                          <span>{WEATHER_LABELS[weatherTypeSecondary]}</span>
+                                          <span>{tlWeather(weatherTypeSecondary)}</span>
                                         </>
                                       );
                                     })()}
@@ -367,12 +368,12 @@ function ScheduleCard({
   crossDayDisplay?: boolean;
   crossDayPosition?: "intermediate" | "final";
 }) {
+  const tlTransport = useTranslations("labels.transportMethod");
   const CategoryIcon = CATEGORY_ICONS[schedule.category];
   const colorClasses = SCHEDULE_COLOR_CLASSES[schedule.color ?? "blue"];
-  const transportLabel =
-    schedule.transportMethod && schedule.transportMethod in TRANSPORT_METHOD_LABELS
-      ? TRANSPORT_METHOD_LABELS[schedule.transportMethod as TransportMethod]
-      : schedule.transportMethod;
+  const transportLabel = schedule.transportMethod
+    ? tlTransport(schedule.transportMethod as TransportMethod)
+    : null;
 
   const displayTime = crossDayDisplay ? schedule.endTime : schedule.startTime;
   const showEndTime = !crossDayDisplay && !schedule.endDayOffset && schedule.endTime;

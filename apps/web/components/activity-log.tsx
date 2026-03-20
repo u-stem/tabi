@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  type ActivityLogResponse,
-  type LogsResponse,
-  type MemberRole,
-  ROLE_LABELS,
-} from "@sugara/shared";
+import type { ActivityLogResponse, LogsResponse } from "@sugara/shared";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import type { LucideIcon } from "lucide-react";
 import { ArrowRightLeft, Check, Copy, Loader2, Pencil, Plus, Trash2, X } from "lucide-react";
@@ -100,23 +95,19 @@ type ActionParts = {
   detail: string | null;
 };
 
-function translateRole(role: string): string {
-  return ROLE_LABELS[role as MemberRole] ?? role;
-}
-
-function translateDetail(detail: string): string {
-  // "editor → viewer" -> "編集者 → 閲覧者"
-  return detail.replace(/\b(owner|editor|viewer)\b/g, (match) => translateRole(match));
+function translateDetail(detail: string, tlRole: (key: string) => string): string {
+  return detail.replace(/\b(owner|editor|viewer)\b/g, (match) => tlRole(match));
 }
 
 function parseAction(
   log: ActivityLogResponse,
   ta: (key: string, params?: Record<string, string>) => string,
+  tlRole: (key: string) => string,
 ): ActionParts {
   const ns = ACTIVITY_NAMESPACE_MAP[log.entityType];
   const key = ns ? `${ns}.${log.action}` : null;
   const name = log.entityName ? `「${log.entityName}」` : "";
-  const detail = log.detail ? `(${translateDetail(log.detail)})` : null;
+  const detail = log.detail ? `(${translateDetail(log.detail, tlRole)})` : null;
 
   if (key) {
     const template = ta(key, { name: "__NAME__" });
@@ -167,6 +158,7 @@ function formatRelativeTime(
 export function ActivityLog({ tripId }: ActivityLogProps) {
   const tm = useTranslations("messages");
   const ta = useTranslations("activity");
+  const tlRole = useTranslations("labels.role");
   const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, isError } =
     useInfiniteQuery({
       queryKey: queryKeys.trips.activityLogs(tripId),
@@ -213,6 +205,7 @@ export function ActivityLog({ tripId }: ActivityLogProps) {
             const parts = parseAction(
               log,
               ta as (key: string, params?: Record<string, string>) => string,
+              tlRole as (key: string) => string,
             );
 
             return (

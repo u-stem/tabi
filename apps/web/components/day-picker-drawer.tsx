@@ -1,7 +1,8 @@
 "use client";
 
 import { format, parseISO } from "date-fns";
-import { ja } from "date-fns/locale";
+import { enUS, ja } from "date-fns/locale";
+import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
@@ -42,6 +43,10 @@ export function DayPickerDrawer({
   patternsByDayId,
   onConfirm,
 }: DayPickerDrawerProps) {
+  const locale = useLocale();
+  const calendarLocale = locale === "ja" ? ja : enUS;
+  const td = useTranslations("dayPicker");
+  const dateFormat = locale === "ja" ? "M月d日 (E)" : "MMM d (E)";
   const initialDayId = days[defaultDayIndex]?.id ?? days[0]?.id;
   const [selectedDayId, setSelectedDayId] = useState(() => initialDayId);
   const [selectedPatternId, setSelectedPatternId] = useState(
@@ -59,14 +64,12 @@ export function DayPickerDrawer({
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
         <DrawerHeader>
-          <DrawerTitle>どの日に追加しますか？</DrawerTitle>
-          <DrawerDescription className="sr-only">
-            候補を追加する日を選択してください
-          </DrawerDescription>
+          <DrawerTitle>{td("title")}</DrawerTitle>
+          <DrawerDescription className="sr-only">{td("description")}</DrawerDescription>
         </DrawerHeader>
         <div className="max-h-[50dvh] overflow-y-auto overscroll-contain" role="radiogroup">
           {days.map((day) => {
-            const dateStr = format(parseISO(day.date), "M月d日 (E)", { locale: ja });
+            const dateStr = format(parseISO(day.date), dateFormat, { locale: calendarLocale });
             return (
               <label
                 key={day.id}
@@ -75,13 +78,13 @@ export function DayPickerDrawer({
                 <input
                   type="radio"
                   name="day"
-                  aria-label={`${day.dayIndex + 1}日目`}
+                  aria-label={td("dayLabel", { n: day.dayIndex + 1 })}
                   checked={selectedDayId === day.id}
                   onChange={() => handleDayChange(day.id)}
                   className="h-4 w-4 accent-primary"
                 />
                 <span className="text-sm">
-                  {day.dayIndex + 1}日目
+                  {td("dayLabel", { n: day.dayIndex + 1 })}
                   <span className="ml-2 text-muted-foreground">{dateStr}</span>
                 </span>
               </label>
@@ -89,8 +92,8 @@ export function DayPickerDrawer({
           })}
         </div>
         {currentPatterns && currentPatterns.length > 1 && (
-          <div className="border-t" role="radiogroup" aria-label="パターン">
-            <p className="px-3 pt-3 text-xs text-muted-foreground">パターン</p>
+          <div className="border-t" role="radiogroup" aria-label={td("patternLabel")}>
+            <p className="px-3 pt-3 text-xs text-muted-foreground">{td("patternLabel")}</p>
             {currentPatterns.map((p) => (
               <label
                 key={p.id}
@@ -116,7 +119,7 @@ export function DayPickerDrawer({
               onOpenChange(false);
             }}
           >
-            追加する
+            {td("confirm")}
           </Button>
         </DrawerFooter>
       </DrawerContent>

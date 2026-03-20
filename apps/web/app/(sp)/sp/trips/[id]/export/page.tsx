@@ -1,7 +1,6 @@
 "use client";
 
 import type { ExpensesResponse, TripResponse } from "@sugara/shared";
-import { EXPENSE_CATEGORY_LABELS } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, CheckCheck, Download, X } from "lucide-react";
 import Link from "next/link";
@@ -42,6 +41,7 @@ import {
   exportTrip,
   filterCandidateFields,
   type PatternMode,
+  type ValueLabels,
 } from "@/lib/export";
 import { useAuthRedirect } from "@/lib/hooks/use-auth-redirect";
 import { queryKeys } from "@/lib/query-keys";
@@ -52,14 +52,21 @@ const FORMAT_LABELS: Record<ExportFormat, string> = {
   csv: "CSV (.csv)",
 };
 
-function toExpenseExportData(data: ExpensesResponse): ExpenseExportData {
+function toExpenseExportData(
+  data: ExpensesResponse,
+  translateCategory?: (key: string) => string,
+): ExpenseExportData {
   return {
     expenses: data.expenses.map((e) => ({
       title: e.title,
       amount: e.amount,
       paidByName: e.paidByUser.name,
       splitType: e.splitType,
-      category: e.category ? (EXPENSE_CATEGORY_LABELS[e.category] ?? null) : null,
+      category: e.category
+        ? translateCategory
+          ? translateCategory(e.category)
+          : e.category
+        : null,
       splits: e.splits.map((s) => ({ name: s.user.name, amount: s.amount })),
     })),
     settlement: {
@@ -97,7 +104,18 @@ export default function SpTripExportPage() {
   const tm = useTranslations("messages");
   const te = useTranslations("exportPage");
   const tel = useTranslations("exportLabels");
+  const tlCat = useTranslations("labels.category");
+  const tlTransport = useTranslations("labels.transportMethod");
+  const tlSplit = useTranslations("labels.splitType");
+  const tlExpCat = useTranslations("labels.expenseCategory");
   const tex = useTranslations("export");
+
+  const valueLabels: ValueLabels = {
+    category: (k) => (tlCat as (k: string) => string)(k),
+    transportMethod: (k) => (tlTransport as (k: string) => string)(k),
+    splitType: (k) => (tlSplit as (k: string) => string)(k),
+    expenseCategory: (k) => (tlExpCat as (k: string) => string)(k),
+  };
 
   const fieldLabels: ExportFieldLabels = {
     date: tel("date"),
@@ -157,7 +175,7 @@ export default function SpTripExportPage() {
 
   useEffect(() => {
     if (trip) {
-      document.title = pageTitle(`${trip.title}（エクスポート）`);
+      document.title = pageTitle(`${trip.title}${te("titleSuffix")}`);
     }
   }, [trip?.title]);
 
@@ -239,19 +257,33 @@ export default function SpTripExportPage() {
           const existing = sheets.get(pattern.label);
           if (existing) {
             existing.rows.push(
-              ...buildScheduleRows(day, [pattern], effectiveFields, fieldLabels, locale),
+              ...buildScheduleRows(
+                day,
+                [pattern],
+                effectiveFields,
+                fieldLabels,
+                locale,
+                valueLabels,
+              ),
             );
           } else {
             sheets.set(pattern.label, {
               fields: effectiveFields,
-              rows: buildScheduleRows(day, [pattern], effectiveFields, fieldLabels, locale),
+              rows: buildScheduleRows(
+                day,
+                [pattern],
+                effectiveFields,
+                fieldLabels,
+                locale,
+                valueLabels,
+              ),
             });
           }
         }
       }
     } else {
       const rows = trip.days.flatMap((day) =>
-        buildScheduleRows(day, day.patterns, effectiveFields, fieldLabels, locale),
+        buildScheduleRows(day, day.patterns, effectiveFields, fieldLabels, locale, valueLabels),
       );
       sheets.set(exportSheetNames.itinerary, { fields: effectiveFields, rows });
     }
@@ -260,7 +292,13 @@ export default function SpTripExportPage() {
       const candidateFields = filterCandidateFields(effectiveFields);
       sheets.set(exportSheetNames.candidates, {
         fields: candidateFields,
-        rows: buildCandidateRows(trip.candidates, effectiveFields, fieldLabels, locale),
+        rows: buildCandidateRows(
+          trip.candidates,
+          effectiveFields,
+          fieldLabels,
+          locale,
+          valueLabels,
+        ),
       });
     }
 
@@ -268,7 +306,7 @@ export default function SpTripExportPage() {
   }, [trip, effectiveFields, effectivePatternMode, includeCandidates, locale]);
 
   const expenseExportData = useMemo(
-    () => (expensesData ? toExpenseExportData(expensesData) : null),
+    () => (expensesData ? toExpenseExportData(expensesData, valueLabels.expenseCategory) : null),
     [expensesData],
   );
 
@@ -276,7 +314,7 @@ export default function SpTripExportPage() {
     if (!includeExpenses || !expenseExportData || expenseExportData.expenses.length === 0) {
       return null;
     }
-    return buildExpenseExport(expenseExportData, expenseLabels);
+    return buildExpenseExport(expenseExportData, expenseLabels, valueLabels);
   }, [includeExpenses, expenseExportData, expenseLabels]);
 
   const sheetNames = useMemo(() => {
@@ -321,6 +359,7 @@ export default function SpTripExportPage() {
         expenseLabels,
         sheetNames: exportSheetNames,
         locale,
+        valueLabels,
       });
       toast.success(tm("exportSuccess"));
     } catch {

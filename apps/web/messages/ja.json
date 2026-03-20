@@ -495,6 +495,19 @@
       "private": "非公開",
       "friends_only": "フレンド限定",
       "public": "全体公開"
+    },
+    "weather": {
+      "sunny": "晴れ",
+      "partly_cloudy": "晴れ時々曇り",
+      "cloudy": "曇り",
+      "mostly_cloudy": "曇り時々晴れ",
+      "light_rain": "小雨",
+      "rainy": "雨",
+      "heavy_rain": "大雨",
+      "thunder": "雷雨",
+      "snowy": "雪",
+      "sleet": "みぞれ",
+      "foggy": "霧"
     }
   },
   "trip": {
@@ -529,6 +542,8 @@
     "createTitle": "新しい旅行を作成",
     "createDescription": "旅行の基本情報を入力してください",
     "tripTitle": "旅行タイトル",
+    "tripTitlePlaceholder": "京都3日間の旅",
+    "destinationPlaceholder": "京都",
     "destination": "目的地",
     "decideDates": "日程を決定する",
     "adjustDates": "日程を調整する",
@@ -870,7 +885,11 @@
     "selectColumnsHint": "出力する列を選択するとプレビューが表示されます"
   },
   "dayPicker": {
-    "patternLabel": "パターン"
+    "patternLabel": "パターン",
+    "title": "どの日に追加しますか？",
+    "description": "候補を追加する日を選択してください",
+    "dayLabel": "{n}日目",
+    "confirm": "追加する"
   },
   "bookmark": {
     "pageTitle": "ブックマーク",
@@ -917,7 +936,22 @@
     "bookmarkLoadFailed": "ブックマークの読み込みに失敗しました",
     "listCount": "{count} リスト",
     "publicProfile": "公開プロフィール",
-    "profileLoadFailed": "プロフィールの読み込みに失敗しました"
+    "profileLoadFailed": "プロフィールの読み込みに失敗しました",
+    "editListTitle": "リストを編集",
+    "editListDescription": "リストの設定を変更します。",
+    "addBookmarkTitle": "ブックマークを追加",
+    "addBookmarkDescription": "「{listName}」にブックマークを追加します。",
+    "editBookmarkTitle": "ブックマークを編集",
+    "editBookmarkDescription": "ブックマークの内容を変更します。",
+    "deleteListTitle": "リストを削除しますか？",
+    "deleteListDescription": "「{listName}」とそのブックマークがすべて削除されます。この操作は取り消せません。",
+    "deleteBookmarkTitle": "ブックマークを削除しますか？",
+    "deleteBookmarkDescription": "「{name}」を削除します。この操作は取り消せません。",
+    "batchDeleteBookmarkTitle": "{count}件のブックマークを削除しますか？",
+    "batchDeleteBookmarkDescription": "選択したブックマークをすべて削除します。この操作は取り消せません。",
+    "adding": "追加中...",
+    "saving": "保存中...",
+    "deleting": "削除中..."
   },
   "friend": {
     "pageTitle": "フレンド",
@@ -1165,7 +1199,19 @@
     "checkOut": "チェックアウト",
     "sameDay": "当日",
     "nextDay": "翌日",
-    "daysAfter": "{count}日後"
+    "daysAfter": "{count}日後",
+    "namePlaceholder": "金閣寺",
+    "addressPlaceholder": "京都市北区金閣寺町1",
+    "departurePlaceholder": "東京駅",
+    "arrivalPlaceholder": "新大阪駅"
+  },
+  "printPage": {
+    "printButton": "印刷 / PDF保存",
+    "printButtonShort": "印刷",
+    "titleSuffix": "（印刷）",
+    "timeHeader": "時間",
+    "nameHeader": "名前",
+    "memoHeader": "メモ"
   },
   "travelTime": {
     "seconds": "{count}秒",
@@ -1344,7 +1390,8 @@
     "bomLabel": "BOM を付与 (Excel で日本語を正しく表示)",
     "includeCandidates": "候補を含める ({count}件)",
     "includeExpenses": "費用を含める ({count}件)",
-    "exportTitle": "エクスポート"
+    "exportTitle": "エクスポート",
+    "titleSuffix": "（エクスポート）"
   },
   "prefectures": {
     "regionHokkaido": "北海道・東北",

@@ -49,7 +49,6 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { UserAvatar } from "@/components/user-avatar";
 import { ApiError, api } from "@/lib/api";
 import { authClient, useSession } from "@/lib/auth-client";
-import { translateAuthError } from "@/lib/auth-error";
 import {
   getPasswordRequirementsText,
   MIN_PASSWORD_LENGTH,
@@ -251,6 +250,7 @@ export function ProfileSection({
   const ts = useTranslations("settings");
   const tm = useTranslations("messages");
   const tc = useTranslations("common");
+  const te = useTranslations("authErrors");
   const { refetch } = useSession();
   const [style, setStyle] = useState<DiceBearStyle>("glass");
   const [seeds, setSeeds] = useState<string[]>(() => generateSeeds(CANDIDATE_COUNT));
@@ -284,7 +284,12 @@ export function ProfileSection({
 
     const result = await authClient.updateUser(updates);
     if (result.error) {
-      setError(translateAuthError(result.error, tm("settingsProfileUpdateFailed")));
+      const code = result.error.code;
+      setError(
+        code && (te.has as (k: string) => boolean)(code)
+          ? (te as (k: string) => string)(code)
+          : tm("settingsProfileUpdateFailed"),
+      );
       setLoading(false);
       return;
     }
@@ -458,6 +463,7 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
   const ts = useTranslations("settings");
   const tm = useTranslations("messages");
   const tc = useTranslations("common");
+  const te = useTranslations("authErrors");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState(defaultUsername);
@@ -474,7 +480,12 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
       username: trimmed,
     });
     if (result.error) {
-      setError(translateAuthError(result.error, tm("settingsUsernameUpdateFailed")));
+      const code = result.error.code;
+      setError(
+        code && (te.has as (k: string) => boolean)(code)
+          ? (te as (k: string) => string)(code)
+          : tm("settingsUsernameUpdateFailed"),
+      );
       setLoading(false);
       return;
     }
@@ -537,6 +548,7 @@ function UsernameSection({ defaultUsername }: { defaultUsername: string }) {
 function PasswordSection({ username }: { username: string }) {
   const ts = useTranslations("settings");
   const tm = useTranslations("messages");
+  const te = useTranslations("authErrors");
   const tpr = useTranslations("passwordRules");
   const pwT = {
     rules: (key: string, params?: Record<string, string | number | Date>) =>
@@ -575,7 +587,12 @@ function PasswordSection({ username }: { username: string }) {
     });
 
     if (result.error) {
-      setError(translateAuthError(result.error, tm("settingsPasswordChangeFailed")));
+      const code = result.error.code;
+      setError(
+        code && (te.has as (k: string) => boolean)(code)
+          ? (te as (k: string) => string)(code)
+          : tm("settingsPasswordChangeFailed"),
+      );
       setLoading(false);
       return;
     }

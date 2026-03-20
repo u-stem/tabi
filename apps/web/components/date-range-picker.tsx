@@ -1,7 +1,8 @@
 "use client";
 
 import { format, isValid, parse } from "date-fns";
-import { ja } from "date-fns/locale";
+import { enUS, ja } from "date-fns/locale";
+import { useLocale } from "next-intl";
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
 import { CalendarNav, END_YEAR, START_YEAR } from "@/components/calendar-nav";
@@ -30,6 +31,8 @@ export function DateRangePicker({
   onChangeStart,
   onChangeEnd,
 }: DateRangePickerProps) {
+  const currentLocale = useLocale();
+  const calendarLocale = currentLocale === "ja" ? ja : enUS;
   const [month, setMonth] = useState<Date>(startDate ? toDate(startDate) : new Date());
 
   const selected: DateRange = {
@@ -61,7 +64,7 @@ export function DateRangePicker({
         month={month}
         onMonthChange={setMonth}
         numberOfMonths={2}
-        locale={ja}
+        locale={calendarLocale}
         hideNavigation
         startMonth={new Date(START_YEAR, 0)}
         endMonth={new Date(END_YEAR, 11)}

@@ -172,7 +172,7 @@ export function EditTripDialog({
                 name="title"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
-                placeholder="京都3日間の旅"
+                placeholder={tt("tripTitlePlaceholder")}
                 maxLength={TRIP_TITLE_MAX_LENGTH}
                 required
               />
@@ -187,7 +187,7 @@ export function EditTripDialog({
                 name="destination"
                 value={editDestination}
                 onChange={(e) => setEditDestination(e.target.value)}
-                placeholder="京都"
+                placeholder={tt("destinationPlaceholder")}
                 maxLength={TRIP_DESTINATION_MAX_LENGTH}
               />
               <p className="text-right text-xs text-muted-foreground">

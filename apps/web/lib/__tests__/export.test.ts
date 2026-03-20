@@ -26,6 +26,7 @@ import {
   filterCandidateFields,
   rowsToCSV,
   scheduleToRow,
+  type ValueLabels,
 } from "../export";
 
 function makeSchedule(overrides: Partial<ScheduleResponse> = {}): ScheduleResponse {
@@ -90,6 +91,44 @@ function makeTrip(overrides: Partial<TripResponse> = {}): TripResponse {
   };
 }
 
+const CATEGORY_MAP: Record<string, string> = {
+  sightseeing: "Sightseeing",
+  restaurant: "Dining",
+  hotel: "Accommodation",
+  transport: "Transport",
+  activity: "Activity",
+  other: "Other",
+};
+const TRANSPORT_MAP: Record<string, string> = {
+  train: "Train",
+  shinkansen: "Shinkansen",
+  bus: "Bus",
+  taxi: "Taxi",
+  walk: "Walk",
+  car: "Car",
+  airplane: "Airplane",
+};
+const SPLIT_MAP: Record<string, string> = {
+  equal: "Equal",
+  custom: "Custom",
+  itemized: "Itemized",
+};
+const EXP_CAT_MAP: Record<string, string> = {
+  transportation: "Transportation",
+  accommodation: "Accommodation",
+  meals: "Meals",
+  other: "Other",
+};
+
+function makeValueLabels(): ValueLabels {
+  return {
+    category: (k) => CATEGORY_MAP[k] ?? k,
+    transportMethod: (k) => TRANSPORT_MAP[k] ?? k,
+    splitType: (k) => SPLIT_MAP[k] ?? k,
+    expenseCategory: (k) => EXP_CAT_MAP[k] ?? k,
+  };
+}
+
 describe("EXPORT_FIELDS / EXPORT_FIELD_LABELS", () => {
   it("has 13 fields defined", () => {
     expect(EXPORT_FIELDS).toHaveLength(13);
@@ -121,20 +160,38 @@ describe("scheduleToRow", () => {
     expect(row[EXPORT_FIELD_LABELS.address]).toBe("Tokyo, Japan");
   });
 
-  it("converts category to Japanese label", () => {
+  it("returns raw category when no valueLabels provided", () => {
     const schedule = makeSchedule({ category: "restaurant" });
     const day = makeDay();
     const row = scheduleToRow(schedule, day, null, ["category"]);
 
-    expect(row[EXPORT_FIELD_LABELS.category]).toBe("飲食");
+    expect(row[EXPORT_FIELD_LABELS.category]).toBe("restaurant");
   });
 
-  it("converts transportMethod to Japanese label", () => {
+  it("translates category when valueLabels provided", () => {
+    const schedule = makeSchedule({ category: "restaurant" });
+    const day = makeDay();
+    const vl = makeValueLabels();
+    const row = scheduleToRow(schedule, day, null, ["category"], undefined, undefined, vl);
+
+    expect(row[EXPORT_FIELD_LABELS.category]).toBe("Dining");
+  });
+
+  it("returns raw transportMethod when no valueLabels provided", () => {
     const schedule = makeSchedule({ transportMethod: "shinkansen" });
     const day = makeDay();
     const row = scheduleToRow(schedule, day, null, ["transportMethod"]);
 
-    expect(row[EXPORT_FIELD_LABELS.transportMethod]).toBe("新幹線");
+    expect(row[EXPORT_FIELD_LABELS.transportMethod]).toBe("shinkansen");
+  });
+
+  it("translates transportMethod when valueLabels provided", () => {
+    const schedule = makeSchedule({ transportMethod: "shinkansen" });
+    const day = makeDay();
+    const vl = makeValueLabels();
+    const row = scheduleToRow(schedule, day, null, ["transportMethod"], undefined, undefined, vl);
+
+    expect(row[EXPORT_FIELD_LABELS.transportMethod]).toBe("Shinkansen");
   });
 
   it("formats date to Japanese format", () => {
@@ -277,7 +334,7 @@ describe("buildCandidateRows", () => {
     expect(rows[0]).not.toHaveProperty(EXPORT_FIELD_LABELS.date);
     expect(rows[0]).not.toHaveProperty(EXPORT_FIELD_LABELS.dayNumber);
     expect(rows[0][EXPORT_FIELD_LABELS.name]).toBe("Candidate 1");
-    expect(rows[0][EXPORT_FIELD_LABELS.transportMethod]).toBe("電車");
+    expect(rows[0][EXPORT_FIELD_LABELS.transportMethod]).toBe("train");
   });
 });
 
@@ -481,7 +538,7 @@ describe("exportTripToExcel", () => {
     );
 
     const sheetNames = mockWorkbookSheets.map((s) => s.name);
-    expect(sheetNames).toContain("旅程");
+    expect(sheetNames).toContain("Itinerary");
   });
 
   it("adds a candidates sheet when includeCandidates is true", async () => {
@@ -498,7 +555,7 @@ describe("exportTripToExcel", () => {
     await exportTripToExcel(trip, makeOptions({ includeCandidates: true }));
 
     const sheetNames = mockWorkbookSheets.map((s) => s.name);
-    expect(sheetNames).toContain("候補");
+    expect(sheetNames).toContain("Candidates");
   });
 
   it("does not add candidates sheet when includeCandidates is false", async () => {
@@ -515,7 +572,7 @@ describe("exportTripToExcel", () => {
     await exportTripToExcel(trip, makeOptions({ includeCandidates: false }));
 
     const sheetNames = mockWorkbookSheets.map((s) => s.name);
-    expect(sheetNames).not.toContain("候補");
+    expect(sheetNames).not.toContain("Candidates");
   });
 
   it("generates the correct file name", async () => {
@@ -761,7 +818,7 @@ describe("exportTripToCSV", () => {
     // BOM prefix
     expect(capturedContent.charCodeAt(0)).toBe(0xfeff);
     // Contains candidate section
-    expect(capturedContent).toContain("候補");
+    expect(capturedContent).toContain("Candidates");
     expect(capturedContent).toContain("Candidate Spot");
   });
 
@@ -822,7 +879,7 @@ describe("exportTripToCSV", () => {
 
     expect(mockLink.download).toMatch(/\.tsv$/);
     expect(capturedContent).toContain("\t");
-    expect(capturedContent).not.toMatch(/名前,/);
+    expect(capturedContent).not.toMatch(/Name,/);
   });
 
   it("uses LF line ending when specified", async () => {
@@ -891,7 +948,7 @@ describe("exportTripToCSV", () => {
       csvOptions: { delimiter: "comma", bom: false, lineEnding: "lf" },
     });
 
-    expect(capturedContent).toContain("\n\n--- 候補 ---\n");
+    expect(capturedContent).toContain("\n\n--- Candidates ---\n");
     expect(capturedContent).not.toContain("\r\n");
   });
 });
@@ -944,10 +1001,10 @@ describe("buildExpenseExport", () => {
     expect(rows[0][EXPENSE_EXPORT_HEADERS.title]).toBe("夕食");
     expect(rows[0][EXPENSE_EXPORT_HEADERS.amount]).toBe(5000);
     expect(rows[0][EXPENSE_EXPORT_HEADERS.paidBy]).toBe("Alice");
-    expect(rows[0][EXPENSE_EXPORT_HEADERS.splitType]).toBe("均等");
+    expect(rows[0][EXPENSE_EXPORT_HEADERS.splitType]).toBe("equal");
 
     expect(rows[1][EXPENSE_EXPORT_HEADERS.title]).toBe("タクシー");
-    expect(rows[1][EXPENSE_EXPORT_HEADERS.splitType]).toBe("カスタム");
+    expect(rows[1][EXPENSE_EXPORT_HEADERS.splitType]).toBe("custom");
 
     // Member split columns
     expect(headers).toContain("Alice");
@@ -962,7 +1019,7 @@ describe("buildExpenseExport", () => {
     const data = makeExpenseData();
     const rows = buildExpenseExport(data).rows;
 
-    const totalRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "合計");
+    const totalRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "Total");
     expect(totalRow).toBeDefined();
     expect(totalRow?.[EXPENSE_EXPORT_HEADERS.amount]).toBe(8000);
   });
@@ -971,7 +1028,7 @@ describe("buildExpenseExport", () => {
     const data = makeExpenseData();
     const rows = buildExpenseExport(data).rows;
 
-    const sectionRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[過不足]");
+    const sectionRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[Balance]");
     expect(sectionRow).toBeDefined();
 
     const aliceRow = rows.find(
@@ -987,7 +1044,7 @@ describe("buildExpenseExport", () => {
     const data = makeExpenseData();
     const rows = buildExpenseExport(data).rows;
 
-    const sectionRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[精算]");
+    const sectionRow = rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[Settlement]");
     expect(sectionRow).toBeDefined();
 
     const transferRow = rows.find((r) => String(r[EXPENSE_EXPORT_HEADERS.title]).includes("→"));
@@ -1010,7 +1067,7 @@ describe("buildExpenseExport", () => {
     });
     const rows = buildExpenseExport(data).rows;
 
-    const sectionIdx = rows.findIndex((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[過不足]");
+    const sectionIdx = rows.findIndex((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[Balance]");
     const balanceRows = rows
       .slice(sectionIdx + 1)
       .filter(
@@ -1036,7 +1093,7 @@ describe("buildExpenseExport", () => {
     });
     const rows = buildExpenseExport(data).rows;
 
-    expect(rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[過不足]")).toBeUndefined();
+    expect(rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[Balance]")).toBeUndefined();
   });
 
   it("skips transfer section when no transfers", () => {
@@ -1049,7 +1106,7 @@ describe("buildExpenseExport", () => {
     });
     const rows = buildExpenseExport(data).rows;
 
-    expect(rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[精算]")).toBeUndefined();
+    expect(rows.find((r) => r[EXPENSE_EXPORT_HEADERS.title] === "[Settlement]")).toBeUndefined();
   });
 });
 
@@ -1080,7 +1137,7 @@ describe("exportTripToExcel - expenses", () => {
     });
 
     const sheetNames = mockWorkbookSheets.map((s) => s.name);
-    expect(sheetNames).toContain("費用");
+    expect(sheetNames).toContain("Expenses");
   });
 
   it("does not add expense sheet when includeExpenses is false", async () => {
@@ -1093,7 +1150,7 @@ describe("exportTripToExcel - expenses", () => {
     });
 
     const sheetNames = mockWorkbookSheets.map((s) => s.name);
-    expect(sheetNames).not.toContain("費用");
+    expect(sheetNames).not.toContain("Expenses");
   });
 
   it("does not add expense sheet when expenseData has no expenses", async () => {
@@ -1107,7 +1164,7 @@ describe("exportTripToExcel - expenses", () => {
     });
 
     const sheetNames = mockWorkbookSheets.map((s) => s.name);
-    expect(sheetNames).not.toContain("費用");
+    expect(sheetNames).not.toContain("Expenses");
   });
 });
 
@@ -1146,10 +1203,10 @@ describe("exportTripToCSV - expenses", () => {
       csvOptions: { delimiter: "comma", bom: false, lineEnding: "lf" },
     });
 
-    expect(capturedContent).toContain("--- 費用 ---");
+    expect(capturedContent).toContain("--- Expenses ---");
     expect(capturedContent).toContain("夕食");
     expect(capturedContent).toContain("タクシー");
-    expect(capturedContent).toContain("合計");
+    expect(capturedContent).toContain("Total");
   });
 
   it("does not append expense section when includeExpenses is false", async () => {
@@ -1178,6 +1235,6 @@ describe("exportTripToCSV - expenses", () => {
       csvOptions: { delimiter: "comma", bom: false, lineEnding: "lf" },
     });
 
-    expect(capturedContent).not.toContain("費用");
+    expect(capturedContent).not.toContain("Expenses");
   });
 });

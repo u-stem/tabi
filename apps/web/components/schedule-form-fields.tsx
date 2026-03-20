@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
-import { CATEGORY_OPTIONS, TRANSPORT_METHOD_OPTIONS } from "@/lib/schedule-utils";
 import { cn } from "@/lib/utils";
 
 type LocationSelectedParams = {
@@ -91,6 +90,15 @@ export function ScheduleFormFields({
   onLocationSelected,
 }: ScheduleFormFieldsProps) {
   const tsf = useTranslations("scheduleForm");
+  const tlCat = useTranslations("labels.category");
+  const tlTransport = useTranslations("labels.transportMethod");
+
+  const categoryOptions = (
+    ["sightseeing", "restaurant", "hotel", "transport", "activity", "other"] as const
+  ).map((v) => ({ value: v, label: tlCat(v) }));
+  const transportMethodOptions = (
+    ["train", "shinkansen", "bus", "taxi", "walk", "car", "airplane"] as const
+  ).map((v) => ({ value: v, label: tlTransport(v) }));
   // Controlled state for text fields (Dialog unmounts on close, so these re-init correctly)
   const [name, setName] = useState(defaultValues?.name ?? "");
   // Ref to read current name inside handlePlaceSelect without adding name to deps
@@ -164,7 +172,7 @@ export function ScheduleFormFields({
           name="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="金閣寺"
+          placeholder={tsf("namePlaceholder")}
           required
           maxLength={SCHEDULE_NAME_MAX_LENGTH}
         />
@@ -185,7 +193,7 @@ export function ScheduleFormFields({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {CATEGORY_OPTIONS.map((cat) => (
+            {categoryOptions.map((cat) => (
               <SelectItem key={cat.value} value={cat.value}>
                 {cat.label}
               </SelectItem>
@@ -229,7 +237,7 @@ export function ScheduleFormFields({
               name="address"
               value={address}
               onChange={(e) => setAddress(e.target.value)}
-              placeholder="京都市北区金閣寺町1"
+              placeholder={tsf("addressPlaceholder")}
               maxLength={SCHEDULE_ADDRESS_MAX_LENGTH}
             />
             <p className="text-right text-xs text-muted-foreground">
@@ -246,7 +254,7 @@ export function ScheduleFormFields({
               name="departurePlace"
               value={departurePlace}
               onChange={(e) => setDeparturePlace(e.target.value)}
-              placeholder="東京駅"
+              placeholder={tsf("departurePlaceholder")}
               maxLength={SCHEDULE_PLACE_MAX_LENGTH}
             />
             <p className="text-right text-xs text-muted-foreground">
@@ -260,7 +268,7 @@ export function ScheduleFormFields({
               name="arrivalPlace"
               value={arrivalPlace}
               onChange={(e) => setArrivalPlace(e.target.value)}
-              placeholder="新大阪駅"
+              placeholder={tsf("arrivalPlaceholder")}
               maxLength={SCHEDULE_PLACE_MAX_LENGTH}
             />
             <p className="text-right text-xs text-muted-foreground">
@@ -277,7 +285,7 @@ export function ScheduleFormFields({
                 <SelectValue placeholder={tsf("transportPlaceholder")} />
               </SelectTrigger>
               <SelectContent>
-                {TRANSPORT_METHOD_OPTIONS.map((m) => (
+                {transportMethodOptions.map((m) => (
                   <SelectItem key={m.value} value={m.value}>
                     {m.label}
                   </SelectItem>

@@ -2,7 +2,7 @@
 
 import { TRIP_DESTINATION_MAX_LENGTH, TRIP_TITLE_MAX_LENGTH } from "@sugara/shared";
 import { format } from "date-fns";
-import { ja } from "date-fns/locale";
+import { enUS, ja } from "date-fns/locale";
 import { Plus, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useState } from "react";
@@ -40,6 +40,7 @@ type CreateTripDialogProps = {
 
 export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDialogProps) {
   const locale = useLocale();
+  const calendarLocale = locale === "ja" ? ja : enUS;
   const tm = useTranslations("messages");
   const tt = useTranslations("trip");
   const tc = useTranslations("common");
@@ -204,7 +205,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
                 name="title"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="京都3日間の旅"
+                placeholder={tt("tripTitlePlaceholder")}
                 maxLength={TRIP_TITLE_MAX_LENGTH}
                 required
               />
@@ -219,7 +220,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
                 name="destination"
                 value={destination}
                 onChange={(e) => setDestination(e.target.value)}
-                placeholder="京都"
+                placeholder={tt("destinationPlaceholder")}
                 maxLength={TRIP_DESTINATION_MAX_LENGTH}
               />
               <p className="text-right text-xs text-muted-foreground">
@@ -303,7 +304,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
                     month={calendarMonth}
                     onMonthChange={setCalendarMonth}
                     numberOfMonths={2}
-                    locale={ja}
+                    locale={calendarLocale}
                     hideNavigation
                     startMonth={new Date(START_YEAR, 0)}
                     endMonth={new Date(END_YEAR, 11)}

@@ -6,7 +6,7 @@ import type {
   ExpenseSplitType,
   MemberResponse,
 } from "@sugara/shared";
-import { EXPENSE_CATEGORY_LABELS, EXPENSE_TITLE_MAX_LENGTH } from "@sugara/shared";
+import { EXPENSE_TITLE_MAX_LENGTH, expenseCategorySchema } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus, Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -314,9 +314,7 @@ export function ExpenseDialog({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">{te("uncategorized")}</SelectItem>
-                {(
-                  Object.keys(EXPENSE_CATEGORY_LABELS) as (keyof typeof EXPENSE_CATEGORY_LABELS)[]
-                ).map((value) => (
+                {expenseCategorySchema.options.map((value) => (
                   <SelectItem key={value} value={value}>
                     {tlExpCat(value)}
                   </SelectItem>

@@ -36,7 +36,9 @@ export const BookmarkListCard = memo(function BookmarkListCard({
         <div className="flex items-center justify-between">
           <div className="flex min-w-0 items-center gap-2">
             {selectable && <SelectionIndicator checked={selected} />}
-            <CardTitle className="truncate text-lg">{name}</CardTitle>
+            <CardTitle className="truncate text-lg" translate="yes">
+              {name}
+            </CardTitle>
           </div>
           <Badge
             variant={

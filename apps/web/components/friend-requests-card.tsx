@@ -110,7 +110,9 @@ export function FriendRequestsCard({
                 <UserAvatar name={req.name} image={req.image} className="h-10 w-10" />
               </Link>
               <Link href={`${profileHrefPrefix}/${req.requesterId}`} className="min-w-0 flex-1">
-                <span className="truncate text-sm font-medium">{req.name}</span>
+                <span translate="yes" className="truncate text-sm font-medium">
+                  {req.name}
+                </span>
               </Link>
               <div className="flex shrink-0 items-center gap-2">
                 <Button
@@ -155,7 +157,9 @@ export function FriendRequestsCard({
                 className="h-6 w-6 shrink-0"
                 fallbackClassName="text-xs"
               />
-              <span className="text-sm truncate">{req.name}</span>
+              <span translate="yes" className="text-sm truncate">
+                {req.name}
+              </span>
             </div>
             <div className="flex gap-2 shrink-0">
               <Button size="sm" variant="outline" asChild>

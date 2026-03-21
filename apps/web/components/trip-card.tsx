@@ -68,7 +68,9 @@ export const TripCard = memo(function TripCard({
         <div className="flex items-center justify-between">
           <div className="flex min-w-0 items-center gap-2">
             {selectable && <SelectionIndicator checked={selected} />}
-            <CardTitle className="truncate text-lg">{title}</CardTitle>
+            <CardTitle className="truncate text-lg" translate="yes">
+              {title}
+            </CardTitle>
           </div>
           <div className="flex items-center gap-1.5">
             {unsettled && (
@@ -89,7 +91,9 @@ export const TripCard = memo(function TripCard({
             </Badge>
           </div>
         </div>
-        <CardDescription className="truncate">{destination || "\u00A0"}</CardDescription>
+        <CardDescription className="truncate" translate="yes">
+          {destination || "\u00A0"}
+        </CardDescription>
       </CardHeader>
       <CardContent className="mt-auto">
         <p className="text-sm text-muted-foreground">

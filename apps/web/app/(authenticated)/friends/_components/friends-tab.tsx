@@ -108,7 +108,9 @@ function FriendListSection({
                     image={friend.image}
                     className="h-10 w-10 shrink-0"
                   />
-                  <span className="truncate text-sm font-medium">{friend.name}</span>
+                  <span translate="yes" className="truncate text-sm font-medium">
+                    {friend.name}
+                  </span>
                 </Link>
                 <ItemMenuButton
                   ariaLabel={tc("itemMenu", { name: friend.name })}
@@ -137,7 +139,9 @@ function FriendListSection({
                         className="h-6 w-6 shrink-0"
                         fallbackClassName="text-xs"
                       />
-                      <span className="text-sm truncate">{friend.name}</span>
+                      <span translate="yes" className="text-sm truncate">
+                        {friend.name}
+                      </span>
                     </div>
                     <div className="flex gap-2 shrink-0">
                       <Button size="sm" variant="outline" asChild>

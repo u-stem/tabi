@@ -122,7 +122,9 @@ export const PlaceItem = memo(function PlaceItem({
           <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
         ) : null}
         <div className="min-w-0 flex-1">
-          <span className="block min-w-0 truncate text-sm font-medium">{name}</span>
+          <span className="block min-w-0 truncate text-sm font-medium" translate="yes">
+            {name}
+          </span>
           <ScheduleTimeLabel
             crossDayDisplay={crossDayDisplay}
             crossDayPosition={crossDayPosition}
@@ -140,7 +142,9 @@ export const PlaceItem = memo(function PlaceItem({
                   className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
                 >
                   <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                  <span className="truncate">{address}</span>
+                  <span className="truncate" translate="yes">
+                    {address}
+                  </span>
                 </a>
               )}
               <ScheduleLinks urls={urls} memo={memo} />

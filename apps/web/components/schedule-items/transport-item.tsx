@@ -151,7 +151,9 @@ export const TransportItem = memo(function TransportItem({
           <DragHandle attributes={sortable.attributes} listeners={sortable.listeners} />
         ) : null}
         <div className="min-w-0 flex-1">
-          <span className="block min-w-0 truncate text-sm font-medium">{name}</span>
+          <span className="block min-w-0 truncate text-sm font-medium" translate="yes">
+            {name}
+          </span>
           <ScheduleTimeLabel
             crossDayDisplay={crossDayDisplay}
             crossDayPosition={crossDayPosition}
@@ -162,7 +164,10 @@ export const TransportItem = memo(function TransportItem({
           {(routeStr || urls.length > 0 || memo) && (
             <div className={cn("mt-1 space-y-1", selectable && "pointer-events-none")}>
               {routeStr && (
-                <span className="flex w-fit max-w-full items-center gap-1.5 text-xs text-muted-foreground">
+                <span
+                  className="flex w-fit max-w-full items-center gap-1.5 text-xs text-muted-foreground"
+                  translate="yes"
+                >
                   <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
                   {transitUrl ? (
                     <a

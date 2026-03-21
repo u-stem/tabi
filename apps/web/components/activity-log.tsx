@@ -106,7 +106,7 @@ function parseAction(
 ): ActionParts {
   const ns = ACTIVITY_NAMESPACE_MAP[log.entityType];
   const key = ns ? `${ns}.${log.action}` : null;
-  const name = log.entityName ? `「${log.entityName}」` : "";
+  const name = log.entityName ?? "";
   const detail = log.detail ? `(${translateDetail(log.detail, tlRole)})` : null;
 
   if (key) {
@@ -220,14 +220,22 @@ export function ActivityLog({ tripId }: ActivityLogProps) {
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="break-words text-sm leading-6">
-                    <span className="font-medium">{log.userName}</span>
+                    <span translate="yes" className="font-medium">
+                      {log.userName}
+                    </span>
                     <span className="ml-1 text-muted-foreground">
                       {parts.before}
                       {parts.entityName && (
-                        <span className="font-medium text-foreground">{parts.entityName}</span>
+                        <span translate="yes" className="font-medium text-foreground">
+                          {parts.entityName}
+                        </span>
                       )}
                       {parts.after}
-                      {parts.detail && <span className="ml-1">{parts.detail}</span>}
+                      {parts.detail && (
+                        <span translate="yes" className="ml-1">
+                          {parts.detail}
+                        </span>
+                      )}
                     </span>
                     <span className="ml-2 text-xs text-muted-foreground/60">
                       {formatRelativeTime(

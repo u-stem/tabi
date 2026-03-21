@@ -470,7 +470,9 @@ export function ScheduleLinks({ urls, memo }: { urls: string[]; memo?: string | 
       {memo && (
         <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
           <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
-          <p className="whitespace-pre-line">{memo}</p>
+          <p className="whitespace-pre-line" translate="yes">
+            {memo}
+          </p>
         </div>
       )}
     </>

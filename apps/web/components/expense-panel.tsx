@@ -149,7 +149,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
                         >
                           <span className="flex items-center gap-1.5">
                             <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
-                            {b.name}
+                            <span translate="yes">{b.name}</span>
                           </span>
                           <span
                             className={
@@ -294,7 +294,9 @@ function ExpenseRow({
     <CollapsiblePrimitive.Root className="rounded-md border">
       <div className="flex items-center justify-between gap-2 p-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{expense.title}</p>
+          <p className="truncate text-sm font-medium" translate="yes">
+            {expense.title}
+          </p>
           <p className="text-xs text-muted-foreground">
             {te("paidBy", { name: expense.paidByUser.name })}
             {" / "}
@@ -363,7 +365,7 @@ function ExpenseRow({
                   <div key={item.id} className="flex items-center justify-between pl-2 text-sm">
                     <span className="flex items-center gap-1.5">
                       <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
-                      {item.name}
+                      <span translate="yes">{item.name}</span>
                       <span className="text-xs text-muted-foreground">
                         ({te("memberCount", { count: item.members.length })})
                       </span>
@@ -389,7 +391,7 @@ function ExpenseRow({
                   >
                     <span className="flex items-center gap-1.5">
                       <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
-                      {split.user.name}
+                      <span translate="yes">{split.user.name}</span>
                     </span>
                     <span className="font-medium">
                       {split.amount.toLocaleString()}

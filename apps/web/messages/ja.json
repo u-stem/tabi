@@ -875,34 +875,34 @@
   },
   "activity": {
     "trip": {
-      "created": "旅行{name}を作成",
-      "updated": "旅行{name}を更新",
-      "duplicated": "旅行{name}を複製"
+      "created": "旅行「{name}」を作成",
+      "updated": "旅行「{name}」を更新",
+      "duplicated": "旅行「{name}」を複製"
     },
     "schedule": {
-      "created": "予定{name}を追加",
-      "updated": "予定{name}を更新",
-      "deleted": "予定{name}を削除",
-      "duplicated": "予定{name}を複製",
-      "unassigned": "予定{name}を候補に戻す"
+      "created": "予定「{name}」を追加",
+      "updated": "予定「{name}」を更新",
+      "deleted": "予定「{name}」を削除",
+      "duplicated": "予定「{name}」を複製",
+      "unassigned": "予定「{name}」を候補に戻す"
     },
     "candidate": {
-      "created": "候補{name}を追加",
-      "updated": "候補{name}を更新",
-      "deleted": "候補{name}を削除",
-      "duplicated": "候補{name}を複製",
-      "assigned": "候補{name}を予定に追加"
+      "created": "候補「{name}」を追加",
+      "updated": "候補「{name}」を更新",
+      "deleted": "候補「{name}」を削除",
+      "duplicated": "候補「{name}」を複製",
+      "assigned": "候補「{name}」を予定に追加"
     },
     "pattern": {
-      "created": "パターン{name}を追加",
-      "updated": "パターン{name}を更新",
-      "deleted": "パターン{name}を削除",
-      "duplicated": "パターン{name}を複製"
+      "created": "パターン「{name}」を追加",
+      "updated": "パターン「{name}」を更新",
+      "deleted": "パターン「{name}」を削除",
+      "duplicated": "パターン「{name}」を複製"
     },
     "member": {
-      "created": "メンバー{name}を追加",
-      "deleted": "メンバー{name}を削除",
-      "role_changed": "{name}のロールを変更"
+      "created": "メンバー「{name}」を追加",
+      "deleted": "メンバー「{name}」を削除",
+      "role_changed": "「{name}」のロールを変更"
     },
     "day_memo": {
       "updated": "日程メモを更新"
@@ -911,15 +911,15 @@
       "updated": "天気を更新"
     },
     "expenseLog": {
-      "created": "費用{name}を追加",
-      "updated": "費用{name}を更新",
-      "deleted": "費用{name}を削除"
+      "created": "費用「{name}」を追加",
+      "updated": "費用「{name}」を更新",
+      "deleted": "費用「{name}」を削除"
     },
     "pollLog": {
       "created": "日程調整を開始",
-      "option_added": "日程案{name}を追加",
-      "option_deleted": "日程案{name}を削除",
-      "confirmed": "日程{name}を確定"
+      "option_added": "日程案「{name}」を追加",
+      "option_deleted": "日程案「{name}」を削除",
+      "confirmed": "日程「{name}」を確定"
     },
     "chat_session": {
       "created": "作戦会議を開始",

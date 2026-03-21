@@ -875,34 +875,34 @@
   },
   "activity": {
     "trip": {
-      "created": "Created trip {name}",
-      "updated": "Updated trip {name}",
-      "duplicated": "Duplicated trip {name}"
+      "created": "Created trip \"{name}\"",
+      "updated": "Updated trip \"{name}\"",
+      "duplicated": "Duplicated trip \"{name}\""
     },
     "schedule": {
-      "created": "Added schedule {name}",
-      "updated": "Updated schedule {name}",
-      "deleted": "Deleted schedule {name}",
-      "duplicated": "Duplicated schedule {name}",
-      "unassigned": "Moved schedule {name} to candidates"
+      "created": "Added schedule \"{name}\"",
+      "updated": "Updated schedule \"{name}\"",
+      "deleted": "Deleted schedule \"{name}\"",
+      "duplicated": "Duplicated schedule \"{name}\"",
+      "unassigned": "Moved schedule \"{name}\" to candidates"
     },
     "candidate": {
-      "created": "Added candidate {name}",
-      "updated": "Updated candidate {name}",
-      "deleted": "Deleted candidate {name}",
-      "duplicated": "Duplicated candidate {name}",
-      "assigned": "Added candidate {name} to schedule"
+      "created": "Added candidate \"{name}\"",
+      "updated": "Updated candidate \"{name}\"",
+      "deleted": "Deleted candidate \"{name}\"",
+      "duplicated": "Duplicated candidate \"{name}\"",
+      "assigned": "Added candidate \"{name}\" to schedule"
     },
     "pattern": {
-      "created": "Added pattern {name}",
-      "updated": "Updated pattern {name}",
-      "deleted": "Deleted pattern {name}",
-      "duplicated": "Duplicated pattern {name}"
+      "created": "Added pattern \"{name}\"",
+      "updated": "Updated pattern \"{name}\"",
+      "deleted": "Deleted pattern \"{name}\"",
+      "duplicated": "Duplicated pattern \"{name}\""
     },
     "member": {
-      "created": "Added member {name}",
-      "deleted": "Removed member {name}",
-      "role_changed": "Changed role for {name}"
+      "created": "Added member \"{name}\"",
+      "deleted": "Removed member \"{name}\"",
+      "role_changed": "Changed role for \"{name}\""
     },
     "day_memo": {
       "updated": "Updated day memo"
@@ -911,15 +911,15 @@
       "updated": "Updated weather"
     },
     "expenseLog": {
-      "created": "Added expense {name}",
-      "updated": "Updated expense {name}",
-      "deleted": "Deleted expense {name}"
+      "created": "Added expense \"{name}\"",
+      "updated": "Updated expense \"{name}\"",
+      "deleted": "Deleted expense \"{name}\""
     },
     "pollLog": {
       "created": "Started schedule coordination",
-      "option_added": "Added date option {name}",
-      "option_deleted": "Deleted date option {name}",
-      "confirmed": "Confirmed dates {name}"
+      "option_added": "Added date option \"{name}\"",
+      "option_deleted": "Deleted date option \"{name}\"",
+      "confirmed": "Confirmed dates \"{name}\""
     },
     "chat_session": {
       "created": "Started strategy session",

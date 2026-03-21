@@ -159,7 +159,9 @@ export function GroupsTab({
                     <Users className="h-5 w-5 text-muted-foreground" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">{group.name}</span>
+                    <span translate="yes" className="block truncate text-sm font-medium">
+                      {group.name}
+                    </span>
                     <span className="text-xs text-muted-foreground">
                       {tf("memberCount", { count: group.memberCount })}
                     </span>
@@ -195,7 +197,9 @@ export function GroupsTab({
                       className="flex items-center gap-2 min-w-0 hover:underline"
                       onClick={() => setDetailGroup(group)}
                     >
-                      <span className="text-sm truncate">{group.name}</span>
+                      <span translate="yes" className="text-sm truncate">
+                        {group.name}
+                      </span>
                       <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
                         <Users className="h-3.5 w-3.5" />
                         {group.memberCount}

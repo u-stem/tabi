@@ -469,6 +469,7 @@ function SouvenirItemRow({
         <div className="flex items-center gap-1.5">
           <p
             className={`text-sm font-medium ${(isOwnItem || item.shareStyle !== "recommend") && item.isPurchased && !selected ? "line-through" : ""}`}
+            translate="yes"
           >
             {item.name}
           </p>
@@ -512,7 +513,7 @@ function SouvenirItemRow({
         {!isOwnItem && (
           <div className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
             <User className="h-3 w-3 shrink-0" />
-            <span>{item.userName}</span>
+            <span translate="yes">{item.userName}</span>
           </div>
         )}
         {(item.recipient || item.addresses.length > 0 || item.urls.length > 0 || item.memo) && (
@@ -520,7 +521,7 @@ function SouvenirItemRow({
             {item.recipient && (
               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                 <User className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <span>{item.recipient}</span>
+                <span translate="yes">{item.recipient}</span>
               </div>
             )}
             {item.addresses.map((addr) => (
@@ -532,7 +533,9 @@ function SouvenirItemRow({
                 className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
               >
                 <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                <span className="truncate">{addr}</span>
+                <span className="truncate" translate="yes">
+                  {addr}
+                </span>
               </a>
             ))}
             {item.urls.filter(isSafeUrl).map((url) => (
@@ -550,7 +553,9 @@ function SouvenirItemRow({
             {item.memo && (
               <div className="flex items-start gap-1.5 text-xs text-muted-foreground/70">
                 <StickyNote className="mt-0.5 h-3 w-3 shrink-0" />
-                <p className="whitespace-pre-line">{item.memo}</p>
+                <p className="whitespace-pre-line" translate="yes">
+                  {item.memo}
+                </p>
               </div>
             )}
           </div>

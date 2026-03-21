@@ -78,7 +78,9 @@ export function TripHeader({
 
       {/* Mobile compact header */}
       <div className="flex h-11 items-center gap-2 lg:hidden">
-        <h1 className="min-w-0 flex-1 truncate text-base font-bold">{trip.title}</h1>
+        <h1 className="min-w-0 flex-1 truncate text-base font-bold" translate="yes">
+          {trip.title}
+        </h1>
         {showReaction && <ReactionButton onReaction={onReaction} cooldown={cooldown ?? false} />}
         <PresenceAvatars users={otherPresence} isConnected={isConnected} />
         <TripActions {...tripActionsProps} compact />
@@ -87,20 +89,22 @@ export function TripHeader({
       {/* Desktop header */}
       <div className="hidden lg:block">
         <div className="flex items-center gap-3">
-          <h1 className="min-w-0 truncate text-2xl font-bold">{trip.title}</h1>
+          <h1 className="min-w-0 truncate text-2xl font-bold" translate="yes">
+            {trip.title}
+          </h1>
           <PresenceAvatars users={otherPresence} isConnected={isConnected} />
         </div>
         <p className="text-muted-foreground">
           {trip.startDate && trip.endDate ? (
             <>
-              {trip.destination ? `${trip.destination} / ` : null}
+              {trip.destination ? <span translate="yes">{trip.destination} / </span> : null}
               {formatDateRange(trip.startDate, trip.endDate, locale)}
               <span className="ml-2 text-sm">
                 ({tdf("dayCount", { count: getDayCount(trip.startDate, trip.endDate) })})
               </span>
             </>
           ) : (
-            trip.destination
+            <span translate="yes">{trip.destination}</span>
           )}
         </p>
         <div className="mt-3 flex flex-wrap items-center gap-2">

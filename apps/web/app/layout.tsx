@@ -75,7 +75,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const messages = await getMessages();
 
   return (
-    <html lang={locale} suppressHydrationWarning>
+    <html lang={locale} translate="no" suppressHydrationWarning>
       <body
         className={`${inter.variable} ${notoSansJP.variable} min-h-screen bg-background font-sans antialiased`}
       >

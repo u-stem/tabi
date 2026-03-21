@@ -173,7 +173,7 @@ export function BookmarkPanel({ tripId, disabled, onCandidateAdded }: BookmarkPa
                 </SelectTrigger>
                 <SelectContent>
                   {lists.map((list) => (
-                    <SelectItem key={list.id} value={list.id}>
+                    <SelectItem key={list.id} value={list.id} translate="yes">
                       {list.name} ({list.bookmarkCount})
                     </SelectItem>
                   ))}
@@ -288,7 +288,9 @@ function BookmarkContent({
 }) {
   return (
     <div className="min-w-0 flex-1">
-      <p className="text-sm font-medium">{name}</p>
+      <p className="text-sm font-medium" translate="yes">
+        {name}
+      </p>
       {urls.length > 0 &&
         urls.filter(isSafeUrl).map((url) => (
           <a
@@ -309,7 +311,9 @@ function BookmarkContent({
       {memo && (
         <div className="mt-0.5 flex items-start gap-1 text-xs text-muted-foreground">
           <StickyNote className="mt-0.5 h-3 w-3 shrink-0 text-muted-foreground/70" />
-          <p className="line-clamp-2 whitespace-pre-line">{memo}</p>
+          <p className="line-clamp-2 whitespace-pre-line" translate="yes">
+            {memo}
+          </p>
         </div>
       )}
     </div>

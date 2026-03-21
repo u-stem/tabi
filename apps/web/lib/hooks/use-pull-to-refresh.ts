@@ -32,10 +32,14 @@ export function usePullToRefresh(
   const startYRef = useRef(0);
   const startXRef = useRef(0);
   const pullingRef = useRef(false);
+  const refreshingRef = useRef(false);
+  const pullDistanceRef = useRef(0);
+  const onRefreshRef = useRef(onRefresh);
+  onRefreshRef.current = onRefresh;
 
   const handleTouchStart = useCallback(
     (e: TouchEvent) => {
-      if (state.refreshing) return;
+      if (refreshingRef.current) return;
       if (activeScrollElement && activeScrollElement.scrollTop > 0) return;
       if (!activeScrollElement && scrollRef.current && scrollRef.current.scrollTop > 0) return;
       if (isDialogOrDrawerOpen()) return;
@@ -43,12 +47,12 @@ export function usePullToRefresh(
       startXRef.current = e.touches[0].clientX;
       pullingRef.current = false;
     },
-    [scrollRef, activeScrollElement, state.refreshing],
+    [scrollRef, activeScrollElement],
   );
 
   const handleTouchMove = useCallback(
     (e: TouchEvent) => {
-      if (state.refreshing) return;
+      if (refreshingRef.current) return;
       if (isDialogOrDrawerOpen()) return;
       const scrolledDown = activeScrollElement
         ? activeScrollElement.scrollTop > 0
@@ -74,26 +78,30 @@ export function usePullToRefresh(
       pullingRef.current = true;
 
       const distance = Math.min(deltaY * 0.5, MAX_PULL);
+      pullDistanceRef.current = distance;
       setState((s) => ({ ...s, pulling: true, pullDistance: distance }));
     },
-    [scrollRef, activeScrollElement, state.refreshing],
+    [scrollRef, activeScrollElement],
   );
 
   const handleTouchEnd = useCallback(async () => {
     if (!pullingRef.current) return;
     pullingRef.current = false;
 
-    if (state.pullDistance >= THRESHOLD) {
+    if (pullDistanceRef.current >= THRESHOLD) {
+      refreshingRef.current = true;
       setState({ pulling: false, pullDistance: 0, refreshing: true });
       try {
-        await onRefresh();
+        await onRefreshRef.current();
       } finally {
+        refreshingRef.current = false;
         setState({ pulling: false, pullDistance: 0, refreshing: false });
       }
     } else {
       setState({ pulling: false, pullDistance: 0, refreshing: false });
     }
-  }, [state.pullDistance, onRefresh]);
+    pullDistanceRef.current = 0;
+  }, []);
 
   useEffect(() => {
     const el = activeScrollElement ?? scrollRef.current;

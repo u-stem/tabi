@@ -659,7 +659,11 @@ export default function TripDetailPage() {
 
   const scheduleLimitReached = (trip?.scheduleCount ?? 0) >= MAX_SCHEDULES_PER_TRIP;
   const scheduleLimitMessage = tm("limitSchedules", { max: MAX_SCHEDULES_PER_TRIP });
-  const selectionValue = { ...selection, canEnter: canEdit && online };
+  const selectionCanEnter = canEdit && online;
+  const selectionValue = useMemo(
+    () => ({ ...selection, canEnter: selectionCanEnter }),
+    [selection, selectionCanEnter],
+  );
 
   const mobileSwipeTabs = MOBILE_SWIPE_TAB_IDS.map((id) => ({
     id,
@@ -730,7 +734,7 @@ export default function TripDetailPage() {
                   onAddScheduleOpenChange={!isLg ? setAddScheduleOpen : undefined}
                   maxEndDayOffset={Math.max(1, tripData.days.length - 1 - selectedDay)}
                   totalDays={tripData.days.length}
-                  crossDayEntries={getCrossDayEntries(tripData.days, currentDay.dayNumber)}
+                  crossDayEntries={dndCrossDayEntries}
                   overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
                   scheduleLimitReached={scheduleLimitReached}
                   scheduleLimitMessage={scheduleLimitMessage}
@@ -959,7 +963,7 @@ export default function TripDetailPage() {
                           onAddScheduleOpenChange={isLg ? setAddScheduleOpen : undefined}
                           maxEndDayOffset={Math.max(1, trip.days.length - 1 - selectedDay)}
                           totalDays={trip.days.length}
-                          crossDayEntries={getCrossDayEntries(trip.days, currentDay.dayNumber)}
+                          crossDayEntries={dndCrossDayEntries}
                           overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
                           scheduleLimitReached={scheduleLimitReached}
                           scheduleLimitMessage={scheduleLimitMessage}
@@ -1107,12 +1111,14 @@ export default function TripDetailPage() {
   );
 }
 
+const MAPS_LIBRARIES: ("places" | "geometry")[] = ["places", "geometry"];
+
 function MapsProvider({ enabled, children }: { enabled: boolean; children: React.ReactNode }) {
   if (!enabled) return <>{children}</>;
   return (
     <APIProvider
       apiKey={process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? ""}
-      libraries={["places", "geometry"]}
+      libraries={MAPS_LIBRARIES}
     >
       {children}
     </APIProvider>

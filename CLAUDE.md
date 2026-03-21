@@ -134,11 +134,11 @@ bun run --filter @sugara/shared check-types
 
 ## お知らせ (News) メンテナンス
 
-機能を追加・変更したときは `apps/web/content/news/YYYY-MM-DD-<topic>.md` にお知らせ記事を追加する。
-既存の記事で記述が古くなったもの（機能の場所が変わった等）も同じコミットで修正する。
+機能を追加・変更したときは `apps/web/content/news/ja/YYYY-MM-DD-<topic>.md` と `apps/web/content/news/en/YYYY-MM-DD-<topic>.md` にお知らせ記事を追加する。
+既存の記事で記述が古くなったもの（機能の場所が変わった等）も同じコミットで ja/en 両方を修正する。
 
-- 新機能の追加 → 新しい記事を作成
-- 既存機能の変更 → 影響する過去の記事を修正
+- 新機能の追加 → ja と en の両方に新しい記事を作成
+- 既存機能の変更 → 影響する過去の記事を ja/en 両方で修正
 
 ## README バッジメンテナンス
 

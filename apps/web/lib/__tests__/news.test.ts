@@ -3,7 +3,7 @@ import { getAllNews, getNewsBySlug } from "../news";
 
 describe("getAllNews", () => {
   it("returns articles sorted by date descending", () => {
-    const articles = getAllNews();
+    const articles = getAllNews("ja");
 
     expect(articles.length).toBeGreaterThan(0);
 
@@ -13,7 +13,7 @@ describe("getAllNews", () => {
   });
 
   it("returns metadata fields for each article", () => {
-    const articles = getAllNews();
+    const articles = getAllNews("ja");
     const article = articles[0];
 
     expect(article).toHaveProperty("title");
@@ -21,11 +21,18 @@ describe("getAllNews", () => {
     expect(article).toHaveProperty("summary");
     expect(article).toHaveProperty("slug");
   });
+
+  it("returns same number of articles for en as ja", () => {
+    const jaArticles = getAllNews("ja");
+    const enArticles = getAllNews("en");
+
+    expect(enArticles.length).toBe(jaArticles.length);
+  });
 });
 
 describe("getNewsBySlug", () => {
   it("returns article with metadata and markdown content", () => {
-    const article = getNewsBySlug("2026-02-12-launch");
+    const article = getNewsBySlug("2026-02-12-launch", "ja");
 
     expect(article).not.toBeNull();
     if (!article) throw new Error("article not found");
@@ -35,8 +42,24 @@ describe("getNewsBySlug", () => {
   });
 
   it("returns null for non-existent slug", () => {
-    const article = getNewsBySlug("non-existent-article");
+    const article = getNewsBySlug("non-existent-article", "ja");
 
     expect(article).toBeNull();
+  });
+
+  it("falls back to ja for unknown locale", () => {
+    const jaArticle = getNewsBySlug("2026-02-12-launch", "ja");
+    const frArticle = getNewsBySlug("2026-02-12-launch", "fr");
+
+    expect(frArticle).not.toBeNull();
+    expect(frArticle?.title).toBe(jaArticle?.title);
+  });
+
+  it("returns en article when it exists", () => {
+    const enArticle = getNewsBySlug("2026-03-21-i18n", "en");
+
+    expect(enArticle).not.toBeNull();
+    if (!enArticle) throw new Error("article not found");
+    expect(enArticle.title).toBe("English language support added");
   });
 });

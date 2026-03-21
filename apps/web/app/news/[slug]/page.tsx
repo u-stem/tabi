@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import Markdown from "react-markdown";
 import { Logo } from "@/components/logo";
 import { pageTitle } from "@/lib/constants";
@@ -19,7 +19,8 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-  const article = getNewsBySlug(slug);
+  const locale = await getLocale();
+  const article = getNewsBySlug(slug, locale);
   const ogImage = `/icons/apple-touch-icon-${getSeason()}.png`;
   if (!article) {
     const t = await getTranslations("pageTitle");
@@ -46,7 +47,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function NewsArticlePage({ params }: Props) {
   const { slug } = await params;
-  const article = getNewsBySlug(slug);
+  const locale = await getLocale();
+  const article = getNewsBySlug(slug, locale);
   const tf = await getTranslations("home.footer");
   const tn = await getTranslations("news");
 

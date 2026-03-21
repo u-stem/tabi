@@ -13,36 +13,16 @@ type NewsArticle = NewsMeta & {
   content: string;
 };
 
+const DEFAULT_LOCALE = "ja";
 const newsDir = path.join(process.cwd(), "content", "news");
 
-export function getAllNews(): NewsMeta[] {
-  const files = fs.readdirSync(newsDir).filter((f) => f.endsWith(".md"));
-
-  const articles = files.map((file) => {
-    const raw = fs.readFileSync(path.join(newsDir, file), "utf-8");
-    const { data } = matter(raw);
-    return {
-      title: data.title as string,
-      date: data.date as string,
-      summary: data.summary as string,
-      slug: file.replace(/\.md$/, ""),
-    };
-  });
-
-  return articles.sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
+function localeDir(locale: string): string {
+  return path.join(newsDir, locale);
 }
 
-export function getNewsBySlug(slug: string): NewsArticle | null {
-  if (slug.includes("..") || slug.includes("/")) return null;
-  const filePath = path.join(newsDir, `${slug}.md`);
-
-  if (!fs.existsSync(filePath)) {
-    return null;
-  }
-
+function parseFile(filePath: string, slug: string): NewsMeta & { content: string } {
   const raw = fs.readFileSync(filePath, "utf-8");
   const { data, content } = matter(raw);
-
   return {
     title: data.title as string,
     date: data.date as string,
@@ -50,4 +30,43 @@ export function getNewsBySlug(slug: string): NewsArticle | null {
     slug,
     content,
   };
+}
+
+export function getAllNews(locale: string = DEFAULT_LOCALE): NewsMeta[] {
+  const jaDir = localeDir(DEFAULT_LOCALE);
+  const targetDir = localeDir(locale);
+
+  // Start with all ja slugs as the canonical set
+  const jaSlugs = fs
+    .readdirSync(jaDir)
+    .filter((f) => f.endsWith(".md"))
+    .map((f) => f.replace(/\.md$/, ""));
+
+  const articles = jaSlugs.map((slug) => {
+    const targetPath = path.join(targetDir, `${slug}.md`);
+    const jaPath = path.join(jaDir, `${slug}.md`);
+
+    // Use target locale if available, fall back to ja
+    const filePath = locale !== DEFAULT_LOCALE && fs.existsSync(targetPath) ? targetPath : jaPath;
+    const { content: _, ...meta } = parseFile(filePath, slug);
+    return meta;
+  });
+
+  return articles.sort((a, b) => (a.date > b.date ? -1 : a.date < b.date ? 1 : 0));
+}
+
+export function getNewsBySlug(slug: string, locale: string = DEFAULT_LOCALE): NewsArticle | null {
+  if (slug.includes("..") || slug.includes("/")) return null;
+
+  const targetPath = path.join(localeDir(locale), `${slug}.md`);
+  const jaPath = path.join(localeDir(DEFAULT_LOCALE), `${slug}.md`);
+
+  // Use target locale if available, fall back to ja
+  const filePath = locale !== DEFAULT_LOCALE && fs.existsSync(targetPath) ? targetPath : jaPath;
+
+  if (!fs.existsSync(filePath)) {
+    return null;
+  }
+
+  return parseFile(filePath, slug);
 }

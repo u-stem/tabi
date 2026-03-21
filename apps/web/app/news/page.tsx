@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Logo } from "@/components/logo";
 import { pageTitle } from "@/lib/constants";
 import { getAllNews } from "@/lib/news";
@@ -11,7 +11,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function NewsPage() {
-  const articles = getAllNews();
+  const locale = await getLocale();
+  const articles = getAllNews(locale);
   const t = await getTranslations("news");
   const tl = await getTranslations("legal");
 

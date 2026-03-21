@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { pageTitle } from "@/lib/constants";
 import { getAllNews } from "@/lib/news";
 
@@ -10,7 +10,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function SpHomeLayout({ children }: { children: React.ReactNode }) {
-  const articles = getAllNews();
+  const locale = await getLocale();
+  const articles = getAllNews(locale);
   const latest = articles[0];
 
   return (

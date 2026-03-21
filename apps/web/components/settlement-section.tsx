@@ -223,8 +223,7 @@ export function SettlementSection({
             <span
               className={`ml-auto font-medium ${isChecked ? "line-through text-muted-foreground" : ""}`}
             >
-              {t.amount.toLocaleString()}
-              {te("yen")}
+              {te("amountWithCurrency", { amount: t.amount.toLocaleString() })}
             </span>
           </div>
         );

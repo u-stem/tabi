@@ -126,8 +126,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
             <div className="flex items-center justify-between p-3">
               <span className="text-sm font-medium">{te("totalSpending")}</span>
               <span className="text-sm font-bold">
-                {settlement.totalAmount.toLocaleString()}
-                {te("yen")}
+                {te("amountWithCurrency", { amount: settlement.totalAmount.toLocaleString() })}
               </span>
             </div>
             {settlement.transfers.length > 0 && (
@@ -159,8 +158,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
                             }
                           >
                             {b.net > 0 ? "+" : ""}
-                            {b.net.toLocaleString()}
-                            {te("yen")}
+                            {te("amountWithCurrency", { amount: b.net.toLocaleString() })}
                           </span>
                         </div>
                       ))}
@@ -183,8 +181,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
                               </span>
                             </span>
                             <span className="font-medium">
-                              {ct.total.toLocaleString()}
-                              {te("yen")}
+                              {te("amountWithCurrency", { amount: ct.total.toLocaleString() })}
                             </span>
                           </div>
                         ))}
@@ -306,8 +303,7 @@ function ExpenseRow({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span className="text-sm font-bold">
-            {expense.amount.toLocaleString()}
-            {te("yen")}
+            {te("amountWithCurrency", { amount: expense.amount.toLocaleString() })}
           </span>
           {canEdit &&
             (isMobile ? (
@@ -371,8 +367,7 @@ function ExpenseRow({
                       </span>
                     </span>
                     <span className="font-medium">
-                      {item.amount.toLocaleString()}
-                      {te("yen")}
+                      {te("amountWithCurrency", { amount: item.amount.toLocaleString() })}
                     </span>
                   </div>
                 ))}
@@ -394,8 +389,7 @@ function ExpenseRow({
                       <span translate="yes">{split.user.name}</span>
                     </span>
                     <span className="font-medium">
-                      {split.amount.toLocaleString()}
-                      {te("yen")}
+                      {te("amountWithCurrency", { amount: split.amount.toLocaleString() })}
                     </span>
                   </div>
                 ))}

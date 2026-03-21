@@ -562,8 +562,7 @@ export function ExpenseDialog({
                           <div key={s.userId} className="flex items-center justify-between text-sm">
                             <span>{member?.name ?? s.userId}</span>
                             <span className="font-medium">
-                              {s.amount.toLocaleString()}
-                              {te("yen")}
+                              {te("amountWithCurrency", { amount: s.amount.toLocaleString() })}
                             </span>
                           </div>
                         );

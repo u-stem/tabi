@@ -763,7 +763,8 @@
     "settlementComplete": "Settlement Complete",
     "settlementProgress": "{checked}/{total} done",
     "unsettled": "Unsettled",
-    "yen": "¥"
+    "yen": "¥",
+    "amountWithCurrency": "¥{amount}"
   },
   "poll": {
     "pageTitle": "Quick Poll",

@@ -763,7 +763,8 @@
     "settlementComplete": "精算完了",
     "settlementProgress": "{checked}/{total} 完了",
     "unsettled": "未精算",
-    "yen": "円"
+    "yen": "円",
+    "amountWithCurrency": "{amount}円"
   },
   "poll": {
     "pageTitle": "かんたん投票",

@@ -1,7 +1,7 @@
 import { getFaqs } from "@sugara/api/lib/faqs";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Logo } from "@/components/logo";
 import { pageTitle } from "@/lib/constants";
 import { FaqSearch } from "./_components/faq-search";
@@ -12,7 +12,8 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function FaqPage() {
-  const faqs = await getFaqs();
+  const locale = await getLocale();
+  const faqs = await getFaqs(locale);
   const t = await getTranslations("faq");
   const tl = await getTranslations("legal");
 

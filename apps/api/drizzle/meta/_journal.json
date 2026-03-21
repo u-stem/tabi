@@ -232,6 +232,13 @@
       "when": 1773717291539,
       "tag": "0032_abnormal_speedball",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1774059328139,
+      "tag": "0033_married_ghost_rider",
+      "breakpoints": true
     }
   ]
 }

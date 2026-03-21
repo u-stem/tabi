@@ -1,0 +1,1 @@
+ALTER TABLE "faqs" ADD COLUMN "locale" text DEFAULT 'ja' NOT NULL;

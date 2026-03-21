@@ -13,7 +13,7 @@ const isLocalhost = url.includes("localhost") || url.includes("127.0.0.1");
 const client = postgres(url, { ssl: isLocalhost ? false : "require", max: 1 });
 const db = drizzle(client);
 
-const FAQ_ITEMS = [
+const JA_FAQS = [
   // ---- Overview ----
   {
     question: "sugaraで何ができますか？",
@@ -261,51 +261,6 @@ const FAQ_ITEMS = [
       "はい。「?」キーでショートカット一覧を表示できます。日程の切り替え（数字キー・[ ]キー）、予定の追加（aキー）、候補の追加（cキー）などが使えます。",
     sortOrder: 91,
   },
-  // ---- Maps ----
-  {
-    question: "地図タブが表示されません",
-    answer:
-      "地図タブは管理者が作成した旅行のみ利用できます。一般ユーザーが作成した旅行では表示されません。",
-    sortOrder: 92,
-  },
-  {
-    question: "地図にスポットが表示されません",
-    answer:
-      "スポット追加・編集ダイアログの住所フィールドで候補から場所を選択すると、座標情報が保存されて地図上にピンが表示されます。手入力した住所やフリーテキストの場合はピンが表示されません。",
-    sortOrder: 93,
-  },
-  {
-    question: "タイムラインにスポット間の移動時間が表示されません",
-    answer:
-      "移動時間は、連続する2つのスポットが両方とも地図座標を持ち、かつカテゴリが「移動」でない場合に表示されます。いずれかのスポットの住所を検索候補から選び直すと表示されるようになります。",
-    sortOrder: 94,
-  },
-  {
-    question: "地図タブはどう使いますか？",
-    answer:
-      "右パネルの「地図」タブ（またはキーボードショートカット g → m）で開きます。「当日」ボタンで当日のスポットのみ、「全期間」ボタンで旅行全体のスポットを表示します。ピンをタップするとスポット名が表示されます。",
-    sortOrder: 95,
-  },
-  // ---- かんたん投票 ----
-  {
-    question: "「かんたん投票」とは何ですか？",
-    answer:
-      "旅行に紐づかない独立した投票機能です。質問と選択肢を設定して共有リンクを発行すると、リンクを知っている人が誰でも投票できます。ログイン不要で、複数選択の許可や投票前の結果表示の設定も可能です。1ユーザーあたり20件まで作成できます。",
-    sortOrder: 96,
-  },
-  {
-    question: "かんたん投票のリンクを共有するにはどうすればよいですか？",
-    answer:
-      "投票作成後に表示されるリンクをコピーして共有します。投票一覧ページからもリンクのコピーが可能です。リンクを受け取った人はログインなしで投票できます。",
-    sortOrder: 97,
-  },
-  // ---- Tools ----
-  {
-    question: "ルーレット機能とは？",
-    answer:
-      "旅行先やアクティビティをランダムに決めるツールです。プロフィールページの「ツール」セクションからアクセスできます。都道府県モード（地域フィルタ付き）、カスタムモード（自分で選択肢を入力）、ブックマークモード（ブックマークリストからランダム選択）の3つのモードがあります。",
-    sortOrder: 98,
-  },
   // ---- Language ----
   {
     question: "表示言語を変更するにはどうすればよいですか？",
@@ -313,26 +268,398 @@ const FAQ_ITEMS = [
       "ヘッダーのメニューにある言語切り替えボタンをタップすると、日本語と英語を切り替えられます。選択した言語はブラウザに保存され、次回以降も同じ言語で表示されます。言語を設定していない場合は、ブラウザの言語設定に応じて自動で選択されます。",
     sortOrder: 92,
   },
+  // ---- Maps ----
+  {
+    question: "地図タブが表示されません",
+    answer:
+      "地図タブは管理者が作成した旅行のみ利用できます。一般ユーザーが作成した旅行では表示されません。",
+    sortOrder: 93,
+  },
+  {
+    question: "地図にスポットが表示されません",
+    answer:
+      "スポット追加・編集ダイアログの住所フィールドで候補から場所を選択すると、座標情報が保存されて地図上にピンが表示されます。手入力した住所やフリーテキストの場合はピンが表示されません。",
+    sortOrder: 94,
+  },
+  {
+    question: "タイムラインにスポット間の移動時間が表示されません",
+    answer:
+      "移動時間は、連続する2つのスポットが両方とも地図座標を持ち、かつカテゴリが「移動」でない場合に表示されます。いずれかのスポットの住所を検索候補から選び直すと表示されるようになります。",
+    sortOrder: 95,
+  },
+  {
+    question: "地図タブはどう使いますか？",
+    answer:
+      "右パネルの「地図」タブ（またはキーボードショートカット g → m）で開きます。「当日」ボタンで当日のスポットのみ、「全期間」ボタンで旅行全体のスポットを表示します。ピンをタップするとスポット名が表示されます。",
+    sortOrder: 96,
+  },
+  // ---- Quick Poll ----
+  {
+    question: "「かんたん投票」とは何ですか？",
+    answer:
+      "旅行に紐づかない独立した投票機能です。質問と選択肢を設定して共有リンクを発行すると、リンクを知っている人が誰でも投票できます。ログイン不要で、複数選択の許可や投票前の結果表示の設定も可能です。1ユーザーあたり20件まで作成できます。",
+    sortOrder: 97,
+  },
+  {
+    question: "かんたん投票のリンクを共有するにはどうすればよいですか？",
+    answer:
+      "投票作成後に表示されるリンクをコピーして共有します。投票一覧ページからもリンクのコピーが可能です。リンクを受け取った人はログインなしで投票できます。",
+    sortOrder: 98,
+  },
+  // ---- Tools ----
+  {
+    question: "ルーレット機能とは？",
+    answer:
+      "旅行先やアクティビティをランダムに決めるツールです。プロフィールページの「ツール」セクションからアクセスできます。都道府県モード（地域フィルタ付き）、カスタムモード（自分で選択肢を入力）、ブックマークモード（ブックマークリストからランダム選択）の3つのモードがあります。",
+    sortOrder: 99,
+  },
   // ---- Limits ----
   {
     question: "旅行や予定に上限はありますか？",
     answer:
       "旅行は1ユーザーあたり10件、予定は1旅行あたり300件、メンバーは1旅行あたり20人、パターンは1日あたり3つ、ブックマークリストは5件、フレンドは100人、グループは10件、お土産は1旅行あたり100件、かんたん投票は1ユーザーあたり20件までです。",
-    sortOrder: 99,
+    sortOrder: 100,
   },
   // ---- Desktop App ----
   {
     question: "デスクトップアプリはありますか？",
     answer:
       "macOS と Windows 向けのデスクトップアプリを提供しています。設定画面の「その他」タブにある「デスクトップアプリをダウンロード」からインストーラーをダウンロードできます。インストール後は自動でアップデートされます。",
-    sortOrder: 100,
+    sortOrder: 101,
   },
   {
     question: "デスクトップアプリのインストール時に警告が出ます",
     answer:
       "現在コード署名に対応していないため、macOS では「開発元を確認できません」、Windows では SmartScreen の警告が表示されることがあります。macOS の場合は右クリック（または Control キー+クリック）から「開く」を選択してください。Windows の場合は「詳細情報」→「実行」を選択してください。",
+    sortOrder: 102,
+  },
+];
+
+const EN_FAQS = [
+  // ---- Overview ----
+  {
+    question: "What can I do with sugara?",
+    answer:
+      "sugara is a web app for creating travel plans and collaborating with members. It supports schedule and destination management, schedule voting, expense management, souvenir lists, bookmarks, Excel/CSV export, and printing. It also works on smartphones.",
+    sortOrder: 0,
+  },
+  // ---- Account ----
+  {
+    question: "How do I create an account?",
+    answer:
+      "Register by entering a username, display name, and password. No email address is required. However, an administrator may have disabled new registrations. In that case, you can still use the app as a guest.",
+    sortOrder: 10,
+  },
+  {
+    question: "What information do I need to log in?",
+    answer:
+      "Log in with your username and password. Email addresses are not used for login. Usernames must be 3-20 characters using only alphanumeric characters and underscores.",
+    sortOrder: 11,
+  },
+  {
+    question: "Can I try the app as a guest?",
+    answer:
+      "Yes. Select 'Try as Guest' on the login screen to experience the app without creating an account. Guest accounts are temporary and some features (like settings) are not available.",
+    sortOrder: 12,
+  },
+  {
+    question: "Can I change my username?",
+    answer:
+      "Yes. You can change your username from the 'Account' tab in Settings. It must be 3-20 characters using only alphanumeric characters and underscores. After changing, use the new username to log in.",
+    sortOrder: 13,
+  },
+  {
+    question: "How do I change my password?",
+    answer:
+      "Go to the 'Account' tab in Settings. Enter your current password and new password, then save. Changing your password will automatically log out sessions on other devices.",
+    sortOrder: 14,
+  },
+  {
+    question: "What if I forget my password?",
+    answer:
+      "Use the 'Forgot Password' link on the login screen to request a reset. Enter your registered email address to receive a reset link. If you haven't set an email address, contact the administrator for a temporary password.",
+    sortOrder: 15,
+  },
+  {
+    question: "How do I set up my email address?",
+    answer:
+      "Register from the 'Account' tab in Settings. Enter your email address and save — a confirmation email will be sent. Click the link in the email to complete setup. Having an email address allows you to reset your password yourself.",
+    sortOrder: 16,
+  },
+  {
+    question: "I didn't receive the confirmation email",
+    answer:
+      "Check your spam folder. If it's not there, you can resend from the Settings page. If it still doesn't arrive after waiting, contact the administrator.",
+    sortOrder: 17,
+  },
+  {
+    question: "How do I delete my account?",
+    answer:
+      "Go to 'Delete Account' in the 'Account' tab in Settings. You'll need to enter your password for confirmation. Deletion permanently removes all trips, memberships, and friend data and cannot be undone.",
+    sortOrder: 18,
+  },
+  // ---- Profile ----
+  {
+    question: "How do I change my avatar or display name?",
+    answer:
+      "Go to the 'Profile' tab in Settings. Choose an avatar from DiceBear illustration styles. Select a style (Glass, Pixel Art, etc. — 12 types) and shuffle through candidates to find your favorite. Display names can be set freely.",
+    sortOrder: 19,
+  },
+  {
+    question: "What is a User ID?",
+    answer:
+      "A UUID identifier used by other users to add you as a member or send friend requests. You can view and copy it from the 'Your User ID' section on the Friends page. It is different from your username.",
+    sortOrder: 20,
+  },
+  // ---- Trips ----
+  {
+    question: "Why does my trip status change automatically?",
+    answer:
+      "Based on the trip's start and end dates, the status automatically transitions from 'Planned' to 'In Progress' to 'Completed.' You can also change it manually.",
+    sortOrder: 21,
+  },
+  {
+    question: "What are 'Patterns'?",
+    answer:
+      "A feature that lets you create up to 3 alternative plans for each day. For example, you can manage a 'Sunny day plan' and a 'Rainy day plan' side by side.",
+    sortOrder: 22,
+  },
+  {
+    question: "What's the difference between 'Candidates' and 'Schedules'?",
+    answer:
+      "'Candidates' are destinations you haven't assigned to a day yet — a holding area for places you're considering. Drag and drop a candidate onto a day to turn it into a 'Schedule.'",
+    sortOrder: 23,
+  },
+  {
+    question: "Can I export my travel plan?",
+    answer:
+      "Yes, export in Excel (.xlsx) or CSV format. Excel exports create separate sheets per pattern. CSV supports customizable delimiters and line endings. You can also print or save as PDF using the print layout.",
+    sortOrder: 24,
+  },
+  // ---- Scheduling ----
+  {
+    question: "What is 'Schedule Coordination'?",
+    answer:
+      "A feature for deciding trip dates through member voting. Propose multiple date options and members respond with 'OK / Maybe / NG.' When the owner finalizes a date, the trip dates are set automatically.",
+    sortOrder: 30,
+  },
+  {
+    question: "How do I invite participants to schedule coordination?",
+    answer:
+      "Add users through member management, just like a regular trip. Trip members can respond when they access the schedule coordination. You can share a link to show response status externally, but the link is view-only (no voting). After finalizing, voting participants are automatically added as trip members (editors).",
+    sortOrder: 31,
+  },
+  // ---- Members ----
+  {
+    question: "How do I add members?",
+    answer:
+      "Open member management from the trip detail page and enter the other person's 'User ID.' User IDs can be found on their Friends page. Friends can be added in bulk from your friend list or groups.",
+    sortOrder: 40,
+  },
+  {
+    question: "What's the difference between 'Editor' and 'Viewer' roles?",
+    answer:
+      "'Editors' can add, edit, and delete schedules. 'Viewers' can only view trip content. Only the owner can manage members (add, remove, change roles).",
+    sortOrder: 41,
+  },
+  {
+    question: "When should I use a share link vs. member invitation?",
+    answer:
+      "Share links let anyone with the link view the trip (read-only). Member invitations assign roles including edit permissions to specific users. Use member invitations for collaborative planning, and share links for showing a finished plan.",
+    sortOrder: 42,
+  },
+  {
+    question: "Can multiple people edit at the same time?",
+    answer:
+      "Yes. When members access the trip simultaneously, changes from other members are reflected in real time. You can also see who is viewing which day.",
+    sortOrder: 43,
+  },
+  // ---- Friends / Groups ----
+  {
+    question: "What are 'Friends'?",
+    answer:
+      "A feature for registering people you frequently travel with. You can add friends directly to trips from your friend list. Send a request using the other person's 'User ID' — once approved, you become friends. User IDs can be found on the Friends page. All friend actions (request, accept, decline, cancel, remove) are reflected in real time on the other person's screen.",
+    sortOrder: 50,
+  },
+  {
+    question: "Can I cancel a sent friend request?",
+    answer:
+      "Yes. Cancel from the 'Sent Requests' section on the Friends page. Canceling immediately removes the request from the recipient's list.",
+    sortOrder: 52,
+  },
+  {
+    question: "How do I send a friend request via QR code?",
+    answer:
+      "Tap the 'QR Code' button on the profile page to display your QR code. When someone scans it, a friend request confirmation page opens where they can send a request. You can also use the 'Scan' button to scan QR codes with the camera or read them from screenshots and images.",
+    sortOrder: 51,
+  },
+  {
+    question: "What are 'Groups' for?",
+    answer:
+      "Group your frequent travel companions so you can bulk-add them to trips when adding members.",
+    sortOrder: 51,
+  },
+  // ---- Bookmarks ----
+  {
+    question: "What are 'Bookmarks'?",
+    answer:
+      "A feature for saving and sharing destinations in lists. Save places you're interested in and bulk-add them as trip candidates. List visibility can be set to 'Private,' 'Friends Only,' or 'Public.'",
+    sortOrder: 60,
+  },
+  // ---- Reactions ----
+  {
+    question: "How do I send reactions on a trip page?",
+    answer:
+      "When viewing a trip page at the same time as other members, a reaction button (smiley icon) appears in the header. Tap it to open the emoji picker — the selected emoji floats up on all members' screens. Consecutive sends are limited by a 1-second cooldown.",
+    sortOrder: 65,
+  },
+  // ---- Expenses ----
+  {
+    question: "What is the 'Expenses' tab?",
+    answer:
+      "A feature for recording trip expenses and automatically calculating settlements between members. Enter who paid how much, and it shows who owes whom. Expenses are shared with all trip members.",
+    sortOrder: 70,
+  },
+  {
+    question: "How do I split a bill by item (e.g., at a restaurant)?",
+    answer:
+      "Select 'Per Item' as the split method when adding an expense. Set the amount and target members for each item. You can enter only individual items and use the 'Split remaining equally' button to distribute shared costs automatically.",
+    sortOrder: 71,
+  },
+  {
+    question: "Can I set categories on expenses?",
+    answer:
+      "Yes. When adding or editing expenses, you can set categories: Transportation, Accommodation, Food & Drink, Communication, Consumables, Entertainment, Meetings, or Other. Categories are optional. Category totals appear in the settlement summary and are included in exports.",
+    sortOrder: 72,
+  },
+  {
+    question: "What is the settlement check?",
+    answer:
+      "Checkboxes in the settlement list that let you record when a payment has been completed. Checking shows a strikethrough and progress (e.g., 1/3 completed). Only the payer and recipient can toggle checks.",
+    sortOrder: 73,
+  },
+  {
+    question: "What happens to settlement checks when expenses change?",
+    answer:
+      "When expenses are added, updated, or deleted, settlement amounts change, so all settlement checks are automatically reset. Please be aware of this before modifying expenses if settlements have been completed.",
+    sortOrder: 74,
+  },
+  {
+    question: "Where can I see unsettled trips?",
+    answer:
+      "An 'Unsettled Summary' is shown on your profile page with totals for amounts owed and receivable, broken down by trip. The home screen also shows an 'Unsettled' badge on trip cards.",
+    sortOrder: 75,
+  },
+  // ---- Souvenirs ----
+  {
+    question: "What is the 'Souvenirs' list?",
+    answer:
+      "A feature for managing souvenirs you want to buy for each trip. Record item name, recipient, shop location, URL, and more. Mark items as purchased with checkboxes. Turn on 'Share with members' per item to make it visible to trip members. Items remain private unless explicitly shared.",
+    sortOrder: 80,
+  },
+  {
+    question: "What's the difference between 'Recommendation' and 'Errand' sharing styles?",
+    answer:
+      "When sharing is on, purchase status is visible to members by default. Selecting 'Recommendation' shares information only — purchase status is hidden from members. 'Errand' shows purchase status to members (same as default).",
+    sortOrder: 81,
+  },
+  // ---- Feedback ----
+  {
+    question: "Where can I send feedback or report bugs?",
+    answer:
+      "Use 'Feedback' at the bottom of the Settings page. Your feedback is submitted as a GitHub Issue. Feel free to send feature requests or bug reports.",
+    sortOrder: 85,
+  },
+  // ---- UX ----
+  {
+    question: "Does it work on smartphones?",
+    answer:
+      "Yes. When accessed from a smartphone browser, the app automatically switches to a touch-optimized interface. Use the bottom navigation for quick access to main pages, and swipe to switch tabs on trip details. Select 'Desktop View' from the header menu to switch to the desktop interface at any time.",
+    sortOrder: 90,
+  },
+  {
+    question: "Are there keyboard shortcuts?",
+    answer:
+      "Yes. Press '?' to display the shortcut list. Available shortcuts include switching days (number keys, [ ] keys), adding a schedule (a key), adding a candidate (c key), and more.",
+    sortOrder: 91,
+  },
+  // ---- Language ----
+  {
+    question: "How do I change the display language?",
+    answer:
+      "Tap the language toggle button in the header menu to switch between Japanese and English. Your choice is saved in the browser and used for future visits. If no preference is set, the language is automatically selected based on your browser settings.",
+    sortOrder: 92,
+  },
+  // ---- Maps ----
+  {
+    question: "The map tab is not showing",
+    answer:
+      "The map tab is only available for trips created by administrators. It does not appear for trips created by regular users.",
+    sortOrder: 93,
+  },
+  {
+    question: "Spots are not showing on the map",
+    answer:
+      "Select a place from the suggestions in the address field when adding or editing a spot. This saves coordinates and displays a pin on the map. Manually entered addresses or free text will not show pins.",
+    sortOrder: 94,
+  },
+  {
+    question: "Travel time between spots is not showing on the timeline",
+    answer:
+      "Travel time is displayed when two consecutive spots both have map coordinates and neither has a 'Transit' category. Re-select the address from search suggestions for either spot to fix this.",
+    sortOrder: 95,
+  },
+  {
+    question: "How do I use the map tab?",
+    answer:
+      "Open it from the 'Map' tab in the right panel (or keyboard shortcut g then m). Use the 'Today' button to show only today's spots, or the 'All Days' button to show all trip spots. Tap a pin to see the spot name.",
+    sortOrder: 96,
+  },
+  // ---- Quick Poll ----
+  {
+    question: "What is 'Quick Poll'?",
+    answer:
+      "A standalone voting feature not tied to any trip. Set a question and options, then share a link — anyone with the link can vote without logging in. You can allow multiple selections and control whether results are visible before voting. Each user can create up to 20 polls.",
+    sortOrder: 97,
+  },
+  {
+    question: "How do I share a Quick Poll link?",
+    answer:
+      "Copy the link shown after creating a poll. You can also copy the link from the poll list page. Anyone who receives the link can vote without logging in.",
+    sortOrder: 98,
+  },
+  // ---- Tools ----
+  {
+    question: "What is the Roulette feature?",
+    answer:
+      "A tool for randomly selecting a destination or activity. Access it from the 'Tools' section on your profile page. Three modes are available: Prefecture (with region filter), Custom (enter your own options), and Bookmark (random selection from a bookmark list).",
+    sortOrder: 99,
+  },
+  // ---- Limits ----
+  {
+    question: "Are there limits on trips and schedules?",
+    answer:
+      "Trips: 10 per user, Schedules: 300 per trip, Members: 20 per trip, Patterns: 3 per day, Bookmark lists: 5, Friends: 100, Groups: 10, Souvenirs: 100 per trip, Quick Polls: 20 per user.",
+    sortOrder: 100,
+  },
+  // ---- Desktop App ----
+  {
+    question: "Is there a desktop app?",
+    answer:
+      "Desktop apps for macOS and Windows are available. Download the installer from 'Download Desktop App' in the 'Other' tab of Settings. After installation, the app updates automatically.",
     sortOrder: 101,
   },
+  {
+    question: "I see a warning when installing the desktop app",
+    answer:
+      "The app is not currently code-signed, so macOS may show 'Cannot verify developer' and Windows may show a SmartScreen warning. On macOS, right-click (or Control+click) and select 'Open.' On Windows, click 'More info' then 'Run anyway.'",
+    sortOrder: 102,
+  },
+];
+
+const FAQ_ITEMS = [
+  ...JA_FAQS.map((item) => ({ ...item, locale: "ja" })),
+  ...EN_FAQS.map((item) => ({ ...item, locale: "en" })),
 ];
 
 async function main() {

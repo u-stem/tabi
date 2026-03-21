@@ -806,6 +806,7 @@ export const faqs = pgTable("faqs", {
   id: uuid("id").primaryKey().defaultRandom(),
   question: text("question").notNull(),
   answer: text("answer").notNull(),
+  locale: text("locale").notNull().default("ja"),
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

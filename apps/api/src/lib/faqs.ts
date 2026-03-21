@@ -1,4 +1,4 @@
-import { asc } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { db } from "../db/index";
 import { faqs } from "../db/schema";
 
@@ -9,7 +9,7 @@ export type FaqItem = {
   sortOrder: number;
 };
 
-export async function getFaqs(): Promise<FaqItem[]> {
+export async function getFaqs(locale = "ja"): Promise<FaqItem[]> {
   return db
     .select({
       id: faqs.id,
@@ -18,5 +18,6 @@ export async function getFaqs(): Promise<FaqItem[]> {
       sortOrder: faqs.sortOrder,
     })
     .from(faqs)
+    .where(eq(faqs.locale, locale))
     .orderBy(asc(faqs.sortOrder));
 }

@@ -6,6 +6,7 @@ export type FaqItem = {
   id: string;
   question: string;
   answer: string;
+  category: string;
   sortOrder: number;
 };
 
@@ -15,6 +16,7 @@ export async function getFaqs(locale = "ja"): Promise<FaqItem[]> {
       id: faqs.id,
       question: faqs.question,
       answer: faqs.answer,
+      category: faqs.category,
       sortOrder: faqs.sortOrder,
     })
     .from(faqs)

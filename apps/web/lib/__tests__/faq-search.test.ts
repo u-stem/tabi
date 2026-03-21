@@ -25,12 +25,14 @@ describe("buildFaqIndex", () => {
       id: "1",
       question: "メンバーを追加するには？",
       answer: "ユーザーIDを入力します",
+      category: "members",
       sortOrder: 0,
     },
     {
       id: "2",
       question: "フレンドとは何ですか？",
       answer: "よく一緒に旅行する相手",
+      category: "friends",
       sortOrder: 1,
     },
   ];

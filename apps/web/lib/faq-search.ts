@@ -4,6 +4,7 @@ export type SearchableFaq = {
   id: string;
   question: string;
   answer: string;
+  category: string;
   sortOrder: number;
 };
 
@@ -21,7 +22,7 @@ export function createBigramTokenizer(text: string): string[] {
 export function buildFaqIndex(faqs: SearchableFaq[]): MiniSearch<SearchableFaq> {
   const ms = new MiniSearch<SearchableFaq>({
     fields: ["question", "answer"],
-    storeFields: ["id", "question", "answer", "sortOrder"],
+    storeFields: ["id", "question", "answer", "category", "sortOrder"],
     tokenize: createBigramTokenizer,
     searchOptions: {
       boost: { question: 2 },

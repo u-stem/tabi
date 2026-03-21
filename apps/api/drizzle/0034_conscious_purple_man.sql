@@ -1,0 +1,1 @@
+ALTER TABLE "faqs" ADD COLUMN "category" text DEFAULT 'other' NOT NULL;

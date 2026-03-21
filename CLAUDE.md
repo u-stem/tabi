@@ -126,11 +126,13 @@ bun run --filter @sugara/shared check-types
 ## FAQ メンテナンス
 
 機能を追加・変更したときは、そのユーザーが持ちそうな疑問を考え、`apps/api/src/db/seed-faqs.ts` を同じコミットで更新する。
+`JA_FAQS` と `EN_FAQS` の両方にエントリを追加し、適切な `sortOrder` を設定する（`resolveCategory` でカテゴリが自動付与される）。
 更新後は `bun run --filter @sugara/api db:seed-faqs` を実行してローカル DB に反映する。
 
-- 新機能の追加 → 新しい FAQ エントリを追加
-- 機能の仕様変更 → 既存エントリの answer を更新
-- 機能の削除 → 該当エントリを削除
+- 新機能の追加 → ja と en の両方に新しい FAQ エントリを追加
+- 機能の仕様変更 → 既存エントリの answer を ja/en 両方で更新
+- 機能の削除 → 該当エントリを ja/en 両方で削除
+- カテゴリの追加 → `resolveCategory` の sortOrder マッピングと `messages/{ja,en}.json` の `faq.category` を更新
 
 ## お知らせ (News) メンテナンス
 

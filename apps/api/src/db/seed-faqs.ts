@@ -657,9 +657,32 @@ const EN_FAQS = [
   },
 ];
 
+// Map sortOrder ranges to categories
+function resolveCategory(sortOrder: number): string {
+  if (sortOrder === 0) return "overview";
+  if (sortOrder >= 10 && sortOrder <= 18) return "account";
+  if (sortOrder >= 19 && sortOrder <= 20) return "profile";
+  if (sortOrder >= 21 && sortOrder <= 24) return "trips";
+  if (sortOrder >= 30 && sortOrder <= 31) return "scheduling";
+  if (sortOrder >= 40 && sortOrder <= 43) return "members";
+  if (sortOrder >= 50 && sortOrder <= 52) return "friends";
+  if (sortOrder === 60) return "bookmarks";
+  if (sortOrder === 65) return "reactions";
+  if (sortOrder >= 70 && sortOrder <= 75) return "expenses";
+  if (sortOrder >= 80 && sortOrder <= 81) return "souvenirs";
+  if (sortOrder === 85) return "feedback";
+  if (sortOrder >= 90 && sortOrder <= 92) return "ux";
+  if (sortOrder >= 93 && sortOrder <= 96) return "maps";
+  if (sortOrder >= 97 && sortOrder <= 98) return "quickpoll";
+  if (sortOrder === 99) return "tools";
+  if (sortOrder === 100) return "limits";
+  if (sortOrder >= 101) return "desktop";
+  return "other";
+}
+
 const FAQ_ITEMS = [
-  ...JA_FAQS.map((item) => ({ ...item, locale: "ja" })),
-  ...EN_FAQS.map((item) => ({ ...item, locale: "en" })),
+  ...JA_FAQS.map((item) => ({ ...item, locale: "ja", category: resolveCategory(item.sortOrder) })),
+  ...EN_FAQS.map((item) => ({ ...item, locale: "en", category: resolveCategory(item.sortOrder) })),
 ];
 
 async function main() {

@@ -1383,7 +1383,28 @@
   "faq": {
     "title": "よくある質問",
     "searchPlaceholder": "質問を入力...",
-    "noResults": "見つかりませんでした"
+    "noResults": "見つかりませんでした",
+    "category": {
+      "overview": "概要",
+      "account": "アカウント",
+      "profile": "プロフィール",
+      "trips": "旅行",
+      "scheduling": "日程調整",
+      "members": "メンバー",
+      "friends": "フレンド・グループ",
+      "bookmarks": "ブックマーク",
+      "reactions": "リアクション",
+      "expenses": "費用・精算",
+      "souvenirs": "お土産",
+      "feedback": "フィードバック",
+      "ux": "使い方",
+      "maps": "地図",
+      "quickpoll": "かんたん投票",
+      "tools": "ツール",
+      "limits": "上限",
+      "desktop": "デスクトップアプリ",
+      "other": "その他"
+    }
   },
   "news": {
     "title": "お知らせ",

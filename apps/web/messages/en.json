@@ -1383,7 +1383,28 @@
   "faq": {
     "title": "FAQ",
     "searchPlaceholder": "Search questions...",
-    "noResults": "No results found"
+    "noResults": "No results found",
+    "category": {
+      "overview": "Overview",
+      "account": "Account",
+      "profile": "Profile",
+      "trips": "Trips",
+      "scheduling": "Schedule Coordination",
+      "members": "Members",
+      "friends": "Friends & Groups",
+      "bookmarks": "Bookmarks",
+      "reactions": "Reactions",
+      "expenses": "Expenses & Settlements",
+      "souvenirs": "Souvenirs",
+      "feedback": "Feedback",
+      "ux": "Usage",
+      "maps": "Maps",
+      "quickpoll": "Quick Poll",
+      "tools": "Tools",
+      "limits": "Limits",
+      "desktop": "Desktop App",
+      "other": "Other"
+    }
   },
   "news": {
     "title": "News",

@@ -3,6 +3,7 @@
 import type { DayPatternResponse } from "@sugara/shared";
 import { PATTERN_LABEL_MAX_LENGTH } from "@sugara/shared";
 import { Check, ClipboardPaste, Plus, Trash2, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,21 +34,23 @@ type PatternOps = ReturnType<typeof usePatternOperations>;
 type Selection = ReturnType<typeof useScheduleSelection>;
 
 export function AddPatternDialog({ patternOps }: { patternOps: PatternOps }) {
+  const ts = useTranslations("schedule");
+  const tc = useTranslations("common");
   return (
     <ResponsiveDialog open={patternOps.add.open} onOpenChange={patternOps.add.setOpen}>
       <ResponsiveDialogContent className="sm:max-w-sm">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>パターン追加</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>日程のパターンを追加します。</ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{ts("addPatternTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>{ts("addPatternDescription")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={patternOps.add.submit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="pattern-label">ラベル</Label>
+            <Label htmlFor="pattern-label">{ts("patternLabel")}</Label>
             <Input
               id="pattern-label"
               value={patternOps.add.label}
               onChange={(e) => patternOps.add.setLabel(e.target.value)}
-              placeholder="例: 雨の日プラン"
+              placeholder={ts("patternPlaceholder")}
               maxLength={PATTERN_LABEL_MAX_LENGTH}
             />
             <p className="text-right text-xs text-muted-foreground">
@@ -58,12 +61,12 @@ export function AddPatternDialog({ patternOps }: { patternOps: PatternOps }) {
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={patternOps.add.loading || !patternOps.add.label.trim()}>
               <Plus className="h-4 w-4" />
-              {patternOps.add.loading ? "追加中..." : "追加"}
+              {patternOps.add.loading ? ts("adding") : ts("addButton")}
             </Button>
           </ResponsiveDialogFooter>
         </form>
@@ -73,6 +76,8 @@ export function AddPatternDialog({ patternOps }: { patternOps: PatternOps }) {
 }
 
 export function RenamePatternDialog({ patternOps }: { patternOps: PatternOps }) {
+  const ts = useTranslations("schedule");
+  const tc = useTranslations("common");
   return (
     <ResponsiveDialog
       open={patternOps.rename.target !== null}
@@ -80,12 +85,14 @@ export function RenamePatternDialog({ patternOps }: { patternOps: PatternOps }) 
     >
       <ResponsiveDialogContent className="sm:max-w-sm">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>パターン名変更</ResponsiveDialogTitle>
-          <ResponsiveDialogDescription>パターンのラベルを変更します。</ResponsiveDialogDescription>
+          <ResponsiveDialogTitle>{ts("renamePatternTitle")}</ResponsiveDialogTitle>
+          <ResponsiveDialogDescription>
+            {ts("renamePatternDescription")}
+          </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <form onSubmit={patternOps.rename.submit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="rename-label">ラベル</Label>
+            <Label htmlFor="rename-label">{ts("patternLabel")}</Label>
             <Input
               id="rename-label"
               value={patternOps.rename.label}
@@ -100,12 +107,12 @@ export function RenamePatternDialog({ patternOps }: { patternOps: PatternOps }) 
             <ResponsiveDialogClose asChild>
               <Button type="button" variant="outline">
                 <X className="h-4 w-4" />
-                キャンセル
+                {tc("cancel")}
               </Button>
             </ResponsiveDialogClose>
             <Button type="submit" disabled={!patternOps.rename.label.trim()}>
               <Check className="h-4 w-4" />
-              変更
+              {ts("change")}
             </Button>
           </ResponsiveDialogFooter>
         </form>
@@ -115,6 +122,8 @@ export function RenamePatternDialog({ patternOps }: { patternOps: PatternOps }) 
 }
 
 export function DeletePatternDialog({ patternOps }: { patternOps: PatternOps }) {
+  const ts = useTranslations("schedule");
+  const tc = useTranslations("common");
   return (
     <ResponsiveAlertDialog
       open={patternOps.deleteTarget !== null}
@@ -122,16 +131,15 @@ export function DeletePatternDialog({ patternOps }: { patternOps: PatternOps }) 
     >
       <ResponsiveAlertDialogContent>
         <ResponsiveAlertDialogHeader>
-          <ResponsiveAlertDialogTitle>パターンを削除しますか？</ResponsiveAlertDialogTitle>
+          <ResponsiveAlertDialogTitle>{ts("deletePatternTitle")}</ResponsiveAlertDialogTitle>
           <ResponsiveAlertDialogDescription>
-            「{patternOps.deleteTarget?.label}
-            」とその中のすべての予定を削除します。この操作は取り消せません。
+            {ts("deletePatternDescription", { name: patternOps.deleteTarget?.label ?? "" })}
           </ResponsiveAlertDialogDescription>
         </ResponsiveAlertDialogHeader>
         <ResponsiveAlertDialogFooter>
           <ResponsiveAlertDialogCancel>
             <X className="h-4 w-4" />
-            キャンセル
+            {tc("cancel")}
           </ResponsiveAlertDialogCancel>
           <ResponsiveAlertDialogDestructiveAction
             onClick={() => {
@@ -139,7 +147,7 @@ export function DeletePatternDialog({ patternOps }: { patternOps: PatternOps }) 
               patternOps.setDeleteTarget(null);
             }}
           >
-            削除する
+            {tc("deletConfirm")}
           </ResponsiveAlertDialogDestructiveAction>
         </ResponsiveAlertDialogFooter>
       </ResponsiveAlertDialogContent>
@@ -154,6 +162,8 @@ export function OverwritePatternDialog({
   patternOps: PatternOps;
   patterns: DayPatternResponse[];
 }) {
+  const ts = useTranslations("schedule");
+  const tc = useTranslations("common");
   const source = patternOps.overwriteSource;
   const destinationOptions = patterns.filter((p) => p.id !== source?.id);
   const [selectedDestId, setSelectedDestId] = useState<string | null>(null);
@@ -170,14 +180,13 @@ export function OverwritePatternDialog({
     >
       <ResponsiveDialogContent className="sm:max-w-sm">
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>パターンを上書き</ResponsiveDialogTitle>
+          <ResponsiveDialogTitle>{ts("overwritePatternTitle")}</ResponsiveDialogTitle>
           <ResponsiveDialogDescription>
-            「{source?.label}
-            」の予定を、選択したパターンにコピーします。コピー先の既存の予定はすべて削除されます。
+            {ts("overwritePatternDescription", { name: source?.label ?? "" })}
           </ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
         <div className="space-y-2">
-          <Label>コピー先パターン</Label>
+          <Label>{ts("destinationPattern")}</Label>
           <div className="space-y-1">
             {destinationOptions.map((p) => (
               <button
@@ -193,7 +202,7 @@ export function OverwritePatternDialog({
                 {selectedDestId === p.id && <Check className="h-4 w-4 shrink-0 text-primary" />}
                 <span className="truncate">{p.label}</span>
                 <span className="ml-auto shrink-0 text-xs text-muted-foreground">
-                  {p.schedules.length}件
+                  {ts("itemCount", { count: p.schedules.length })}
                 </span>
               </button>
             ))}
@@ -203,7 +212,7 @@ export function OverwritePatternDialog({
           <ResponsiveDialogClose asChild>
             <Button type="button" variant="outline">
               <X className="h-4 w-4" />
-              キャンセル
+              {tc("cancel")}
             </Button>
           </ResponsiveDialogClose>
           <Button
@@ -216,7 +225,7 @@ export function OverwritePatternDialog({
             }}
           >
             <ClipboardPaste className="h-4 w-4" />
-            上書き
+            {ts("overwriteButton")}
           </Button>
         </ResponsiveDialogFooter>
       </ResponsiveDialogContent>
@@ -225,6 +234,8 @@ export function OverwritePatternDialog({
 }
 
 export function BatchDeleteDialog({ selection }: { selection: Selection }) {
+  const ts = useTranslations("schedule");
+  const tc = useTranslations("common");
   return (
     <ResponsiveAlertDialog
       open={selection.batchDeleteOpen}
@@ -233,23 +244,23 @@ export function BatchDeleteDialog({ selection }: { selection: Selection }) {
       <ResponsiveAlertDialogContent>
         <ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogTitle>
-            {selection.selectedIds.size}件を削除しますか？
+            {ts("batchDeleteTitle", { count: selection.selectedIds.size })}
           </ResponsiveAlertDialogTitle>
           <ResponsiveAlertDialogDescription>
-            選択した{selection.selectedIds.size}件を削除します。この操作は取り消せません。
+            {ts("batchDeleteDescription", { count: selection.selectedIds.size })}
           </ResponsiveAlertDialogDescription>
         </ResponsiveAlertDialogHeader>
         <ResponsiveAlertDialogFooter>
           <ResponsiveAlertDialogCancel>
             <X className="h-4 w-4" />
-            キャンセル
+            {tc("cancel")}
           </ResponsiveAlertDialogCancel>
           <ResponsiveAlertDialogDestructiveAction
             onClick={selection.batchDelete}
             disabled={selection.batchLoading}
           >
             <Trash2 className="h-4 w-4" />
-            削除する
+            {tc("deletConfirm")}
           </ResponsiveAlertDialogDestructiveAction>
         </ResponsiveAlertDialogFooter>
       </ResponsiveAlertDialogContent>

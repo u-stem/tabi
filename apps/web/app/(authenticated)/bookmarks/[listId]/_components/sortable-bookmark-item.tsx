@@ -4,6 +4,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { BookmarkResponse } from "@sugara/shared";
 import { ExternalLink, Pencil, StickyNote, Trash2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import type { CSSProperties } from "react";
 import { useState } from "react";
 import { ActionSheet } from "@/components/action-sheet";
@@ -69,6 +70,8 @@ export function SortableBookmarkItem({
   onDelete: (bm: BookmarkResponse) => void;
   draggable?: boolean;
 }) {
+  const tb = useTranslations("bookmark");
+  const tc = useTranslations("common");
   const isMobile = useMobile();
   const [sheetOpen, setSheetOpen] = useState(false);
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -96,18 +99,21 @@ export function SortableBookmarkItem({
       <BookmarkItemContent bm={bm} asLink />
       {isMobile ? (
         <>
-          <ItemMenuButton ariaLabel={`${bm.name}のメニュー`} onClick={() => setSheetOpen(true)} />
+          <ItemMenuButton
+            ariaLabel={tc("itemMenu", { name: bm.name })}
+            onClick={() => setSheetOpen(true)}
+          />
           <ActionSheet
             open={sheetOpen}
             onOpenChange={setSheetOpen}
             actions={[
               {
-                label: "編集",
+                label: tb("editItem"),
                 icon: <Pencil className="h-4 w-4" />,
                 onClick: () => onEdit(bm),
               },
               {
-                label: "削除",
+                label: tb("deleteItem"),
                 icon: <Trash2 className="h-4 w-4" />,
                 onClick: () => onDelete(bm),
                 variant: "destructive" as const,
@@ -118,16 +124,16 @@ export function SortableBookmarkItem({
       ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <ItemMenuButton ariaLabel={`${bm.name}のメニュー`} />
+            <ItemMenuButton ariaLabel={tc("itemMenu", { name: bm.name })} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={() => onEdit(bm)}>
               <Pencil />
-              編集
+              {tb("editItem")}
             </DropdownMenuItem>
             <DropdownMenuItem className="text-destructive" onClick={() => onDelete(bm)}>
               <Trash2 />
-              削除
+              {tb("deleteItem")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

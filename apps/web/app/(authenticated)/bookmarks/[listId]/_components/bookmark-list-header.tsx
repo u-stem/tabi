@@ -122,7 +122,7 @@ export function BookmarkListHeader({
                 onClick={() => listOps.setDeletingList(true)}
               >
                 <Trash2 className="h-4 w-4" />
-                削除
+                {tc("delete")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -175,7 +175,7 @@ export function BookmarkListHeader({
                   onClick={() => sel.setBatchDeleteOpen(true)}
                 >
                   <Trash2 className="h-4 w-4" />
-                  削除
+                  {tc("delete")}
                 </Button>
               </>
             ) : (

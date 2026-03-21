@@ -108,7 +108,7 @@ export default function SpBookmarksPage() {
         className="mt-4"
         onClick={() => invalidateBookmarkLists()}
       >
-        再試行
+        {tc("retry")}
       </Button>
     </div>
   ) : undefined;

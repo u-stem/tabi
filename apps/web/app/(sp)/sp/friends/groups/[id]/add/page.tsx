@@ -205,7 +205,7 @@ export default function SpGroupAddMemberPage() {
                 <div className="mb-2 flex justify-end">
                   <Button variant="outline" size="sm" onClick={() => setSelectionMode(true)}>
                     <SquareMousePointer className="h-4 w-4" />
-                    選択
+                    {tc("select")}
                   </Button>
                 </div>
               )}
@@ -243,7 +243,7 @@ export default function SpGroupAddMemberPage() {
                           disabled={adding}
                           onClick={() => handleAddFriend(friend.userId)}
                         >
-                          追加
+                          {tf("addMember")}
                         </Button>
                       </>
                     )}
@@ -256,18 +256,18 @@ export default function SpGroupAddMemberPage() {
 
         {/* Add by ID */}
         <section>
-          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">IDで追加</h3>
+          <h3 className="mb-2 text-sm font-semibold text-muted-foreground">{tf("addByIdTitle")}</h3>
           <form onSubmit={handleAddById} className="flex gap-2">
             <Input
               value={userId}
               onChange={(e) => setUserId(e.target.value)}
-              placeholder="ユーザーID"
+              placeholder={tf("userIdPlaceholder2")}
               required
               className="flex-1"
             />
             <Button type="submit" size="sm" variant="outline" disabled={adding || !userId.trim()}>
               <UserPlus className="h-4 w-4" />
-              {adding ? "追加中..." : "追加"}
+              {adding ? tf("addingMember") : tf("addMember")}
             </Button>
           </form>
         </section>

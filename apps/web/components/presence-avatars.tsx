@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import type { PresenceUser } from "@/lib/hooks/use-trip-sync";
 import { cn } from "@/lib/utils";
@@ -37,6 +38,7 @@ type PresenceAvatarsProps = {
 };
 
 export function PresenceAvatars({ users, isConnected }: PresenceAvatarsProps) {
+  const tc = useTranslations("common");
   if (users.length === 0 && isConnected) return null;
 
   const visible = users.slice(0, MAX_VISIBLE);
@@ -50,7 +52,7 @@ export function PresenceAvatars({ users, isConnected }: PresenceAvatarsProps) {
             <TooltipTrigger asChild>
               <span className="text-xs text-muted-foreground">&#x26A0;</span>
             </TooltipTrigger>
-            <TooltipContent>再接続中...</TooltipContent>
+            <TooltipContent>{tc("connecting")}</TooltipContent>
           </Tooltip>
         )}
         {/* Uses hashColor instead of UserAvatar for stable per-user colors in presence */}

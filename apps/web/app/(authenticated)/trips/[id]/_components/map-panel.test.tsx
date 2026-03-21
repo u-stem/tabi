@@ -1,6 +1,7 @@
 import type { ScheduleResponse } from "@sugara/shared";
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { renderWithIntl } from "@/lib/test-utils";
 import type { ScheduleWithDayIndex } from "./map-panel";
 import { MapPanel } from "./map-panel";
 
@@ -58,8 +59,8 @@ describe("MapPanel", () => {
     cleanup();
   });
 
-  it("lat/lng があるスポットにのみマーカーを表示する", () => {
-    render(
+  it("shows markers only for spots with lat/lng", () => {
+    renderWithIntl(
       <MapPanel
         tripId="trip-1"
         currentDaySchedules={[scheduleWithCoords, scheduleWithoutCoords]}
@@ -70,8 +71,10 @@ describe("MapPanel", () => {
     expect(screen.getAllByTestId("marker")).toHaveLength(1);
   });
 
-  it("オフライン時はメッセージを表示する", () => {
-    render(<MapPanel tripId="trip-1" currentDaySchedules={[]} allSchedules={[]} online={false} />);
+  it("shows offline message when offline", () => {
+    renderWithIntl(
+      <MapPanel tripId="trip-1" currentDaySchedules={[]} allSchedules={[]} online={false} />,
+    );
     expect(screen.getByText(/オフライン/)).toBeDefined();
   });
 });

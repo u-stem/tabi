@@ -1,6 +1,7 @@
 "use client";
 
 import type { CandidateResponse, ScheduleResponse } from "@sugara/shared";
+import { useTranslations } from "next-intl";
 import { ActivityLog } from "@/components/activity-log";
 import { BookmarkPanel } from "@/components/bookmark-panel";
 import { CandidatePanel } from "@/components/candidate-panel";
@@ -60,6 +61,7 @@ export function RightPanel({
   allSchedules: ScheduleWithDayIndex[];
   currentDaySchedules: ScheduleResponse[];
 }) {
+  const tsch = useTranslations("schedule");
   return (
     <div className="hidden h-[calc(100vh-8rem)] sm:h-[calc(100vh-12rem)] lg:flex min-w-0 flex-[2] flex-col rounded-lg border border-dashed bg-card self-start sticky top-4">
       <RightPanelTabs
@@ -105,7 +107,7 @@ export function RightPanel({
             <BookmarkPanel tripId={tripId} disabled={disabled} onCandidateAdded={onRefresh} />
           ) : (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              日程が確定するとブックマークを利用できます
+              {tsch("schedulesNotAvailable", { feature: tsch("bookmarks") })}
             </p>
           )
         ) : rightPanelTab === "expenses" ? (
@@ -113,7 +115,7 @@ export function RightPanel({
             <ExpensePanel tripId={tripId} canEdit={canEdit} />
           ) : (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              日程が確定すると費用を記録できます
+              {tsch("schedulesNotAvailable", { feature: tsch("expenses") })}
             </p>
           )
         ) : rightPanelTab === "souvenirs" ? (
@@ -125,7 +127,7 @@ export function RightPanel({
             />
           ) : (
             <p className="py-8 text-center text-sm text-muted-foreground">
-              日程が確定するとお土産リストを利用できます
+              {tsch("schedulesNotAvailable", { feature: tsch("souvenirs") })}
             </p>
           )
         ) : (

@@ -99,7 +99,7 @@ export function PatternTabs({
                   <button
                     type="button"
                     className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none sm:h-6 sm:w-6"
-                    aria-label={`${pattern.label}のメニュー`}
+                    aria-label={tsch("patternMenu", { name: pattern.label })}
                   >
                     <MoreHorizontal className="h-4 w-4" />
                   </button>
@@ -254,7 +254,7 @@ function MobilePatternTabs({
         <>
           <button
             type="button"
-            aria-label={`${currentPattern.label}のメニュー`}
+            aria-label={tsch("patternMenu", { name: currentPattern.label })}
             onClick={() => setActionSheetOpen(true)}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted"
           >

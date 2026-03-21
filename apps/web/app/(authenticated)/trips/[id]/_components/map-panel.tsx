@@ -9,6 +9,7 @@ import {
   useMap,
   useMapsLibrary,
 } from "@vis.gl/react-google-maps";
+import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import { SCHEDULE_COLOR_HEX } from "@/lib/colors";
@@ -148,13 +149,15 @@ function RoutePolyline({
 }
 
 export function MapPanel({ tripId, currentDaySchedules, allSchedules, online }: Props) {
+  const tsch = useTranslations("schedule");
+  const tc = useTranslations("common");
   const [mode, setMode] = useState<MapMode>("day");
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   if (!online) {
     return (
       <div className="flex h-full items-center justify-center p-4 text-center text-sm text-muted-foreground">
-        オフライン時は地図を表示できません
+        {tc("offline")}
       </div>
     );
   }
@@ -197,14 +200,14 @@ export function MapPanel({ tripId, currentDaySchedules, allSchedules, online }: 
           className={`flex-1 px-4 py-2 text-sm ${mode === "day" ? "border-b-2 border-primary font-medium" : "text-muted-foreground"}`}
           onClick={() => setMode("day")}
         >
-          当日
+          {tsch("route")}
         </button>
         <button
           type="button"
           className={`flex-1 px-4 py-2 text-sm ${mode === "all" ? "border-b-2 border-primary font-medium" : "text-muted-foreground"}`}
           onClick={() => setMode("all")}
         >
-          全期間
+          {tsch("spots")}
         </button>
       </div>
       <div className="flex-1">

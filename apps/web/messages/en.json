@@ -1,6 +1,7 @@
 {
   "metadata": {
-    "description": "A collaborative app to create and share trip plans."
+    "description": "A collaborative app to create and share trip plans.",
+    "pwaDescription": "A collaborative app for creating and sharing travel plans."
   },
   "home": {
     "heroTitle": "Planning is part of the adventure.",
@@ -73,7 +74,15 @@
     "shortcuts": "Keyboard Shortcuts",
     "shortcutsDescription": "Shortcuts available on this page",
     "noShortcuts": "No shortcuts available on this page",
-    "selectionMenu": "Selection actions menu"
+    "selectionMenu": "Selection actions menu",
+    "itemMenu": "{name} menu",
+    "scrollToTop": "Scroll to top",
+    "close": "Close",
+    "actions": "Actions",
+    "actionsDescription": "Select an action",
+    "dragHandle": "Drag to reorder",
+    "connecting": "Connecting...",
+    "reactionButton": "Send reaction"
   },
   "nav": {
     "home": "Home",
@@ -604,7 +613,7 @@
     "memoSaving": "Saving...",
     "memoSave": "Save",
     "memoAdd": "Add Memo",
-    "patternLabel": "Pattern",
+    "patternLabel": "Label",
     "addPattern": "Add Pattern",
     "selectPattern": "Select Pattern",
     "selectPatternDescription": "Choose a pattern to display",
@@ -623,7 +632,37 @@
     "addToSchedule": "Add to Schedule",
     "deleteScheduleTitle": "Delete schedule?",
     "deleteScheduleDescription": "Delete \"{name}\". This action cannot be undone.",
-    "deleteScheduleConfirm": "Delete"
+    "deleteScheduleConfirm": "Delete",
+    "addPatternTitle": "Add Pattern",
+    "addPatternDescription": "Add a new schedule pattern.",
+    "patternPlaceholder": "e.g. Rainy day plan",
+    "addButton": "Add",
+    "renamePatternTitle": "Rename Pattern",
+    "renamePatternDescription": "Change the pattern label.",
+    "change": "Change",
+    "deletePatternTitle": "Delete pattern?",
+    "deletePatternDescription": "All schedules in \"{name}\" will be deleted. This cannot be undone.",
+    "overwritePatternTitle": "Overwrite Pattern",
+    "overwritePatternDescription": "Copy schedules from \"{name}\" to the selected pattern. Existing schedules in the destination will be deleted.",
+    "destinationPattern": "Destination pattern",
+    "itemCount": "{count}",
+    "overwriteButton": "Overwrite",
+    "batchDeleteTitle": "Delete {count} items?",
+    "batchDeleteDescription": "{count} selected items will be deleted. This cannot be undone.",
+    "candidateTabDescription": "Manage candidate schedules",
+    "expenseTabDescription": "Record and settle expenses",
+    "souvenirTabDescription": "Manage souvenir lists",
+    "bookmarkTabDescription": "Add schedules from bookmarks",
+    "mapTabDescription": "View schedule locations on map",
+    "route": "Route",
+    "spots": "Spots",
+    "dndPickUp": "Picked up {id}",
+    "dndMoveOver": "Moving {id} over {over}",
+    "dndDropped": "Dropped {id}",
+    "dndMovedTo": "Moved {id} to {over} position",
+    "dndCancelled": "Cancelled moving {id}",
+    "dndFinished": "Finished reordering {id}",
+    "patternMenu": "{name} menu"
   },
   "member": {
     "title": "Members",
@@ -723,7 +762,8 @@
     "settlement": "Settlement",
     "settlementComplete": "Settlement Complete",
     "settlementProgress": "{checked}/{total} done",
-    "unsettled": "Unsettled"
+    "unsettled": "Unsettled",
+    "yen": "¥"
   },
   "poll": {
     "pageTitle": "Quick Poll",
@@ -785,7 +825,8 @@
     "voteHeader": "Vote",
     "pollClosed": "This poll is closed",
     "shortcutGeneral": "General",
-    "optionsCount": "{count} options"
+    "optionsCount": "{count} options",
+    "deadline": "Deadline"
   },
   "souvenir": {
     "addTitle": "Add Souvenir",
@@ -973,7 +1014,16 @@
     "batchDeleteBookmarkDescription": "All selected bookmarks will be deleted. This action cannot be undone.",
     "adding": "Adding...",
     "saving": "Saving...",
-    "deleting": "Deleting..."
+    "deleting": "Deleting...",
+    "nameLabel": "Name",
+    "namePlaceholder": "Name",
+    "memoLabel": "Memo",
+    "memoPlaceholder": "e.g. $5",
+    "deleteUrl": "Delete URL",
+    "addUrl": "Add URL",
+    "editItem": "Edit",
+    "deleteItem": "Delete",
+    "selectItem": "Select"
   },
   "friend": {
     "pageTitle": "Friends",
@@ -1028,8 +1078,8 @@
     "deleteGroupTitle": "Delete this group?",
     "deleteGroupDescription": "\"{name}\" will be deleted. This action cannot be undone.",
     "memberManagement": "Manage Members",
-    "memberCount": "{count} members",
-    "addMember": "Add Member",
+    "memberCount": "{count}",
+    "addMember": "Add",
     "addFromFriends": "Add from Friends",
     "addById": "Add by ID",
     "userIdForAdd": "Add by User ID",
@@ -1042,7 +1092,10 @@
     "deselect": "Deselect",
     "add": "Add",
     "creating": "Creating...",
-    "create": "Create"
+    "create": "Create",
+    "addByIdTitle": "Add by ID",
+    "userIdPlaceholder2": "User ID",
+    "addingMember": "Adding..."
   },
   "notification": {
     "pageTitle": "Notifications",
@@ -1148,7 +1201,8 @@
     "inputPlaceholder": "Enter an option",
     "add": "Add",
     "selectList": "Select List",
-    "loadingList": "Loading..."
+    "loadingList": "Loading...",
+    "bookmarkCount": "{count}"
   },
   "install": {
     "bannerText": "You can add this app to your home screen",
@@ -1350,7 +1404,10 @@
     "dayCount": "{count} days",
     "shareExpiry": "Share link expires: {date}",
     "checkLink": "Please check the link or contact the person who shared it",
-    "updateAvailable": "Content has been updated. Tap to refresh"
+    "updateAvailable": "Content has been updated. Tap to refresh",
+    "footerTitle": "Plan trips with sugara",
+    "footerDescription": "Create, collaborate, and share travel plans",
+    "learnMore": "Learn more"
   },
   "dateFormat": {
     "full": "MMM d, yyyy",

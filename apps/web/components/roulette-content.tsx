@@ -276,7 +276,7 @@ function BookmarkMode() {
           <SelectContent>
             {bookmarkLists.map((list) => (
               <SelectItem key={list.id} value={list.id}>
-                {list.name} ({list.bookmarkCount}件)
+                {list.name} ({tt("bookmarkCount", { count: list.bookmarkCount })})
               </SelectItem>
             ))}
           </SelectContent>

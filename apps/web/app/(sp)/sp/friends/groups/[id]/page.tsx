@@ -132,7 +132,7 @@ export default function SpGroupDetailPage() {
                 <span className="truncate text-sm font-medium">{member.name}</span>
               </Link>
               <ItemMenuButton
-                ariaLabel={`${member.name}のメニュー`}
+                ariaLabel={tc("itemMenu", { name: member.name })}
                 onClick={() => setSheetMember(member)}
               />
             </div>

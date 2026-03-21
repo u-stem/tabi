@@ -354,7 +354,7 @@ export function PollTab({
       {/* Deadline */}
       {poll.deadline && (
         <p className="text-xs text-muted-foreground">
-          回答期限: {format(new Date(poll.deadline), "yyyy/MM/dd HH:mm", { locale: ja })}
+          {tp("deadline")}: {format(new Date(poll.deadline), "yyyy/MM/dd HH:mm", { locale: ja })}
         </p>
       )}
 

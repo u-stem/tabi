@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { BookmarkPanel } from "@/components/bookmark-panel";
 
@@ -16,10 +17,11 @@ export const BookmarkTab = memo(function BookmarkTab({
   hasDays,
   onCandidateAdded,
 }: BookmarkTabProps) {
+  const tsch = useTranslations("schedule");
   if (!hasDays) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        日程が確定するとブックマークを利用できます
+        {tsch("schedulesNotAvailable", { feature: tsch("bookmarks") })}
       </p>
     );
   }

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { SouvenirPanel } from "@/components/souvenir-panel";
 
@@ -16,10 +17,11 @@ export const SouvenirTab = memo(function SouvenirTab({
   addOpen,
   onAddOpenChange,
 }: SouvenirTabProps) {
+  const tsch = useTranslations("schedule");
   if (!hasDays) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        日程が確定するとお土産リストを利用できます
+        {tsch("schedulesNotAvailable", { feature: tsch("souvenirs") })}
       </p>
     );
   }

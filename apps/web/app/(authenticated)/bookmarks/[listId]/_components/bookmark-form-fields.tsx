@@ -7,6 +7,7 @@ import {
   MAX_URLS_PER_BOOKMARK,
 } from "@sugara/shared";
 import { Minus, Plus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ export function BookmarkFormFields({
   onMemoChange: (v: string) => void;
   onUrlsChange: (v: string[]) => void;
 }) {
+  const tb = useTranslations("bookmark");
   const displayUrls = urls.length > 0 ? urls : [""];
 
   // Stable keys for the dynamic URL list to avoid index-based keys
@@ -56,13 +58,13 @@ export function BookmarkFormFields({
     <div className="space-y-4 py-2">
       <div className="space-y-2">
         <Label htmlFor="bookmark-name">
-          名前 <span className="text-destructive">*</span>
+          {tb("nameLabel")} <span className="text-destructive">*</span>
         </Label>
         <Input
           id="bookmark-name"
           value={name}
           onChange={(e) => onNameChange(e.target.value)}
-          placeholder="金閣寺"
+          placeholder={tb("namePlaceholder")}
           maxLength={BOOKMARK_NAME_MAX_LENGTH}
           required
         />
@@ -71,12 +73,12 @@ export function BookmarkFormFields({
         </p>
       </div>
       <div className="space-y-2">
-        <Label htmlFor="bookmark-memo">メモ</Label>
+        <Label htmlFor="bookmark-memo">{tb("memoLabel")}</Label>
         <Textarea
           id="bookmark-memo"
           value={memo}
           onChange={(e) => onMemoChange(e.target.value)}
-          placeholder="拝観料 500円"
+          placeholder={tb("memoPlaceholder")}
           rows={3}
           maxLength={BOOKMARK_MEMO_MAX_LENGTH}
         />
@@ -109,7 +111,7 @@ export function BookmarkFormFields({
                   removeUrlKey(index);
                   onUrlsChange(displayUrls.filter((_, i) => i !== index));
                 }}
-                aria-label="URL を削除"
+                aria-label={tb("deleteUrl")}
               >
                 <Minus className="h-4 w-4" />
               </Button>
@@ -125,7 +127,7 @@ export function BookmarkFormFields({
               onUrlsChange([...displayUrls, ""]);
             }}
           >
-            <Plus className="inline h-3 w-3" /> URL を追加
+            <Plus className="inline h-3 w-3" /> {tb("addUrl")}
           </button>
         )}
       </div>

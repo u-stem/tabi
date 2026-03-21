@@ -44,6 +44,7 @@ export default function SpTripMembersPage() {
   const tm = useTranslations("messages");
   const tme = useTranslations("member");
   const tc = useTranslations("common");
+  const tf = useTranslations("friend");
   const tlRole = useTranslations("labels.role");
 
   const [sheetMember, setSheetMember] = useState<MemberResponse | null>(null);
@@ -407,7 +408,7 @@ export default function SpTripMembersPage() {
                   </Badge>
                   {isOwner && member.role !== "owner" && (
                     <ItemMenuButton
-                      ariaLabel={`${member.name}のメニュー`}
+                      ariaLabel={tc("itemMenu", { name: member.name })}
                       onClick={() => setSheetMember(member)}
                     />
                   )}
@@ -423,7 +424,7 @@ export default function SpTripMembersPage() {
         open={groupPickerOpen}
         onOpenChange={setGroupPickerOpen}
         actions={groups.map((g) => ({
-          label: `${g.name} (${g.memberCount}人)`,
+          label: `${g.name} (${tf("memberCount", { count: g.memberCount })})`,
           icon: <Users className="h-4 w-4" />,
           onClick: () => setSelectedGroupId(g.id),
         }))}

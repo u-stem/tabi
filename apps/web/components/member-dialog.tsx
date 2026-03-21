@@ -314,7 +314,7 @@ export function MemberDialog({
                         <button
                           type="button"
                           className="select-none text-sm text-muted-foreground hover:text-destructive"
-                          aria-label={`${member.name}を削除`}
+                          aria-label={tc("itemMenu", { name: member.name })}
                           onClick={() => setRemoveMember(member)}
                         >
                           {tc("delete")}

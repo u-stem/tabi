@@ -1,6 +1,7 @@
 {
   "metadata": {
-    "description": "旅行の計画を作成・共有できる共同編集アプリ。"
+    "description": "旅行の計画を作成・共有できる共同編集アプリ。",
+    "pwaDescription": "旅行の計画を作成・共有できる共同編集アプリ。"
   },
   "home": {
     "heroTitle": "計画もまた、旅の楽しみだ。",
@@ -73,7 +74,15 @@
     "shortcuts": "キーボードショートカット",
     "shortcutsDescription": "このページで使えるショートカット一覧",
     "noShortcuts": "このページにはショートカットがありません",
-    "selectionMenu": "選択操作メニュー"
+    "selectionMenu": "選択操作メニュー",
+    "itemMenu": "{name}のメニュー",
+    "scrollToTop": "ページトップへ",
+    "close": "閉じる",
+    "actions": "操作",
+    "actionsDescription": "操作を選択してください",
+    "dragHandle": "ドラッグで並び替え",
+    "connecting": "接続中...",
+    "reactionButton": "リアクションを送る"
   },
   "nav": {
     "home": "ホーム",
@@ -604,7 +613,7 @@
     "memoSaving": "保存中...",
     "memoSave": "保存",
     "memoAdd": "メモを追加",
-    "patternLabel": "パターン",
+    "patternLabel": "ラベル",
     "addPattern": "パターン追加",
     "selectPattern": "パターン選択",
     "selectPatternDescription": "表示するパターンを選択してください",
@@ -623,7 +632,37 @@
     "addToSchedule": "予定に追加",
     "deleteScheduleTitle": "予定を削除しますか？",
     "deleteScheduleDescription": "「{name}」を削除します。この操作は取り消せません。",
-    "deleteScheduleConfirm": "削除する"
+    "deleteScheduleConfirm": "削除する",
+    "addPatternTitle": "パターン追加",
+    "addPatternDescription": "日程のパターンを追加します。",
+    "patternPlaceholder": "例: 雨の日プラン",
+    "addButton": "追加",
+    "renamePatternTitle": "パターン名変更",
+    "renamePatternDescription": "パターンのラベルを変更します。",
+    "change": "変更",
+    "deletePatternTitle": "パターンを削除しますか？",
+    "deletePatternDescription": "「{name}」とその中のすべての予定を削除します。この操作は取り消せません。",
+    "overwritePatternTitle": "パターンを上書き",
+    "overwritePatternDescription": "「{name}」の予定を、選択したパターンにコピーします。コピー先の既存の予定はすべて削除されます。",
+    "destinationPattern": "コピー先パターン",
+    "itemCount": "{count}件",
+    "overwriteButton": "上書き",
+    "batchDeleteTitle": "{count}件を削除しますか？",
+    "batchDeleteDescription": "選択した{count}件を削除します。この操作は取り消せません。",
+    "candidateTabDescription": "候補の予定を管理できます",
+    "expenseTabDescription": "費用を記録・精算できます",
+    "souvenirTabDescription": "お土産リストを管理できます",
+    "bookmarkTabDescription": "ブックマークから予定に追加できます",
+    "mapTabDescription": "予定の場所を地図で確認できます",
+    "route": "ルート",
+    "spots": "スポット",
+    "dndPickUp": "{id} を持ち上げました",
+    "dndMoveOver": "{id} を {over} の上に移動中",
+    "dndDropped": "{id} をドロップしました",
+    "dndMovedTo": "{id} を {over} の位置に移動しました",
+    "dndCancelled": "{id} の移動をキャンセルしました",
+    "dndFinished": "{id} の並び替えが完了しました",
+    "patternMenu": "{name}のメニュー"
   },
   "member": {
     "title": "メンバー",
@@ -723,7 +762,8 @@
     "settlement": "精算",
     "settlementComplete": "精算完了",
     "settlementProgress": "{checked}/{total} 完了",
-    "unsettled": "未精算"
+    "unsettled": "未精算",
+    "yen": "円"
   },
   "poll": {
     "pageTitle": "かんたん投票",
@@ -785,7 +825,8 @@
     "voteHeader": "投票",
     "pollClosed": "この投票は終了しています",
     "shortcutGeneral": "全般",
-    "optionsCount": "{count}つの選択肢"
+    "optionsCount": "{count}つの選択肢",
+    "deadline": "期限"
   },
   "souvenir": {
     "addTitle": "お土産を追加",
@@ -973,7 +1014,16 @@
     "batchDeleteBookmarkDescription": "選択したブックマークをすべて削除します。この操作は取り消せません。",
     "adding": "追加中...",
     "saving": "保存中...",
-    "deleting": "削除中..."
+    "deleting": "削除中...",
+    "nameLabel": "名前",
+    "namePlaceholder": "名前",
+    "memoLabel": "メモ",
+    "memoPlaceholder": "例: 500円",
+    "deleteUrl": "URL を削除",
+    "addUrl": "URL を追加",
+    "editItem": "編集",
+    "deleteItem": "削除",
+    "selectItem": "選択"
   },
   "friend": {
     "pageTitle": "フレンド",
@@ -1029,7 +1079,7 @@
     "deleteGroupDescription": "「{name}」を削除します。この操作は取り消せません。",
     "memberManagement": "メンバー管理",
     "memberCount": "{count}人",
-    "addMember": "メンバーを追加",
+    "addMember": "追加",
     "addFromFriends": "フレンドから追加",
     "addById": "IDで追加",
     "userIdForAdd": "ユーザーIDで追加",
@@ -1042,7 +1092,10 @@
     "deselect": "解除",
     "add": "追加",
     "creating": "作成中...",
-    "create": "作成"
+    "create": "作成",
+    "addByIdTitle": "IDで追加",
+    "userIdPlaceholder2": "ユーザーID",
+    "addingMember": "追加中..."
   },
   "notification": {
     "pageTitle": "通知",
@@ -1148,7 +1201,8 @@
     "inputPlaceholder": "選択肢を入力",
     "add": "追加",
     "selectList": "リストを選択",
-    "loadingList": "読み込み中..."
+    "loadingList": "読み込み中...",
+    "bookmarkCount": "{count}件"
   },
   "install": {
     "bannerText": "アプリをホーム画面に追加できます",
@@ -1350,7 +1404,10 @@
     "dayCount": "{count}日間",
     "shareExpiry": "共有リンクの有効期限: {date}",
     "checkLink": "リンクが正しいか確認するか、共有元に問い合わせてください",
-    "updateAvailable": "内容が更新されました。タップして最新を表示"
+    "updateAvailable": "内容が更新されました。タップして最新を表示",
+    "footerTitle": "sugara で旅行計画",
+    "footerDescription": "旅行の計画を作成、共同編集、共有",
+    "learnMore": "詳しく見る"
   },
   "dateFormat": {
     "full": "yyyy年M月d日",

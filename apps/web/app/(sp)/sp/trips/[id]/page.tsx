@@ -420,7 +420,7 @@ export default function SpTripDetailPage() {
           </div>
         ) : (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            日程が確定すると費用を記録できます
+            {tsch("schedulesNotAvailable", { feature: tsch("expenses") })}
           </p>
         );
       case "bookmarks":
@@ -434,7 +434,7 @@ export default function SpTripDetailPage() {
           </div>
         ) : (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            日程が確定するとブックマークを利用できます
+            {tsch("schedulesNotAvailable", { feature: tsch("bookmarks") })}
           </p>
         );
       case "souvenirs":
@@ -448,7 +448,7 @@ export default function SpTripDetailPage() {
           </div>
         ) : (
           <p className="py-8 text-center text-sm text-muted-foreground">
-            日程が確定するとお土産リストを利用できます
+            {tsch("schedulesNotAvailable", { feature: tsch("souvenirs") })}
           </p>
         );
       case "activity":

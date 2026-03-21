@@ -111,7 +111,7 @@ function FriendListSection({
                   <span className="truncate text-sm font-medium">{friend.name}</span>
                 </Link>
                 <ItemMenuButton
-                  ariaLabel={`${friend.name}のメニュー`}
+                  ariaLabel={tc("itemMenu", { name: friend.name })}
                   onClick={() => setSheetTarget(friend)}
                 />
               </div>

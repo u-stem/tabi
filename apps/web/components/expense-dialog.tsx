@@ -414,7 +414,7 @@ export function ExpenseDialog({
                           id={`split-${m.userId}`}
                           type="number"
                           className="w-24"
-                          aria-label={`${m.name}の負担額`}
+                          aria-label={tc("itemMenu", { name: m.name })}
                           value={customAmounts[m.userId] ?? ""}
                           onChange={(e) =>
                             setCustomAmounts((prev) => ({ ...prev, [m.userId]: e.target.value }))
@@ -561,7 +561,10 @@ export function ExpenseDialog({
                         return (
                           <div key={s.userId} className="flex items-center justify-between text-sm">
                             <span>{member?.name ?? s.userId}</span>
-                            <span className="font-medium">{s.amount.toLocaleString()}円</span>
+                            <span className="font-medium">
+                              {s.amount.toLocaleString()}
+                              {te("yen")}
+                            </span>
                           </div>
                         );
                       })}

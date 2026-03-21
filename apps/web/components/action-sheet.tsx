@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { type ReactNode, useLayoutEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Drawer, DrawerContent, DrawerDescription, DrawerTitle } from "@/components/ui/drawer";
@@ -21,6 +22,7 @@ interface ActionSheetProps {
 }
 
 export function ActionSheet({ open, onOpenChange, actions }: ActionSheetProps) {
+  const tc = useTranslations("common");
   // Blur any focused element before the drawer applies aria-hidden to the page.
   // useLayoutEffect fires before Radix's useEffect that sets aria-hidden,
   // preventing the "aria-hidden on focused element's ancestor" browser warning.
@@ -35,8 +37,8 @@ export function ActionSheet({ open, onOpenChange, actions }: ActionSheetProps) {
   return (
     <Drawer open={open} onOpenChange={onOpenChange}>
       <DrawerContent>
-        <DrawerTitle className="sr-only">アクション</DrawerTitle>
-        <DrawerDescription className="sr-only">操作を選択してください</DrawerDescription>
+        <DrawerTitle className="sr-only">{tc("actions")}</DrawerTitle>
+        <DrawerDescription className="sr-only">{tc("actionsDescription")}</DrawerDescription>
         <div className="flex flex-col gap-2 pb-4 pt-2">
           {actions.map((action) =>
             action.href ? (
@@ -77,7 +79,7 @@ export function ActionSheet({ open, onOpenChange, actions }: ActionSheetProps) {
             onClick={() => onOpenChange(false)}
           >
             <X className="mr-2 h-4 w-4" />
-            キャンセル
+            {tc("cancel")}
           </Button>
         </div>
       </DrawerContent>

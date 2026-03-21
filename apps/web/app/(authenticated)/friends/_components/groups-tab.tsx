@@ -166,7 +166,7 @@ export function GroupsTab({
                   </div>
                 </button>
                 <ItemMenuButton
-                  ariaLabel={`${group.name}のメニュー`}
+                  ariaLabel={tc("itemMenu", { name: group.name })}
                   onClick={() => setSheetGroup(group)}
                 />
               </div>
@@ -207,7 +207,7 @@ export function GroupsTab({
                           variant="ghost"
                           size="icon"
                           className="h-8 w-8 shrink-0"
-                          aria-label={`${group.name}のメニュー`}
+                          aria-label={tc("itemMenu", { name: group.name })}
                         >
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>

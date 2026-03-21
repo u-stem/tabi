@@ -47,6 +47,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function NewsArticlePage({ params }: Props) {
   const { slug } = await params;
   const article = getNewsBySlug(slug);
+  const tf = await getTranslations("home.footer");
+  const tn = await getTranslations("news");
 
   if (!article) {
     notFound();
@@ -75,7 +77,7 @@ export default async function NewsArticlePage({ params }: Props) {
           href="/news"
           className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground"
         >
-          お知らせ一覧
+          {tn("title")}
         </Link>
 
         <article className="mt-6">
@@ -90,16 +92,16 @@ export default async function NewsArticlePage({ params }: Props) {
 
       <footer className="container flex flex-wrap items-center justify-center gap-x-4 gap-y-1 py-4 text-sm text-muted-foreground">
         <Link href="/faq" className="underline underline-offset-4 hover:text-foreground">
-          よくある質問
+          {tf("faq")}
         </Link>
         <Link href="/news" className="underline underline-offset-4 hover:text-foreground">
-          お知らせ
+          {tf("news")}
         </Link>
         <Link href="/terms" className="underline underline-offset-4 hover:text-foreground">
-          利用規約
+          {tf("terms")}
         </Link>
         <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
-          プライバシーポリシー
+          {tf("privacy")}
         </Link>
       </footer>
     </div>

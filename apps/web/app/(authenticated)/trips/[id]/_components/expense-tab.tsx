@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import { memo } from "react";
 import { ExpensePanel } from "@/components/expense-panel";
 
@@ -18,10 +19,11 @@ export const ExpenseTab = memo(function ExpenseTab({
   addOpen,
   onAddOpenChange,
 }: ExpenseTabProps) {
+  const tsch = useTranslations("schedule");
   if (!hasDays) {
     return (
       <p className="py-8 text-center text-sm text-muted-foreground">
-        日程が確定すると費用を記録できます
+        {tsch("schedulesNotAvailable", { feature: tsch("expenses") })}
       </p>
     );
   }

@@ -1,6 +1,7 @@
 "use client";
 
 import { SmilePlus } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useState } from "react";
 import { ReactionPicker } from "@/components/reaction-picker";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -13,6 +14,7 @@ export function ReactionButton({
   onReaction: (emoji: string) => void;
   cooldown: boolean;
 }) {
+  const tc = useTranslations("common");
   const [open, setOpen] = useState(false);
 
   return (
@@ -21,7 +23,7 @@ export function ReactionButton({
         <button
           type="button"
           className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-          aria-label="リアクションを送る"
+          aria-label={tc("reactionButton")}
           onClick={() => haptics.light()}
         >
           <SmilePlus className="h-5 w-5" />

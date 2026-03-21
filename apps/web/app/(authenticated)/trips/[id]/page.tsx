@@ -74,22 +74,28 @@ import {
 } from "./_components/trip-dialogs";
 import { TripHeader } from "./_components/trip-header";
 
-const dndAnnouncements: Announcements = {
-  onDragStart({ active }) {
-    return `${active.id} を持ち上げました`;
-  },
-  onDragOver({ active, over }) {
-    if (over) return `${active.id} を ${over.id} の上に移動中`;
-    return `${active.id} をドラッグ中`;
-  },
-  onDragEnd({ active, over }) {
-    if (over) return `${active.id} を ${over.id} の位置にドロップしました`;
-    return `${active.id} をドロップしました`;
-  },
-  onDragCancel({ active }) {
-    return `${active.id} のドラッグをキャンセルしました`;
-  },
-};
+function useDndAnnouncements(): Announcements {
+  const tsch = useTranslations("schedule");
+  return useMemo(
+    () => ({
+      onDragStart({ active }) {
+        return tsch("dndPickUp", { id: String(active.id) });
+      },
+      onDragOver({ active, over }) {
+        if (over) return tsch("dndMoveOver", { id: String(active.id), over: String(over.id) });
+        return tsch("dndDropped", { id: String(active.id) });
+      },
+      onDragEnd({ active, over }) {
+        if (over) return tsch("dndMovedTo", { id: String(active.id), over: String(over.id) });
+        return tsch("dndDropped", { id: String(active.id) });
+      },
+      onDragCancel({ active }) {
+        return tsch("dndCancelled", { id: String(active.id) });
+      },
+    }),
+    [tsch],
+  );
+}
 
 function TripDetailSkeleton() {
   return (
@@ -221,6 +227,7 @@ export default function TripDetailPage() {
   const ts = useTranslations("souvenir");
   const tp = useTranslations("poll");
   const tsc = useTranslations("shortcuts");
+  const dndAnnouncements = useDndAnnouncements();
   const params = useParams();
   const tripId = params.id as string;
   const online = useOnlineStatus();

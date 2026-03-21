@@ -151,7 +151,7 @@ export function ScheduleMenu({
       {isMobile ? (
         <>
           <ItemMenuButton
-            ariaLabel={`${name}のメニュー`}
+            ariaLabel={tc("itemMenu", { name })}
             disabled={disabled}
             onClick={() => setSheetOpen(true)}
           />
@@ -160,7 +160,7 @@ export function ScheduleMenu({
       ) : (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <ItemMenuButton ariaLabel={`${name}のメニュー`} disabled={disabled} />
+            <ItemMenuButton ariaLabel={tc("itemMenu", { name })} disabled={disabled} />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
             <DropdownMenuItem onClick={onEdit}>

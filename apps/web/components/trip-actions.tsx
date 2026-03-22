@@ -13,6 +13,7 @@ import {
   History,
   Link,
   Map as MapIcon,
+  MessageSquare,
   MoreHorizontal,
   Pencil,
   PenLine,
@@ -36,6 +37,10 @@ const MemberDialog = dynamic(() =>
 
 const ShareDialog = dynamic(() =>
   import("@/components/share-dialog").then((mod) => mod.ShareDialog),
+);
+
+const DiscordWebhookDialog = dynamic(() =>
+  import("@/components/discord-webhook-dialog").then((mod) => mod.DiscordWebhookDialog),
 );
 
 import { ActionSheet } from "@/components/action-sheet";
@@ -121,6 +126,7 @@ export function TripActions({
   const tm = useTranslations("messages");
   const tt = useTranslations("trip");
   const tc = useTranslations("common");
+  const td = useTranslations("discord");
   const tlStatus = useTranslations("labels.status");
   const { data: session } = useSession();
   const isGuest = isGuestUser(session);
@@ -138,6 +144,7 @@ export function TripActions({
   const [shareExpiresAt, setShareExpiresAt] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [discordOpen, setDiscordOpen] = useState(false);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [statusSheetOpen, setStatusSheetOpen] = useState(false);
   const menuTriggerId = compact
@@ -298,6 +305,15 @@ export function TripActions({
             label: sharing ? tt("generating") : tt("shareLink"),
             icon: <Link className="h-4 w-4" />,
             onClick: handleShare,
+          },
+        ]
+      : []),
+    ...(canEditRole && !isGuest
+      ? [
+          {
+            label: td("title"),
+            icon: <MessageSquare className="h-4 w-4" />,
+            onClick: () => setDiscordOpen(true),
           },
         ]
       : []),
@@ -496,6 +512,12 @@ export function TripActions({
                 {sharing ? tt("generating") : tt("shareLink")}
               </DropdownMenuItem>
             )}
+            {canEditRole && !isGuest && (
+              <DropdownMenuItem onClick={() => setDiscordOpen(true)}>
+                <MessageSquare />
+                {td("title")}
+              </DropdownMenuItem>
+            )}
             {canEditRole && (
               <DropdownMenuItem asChild>
                 <NextLink href={isMobile ? `/sp/trips/${tripId}/print` : `/trips/${tripId}/print`}>
@@ -535,6 +557,12 @@ export function TripActions({
         open={memberOpen}
         onOpenChange={setMemberOpen}
         memberLimitReached={memberLimitReached}
+      />
+      <DiscordWebhookDialog
+        tripId={tripId}
+        open={discordOpen}
+        onOpenChange={setDiscordOpen}
+        canEdit={canEditRole}
       />
       {shareUrl && (
         <ShareDialog

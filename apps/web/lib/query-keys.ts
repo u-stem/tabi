@@ -67,6 +67,9 @@ export const queryKeys = {
   publicSettings: {
     all: ["public-settings"] as const,
   },
+  discord: {
+    webhook: (tripId: string) => ["discord", "webhook", tripId] as const,
+  },
   notifications: {
     all: ["notifications"] as const,
     list: () => [...queryKeys.notifications.all, "list"] as const,

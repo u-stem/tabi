@@ -333,6 +333,19 @@ const JA_FAQS = [
       "現在コード署名に対応していないため、macOS では「開発元を確認できません」、Windows では SmartScreen の警告が表示されることがあります。macOS の場合は右クリック（または Control キー+クリック）から「開く」を選択してください。Windows の場合は「詳細情報」→「実行」を選択してください。",
     sortOrder: 102,
   },
+  // ---- Notifications ----
+  {
+    question: "旅行のイベントをDiscordに通知するには？",
+    answer:
+      "旅行のメニューから「Discord通知」を選び、DiscordのWebhook URLを設定してください。通知するイベントの種類も選択できます。",
+    sortOrder: 105,
+  },
+  {
+    question: "Discord通知が届かなくなった場合は？",
+    answer:
+      "Webhook URLが無効になると自動的に通知が停止します。旅行のメニューからDiscord通知の状態を確認し、必要に応じてURLを再設定してください。",
+    sortOrder: 106,
+  },
 ];
 
 const EN_FAQS = [
@@ -655,6 +668,19 @@ const EN_FAQS = [
       "The app is not currently code-signed, so macOS may show 'Cannot verify developer' and Windows may show a SmartScreen warning. On macOS, right-click (or Control+click) and select 'Open.' On Windows, click 'More info' then 'Run anyway.'",
     sortOrder: 102,
   },
+  // ---- Notifications ----
+  {
+    question: "How do I send trip events to Discord?",
+    answer:
+      "Open the trip menu, select 'Discord Notifications', and configure a Discord Webhook URL. You can also select which event types to send.",
+    sortOrder: 105,
+  },
+  {
+    question: "What if Discord notifications stop working?",
+    answer:
+      "If the Webhook URL becomes invalid, notifications are automatically paused. Check the Discord notification settings from the trip menu and reconfigure the URL if needed.",
+    sortOrder: 106,
+  },
 ];
 
 // Map sortOrder ranges to categories
@@ -676,7 +702,8 @@ function resolveCategory(sortOrder: number): string {
   if (sortOrder >= 97 && sortOrder <= 98) return "quickpoll";
   if (sortOrder === 99) return "tools";
   if (sortOrder === 100) return "limits";
-  if (sortOrder >= 101) return "desktop";
+  if (sortOrder >= 101 && sortOrder <= 102) return "desktop";
+  if (sortOrder >= 105 && sortOrder <= 106) return "notifications";
   return "other";
 }
 

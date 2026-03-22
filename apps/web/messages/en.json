@@ -1441,6 +1441,7 @@
       "tools": "Tools",
       "limits": "Limits",
       "desktop": "Desktop App",
+      "notifications": "Notifications",
       "other": "Other"
     }
   },

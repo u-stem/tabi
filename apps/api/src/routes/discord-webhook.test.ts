@@ -48,6 +48,9 @@ vi.mock("../lib/env", () => ({
   env: { FRONTEND_URL: "http://localhost:3000" },
 }));
 
+const globalMockFetch = vi.fn();
+vi.stubGlobal("fetch", globalMockFetch);
+
 import { discordWebhookRoutes } from "./discord-webhook";
 
 const fakeUserId = "00000000-0000-0000-0000-000000000001";
@@ -230,6 +233,7 @@ describe("Discord webhook routes", () => {
   describe(`POST ${basePath}/test`, () => {
     it("returns 200 when test notification succeeds", async () => {
       mockDbQuery.discordWebhooks.findFirst.mockResolvedValue(fakeWebhook);
+      globalMockFetch.mockResolvedValueOnce({ ok: true, status: 204 });
 
       const app = createTestApp(discordWebhookRoutes, "/api/trips");
       const res = await app.request(`${basePath}/test`, { method: "POST" });
@@ -237,7 +241,10 @@ describe("Discord webhook routes", () => {
 
       expect(res.status).toBe(200);
       expect(body.ok).toBe(true);
-      expect(mockSendDiscordWebhook).toHaveBeenCalled();
+      expect(globalMockFetch).toHaveBeenCalledWith(
+        fakeWebhook.webhookUrl,
+        expect.objectContaining({ method: "POST" }),
+      );
     });
 
     it("returns 404 when no webhook exists", async () => {

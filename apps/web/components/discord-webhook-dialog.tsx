@@ -47,7 +47,7 @@ type DiscordWebhookDialogProps = {
 type WebhookResponse = {
   id: string;
   name: string | null;
-  webhookUrl: string;
+  maskedUrl: string;
   enabledTypes: DiscordEnabledType[];
   isActive: boolean;
   lastSuccessAt: string | null;
@@ -492,7 +492,7 @@ function ExistingWebhookView({
           <Badge variant={webhook.isActive ? "default" : "secondary"}>
             {webhook.isActive ? td("active") : td("inactive")}
           </Badge>
-          <span className="text-sm text-muted-foreground">{webhook.webhookUrl}</span>
+          <span className="text-sm text-muted-foreground">{webhook.maskedUrl}</span>
         </div>
       </div>
 

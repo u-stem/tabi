@@ -9,7 +9,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { discordWebhooks } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
-import { sendDiscordWebhook, validateWebhookUrl } from "../lib/discord";
+import { validateWebhookUrl } from "../lib/discord";
 import { env } from "../lib/env";
 import { getParam } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
@@ -183,15 +183,19 @@ discordWebhookRoutes.post(
       baseUrl: env.FRONTEND_URL,
     });
 
+    // Send directly without affecting failureCount/isActive state
     try {
-      await sendDiscordWebhook({
-        webhookId: webhook.id,
-        webhookUrl: webhook.webhookUrl,
-        embed,
+      const res = await fetch(webhook.webhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ embeds: [embed] }),
       });
+      if (!res.ok) {
+        return c.json({ error: ERROR_MSG.WEBHOOK_TEST_FAILED }, 502);
+      }
       return c.json({ ok: true });
     } catch {
-      return c.json({ error: ERROR_MSG.WEBHOOK_TEST_FAILED }, 500);
+      return c.json({ error: ERROR_MSG.WEBHOOK_TEST_FAILED }, 502);
     }
   },
 );

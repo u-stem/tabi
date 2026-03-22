@@ -1,14 +1,21 @@
-import { NOTIFICATION_DEFAULTS, type NotificationType, PUSH_MSG } from "@sugara/shared";
+import {
+  buildDiscordEmbed,
+  NOTIFICATION_DEFAULTS,
+  type NotificationType,
+  PUSH_MSG,
+} from "@sugara/shared";
 import { and, asc, eq, inArray } from "drizzle-orm";
 import webpush from "web-push";
 import { db } from "../db/index";
 import {
+  discordWebhooks,
   notificationPreferences,
   notifications,
   pushSubscriptions,
   tripMembers,
   trips,
 } from "../db/schema";
+import { sendDiscordWebhook } from "./discord";
 import { env } from "./env";
 import { logger } from "./logger";
 
@@ -39,6 +46,41 @@ type CreateNotificationParams = {
   payload: NotificationPayload;
 };
 
+// Sends a Discord embed for the trip's configured webhook, if active and subscribed to the type.
+// Called once per event, outside the per-user notification loop.
+async function sendDiscordForTrip(params: {
+  type: NotificationType;
+  tripId: string;
+  payload: NotificationPayload;
+}): Promise<void> {
+  try {
+    const webhook = await db.query.discordWebhooks.findFirst({
+      where: eq(discordWebhooks.tripId, params.tripId),
+    });
+
+    if (!webhook || !webhook.isActive) return;
+
+    const enabledTypes = webhook.enabledTypes as string[];
+    if (!enabledTypes.includes(params.type)) return;
+
+    const embed = buildDiscordEmbed({
+      type: params.type,
+      payload: params.payload,
+      tripId: params.tripId,
+      locale: webhook.locale,
+      baseUrl: env.FRONTEND_URL,
+    });
+
+    await sendDiscordWebhook({
+      webhookId: webhook.id,
+      webhookUrl: webhook.webhookUrl,
+      embed,
+    });
+  } catch (err) {
+    logger.error({ err, tripId: params.tripId }, "Failed to send Discord notification");
+  }
+}
+
 /**
  * Fire-and-forget: fetch trip title then notify multiple users.
  * Use when recipient userIds are already known (e.g. expense splits, member add/remove).
@@ -55,6 +97,7 @@ export function notifyUsers(params: {
     .findFirst({ where: eq(trips.id, tripId), columns: { title: true } })
     .then((trip) => {
       const tripName = trip?.title ?? "旅行";
+      void sendDiscordForTrip({ type, tripId, payload: makePayload(tripName) });
       void Promise.all(
         userIds.map((userId) =>
           createNotification({ type, userId, tripId, payload: makePayload(tripName) }),
@@ -84,6 +127,7 @@ export function notifyTripMembersExcluding(params: {
       db.query.trips.findFirst({ where: eq(trips.id, tripId), columns: { title: true } }),
     ]);
     const tripName = trip?.title ?? "旅行";
+    void sendDiscordForTrip({ type, tripId, payload: makePayload(tripName) });
     await Promise.all(
       members
         .filter((m) => m.userId !== actorId)

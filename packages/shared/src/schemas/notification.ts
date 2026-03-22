@@ -11,6 +11,7 @@ export const notificationTypeSchema = z.enum([
   "poll_closed",
   "expense_added",
   "settlement_checked",
+  "discord_webhook_disabled",
 ]);
 
 export type NotificationType = z.infer<typeof notificationTypeSchema>;
@@ -47,6 +48,7 @@ export const NOTIFICATION_DEFAULTS = {
   poll_closed: { inApp: true, push: false },
   expense_added: { inApp: false, push: false },
   settlement_checked: { inApp: true, push: true },
+  discord_webhook_disabled: { inApp: true, push: true },
 } satisfies Record<NotificationType, { inApp: boolean; push: boolean }>;
 
 /** Japanese labels for notification types, used in preference settings UI. */
@@ -61,6 +63,7 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   poll_closed: "日程投票が終了した",
   expense_added: "費用が追加された",
   settlement_checked: "精算チェック",
+  discord_webhook_disabled: "Discord通知が無効化された",
 };
 
 /**
@@ -89,6 +92,8 @@ export function formatNotificationText(type: string, payload: Record<string, str
       return `${payload.actorName}さんが費用「${payload.entityName}」を追加しました`;
     case "settlement_checked":
       return `${payload.actorName}さんが精算をチェックしました`;
+    case "discord_webhook_disabled":
+      return `「${payload.tripName}」のDiscord通知が無効化されました`;
     default:
       return "新しい通知があります";
   }

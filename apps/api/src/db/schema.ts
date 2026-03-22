@@ -283,6 +283,7 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "poll_closed",
   "expense_added",
   "settlement_checked",
+  "discord_webhook_disabled",
 ]);
 
 export const scheduleReactions = pgTable(

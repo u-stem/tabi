@@ -351,7 +351,9 @@ type TypeChecklistProps = {
 function TypeChecklist({ enabledTypes, onToggleType, disabled, td }: TypeChecklistProps) {
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium">{td("enabledTypes")}</Label>
+      <Label className="text-sm font-medium">
+        {td("enabledTypes")} <span className="text-destructive">*</span>
+      </Label>
       <div className="grid grid-cols-2 gap-2">
         {ALL_ENABLED_TYPES.map((type) => (
           <div key={type} className="flex items-center gap-2">
@@ -397,7 +399,9 @@ function CreateWebhookForm({
   return (
     <form onSubmit={onCreate} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="webhook-url">{td("webhookUrl")}</Label>
+        <Label htmlFor="webhook-url">
+          {td("webhookUrl")} <span className="text-destructive">*</span>
+        </Label>
         <Input
           id="webhook-url"
           type="url"
@@ -510,7 +514,9 @@ function ExistingWebhookView({
       {/* Reactivate form */}
       {showReactivateForm && canEdit && (
         <form onSubmit={onReactivate} className="space-y-2">
-          <Label htmlFor="reactivate-url">{td("webhookUrl")}</Label>
+          <Label htmlFor="reactivate-url">
+            {td("webhookUrl")} <span className="text-destructive">*</span>
+          </Label>
           <Input
             id="reactivate-url"
             type="url"

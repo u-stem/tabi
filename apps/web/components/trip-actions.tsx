@@ -13,7 +13,6 @@ import {
   History,
   Link,
   Map as MapIcon,
-  MessageSquare,
   MoreHorizontal,
   Pencil,
   PenLine,
@@ -29,6 +28,7 @@ import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { type ReactNode, useState } from "react";
+import { FaDiscord } from "react-icons/fa";
 import { toast } from "sonner";
 
 const MemberDialog = dynamic(() =>
@@ -312,7 +312,7 @@ export function TripActions({
       ? [
           {
             label: td("title"),
-            icon: <MessageSquare className="h-4 w-4" />,
+            icon: <FaDiscord className="h-4 w-4" />,
             onClick: () => setDiscordOpen(true),
           },
         ]
@@ -514,7 +514,7 @@ export function TripActions({
             )}
             {canEditRole && !isGuest && (
               <DropdownMenuItem onClick={() => setDiscordOpen(true)}>
-                <MessageSquare />
+                <FaDiscord />
                 {td("title")}
               </DropdownMenuItem>
             )}

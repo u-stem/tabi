@@ -23,7 +23,7 @@ export const discordWebhookUrlSchema = z
   .string()
   .url()
   .regex(
-    /^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\//,
+    /^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\/\d+\/[\w-]+$/,
     "Must be a Discord Webhook URL",
   );
 

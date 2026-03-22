@@ -558,6 +558,7 @@ export const tripsRelations = relations(trips, ({ one, many }) => ({
   poll: one(schedulePolls, { fields: [trips.id], references: [schedulePolls.tripId] }),
   expenses: many(expenses),
   souvenirItems: many(souvenirItems),
+  discordWebhook: one(discordWebhooks),
 }));
 
 export const tripMembersRelations = relations(tripMembers, ({ one }) => ({
@@ -949,4 +950,29 @@ export const settlementPaymentsRelations = relations(settlementPayments, ({ one 
     references: [users.id],
     relationName: "settlementPaymentPaidBy",
   }),
+}));
+
+export const discordWebhooks = pgTable("discord_webhooks", {
+  id: uuid().primaryKey().defaultRandom(),
+  tripId: uuid("trip_id")
+    .notNull()
+    .references(() => trips.id, { onDelete: "cascade" })
+    .unique(),
+  webhookUrl: text("webhook_url").notNull(),
+  name: text("name").default(""),
+  enabledTypes: jsonb("enabled_types").$type<string[]>().notNull(),
+  locale: text("locale").notNull().default("ja"),
+  isActive: boolean("is_active").notNull().default(true),
+  lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
+  failureCount: integer("failure_count").notNull().default(0),
+  createdBy: uuid("created_by")
+    .notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}).enableRLS();
+
+export const discordWebhooksRelations = relations(discordWebhooks, ({ one }) => ({
+  trip: one(trips, { fields: [discordWebhooks.tripId], references: [trips.id] }),
+  creator: one(users, { fields: [discordWebhooks.createdBy], references: [users.id] }),
 }));

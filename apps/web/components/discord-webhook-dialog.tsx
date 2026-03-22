@@ -227,8 +227,9 @@ export function DiscordWebhookDialog({
       });
       toast.success(td("deleted"));
       queryClient.invalidateQueries({ queryKey: cacheKey });
-    } catch {
-      toast.error(td("deleted"));
+    } catch (err) {
+      const message = getApiErrorMessage(err, td("delete"));
+      toast.error(message);
     } finally {
       setDeleting(false);
       setDeleteOpen(false);

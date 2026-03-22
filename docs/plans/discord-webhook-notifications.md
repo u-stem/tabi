@@ -120,7 +120,7 @@ Vercel may freeze the runtime after the API response is sent. Existing push noti
 
 ### Localization
 
-Embed messages use the trip owner's language setting. Since this is a trip-level (not per-user) notification, individual member language preferences are not considered.
+Embed messages use the locale set when the Webhook was created (stored in `discord_webhooks.locale`). Since this is a trip-level (not per-user) notification, individual member language preferences are not considered.
 
 Create a dedicated Discord message formatter (similar to existing `PUSH_MSG` pattern in `packages/shared`) that produces localized Embed descriptions for each notification type. This keeps Discord formatting separate from push/in-app formatting.
 

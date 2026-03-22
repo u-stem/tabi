@@ -108,6 +108,10 @@ export const ERROR_MSG = {
   SETTLEMENT_PAYMENT_NOT_FOUND: "Settlement payment not found",
   SETTLEMENT_ALREADY_CHECKED: "Settlement already checked",
   SETTLEMENT_TRANSFER_NOT_FOUND: "Transfer not found in current settlement",
+  WEBHOOK_ALREADY_EXISTS: "Webhook already exists for this trip",
+  WEBHOOK_NOT_FOUND: "Webhook not found",
+  WEBHOOK_UNREACHABLE: "Webhook URL is unreachable",
+  WEBHOOK_TEST_FAILED: "Failed to send test notification",
 } as const;
 
 // ─── UI messages (Japanese, used in toasts and UI feedback) ───────────────────

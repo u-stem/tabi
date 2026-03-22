@@ -2,6 +2,7 @@ export * from "./account";
 export * from "./avatar";
 export * from "./bookmark";
 export * from "./day-pattern";
+export * from "./discord-webhook";
 export * from "./expense";
 export * from "./faq";
 export * from "./feedback";

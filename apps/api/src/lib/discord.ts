@@ -66,7 +66,11 @@ export async function sendDiscordWebhook(params: SendWebhookParams): Promise<voi
       // retry failed, fall through to increment failure count
     }
     await incrementFailureCount(webhookId);
+    return;
   }
+
+  // Other failures (429 rate limit, 403, etc.)
+  await incrementFailureCount(webhookId);
 }
 
 async function incrementFailureCount(webhookId: string): Promise<void> {
@@ -85,15 +89,14 @@ async function incrementFailureCount(webhookId: string): Promise<void> {
 }
 
 async function deactivateWebhook(webhookId: string): Promise<void> {
-  await db
+  const [webhook] = await db
     .update(discordWebhooks)
     .set({ isActive: false, updatedAt: new Date() })
-    .where(eq(discordWebhooks.id, webhookId));
-
-  const webhook = await db.query.discordWebhooks.findFirst({
-    where: eq(discordWebhooks.id, webhookId),
-    columns: { tripId: true, createdBy: true },
-  });
+    .where(eq(discordWebhooks.id, webhookId))
+    .returning({
+      tripId: discordWebhooks.tripId,
+      createdBy: discordWebhooks.createdBy,
+    });
 
   if (webhook) {
     notifyUsers({

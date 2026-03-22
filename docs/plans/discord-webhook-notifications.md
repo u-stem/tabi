@@ -35,6 +35,7 @@ Add `discord_webhooks` table:
 | webhookUrl | TEXT | Discord Webhook URL |
 | name | TEXT | Display name (e.g., "Trip notifications") |
 | enabledTypes | JSONB | Array of enabled notification types |
+| locale | TEXT | Embed message language ("ja" / "en"), set at creation time |
 | isActive | BOOLEAN | Active/inactive (auto-deactivated on failure) |
 | lastSuccessAt | TIMESTAMP | Last successful send |
 | failureCount | INTEGER | Consecutive failure count |

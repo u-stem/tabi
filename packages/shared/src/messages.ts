@@ -483,7 +483,7 @@ export const PUSH_MSG: Record<string, (payload: Record<string, string | undefine
   expense_added: (p) => `${p.actorName}さんが費用「${p.entityName}」を追加しました`,
   settlement_checked: (p) => `${p.actorName}さんが精算をチェックしました`,
   discord_webhook_disabled: (p) =>
-    `「${p.tripName}」のDiscord Webhookが無効化されました。設定を確認してください`,
+    `「${p.tripName}」のDiscord通知が無効化されました。設定を確認してください`,
 };
 
 // ─── UI labels (Japanese, used in dropdowns and badges) ───────────────────────

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { currencyCodeSchema } from "../currency";
 import { MAX_OPTIONS_PER_POLL } from "../limits";
 
 export const TRIP_TITLE_MAX_LENGTH = 100;
@@ -16,6 +17,7 @@ export const createTripSchema = z
     coverImagePosition: z.number().int().min(0).max(100).optional(),
     startDate: z.string().date(),
     endDate: z.string().date(),
+    currency: currencyCodeSchema.optional().default("JPY"),
   })
   .refine((data) => data.endDate >= data.startDate, {
     message: "End date must be on or after start date",
@@ -41,6 +43,7 @@ export const createTripWithPollSchema = z.object({
     )
     .min(1)
     .max(MAX_OPTIONS_PER_POLL),
+  currency: currencyCodeSchema.optional().default("JPY"),
 });
 
 export const updateTripSchema = z
@@ -52,6 +55,7 @@ export const updateTripSchema = z
     coverImagePosition: z.number().int().min(0).max(100).optional(),
     startDate: z.string().date().optional(),
     endDate: z.string().date().optional(),
+    currency: currencyCodeSchema.optional(),
   })
   .refine(
     (data) => {

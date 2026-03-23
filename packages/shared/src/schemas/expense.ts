@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { currencyCodeSchema } from "../currency";
 import { MAX_LINE_ITEMS_PER_EXPENSE } from "../limits";
 
 export const EXPENSE_TITLE_MAX_LENGTH = 200;
@@ -32,10 +33,12 @@ const lineItemInputSchema = z.object({
 export const createExpenseSchema = z
   .object({
     title: z.string().min(1).max(EXPENSE_TITLE_MAX_LENGTH),
-    amount: z.number().int().min(1),
+    amount: z.number().positive(),
     paidByUserId: z.string().check(z.guid()),
     splitType: expenseSplitTypeSchema,
     category: expenseCategorySchema.optional(),
+    currency: currencyCodeSchema.optional().default("JPY"),
+    exchangeRate: z.number().positive().max(999999).optional(),
     splits: z.array(splitItemSchema).min(1),
     lineItems: z.array(lineItemInputSchema).max(MAX_LINE_ITEMS_PER_EXPENSE).optional(),
   })
@@ -78,10 +81,12 @@ export const createExpenseSchema = z
 export const updateExpenseSchema = z
   .object({
     title: z.string().min(1).max(EXPENSE_TITLE_MAX_LENGTH),
-    amount: z.number().int().min(1),
+    amount: z.number().positive(),
     paidByUserId: z.string().check(z.guid()),
     splitType: expenseSplitTypeSchema,
     category: expenseCategorySchema.nullable().optional(),
+    currency: currencyCodeSchema.optional().default("JPY"),
+    exchangeRate: z.number().positive().max(999999).optional(),
     splits: z.array(splitItemSchema).min(1),
     lineItems: z.array(lineItemInputSchema).max(MAX_LINE_ITEMS_PER_EXPENSE).optional(),
   })

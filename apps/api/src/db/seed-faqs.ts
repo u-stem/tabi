@@ -228,6 +228,18 @@ const JA_FAQS = [
       "自分のプロフィールページに「未精算サマリー」が表示されます。支払い残・受取り残の合計と、旅行ごとの内訳が確認できます。また、ホーム画面の旅行カードに「未精算」バッジが表示されます。",
     sortOrder: 75,
   },
+  {
+    question: "異なる通貨を使うには？",
+    answer:
+      "旅行の作成時に基準通貨を選択し、費用の登録時に通貨を変更できます。為替レートは自動取得され、手動で修正することもできます。",
+    sortOrder: 76,
+  },
+  {
+    question: "為替レートはどう決まる？",
+    answer:
+      "費用の登録時にECB（欧州中央銀行）のデータを基にしたレートが自動入力されます。実際の両替レートに合わせて手動で変更できます。",
+    sortOrder: 77,
+  },
   // ---- Souvenirs ----
   {
     question: "「お土産」リストとは何ですか？",
@@ -563,6 +575,18 @@ const EN_FAQS = [
       "An 'Unsettled Summary' is shown on your profile page with totals for amounts owed and receivable, broken down by trip. The home screen also shows an 'Unsettled' badge on trip cards.",
     sortOrder: 75,
   },
+  {
+    question: "How do I use different currencies?",
+    answer:
+      "Select a base currency when creating a trip, then choose a different currency when adding an expense. Exchange rates are auto-fetched and can be manually adjusted.",
+    sortOrder: 76,
+  },
+  {
+    question: "How are exchange rates determined?",
+    answer:
+      "Rates are auto-filled based on ECB (European Central Bank) data when adding an expense. You can manually adjust them to match your actual exchange rate.",
+    sortOrder: 77,
+  },
   // ---- Souvenirs ----
   {
     question: "What is the 'Souvenirs' list?",
@@ -694,7 +718,7 @@ function resolveCategory(sortOrder: number): string {
   if (sortOrder >= 50 && sortOrder <= 52) return "friends";
   if (sortOrder === 60) return "bookmarks";
   if (sortOrder === 65) return "reactions";
-  if (sortOrder >= 70 && sortOrder <= 75) return "expenses";
+  if (sortOrder >= 70 && sortOrder <= 77) return "expenses";
   if (sortOrder >= 80 && sortOrder <= 81) return "souvenirs";
   if (sortOrder === 85) return "feedback";
   if (sortOrder >= 90 && sortOrder <= 92) return "ux";

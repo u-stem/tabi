@@ -575,7 +575,10 @@
     "shareDescription": "URLまたはQRコードで共有できます",
     "shareTitle": "共有リンク",
     "copyUrl": "URLをコピー",
-    "shareExpiry": "有効期限:"
+    "shareExpiry": "有効期限:",
+    "currency": "基準通貨",
+    "currencyHelp": "精算に使用する通貨です",
+    "currencyChangeDisabled": "費用が登録されているため変更できません"
   },
   "schedule": {
     "addSchedule": "予定を追加",

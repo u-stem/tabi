@@ -575,7 +575,10 @@
     "shareDescription": "Share via URL or QR code",
     "shareTitle": "Share Link",
     "copyUrl": "Copy URL",
-    "shareExpiry": "Expires:"
+    "shareExpiry": "Expires:",
+    "currency": "Base Currency",
+    "currencyHelp": "Currency used for settlement",
+    "currencyChangeDisabled": "Cannot change because expenses exist"
   },
   "schedule": {
     "addSchedule": "Add Schedule",

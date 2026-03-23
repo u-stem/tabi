@@ -71,10 +71,12 @@ export type TripResponse = {
   coverImageUrl: string | null;
   coverImagePosition: number;
   shareToken: string | null;
+  currency: string;
   role: MemberRole;
   days: DayResponse[];
   candidates: CandidateResponse[];
   scheduleCount: number;
+  expenseCount: number;
   memberCount: number;
   poll: TripPollSummary | null;
   mapsEnabled: boolean;
@@ -89,6 +91,7 @@ export type TripListItem = {
   status: TripStatus;
   coverImageUrl: string | null;
   coverImagePosition: number;
+  currency: string;
   role: MemberRole;
   totalSchedules: number;
   updatedAt: string;

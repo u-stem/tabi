@@ -1,7 +1,12 @@
 "use client";
 
 import { type Announcements, DndContext, DragOverlay, defaultDropAnimation } from "@dnd-kit/core";
-import type { BookmarkListResponse, PollDetailResponse, TripResponse } from "@sugara/shared";
+import type {
+  BookmarkListResponse,
+  CurrencyCode,
+  PollDetailResponse,
+  TripResponse,
+} from "@sugara/shared";
 import {
   canEdit as canEditRole,
   isOwner as isOwnerRole,
@@ -877,6 +882,8 @@ export default function TripDetailPage() {
                 endDate={trip.endDate}
                 coverImageUrl={trip.coverImageUrl}
                 coverImagePosition={trip.coverImagePosition}
+                currency={(trip.currency ?? "JPY") as CurrencyCode}
+                expenseCount={trip.expenseCount ?? 0}
                 open={editOpen}
                 onOpenChange={setEditOpen}
                 onUpdate={onMutate}

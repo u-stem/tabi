@@ -1,6 +1,11 @@
 "use client";
 
-import { TRIP_DESTINATION_MAX_LENGTH, TRIP_TITLE_MAX_LENGTH } from "@sugara/shared";
+import {
+  CURRENCIES,
+  type CurrencyCode,
+  TRIP_DESTINATION_MAX_LENGTH,
+  TRIP_TITLE_MAX_LENGTH,
+} from "@sugara/shared";
 import { format } from "date-fns";
 import { enUS, ja } from "date-fns/locale";
 import { Plus, X } from "lucide-react";
@@ -24,6 +29,13 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ApiError, api, getApiErrorMessage } from "@/lib/api";
 import { formatDateRangeShort } from "@/lib/format";
@@ -50,6 +62,8 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [currency, setCurrency] = useState<CurrencyCode>("JPY");
+
   // Direct mode state
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -67,6 +81,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
   function resetAll() {
     setTitle("");
     setDestination("");
+    setCurrency("JPY");
     setDateMode("direct");
     setError(null);
     setLoading(false);
@@ -114,6 +129,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
       const body: Record<string, unknown> = {
         title,
         pollOptions: candidates,
+        currency,
       };
       if (destination) body.destination = destination;
 
@@ -161,6 +177,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
             ...(destination && { destination }),
             startDate: sd,
             endDate: ed,
+            currency,
           }),
         });
         if (coverFile && result) {
@@ -226,6 +243,23 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
               <p className="text-right text-xs text-muted-foreground">
                 {destination.length}/{TRIP_DESTINATION_MAX_LENGTH}
               </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="create-currency">{tt("currency")}</Label>
+              <Select value={currency} onValueChange={(v) => setCurrency(v as CurrencyCode)}>
+                <SelectTrigger id="create-currency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(CURRENCIES).map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.code} - {locale === "ja" ? c.nameJa : c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">{tt("currencyHelp")}</p>
             </div>
 
             <CoverImagePicker

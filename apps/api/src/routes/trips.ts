@@ -1,3 +1,4 @@
+import type { CurrencyCode } from "@sugara/shared";
 import {
   createTripSchema,
   createTripWithPollSchema,
@@ -10,6 +11,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import {
   dayPatterns,
+  expenses,
   schedulePollOptions,
   schedulePollParticipants,
   schedulePolls,
@@ -123,6 +125,7 @@ tripRoutes.post("/", async (c) => {
       pollOptions,
       coverImageUrl,
       coverImagePosition,
+      currency,
     } = parsed.data;
 
     const trip = await db.transaction(async (tx) => {
@@ -146,6 +149,7 @@ tripRoutes.post("/", async (c) => {
           status: "scheduling",
           coverImageUrl: coverImageUrl ?? null,
           coverImagePosition: coverImagePosition ?? 50,
+          currency,
         })
         .returning();
 
@@ -221,6 +225,7 @@ tripRoutes.post("/", async (c) => {
     endDate,
     coverImageUrl,
     coverImagePosition,
+    currency,
   } = parsed.data;
 
   const trip = await db.transaction(async (tx) => {
@@ -245,6 +250,7 @@ tripRoutes.post("/", async (c) => {
         endDate,
         coverImageUrl: coverImageUrl ?? null,
         coverImagePosition: coverImagePosition ?? 50,
+        currency,
       })
       .returning();
 
@@ -322,6 +328,10 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
     .select({ count: count() })
     .from(tripMembers)
     .where(eq(tripMembers.tripId, tripId));
+  const [{ count: expenseCount }] = await db
+    .select({ count: count() })
+    .from(expenses)
+    .where(eq(expenses.tripId, tripId));
   const detailSettings = await getAppSettings();
 
   const { poll: rawPoll, ...trip } = tripWithPoll;
@@ -348,6 +358,7 @@ tripRoutes.get("/:id", requireTripAccess("viewer", "id"), async (c) => {
     role,
     candidates,
     scheduleCount,
+    expenseCount,
     memberCount,
     poll,
   });
@@ -427,6 +438,12 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
     otherFields.coverImagePosition !== currentTrip.coverImagePosition
   ) {
     updatePayload.coverImagePosition = otherFields.coverImagePosition;
+  }
+  if (
+    otherFields.currency !== undefined &&
+    otherFields.currency !== (currentTrip.currency as CurrencyCode)
+  ) {
+    updatePayload.currency = otherFields.currency;
   }
   if (datesChanged) {
     if (effectiveStart !== currentTrip.startDate) updatePayload.startDate = effectiveStart;
@@ -540,6 +557,7 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
         endDate: source.endDate,
         status: source.status === "scheduling" ? "scheduling" : "draft",
         coverImagePosition: source.coverImagePosition,
+        currency: source.currency ?? "JPY",
       })
       .returning();
 

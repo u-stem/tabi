@@ -1,8 +1,13 @@
 "use client";
 
-import { TRIP_DESTINATION_MAX_LENGTH, TRIP_TITLE_MAX_LENGTH } from "@sugara/shared";
+import {
+  CURRENCIES,
+  type CurrencyCode,
+  TRIP_DESTINATION_MAX_LENGTH,
+  TRIP_TITLE_MAX_LENGTH,
+} from "@sugara/shared";
 import { Check, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { CoverImagePicker } from "@/components/cover-image-picker";
@@ -19,6 +24,13 @@ import {
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { getDayCount } from "@/lib/format";
 import { useCoverImageUpload } from "@/lib/hooks/use-cover-image-upload";
@@ -31,6 +43,8 @@ type EditTripDialogProps = {
   endDate: string | null;
   coverImageUrl: string | null;
   coverImagePosition: number;
+  currency: CurrencyCode;
+  expenseCount: number;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
@@ -44,10 +58,13 @@ export function EditTripDialog({
   endDate,
   coverImageUrl,
   coverImagePosition,
+  currency,
+  expenseCount,
   open,
   onOpenChange,
   onUpdate,
 }: EditTripDialogProps) {
+  const locale = useLocale();
   const tm = useTranslations("messages");
   const tt = useTranslations("trip");
   const tc = useTranslations("common");
@@ -58,6 +75,7 @@ export function EditTripDialog({
   const hasDates = startDate != null && endDate != null;
   const [editStartDate, setEditStartDate] = useState(startDate ?? "");
   const [editEndDate, setEditEndDate] = useState(endDate ?? "");
+  const [editCurrency, setEditCurrency] = useState<CurrencyCode>(currency);
   const [coverFile, setCoverFile] = useState<File | null>(null);
   const [editPosition, setEditPosition] = useState(coverImagePosition);
   const [removeCover, setRemoveCover] = useState(false);
@@ -69,11 +87,12 @@ export function EditTripDialog({
       setEditDestination(destination ?? "");
       setEditStartDate(startDate ?? "");
       setEditEndDate(endDate ?? "");
+      setEditCurrency(currency);
       setCoverFile(null);
       setEditPosition(coverImagePosition);
       setRemoveCover(false);
     }
-  }, [open, title, destination, startDate, endDate, coverImagePosition]);
+  }, [open, title, destination, startDate, endDate, currency, coverImagePosition]);
 
   function handleOpenChange(isOpen: boolean) {
     onOpenChange(isOpen);
@@ -135,6 +154,9 @@ export function EditTripDialog({
     }
     if (editPosition !== coverImagePosition) {
       data.coverImagePosition = editPosition;
+    }
+    if (editCurrency !== currency) {
+      data.currency = editCurrency;
     }
 
     try {
@@ -214,6 +236,28 @@ export function EditTripDialog({
                 {uploadError}
               </p>
             )}
+            <div className="space-y-2">
+              <Label htmlFor="edit-currency">{tt("currency")}</Label>
+              <Select
+                value={editCurrency}
+                onValueChange={(v) => setEditCurrency(v as CurrencyCode)}
+                disabled={expenseCount > 0}
+              >
+                <SelectTrigger id="edit-currency">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(CURRENCIES).map((c) => (
+                    <SelectItem key={c.code} value={c.code}>
+                      {c.code} - {locale === "ja" ? c.nameJa : c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                {expenseCount > 0 ? tt("currencyChangeDisabled") : tt("currencyHelp")}
+              </p>
+            </div>
             {hasDates && (
               <div className="space-y-2">
                 <Label>

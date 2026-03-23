@@ -242,7 +242,12 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     type: "expense_added",
     tripId,
     userIds: splits.filter((s) => s.userId !== user.id).map((s) => s.userId),
-    makePayload: (tripName) => ({ actorName: user.name, tripName, entityName: title }),
+    makePayload: (tripName) => ({
+      actorName: user.name,
+      tripName,
+      entityName: title,
+      amount: formatCurrency(amount, currency, "ja"),
+    }),
   });
 
   return c.json(result, 201);

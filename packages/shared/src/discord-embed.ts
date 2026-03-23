@@ -49,7 +49,10 @@ const DISCORD_MSG_JA: Record<string, (p: NotificationPayload) => string> = {
   schedule_deleted: (p) => `${p.actorName}さんが予定を削除しました`,
   poll_started: () => "日程調整が開始されました",
   poll_closed: () => "日程調整が終了しました",
-  expense_added: (p) => `${p.actorName}さんが費用「${p.entityName}」を追加しました`,
+  expense_added: (p) =>
+    p.amount
+      ? `${p.actorName}さんが費用「${p.entityName}」(${p.amount})を追加しました`
+      : `${p.actorName}さんが費用「${p.entityName}」を追加しました`,
   settlement_checked: (p) => `${p.actorName}さんが精算をチェックしました`,
   candidate_created: (p) => `${p.actorName}さんが候補「${p.entityName}」を追加しました`,
   candidate_deleted: (p) => `${p.actorName}さんが候補を削除しました`,
@@ -65,7 +68,10 @@ const DISCORD_MSG_EN: Record<string, (p: NotificationPayload) => string> = {
   schedule_deleted: (p) => `${p.actorName} removed a schedule item`,
   poll_started: () => "A poll has started",
   poll_closed: () => "A poll has ended",
-  expense_added: (p) => `${p.actorName} added expense "${p.entityName}"`,
+  expense_added: (p) =>
+    p.amount
+      ? `${p.actorName} added expense "${p.entityName}" (${p.amount})`
+      : `${p.actorName} added expense "${p.entityName}"`,
   settlement_checked: (p) => `${p.actorName} checked a settlement`,
   candidate_created: (p) => `${p.actorName} added candidate "${p.entityName}"`,
   candidate_deleted: (p) => `${p.actorName} removed a candidate`,

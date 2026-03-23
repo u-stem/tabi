@@ -42,7 +42,7 @@ describe("buildDiscordEmbed", () => {
     expect(embed.description).toContain("Tanaka");
   });
 
-  it("builds embed for expense_added", () => {
+  it("builds embed for expense_added without amount", () => {
     const embed = buildDiscordEmbed({
       type: "expense_added",
       payload: { actorName: "Yamada", tripName: "Kyoto Trip", entityName: "Dinner" },
@@ -51,6 +51,43 @@ describe("buildDiscordEmbed", () => {
       baseUrl: "https://sugara.vercel.app",
     });
     expect(embed.color).toBe(DISCORD_EMBED_COLORS.expense);
+    expect(embed.description).toContain("Yamada");
+    expect(embed.description).toContain("Dinner");
+    expect(embed.description).not.toContain("(");
+  });
+
+  it("builds embed for expense_added with amount in Japanese", () => {
+    const embed = buildDiscordEmbed({
+      type: "expense_added",
+      payload: {
+        actorName: "Yamada",
+        tripName: "Kyoto Trip",
+        entityName: "Dinner",
+        amount: "¥3,000",
+      },
+      tripId: "trip-3",
+      locale: "ja",
+      baseUrl: "https://sugara.vercel.app",
+    });
+    expect(embed.description).toContain("Yamada");
+    expect(embed.description).toContain("Dinner");
+    expect(embed.description).toContain("¥3,000");
+  });
+
+  it("builds embed for expense_added with amount in English", () => {
+    const embed = buildDiscordEmbed({
+      type: "expense_added",
+      payload: {
+        actorName: "Yamada",
+        tripName: "Kyoto Trip",
+        entityName: "Dinner",
+        amount: "$50.00",
+      },
+      tripId: "trip-3",
+      locale: "en",
+      baseUrl: "https://sugara.vercel.app",
+    });
+    expect(embed.description).toBe('Yamada added expense "Dinner" ($50.00)');
   });
 
   it("builds embed for poll_started", () => {

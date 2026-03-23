@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { scheduleReactions, schedules } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
+import { notifyTripMembersExcluding } from "../lib/notifications";
 import { getParam } from "../lib/params";
 import { requireAuth } from "../middleware/auth";
 import { requireTripAccess } from "../middleware/require-trip-access";
@@ -59,6 +60,13 @@ reactionRoutes.put("/:tripId/candidates/:scheduleId/reaction", requireTripAccess
     .returning();
 
   const counts = await getReactionCounts(scheduleId);
+
+  notifyTripMembersExcluding({
+    type: "candidate_reaction",
+    tripId,
+    actorId: user.id,
+    makePayload: (tripName) => ({ actorName: user.name, tripName, entityName: existing.name }),
+  });
 
   return c.json({ type: reaction.type, ...counts });
 });

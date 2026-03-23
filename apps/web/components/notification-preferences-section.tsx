@@ -36,6 +36,11 @@ const CATEGORY_KEYS = [
     descKey: "categoryExpenseDesc" as const,
     types: ["expense_added"] as const,
   },
+  {
+    labelKey: "categoryCandidate" as const,
+    descKey: "categoryCandidateDesc" as const,
+    types: ["candidate_created", "candidate_deleted", "candidate_reaction"] as const,
+  },
 ] as const;
 
 type CategoryType = (typeof CATEGORY_KEYS)[number]["types"][number];

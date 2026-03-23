@@ -260,6 +260,13 @@
       "when": 1774188227558,
       "tag": "0036_careful_sage",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1774228332058,
+      "tag": "0037_wealthy_wong",
+      "breakpoints": true
     }
   ]
 }

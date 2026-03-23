@@ -49,6 +49,10 @@ vi.mock("../lib/activity-logger", () => ({
   logActivity: vi.fn().mockResolvedValue(undefined),
 }));
 
+vi.mock("../lib/notifications", () => ({
+  notifyTripMembersExcluding: vi.fn(),
+}));
+
 import { MAX_SCHEDULES_PER_TRIP } from "@sugara/shared";
 import { candidateRoutes } from "../routes/candidates";
 import { createTestApp, TEST_USER } from "./test-helpers";

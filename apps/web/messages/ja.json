@@ -1116,6 +1116,8 @@
     "categoryPollDesc": "開始・終了",
     "categoryExpense": "費用",
     "categoryExpenseDesc": "追加",
+    "categoryCandidate": "候補",
+    "categoryCandidateDesc": "追加・削除・リアクション",
     "inAppLabel": "{label} アプリ内通知",
     "pushLabel": "{label} プッシュ通知"
   },
@@ -1154,7 +1156,10 @@
     "typePollStarted": "日程投票開始",
     "typePollClosed": "日程投票終了",
     "typeExpenseAdded": "費用追加",
-    "typeSettlementChecked": "精算チェック"
+    "typeSettlementChecked": "精算チェック",
+    "typeCandidateCreated": "候補追加",
+    "typeCandidateDeleted": "候補削除",
+    "typeCandidateReaction": "候補リアクション"
   },
   "userProfile": {
     "userNotFound": "ユーザーが見つかりません",

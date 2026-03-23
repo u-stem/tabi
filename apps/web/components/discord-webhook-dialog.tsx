@@ -65,6 +65,9 @@ const ALL_ENABLED_TYPES: DiscordEnabledType[] = [
   "poll_closed",
   "expense_added",
   "settlement_checked",
+  "candidate_created",
+  "candidate_deleted",
+  "candidate_reaction",
 ];
 
 const TYPE_LABEL_KEYS: Record<DiscordEnabledType, string> = {
@@ -78,6 +81,9 @@ const TYPE_LABEL_KEYS: Record<DiscordEnabledType, string> = {
   poll_closed: "typePollClosed",
   expense_added: "typeExpenseAdded",
   settlement_checked: "typeSettlementChecked",
+  candidate_created: "typeCandidateCreated",
+  candidate_deleted: "typeCandidateDeleted",
+  candidate_reaction: "typeCandidateReaction",
 };
 
 export function DiscordWebhookDialog({

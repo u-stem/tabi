@@ -11,6 +11,9 @@ export const notificationTypeSchema = z.enum([
   "poll_closed",
   "expense_added",
   "settlement_checked",
+  "candidate_created",
+  "candidate_deleted",
+  "candidate_reaction",
   "discord_webhook_disabled",
 ]);
 
@@ -48,6 +51,9 @@ export const NOTIFICATION_DEFAULTS = {
   poll_closed: { inApp: true, push: false },
   expense_added: { inApp: false, push: false },
   settlement_checked: { inApp: true, push: true },
+  candidate_created: { inApp: false, push: false },
+  candidate_deleted: { inApp: false, push: false },
+  candidate_reaction: { inApp: true, push: false },
   discord_webhook_disabled: { inApp: true, push: true },
 } satisfies Record<NotificationType, { inApp: boolean; push: boolean }>;
 
@@ -63,6 +69,9 @@ export const NOTIFICATION_TYPE_LABELS: Record<string, string> = {
   poll_closed: "日程投票が終了した",
   expense_added: "費用が追加された",
   settlement_checked: "精算チェック",
+  candidate_created: "候補が追加された",
+  candidate_deleted: "候補が削除された",
+  candidate_reaction: "候補にリアクションがついた",
   discord_webhook_disabled: "Discord通知が無効化された",
 };
 
@@ -92,6 +101,12 @@ export function formatNotificationText(type: string, payload: Record<string, str
       return `${payload.actorName}さんが費用「${payload.entityName}」を追加しました`;
     case "settlement_checked":
       return `${payload.actorName}さんが精算をチェックしました`;
+    case "candidate_created":
+      return `${payload.actorName}さんが候補「${payload.entityName}」を追加しました`;
+    case "candidate_deleted":
+      return `${payload.actorName}さんが候補を削除しました`;
+    case "candidate_reaction":
+      return `${payload.actorName}さんが候補「${payload.entityName}」にリアクションしました`;
     case "discord_webhook_disabled":
       return `「${payload.tripName}」のDiscord通知が無効化されました`;
     default:

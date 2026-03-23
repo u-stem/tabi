@@ -35,6 +35,9 @@ const COLOR_MAP: Record<string, number> = {
   poll_closed: DISCORD_EMBED_COLORS.poll,
   expense_added: DISCORD_EMBED_COLORS.expense,
   settlement_checked: DISCORD_EMBED_COLORS.expense,
+  candidate_created: DISCORD_EMBED_COLORS.schedule,
+  candidate_deleted: DISCORD_EMBED_COLORS.schedule,
+  candidate_reaction: DISCORD_EMBED_COLORS.poll,
 };
 
 const DISCORD_MSG_JA: Record<string, (p: NotificationPayload) => string> = {
@@ -48,6 +51,9 @@ const DISCORD_MSG_JA: Record<string, (p: NotificationPayload) => string> = {
   poll_closed: () => "日程調整が終了しました",
   expense_added: (p) => `${p.actorName}さんが費用「${p.entityName}」を追加しました`,
   settlement_checked: (p) => `${p.actorName}さんが精算をチェックしました`,
+  candidate_created: (p) => `${p.actorName}さんが候補「${p.entityName}」を追加しました`,
+  candidate_deleted: (p) => `${p.actorName}さんが候補を削除しました`,
+  candidate_reaction: (p) => `${p.actorName}さんが候補「${p.entityName}」にリアクションしました`,
 };
 
 const DISCORD_MSG_EN: Record<string, (p: NotificationPayload) => string> = {
@@ -61,6 +67,9 @@ const DISCORD_MSG_EN: Record<string, (p: NotificationPayload) => string> = {
   poll_closed: () => "A poll has ended",
   expense_added: (p) => `${p.actorName} added expense "${p.entityName}"`,
   settlement_checked: (p) => `${p.actorName} checked a settlement`,
+  candidate_created: (p) => `${p.actorName} added candidate "${p.entityName}"`,
+  candidate_deleted: (p) => `${p.actorName} removed a candidate`,
+  candidate_reaction: (p) => `${p.actorName} reacted to candidate "${p.entityName}"`,
 };
 
 const DISCORD_MSG: Record<string, Record<string, (p: NotificationPayload) => string>> = {

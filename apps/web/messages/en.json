@@ -1116,6 +1116,8 @@
     "categoryPollDesc": "Started, ended",
     "categoryExpense": "Expenses",
     "categoryExpenseDesc": "Added",
+    "categoryCandidate": "Candidates",
+    "categoryCandidateDesc": "Added, deleted, reactions",
     "inAppLabel": "{label} in-app notification",
     "pushLabel": "{label} push notification"
   },
@@ -1154,7 +1156,10 @@
     "typePollStarted": "Date poll started",
     "typePollClosed": "Date poll closed",
     "typeExpenseAdded": "Expense added",
-    "typeSettlementChecked": "Settlement checked"
+    "typeSettlementChecked": "Settlement checked",
+    "typeCandidateCreated": "Candidate added",
+    "typeCandidateDeleted": "Candidate deleted",
+    "typeCandidateReaction": "Candidate reaction"
   },
   "userProfile": {
     "userNotFound": "User not found",

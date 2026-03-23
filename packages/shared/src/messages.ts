@@ -486,6 +486,9 @@ export const PUSH_MSG: Record<string, (payload: Record<string, string | undefine
   poll_closed: () => "日程投票が終了しました",
   expense_added: (p) => `${p.actorName}さんが費用「${p.entityName}」を追加しました`,
   settlement_checked: (p) => `${p.actorName}さんが精算をチェックしました`,
+  candidate_created: (p) => `${p.actorName}さんが候補「${p.entityName}」を追加しました`,
+  candidate_deleted: (p) => `${p.actorName}さんが候補を削除しました`,
+  candidate_reaction: (p) => `${p.actorName}さんが候補「${p.entityName}」にリアクションしました`,
   discord_webhook_disabled: (p) =>
     `「${p.tripName}」のDiscord通知が無効化されました。設定を確認してください`,
 };

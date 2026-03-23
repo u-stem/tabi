@@ -283,6 +283,9 @@ export const notificationTypeEnum = pgEnum("notification_type", [
   "poll_closed",
   "expense_added",
   "settlement_checked",
+  "candidate_created",
+  "candidate_deleted",
+  "candidate_reaction",
   "discord_webhook_disabled",
 ]);
 

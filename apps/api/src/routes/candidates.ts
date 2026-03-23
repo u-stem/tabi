@@ -16,6 +16,7 @@ import { logActivity } from "../lib/activity-logger";
 import { queryCandidatesWithReactions } from "../lib/candidate-query";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
+import { notifyTripMembersExcluding } from "../lib/notifications";
 import { getParam } from "../lib/params";
 import { buildScheduleCloneValues } from "../lib/schedule-clone";
 import { getScheduleCount } from "../lib/schedule-count";
@@ -82,6 +83,13 @@ candidateRoutes.post("/:tripId/candidates", requireTripAccess("editor"), async (
     action: "created",
     entityType: "candidate",
     entityName: schedule.name,
+  });
+
+  notifyTripMembersExcluding({
+    type: "candidate_created",
+    tripId,
+    actorId: user.id,
+    makePayload: (tripName) => ({ actorName: user.name, tripName, entityName: schedule.name }),
   });
 
   return c.json(schedule, 201);
@@ -449,6 +457,13 @@ candidateRoutes.delete(
       action: "deleted",
       entityType: "candidate",
       entityName: existing.name,
+    });
+
+    notifyTripMembersExcluding({
+      type: "candidate_deleted",
+      tripId,
+      actorId: user.id,
+      makePayload: (tripName) => ({ actorName: user.name, tripName }),
     });
 
     return c.json({ ok: true });

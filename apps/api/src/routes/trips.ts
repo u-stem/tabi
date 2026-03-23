@@ -443,6 +443,14 @@ tripRoutes.patch("/:id", requireTripAccess("editor", "id"), async (c) => {
     otherFields.currency !== undefined &&
     otherFields.currency !== (currentTrip.currency as CurrencyCode)
   ) {
+    // Reject currency change when trip already has expenses (amounts are in minor units)
+    const [{ count: expenseCount }] = await db
+      .select({ count: count() })
+      .from(expenses)
+      .where(eq(expenses.tripId, tripId));
+    if (expenseCount > 0) {
+      return c.json({ error: ERROR_MSG.TRIP_HAS_EXPENSES }, 409);
+    }
     updatePayload.currency = otherFields.currency;
   }
   if (datesChanged) {

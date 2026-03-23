@@ -397,20 +397,24 @@ function ExpenseRow({
               )}
               {[...expense.splits]
                 .sort((a, b) => b.amount - a.amount)
-                .map((split) => (
-                  <div
-                    key={split.userId}
-                    className="flex items-center justify-between pl-2 text-sm"
-                  >
-                    <span className="flex items-center gap-1.5">
-                      <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
-                      <span translate="yes">{split.user.name}</span>
-                    </span>
-                    <span className="font-medium">
-                      {formatCurrency(split.amount, currency, locale)}
-                    </span>
-                  </div>
-                ))}
+                .map((split) => {
+                  // Equal splits are calculated in base currency; custom/itemized remain in expense currency
+                  const splitCurrency = expense.splitType === "equal" ? tripCurrency : currency;
+                  return (
+                    <div
+                      key={split.userId}
+                      className="flex items-center justify-between pl-2 text-sm"
+                    >
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-1 w-1 shrink-0 rounded-full bg-muted-foreground" />
+                        <span translate="yes">{split.user.name}</span>
+                      </span>
+                      <span className="font-medium">
+                        {formatCurrency(split.amount, splitCurrency, locale)}
+                      </span>
+                    </div>
+                  );
+                })}
             </div>
           </CollapsiblePrimitive.Content>
         </>

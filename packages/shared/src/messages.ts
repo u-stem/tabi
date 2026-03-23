@@ -78,6 +78,7 @@ export const ERROR_MSG = {
   POLL_INVALID_OPTION: "Some responses reference options not in this poll",
   POLL_OPTION_DUPLICATE: "Duplicate poll option",
   TRIP_DAYS_REDUCED: "Cannot reduce the number of trip days",
+  TRIP_HAS_EXPENSES: "Cannot change currency when trip has expenses",
   EXPENSE_NOT_FOUND: "Expense not found",
   LIMIT_EXPENSES: "Expense limit reached",
   EXPENSE_SPLIT_MISMATCH: "Split amounts must equal total amount",

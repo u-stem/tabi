@@ -5,6 +5,7 @@ import {
   EXPENSE_CATEGORY_LABELS,
   formatCurrency,
   MAX_EXPENSES_PER_TRIP,
+  toMinorUnits,
   updateExpenseSchema,
 } from "@sugara/shared";
 import { count, eq } from "drizzle-orm";
@@ -121,6 +122,9 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     exchangeRate,
   } = parsed.data;
 
+  // Convert display amount to minor units (e.g. $12.50 -> 1250 cents)
+  const minorAmount = toMinorUnits(amount, currency as CurrencyCode);
+
   // Fetch trip currency to validate exchange rate and compute baseAmount
   const trip = await db.query.trips.findFirst({
     where: eq(trips.id, tripId),
@@ -136,10 +140,10 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     );
   }
 
-  // Compute baseAmount in trip currency
+  // Compute baseAmount in trip currency (convertToBase expects minor units)
   const baseAmount =
     currency !== tripCurrency && exchangeRate
-      ? convertToBase(amount, currency, tripCurrency, exchangeRate)
+      ? convertToBase(minorAmount, currency as CurrencyCode, tripCurrency, exchangeRate)
       : null;
 
   // Check expense count limit
@@ -174,7 +178,7 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
   // Calculate split amounts for equal type (use baseAmount for settlement consistency)
   const splitAmounts =
     splitType === "equal"
-      ? calculateEqualSplit(baseAmount ?? amount, splits.length)
+      ? calculateEqualSplit(baseAmount ?? minorAmount, splits.length)
       : splits.map((s) => s.amount ?? 0);
 
   const result = await db.transaction(async (tx) => {
@@ -184,7 +188,7 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
         tripId,
         paidByUserId,
         title,
-        amount,
+        amount: minorAmount,
         currency,
         ...(exchangeRate !== undefined ? { exchangeRate: String(exchangeRate) } : {}),
         baseAmount,
@@ -235,7 +239,7 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     action: "created",
     entityType: "expense",
     entityName: title,
-    detail: formatCurrency(amount, currency, "ja"),
+    detail: formatCurrency(minorAmount, currency as CurrencyCode, "ja"),
   });
 
   notifyUsers({
@@ -246,7 +250,7 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
       actorName: user.name,
       tripName,
       entityName: title,
-      amount: formatCurrency(amount, currency, "ja"),
+      amount: formatCurrency(minorAmount, currency as CurrencyCode, "ja"),
     }),
   });
 
@@ -298,19 +302,26 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
     );
   }
 
-  // Compute baseAmount in trip currency
-  const finalAmount = restFields.amount ?? existing.amount;
+  // Convert display amount to minor units when amount is provided
+  const minorAmount =
+    restFields.amount !== undefined ? toMinorUnits(restFields.amount, finalCurrency) : undefined;
+
+  // Compute baseAmount in trip currency (convertToBase expects minor units)
+  const finalMinorAmount = minorAmount ?? existing.amount;
   let baseAmount: number | null = null;
   if (needsTripCurrency) {
     baseAmount =
       finalCurrency !== tripCurrency && finalExchangeRate
-        ? convertToBase(finalAmount, finalCurrency, tripCurrency, finalExchangeRate)
+        ? convertToBase(finalMinorAmount, finalCurrency, tripCurrency, finalExchangeRate)
         : null;
   }
 
   // Drizzle's numeric column expects string; convert from the Zod number type
+  // Replace display amount with minor units for DB storage
+  const { amount: _displayAmount, ...restFieldsWithoutAmount } = restFields;
   const updateFields = {
-    ...restFields,
+    ...restFieldsWithoutAmount,
+    ...(minorAmount !== undefined ? { amount: minorAmount } : {}),
     ...(parsedCurrency !== undefined ? { currency: parsedCurrency } : {}),
     ...(exchangeRate !== undefined ? { exchangeRate: String(exchangeRate) } : {}),
     ...(needsTripCurrency ? { baseAmount } : {}),
@@ -377,7 +388,7 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
 
     if (splits) {
       const effectiveBaseAmount = needsTripCurrency
-        ? (baseAmount ?? finalAmount)
+        ? (baseAmount ?? finalMinorAmount)
         : (existing.baseAmount ?? existing.amount);
       const finalSplitType = updateFields.splitType ?? existing.splitType;
       const splitAmounts =

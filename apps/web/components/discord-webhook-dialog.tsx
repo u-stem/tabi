@@ -3,14 +3,13 @@
 import type { DiscordEnabledType } from "@sugara/shared";
 import { DISCORD_ENABLED_TYPES_DEFAULT } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Send, Trash2 } from "lucide-react";
+import { AlertTriangle, Send, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
@@ -32,6 +31,7 @@ import {
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import { api, getApiErrorMessage } from "@/lib/api";
 import { formatDateFromISO } from "@/lib/format";
 import { QUERY_CONFIG } from "@/lib/query-config";
@@ -254,8 +254,8 @@ export function DiscordWebhookDialog({
   const hasChanges =
     webhook &&
     (name !== (webhook.name ?? "") ||
-      JSON.stringify([...enabledTypes].sort()) !==
-        JSON.stringify([...webhook.enabledTypes].sort()));
+      enabledTypes.length !== webhook.enabledTypes.length ||
+      enabledTypes.some((t) => !webhook.enabledTypes.includes(t)));
 
   return (
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
@@ -269,14 +269,23 @@ export function DiscordWebhookDialog({
           isLoading={isLoading}
           skeleton={
             <div className="space-y-3">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+              <div className="grid grid-cols-2 gap-2">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
             </div>
           }
         >
           {error ? (
-            <p className="text-sm text-destructive">{String(error)}</p>
+            <p role="alert" className="text-sm text-destructive">
+              {error instanceof Error ? error.message : String(error)}
+            </p>
           ) : webhook ? (
             <ExistingWebhookView
               webhook={webhook}
@@ -290,7 +299,6 @@ export function DiscordWebhookDialog({
               showReactivateForm={showReactivateForm}
               reactivateUrl={reactivateUrl}
               td={td}
-              tc={tc}
               onNameChange={setName}
               onToggleType={toggleType}
               onUpdate={handleUpdate}
@@ -327,7 +335,10 @@ export function DiscordWebhookDialog({
             </ResponsiveAlertDialogDescription>
           </ResponsiveAlertDialogHeader>
           <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>{tc("cancel")}</ResponsiveAlertDialogCancel>
+            <ResponsiveAlertDialogCancel>
+              <X className="h-4 w-4" />
+              {tc("cancel")}
+            </ResponsiveAlertDialogCancel>
             <ResponsiveAlertDialogDestructiveAction onClick={handleDelete} disabled={deleting}>
               <Trash2 className="h-4 w-4" />
               {td("delete")}
@@ -339,33 +350,36 @@ export function DiscordWebhookDialog({
   );
 }
 
-// --- Sub-components to keep the main component readable ---
+// --- Sub-components ---
 
-type TypeChecklistProps = {
+type TypeToggleListProps = {
   enabledTypes: DiscordEnabledType[];
   onToggleType: (type: DiscordEnabledType) => void;
   disabled: boolean;
   td: ReturnType<typeof useTranslations<"discord">>;
 };
 
-function TypeChecklist({ enabledTypes, onToggleType, disabled, td }: TypeChecklistProps) {
+function TypeToggleList({ enabledTypes, onToggleType, disabled, td }: TypeToggleListProps) {
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium">
+      <Label>
         {td("enabledTypes")} <span className="text-destructive">*</span>
       </Label>
-      <div className="grid grid-cols-2 gap-2">
+      <div className="space-y-1">
         {ALL_ENABLED_TYPES.map((type) => (
-          <div key={type} className="flex items-center gap-2">
-            <Checkbox
+          <div
+            key={type}
+            className="grid grid-cols-[1fr_auto] items-center gap-x-4 rounded-lg px-1 py-1.5"
+          >
+            <Label htmlFor={`type-${type}`} className="text-sm">
+              {td(TYPE_LABEL_KEYS[type] as Parameters<typeof td>[0])}
+            </Label>
+            <Switch
               id={`type-${type}`}
               checked={enabledTypes.includes(type)}
               onCheckedChange={() => onToggleType(type)}
               disabled={disabled}
             />
-            <Label htmlFor={`type-${type}`} className="text-sm">
-              {td(TYPE_LABEL_KEYS[type] as Parameters<typeof td>[0])}
-            </Label>
           </div>
         ))}
       </div>
@@ -425,14 +439,14 @@ function CreateWebhookForm({
         />
       </div>
 
-      <TypeChecklist
+      <TypeToggleList
         enabledTypes={enabledTypes}
         onToggleType={onToggleType}
         disabled={saving}
         td={td}
       />
 
-      <Button type="submit" disabled={saving || enabledTypes.length === 0} className="w-full">
+      <Button type="submit" disabled={saving || enabledTypes.length === 0}>
         {td("save")}
       </Button>
     </form>
@@ -451,7 +465,6 @@ type ExistingWebhookViewProps = {
   showReactivateForm: boolean;
   reactivateUrl: string;
   td: ReturnType<typeof useTranslations<"discord">>;
-  tc: ReturnType<typeof useTranslations<"common">>;
   onNameChange: (name: string) => void;
   onToggleType: (type: DiscordEnabledType) => void;
   onUpdate: () => void;
@@ -474,7 +487,6 @@ function ExistingWebhookView({
   showReactivateForm,
   reactivateUrl,
   td,
-  tc,
   onNameChange,
   onToggleType,
   onUpdate,
@@ -498,10 +510,10 @@ function ExistingWebhookView({
 
       {/* Inactive warning */}
       {!webhook.isActive && (
-        <div className="flex items-start gap-2 rounded-md border border-yellow-500/20 bg-yellow-500/10 p-3">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
+        <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-950/30">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <div className="space-y-2">
-            <p className="text-sm text-yellow-800 dark:text-yellow-200">{td("inactiveWarning")}</p>
+            <p className="text-sm text-amber-900 dark:text-amber-200">{td("inactiveWarning")}</p>
             {canEdit && !showReactivateForm && (
               <Button size="sm" variant="outline" onClick={onShowReactivateForm}>
                 {td("reactivate")}
@@ -525,7 +537,7 @@ function ExistingWebhookView({
             onChange={(e) => onReactivateUrlChange(e.target.value)}
             required
           />
-          <Button type="submit" size="sm" disabled={saving}>
+          <Button type="submit" disabled={saving}>
             {td("save")}
           </Button>
         </form>
@@ -554,7 +566,7 @@ function ExistingWebhookView({
       )}
 
       {/* Enabled types */}
-      <TypeChecklist
+      <TypeToggleList
         enabledTypes={enabledTypes}
         onToggleType={onToggleType}
         disabled={!canEdit || saving}
@@ -563,7 +575,7 @@ function ExistingWebhookView({
 
       {/* Actions */}
       {canEdit && (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 border-t pt-4">
           <Button
             size="sm"
             disabled={saving || !hasChanges || enabledTypes.length === 0}

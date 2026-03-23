@@ -271,6 +271,8 @@ export type ExpenseItem = {
   title: string;
   amount: number;
   currency: CurrencyCode;
+  exchangeRate: string | null;
+  baseAmount: number | null;
   splitType: ExpenseSplitType;
   category: ExpenseCategory | null;
   paidByUserId: string;

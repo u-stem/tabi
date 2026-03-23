@@ -228,6 +228,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
           {/* Dialogs */}
           <ExpenseDialog
             tripId={tripId}
+            tripCurrency={tripCurrency}
             open={dialogOpen}
             onOpenChange={(open) => {
               if (!open) setEditingExpenseItem(null);

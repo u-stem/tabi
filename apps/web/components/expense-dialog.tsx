@@ -7,11 +7,18 @@ import type {
   ExpenseSplitType,
   MemberResponse,
 } from "@sugara/shared";
-import { EXPENSE_TITLE_MAX_LENGTH, expenseCategorySchema, formatCurrency } from "@sugara/shared";
+import {
+  CURRENCIES,
+  convertToBase,
+  EXPENSE_TITLE_MAX_LENGTH,
+  expenseCategorySchema,
+  formatCurrency,
+  toMinorUnits,
+} from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Plus, Trash2, X } from "lucide-react";
+import { Check, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +47,7 @@ import { cn } from "@/lib/utils";
 
 type ExpenseDialogProps = {
   tripId: string;
+  tripCurrency: CurrencyCode;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   expense?: ExpenseItem | null;
@@ -48,6 +56,7 @@ type ExpenseDialogProps = {
 
 export function ExpenseDialog({
   tripId,
+  tripCurrency,
   open,
   onOpenChange,
   expense,
@@ -60,8 +69,6 @@ export function ExpenseDialog({
   const locale = useLocale();
   const tlExpCat = useTranslations("labels.expenseCategory");
   const tlSplit = useTranslations("labels.splitType");
-  // Use the expense's currency when editing, default to JPY for new expenses
-  const expenseCurrency: CurrencyCode = (expense?.currency ?? "JPY") as CurrencyCode;
 
   const { data: members = [] } = useQuery({
     queryKey: queryKeys.trips.members(tripId),
@@ -80,6 +87,31 @@ export function ExpenseDialog({
   const [lineItems, setLineItems] = useState<ExpenseLineItem[]>([]);
   const [splitTheRest, setSplitTheRest] = useState(false);
   const [membersInitialized, setMembersInitialized] = useState(false);
+  const [currency, setCurrency] = useState<CurrencyCode>(tripCurrency);
+  const [exchangeRate, setExchangeRate] = useState("");
+  const [fetchingRate, setFetchingRate] = useState(false);
+  // Skip auto-fetch on initial currency set when editing an expense
+  const skipAutoFetchRef = useRef(false);
+
+  const isDifferentCurrency = currency !== tripCurrency;
+
+  // Fetch exchange rate from API
+  const fetchRate = useCallback(
+    async (from: CurrencyCode, to: CurrencyCode) => {
+      setFetchingRate(true);
+      try {
+        const data = await api<{ rate: number }>("/api/exchange-rate", {
+          params: { from, to },
+        });
+        setExchangeRate(String(data.rate));
+      } catch {
+        toast.error(te("fetchRateFailed"));
+      } finally {
+        setFetchingRate(false);
+      }
+    },
+    [te],
+  );
 
   // Reset form when dialog opens
   useEffect(() => {
@@ -89,6 +121,10 @@ export function ExpenseDialog({
       setAmount(String(expense.amount));
       setPaidByUserId(expense.paidByUserId);
       setCategory(expense.category ?? "");
+      setCurrency(expense.currency);
+      setExchangeRate(expense.exchangeRate ? String(Number(expense.exchangeRate)) : "");
+      // Prevent auto-fetch from overwriting the pre-filled rate
+      skipAutoFetchRef.current = true;
 
       if (expense.splitType === "itemized" && expense.lineItems && expense.lineItems.length > 0) {
         setSplitType("itemized");
@@ -125,8 +161,24 @@ export function ExpenseDialog({
       setLineItems([]);
       setSplitTheRest(false);
       setMembersInitialized(false);
+      setCurrency(tripCurrency);
+      setExchangeRate("");
     }
-  }, [open, expense]);
+  }, [open, expense, tripCurrency]);
+
+  // Auto-fetch exchange rate when currency changes to a different one
+  useEffect(() => {
+    if (!open) return;
+    if (skipAutoFetchRef.current) {
+      skipAutoFetchRef.current = false;
+      return;
+    }
+    if (currency !== tripCurrency) {
+      fetchRate(currency, tripCurrency);
+    } else {
+      setExchangeRate("");
+    }
+  }, [open, currency, tripCurrency, fetchRate]);
 
   // Auto-select all members only on first load for new expense
   useEffect(() => {
@@ -188,6 +240,18 @@ export function ExpenseDialog({
     splitType === "itemized" &&
     lineItems.some((item) => item.amount <= 0 || item.memberIds.size === 0);
 
+  // Base amount display (converted to trip currency)
+  const parsedExchangeRate = Number(exchangeRate) || 0;
+  const baseAmountDisplay = useMemo(() => {
+    if (!isDifferentCurrency || parsedAmount <= 0 || parsedExchangeRate <= 0) return null;
+    const minorAmount = toMinorUnits(parsedAmount, currency);
+    const baseMinor = convertToBase(minorAmount, currency, tripCurrency, parsedExchangeRate);
+    return formatCurrency(baseMinor, tripCurrency, locale);
+  }, [isDifferentCurrency, parsedAmount, parsedExchangeRate, currency, tripCurrency, locale]);
+
+  // Whether exchange rate is required but missing
+  const exchangeRateMissing = isDifferentCurrency && parsedExchangeRate <= 0;
+
   const addLineItem = useCallback(() => {
     setLineItems((prev) => [
       ...prev,
@@ -224,6 +288,7 @@ export function ExpenseDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (parsedAmount <= 0 || !paidByUserId) return;
+    if (isDifferentCurrency && parsedExchangeRate <= 0) return;
 
     let splits: { userId: string; amount?: number }[];
 
@@ -254,6 +319,8 @@ export function ExpenseDialog({
       const body = {
         title,
         amount: parsedAmount,
+        currency,
+        ...(isDifferentCurrency ? { exchangeRate: parsedExchangeRate } : {}),
         paidByUserId,
         splitType,
         splits,
@@ -328,8 +395,24 @@ export function ExpenseDialog({
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="expense-currency">{te("currency")}</Label>
+            <Select value={currency} onValueChange={(v) => setCurrency(v as CurrencyCode)}>
+              <SelectTrigger id="expense-currency">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.values(CURRENCIES).map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    {c.code} - {locale === "ja" ? c.nameJa : c.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="expense-amount">
-              {te("amountLabel")} <span className="text-destructive">*</span>
+              {te("amountLabel")} ({currency}) <span className="text-destructive">*</span>
             </Label>
             <Input
               id="expense-amount"
@@ -337,10 +420,49 @@ export function ExpenseDialog({
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               placeholder="0"
-              min={1}
+              min={CURRENCIES[currency].decimals > 0 ? "0.01" : "1"}
+              step={CURRENCIES[currency].decimals > 0 ? "0.01" : "1"}
               required
             />
           </div>
+
+          {isDifferentCurrency && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="expense-exchange-rate">
+                  {te("exchangeRate")} <span className="text-destructive">*</span>
+                </Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 px-2 text-xs"
+                  disabled={fetchingRate}
+                  onClick={() => fetchRate(currency, tripCurrency)}
+                >
+                  <RefreshCw className={cn("h-3 w-3", fetchingRate && "animate-spin")} />
+                  {te("fetchRate")}
+                </Button>
+              </div>
+              <Input
+                id="expense-exchange-rate"
+                type="number"
+                value={exchangeRate}
+                onChange={(e) => setExchangeRate(e.target.value)}
+                placeholder="0"
+                min="0"
+                step="any"
+              />
+              {exchangeRateMissing && parsedAmount > 0 && (
+                <p className="text-xs text-destructive">{te("exchangeRateRequired")}</p>
+              )}
+              {baseAmountDisplay && (
+                <p className="text-sm text-muted-foreground">
+                  {te("baseAmount")}: {baseAmountDisplay}
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="expense-paid-by">
@@ -566,7 +688,7 @@ export function ExpenseDialog({
                           <div key={s.userId} className="flex items-center justify-between text-sm">
                             <span>{member?.name ?? s.userId}</span>
                             <span className="font-medium">
-                              {formatCurrency(s.amount, expenseCurrency, locale)}
+                              {formatCurrency(s.amount, currency, locale)}
                             </span>
                           </div>
                         );
@@ -591,6 +713,7 @@ export function ExpenseDialog({
                 loading ||
                 !title.trim() ||
                 parsedAmount <= 0 ||
+                exchangeRateMissing ||
                 (splitType === "equal" && selectedMembers.size === 0) ||
                 (splitType === "custom" && (selectedMembers.size === 0 || customMismatch)) ||
                 (splitType === "itemized" &&

@@ -1,13 +1,17 @@
 import { currencyCodeSchema } from "@sugara/shared";
 import { Hono } from "hono";
+import { RATE_LIMIT_PUBLIC_RESOURCE } from "../lib/constants";
 import { fetchExchangeRate } from "../lib/exchange-rate";
 import { requireAuth } from "../middleware/auth";
+import { rateLimitByIp } from "../middleware/rate-limit";
 import type { AppEnv } from "../types";
 
 export const exchangeRateRoutes = new Hono<AppEnv>();
 
+const exchangeRateRateLimit = rateLimitByIp(RATE_LIMIT_PUBLIC_RESOURCE);
+
 // GET /api/exchange-rate?from=USD&to=JPY
-exchangeRateRoutes.get("/", requireAuth, async (c) => {
+exchangeRateRoutes.get("/", requireAuth, exchangeRateRateLimit, async (c) => {
   const { from, to } = c.req.query();
 
   if (!from || !to) {

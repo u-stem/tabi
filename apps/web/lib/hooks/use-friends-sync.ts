@@ -33,6 +33,8 @@ export function useFriendsSync(userId: string | undefined, onSync: () => void): 
 
     function connect() {
       disconnect();
+      // SECURITY: Supabase Realtime channels are accessible to anyone with the anon key.
+      // userId is a UUIDv4 (122-bit entropy), making brute-force impractical.
       const channel = supabase.channel(channelName);
 
       channel

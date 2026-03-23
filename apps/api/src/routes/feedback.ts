@@ -1,16 +1,19 @@
 import { createFeedbackSchema } from "@sugara/shared";
 import { Hono } from "hono";
-import { ERROR_MSG } from "../lib/constants";
+import { ERROR_MSG, RATE_LIMIT_FEEDBACK } from "../lib/constants";
 import { env } from "../lib/env";
 import { logger } from "../lib/logger";
 import { requireAuth } from "../middleware/auth";
+import { rateLimitByIp } from "../middleware/rate-limit";
 
 const TITLE_MAX_LENGTH = 50;
 const REPO_FORMAT = /^[\w.-]+\/[\w.-]+$/;
 
+const feedbackRateLimit = rateLimitByIp(RATE_LIMIT_FEEDBACK);
+
 export const feedbackRoutes = new Hono();
 
-feedbackRoutes.post("/feedback", requireAuth, async (c) => {
+feedbackRoutes.post("/feedback", requireAuth, feedbackRateLimit, async (c) => {
   const json = await c.req.json();
   const parsed = createFeedbackSchema.safeParse(json);
   if (!parsed.success) {

@@ -20,6 +20,7 @@ export const NOTIFICATIONS_LIST_LIMIT = 20;
 // Rate limit configs
 export const RATE_LIMIT_PUBLIC_RESOURCE = { window: 60, max: 30 } as const;
 export const RATE_LIMIT_ACCOUNT_MUTATION = { window: 300, max: 5 } as const;
+export const RATE_LIMIT_FEEDBACK = { window: 60, max: 5 } as const;
 export const MAX_TRIP_DAYS = 365;
 
 export const PG_UNIQUE_VIOLATION = "23505";

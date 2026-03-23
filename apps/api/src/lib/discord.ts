@@ -14,6 +14,11 @@ type SendWebhookParams = {
 };
 
 export async function validateWebhookUrl(url: string): Promise<boolean> {
+  // Defense-in-depth: only allow Discord webhook URLs
+  if (!/^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\//.test(url)) {
+    return false;
+  }
+
   try {
     const res = await fetch(url, { method: "GET" });
     return res.ok;

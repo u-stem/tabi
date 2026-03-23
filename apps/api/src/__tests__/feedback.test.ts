@@ -40,7 +40,7 @@ describe("Feedback routes", () => {
     const app = createTestApp(feedbackRoutes, "/api");
     const res = await app.request("/api/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.0.1.1" },
       body: JSON.stringify({ body: "Bug report" }),
     });
     expect(res.status).toBe(401);
@@ -50,7 +50,7 @@ describe("Feedback routes", () => {
     const app = createTestApp(feedbackRoutes, "/api");
     const res = await app.request("/api/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.0.1.2" },
       body: JSON.stringify({ body: "" }),
     });
     expect(res.status).toBe(400);
@@ -60,7 +60,7 @@ describe("Feedback routes", () => {
     const app = createTestApp(feedbackRoutes, "/api");
     const res = await app.request("/api/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.0.1.3" },
       body: JSON.stringify({ body: "a".repeat(1001) }),
     });
     expect(res.status).toBe(400);
@@ -75,7 +75,7 @@ describe("Feedback routes", () => {
     const app = createTestApp(feedbackRoutes, "/api");
     const res = await app.request("/api/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.0.1.4" },
       body: JSON.stringify({ body: "Something is broken" }),
     });
     expect(res.status).toBe(201);
@@ -101,7 +101,7 @@ describe("Feedback routes", () => {
     const longBody = "a".repeat(60);
     await app.request("/api/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.0.1.5" },
       body: JSON.stringify({ body: longBody }),
     });
     const reqBody = JSON.parse(mockFetch.mock.calls[0][1].body);
@@ -115,7 +115,7 @@ describe("Feedback routes", () => {
     const app = createTestApp(feedbackRoutes, "/api");
     const res = await app.request("/api/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.0.1.6" },
       body: JSON.stringify({ body: "Test feedback" }),
     });
     expect(res.status).toBe(502);
@@ -130,7 +130,7 @@ describe("Feedback routes", () => {
     const app = createTestApp(feedbackRoutes, "/api");
     await app.request("/api/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.0.1.7" },
       body: JSON.stringify({ body: "Hey @admin please fix" }),
     });
     const reqBody = JSON.parse(mockFetch.mock.calls[0][1].body);
@@ -147,7 +147,7 @@ describe("Feedback routes", () => {
     const app = createTestApp(feedbackRoutes, "/api");
     await app.request("/api/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.0.1.8" },
       body: JSON.stringify({ body: "[click](javascript:alert(1))" }),
     });
     const reqBody = JSON.parse(mockFetch.mock.calls[0][1].body);
@@ -163,7 +163,7 @@ describe("Feedback routes", () => {
     const app = createTestApp(feedbackRoutes, "/api");
     await app.request("/api/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.0.1.9" },
       body: JSON.stringify({ body: "[click](&#106;avascript:alert(1))" }),
     });
     const reqBody = JSON.parse(mockFetch.mock.calls[0][1].body);
@@ -179,7 +179,7 @@ describe("Feedback routes", () => {
     const app = createTestApp(feedbackRoutes, "/api");
     await app.request("/api/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.0.1.10" },
       body: JSON.stringify({ body: "[click](data:text/html,<script>)" }),
     });
     const reqBody = JSON.parse(mockFetch.mock.calls[0][1].body);
@@ -192,7 +192,7 @@ describe("Feedback routes", () => {
     const app = createTestApp(feedbackRoutes, "/api");
     const res = await app.request("/api/feedback", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "x-forwarded-for": "10.0.1.11" },
       body: JSON.stringify({ body: "Test feedback" }),
     });
     expect(res.status).toBe(500);

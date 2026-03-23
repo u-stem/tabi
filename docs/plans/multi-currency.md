@@ -9,11 +9,12 @@ Add multi-currency support to trip expenses. Each trip has a base currency; expe
 ### In scope
 
 - 12 currencies: JPY, USD, EUR, GBP, AUD, CAD, CHF, CNY, KRW, THB, SGD, HKD
-- Base currency per trip (default JPY, set at creation, editable)
+- Base currency per trip (default JPY, set at creation, editable with restrictions)
 - Per-expense currency selection with exchange rate input
 - Exchange rate auto-fetch from frankfurter.dev (default value, user-editable)
 - Settlement calculated in base currency
 - Amounts stored as integers in minor units (cents, yen, won)
+- Splits calculated and stored in base currency
 - Currency formatting via `Intl.NumberFormat` (replaces i18n `amountWithCurrency` templates)
 - Existing trips auto-set to JPY, existing expense data unchanged
 
@@ -53,7 +54,7 @@ Migration sets existing rows to `'JPY'`.
 
 Add columns:
 - `currency TEXT NOT NULL DEFAULT 'JPY'` — currency of this expense
-- `exchange_rate NUMERIC NULL` — rate to base currency (NULL when same as base)
+- `exchange_rate NUMERIC(12,6) NULL` — rate to base currency (NULL when same as base)
 - `base_amount INTEGER NULL` — amount converted to base currency in minor units (NULL when same as base)
 
 Existing data: `currency = 'JPY'`, `exchange_rate = NULL`, `base_amount = NULL`. No data transformation needed since existing amounts are already JPY minor units.
@@ -65,9 +66,42 @@ Trip base currency: JPY. Expense: $100.50 at rate 148.5.
 | Column | Value | Notes |
 |--------|-------|-------|
 | currency | `'USD'` | |
-| amount | `10050` | $100.50 in cents |
+| amount | `10050` | $100.50 in cents (minor units) |
 | exchange_rate | `148.5` | USD → JPY |
-| base_amount | `14924` | ¥14,924 (10050 * 148.5 / 100, rounded) |
+| base_amount | `14924` | see conversion formula below |
+
+**Conversion formula:**
+
+```
+baseMinorUnits = round(fromMinorUnits * rate * 10^baseDecimals / 10^fromDecimals)
+```
+
+Rounding: **round half up** (consistent with existing `calculateEqualSplit` remainder handling).
+
+Example: USD (decimals=2) → JPY (decimals=0):
+```
+round(10050 * 148.5 * 10^0 / 10^2) = round(10050 * 148.5 / 100) = round(14924.25) = 14924
+```
+
+Example: JPY (decimals=0) → USD (decimals=2), rate 0.00673:
+```
+round(1000 * 0.00673 * 10^2 / 10^0) = round(1000 * 0.673) = round(673) = 673 ($6.73)
+```
+
+## Splits and Settlement Currency
+
+**All splits are calculated and stored in base currency.**
+
+When creating/updating an expense:
+1. Determine the effective amount in base currency: `baseAmount ?? amount`
+2. Calculate splits (equal/custom/itemized) using the base currency amount
+3. Store `expense_splits.amount` in base currency minor units
+
+This means:
+- `calculateEqualSplit` receives `baseAmount ?? amount`
+- `settlement.ts` continues using `expense.amount` / `split.amount` as-is, but now expense routes pass `baseAmount ?? amount` instead of `amount`
+- No changes needed to `calculateSettlement` algorithm itself
+- Existing JPY-only data works unchanged (`baseAmount = NULL` → uses `amount`)
 
 ## Shared Package (`packages/shared`)
 
@@ -96,13 +130,15 @@ const CURRENCIES: Record<CurrencyCode, CurrencyDef> = {
 - `toMinorUnits(amount: number, currency: CurrencyCode): number` — display → minor ($12.50 → 1250)
 - `fromMinorUnits(amount: number, currency: CurrencyCode): number` — minor → display (1250 → 12.50)
 - `formatCurrency(minorAmount: number, currency: CurrencyCode, locale: string): string` — format via `Intl.NumberFormat`
-- `convertToBase(minorAmount: number, fromCurrency: CurrencyCode, baseCurrency: CurrencyCode, rate: number): number` — convert and return base minor units
+- `convertToBase(fromMinorUnits: number, fromCurrency: CurrencyCode, baseCurrency: CurrencyCode, rate: number): number` — apply formula: `round(fromMinorUnits * rate * 10^baseDecimals / 10^fromDecimals)`, rounding half up
 
 ### Zod schemas
 
 - `currencyCodeSchema = z.enum(["JPY", "USD", ...])` — validates currency code
-- Update `createExpenseSchema` / `updateExpenseSchema` with `currency`, `exchangeRate`, `baseAmount`
+- `exchangeRateSchema = z.number().positive().max(999999)` — rate with max bound
+- Update `createExpenseSchema` / `updateExpenseSchema` with `currency`, `exchangeRate`
 - Update `createTripSchema` / `updateTripSchema` with `currency`
+- Server computes `baseAmount` (not accepted from client)
 
 ## API Changes
 
@@ -111,7 +147,8 @@ const CURRENCIES: Record<CurrencyCode, CurrencyDef> = {
 `GET /api/exchange-rate?from=USD&to=JPY`
 
 - Calls frankfurter.dev: `GET https://api.frankfurter.dev/v1/latest?from=USD&to=JPY`
-- Memory cache with 1-hour TTL
+- Memory cache with 1-hour TTL, key format: `${from}-${to}`
+- No dedup for concurrent requests (small-scale app, low concurrency)
 - Returns `{ rate: 148.5, from: "USD", to: "JPY" }`
 - Returns 502 if frankfurter.dev is down (frontend falls back to manual input)
 - Rate limiting via existing `rateLimitByIp`
@@ -119,14 +156,17 @@ const CURRENCIES: Record<CurrencyCode, CurrencyDef> = {
 ### Expense routes changes
 
 - POST/PATCH: accept `currency`, `exchangeRate` fields
-- Server calculates `baseAmount` from `amount`, `exchangeRate`, and currency decimals
+- Server calculates `baseAmount` from `amount`, `exchangeRate`, and currency decimals using `convertToBase`
 - Validation: if `currency !== trip.currency`, `exchangeRate` is required
+- Splits are calculated using `baseAmount ?? amount` (base currency)
+- `categoryTotals` aggregation uses `baseAmount ?? amount`
 
 ### Settlement calculation
 
-- Use `baseAmount ?? amount` for each expense
+- Expense routes pass `baseAmount ?? amount` as the expense amount for settlement
+- `settlement.ts` algorithm unchanged
+- `settlement-payments.ts` also uses `baseAmount ?? amount`
 - Result is in trip's base currency
-- No changes to settlement algorithm, only the input amounts change
 
 ## Frontend Changes
 
@@ -138,9 +178,9 @@ Remove `amountWithCurrency` i18n key from `ja.json` / `en.json`.
 
 ### Trip creation/edit
 
-- Add currency selector (dropdown with flag/symbol) to create-trip-dialog and edit-trip-dialog
+- Add currency selector (dropdown with symbol) to create-trip-dialog and edit-trip-dialog
 - Default: JPY
-- Edit: show warning if trip has expenses ("changing base currency will not re-convert existing expenses")
+- Edit: if trip has expenses, base currency change is **prohibited** (disabled with explanation). This avoids settlement_payments inconsistency and re-conversion complexity.
 
 ### Expense creation/edit
 
@@ -164,26 +204,32 @@ Remove `amountWithCurrency` i18n key from `ja.json` / `en.json`.
 
 ## Activity Log
 
-- Update expense activity log messages to include currency symbol
-- `¥${amount.toLocaleString()}` → `formatCurrency(amount, currency, locale)`
+- Update expense activity log detail to use original currency: `formatCurrency(amount, currency, "ja")`
+- Activity log is stored as a string in the DB, using Japanese locale for consistency (same as current behavior with `¥`)
+- Example: `$100.50` instead of `¥14,924` — shows what was actually paid
 
 ## Discord Embed
 
-- Update Discord Embed messages for expense_added to include currency
+- Update `DISCORD_MSG_JA` / `DISCORD_MSG_EN` `expense_added` messages to accept `amount` and `currency` in payload
+- Format using `formatCurrency` in the embed builder
+- Requires adding `amount` and `currency` to the notification payload for `expense_added`
 
 ## Existing Data Compatibility
 
 - Migration adds columns with defaults, no data transformation
 - `baseAmount ?? amount` pattern ensures existing JPY-only expenses work without changes
 - `exchangeRate = NULL` means same currency (no conversion)
+- Existing splits remain valid (already in JPY = base currency)
 
 ## Testing Strategy
 
-- Unit tests: `toMinorUnits`, `fromMinorUnits`, `formatCurrency`, `convertToBase`
+- Unit tests: `toMinorUnits`, `fromMinorUnits`, `formatCurrency`, `convertToBase` (including rounding edge cases)
 - Unit tests: exchange rate cache logic
 - Unit tests: settlement calculation with mixed currencies
+- Unit tests: equal split with base currency conversion
 - Integration tests: expense CRUD with foreign currency
 - Integration tests: exchange rate API endpoint
+- Integration tests: settlement with mixed-currency expenses
 
 ## FAQ Updates
 

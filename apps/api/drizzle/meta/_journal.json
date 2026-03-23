@@ -274,6 +274,13 @@
       "when": 1774238129596,
       "tag": "0038_misty_sasquatch",
       "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1774262888062,
+      "tag": "0039_bored_black_bird",
+      "breakpoints": true
     }
   ]
 }

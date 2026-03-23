@@ -218,7 +218,12 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
     return c.json({ error: ERROR_MSG.EXPENSE_NOT_FOUND }, 404);
   }
 
-  const { splits, lineItems, ...updateFields } = parsed.data;
+  const { splits, lineItems, exchangeRate, ...restFields } = parsed.data;
+  // Drizzle's numeric column expects string; convert from the Zod number type
+  const updateFields = {
+    ...restFields,
+    ...(exchangeRate !== undefined ? { exchangeRate: String(exchangeRate) } : {}),
+  };
 
   // Verify member constraints when paidByUserId, splits, or lineItems change
   if (updateFields.paidByUserId || splits || lineItems) {

@@ -14,7 +14,7 @@
     "check-types": "tsc --noEmit"
   },
   "devDependencies": {
-    "typescript": "^5",
+    "typescript": "^6",
     "vitest": "^4.0.18"
   },
   "dependencies": {

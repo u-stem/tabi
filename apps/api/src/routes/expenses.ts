@@ -1,7 +1,9 @@
-import type { ExpenseCategory } from "@sugara/shared";
+import type { CurrencyCode, ExpenseCategory } from "@sugara/shared";
 import {
+  convertToBase,
   createExpenseSchema,
   EXPENSE_CATEGORY_LABELS,
+  formatCurrency,
   MAX_EXPENSES_PER_TRIP,
   updateExpenseSchema,
 } from "@sugara/shared";
@@ -15,6 +17,7 @@ import {
   expenses,
   settlementPayments,
   tripMembers,
+  trips,
 } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG } from "../lib/constants";
@@ -54,7 +57,7 @@ expenseRoutes.get("/:tripId/expenses", requireTripAccess(), async (c) => {
   const memberInfos = members.map((m) => ({ id: m.user.id, name: m.user.name }));
   const expenseData = expenseList.map((e) => ({
     paidByUserId: e.paidByUserId,
-    amount: e.amount,
+    amount: e.baseAmount ?? e.amount,
     splits: e.splits.map((s) => ({ userId: s.userId, amount: s.amount })),
   }));
 
@@ -64,7 +67,7 @@ expenseRoutes.get("/:tripId/expenses", requireTripAccess(), async (c) => {
   for (const e of expenseList) {
     if (e.category) {
       const existing = categoryMap.get(e.category) ?? { total: 0, count: 0 };
-      existing.total += e.amount;
+      existing.total += e.baseAmount ?? e.amount;
       existing.count += 1;
       categoryMap.set(e.category, existing);
     }
@@ -100,7 +103,38 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     return c.json({ error: parsed.error.flatten() }, 400);
   }
 
-  const { title, amount, paidByUserId, splitType, splits, lineItems, category } = parsed.data;
+  const {
+    title,
+    amount,
+    paidByUserId,
+    splitType,
+    splits,
+    lineItems,
+    category,
+    currency,
+    exchangeRate,
+  } = parsed.data;
+
+  // Fetch trip currency to validate exchange rate and compute baseAmount
+  const trip = await db.query.trips.findFirst({
+    where: eq(trips.id, tripId),
+    columns: { currency: true },
+  });
+  const tripCurrency = (trip?.currency ?? "JPY") as CurrencyCode;
+
+  // Validate exchangeRate when expense currency differs from trip currency
+  if (currency !== tripCurrency && !exchangeRate) {
+    return c.json(
+      { error: "exchangeRate is required when currency differs from trip currency" },
+      400,
+    );
+  }
+
+  // Compute baseAmount in trip currency
+  const baseAmount =
+    currency !== tripCurrency && exchangeRate
+      ? convertToBase(amount, currency, tripCurrency, exchangeRate)
+      : null;
 
   // Check expense count limit
   const [{ count: expenseCount }] = await db
@@ -131,16 +165,26 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     return c.json({ error: ERROR_MSG.EXPENSE_SPLIT_USER_NOT_MEMBER }, 400);
   }
 
-  // Calculate split amounts for equal type
+  // Calculate split amounts for equal type (use baseAmount for settlement consistency)
   const splitAmounts =
     splitType === "equal"
-      ? calculateEqualSplit(amount, splits.length)
+      ? calculateEqualSplit(baseAmount ?? amount, splits.length)
       : splits.map((s) => s.amount ?? 0);
 
   const result = await db.transaction(async (tx) => {
     const [expense] = await tx
       .insert(expenses)
-      .values({ tripId, paidByUserId, title, amount, splitType, category: category ?? null })
+      .values({
+        tripId,
+        paidByUserId,
+        title,
+        amount,
+        currency,
+        ...(exchangeRate !== undefined ? { exchangeRate: String(exchangeRate) } : {}),
+        baseAmount,
+        splitType,
+        category: category ?? null,
+      })
       .returning();
 
     await tx.insert(expenseSplits).values(
@@ -185,7 +229,7 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     action: "created",
     entityType: "expense",
     entityName: title,
-    detail: `\u00A5${amount.toLocaleString()}`,
+    detail: formatCurrency(amount, currency, "ja"),
   });
 
   notifyUsers({
@@ -218,11 +262,47 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
     return c.json({ error: ERROR_MSG.EXPENSE_NOT_FOUND }, 404);
   }
 
-  const { splits, lineItems, exchangeRate, ...restFields } = parsed.data;
+  const { splits, lineItems, exchangeRate, currency: parsedCurrency, ...restFields } = parsed.data;
+
+  // Fetch trip currency when amount or currency changes (needed for baseAmount recalculation)
+  const finalCurrency = (parsedCurrency ?? existing.currency ?? "JPY") as CurrencyCode;
+  const needsTripCurrency =
+    parsedCurrency !== undefined || restFields.amount !== undefined || exchangeRate !== undefined;
+  let tripCurrency: CurrencyCode = "JPY";
+  if (needsTripCurrency) {
+    const trip = await db.query.trips.findFirst({
+      where: eq(trips.id, tripId),
+      columns: { currency: true },
+    });
+    tripCurrency = (trip?.currency ?? "JPY") as CurrencyCode;
+  }
+
+  // Validate exchangeRate when expense currency differs from trip currency
+  const finalExchangeRate =
+    exchangeRate ?? (existing.exchangeRate ? Number(existing.exchangeRate) : undefined);
+  if (needsTripCurrency && finalCurrency !== tripCurrency && !finalExchangeRate) {
+    return c.json(
+      { error: "exchangeRate is required when currency differs from trip currency" },
+      400,
+    );
+  }
+
+  // Compute baseAmount in trip currency
+  const finalAmount = restFields.amount ?? existing.amount;
+  let baseAmount: number | null = null;
+  if (needsTripCurrency) {
+    baseAmount =
+      finalCurrency !== tripCurrency && finalExchangeRate
+        ? convertToBase(finalAmount, finalCurrency, tripCurrency, finalExchangeRate)
+        : null;
+  }
+
   // Drizzle's numeric column expects string; convert from the Zod number type
   const updateFields = {
     ...restFields,
+    ...(parsedCurrency !== undefined ? { currency: parsedCurrency } : {}),
     ...(exchangeRate !== undefined ? { exchangeRate: String(exchangeRate) } : {}),
+    ...(needsTripCurrency ? { baseAmount } : {}),
   };
 
   // Verify member constraints when paidByUserId, splits, or lineItems change
@@ -285,11 +365,13 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
       .returning();
 
     if (splits) {
-      const finalAmount = updateFields.amount ?? existing.amount;
+      const effectiveBaseAmount = needsTripCurrency
+        ? (baseAmount ?? finalAmount)
+        : (existing.baseAmount ?? existing.amount);
       const finalSplitType = updateFields.splitType ?? existing.splitType;
       const splitAmounts =
         finalSplitType === "equal"
-          ? calculateEqualSplit(finalAmount, splits.length)
+          ? calculateEqualSplit(effectiveBaseAmount, splits.length)
           : splits.map((s) => s.amount ?? 0);
 
       await tx.delete(expenseSplits).where(eq(expenseSplits.expenseId, expenseId));
@@ -336,10 +418,12 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
 
   const oldAmount = existing.amount;
   const newAmount = updated.amount;
+  const updatedCurrency = (updated.currency ?? "JPY") as CurrencyCode;
+  const existingCurrency = (existing.currency ?? "JPY") as CurrencyCode;
   const detail =
-    oldAmount !== newAmount
-      ? `\u00A5${oldAmount.toLocaleString()} → \u00A5${newAmount.toLocaleString()}`
-      : `\u00A5${newAmount.toLocaleString()}`;
+    oldAmount !== newAmount || existingCurrency !== updatedCurrency
+      ? `${formatCurrency(oldAmount, existingCurrency, "ja")} → ${formatCurrency(newAmount, updatedCurrency, "ja")}`
+      : formatCurrency(newAmount, updatedCurrency, "ja");
 
   logActivity({
     tripId,
@@ -379,7 +463,7 @@ expenseRoutes.delete("/:tripId/expenses/:expenseId", requireTripAccess("editor")
     action: "deleted",
     entityType: "expense",
     entityName: existing.title,
-    detail: `\u00A5${existing.amount.toLocaleString()}`,
+    detail: formatCurrency(existing.amount, (existing.currency ?? "JPY") as CurrencyCode, "ja"),
   });
 
   return c.body(null, 204);

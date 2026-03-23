@@ -1,8 +1,9 @@
-import { createSettlementPaymentSchema } from "@sugara/shared";
+import type { CurrencyCode } from "@sugara/shared";
+import { createSettlementPaymentSchema, formatCurrency } from "@sugara/shared";
 import { and, eq } from "drizzle-orm";
 import { Hono } from "hono";
 import { db } from "../db/index";
-import { expenses, settlementPayments, tripMembers } from "../db/schema";
+import { expenses, settlementPayments, tripMembers, trips } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
 import { ERROR_MSG, PG_UNIQUE_VIOLATION } from "../lib/constants";
 import { notifyUsers } from "../lib/notifications";
@@ -34,7 +35,7 @@ settlementPaymentRoutes.post("/:tripId/settlement-payments", requireTripAccess()
   }
 
   // Validate the transfer exists in current settlement
-  const [expenseList, members] = await Promise.all([
+  const [expenseList, members, trip] = await Promise.all([
     db.query.expenses.findMany({
       where: eq(expenses.tripId, tripId),
       with: { splits: true },
@@ -43,12 +44,17 @@ settlementPaymentRoutes.post("/:tripId/settlement-payments", requireTripAccess()
       where: eq(tripMembers.tripId, tripId),
       with: { user: { columns: { id: true, name: true } } },
     }),
+    db.query.trips.findFirst({
+      where: eq(trips.id, tripId),
+      columns: { currency: true },
+    }),
   ]);
+  const tripCurrency = (trip?.currency ?? "JPY") as CurrencyCode;
 
   const memberInfos = members.map((m) => ({ id: m.user.id, name: m.user.name }));
   const expenseData = expenseList.map((e) => ({
     paidByUserId: e.paidByUserId,
-    amount: e.amount,
+    amount: e.baseAmount ?? e.amount,
     splits: e.splits.map((s) => ({ userId: s.userId, amount: s.amount })),
   }));
   const settlement = calculateSettlement(expenseData, memberInfos);
@@ -75,13 +81,15 @@ settlementPaymentRoutes.post("/:tripId/settlement-payments", requireTripAccess()
     const fromName = matchingTransfer.from.name;
     const toName = matchingTransfer.to.name;
 
+    const formattedAmount = formatCurrency(amount, tripCurrency, "ja");
+
     logActivity({
       tripId,
       userId: user.id,
       action: "settle",
       entityType: "settlement",
       entityName: `${fromName} \u2192 ${toName}`,
-      detail: `\u00A5${amount.toLocaleString()}`,
+      detail: formattedAmount,
     });
 
     // Notify the other party only
@@ -93,7 +101,7 @@ settlementPaymentRoutes.post("/:tripId/settlement-payments", requireTripAccess()
       makePayload: (tripName) => ({
         actorName: user.name,
         tripName,
-        entityName: `${fromName} \u2192 ${toName} \u00A5${amount.toLocaleString()}`,
+        entityName: `${fromName} \u2192 ${toName} ${formattedAmount}`,
       }),
     });
 
@@ -130,11 +138,18 @@ settlementPaymentRoutes.delete(
 
     await db.delete(settlementPayments).where(eq(settlementPayments.id, id));
 
-    // Look up names for activity log
-    const members = await db.query.tripMembers.findMany({
-      where: eq(tripMembers.tripId, tripId),
-      with: { user: { columns: { id: true, name: true } } },
-    });
+    // Look up names and trip currency for activity log
+    const [members, trip] = await Promise.all([
+      db.query.tripMembers.findMany({
+        where: eq(tripMembers.tripId, tripId),
+        with: { user: { columns: { id: true, name: true } } },
+      }),
+      db.query.trips.findFirst({
+        where: eq(trips.id, tripId),
+        columns: { currency: true },
+      }),
+    ]);
+    const tripCurrency = (trip?.currency ?? "JPY") as CurrencyCode;
     const memberMap = new Map(members.map((m) => [m.user.id, m.user.name]));
     const fromName = memberMap.get(existing.fromUserId) ?? "Unknown";
     const toName = memberMap.get(existing.toUserId) ?? "Unknown";
@@ -145,7 +160,7 @@ settlementPaymentRoutes.delete(
       action: "unsettle",
       entityType: "settlement",
       entityName: `${fromName} \u2192 ${toName}`,
-      detail: `\u00A5${existing.amount.toLocaleString()}`,
+      detail: formatCurrency(existing.amount, tripCurrency, "ja"),
     });
 
     return c.body(null, 204);
@@ -207,7 +222,7 @@ unsettledSummaryRoutes.get("/:userId/unsettled-summary", async (c) => {
     const memberInfos = members.map((m) => ({ id: m.user.id, name: m.user.name }));
     const expenseData = expenseList.map((e) => ({
       paidByUserId: e.paidByUserId,
-      amount: e.amount,
+      amount: e.baseAmount ?? e.amount,
       splits: e.splits.map((s) => ({ userId: s.userId, amount: s.amount })),
     }));
 

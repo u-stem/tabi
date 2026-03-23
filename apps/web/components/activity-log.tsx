@@ -113,12 +113,13 @@ function parseAction(
     const template = ta(key, { name: "__NAME__" });
     if (template.includes("__NAME__")) {
       const [before, after] = template.split("__NAME__");
-      return {
-        before,
-        entityName: log.entityName ? name : null,
-        after,
-        detail,
-      };
+      if (log.entityName) {
+        return { before, entityName: name, after, detail };
+      }
+      // Strip surrounding brackets when entityName is absent (e.g. "候補「」を削除" -> "候補を削除")
+      const cleanBefore = before.replace(/[「\u300c]$/, "");
+      const cleanAfter = after.replace(/^[」\u300d]/, "");
+      return { before: cleanBefore, entityName: null, after: cleanAfter, detail };
     }
     return {
       before: template,

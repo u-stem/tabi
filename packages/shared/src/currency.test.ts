@@ -1,0 +1,88 @@
+import { describe, expect, it } from "vitest";
+import {
+  CURRENCIES,
+  convertToBase,
+  currencyCodeSchema,
+  formatCurrency,
+  fromMinorUnits,
+  toMinorUnits,
+} from "./currency";
+
+describe("toMinorUnits", () => {
+  it("converts USD amount to cents", () => {
+    expect(toMinorUnits(12.5, "USD")).toBe(1250);
+  });
+
+  it("converts JPY amount unchanged (no decimals)", () => {
+    expect(toMinorUnits(1000, "JPY")).toBe(1000);
+  });
+
+  it("converts KRW amount unchanged (no decimals)", () => {
+    expect(toMinorUnits(5000, "KRW")).toBe(5000);
+  });
+});
+
+describe("fromMinorUnits", () => {
+  it("converts cents to USD amount", () => {
+    expect(fromMinorUnits(1250, "USD")).toBe(12.5);
+  });
+
+  it("converts JPY minor units unchanged (no decimals)", () => {
+    expect(fromMinorUnits(1000, "JPY")).toBe(1000);
+  });
+});
+
+describe("convertToBase", () => {
+  it("converts USD minor units to JPY minor units", () => {
+    // 10050 cents * 148.5 / 100 = 14924.25 → 14924
+    expect(convertToBase(10050, "USD", "JPY", 148.5)).toBe(14924);
+  });
+
+  it("converts JPY minor units to USD minor units", () => {
+    // 1000 yen * 0.00673 * 100 / 1 = 673
+    expect(convertToBase(1000, "JPY", "USD", 0.00673)).toBe(673);
+  });
+
+  it("returns input unchanged when currencies are the same", () => {
+    expect(convertToBase(5000, "JPY", "JPY", 1)).toBe(5000);
+  });
+
+  it("rounds down when fractional part is below .5", () => {
+    // 1050 * 148.5 / 100 = 1559.25 → 1559
+    expect(convertToBase(1050, "USD", "JPY", 148.5)).toBe(1559);
+  });
+
+  it("rounds up when fractional part is .5 or above", () => {
+    // need a case that rounds up: 101 cents * 148.0 / 100 = 149.48 → 149
+    // try: 1 cent * 1.005 rate to JPY (decimals 0): 1 * 1.005 * 1 / 100 = 0.01005 → 0
+    // better: use THB (2 decimals) → USD (2 decimals): 1 * 1.505 * 100 / 100 = 1.505 → 2
+    expect(convertToBase(1, "THB", "USD", 1.505)).toBe(2);
+  });
+});
+
+describe("formatCurrency", () => {
+  it("formats JPY in Japanese locale", () => {
+    expect(formatCurrency(14924, "JPY", "ja")).toContain("14,924");
+  });
+
+  it("formats USD in English locale", () => {
+    expect(formatCurrency(1250, "USD", "en")).toContain("12.50");
+  });
+});
+
+describe("CURRENCIES", () => {
+  it("has all 12 entries", () => {
+    expect(Object.keys(CURRENCIES)).toHaveLength(12);
+  });
+});
+
+describe("currencyCodeSchema", () => {
+  it("accepts valid currency codes", () => {
+    expect(currencyCodeSchema.safeParse("JPY").success).toBe(true);
+    expect(currencyCodeSchema.safeParse("USD").success).toBe(true);
+  });
+
+  it("rejects invalid currency codes", () => {
+    expect(currencyCodeSchema.safeParse("XXX").success).toBe(false);
+  });
+});

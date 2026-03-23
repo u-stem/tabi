@@ -216,6 +216,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
                 <ExpenseRow
                   key={expense.id}
                   expense={expense}
+                  tripCurrency={tripCurrency}
                   canEdit={canEdit}
                   isMobile={isMobile}
                   onEdit={handleEdit}
@@ -277,12 +278,14 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
 
 function ExpenseRow({
   expense,
+  tripCurrency,
   canEdit,
   isMobile,
   onEdit,
   onDelete,
 }: {
   expense: ExpenseItem;
+  tripCurrency: CurrencyCode;
   canEdit: boolean;
   isMobile: boolean;
   onEdit: (expense: ExpenseItem) => void;
@@ -313,6 +316,12 @@ function ExpenseRow({
         <div className="flex shrink-0 items-center gap-2">
           <span className="text-sm font-bold">
             {formatCurrency(expense.amount, currency, locale)}
+            {expense.baseAmount != null && expense.currency !== tripCurrency && (
+              <span className="text-muted-foreground">
+                {" "}
+                ({formatCurrency(expense.baseAmount, tripCurrency, locale)})
+              </span>
+            )}
           </span>
           {canEdit &&
             (isMobile ? (

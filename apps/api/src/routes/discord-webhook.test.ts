@@ -71,7 +71,6 @@ const fakeWebhook = {
   id: "wh-1",
   tripId,
   webhookUrl: validWebhookUrl,
-  name: "",
   enabledTypes: ["member_added"],
   locale: "ja",
   isActive: true,

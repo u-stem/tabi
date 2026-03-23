@@ -267,6 +267,13 @@
       "when": 1774228332058,
       "tag": "0037_wealthy_wong",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1774238129596,
+      "tag": "0038_misty_sasquatch",
+      "breakpoints": true
     }
   ]
 }

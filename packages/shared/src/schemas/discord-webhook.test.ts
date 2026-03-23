@@ -42,14 +42,6 @@ describe("createDiscordWebhookSchema", () => {
     expect(result.success).toBe(true);
   });
 
-  it("accepts payload without name (optional)", () => {
-    const result = createDiscordWebhookSchema.safeParse({
-      webhookUrl: "https://discord.com/api/webhooks/123/abc",
-      enabledTypes: ["member_added"],
-    });
-    expect(result.success).toBe(true);
-  });
-
   it("rejects discord_webhook_disabled in enabledTypes", () => {
     const result = createDiscordWebhookSchema.safeParse({
       webhookUrl: "https://discord.com/api/webhooks/123/abc",
@@ -68,11 +60,6 @@ describe("createDiscordWebhookSchema", () => {
 });
 
 describe("updateDiscordWebhookSchema", () => {
-  it("accepts partial update with only name", () => {
-    const result = updateDiscordWebhookSchema.safeParse({ name: "New name" });
-    expect(result.success).toBe(true);
-  });
-
   it("accepts partial update with only enabledTypes", () => {
     const result = updateDiscordWebhookSchema.safeParse({
       enabledTypes: ["member_added"],

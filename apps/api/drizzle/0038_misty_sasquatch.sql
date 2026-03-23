@@ -1,0 +1,1 @@
+ALTER TABLE "discord_webhooks" DROP COLUMN "name";

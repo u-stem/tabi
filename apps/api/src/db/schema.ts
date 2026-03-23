@@ -962,7 +962,6 @@ export const discordWebhooks = pgTable("discord_webhooks", {
     .references(() => trips.id, { onDelete: "cascade" })
     .unique(),
   webhookUrl: text("webhook_url").notNull(),
-  name: text("name").default(""),
   enabledTypes: jsonb("enabled_types").$type<string[]>().notNull(),
   locale: text("locale").notNull().default("ja"),
   isActive: boolean("is_active").notNull().default(true),

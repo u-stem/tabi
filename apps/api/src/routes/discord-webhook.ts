@@ -35,7 +35,6 @@ discordWebhookRoutes.get("/:tripId/discord-webhook", requireTripAccess(), async 
     id: webhook.id,
     tripId: webhook.tripId,
     maskedUrl: maskWebhookUrl(webhook.webhookUrl),
-    name: webhook.name,
     enabledTypes: webhook.enabledTypes,
     locale: webhook.locale,
     isActive: webhook.isActive,
@@ -73,7 +72,6 @@ discordWebhookRoutes.post("/:tripId/discord-webhook", requireTripAccess("editor"
     .values({
       tripId,
       webhookUrl: parsed.data.webhookUrl,
-      name: parsed.data.name ?? "",
       enabledTypes: parsed.data.enabledTypes,
       locale: parsed.data.locale,
       createdBy: user.id,
@@ -85,7 +83,6 @@ discordWebhookRoutes.post("/:tripId/discord-webhook", requireTripAccess("editor"
       id: inserted.id,
       tripId: inserted.tripId,
       maskedUrl: maskWebhookUrl(inserted.webhookUrl),
-      name: inserted.name,
       enabledTypes: inserted.enabledTypes,
       locale: inserted.locale,
       isActive: inserted.isActive,
@@ -123,9 +120,12 @@ discordWebhookRoutes.put("/:tripId/discord-webhook", requireTripAccess("editor")
 
   const setData: Record<string, unknown> = { updatedAt: new Date() };
   if (parsed.data.webhookUrl !== undefined) setData.webhookUrl = parsed.data.webhookUrl;
-  if (parsed.data.name !== undefined) setData.name = parsed.data.name;
   if (parsed.data.enabledTypes !== undefined) setData.enabledTypes = parsed.data.enabledTypes;
   if (parsed.data.locale !== undefined) setData.locale = parsed.data.locale;
+  if (parsed.data.isActive !== undefined) {
+    setData.isActive = parsed.data.isActive;
+    if (!parsed.data.isActive) setData.failureCount = 0;
+  }
 
   // Reset failure tracking when URL changes
   if (urlChanged) {
@@ -143,7 +143,6 @@ discordWebhookRoutes.put("/:tripId/discord-webhook", requireTripAccess("editor")
     id: updated.id,
     tripId: updated.tripId,
     maskedUrl: maskWebhookUrl(updated.webhookUrl),
-    name: updated.name,
     enabledTypes: updated.enabledTypes,
     locale: updated.locale,
     isActive: updated.isActive,

@@ -31,7 +31,6 @@ export const localeSchema = z.enum(["ja", "en"]);
 
 export const createDiscordWebhookSchema = z.object({
   webhookUrl: discordWebhookUrlSchema,
-  name: z.string().max(100).optional(),
   enabledTypes: z.array(discordEnabledTypeSchema).min(1),
   locale: localeSchema.optional().default("ja"),
 });
@@ -40,9 +39,9 @@ export type CreateDiscordWebhook = z.infer<typeof createDiscordWebhookSchema>;
 
 export const updateDiscordWebhookSchema = z.object({
   webhookUrl: discordWebhookUrlSchema.optional(),
-  name: z.string().max(100).optional(),
   enabledTypes: z.array(discordEnabledTypeSchema).min(1).optional(),
   locale: localeSchema.optional(),
+  isActive: z.boolean().optional(),
 });
 
 export type UpdateDiscordWebhook = z.infer<typeof updateDiscordWebhookSchema>;

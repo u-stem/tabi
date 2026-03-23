@@ -3,7 +3,7 @@
 import type { DiscordEnabledType } from "@sugara/shared";
 import { DISCORD_ENABLED_TYPES_DEFAULT } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, Send, Trash2, X } from "lucide-react";
+import { Check, Send, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -14,19 +14,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import {
-  ResponsiveAlertDialog,
-  ResponsiveAlertDialogCancel,
-  ResponsiveAlertDialogContent,
-  ResponsiveAlertDialogDescription,
-  ResponsiveAlertDialogDestructiveAction,
-  ResponsiveAlertDialogFooter,
-  ResponsiveAlertDialogHeader,
-  ResponsiveAlertDialogTitle,
-} from "@/components/ui/responsive-alert-dialog";
-import {
   ResponsiveDialog,
+  ResponsiveDialogClose,
   ResponsiveDialogContent,
   ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
   ResponsiveDialogHeader,
   ResponsiveDialogTitle,
 } from "@/components/ui/responsive-dialog";
@@ -46,7 +38,6 @@ type DiscordWebhookDialogProps = {
 
 type WebhookResponse = {
   id: string;
-  name: string | null;
   maskedUrl: string;
   enabledTypes: DiscordEnabledType[];
   isActive: boolean;
@@ -54,21 +45,21 @@ type WebhookResponse = {
   failureCount: number;
 };
 
-const ALL_ENABLED_TYPES: DiscordEnabledType[] = [
-  "member_added",
-  "member_removed",
-  "role_changed",
-  "schedule_created",
-  "schedule_updated",
-  "schedule_deleted",
-  "poll_started",
-  "poll_closed",
-  "expense_added",
-  "settlement_checked",
-  "candidate_created",
-  "candidate_deleted",
-  "candidate_reaction",
+const TYPE_GROUPS: { labelKey: string; types: DiscordEnabledType[] }[] = [
+  { labelKey: "groupMember", types: ["member_added", "member_removed", "role_changed"] },
+  {
+    labelKey: "groupSchedule",
+    types: ["schedule_created", "schedule_updated", "schedule_deleted"],
+  },
+  { labelKey: "groupPoll", types: ["poll_started", "poll_closed"] },
+  { labelKey: "groupExpense", types: ["expense_added", "settlement_checked"] },
+  {
+    labelKey: "groupCandidate",
+    types: ["candidate_created", "candidate_deleted", "candidate_reaction"],
+  },
 ];
+
+const ALL_ENABLED_TYPES: DiscordEnabledType[] = TYPE_GROUPS.flatMap((g) => g.types);
 
 const TYPE_LABEL_KEYS: Record<DiscordEnabledType, string> = {
   member_added: "typeMemberAdded",
@@ -94,22 +85,16 @@ export function DiscordWebhookDialog({
 }: DiscordWebhookDialogProps) {
   const locale = useLocale();
   const td = useTranslations("discord");
-  const tc = useTranslations("common");
   const queryClient = useQueryClient();
   const cacheKey = queryKeys.discord.webhook(tripId);
 
   const [webhookUrl, setWebhookUrl] = useState("");
-  const [name, setName] = useState("");
   const [enabledTypes, setEnabledTypes] = useState<DiscordEnabledType[]>(
     DISCORD_ENABLED_TYPES_DEFAULT,
   );
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  // Show URL form to reconfigure an inactive webhook
-  const [showReactivateForm, setShowReactivateForm] = useState(false);
-  const [reactivateUrl, setReactivateUrl] = useState("");
+  const [toggling, setToggling] = useState(false);
 
   const {
     data: webhook,
@@ -128,16 +113,11 @@ export function DiscordWebhookDialog({
   // Sync form state when webhook data loads
   useEffect(() => {
     if (webhook) {
-      setName(webhook.name ?? "");
+      setWebhookUrl("");
       setEnabledTypes(webhook.enabledTypes);
-      setShowReactivateForm(false);
-      setReactivateUrl("");
     } else {
       setWebhookUrl("");
-      setName("");
       setEnabledTypes(DISCORD_ENABLED_TYPES_DEFAULT);
-      setShowReactivateForm(false);
-      setReactivateUrl("");
     }
   }, [webhook]);
 
@@ -159,7 +139,6 @@ export function DiscordWebhookDialog({
         method: "POST",
         body: JSON.stringify({
           webhookUrl,
-          name: name.trim() || undefined,
           enabledTypes,
           locale,
         }),
@@ -180,65 +159,46 @@ export function DiscordWebhookDialog({
   async function handleUpdate() {
     setSaving(true);
     try {
+      const body: Record<string, unknown> = { enabledTypes, locale };
+      if (webhookUrl.trim()) {
+        body.webhookUrl = webhookUrl;
+      }
       await api(`/api/trips/${tripId}/discord-webhook`, {
         method: "PUT",
-        body: JSON.stringify({
-          name: name.trim() || undefined,
-          enabledTypes,
-          locale,
-        }),
+        body: JSON.stringify(body),
       });
       toast.success(td("updated"));
       queryClient.invalidateQueries({ queryKey: cacheKey });
     } catch (err) {
+      const message = getApiErrorMessage(err, td("invalidUrl"), {
+        badRequest: td("unreachableUrl"),
+      });
+      toast.error(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleToggleActive() {
+    if (!webhook || toggling) return;
+    setToggling(true);
+    const newIsActive = !webhook.isActive;
+    // Optimistic update to avoid flicker
+    queryClient.setQueryData(cacheKey, { ...webhook, isActive: newIsActive });
+    try {
+      await api(`/api/trips/${tripId}/discord-webhook`, {
+        method: "PUT",
+        body: JSON.stringify({ isActive: newIsActive }),
+      });
+      toast.success(td("updated"));
+      queryClient.invalidateQueries({ queryKey: cacheKey });
+    } catch (err) {
+      // Revert on failure
+      queryClient.setQueryData(cacheKey, webhook);
       const message = getApiErrorMessage(err, td("invalidUrl"));
       toast.error(message);
     } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleReactivate(e: React.FormEvent) {
-    e.preventDefault();
-    if (!reactivateUrl.trim()) {
-      toast.error(td("invalidUrl"));
-      return;
-    }
-    setSaving(true);
-    try {
-      await api(`/api/trips/${tripId}/discord-webhook`, {
-        method: "PUT",
-        body: JSON.stringify({
-          webhookUrl: reactivateUrl,
-          locale,
-        }),
-      });
-      toast.success(td("updated"));
-      setShowReactivateForm(false);
-      setReactivateUrl("");
-      queryClient.invalidateQueries({ queryKey: cacheKey });
-    } catch (err) {
-      const message = getApiErrorMessage(err, td("unreachableUrl"));
-      toast.error(message);
-    } finally {
-      setSaving(false);
-    }
-  }
-
-  async function handleDelete() {
-    setDeleting(true);
-    try {
-      await api(`/api/trips/${tripId}/discord-webhook`, {
-        method: "DELETE",
-      });
-      toast.success(td("deleted"));
-      queryClient.invalidateQueries({ queryKey: cacheKey });
-    } catch (err) {
-      const message = getApiErrorMessage(err, td("delete"));
-      toast.error(message);
-    } finally {
-      setDeleting(false);
-      setDeleteOpen(false);
+      setToggling(false);
     }
   }
 
@@ -259,7 +219,7 @@ export function DiscordWebhookDialog({
 
   const hasChanges =
     webhook &&
-    (name !== (webhook.name ?? "") ||
+    (webhookUrl.trim() !== "" ||
       enabledTypes.length !== webhook.enabledTypes.length ||
       enabledTypes.some((t) => !webhook.enabledTypes.includes(t)));
 
@@ -267,7 +227,17 @@ export function DiscordWebhookDialog({
     <ResponsiveDialog open={open} onOpenChange={onOpenChange}>
       <ResponsiveDialogContent>
         <ResponsiveDialogHeader>
-          <ResponsiveDialogTitle>{td("title")}</ResponsiveDialogTitle>
+          <div className="flex items-center gap-2">
+            <ResponsiveDialogTitle>{td("title")}</ResponsiveDialogTitle>
+            {webhook && (
+              <Badge
+                variant={webhook.isActive ? "default" : "secondary"}
+                className="pointer-events-none"
+              >
+                {webhook.isActive ? td("active") : td("inactive")}
+              </Badge>
+            )}
+          </div>
           <ResponsiveDialogDescription>{td("description")}</ResponsiveDialogDescription>
         </ResponsiveDialogHeader>
 
@@ -297,61 +267,36 @@ export function DiscordWebhookDialog({
               webhook={webhook}
               canEdit={canEditProp}
               locale={locale}
-              name={name}
+              webhookUrl={webhookUrl}
               enabledTypes={enabledTypes}
               saving={saving}
               testing={testing}
+              toggling={toggling}
               hasChanges={!!hasChanges}
-              showReactivateForm={showReactivateForm}
-              reactivateUrl={reactivateUrl}
               td={td}
-              onNameChange={setName}
+              onWebhookUrlChange={setWebhookUrl}
               onToggleType={toggleType}
+              onSetAll={setEnabledTypes}
               onUpdate={handleUpdate}
               onTestSend={handleTestSend}
-              onDeleteOpen={() => setDeleteOpen(true)}
-              onShowReactivateForm={() => setShowReactivateForm(true)}
-              onReactivateUrlChange={setReactivateUrl}
-              onReactivate={handleReactivate}
+              onToggleActive={handleToggleActive}
             />
           ) : (
             canEditProp && (
               <CreateWebhookForm
                 webhookUrl={webhookUrl}
-                name={name}
                 enabledTypes={enabledTypes}
                 saving={saving}
                 td={td}
                 onWebhookUrlChange={setWebhookUrl}
-                onNameChange={setName}
                 onToggleType={toggleType}
+                onSetAll={setEnabledTypes}
                 onCreate={handleCreate}
               />
             )
           )}
         </LoadingBoundary>
       </ResponsiveDialogContent>
-
-      <ResponsiveAlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <ResponsiveAlertDialogContent>
-          <ResponsiveAlertDialogHeader>
-            <ResponsiveAlertDialogTitle>{td("delete")}</ResponsiveAlertDialogTitle>
-            <ResponsiveAlertDialogDescription>
-              {td("deleteConfirm")}
-            </ResponsiveAlertDialogDescription>
-          </ResponsiveAlertDialogHeader>
-          <ResponsiveAlertDialogFooter>
-            <ResponsiveAlertDialogCancel>
-              <X className="h-4 w-4" />
-              {tc("cancel")}
-            </ResponsiveAlertDialogCancel>
-            <ResponsiveAlertDialogDestructiveAction onClick={handleDelete} disabled={deleting}>
-              <Trash2 className="h-4 w-4" />
-              {td("delete")}
-            </ResponsiveAlertDialogDestructiveAction>
-          </ResponsiveAlertDialogFooter>
-        </ResponsiveAlertDialogContent>
-      </ResponsiveAlertDialog>
     </ResponsiveDialog>
   );
 }
@@ -361,31 +306,62 @@ export function DiscordWebhookDialog({
 type TypeToggleListProps = {
   enabledTypes: DiscordEnabledType[];
   onToggleType: (type: DiscordEnabledType) => void;
+  onSetAll: (types: DiscordEnabledType[]) => void;
   disabled: boolean;
   td: ReturnType<typeof useTranslations<"discord">>;
 };
 
-function TypeToggleList({ enabledTypes, onToggleType, disabled, td }: TypeToggleListProps) {
+function TypeToggleList({
+  enabledTypes,
+  onToggleType,
+  onSetAll,
+  disabled,
+  td,
+}: TypeToggleListProps) {
+  const allSelected = ALL_ENABLED_TYPES.every((t) => enabledTypes.includes(t));
+
   return (
     <div className="space-y-2">
-      <Label>
-        {td("enabledTypes")} <span className="text-destructive">*</span>
-      </Label>
-      <div className="space-y-1">
-        {ALL_ENABLED_TYPES.map((type) => (
-          <div
-            key={type}
-            className="grid grid-cols-[1fr_auto] items-center gap-x-4 rounded-lg px-1 py-1.5"
+      <div className="flex items-center justify-between">
+        <Label>
+          {td("enabledTypes")} <span className="text-destructive">*</span>
+        </Label>
+        {!disabled && (
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            className="h-auto p-0 text-xs"
+            onClick={() => onSetAll(allSelected ? [] : [...ALL_ENABLED_TYPES])}
           >
-            <Label htmlFor={`type-${type}`} className="text-sm">
-              {td(TYPE_LABEL_KEYS[type] as Parameters<typeof td>[0])}
-            </Label>
-            <Switch
-              id={`type-${type}`}
-              checked={enabledTypes.includes(type)}
-              onCheckedChange={() => onToggleType(type)}
-              disabled={disabled}
-            />
+            {allSelected ? td("deselectAll") : td("selectAll")}
+          </Button>
+        )}
+      </div>
+      <div className="space-y-3">
+        {TYPE_GROUPS.map((group) => (
+          <div key={group.labelKey}>
+            <p className="mb-1 text-xs font-medium text-muted-foreground">
+              {td(group.labelKey as Parameters<typeof td>[0])}
+            </p>
+            <div className="space-y-1">
+              {group.types.map((type) => (
+                <div
+                  key={type}
+                  className="grid grid-cols-[1fr_auto] items-center gap-x-4 rounded-lg px-1 py-1.5"
+                >
+                  <Label htmlFor={`type-${type}`} className="text-sm">
+                    {td(TYPE_LABEL_KEYS[type] as Parameters<typeof td>[0])}
+                  </Label>
+                  <Switch
+                    id={`type-${type}`}
+                    checked={enabledTypes.includes(type)}
+                    onCheckedChange={() => onToggleType(type)}
+                    disabled={disabled}
+                  />
+                </div>
+              ))}
+            </div>
           </div>
         ))}
       </div>
@@ -395,27 +371,26 @@ function TypeToggleList({ enabledTypes, onToggleType, disabled, td }: TypeToggle
 
 type CreateWebhookFormProps = {
   webhookUrl: string;
-  name: string;
   enabledTypes: DiscordEnabledType[];
   saving: boolean;
   td: ReturnType<typeof useTranslations<"discord">>;
   onWebhookUrlChange: (url: string) => void;
-  onNameChange: (name: string) => void;
   onToggleType: (type: DiscordEnabledType) => void;
+  onSetAll: (types: DiscordEnabledType[]) => void;
   onCreate: (e: React.FormEvent) => void;
 };
 
 function CreateWebhookForm({
   webhookUrl,
-  name,
   enabledTypes,
   saving,
   td,
   onWebhookUrlChange,
-  onNameChange,
   onToggleType,
+  onSetAll,
   onCreate,
 }: CreateWebhookFormProps) {
+  const tc = useTranslations("common");
   return (
     <form onSubmit={onCreate} className="space-y-4">
       <div className="space-y-2">
@@ -433,28 +408,26 @@ function CreateWebhookForm({
         <p className="text-xs text-muted-foreground">{td("webhookUrlHelp")}</p>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="webhook-name">{td("name")}</Label>
-        <Input
-          id="webhook-name"
-          type="text"
-          placeholder={td("namePlaceholder")}
-          value={name}
-          onChange={(e) => onNameChange(e.target.value)}
-          maxLength={100}
-        />
-      </div>
-
       <TypeToggleList
         enabledTypes={enabledTypes}
         onToggleType={onToggleType}
+        onSetAll={onSetAll}
         disabled={saving}
         td={td}
       />
 
-      <Button type="submit" disabled={saving || enabledTypes.length === 0}>
-        {td("save")}
-      </Button>
+      <ResponsiveDialogFooter>
+        <ResponsiveDialogClose asChild>
+          <Button type="button" variant="outline">
+            <X className="h-4 w-4" />
+            {tc("cancel")}
+          </Button>
+        </ResponsiveDialogClose>
+        <Button type="submit" disabled={saving || enabledTypes.length === 0}>
+          <Check className="h-4 w-4" />
+          {td("save")}
+        </Button>
+      </ResponsiveDialogFooter>
     </form>
   );
 }
@@ -463,90 +436,86 @@ type ExistingWebhookViewProps = {
   webhook: WebhookResponse;
   canEdit: boolean;
   locale: string;
-  name: string;
+  webhookUrl: string;
   enabledTypes: DiscordEnabledType[];
   saving: boolean;
   testing: boolean;
+  toggling: boolean;
   hasChanges: boolean;
-  showReactivateForm: boolean;
-  reactivateUrl: string;
   td: ReturnType<typeof useTranslations<"discord">>;
-  onNameChange: (name: string) => void;
+  onWebhookUrlChange: (url: string) => void;
   onToggleType: (type: DiscordEnabledType) => void;
+  onSetAll: (types: DiscordEnabledType[]) => void;
   onUpdate: () => void;
   onTestSend: () => void;
-  onDeleteOpen: () => void;
-  onShowReactivateForm: () => void;
-  onReactivateUrlChange: (url: string) => void;
-  onReactivate: (e: React.FormEvent) => void;
+  onToggleActive: () => void;
 };
 
 function ExistingWebhookView({
   webhook,
   canEdit,
   locale,
-  name,
+  webhookUrl,
   enabledTypes,
   saving,
   testing,
+  toggling,
   hasChanges,
-  showReactivateForm,
-  reactivateUrl,
   td,
-  onNameChange,
+  onWebhookUrlChange,
   onToggleType,
+  onSetAll,
   onUpdate,
   onTestSend,
-  onDeleteOpen,
-  onShowReactivateForm,
-  onReactivateUrlChange,
-  onReactivate,
+  onToggleActive,
 }: ExistingWebhookViewProps) {
+  const tc = useTranslations("common");
+
   return (
     <div className="space-y-4">
-      {/* Status + masked URL */}
-      <div className="flex items-center justify-between">
+      {/* Active toggle */}
+      {canEdit && (
         <div className="flex items-center gap-2">
-          <Badge variant={webhook.isActive ? "default" : "secondary"}>
+          <Switch
+            id="webhook-active"
+            checked={webhook.isActive}
+            onCheckedChange={onToggleActive}
+            disabled={toggling}
+          />
+          <Label htmlFor="webhook-active" className="text-sm">
             {webhook.isActive ? td("active") : td("inactive")}
-          </Badge>
-          <span className="text-sm text-muted-foreground">{webhook.maskedUrl}</span>
-        </div>
-      </div>
-
-      {/* Inactive warning */}
-      {!webhook.isActive && (
-        <div className="flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-950/30">
-          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
-          <div className="space-y-2">
-            <p className="text-sm text-amber-900 dark:text-amber-200">{td("inactiveWarning")}</p>
-            {canEdit && !showReactivateForm && (
-              <Button size="sm" variant="outline" onClick={onShowReactivateForm}>
-                {td("reactivate")}
-              </Button>
-            )}
-          </div>
+          </Label>
         </div>
       )}
 
-      {/* Reactivate form */}
-      {showReactivateForm && canEdit && (
-        <form onSubmit={onReactivate} className="space-y-2">
-          <Label htmlFor="reactivate-url">
-            {td("webhookUrl")} <span className="text-destructive">*</span>
-          </Label>
-          <Input
-            id="reactivate-url"
-            type="url"
-            placeholder={td("webhookUrlPlaceholder")}
-            value={reactivateUrl}
-            onChange={(e) => onReactivateUrlChange(e.target.value)}
-            required
-          />
-          <Button type="submit" disabled={saving}>
-            {td("save")}
-          </Button>
-        </form>
+      {/* Webhook URL + test send */}
+      {canEdit ? (
+        <div className="space-y-3">
+          <div>
+            <Label htmlFor="edit-webhook-url">{td("webhookUrl")}</Label>
+            <p className="mt-1 text-xs text-muted-foreground">{td("webhookUrlChangeHelp")}</p>
+          </div>
+          <div className="flex gap-2">
+            <Input
+              id="edit-webhook-url"
+              type="url"
+              placeholder={webhook.maskedUrl}
+              value={webhookUrl}
+              onChange={(e) => onWebhookUrlChange(e.target.value)}
+            />
+            <Button
+              variant="outline"
+              disabled={testing || !webhook.isActive}
+              onClick={onTestSend}
+              className="shrink-0"
+            >
+              <Send className="h-4 w-4" />
+              {td("testSend")}
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <span className="text-sm text-muted-foreground">{webhook.maskedUrl}</span>
       )}
 
       {/* Last success */}
@@ -556,53 +525,29 @@ function ExistingWebhookView({
         </p>
       )}
 
-      {/* Name (editable) */}
-      {canEdit && (
-        <div className="space-y-2">
-          <Label htmlFor="edit-webhook-name">{td("name")}</Label>
-          <Input
-            id="edit-webhook-name"
-            type="text"
-            placeholder={td("namePlaceholder")}
-            value={name}
-            onChange={(e) => onNameChange(e.target.value)}
-            maxLength={100}
-          />
-        </div>
-      )}
-
       {/* Enabled types */}
       <TypeToggleList
         enabledTypes={enabledTypes}
         onToggleType={onToggleType}
+        onSetAll={onSetAll}
         disabled={!canEdit || saving}
         td={td}
       />
 
-      {/* Actions */}
+      {/* Footer: cancel + save */}
       {canEdit && (
-        <div className="flex flex-wrap gap-2 border-t pt-4">
-          <Button
-            size="sm"
-            disabled={saving || !hasChanges || enabledTypes.length === 0}
-            onClick={onUpdate}
-          >
+        <ResponsiveDialogFooter>
+          <ResponsiveDialogClose asChild>
+            <Button type="button" variant="outline">
+              <X className="h-4 w-4" />
+              {tc("cancel")}
+            </Button>
+          </ResponsiveDialogClose>
+          <Button disabled={saving || !hasChanges || enabledTypes.length === 0} onClick={onUpdate}>
+            <Check className="h-4 w-4" />
             {td("save")}
           </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={testing || !webhook.isActive}
-            onClick={onTestSend}
-          >
-            <Send className="h-4 w-4" />
-            {td("testSend")}
-          </Button>
-          <Button size="sm" variant="destructive" onClick={onDeleteOpen}>
-            <Trash2 className="h-4 w-4" />
-            {td("delete")}
-          </Button>
-        </div>
+        </ResponsiveDialogFooter>
       )}
     </div>
   );

@@ -14,4 +14,8 @@ Trip events can now be sent to a Discord channel via webhooks.
 - Choose which event types to send: schedule changes, candidate additions and reactions, member joins and leaves, expenses, polls, and more
 - If the Webhook URL becomes invalid, notifications are automatically paused and you can check the status from the trip menu
 
+## Improvements
+
+- Fixed activity log display when performing batch operations on candidates or schedules
+
 Please send us your feedback from the Settings page.

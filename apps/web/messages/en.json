@@ -758,13 +758,11 @@
     "lineItemsSection": "Line Items",
     "memberCount": "{count} members",
     "deleteTitle": "Delete this expense?",
-    "deleteDescription": "\"{title}\" ({amount} JPY) will be deleted. This action cannot be undone.",
+    "deleteDescription": "\"{title}\" ({amount}) will be deleted. This action cannot be undone.",
     "settlement": "Settlement",
     "settlementComplete": "Settlement Complete",
     "settlementProgress": "{checked}/{total} done",
-    "unsettled": "Unsettled",
-    "yen": "¥",
-    "amountWithCurrency": "¥{amount}"
+    "unsettled": "Unsettled"
   },
   "poll": {
     "pageTitle": "Quick Poll",

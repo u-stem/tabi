@@ -35,7 +35,7 @@ expenseRoutes.use("*", requireAuth);
 expenseRoutes.get("/:tripId/expenses", requireTripAccess(), async (c) => {
   const tripId = getParam(c, "tripId");
 
-  const [expenseList, members] = await Promise.all([
+  const [expenseList, members, tripRow] = await Promise.all([
     db.query.expenses.findMany({
       where: eq(expenses.tripId, tripId),
       with: {
@@ -52,7 +52,12 @@ expenseRoutes.get("/:tripId/expenses", requireTripAccess(), async (c) => {
       where: eq(tripMembers.tripId, tripId),
       with: { user: { columns: { id: true, name: true } } },
     }),
+    db.query.trips.findFirst({
+      where: eq(trips.id, tripId),
+      columns: { currency: true },
+    }),
   ]);
+  const tripCurrency = (tripRow?.currency ?? "JPY") as CurrencyCode;
 
   const memberInfos = members.map((m) => ({ id: m.user.id, name: m.user.name }));
   const expenseData = expenseList.map((e) => ({
@@ -85,6 +90,7 @@ expenseRoutes.get("/:tripId/expenses", requireTripAccess(), async (c) => {
   });
 
   return c.json({
+    tripCurrency,
     expenses: expenseList,
     settlement,
     settlementPayments: payments,

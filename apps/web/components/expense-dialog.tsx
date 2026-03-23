@@ -1,15 +1,16 @@
 "use client";
 
 import type {
+  CurrencyCode,
   ExpenseCategory,
   ExpenseItem,
   ExpenseSplitType,
   MemberResponse,
 } from "@sugara/shared";
-import { EXPENSE_TITLE_MAX_LENGTH, expenseCategorySchema } from "@sugara/shared";
+import { EXPENSE_TITLE_MAX_LENGTH, expenseCategorySchema, formatCurrency } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { Check, Plus, Trash2, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -56,8 +57,11 @@ export function ExpenseDialog({
   const tm = useTranslations("messages");
   const te = useTranslations("expense");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const tlExpCat = useTranslations("labels.expenseCategory");
   const tlSplit = useTranslations("labels.splitType");
+  // Use the expense's currency when editing, default to JPY for new expenses
+  const expenseCurrency: CurrencyCode = (expense?.currency ?? "JPY") as CurrencyCode;
 
   const { data: members = [] } = useQuery({
     queryKey: queryKeys.trips.members(tripId),
@@ -562,7 +566,7 @@ export function ExpenseDialog({
                           <div key={s.userId} className="flex items-center justify-between text-sm">
                             <span>{member?.name ?? s.userId}</span>
                             <span className="font-medium">
-                              {te("amountWithCurrency", { amount: s.amount.toLocaleString() })}
+                              {formatCurrency(s.amount, expenseCurrency, locale)}
                             </span>
                           </div>
                         );

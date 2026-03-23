@@ -758,13 +758,11 @@
     "lineItemsSection": "品目",
     "memberCount": "{count}人",
     "deleteTitle": "費用を削除しますか?",
-    "deleteDescription": "「{title}」({amount}円) を削除します。この操作は取り消せません。",
+    "deleteDescription": "「{title}」({amount}) を削除します。この操作は取り消せません。",
     "settlement": "精算",
     "settlementComplete": "精算完了",
     "settlementProgress": "{checked}/{total} 完了",
-    "unsettled": "未精算",
-    "yen": "円",
-    "amountWithCurrency": "{amount}円"
+    "unsettled": "未精算"
   },
   "poll": {
     "pageTitle": "かんたん投票",

@@ -1,9 +1,10 @@
 "use client";
 
-import type { ExpensesResponse, Settlement, SettlementPayment } from "@sugara/shared";
+import type { CurrencyCode, ExpensesResponse, Settlement, SettlementPayment } from "@sugara/shared";
+import { formatCurrency } from "@sugara/shared";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { ArrowRight } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
 import { api, getApiErrorMessage } from "@/lib/api";
@@ -14,6 +15,7 @@ type SettlementSectionProps = {
   settlement: Settlement;
   settlementPayments: SettlementPayment[];
   currentUserId: string | undefined;
+  tripCurrency: CurrencyCode;
 };
 
 function findPayment(
@@ -32,9 +34,11 @@ export function SettlementSection({
   settlement,
   settlementPayments,
   currentUserId,
+  tripCurrency,
 }: SettlementSectionProps) {
   const tm = useTranslations("messages");
   const te = useTranslations("expense");
+  const locale = useLocale();
   const queryClient = useQueryClient();
   const transfers = [...settlement.transfers].sort((a, b) => b.amount - a.amount);
   const checkedCount = transfers.filter((t) =>
@@ -223,7 +227,7 @@ export function SettlementSection({
             <span
               className={`ml-auto font-medium ${isChecked ? "line-through text-muted-foreground" : ""}`}
             >
-              {te("amountWithCurrency", { amount: t.amount.toLocaleString() })}
+              {formatCurrency(t.amount, tripCurrency, locale)}
             </span>
           </div>
         );

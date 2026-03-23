@@ -182,7 +182,7 @@ unsettledSummaryRoutes.get("/:userId/unsettled-summary", async (c) => {
   const memberships = await db.query.tripMembers.findMany({
     where: eq(tripMembers.userId, userId),
     with: {
-      trip: { columns: { id: true, title: true } },
+      trip: { columns: { id: true, title: true, currency: true } },
     },
   });
 
@@ -191,6 +191,7 @@ unsettledSummaryRoutes.get("/:userId/unsettled-summary", async (c) => {
   const unsettledTrips: {
     tripId: string;
     tripTitle: string;
+    tripCurrency: string;
     transfers: {
       fromUser: { id: string; name: string };
       toUser: { id: string; name: string };
@@ -246,6 +247,7 @@ unsettledSummaryRoutes.get("/:userId/unsettled-summary", async (c) => {
       unsettledTrips.push({
         tripId: trip.id,
         tripTitle: trip.title,
+        tripCurrency: trip.currency ?? "JPY",
         transfers: unsettledTransfers.map((t) => ({
           fromUser: t.from,
           toUser: t.to,

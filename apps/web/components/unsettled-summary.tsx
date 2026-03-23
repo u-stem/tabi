@@ -1,11 +1,12 @@
 "use client";
 
-import type { UnsettledSummary } from "@sugara/shared";
+import type { CurrencyCode, UnsettledSummary } from "@sugara/shared";
+import { formatCurrency } from "@sugara/shared";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { api } from "@/lib/api";
 import { QUERY_CONFIG } from "@/lib/query-config";
 import { queryKeys } from "@/lib/query-keys";
@@ -17,6 +18,7 @@ type UnsettledSummarySectionProps = {
 
 export function UnsettledSummarySection({ userId, isOwnProfile }: UnsettledSummarySectionProps) {
   const te = useTranslations("expense");
+  const locale = useLocale();
   const pathname = usePathname();
   const { data } = useQuery({
     queryKey: queryKeys.settlement.unsettled(userId),
@@ -37,6 +39,7 @@ export function UnsettledSummarySection({ userId, isOwnProfile }: UnsettledSumma
         {te("unsettled")}
       </h2>
       {data.trips.map((trip) => {
+        const tc = (trip.tripCurrency ?? "JPY") as CurrencyCode;
         const owed = trip.transfers
           .filter((t) => t.fromUser.id === userId)
           .reduce((sum, t) => sum + t.amount, 0);
@@ -67,11 +70,13 @@ export function UnsettledSummarySection({ userId, isOwnProfile }: UnsettledSumma
             </div>
             <div className="flex shrink-0 items-center gap-2">
               {owed > 0 && (
-                <span className="font-medium text-destructive">-¥{owed.toLocaleString()}</span>
+                <span className="font-medium text-destructive">
+                  -{formatCurrency(owed, tc, locale)}
+                </span>
               )}
               {owedTo > 0 && (
                 <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                  +¥{owedTo.toLocaleString()}
+                  +{formatCurrency(owedTo, tc, locale)}
                 </span>
               )}
               <ChevronRight className="h-4 w-4 text-muted-foreground" />

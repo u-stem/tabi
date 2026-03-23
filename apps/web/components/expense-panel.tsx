@@ -1,9 +1,10 @@
 "use client";
 
-import type { ExpenseItem, ExpensesResponse } from "@sugara/shared";
+import type { CurrencyCode, ExpenseItem, ExpensesResponse } from "@sugara/shared";
+import { formatCurrency } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { Collapsible as CollapsiblePrimitive } from "radix-ui";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -46,6 +47,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
   const tm = useTranslations("messages");
   const te = useTranslations("expense");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const isMobile = useMobile();
   const queryClient = useQueryClient();
   const { data: session } = useSession();
@@ -89,7 +91,8 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
     setDialogOpen(true);
   };
 
-  const { expenses, settlement, settlementPayments, categoryTotals } = data ?? {
+  const { tripCurrency, expenses, settlement, settlementPayments, categoryTotals } = data ?? {
+    tripCurrency: "JPY" as CurrencyCode,
     expenses: [],
     settlement: { totalAmount: 0, balances: [], transfers: [] },
     settlementPayments: [],
@@ -126,7 +129,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
             <div className="flex items-center justify-between p-3">
               <span className="text-sm font-medium">{te("totalSpending")}</span>
               <span className="text-sm font-bold">
-                {te("amountWithCurrency", { amount: settlement.totalAmount.toLocaleString() })}
+                {formatCurrency(settlement.totalAmount, tripCurrency, locale)}
               </span>
             </div>
             {settlement.transfers.length > 0 && (
@@ -158,7 +161,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
                             }
                           >
                             {b.net > 0 ? "+" : ""}
-                            {te("amountWithCurrency", { amount: b.net.toLocaleString() })}
+                            {formatCurrency(b.net, tripCurrency, locale)}
                           </span>
                         </div>
                       ))}
@@ -181,7 +184,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
                               </span>
                             </span>
                             <span className="font-medium">
-                              {te("amountWithCurrency", { amount: ct.total.toLocaleString() })}
+                              {formatCurrency(ct.total, tripCurrency, locale)}
                             </span>
                           </div>
                         ))}
@@ -202,6 +205,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
               settlement={settlement}
               settlementPayments={settlementPayments}
               currentUserId={session?.user?.id}
+              tripCurrency={tripCurrency}
             />
           )}
 
@@ -243,7 +247,9 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
                 <ResponsiveAlertDialogDescription>
                   {te("deleteDescription", {
                     title: deleteTarget?.title ?? "",
-                    amount: deleteTarget?.amount.toLocaleString() ?? "",
+                    amount: deleteTarget
+                      ? formatCurrency(deleteTarget.amount, deleteTarget.currency, locale)
+                      : "",
                   })}
                 </ResponsiveAlertDialogDescription>
               </ResponsiveAlertDialogHeader>
@@ -284,8 +290,10 @@ function ExpenseRow({
   const [sheetOpen, setSheetOpen] = useState(false);
   const te = useTranslations("expense");
   const tc = useTranslations("common");
+  const locale = useLocale();
   const tlExpCat = useTranslations("labels.expenseCategory");
   const tlSplit = useTranslations("labels.splitType");
+  const currency = expense.currency ?? ("JPY" as CurrencyCode);
 
   return (
     <CollapsiblePrimitive.Root className="rounded-md border">
@@ -303,7 +311,7 @@ function ExpenseRow({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <span className="text-sm font-bold">
-            {te("amountWithCurrency", { amount: expense.amount.toLocaleString() })}
+            {formatCurrency(expense.amount, currency, locale)}
           </span>
           {canEdit &&
             (isMobile ? (
@@ -367,7 +375,7 @@ function ExpenseRow({
                       </span>
                     </span>
                     <span className="font-medium">
-                      {te("amountWithCurrency", { amount: item.amount.toLocaleString() })}
+                      {formatCurrency(item.amount, currency, locale)}
                     </span>
                   </div>
                 ))}
@@ -389,7 +397,7 @@ function ExpenseRow({
                       <span translate="yes">{split.user.name}</span>
                     </span>
                     <span className="font-medium">
-                      {te("amountWithCurrency", { amount: split.amount.toLocaleString() })}
+                      {formatCurrency(split.amount, currency, locale)}
                     </span>
                   </div>
                 ))}

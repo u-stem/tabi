@@ -1,3 +1,4 @@
+import type { CurrencyCode } from "./currency";
 import type { BookmarkListVisibility } from "./schemas/bookmark";
 import type { ExpenseCategory, ExpenseSplitType } from "./schemas/expense";
 import type { MemberRole } from "./schemas/member";
@@ -266,6 +267,7 @@ export type ExpenseItem = {
   id: string;
   title: string;
   amount: number;
+  currency: CurrencyCode;
   splitType: ExpenseSplitType;
   category: ExpenseCategory | null;
   paidByUserId: string;
@@ -295,6 +297,7 @@ export type CategoryTotal = {
 };
 
 export type ExpensesResponse = {
+  tripCurrency: CurrencyCode;
   expenses: ExpenseItem[];
   settlement: Settlement;
   settlementPayments: SettlementPayment[];
@@ -320,6 +323,7 @@ export type UnsettledTransfer = {
 export type UnsettledTrip = {
   tripId: string;
   tripTitle: string;
+  tripCurrency: CurrencyCode;
   transfers: UnsettledTransfer[];
 };
 

@@ -30,6 +30,10 @@ jobs:
       - name: TypeScript
         run: bun run check-types
 
+      - name: Dependency audit
+        run: bun audit --level moderate
+        continue-on-error: true
+
   test:
     runs-on: ubuntu-latest
     steps:

@@ -7,8 +7,37 @@ permissions:
   pull-requests: write
 
 jobs:
+  update-lockfile:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "1.3.2"
+
+      - name: Update lockfile
+        run: bun install
+
+      - name: Commit lockfile if changed
+        run: |
+          if git diff --quiet bun.lock; then
+            echo "Lockfile is up to date"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add bun.lock
+            git commit -m "chore: bun.lock を更新"
+            git push
+          fi
+
   auto-merge:
     runs-on: ubuntu-latest
+    needs: update-lockfile
     if: github.actor == 'dependabot[bot]'
     steps:
       - name: Fetch Dependabot metadata

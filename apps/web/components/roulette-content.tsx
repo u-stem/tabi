@@ -23,6 +23,8 @@ import { isDialogOpen } from "@/lib/hotkeys";
 import { ALL_PREFECTURE_KEYS, REGIONS } from "@/lib/prefectures";
 import { queryKeys } from "@/lib/query-keys";
 import {
+  ALL_COUNTRY_KEYS,
+  COUNTRY_REGIONS,
   CUISINE_KEYS,
   PRESET_CATEGORIES,
   type PresetCategory,
@@ -176,6 +178,77 @@ function PrefecturePreset() {
   );
 }
 
+function CountryPreset() {
+  const tt = useTranslations("tools");
+  const tc = useTranslations("countries");
+  const [selectedRegions, setSelectedRegions] = useState<Set<string>>(new Set());
+
+  const candidateKeys = useMemo(() => {
+    if (selectedRegions.size === 0) return ALL_COUNTRY_KEYS;
+    return COUNTRY_REGIONS.filter((r) => selectedRegions.has(r.nameKey)).flatMap(
+      (r) => r.countryKeys,
+    );
+  }, [selectedRegions]);
+
+  const candidates = useMemo(
+    () => candidateKeys.map((key) => tc(key as "china")),
+    [candidateKeys, tc],
+  );
+
+  const { state, display, spin, reset } = useRoulette(candidates);
+
+  const toggleRegion = useCallback(
+    (nameKey: string) => {
+      reset();
+      setSelectedRegions((prev) => {
+        const next = new Set(prev);
+        if (next.has(nameKey)) {
+          next.delete(nameKey);
+        } else {
+          next.add(nameKey);
+        }
+        return next;
+      });
+    },
+    [reset],
+  );
+
+  return (
+    <div className="space-y-4">
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">{tt("regionFilter")}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {COUNTRY_REGIONS.map((r) => (
+            <button
+              key={r.nameKey}
+              type="button"
+              onClick={() => toggleRegion(r.nameKey)}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                selectedRegions.has(r.nameKey)
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-input bg-background text-muted-foreground hover:bg-accent",
+              )}
+            >
+              {tc(r.nameKey as "regionEastAsia")}
+            </button>
+          ))}
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {tt("itemCount", { count: candidates.length })}
+        </p>
+      </div>
+      <RouletteDisplay
+        state={state}
+        display={display}
+        onSpin={spin}
+        onReset={reset}
+        disabled={candidates.length === 0}
+      />
+    </div>
+  );
+}
+
 function SimplePreset({
   keys,
   namespace,
@@ -233,6 +306,7 @@ function PresetMode() {
         </div>
       </div>
       {category === "prefecture" && <PrefecturePreset />}
+      {category === "country" && <CountryPreset />}
       {category === "cuisine" && <SimplePreset keys={CUISINE_KEYS} namespace="cuisine" />}
       {category === "transport" && <SimplePreset keys={TRANSPORT_KEYS} namespace="transport" />}
     </div>

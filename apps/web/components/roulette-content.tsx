@@ -409,6 +409,12 @@ function BookmarkMode() {
 
   const { state, display, spin, reset } = useRoulette(candidates);
 
+  if (!isLoading && bookmarkLists.length === 0) {
+    return (
+      <p className="py-8 text-center text-sm text-muted-foreground">{tt("noBookmarkLists")}</p>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">

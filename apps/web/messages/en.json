@@ -1261,7 +1261,8 @@
     "add": "Add",
     "selectList": "Select List",
     "loadingList": "Loading...",
-    "bookmarkCount": "{count}"
+    "bookmarkCount": "{count}",
+    "noBookmarkLists": "No bookmark lists"
   },
   "install": {
     "bannerText": "You can add this app to your home screen",

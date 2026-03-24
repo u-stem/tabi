@@ -38,19 +38,20 @@ export const TRANSPORT_KEYS = [
   "hitchhike",
 ] as const;
 
-export type CountryRegion = {
+// Unified region group type shared by prefecture and country presets
+export type RegionGroup = {
   nameKey: string;
-  countryKeys: string[];
+  keys: string[];
 };
 
-export const COUNTRY_REGIONS: CountryRegion[] = [
+const COUNTRY_REGIONS_CONST = [
   {
     nameKey: "regionEastAsia",
-    countryKeys: ["china", "south_korea", "taiwan", "hong_kong", "mongolia"],
+    keys: ["china", "south_korea", "taiwan", "hong_kong", "mongolia"],
   },
   {
     nameKey: "regionSoutheastAsia",
-    countryKeys: [
+    keys: [
       "thailand",
       "vietnam",
       "singapore",
@@ -64,15 +65,15 @@ export const COUNTRY_REGIONS: CountryRegion[] = [
   },
   {
     nameKey: "regionSouthAsia",
-    countryKeys: ["india", "sri_lanka", "nepal", "maldives"],
+    keys: ["india", "sri_lanka", "nepal", "maldives"],
   },
   {
     nameKey: "regionMiddleEast",
-    countryKeys: ["turkey", "uae", "israel", "jordan", "oman", "qatar"],
+    keys: ["turkey", "uae", "israel", "jordan", "oman", "qatar"],
   },
   {
     nameKey: "regionWesternEurope",
-    countryKeys: [
+    keys: [
       "uk",
       "france",
       "germany",
@@ -88,31 +89,33 @@ export const COUNTRY_REGIONS: CountryRegion[] = [
   },
   {
     nameKey: "regionNorthernEurope",
-    countryKeys: ["sweden", "norway", "finland", "denmark", "iceland"],
+    keys: ["sweden", "norway", "finland", "denmark", "iceland"],
   },
   {
     nameKey: "regionEasternEurope",
-    countryKeys: ["poland", "czech", "hungary", "croatia", "greece", "romania", "bulgaria"],
+    keys: ["poland", "czech", "hungary", "croatia", "greece", "romania", "bulgaria"],
   },
   {
     nameKey: "regionNorthAmerica",
-    countryKeys: ["usa", "canada", "mexico"],
+    keys: ["usa", "canada", "mexico"],
   },
   {
     nameKey: "regionCentralSouthAmerica",
-    countryKeys: ["brazil", "argentina", "peru", "chile", "colombia", "cuba", "costa_rica"],
+    keys: ["brazil", "argentina", "peru", "chile", "colombia", "cuba", "costa_rica"],
   },
   {
     nameKey: "regionAfrica",
-    countryKeys: ["egypt", "morocco", "south_africa", "kenya", "tanzania", "ethiopia"],
+    keys: ["egypt", "morocco", "south_africa", "kenya", "tanzania", "ethiopia"],
   },
   {
     nameKey: "regionOceania",
-    countryKeys: ["australia", "new_zealand", "fiji", "guam", "hawaii"],
+    keys: ["australia", "new_zealand", "fiji", "guam", "hawaii"],
   },
-];
+] as const satisfies readonly RegionGroup[];
 
-export const ALL_COUNTRY_KEYS = COUNTRY_REGIONS.flatMap((r) => r.countryKeys);
+export const COUNTRY_REGIONS: RegionGroup[] = COUNTRY_REGIONS_CONST as unknown as RegionGroup[];
+
+export const ALL_COUNTRY_KEYS = COUNTRY_REGIONS_CONST.flatMap((r) => r.keys);
 
 export type PresetCategory = "prefecture" | "country" | "cuisine" | "transport";
 

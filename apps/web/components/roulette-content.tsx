@@ -28,6 +28,7 @@ import {
   CUISINE_KEYS,
   PRESET_CATEGORIES,
   type PresetCategory,
+  type RegionGroup,
   TRANSPORT_KEYS,
 } from "@/lib/roulette-presets";
 import { cn } from "@/lib/utils";
@@ -108,20 +109,27 @@ function RouletteDisplay({
   );
 }
 
-function PrefecturePreset() {
+function RegionFilterPreset({
+  regions,
+  allKeys,
+  namespace,
+}: {
+  regions: RegionGroup[];
+  allKeys: string[];
+  namespace: "prefectures" | "countries";
+}) {
   const tt = useTranslations("tools");
-  const tp = useTranslations("prefectures");
+  const tn = useTranslations(namespace);
   const [selectedRegions, setSelectedRegions] = useState<Set<string>>(new Set());
 
   const candidateKeys = useMemo(() => {
-    if (selectedRegions.size === 0) return ALL_PREFECTURE_KEYS;
-    return REGIONS.filter((r) => selectedRegions.has(r.nameKey)).flatMap((r) => r.prefectureKeys);
-  }, [selectedRegions]);
+    if (selectedRegions.size === 0) return allKeys;
+    return regions.filter((r) => selectedRegions.has(r.nameKey)).flatMap((r) => r.keys);
+  }, [selectedRegions, allKeys, regions]);
 
-  // Translate keys to display names for the roulette
   const candidates = useMemo(
-    () => candidateKeys.map((key) => tp(key as "hokkaido")),
-    [candidateKeys, tp],
+    () => candidateKeys.map((key) => tn(key as "hokkaido")),
+    [candidateKeys, tn],
   );
 
   const { state, display, spin, reset } = useRoulette(candidates);
@@ -147,7 +155,7 @@ function PrefecturePreset() {
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">{tt("regionFilter")}</p>
         <div className="flex flex-wrap gap-1.5">
-          {REGIONS.map((r) => (
+          {regions.map((r) => (
             <button
               key={r.nameKey}
               type="button"
@@ -159,78 +167,7 @@ function PrefecturePreset() {
                   : "border-input bg-background text-muted-foreground hover:bg-accent",
               )}
             >
-              {tp(r.nameKey as "regionHokkaido")}
-            </button>
-          ))}
-        </div>
-        <p className="text-xs text-muted-foreground">
-          {tt("itemCount", { count: candidates.length })}
-        </p>
-      </div>
-      <RouletteDisplay
-        state={state}
-        display={display}
-        onSpin={spin}
-        onReset={reset}
-        disabled={candidates.length === 0}
-      />
-    </div>
-  );
-}
-
-function CountryPreset() {
-  const tt = useTranslations("tools");
-  const tc = useTranslations("countries");
-  const [selectedRegions, setSelectedRegions] = useState<Set<string>>(new Set());
-
-  const candidateKeys = useMemo(() => {
-    if (selectedRegions.size === 0) return ALL_COUNTRY_KEYS;
-    return COUNTRY_REGIONS.filter((r) => selectedRegions.has(r.nameKey)).flatMap(
-      (r) => r.countryKeys,
-    );
-  }, [selectedRegions]);
-
-  const candidates = useMemo(
-    () => candidateKeys.map((key) => tc(key as "china")),
-    [candidateKeys, tc],
-  );
-
-  const { state, display, spin, reset } = useRoulette(candidates);
-
-  const toggleRegion = useCallback(
-    (nameKey: string) => {
-      reset();
-      setSelectedRegions((prev) => {
-        const next = new Set(prev);
-        if (next.has(nameKey)) {
-          next.delete(nameKey);
-        } else {
-          next.add(nameKey);
-        }
-        return next;
-      });
-    },
-    [reset],
-  );
-
-  return (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <p className="text-sm text-muted-foreground">{tt("regionFilter")}</p>
-        <div className="flex flex-wrap gap-1.5">
-          {COUNTRY_REGIONS.map((r) => (
-            <button
-              key={r.nameKey}
-              type="button"
-              onClick={() => toggleRegion(r.nameKey)}
-              className={cn(
-                "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
-                selectedRegions.has(r.nameKey)
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-input bg-background text-muted-foreground hover:bg-accent",
-              )}
-            >
-              {tc(r.nameKey as "regionEastAsia")}
+              {tn(r.nameKey as "regionHokkaido")}
             </button>
           ))}
         </div>
@@ -305,10 +242,28 @@ function PresetMode() {
           ))}
         </div>
       </div>
-      {category === "prefecture" && <PrefecturePreset />}
-      {category === "country" && <CountryPreset />}
-      {category === "cuisine" && <SimplePreset keys={CUISINE_KEYS} namespace="cuisine" />}
-      {category === "transport" && <SimplePreset keys={TRANSPORT_KEYS} namespace="transport" />}
+      {category === "prefecture" && (
+        <RegionFilterPreset
+          key="prefecture"
+          regions={REGIONS}
+          allKeys={ALL_PREFECTURE_KEYS}
+          namespace="prefectures"
+        />
+      )}
+      {category === "country" && (
+        <RegionFilterPreset
+          key="country"
+          regions={COUNTRY_REGIONS}
+          allKeys={ALL_COUNTRY_KEYS}
+          namespace="countries"
+        />
+      )}
+      {category === "cuisine" && (
+        <SimplePreset key="cuisine" keys={CUISINE_KEYS} namespace="cuisine" />
+      )}
+      {category === "transport" && (
+        <SimplePreset key="transport" keys={TRANSPORT_KEYS} namespace="transport" />
+      )}
     </div>
   );
 }

@@ -1723,8 +1723,8 @@
     "australia": "Australia",
     "new_zealand": "New Zealand",
     "fiji": "Fiji",
-    "guam": "Guam",
-    "hawaii": "Hawaii"
+    "guam": "Guam (US)",
+    "hawaii": "Hawaii (US)"
   },
   "passwordRules": {
     "minLength": "At least {count} characters",

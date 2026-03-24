@@ -22,9 +22,18 @@ import { useRoulette } from "@/lib/hooks/use-roulette";
 import { isDialogOpen } from "@/lib/hotkeys";
 import { ALL_PREFECTURE_KEYS, REGIONS } from "@/lib/prefectures";
 import { queryKeys } from "@/lib/query-keys";
+import {
+  ALL_COUNTRY_KEYS,
+  COUNTRY_REGIONS,
+  CUISINE_KEYS,
+  PRESET_CATEGORIES,
+  type PresetCategory,
+  type RegionGroup,
+  TRANSPORT_KEYS,
+} from "@/lib/roulette-presets";
 import { cn } from "@/lib/utils";
 
-type Mode = "prefecture" | "custom" | "bookmark";
+type Mode = "preset" | "custom" | "bookmark";
 
 function RouletteDisplay({
   state,
@@ -100,20 +109,27 @@ function RouletteDisplay({
   );
 }
 
-function PrefectureMode() {
+function RegionFilterPreset({
+  regions,
+  allKeys,
+  namespace,
+}: {
+  regions: RegionGroup[];
+  allKeys: string[];
+  namespace: "prefectures" | "countries";
+}) {
   const tt = useTranslations("tools");
-  const tp = useTranslations("prefectures");
+  const tn = useTranslations(namespace);
   const [selectedRegions, setSelectedRegions] = useState<Set<string>>(new Set());
 
   const candidateKeys = useMemo(() => {
-    if (selectedRegions.size === 0) return ALL_PREFECTURE_KEYS;
-    return REGIONS.filter((r) => selectedRegions.has(r.nameKey)).flatMap((r) => r.prefectureKeys);
-  }, [selectedRegions]);
+    if (selectedRegions.size === 0) return allKeys;
+    return regions.filter((r) => selectedRegions.has(r.nameKey)).flatMap((r) => r.keys);
+  }, [selectedRegions, allKeys, regions]);
 
-  // Translate keys to display names for the roulette
   const candidates = useMemo(
-    () => candidateKeys.map((key) => tp(key as "hokkaido")),
-    [candidateKeys, tp],
+    () => candidateKeys.map((key) => tn(key as "hokkaido")),
+    [candidateKeys, tn],
   );
 
   const { state, display, spin, reset } = useRoulette(candidates);
@@ -139,7 +155,7 @@ function PrefectureMode() {
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">{tt("regionFilter")}</p>
         <div className="flex flex-wrap gap-1.5">
-          {REGIONS.map((r) => (
+          {regions.map((r) => (
             <button
               key={r.nameKey}
               type="button"
@@ -151,7 +167,7 @@ function PrefectureMode() {
                   : "border-input bg-background text-muted-foreground hover:bg-accent",
               )}
             >
-              {tp(r.nameKey as "regionHokkaido")}
+              {tn(r.nameKey as "regionHokkaido")}
             </button>
           ))}
         </div>
@@ -166,6 +182,88 @@ function PrefectureMode() {
         onReset={reset}
         disabled={candidates.length === 0}
       />
+    </div>
+  );
+}
+
+function SimplePreset({
+  keys,
+  namespace,
+}: {
+  keys: readonly string[];
+  namespace: "cuisine" | "transport";
+}) {
+  const tt = useTranslations("tools");
+  const tn = useTranslations(namespace);
+
+  const candidates = useMemo(() => keys.map((key) => tn(key as "japanese")), [keys, tn]);
+
+  const { state, display, spin, reset } = useRoulette(candidates);
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">
+        {tt("itemCount", { count: candidates.length })}
+      </p>
+      <RouletteDisplay
+        state={state}
+        display={display}
+        onSpin={spin}
+        onReset={reset}
+        disabled={candidates.length === 0}
+      />
+    </div>
+  );
+}
+
+function PresetMode() {
+  const tt = useTranslations("tools");
+  const [category, setCategory] = useState<PresetCategory>("prefecture");
+
+  return (
+    <div className="space-y-6">
+      <div className="space-y-2">
+        <p className="text-sm text-muted-foreground">{tt("presetCategory")}</p>
+        <div className="flex flex-wrap gap-1.5">
+          {PRESET_CATEGORIES.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => setCategory(cat)}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-sm font-medium transition-colors",
+                category === cat
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-input bg-background text-muted-foreground hover:bg-accent",
+              )}
+            >
+              {tt(cat)}
+            </button>
+          ))}
+        </div>
+      </div>
+      {category === "prefecture" && (
+        <RegionFilterPreset
+          key="prefecture"
+          regions={REGIONS}
+          allKeys={ALL_PREFECTURE_KEYS}
+          namespace="prefectures"
+        />
+      )}
+      {category === "country" && (
+        <RegionFilterPreset
+          key="country"
+          regions={COUNTRY_REGIONS}
+          allKeys={ALL_COUNTRY_KEYS}
+          namespace="countries"
+        />
+      )}
+      {category === "cuisine" && (
+        <SimplePreset key="cuisine" keys={CUISINE_KEYS} namespace="cuisine" />
+      )}
+      {category === "transport" && (
+        <SimplePreset key="transport" keys={TRANSPORT_KEYS} namespace="transport" />
+      )}
     </div>
   );
 }
@@ -266,6 +364,10 @@ function BookmarkMode() {
 
   const { state, display, spin, reset } = useRoulette(candidates);
 
+  if (!isLoading && bookmarkLists.length === 0) {
+    return <p className="py-8 text-center text-muted-foreground">{tt("noBookmarkLists")}</p>;
+  }
+
   return (
     <div className="space-y-4">
       <div className="space-y-2">
@@ -299,15 +401,15 @@ function BookmarkMode() {
 }
 
 export const ROULETTE_MODES = [
-  { value: "prefecture", labelKey: "prefecture" },
+  { value: "preset", labelKey: "preset" },
   { value: "custom", labelKey: "custom" },
   { value: "bookmark", labelKey: "bookmark" },
 ] as const;
 
 export function RouletteModeContent({ mode }: { mode: Mode }) {
   switch (mode) {
-    case "prefecture":
-      return <PrefectureMode />;
+    case "preset":
+      return <PresetMode />;
     case "custom":
       return <CustomMode />;
     case "bookmark":
@@ -317,7 +419,7 @@ export function RouletteModeContent({ mode }: { mode: Mode }) {
 
 export function RouletteContent() {
   const tt = useTranslations("tools");
-  const [mode, setMode] = useState<Mode>("prefecture");
+  const [mode, setMode] = useState<Mode>("preset");
 
   return (
     <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
@@ -329,7 +431,7 @@ export function RouletteContent() {
         ))}
       </TabsList>
       {ROULETTE_MODES.map((m) => (
-        <TabsContent key={m.value} value={m.value}>
+        <TabsContent key={m.value} value={m.value} className="mt-4">
           <RouletteModeContent mode={m.value} />
         </TabsContent>
       ))}

@@ -186,6 +186,35 @@ describe("Feedback routes", () => {
     expect(reqBody.body).not.toContain("data:");
   });
 
+  it("returns 429 when rate limit is exceeded", async () => {
+    mockFetch.mockImplementation(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ html_url: "https://github.com/owner/repo/issues/99" }), {
+          status: 201,
+        }),
+      ),
+    );
+    const app = createTestApp(feedbackRoutes, "/api");
+    const makeRequest = () =>
+      app.request("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-forwarded-for": "10.0.99.1" },
+        body: JSON.stringify({ body: "Rate limit test" }),
+      });
+
+    // First 5 requests should succeed (RATE_LIMIT_FEEDBACK.max = 5)
+    for (let i = 0; i < 5; i++) {
+      const res = await makeRequest();
+      expect(res.status).toBe(201);
+    }
+
+    // 6th request should be rate-limited
+    const res = await makeRequest();
+    expect(res.status).toBe(429);
+    const data = await res.json();
+    expect(data.error).toBeDefined();
+  });
+
   it("returns 500 when GitHub env vars are not configured", async () => {
     vi.stubEnv("GITHUB_TOKEN", "");
     vi.stubEnv("GITHUB_FEEDBACK_REPO", "");

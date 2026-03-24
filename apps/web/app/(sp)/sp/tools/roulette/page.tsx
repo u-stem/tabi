@@ -24,7 +24,7 @@ export default function SpRoulettePage() {
     document.title = pageTitle(tt("roulette"));
   }, [tt]);
 
-  const [mode, setMode] = useState<Mode>("prefecture");
+  const [mode, setMode] = useState<Mode>("preset");
 
   const changeMode = useCallback((next: Mode) => {
     setMode(next);

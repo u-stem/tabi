@@ -1,23 +1,20 @@
+import type { RegionGroup } from "@/lib/roulette-presets";
+
 // Prefecture keys mapped to message keys in the "prefectures" namespace
 export type PrefectureKey = (typeof ALL_PREFECTURE_KEYS)[number];
 
-export type Region = {
-  nameKey: string;
-  prefectureKeys: string[];
-};
-
-export const REGIONS: Region[] = [
+export const REGIONS: RegionGroup[] = [
   {
     nameKey: "regionHokkaido",
-    prefectureKeys: ["hokkaido", "aomori", "iwate", "miyagi", "akita", "yamagata", "fukushima"],
+    keys: ["hokkaido", "aomori", "iwate", "miyagi", "akita", "yamagata", "fukushima"],
   },
   {
     nameKey: "regionKanto",
-    prefectureKeys: ["ibaraki", "tochigi", "gunma", "saitama", "chiba", "tokyo", "kanagawa"],
+    keys: ["ibaraki", "tochigi", "gunma", "saitama", "chiba", "tokyo", "kanagawa"],
   },
   {
     nameKey: "regionChubu",
-    prefectureKeys: [
+    keys: [
       "niigata",
       "toyama",
       "ishikawa",
@@ -31,11 +28,11 @@ export const REGIONS: Region[] = [
   },
   {
     nameKey: "regionKinki",
-    prefectureKeys: ["mie", "shiga", "kyoto", "osaka", "hyogo", "nara", "wakayama"],
+    keys: ["mie", "shiga", "kyoto", "osaka", "hyogo", "nara", "wakayama"],
   },
   {
     nameKey: "regionChugokuShikoku",
-    prefectureKeys: [
+    keys: [
       "tottori",
       "shimane",
       "okayama",
@@ -49,17 +46,8 @@ export const REGIONS: Region[] = [
   },
   {
     nameKey: "regionKyushu",
-    prefectureKeys: [
-      "fukuoka",
-      "saga",
-      "nagasaki",
-      "kumamoto",
-      "oita",
-      "miyazaki",
-      "kagoshima",
-      "okinawa",
-    ],
+    keys: ["fukuoka", "saga", "nagasaki", "kumamoto", "oita", "miyazaki", "kagoshima", "okinawa"],
   },
 ];
 
-export const ALL_PREFECTURE_KEYS = REGIONS.flatMap((r) => r.prefectureKeys);
+export const ALL_PREFECTURE_KEYS = REGIONS.flatMap((r) => r.keys);

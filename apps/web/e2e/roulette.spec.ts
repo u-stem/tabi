@@ -1,14 +1,17 @@
 import { expect, test } from "./fixtures/auth";
 
 test.describe("Roulette", () => {
-  test("spins with prefecture mode", async ({ authenticatedPage: page }) => {
+  test("spins with prefecture preset", async ({ authenticatedPage: page }) => {
     await page.goto("/tools/roulette");
 
-    // Default mode is prefecture
-    await expect(page.getByRole("tab", { name: "都道府県" })).toHaveAttribute(
+    // Default mode is preset
+    await expect(page.getByRole("tab", { name: "プリセット" })).toHaveAttribute(
       "data-state",
       "active",
     );
+
+    // Default category is prefecture (都道府県)
+    await expect(page.getByRole("button", { name: "都道府県" })).toBeVisible();
 
     // Spin the roulette
     await page.getByRole("button", { name: "回す" }).click();
@@ -18,7 +21,7 @@ test.describe("Roulette", () => {
     await expect(page.getByRole("button", { name: "リセット" })).toBeVisible();
   });
 
-  test("filters by region in prefecture mode", async ({ authenticatedPage: page }) => {
+  test("filters by region in prefecture preset", async ({ authenticatedPage: page }) => {
     await page.goto("/tools/roulette");
 
     // Select a region filter (button text includes region name like "北海道・東北")
@@ -30,6 +33,62 @@ test.describe("Roulette", () => {
 
     // Region filter button should still be selected (active state)
     await expect(page.getByRole("button", { name: "北海道・東北" })).toBeVisible();
+  });
+
+  test("switches to cuisine preset and spins", async ({ authenticatedPage: page }) => {
+    await page.goto("/tools/roulette");
+
+    // Click cuisine category pill
+    await page.getByRole("button", { name: "食事ジャンル" }).click();
+
+    // Item count should be visible (cuisine has 20 items)
+    await expect(page.getByText(/\d+件/)).toBeVisible();
+
+    // Spin
+    await page.getByRole("button", { name: "回す" }).click();
+    await expect(page.getByRole("button", { name: "もう一回" })).toBeVisible({ timeout: 10000 });
+  });
+
+  test("switches to transport preset and spins", async ({ authenticatedPage: page }) => {
+    await page.goto("/tools/roulette");
+
+    // Click transport category pill
+    await page.getByRole("button", { name: "移動手段" }).click();
+
+    // Item count should be visible
+    await expect(page.getByText(/\d+件/)).toBeVisible();
+
+    // Spin
+    await page.getByRole("button", { name: "回す" }).click();
+    await expect(page.getByRole("button", { name: "もう一回" })).toBeVisible({ timeout: 10000 });
+  });
+
+  test("switches to country preset and filters by region", async ({
+    authenticatedPage: page,
+  }) => {
+    await page.goto("/tools/roulette");
+
+    // Click country category pill
+    await page.getByRole("button", { name: "国・地域" }).click();
+
+    // Region filter should appear; click East Asia
+    await page.getByRole("button", { name: "東アジア" }).click();
+
+    // Spin
+    await page.getByRole("button", { name: "回す" }).click();
+    await expect(page.getByRole("button", { name: "もう一回" })).toBeVisible({ timeout: 10000 });
+  });
+
+  test("shows empty state in bookmark mode when no lists", async ({
+    authenticatedPage: page,
+  }) => {
+    await page.goto("/tools/roulette");
+
+    // Switch to bookmark tab
+    await page.getByRole("tab", { name: "ブックマーク" }).click();
+
+    // Should show empty state
+    await expect(page.getByText("リストがありません")).toBeVisible();
   });
 
   test("uses custom mode", async ({ authenticatedPage: page }) => {

@@ -478,7 +478,7 @@ export function RouletteContent() {
         ))}
       </TabsList>
       {ROULETTE_MODES.map((m) => (
-        <TabsContent key={m.value} value={m.value}>
+        <TabsContent key={m.value} value={m.value} className="mt-4">
           <RouletteModeContent mode={m.value} />
         </TabsContent>
       ))}

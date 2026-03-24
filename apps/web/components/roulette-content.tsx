@@ -284,7 +284,7 @@ function PresetMode() {
   const [category, setCategory] = useState<PresetCategory>("prefecture");
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="space-y-2">
         <p className="text-sm text-muted-foreground">{tt("presetCategory")}</p>
         <div className="flex flex-wrap gap-1.5">

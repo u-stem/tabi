@@ -225,6 +225,7 @@ describe("Share routes", () => {
         startDate: "2025-07-01",
         endDate: "2025-07-03",
         days: [],
+        schedules: [],
       };
       mockDbQuery.trips.findFirst.mockResolvedValue(sharedTrip);
 
@@ -237,6 +238,58 @@ describe("Share routes", () => {
       expect(body.ownerId).toBeUndefined();
       expect(body.shareToken).toBeUndefined();
       expect(body.shareTokenExpiresAt).toBeUndefined();
+    });
+
+    it("returns candidates (schedules without dayPatternId) in response", async () => {
+      const sharedTrip = {
+        id: "trip-1",
+        ownerId: "user-1",
+        shareToken: "valid-token",
+        shareTokenExpiresAt: new Date("2030-01-01"),
+        title: "Tokyo Trip",
+        destination: "Tokyo",
+        startDate: "2025-07-01",
+        endDate: "2025-07-03",
+        days: [],
+        schedules: [
+          {
+            id: "sched-1",
+            name: "Senso-ji Temple",
+            category: "sightseeing",
+            dayPatternId: null,
+            address: "Asakusa",
+            memo: null,
+            urls: [],
+            startTime: null,
+            endTime: null,
+            color: "blue",
+            sortOrder: 0,
+          },
+          {
+            id: "sched-2",
+            name: "Assigned Schedule",
+            category: "restaurant",
+            dayPatternId: "pattern-1",
+            address: null,
+            memo: null,
+            urls: [],
+            startTime: null,
+            endTime: null,
+            color: "red",
+            sortOrder: 1,
+          },
+        ],
+      };
+      mockDbQuery.trips.findFirst.mockResolvedValue(sharedTrip);
+
+      const app = createTestApp(shareRoutes, "/");
+      const res = await app.request("/api/shared/valid-token");
+      const body = await res.json();
+
+      expect(res.status).toBe(200);
+      expect(body.candidates).toHaveLength(1);
+      expect(body.candidates[0].name).toBe("Senso-ji Temple");
+      expect(body.candidates[0].dayPatternId).toBeUndefined();
     });
 
     it("returns 404 when share link expires at exactly current time", async () => {

@@ -363,6 +363,7 @@ export type SharedTripResponse = {
   endDate: string | null;
   status: TripStatus;
   days: DayResponse[];
+  candidates: ScheduleResponse[];
   shareExpiresAt: string | null;
 };
 

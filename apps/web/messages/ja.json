@@ -1487,6 +1487,8 @@
     "shareExpiry": "共有リンクの有効期限: {date}",
     "checkLink": "リンクが正しいか確認するか、共有元に問い合わせてください",
     "updateAvailable": "内容が更新されました。タップして最新を表示",
+    "candidates": "候補スポット",
+    "candidateCount": "{count}件",
     "footerTitle": "sugara で旅行計画",
     "footerDescription": "旅行の計画を作成、共同編集、共有",
     "learnMore": "詳しく見る"

@@ -9,7 +9,16 @@ import type {
   WeatherType,
 } from "@sugara/shared";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Calendar, ExternalLink, MapPin, RefreshCw, Route, StickyNote } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  ExternalLink,
+  Lightbulb,
+  MapPin,
+  RefreshCw,
+  Route,
+  StickyNote,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { Logo } from "@/components/logo";
@@ -26,6 +35,7 @@ import {
   formatDate,
   formatDateFromISO,
   formatDateRange,
+  formatTimeRange,
   getDayCount,
   isSafeUrl,
   stripProtocol,
@@ -208,6 +218,9 @@ export function SharedTripClient({ token }: { token: string }) {
                     {tsh("noScheduleYet")}
                   </p>
                 )}
+                {(trip.candidates ?? []).length > 0 && (
+                  <SharedCandidatesSection candidates={trip.candidates} />
+                )}
                 {(trip.days ?? []).map((day) => {
                   const crossDayEntries = getCrossDayEntries(trip.days ?? [], day.dayNumber);
                   return (
@@ -353,6 +366,107 @@ function PatternSection({
         </div>
       )}
     </div>
+  );
+}
+
+function SharedCandidatesSection({ candidates }: { candidates: ScheduleResponse[] }) {
+  const tsh = useTranslations("shared");
+  const tlCat = useTranslations("labels.category");
+  const tlTransport = useTranslations("labels.transportMethod");
+
+  return (
+    <section className="overflow-hidden rounded-xl border bg-card shadow-sm">
+      <div className="border-b bg-muted/40 px-4 py-3 sm:px-5">
+        <h3 className="flex items-center gap-2 text-sm font-semibold">
+          <Lightbulb className="h-4 w-4 text-amber-500" />
+          <span>{tsh("candidates")}</span>
+          <span className="text-xs font-normal text-muted-foreground">
+            {tsh("candidateCount", { count: candidates.length })}
+          </span>
+        </h3>
+      </div>
+      <div className="space-y-1 p-4 sm:p-5">
+        {candidates.map((spot) => {
+          const colorClasses = SCHEDULE_COLOR_CLASSES[spot.color ?? "blue"];
+          const CategoryIcon = CATEGORY_ICONS[spot.category];
+          const timeStr = formatTimeRange(spot.startTime, spot.endTime);
+          const transportLabel = spot.transportMethod
+            ? tlTransport(spot.transportMethod as TransportMethod)
+            : null;
+          const safeUrls = spot.urls.filter(isSafeUrl);
+          const routeStr =
+            spot.departurePlace && spot.arrivalPlace
+              ? `${spot.departurePlace} → ${spot.arrivalPlace}`
+              : spot.departurePlace || spot.arrivalPlace || "";
+
+          return (
+            <div
+              key={spot.id}
+              className="flex items-start gap-3 rounded-lg px-3 py-2.5 transition-colors hover:bg-muted/30"
+            >
+              <div
+                className={cn(
+                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-md text-white",
+                  colorClasses.bg,
+                )}
+              >
+                <CategoryIcon className="h-3 w-3" />
+              </div>
+              <div className="min-w-0 flex-1 space-y-1">
+                <p className="flex items-baseline gap-1.5 text-sm">
+                  <span className="break-words font-medium">{spot.name}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {tlCat(spot.category)}
+                  </span>
+                </p>
+                {timeStr && (
+                  <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                    <span>{timeStr}</span>
+                  </div>
+                )}
+                {spot.address && (
+                  <a
+                    href={buildMapsSearchUrl(spot.address)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    <MapPin className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                    <span className="truncate">{spot.address}</span>
+                  </a>
+                )}
+                {spot.category === "transport" && routeStr && (
+                  <span className="flex w-fit max-w-full items-center gap-1.5 text-xs text-muted-foreground">
+                    <Route className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                    <span className="truncate">{routeStr}</span>
+                    {transportLabel && <span className="shrink-0">({transportLabel})</span>}
+                  </span>
+                )}
+                {safeUrls.map((u) => (
+                  <a
+                    key={u}
+                    href={u}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex w-fit max-w-full items-center gap-1.5 text-xs text-blue-600 hover:underline dark:text-blue-400"
+                  >
+                    <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                    <span className="truncate">{stripProtocol(u)}</span>
+                  </a>
+                ))}
+                {spot.memo && (
+                  <div className="flex items-start gap-1.5 text-xs text-muted-foreground/70">
+                    <StickyNote className="mt-0.5 h-3 w-3 shrink-0" />
+                    <p className="whitespace-pre-line">{spot.memo}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

@@ -123,6 +123,9 @@ shareRoutes.get("/api/shared/:token", sharedTripRateLimit, async (c) => {
           },
         },
       },
+      schedules: {
+        orderBy: (schedules, { asc }) => [asc(schedules.sortOrder)],
+      },
     },
   });
 
@@ -133,6 +136,11 @@ shareRoutes.get("/api/shared/:token", sharedTripRateLimit, async (c) => {
   if (trip.shareTokenExpiresAt && trip.shareTokenExpiresAt <= new Date()) {
     return c.json({ error: ERROR_MSG.SHARED_NOT_FOUND }, 404);
   }
+
+  // Candidates are schedules not assigned to any day pattern
+  const candidates = (trip.schedules ?? [])
+    .filter((s) => s.dayPatternId == null)
+    .map(({ dayPatternId: _, tripId: __, ...rest }) => rest);
 
   c.header("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
   return c.json({
@@ -146,6 +154,7 @@ shareRoutes.get("/api/shared/:token", sharedTripRateLimit, async (c) => {
     createdAt: trip.createdAt,
     updatedAt: trip.updatedAt,
     days: trip.days,
+    candidates,
     shareExpiresAt: trip.shareTokenExpiresAt?.toISOString() ?? null,
   });
 });

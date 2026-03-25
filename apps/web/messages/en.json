@@ -1487,6 +1487,8 @@
     "shareExpiry": "Share link expires: {date}",
     "checkLink": "Please check the link or contact the person who shared it",
     "updateAvailable": "Content has been updated. Tap to refresh",
+    "candidates": "Candidate Spots",
+    "candidateCount": "{count} spots",
     "footerTitle": "Plan trips with sugara",
     "footerDescription": "Create, collaborate, and share travel plans",
     "learnMore": "Learn more"

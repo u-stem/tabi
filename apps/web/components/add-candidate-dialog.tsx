@@ -61,6 +61,18 @@ export function AddCandidateDialog({
   const [timeError, setTimeError] = useState<string | null>(null);
   const [urls, setUrls] = useState<string[]>([]);
 
+  function resetForm() {
+    setError(null);
+    setCategory(DEFAULT_SCHEDULE_CATEGORY);
+    setTransportMethod("");
+    setColor("blue");
+    setStartTime(undefined);
+    setEndTime(undefined);
+    setEndDayOffset(0);
+    setTimeError(null);
+    setUrls([]);
+  }
+
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setTimeError(null);
@@ -97,6 +109,7 @@ export function AddCandidateDialog({
       if (prev) {
         queryClient.setQueryData(cacheKey, addCandidate(prev, toCandidateResponse(result)));
       }
+      resetForm();
       onOpenChange(false);
       toast.success(tm("candidateAdded"));
       onAdd();
@@ -112,17 +125,7 @@ export function AddCandidateDialog({
       open={open}
       onOpenChange={(isOpen) => {
         onOpenChange(isOpen);
-        if (!isOpen) {
-          setError(null);
-          setCategory(DEFAULT_SCHEDULE_CATEGORY);
-          setTransportMethod("");
-          setColor("blue");
-          setStartTime(undefined);
-          setEndTime(undefined);
-          setEndDayOffset(0);
-          setTimeError(null);
-          setUrls([]);
-        }
+        if (!isOpen) resetForm();
       }}
     >
       <ResponsiveDialogContent>

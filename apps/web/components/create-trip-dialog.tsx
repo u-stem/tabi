@@ -147,6 +147,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
             });
           }
         }
+        resetAll();
         onOpenChange(false);
         toast.success(tm("tripCreated"));
         onCreated();
@@ -189,6 +190,7 @@ export function CreateTripDialog({ open, onOpenChange, onCreated }: CreateTripDi
             });
           }
         }
+        resetAll();
         onOpenChange(false);
         toast.success(tm("tripCreated"));
         onCreated();

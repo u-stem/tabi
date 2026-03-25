@@ -78,6 +78,21 @@ export function AddScheduleDialog({
   const [longitude, setLongitude] = useState<number | null>(null);
   const [placeId, setPlaceId] = useState<string | null>(null);
 
+  function resetForm() {
+    setError(null);
+    setCategory(DEFAULT_SCHEDULE_CATEGORY);
+    setTransportMethod("");
+    setColor("blue");
+    setStartTime(undefined);
+    setEndTime(undefined);
+    setEndDayOffset(0);
+    setTimeError(null);
+    setUrls([]);
+    setLatitude(null);
+    setLongitude(null);
+    setPlaceId(null);
+  }
+
   const handleLocationSelected = useCallback(
     ({
       latitude: lat,
@@ -142,6 +157,7 @@ export function AddScheduleDialog({
           addScheduleToPattern(prev, dayId, patternId, toScheduleResponse(result)),
         );
       }
+      resetForm();
       setOpen(false);
       toast.success(tm("scheduleAdded"));
       onAdd();
@@ -157,20 +173,7 @@ export function AddScheduleDialog({
       open={open}
       onOpenChange={(isOpen) => {
         setOpen(isOpen);
-        if (!isOpen) {
-          setError(null);
-          setCategory(DEFAULT_SCHEDULE_CATEGORY);
-          setTransportMethod("");
-          setColor("blue");
-          setStartTime(undefined);
-          setEndTime(undefined);
-          setEndDayOffset(0);
-          setTimeError(null);
-          setUrls([]);
-          setLatitude(null);
-          setLongitude(null);
-          setPlaceId(null);
-        }
+        if (!isOpen) resetForm();
       }}
     >
       {!hideTrigger && (

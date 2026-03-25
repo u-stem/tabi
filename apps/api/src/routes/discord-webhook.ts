@@ -109,10 +109,11 @@ discordWebhookRoutes.put("/:tripId/discord-webhook", requireTripAccess("editor")
     return c.json({ error: ERROR_MSG.WEBHOOK_NOT_FOUND }, 404);
   }
 
-  const urlChanged = parsed.data.webhookUrl && parsed.data.webhookUrl !== existing.webhookUrl;
+  const newUrl = parsed.data.webhookUrl;
+  const urlChanged = newUrl && newUrl !== existing.webhookUrl;
 
   if (urlChanged) {
-    const isReachable = await validateWebhookUrl(parsed.data.webhookUrl!);
+    const isReachable = await validateWebhookUrl(newUrl);
     if (!isReachable) {
       return c.json({ error: ERROR_MSG.WEBHOOK_UNREACHABLE }, 400);
     }

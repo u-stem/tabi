@@ -4,7 +4,13 @@ export const ogpRequestSchema = z.object({
   url: z
     .string()
     .url()
-    .refine((v) => new URL(v).protocol === "https:", "Only HTTPS URLs are allowed"),
+    .refine((v) => {
+      try {
+        return new URL(v).protocol === "https:";
+      } catch {
+        return false;
+      }
+    }, "Only HTTPS URLs are allowed"),
 });
 
 export const ogpResponseSchema = z.object({

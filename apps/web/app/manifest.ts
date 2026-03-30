@@ -1,6 +1,16 @@
 import type { MetadataRoute } from "next";
 
-export default function manifest(): MetadataRoute.Manifest {
+type ShareTarget = {
+  action: string;
+  method: string;
+  params: Record<string, string>;
+};
+
+type ManifestWithShareTarget = MetadataRoute.Manifest & {
+  share_target: ShareTarget;
+};
+
+export default function manifest(): ManifestWithShareTarget {
   return {
     name: "sugara",
     short_name: "sugara",
@@ -21,5 +31,14 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/png",
       },
     ],
+    share_target: {
+      action: "/share-target",
+      method: "GET",
+      params: {
+        url: "url",
+        title: "title",
+        text: "text",
+      },
+    },
   };
 }

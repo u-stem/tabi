@@ -1827,5 +1827,15 @@
     "datePoll": "日程調整",
     "sharedPlan": "共有プラン",
     "userProfile": "{name} のプロフィール"
+  },
+  "shareTarget": {
+    "title": "候補に追加",
+    "adding": "追加中...",
+    "selectTrip": "追加先の旅行を選択",
+    "noActiveTrips": "進行中の旅行がありません",
+    "goHome": "ホームに戻る",
+    "invalidUrl": "共有されたURLが無効です",
+    "added": "候補を追加しました",
+    "addFailed": "候補の追加に失敗しました"
   }
 }

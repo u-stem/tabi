@@ -1827,5 +1827,15 @@
     "datePoll": "Date Poll",
     "sharedPlan": "Shared Plan",
     "userProfile": "{name}'s Profile"
+  },
+  "shareTarget": {
+    "title": "Add to Candidates",
+    "adding": "Adding...",
+    "selectTrip": "Select a trip",
+    "noActiveTrips": "No active trips",
+    "goHome": "Go to Home",
+    "invalidUrl": "The shared URL is invalid",
+    "added": "Candidate added",
+    "addFailed": "Failed to add candidate"
   }
 }

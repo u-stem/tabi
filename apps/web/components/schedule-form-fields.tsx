@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { SCHEDULE_COLOR_CLASSES } from "@/lib/colors";
+import { useOgpAutofill } from "@/lib/hooks/use-ogp-autofill";
 import { cn } from "@/lib/utils";
 
 type LocationSelectedParams = {
@@ -105,6 +106,16 @@ export function ScheduleFormFields({
   // (which would cause PlacesAutocompleteInput to re-create its Autocomplete instance)
   const nameRef = useRef(name);
   nameRef.current = name;
+
+  const handleOgpTitle = useCallback((title: string) => {
+    if (!nameRef.current) {
+      setName(title.slice(0, SCHEDULE_NAME_MAX_LENGTH));
+    }
+  }, []);
+
+  const firstUrl = urls.find((u) => u.trim() !== "") ?? "";
+  useOgpAutofill({ url: firstUrl, name, onTitleFetched: handleOgpTitle });
+
   const [address, setAddress] = useState(defaultValues?.address ?? "");
   const [departurePlace, setDeparturePlace] = useState(defaultValues?.departurePlace ?? "");
   const [arrivalPlace, setArrivalPlace] = useState(defaultValues?.arrivalPlace ?? "");

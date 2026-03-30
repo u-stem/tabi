@@ -114,6 +114,12 @@ const JA_FAQS = [
       "Excel (.xlsx) または CSV 形式でエクスポートできます。Excelではパターンごとにシートが分かれて出力されます。CSVは区切り文字や改行コードをカスタマイズ可能です。また、印刷用レイアウトでブラウザから印刷・PDF保存もできます。",
     sortOrder: 24,
   },
+  {
+    question: "スマホのブラウザからURLを旅行に追加できますか？",
+    answer:
+      "はい。sugaraをPWAとしてインストールした状態で、ブラウザの共有メニューからsugaraを選択すると、候補として追加できます。また、候補追加フォームでURLを入力すると、ページタイトルが自動で名前欄に入力されます。",
+    sortOrder: 25,
+  },
   // ---- Scheduling ----
   {
     question: "「日程調整」とは何ですか？",
@@ -461,6 +467,12 @@ const EN_FAQS = [
       "Yes, export in Excel (.xlsx) or CSV format. Excel exports create separate sheets per pattern. CSV supports customizable delimiters and line endings. You can also print or save as PDF using the print layout.",
     sortOrder: 24,
   },
+  {
+    question: "Can I add a URL to a trip from my phone's browser?",
+    answer:
+      "Yes. With sugara installed as a PWA, select sugara from your browser's share menu to add it as a candidate. You can also paste a URL in the candidate form, and the page title will be automatically filled in.",
+    sortOrder: 25,
+  },
   // ---- Scheduling ----
   {
     question: "What is 'Schedule Coordination'?",
@@ -712,7 +724,7 @@ function resolveCategory(sortOrder: number): string {
   if (sortOrder === 0) return "overview";
   if (sortOrder >= 10 && sortOrder <= 18) return "account";
   if (sortOrder >= 19 && sortOrder <= 20) return "profile";
-  if (sortOrder >= 21 && sortOrder <= 24) return "trips";
+  if (sortOrder >= 21 && sortOrder <= 25) return "trips";
   if (sortOrder >= 30 && sortOrder <= 31) return "scheduling";
   if (sortOrder >= 40 && sortOrder <= 43) return "members";
   if (sortOrder >= 50 && sortOrder <= 52) return "friends";

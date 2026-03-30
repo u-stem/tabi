@@ -36,10 +36,18 @@ export function titleFromUrl(url: string): string {
 const PRIVATE_IP_RE =
   /^(127\.|10\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.|0\.|169\.254\.|::1|fc|fd|fe80)/;
 
+const BLOCKED_HOSTNAMES = new Set(["localhost", "0.0.0.0", "[::1]"]);
+
+export function isBlockedHostname(hostname: string): boolean {
+  if (BLOCKED_HOSTNAMES.has(hostname)) return true;
+  if (hostname.endsWith(".local") || hostname.endsWith(".internal")) return true;
+  return PRIVATE_IP_RE.test(hostname);
+}
+
 export async function fetchOgpTitle(url: string): Promise<string> {
   const parsed = new URL(url);
 
-  if (PRIVATE_IP_RE.test(parsed.hostname)) {
+  if (isBlockedHostname(parsed.hostname)) {
     return titleFromUrl(url);
   }
 
@@ -55,6 +63,14 @@ export async function fetchOgpTitle(url: string): Promise<string> {
       },
       redirect: "follow",
     });
+
+    // Check redirect destination for SSRF
+    if (res.redirected && res.url) {
+      const redirected = new URL(res.url);
+      if (isBlockedHostname(redirected.hostname)) {
+        return titleFromUrl(url);
+      }
+    }
 
     if (!res.ok || !res.headers.get("content-type")?.includes("text/html")) {
       return titleFromUrl(url);

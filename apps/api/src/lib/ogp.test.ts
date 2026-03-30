@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { extractTitle, titleFromUrl } from "./ogp";
+import { extractTitle, isBlockedHostname, titleFromUrl } from "./ogp";
 
 describe("extractTitle", () => {
   it("extracts og:title from HTML", () => {
@@ -51,5 +51,39 @@ describe("titleFromUrl", () => {
 
   it("strips query params", () => {
     expect(titleFromUrl("https://example.com/search?q=test")).toBe("example.com/search");
+  });
+});
+
+describe("isBlockedHostname", () => {
+  it("blocks localhost", () => {
+    expect(isBlockedHostname("localhost")).toBe(true);
+  });
+
+  it("blocks 0.0.0.0", () => {
+    expect(isBlockedHostname("0.0.0.0")).toBe(true);
+  });
+
+  it("blocks .local domains", () => {
+    expect(isBlockedHostname("myhost.local")).toBe(true);
+  });
+
+  it("blocks .internal domains", () => {
+    expect(isBlockedHostname("service.internal")).toBe(true);
+  });
+
+  it("blocks private IPs", () => {
+    expect(isBlockedHostname("10.0.0.1")).toBe(true);
+    expect(isBlockedHostname("192.168.1.1")).toBe(true);
+    expect(isBlockedHostname("172.16.0.1")).toBe(true);
+    expect(isBlockedHostname("127.0.0.1")).toBe(true);
+  });
+
+  it("blocks metadata endpoint IP range", () => {
+    expect(isBlockedHostname("169.254.169.254")).toBe(true);
+  });
+
+  it("allows public hostnames", () => {
+    expect(isBlockedHostname("example.com")).toBe(false);
+    expect(isBlockedHostname("google.com")).toBe(false);
   });
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import type { TripListItem } from "@sugara/shared";
+import { SCHEDULE_NAME_MAX_LENGTH } from "@sugara/shared";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -48,7 +49,7 @@ export function ShareTargetContent({ url, title, text }: Props) {
         await api(`/api/trips/${tripId}/candidates`, {
           method: "POST",
           body: JSON.stringify({
-            name: name.slice(0, 200),
+            name: name.slice(0, SCHEDULE_NAME_MAX_LENGTH),
             category: "other" as const,
             color: "blue" as const,
             urls: [resolvedUrl],
@@ -95,7 +96,7 @@ export function ShareTargetContent({ url, title, text }: Props) {
     return () => {
       cancelled = true;
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [addCandidate, resolvedUrl]);
 
   if (loading) {
     return (

@@ -10,6 +10,7 @@ export * from "./friend";
 export * from "./group";
 export * from "./member";
 export * from "./notification";
+export * from "./ogp";
 export * from "./poll";
 export * from "./quick-poll";
 export * from "./schedule";

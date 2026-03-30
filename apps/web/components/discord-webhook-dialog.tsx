@@ -145,6 +145,7 @@ export function DiscordWebhookDialog({
       });
       toast.success(td("created"));
       queryClient.invalidateQueries({ queryKey: cacheKey });
+      onOpenChange(false);
     } catch (err) {
       const message = getApiErrorMessage(err, td("invalidUrl"), {
         conflict: td("alreadyExists"),
@@ -169,6 +170,7 @@ export function DiscordWebhookDialog({
       });
       toast.success(td("updated"));
       queryClient.invalidateQueries({ queryKey: cacheKey });
+      onOpenChange(false);
     } catch (err) {
       const message = getApiErrorMessage(err, td("invalidUrl"), {
         badRequest: td("unreachableUrl"),

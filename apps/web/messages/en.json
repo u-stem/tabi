@@ -69,6 +69,7 @@
     "all": "All",
     "offline": "You are offline",
     "offlineRetry": "Check your internet connection and try again",
+    "cachedTrips": "Available trips",
     "deleteConfirmTitle": "Delete {count} {label}?",
     "deleteConfirmDescription": "The selected {label} will be deleted. This action cannot be undone.",
     "shortcuts": "Keyboard Shortcuts",

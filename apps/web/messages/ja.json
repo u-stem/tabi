@@ -69,6 +69,7 @@
     "all": "すべて",
     "offline": "オフラインです",
     "offlineRetry": "インターネット接続を確認してから再度お試しください",
+    "cachedTrips": "閲覧可能な旅行",
     "deleteConfirmTitle": "{count}件の{label}を削除しますか？",
     "deleteConfirmDescription": "選択した{label}が削除されます。この操作は取り消せません。",
     "shortcuts": "キーボードショートカット",

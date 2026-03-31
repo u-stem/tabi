@@ -2,11 +2,14 @@
 
 import type { TripListItem } from "@sugara/shared";
 import type { PersistedClient } from "@tanstack/react-query-persist-client";
+import { get } from "idb-keyval";
 import { WifiOff } from "lucide-react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { useEffect, useState } from "react";
 import { pageTitle } from "@/lib/constants";
+import { CACHE_KEY } from "@/lib/idb-persister";
+import { queryKeys } from "@/lib/query-keys";
 
 export default function OfflinePage() {
   const tc = useTranslations("common");
@@ -19,21 +22,29 @@ export default function OfflinePage() {
   useEffect(() => {
     async function loadCachedTrips() {
       try {
-        const { get } = await import("idb-keyval");
-        const persisted = await get<PersistedClient>("sugara-query-cache");
+        const persisted = await get<PersistedClient>(CACHE_KEY);
         if (!persisted?.clientState?.queries) return;
 
+        const ownedKey = JSON.stringify(queryKeys.trips.owned());
+        const sharedKey = JSON.stringify(queryKeys.trips.shared());
+
         const owned = persisted.clientState.queries.find(
-          (q) => q.queryKey[0] === "trips" && q.queryKey[1] === "owned",
+          (q) => JSON.stringify(q.queryKey) === ownedKey,
         );
         const shared = persisted.clientState.queries.find(
-          (q) => q.queryKey[0] === "trips" && q.queryKey[1] === "shared",
+          (q) => JSON.stringify(q.queryKey) === sharedKey,
         );
 
-        const all = [
-          ...((owned?.state?.data as TripListItem[] | undefined) ?? []),
-          ...((shared?.state?.data as TripListItem[] | undefined) ?? []),
-        ].sort((a, b) => ((b.updatedAt ?? "") > (a.updatedAt ?? "") ? 1 : -1));
+        const ownedData = Array.isArray(owned?.state?.data) ? owned.state.data : [];
+        const sharedData = Array.isArray(shared?.state?.data) ? shared.state.data : [];
+
+        const all = ([...ownedData, ...sharedData] as TripListItem[]).sort((a, b) => {
+          const bDate = b.updatedAt ?? "";
+          const aDate = a.updatedAt ?? "";
+          if (bDate > aDate) return 1;
+          if (bDate < aDate) return -1;
+          return 0;
+        });
 
         setTrips(all);
       } catch {

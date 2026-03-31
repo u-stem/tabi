@@ -1,7 +1,7 @@
 import type { PersistedClient, Persister } from "@tanstack/react-query-persist-client";
 import { del, get, set } from "idb-keyval";
 
-const CACHE_KEY = "sugara-query-cache";
+export const CACHE_KEY = "sugara-query-cache";
 
 export function createIdbPersister(): Persister {
   return {

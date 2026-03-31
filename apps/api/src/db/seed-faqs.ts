@@ -120,6 +120,12 @@ const JA_FAQS = [
       "はい。sugaraをPWAとしてインストールした状態で、ブラウザの共有メニューからsugaraを選択すると、候補として追加できます。また、候補追加フォームでURLを入力すると、ページタイトルが自動で名前欄に入力されます。",
     sortOrder: 25,
   },
+  {
+    question: "オフラインでも旅行を確認できますか？",
+    answer:
+      "はい。一度表示した旅行データはブラウザに保存され、オフラインでも閲覧できます。PWAとしてインストールしている場合に最適です。データは最大7日間保持されます。",
+    sortOrder: 26,
+  },
   // ---- Scheduling ----
   {
     question: "「日程調整」とは何ですか？",
@@ -473,6 +479,12 @@ const EN_FAQS = [
       "Yes. With sugara installed as a PWA, select sugara from your browser's share menu to add it as a candidate. You can also paste a URL in the candidate form, and the page title will be automatically filled in.",
     sortOrder: 25,
   },
+  {
+    question: "Can I view trips offline?",
+    answer:
+      "Yes. Trip data you've viewed is saved in the browser and can be accessed offline. It works best when sugara is installed as a PWA. Data is kept for up to 7 days.",
+    sortOrder: 26,
+  },
   // ---- Scheduling ----
   {
     question: "What is 'Schedule Coordination'?",
@@ -724,7 +736,7 @@ function resolveCategory(sortOrder: number): string {
   if (sortOrder === 0) return "overview";
   if (sortOrder >= 10 && sortOrder <= 18) return "account";
   if (sortOrder >= 19 && sortOrder <= 20) return "profile";
-  if (sortOrder >= 21 && sortOrder <= 25) return "trips";
+  if (sortOrder >= 21 && sortOrder <= 26) return "trips";
   if (sortOrder >= 30 && sortOrder <= 31) return "scheduling";
   if (sortOrder >= 40 && sortOrder <= 43) return "members";
   if (sortOrder >= 50 && sortOrder <= 52) return "friends";

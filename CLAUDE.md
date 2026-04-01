@@ -28,6 +28,10 @@ bun run db:migrate   # マイグレーション実行 (ローカル。本番は 
 bun run db:studio    # Drizzle Studio 起動
 bun run db:seed      # 開発用シードデータ投入
 bun run db:seed-user # 本番用ユーザー作成 (環境変数で指定)
+bun run db:seed-faqs # FAQ データ投入
+bun run db:cleanup-guests  # 期限切れゲストユーザーを削除
+bun run test:coverage      # カバレッジ付きテスト
+bun run test:e2e           # E2E テスト (Playwright)
 ```
 
 パッケージ単位の実行は `--filter` を使用:
@@ -51,8 +55,10 @@ bun run --filter @sugara/shared check-types
 - 認証: Better Auth (メール/パスワード, 管理者が新規登録を制御, `advanced.database.generateId: "uuid"`)
 - バリデーション: Zod (packages/shared で共有)
 - リンター/フォーマッター: Biome (ルートに biome.json、各パッケージから turbo 経由で実行)
-- テスト: Vitest
-- Git フック: lefthook (pre-commit: check + check-types, commit-msg: Conventional Commits, pre-push: test)
+- i18n: next-intl (Cookie ベース、URL 変更なし)
+- テスト: Vitest, Playwright (E2E)
+- Git フック: lefthook (pre-commit: check + check-types, commit-msg: Conventional Commits, pre-push: test + audit)
+- Claude Code フック: post-edit (biome check + type check), post-stop (test)
 - デプロイ: Vercel
 
 ## 主要パターン
@@ -170,7 +176,8 @@ bun run db:migrate
 ```
 docs/
   architecture/
-    overview.md    全体像・インフラ構成図・技術スタック・デプロイ
+    overview.md            全体像・インフラ構成図・技術スタック・デプロイ
+    db-backup-recovery.md  DB バックアップ・リカバリ手順
 ```
 
 - 設計ドキュメントは「現在の状態」を反映する。古い計画書は git 履歴に残し、docs/ には置かない

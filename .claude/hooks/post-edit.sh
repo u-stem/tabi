@@ -5,16 +5,19 @@ set -euo pipefail
 
 cd "${CLAUDE_PROJECT_DIR:-.}"
 
+# Read stdin once (hook framework pipes JSON with tool_input)
+input=$(cat)
+
 # Determine which package was edited from the tool input
-file_path=$(jq -r '.tool_input.file_path // empty')
+file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
 if [ -z "$file_path" ]; then
   exit 0
 fi
 
 # Map file path to package filter
 case "$file_path" in
-  */apps/web/*)   filter="--filter @sugara/web" ;;
-  */apps/api/*)   filter="--filter @sugara/api" ;;
+  */apps/web/*)        filter="--filter @sugara/web" ;;
+  */apps/api/*)        filter="--filter @sugara/api" ;;
   */packages/shared/*) filter="--filter @sugara/shared" ;;
   *) exit 0 ;; # Files outside packages (root config, docs, etc.)
 esac

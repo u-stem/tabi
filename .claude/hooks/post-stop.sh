@@ -5,4 +5,10 @@ set -euo pipefail
 
 cd "${CLAUDE_PROJECT_DIR:-.}"
 
-output=$(bun run test 2>&1) || { echo "$output" >&2; exit 2; }
+LOG_FAILURE="/Users/mikiya/ws/claude-settings/hooks/log-failure.sh"
+
+output=$(bun run test 2>&1) || {
+  [ -x "$LOG_FAILURE" ] && echo "$output" | "$LOG_FAILURE" test
+  echo "$output" >&2
+  exit 2
+}

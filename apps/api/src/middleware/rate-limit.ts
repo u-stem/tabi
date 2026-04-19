@@ -30,9 +30,12 @@ export function rateLimitByIp(opts: { window: number; max: number }) {
   const storeRef = store;
 
   return async (c: Context, next: Next) => {
+    // Prefer x-real-ip (Vercel sets it from the upstream edge, not spoofable by clients).
+    // Fall back to the *last* entry of x-forwarded-for — the rightmost hop is the one added
+    // by the trusted proxy, so taking the leftmost lets clients spoof the source IP.
     const ip =
-      c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ||
-      c.req.header("x-real-ip") ||
+      c.req.header("x-real-ip")?.trim() ||
+      c.req.header("x-forwarded-for")?.split(",").at(-1)?.trim() ||
       "unknown";
     const now = Date.now();
     const entry = storeRef.get(ip);

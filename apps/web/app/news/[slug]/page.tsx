@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import Markdown from "react-markdown";
 import { Logo } from "@/components/logo";
 import { pageTitle } from "@/lib/constants";
+import { stringifyJsonLd } from "@/lib/json-ld";
 import { getAllNews, getNewsBySlug } from "@/lib/news";
 import { getSeason } from "@/lib/season";
 
@@ -68,7 +69,7 @@ export default async function NewsArticlePage({ params }: Props) {
     <div className="flex min-h-screen flex-col">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: stringifyJsonLd(jsonLd) }}
       />
       <header className="container flex h-14 items-center">
         <Logo href="/" />

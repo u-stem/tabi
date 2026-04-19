@@ -4,6 +4,7 @@ import Link from "next/link";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Logo } from "@/components/logo";
 import { pageTitle } from "@/lib/constants";
+import { stringifyJsonLd } from "@/lib/json-ld";
 import { FaqSearch } from "./_components/faq-search";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -31,7 +32,7 @@ export default async function FaqPage() {
     <div className="flex min-h-screen flex-col">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: stringifyJsonLd(jsonLd) }}
       />
       <header className="container flex h-14 items-center">
         <Logo href="/" />

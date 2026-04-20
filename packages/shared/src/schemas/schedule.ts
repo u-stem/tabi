@@ -77,6 +77,8 @@ export const createScheduleSchema = z.object({
   transportMethod: transportMethodSchema.nullish(),
   color: scheduleColorSchema.default("blue"),
   endDayOffset: z.number().int().min(1).max(MAX_END_DAY_OFFSET).nullish(),
+  crossDayAnchor: z.enum(["before", "after"]).nullable().optional(),
+  crossDayAnchorSourceId: z.string().check(z.guid()).nullable().optional(),
   latitude: z.number().nullable().optional(),
   longitude: z.number().nullable().optional(),
   placeId: z.string().max(255).nullable().optional(),
@@ -89,6 +91,16 @@ import { MAX_SCHEDULES_PER_TRIP } from "../limits";
 
 export const reorderSchedulesSchema = z.object({
   scheduleIds: z.array(z.string().check(z.guid())).max(MAX_SCHEDULES_PER_TRIP),
+  anchors: z
+    .array(
+      z.object({
+        scheduleId: z.string().check(z.guid()),
+        anchor: z.enum(["before", "after"]).nullable(),
+        anchorSourceId: z.string().check(z.guid()).nullable(),
+      }),
+    )
+    .optional(),
+  clearAnchors: z.boolean().optional(),
 });
 
 export const createCandidateSchema = createScheduleSchema;

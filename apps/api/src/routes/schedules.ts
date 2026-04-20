@@ -13,6 +13,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
+import { validateAnchors } from "../lib/anchor-validate";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
 import { notifyTripMembersExcluding } from "../lib/notifications";
@@ -368,32 +369,60 @@ scheduleRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/schedules/reorder
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
+  const { scheduleIds, anchors, clearAnchors } = parsed.data;
 
   // Verify all schedules belong to this pattern before updating
-  if (parsed.data.scheduleIds.length > 0) {
+  if (scheduleIds.length > 0) {
     const targetSchedules = await db.query.schedules.findMany({
-      where: and(
-        inArray(schedules.id, parsed.data.scheduleIds),
-        eq(schedules.dayPatternId, patternId),
-      ),
+      where: and(inArray(schedules.id, scheduleIds), eq(schedules.dayPatternId, patternId)),
+      columns: { id: true },
     });
-    if (targetSchedules.length !== parsed.data.scheduleIds.length) {
+    if (targetSchedules.length !== scheduleIds.length) {
       return c.json({ error: ERROR_MSG.INVALID_REORDER }, 400);
     }
   }
 
-  if (parsed.data.scheduleIds.length > 0) {
-    const ids = parsed.data.scheduleIds;
-    await db
-      .update(schedules)
-      .set({
-        sortOrder: sql`CASE ${sql.join(
-          ids.map((id, i) => sql`WHEN ${schedules.id} = ${id} THEN ${i}::integer`),
-          sql` `,
-        )} END`,
-      })
-      .where(inArray(schedules.id, ids));
+  if (anchors && anchors.length > 0) {
+    const check = await validateAnchors(db, tripId, patternId, anchors);
+    if (check.ok === false) {
+      return c.json({ error: check.message }, check.status);
+    }
   }
+
+  if (scheduleIds.length === 0 && !clearAnchors && (!anchors || anchors.length === 0)) {
+    return c.json({ ok: true });
+  }
+
+  await db.transaction(async (tx) => {
+    if (scheduleIds.length > 0) {
+      await tx
+        .update(schedules)
+        .set({
+          sortOrder: sql`CASE ${sql.join(
+            scheduleIds.map((id, i) => sql`WHEN ${schedules.id} = ${id} THEN ${i}::integer`),
+            sql` `,
+          )} END`,
+        })
+        .where(inArray(schedules.id, scheduleIds));
+    }
+
+    if (clearAnchors && scheduleIds.length > 0) {
+      await tx
+        .update(schedules)
+        .set({ crossDayAnchor: null, crossDayAnchorSourceId: null })
+        .where(inArray(schedules.id, scheduleIds));
+    } else if (anchors && anchors.length > 0) {
+      for (const a of anchors) {
+        await tx
+          .update(schedules)
+          .set({
+            crossDayAnchor: a.anchor,
+            crossDayAnchorSourceId: a.anchorSourceId,
+          })
+          .where(eq(schedules.id, a.scheduleId));
+      }
+    }
+  });
 
   return c.json({ ok: true });
 });
@@ -434,6 +463,30 @@ scheduleRoutes.patch(
       return c.json(existing);
     }
 
+    if (
+      Object.hasOwn(updateData, "crossDayAnchor") ||
+      Object.hasOwn(updateData, "crossDayAnchorSourceId")
+    ) {
+      const check = await validateAnchors(db, tripId, patternId, [
+        {
+          scheduleId,
+          anchor: updateData.crossDayAnchor ?? null,
+          anchorSourceId: updateData.crossDayAnchorSourceId ?? null,
+        },
+      ]);
+      if (check.ok === false) {
+        return c.json({ error: check.message }, check.status);
+      }
+    }
+
+    // When endDayOffset is cleared, the schedule stops generating cross-day
+    // entries, so any anchors pointing to it must be dropped to avoid
+    // orphaned references lingering in the DB.
+    const endDayOffsetCleared =
+      Object.hasOwn(updateData, "endDayOffset") &&
+      (updateData.endDayOffset === null || updateData.endDayOffset === 0) &&
+      (existing.endDayOffset ?? 0) > 0;
+
     // Atomic optimistic lock: include updatedAt in WHERE clause
     const whereConditions = expectedUpdatedAt
       ? and(
@@ -442,14 +495,26 @@ scheduleRoutes.patch(
         )
       : eq(schedules.id, scheduleId);
 
-    const [updated] = await db
-      .update(schedules)
-      .set({
-        ...updateData,
-        updatedAt: new Date(),
-      })
-      .where(whereConditions)
-      .returning();
+    const updated = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(schedules)
+        .set({
+          ...updateData,
+          updatedAt: new Date(),
+        })
+        .where(whereConditions)
+        .returning();
+      if (!row) return null;
+
+      if (endDayOffsetCleared) {
+        await tx
+          .update(schedules)
+          .set({ crossDayAnchor: null, crossDayAnchorSourceId: null })
+          .where(eq(schedules.crossDayAnchorSourceId, scheduleId));
+      }
+
+      return row;
+    });
 
     if (!updated) {
       return c.json({ error: ERROR_MSG.CONFLICT }, 409);

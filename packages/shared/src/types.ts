@@ -22,6 +22,8 @@ export type ScheduleResponse = {
   transportMethod?: string | null;
   color: ScheduleColor;
   endDayOffset?: number | null;
+  crossDayAnchor?: "before" | "after" | null;
+  crossDayAnchorSourceId?: string | null;
   latitude?: number | null;
   longitude?: number | null;
   placeId?: string | null;

@@ -16,7 +16,8 @@ vi.mock("../../lib/auth", () => ({
   },
 }));
 
-import { tripMembers } from "../../db/schema";
+import { eq } from "drizzle-orm";
+import { schedules, tripMembers } from "../../db/schema";
 import { patternRoutes } from "../../routes/patterns";
 import { scheduleRoutes } from "../../routes/schedules";
 import { tripRoutes } from "../../routes/trips";
@@ -609,6 +610,224 @@ describe("Schedules Integration", () => {
       const fetched = list.find((s: { id: string }) => s.id === cruise.id);
       expect(fetched.startTime).toBe("22:00:00");
       expect(fetched.endTime).toBe("02:00:00");
+    });
+  });
+
+  describe("reorder with anchors", () => {
+    async function createReorderSchedule(
+      name: string,
+      category: string,
+      overrides?: Record<string, unknown>,
+    ) {
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, category, ...overrides }),
+        },
+      );
+      return res.json();
+    }
+
+    async function fetchSchedule(id: string) {
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+      );
+      const list = await res.json();
+      return list.find((s: { id: string }) => s.id === id);
+    }
+
+    it("creates schedule with null anchors by default", async () => {
+      const created = await createReorderSchedule("Plain", "sightseeing");
+      expect(created.crossDayAnchor).toBeNull();
+      expect(created.crossDayAnchorSourceId).toBeNull();
+    });
+
+    it("applies anchor fields to the specified schedule", async () => {
+      const hotel = await createReorderSchedule("Hotel", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+      const target = await createReorderSchedule("Target", "sightseeing");
+
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [hotel.id, target.id],
+            anchors: [{ scheduleId: target.id, anchor: "after", anchorSourceId: hotel.id }],
+          }),
+        },
+      );
+      expect(res.status).toBe(200);
+
+      const fetched = await fetchSchedule(target.id);
+      expect(fetched.crossDayAnchor).toBe("after");
+      expect(fetched.crossDayAnchorSourceId).toBe(hotel.id);
+    });
+
+    it("rejects anchor pointing to a schedule without endDayOffset", async () => {
+      const plain = await createReorderSchedule("Not a hotel", "sightseeing");
+      const target = await createReorderSchedule("Target", "sightseeing");
+
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [plain.id, target.id],
+            anchors: [{ scheduleId: target.id, anchor: "after", anchorSourceId: plain.id }],
+          }),
+        },
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it("rejects partial anchor fields (anchor without source)", async () => {
+      const target = await createReorderSchedule("Target", "sightseeing");
+
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [target.id],
+            anchors: [{ scheduleId: target.id, anchor: "after", anchorSourceId: null }],
+          }),
+        },
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it("rejects anchor pointing to itself", async () => {
+      const hotel = await createReorderSchedule("Hotel", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [hotel.id],
+            anchors: [{ scheduleId: hotel.id, anchor: "after", anchorSourceId: hotel.id }],
+          }),
+        },
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it("clears anchors on schedules referencing a hotel whose endDayOffset is set to null", async () => {
+      const hotel = await createReorderSchedule("Hotel Cascade", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+      const target = await createReorderSchedule("Target Cascade", "sightseeing");
+      await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [hotel.id, target.id],
+            anchors: [{ scheduleId: target.id, anchor: "after", anchorSourceId: hotel.id }],
+          }),
+        },
+      );
+
+      const updateRes = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${hotel.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endDayOffset: null, endTime: null }),
+        },
+      );
+      expect(updateRes.status).toBe(200);
+
+      const fetched = await fetchSchedule(target.id);
+      expect(fetched.crossDayAnchor).toBeNull();
+      expect(fetched.crossDayAnchorSourceId).toBeNull();
+    });
+
+    it("trigger nulls cross_day_anchor when source_id is cleared directly (FK SET NULL simulation)", async () => {
+      const hotel = await createReorderSchedule("Hotel Trigger", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+      const target = await createReorderSchedule("Target Trigger", "sightseeing");
+      await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [hotel.id, target.id],
+            anchors: [{ scheduleId: target.id, anchor: "after", anchorSourceId: hotel.id }],
+          }),
+        },
+      );
+
+      const testDb = getTestDb();
+      await testDb
+        .update(schedules)
+        .set({ crossDayAnchorSourceId: null })
+        .where(eq(schedules.id, target.id));
+
+      const after = await testDb.query.schedules.findFirst({
+        where: eq(schedules.id, target.id),
+      });
+      expect(after?.crossDayAnchor).toBeNull();
+      expect(after?.crossDayAnchorSourceId).toBeNull();
+    });
+
+    it("clears all anchors when clearAnchors=true", async () => {
+      const hotel = await createReorderSchedule("Hotel", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+      const target = await createReorderSchedule("Target", "sightseeing");
+
+      await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [hotel.id, target.id],
+            anchors: [{ scheduleId: target.id, anchor: "after", anchorSourceId: hotel.id }],
+          }),
+        },
+      );
+
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [hotel.id, target.id],
+            clearAnchors: true,
+          }),
+        },
+      );
+      expect(res.status).toBe(200);
+
+      const fetched = await fetchSchedule(target.id);
+      expect(fetched.crossDayAnchor).toBeNull();
+      expect(fetched.crossDayAnchorSourceId).toBeNull();
     });
   });
 });

@@ -295,6 +295,20 @@
       "when": 1776570121515,
       "tag": "0041_material_mindworm",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1776687899346,
+      "tag": "0042_absent_wrecking_crew",
+      "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1776687899347,
+      "tag": "0043_cross_day_anchor_trigger",
+      "breakpoints": true
     }
   ]
 }

@@ -241,7 +241,7 @@ export default function TripDetailPage() {
   const queryClient = useQueryClient();
 
   const {
-    data: trip = null,
+    data: trip,
     isLoading,
     error: queryError,
   } = useQuery({

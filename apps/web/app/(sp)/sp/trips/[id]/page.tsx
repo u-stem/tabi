@@ -92,7 +92,7 @@ export default function SpTripDetailPage() {
   const { data: session } = useSession();
   const queryClient = useQueryClient();
   const {
-    data: trip = null,
+    data: trip,
     isLoading,
     error: queryError,
   } = useQuery({

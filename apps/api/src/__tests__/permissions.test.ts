@@ -1,14 +1,22 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const mockDbQuery = vi.hoisted(() => ({
   tripMembers: { findFirst: vi.fn() },
+  tripDays: { findFirst: vi.fn() },
+  dayPatterns: { findFirst: vi.fn() },
 }));
 
 vi.mock("../db/index", () => ({
   db: { query: mockDbQuery },
 }));
 
-import { canEdit, checkTripAccess, isOwner } from "../lib/permissions";
+import {
+  canEdit,
+  checkTripAccess,
+  isOwner,
+  verifyDayAccess,
+  verifyPatternAccess,
+} from "../lib/permissions";
 
 describe("checkTripAccess", () => {
   it("returns role when user is a member", async () => {
@@ -57,5 +65,80 @@ describe("isOwner", () => {
 
   it("returns false for null", () => {
     expect(isOwner(null)).toBe(false);
+  });
+});
+
+describe("verifyDayAccess", () => {
+  beforeEach(() => {
+    mockDbQuery.tripDays.findFirst.mockReset();
+    mockDbQuery.tripMembers.findFirst.mockReset();
+  });
+
+  it("returns the role when both the day belongs to the trip and the user is a member", async () => {
+    mockDbQuery.tripDays.findFirst.mockResolvedValue({ id: "day-1" });
+    mockDbQuery.tripMembers.findFirst.mockResolvedValue({ role: "editor" });
+    const result = await verifyDayAccess("trip-1", "day-1", "user-1");
+    expect(result).toBe("editor");
+  });
+
+  it("returns null when the day does not belong to the trip", async () => {
+    mockDbQuery.tripDays.findFirst.mockResolvedValue(undefined);
+    mockDbQuery.tripMembers.findFirst.mockResolvedValue({ role: "owner" });
+    const result = await verifyDayAccess("trip-1", "day-other", "user-1");
+    expect(result).toBeNull();
+  });
+
+  it("returns null when the user is not a trip member", async () => {
+    mockDbQuery.tripDays.findFirst.mockResolvedValue({ id: "day-1" });
+    mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
+    const result = await verifyDayAccess("trip-1", "day-1", "user-stranger");
+    expect(result).toBeNull();
+  });
+});
+
+describe("verifyPatternAccess", () => {
+  beforeEach(() => {
+    mockDbQuery.dayPatterns.findFirst.mockReset();
+    mockDbQuery.tripMembers.findFirst.mockReset();
+  });
+
+  it("returns the role when pattern belongs to the given day and trip", async () => {
+    mockDbQuery.dayPatterns.findFirst.mockResolvedValue({
+      id: "pat-1",
+      tripDayId: "day-1",
+      tripDay: { id: "day-1", tripId: "trip-1" },
+    });
+    mockDbQuery.tripMembers.findFirst.mockResolvedValue({ role: "viewer" });
+    const result = await verifyPatternAccess("trip-1", "day-1", "pat-1", "user-1");
+    expect(result).toBe("viewer");
+  });
+
+  it("returns null when the pattern belongs to a different trip (cross-trip access attempt)", async () => {
+    mockDbQuery.dayPatterns.findFirst.mockResolvedValue({
+      id: "pat-1",
+      tripDayId: "day-1",
+      tripDay: { id: "day-1", tripId: "trip-OTHER" },
+    });
+    mockDbQuery.tripMembers.findFirst.mockResolvedValue({ role: "owner" });
+    const result = await verifyPatternAccess("trip-1", "day-1", "pat-1", "user-1");
+    expect(result).toBeNull();
+  });
+
+  it("returns null when the pattern does not exist", async () => {
+    mockDbQuery.dayPatterns.findFirst.mockResolvedValue(undefined);
+    mockDbQuery.tripMembers.findFirst.mockResolvedValue({ role: "editor" });
+    const result = await verifyPatternAccess("trip-1", "day-1", "pat-missing", "user-1");
+    expect(result).toBeNull();
+  });
+
+  it("returns null when the user is not a trip member", async () => {
+    mockDbQuery.dayPatterns.findFirst.mockResolvedValue({
+      id: "pat-1",
+      tripDayId: "day-1",
+      tripDay: { id: "day-1", tripId: "trip-1" },
+    });
+    mockDbQuery.tripMembers.findFirst.mockResolvedValue(undefined);
+    const result = await verifyPatternAccess("trip-1", "day-1", "pat-1", "user-stranger");
+    expect(result).toBeNull();
   });
 });

@@ -281,6 +281,20 @@
       "when": 1774262888062,
       "tag": "0039_bored_black_bird",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1776560100579,
+      "tag": "0040_dazzling_thor",
+      "breakpoints": true
+    },
+    {
+      "idx": 41,
+      "version": "7",
+      "when": 1776570121515,
+      "tag": "0041_material_mindworm",
+      "breakpoints": true
     }
   ]
 }

@@ -1,11 +1,16 @@
+# Layered hooks: fast local checks for commit, heavier checks for push, full tests in CI only.
+# This keeps the common commit loop sub-second while still catching type errors before they
+# reach origin/main.
+
 pre-commit:
   parallel: true
   commands:
     check:
       run: bun run check
       stage_fixed: true
-    check-types:
-      run: bun run check-types
+    check-i18n:
+      glob: "apps/web/messages/*.json"
+      run: bun run --filter @sugara/web check-i18n
 
 commit-msg:
   commands:
@@ -15,8 +20,8 @@ commit-msg:
 pre-push:
   parallel: true
   commands:
-    test:
-      run: bun run test
+    check-types:
+      run: bun run check-types
     audit:
       glob: "bun.lock"
       run: bun audit || echo "[audit] vulnerabilities found (non-blocking)"

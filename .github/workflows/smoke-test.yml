@@ -1,0 +1,30 @@
+name: Smoke Test
+
+# Post-deploy verification. Vercel emits `deployment_status` events to GitHub when a
+# deployment transitions to success/failure. We run a lightweight health probe on success so
+# a broken production deploy is caught via GitHub Checks rather than user reports.
+
+on:
+  deployment_status:
+
+jobs:
+  smoke:
+    if: github.event.deployment_status.state == 'success' && github.event.deployment.environment == 'Production'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe /api/health
+        env:
+          TARGET_URL: ${{ github.event.deployment_status.target_url }}
+        run: |
+          set -euo pipefail
+          : "${TARGET_URL:?Deployment status event is missing target_url}"
+          echo "Probing $TARGET_URL/api/health"
+          # Retry for up to 30s: Vercel occasionally reports success slightly before the edge
+          # cache flips to the new deployment.
+          for attempt in 1 2 3 4 5 6; do
+            response=$(curl -fsS --max-time 10 "$TARGET_URL/api/health") && break
+            echo "Attempt $attempt failed, retrying…"
+            sleep 5
+          done
+          echo "Response: $response"
+          echo "$response" | jq -e '.status == "ok"'

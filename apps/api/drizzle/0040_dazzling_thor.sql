@@ -1,0 +1,1 @@
+CREATE INDEX "expense_splits_user_id_idx" ON "expense_splits" USING btree ("user_id");

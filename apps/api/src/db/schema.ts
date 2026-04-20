@@ -513,7 +513,12 @@ export const expenseSplits = pgTable(
       .references(() => users.id, { onDelete: "cascade" }),
     amount: integer("amount").notNull(),
   },
-  (table) => [primaryKey({ columns: [table.expenseId, table.userId] })],
+  (table) => [
+    primaryKey({ columns: [table.expenseId, table.userId] }),
+    // The primary key covers (expenseId, userId), so lookups by userId alone — used when
+    // filtering or aggregating a single user's splits across expenses — would full-scan.
+    index("expense_splits_user_id_idx").on(table.userId),
+  ],
 ).enableRLS();
 
 export const expenseLineItems = pgTable(
@@ -743,6 +748,16 @@ export const appSettings = pgTable(
   },
   (table) => [check("app_settings_single_row", sql`${table.id} = 1`)],
 );
+
+// Records which seed payload (hash of inserted rows) has been applied. Lets idempotent seed
+// scripts skip their delete+insert churn when the content is unchanged — critical for seeds
+// that run on every deploy (e.g. FAQ content) where the default behavior would overwrite any
+// manual DB-side edits and waste DB operations.
+export const seedState = pgTable("seed_state", {
+  key: text("key").primaryKey(),
+  hash: text("hash").notNull(),
+  appliedAt: timestamp("applied_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const notifications = pgTable(
   "notifications",

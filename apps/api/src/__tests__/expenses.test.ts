@@ -332,6 +332,7 @@ describe("Expense routes", () => {
       ]);
       mockCountQuery(0);
       mockDbInsert
+        // expense insert
         .mockReturnValueOnce({
           values: vi.fn().mockReturnValue({
             returning: vi
@@ -339,26 +340,20 @@ describe("Expense routes", () => {
               .mockResolvedValueOnce([{ id: "exp-3", ...itemizedBody, createdAt: new Date() }]),
           }),
         })
+        // splits bulk insert
         .mockReturnValueOnce({
           values: vi.fn().mockResolvedValueOnce(undefined),
         })
-        // lineItem 1 insert + returning
+        // lineItems bulk insert + returning (both items in one call)
         .mockReturnValueOnce({
           values: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValueOnce([{ id: "li-1" }]),
+            returning: vi.fn().mockResolvedValueOnce([
+              { id: "li-1", sortOrder: 0 },
+              { id: "li-2", sortOrder: 1 },
+            ]),
           }),
         })
-        // lineItem 1 members insert
-        .mockReturnValueOnce({
-          values: vi.fn().mockResolvedValueOnce(undefined),
-        })
-        // lineItem 2 insert + returning
-        .mockReturnValueOnce({
-          values: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValueOnce([{ id: "li-2" }]),
-          }),
-        })
-        // lineItem 2 members insert
+        // lineItemMembers bulk insert (all member rows in one call)
         .mockReturnValueOnce({
           values: vi.fn().mockResolvedValueOnce(undefined),
         });
@@ -370,8 +365,8 @@ describe("Expense routes", () => {
       });
 
       expect(res.status).toBe(201);
-      // Verify line items were inserted (expense + splits + 2*(lineItem + members) = 6 inserts)
-      expect(mockDbInsert).toHaveBeenCalledTimes(6);
+      // expense + splits + lineItems + lineItemMembers = 4 bulk inserts (was 6 with per-item N+1)
+      expect(mockDbInsert).toHaveBeenCalledTimes(4);
     });
 
     it("returns 400 when itemized split total does not match amount", async () => {
@@ -831,27 +826,20 @@ describe("Expense routes", () => {
         where: vi.fn().mockResolvedValue(undefined),
       });
       mockDbInsert
-        // splits insert
+        // splits bulk insert
         .mockReturnValueOnce({
           values: vi.fn().mockResolvedValueOnce(undefined),
         })
-        // lineItem 1 insert
+        // lineItems bulk insert + returning
         .mockReturnValueOnce({
           values: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValueOnce([{ id: "li-1" }]),
+            returning: vi.fn().mockResolvedValueOnce([
+              { id: "li-1", sortOrder: 0 },
+              { id: "li-2", sortOrder: 1 },
+            ]),
           }),
         })
-        // lineItem 1 members
-        .mockReturnValueOnce({
-          values: vi.fn().mockResolvedValueOnce(undefined),
-        })
-        // lineItem 2 insert
-        .mockReturnValueOnce({
-          values: vi.fn().mockReturnValue({
-            returning: vi.fn().mockResolvedValueOnce([{ id: "li-2" }]),
-          }),
-        })
-        // lineItem 2 members
+        // lineItemMembers bulk insert
         .mockReturnValueOnce({
           values: vi.fn().mockResolvedValueOnce(undefined),
         });

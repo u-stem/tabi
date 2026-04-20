@@ -23,8 +23,6 @@ const notoSansJP = Noto_Sans_JP({
   preload: false,
 });
 
-export const dynamic = "force-dynamic";
-
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,

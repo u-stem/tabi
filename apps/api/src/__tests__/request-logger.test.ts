@@ -58,12 +58,12 @@ describe("requestLogger middleware", () => {
     expect(logged.status).toBe(500);
   });
 
-  it("skips /health requests", async () => {
+  it("skips /api/health requests", async () => {
     const app = new Hono();
     app.use("*", requestLogger());
-    app.get("/health", (c) => c.json({ status: "ok" }));
+    app.get("/api/health", (c) => c.json({ status: "ok" }));
 
-    await app.request("/health");
+    await app.request("/api/health");
 
     expect(logger.info).not.toHaveBeenCalled();
     expect(logger.warn).not.toHaveBeenCalled();

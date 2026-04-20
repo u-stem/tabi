@@ -206,24 +206,27 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
     );
 
     if (lineItems && lineItems.length > 0) {
-      for (let i = 0; i < lineItems.length; i++) {
-        const item = lineItems[i];
-        const [lineItem] = await tx
-          .insert(expenseLineItems)
-          .values({
+      const insertedItems = await tx
+        .insert(expenseLineItems)
+        .values(
+          lineItems.map((item, i) => ({
             expenseId: expense.id,
             name: item.name,
             amount: item.amount,
             sortOrder: i,
-          })
-          .returning();
-
-        await tx.insert(expenseLineItemMembers).values(
-          item.memberIds.map((userId) => ({
-            lineItemId: lineItem.id,
-            userId,
           })),
-        );
+        )
+        .returning({ id: expenseLineItems.id, sortOrder: expenseLineItems.sortOrder });
+
+      // Map returned rows back to input by sortOrder to resolve memberIds per line item
+      const memberRows = insertedItems.flatMap((row) =>
+        lineItems[row.sortOrder].memberIds.map((userId) => ({
+          lineItemId: row.id,
+          userId,
+        })),
+      );
+      if (memberRows.length > 0) {
+        await tx.insert(expenseLineItemMembers).values(memberRows);
       }
     }
 
@@ -408,24 +411,28 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
 
     if (lineItems !== undefined) {
       await tx.delete(expenseLineItems).where(eq(expenseLineItems.expenseId, expenseId));
-      for (let i = 0; i < lineItems.length; i++) {
-        const item = lineItems[i];
-        const [lineItem] = await tx
+      if (lineItems.length > 0) {
+        const insertedItems = await tx
           .insert(expenseLineItems)
-          .values({
-            expenseId,
-            name: item.name,
-            amount: item.amount,
-            sortOrder: i,
-          })
-          .returning();
+          .values(
+            lineItems.map((item, i) => ({
+              expenseId,
+              name: item.name,
+              amount: item.amount,
+              sortOrder: i,
+            })),
+          )
+          .returning({ id: expenseLineItems.id, sortOrder: expenseLineItems.sortOrder });
 
-        await tx.insert(expenseLineItemMembers).values(
-          item.memberIds.map((userId) => ({
-            lineItemId: lineItem.id,
+        const memberRows = insertedItems.flatMap((row) =>
+          lineItems[row.sortOrder].memberIds.map((userId) => ({
+            lineItemId: row.id,
             userId,
           })),
         );
+        if (memberRows.length > 0) {
+          await tx.insert(expenseLineItemMembers).values(memberRows);
+        }
       }
     } else if (updateFields.splitType && updateFields.splitType !== "itemized") {
       // splitType changed away from itemized: clean up orphaned line items

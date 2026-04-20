@@ -15,7 +15,7 @@ export function requestLogger(): MiddlewareHandler<AppEnv> {
     const method = c.req.method;
     const path = c.req.path;
 
-    if (path === "/health") return;
+    if (path === "/api/health") return;
 
     const log = status >= 500 ? logger.error : status >= 400 ? logger.warn : logger.info;
     log.call(logger, { requestId, method, path, status, duration, userId: c.get("user")?.id });

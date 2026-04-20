@@ -371,11 +371,11 @@ export default function SpTripExportPage() {
 
   return (
     <LoadingBoundary isLoading={isLoading} skeleton={<ExportSkeleton />}>
-      {error || !trip ? (
+      {error ? (
         <div className="flex min-h-[50vh] items-center justify-center">
           <p className="text-destructive">{tm("tripFetchFailed")}</p>
         </div>
-      ) : (
+      ) : trip ? (
         <div className="px-4 pt-4 pb-24 space-y-6">
           <div className="flex items-center gap-2">
             <Link href={`/sp/trips/${tripId}`} className="shrink-0 text-muted-foreground">
@@ -706,7 +706,7 @@ export default function SpTripExportPage() {
             </div>
           )}
         </div>
-      )}
+      ) : null}
     </LoadingBoundary>
   );
 }

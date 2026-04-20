@@ -79,11 +79,11 @@ export default function SpTripPrintPage() {
 
   return (
     <LoadingBoundary isLoading={isLoading} skeleton={<PrintSkeleton />}>
-      {error || !trip ? (
+      {error ? (
         <div className="flex min-h-screen items-center justify-center">
           <p className="text-destructive">{tm("tripFetchFailed")}</p>
         </div>
-      ) : (
+      ) : trip ? (
         <div className="mx-auto max-w-3xl px-6 py-8 print:max-w-none print:px-0 print:py-0">
           <header className="mb-6 print:mb-4">
             <div className="flex items-center gap-2">
@@ -121,7 +121,7 @@ export default function SpTripPrintPage() {
             })}
           </div>
         </div>
-      )}
+      ) : null}
     </LoadingBoundary>
   );
 }

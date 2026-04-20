@@ -523,9 +523,9 @@ export default function SpTripDetailPage() {
   return (
     <>
       <LoadingBoundary isLoading={isLoading || (!!pollId && isPollLoading)} skeleton={skeleton}>
-        {queryError || !trip ? (
+        {queryError ? (
           <p className="text-destructive">{tm("tripFetchFailed")}</p>
-        ) : (
+        ) : trip ? (
           <MapsProvider enabled={trip.mapsEnabled}>
             <SelectionProvider value={selectionValue}>
               <div className="mt-4">
@@ -604,7 +604,7 @@ export default function SpTripDetailPage() {
               </div>
             </SelectionProvider>
           </MapsProvider>
-        )}
+        ) : null}
         <ReactionOverlay reactions={reactions} onAnimationEnd={removeReaction} />
       </LoadingBoundary>
 

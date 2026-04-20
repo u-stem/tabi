@@ -86,12 +86,12 @@ export function QuickPollClient({ token }: { token: string }) {
         </div>
       </header>
       <LoadingBoundary isLoading={isLoading} skeleton={<PollSkeleton />} delay={0}>
-        {error || !poll ? (
+        {error ? (
           <div className="container flex max-w-lg flex-col items-center py-16 text-center">
             <Vote className="mb-4 h-12 w-12 text-muted-foreground" />
             <p className="text-lg font-medium text-destructive">{tm("quickPollNotFound")}</p>
           </div>
-        ) : (
+        ) : poll ? (
           <div className="container max-w-lg py-8 space-y-6">
             <h1 className="break-words text-xl font-bold">{poll.question}</h1>
 
@@ -167,7 +167,7 @@ export function QuickPollClient({ token }: { token: string }) {
               <p className="text-center text-sm text-muted-foreground">{tp("pollClosed")}</p>
             )}
           </div>
-        )}
+        ) : null}
         <SharedFooter />
       </LoadingBoundary>
     </div>

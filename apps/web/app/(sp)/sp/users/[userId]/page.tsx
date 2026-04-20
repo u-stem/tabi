@@ -53,10 +53,12 @@ export default function SpProfilePage() {
       }
     >
       <div className="mx-auto mt-4 max-w-2xl">
-        {error || !profile ? (
-          <ErrorMessage message={error ?? tup("userNotFound")} />
-        ) : (
+        {error ? (
+          <ErrorMessage message={error} />
+        ) : profile ? (
           <ProfileContent profile={profile} userId={userId ?? ""} />
+        ) : (
+          <ErrorMessage message={tup("userNotFound")} />
         )}
       </div>
     </LoadingBoundary>

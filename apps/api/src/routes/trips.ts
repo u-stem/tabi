@@ -680,6 +680,7 @@ tripRoutes.post("/:id/duplicate", requireTripAccess("viewer", "id"), async (c) =
 
 // Upload cover image (editor+)
 tripRoutes.post("/:id/cover-image", requireTripAccess("editor", "id"), async (c) => {
+  const user = c.get("user");
   const tripId = getParam(c, "id");
 
   const body = await c.req.parseBody();
@@ -708,7 +709,10 @@ tripRoutes.post("/:id/cover-image", requireTripAccess("editor", "id"), async (c)
     const buffer = Buffer.from(await file.arrayBuffer());
     coverImageUrl = await uploadCoverImage(tripId, buffer, file.type);
   } catch (err) {
-    logger.error({ err }, "Cover image upload failed");
+    logger.error(
+      { err, tripId, userId: user.id, fileSize: file.size, fileType: file.type },
+      "Cover image upload failed",
+    );
     return c.json({ error: ERROR_MSG.INTERNAL_ERROR }, 500);
   }
 

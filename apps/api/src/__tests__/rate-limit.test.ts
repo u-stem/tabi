@@ -82,4 +82,36 @@ describe("rateLimitByIp middleware", () => {
 
     expect(res.status).toBe(200);
   });
+
+  it("prefers x-real-ip over x-forwarded-for to prevent spoofing", async () => {
+    const app = new Hono();
+    app.use("*", rateLimitByIp({ window: 60, max: 1 }));
+    app.get("/test", (c) => c.json({ ok: true }));
+
+    await app.request("/test", {
+      headers: { "x-real-ip": "9.9.9.9", "x-forwarded-for": "1.1.1.1" },
+    });
+    // Client tries to evade by spoofing x-forwarded-for to a fresh value, but x-real-ip is still 9.9.9.9
+    const res = await app.request("/test", {
+      headers: { "x-real-ip": "9.9.9.9", "x-forwarded-for": "2.2.2.2" },
+    });
+
+    expect(res.status).toBe(429);
+  });
+
+  it("uses the last entry of x-forwarded-for (trusted proxy hop)", async () => {
+    const app = new Hono();
+    app.use("*", rateLimitByIp({ window: 60, max: 1 }));
+    app.get("/test", (c) => c.json({ ok: true }));
+
+    // Attacker controls the leftmost value; the trusted proxy appends the real client IP on the right.
+    await app.request("/test", {
+      headers: { "x-forwarded-for": "evil-spoof, 7.7.7.7" },
+    });
+    const res = await app.request("/test", {
+      headers: { "x-forwarded-for": "different-spoof, 7.7.7.7" },
+    });
+
+    expect(res.status).toBe(429);
+  });
 });

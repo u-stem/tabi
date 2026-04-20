@@ -2,9 +2,9 @@ import { describe, expect, it } from "vitest";
 import { generateShareToken } from "../lib/share-token";
 
 describe("generateShareToken", () => {
-  it("generates an 11-character token", () => {
+  it("generates a 43-character token (32 bytes base64url)", () => {
     const token = generateShareToken();
-    expect(token).toHaveLength(11);
+    expect(token).toHaveLength(43);
   });
 
   it("uses only base64url characters", () => {

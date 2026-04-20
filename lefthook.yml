@@ -5,6 +5,17 @@
 pre-commit:
   parallel: true
   commands:
+    # main/master is protected by GitHub Branch Protection — direct push is rejected.
+    # Block commits locally so the mistake is caught before the work has to be moved.
+    branch-guard:
+      run: |
+        branch=$(git branch --show-current)
+        case "$branch" in
+          main|master)
+            echo "[branch-guard] $branch への直接コミットは禁止です。'git switch -c <type>/<topic>' で feature branch を作成してください。" >&2
+            exit 1
+            ;;
+        esac
     check:
       run: bun run check
       stage_fixed: true

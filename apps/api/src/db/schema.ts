@@ -1,5 +1,6 @@
 import { relations, sql } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean,
   check,
   date,
@@ -260,6 +261,11 @@ export const schedules = pgTable(
     transportMethod: transportMethodEnum("transport_method"),
     color: scheduleColorEnum("color").notNull().default("blue"),
     endDayOffset: integer("end_day_offset"),
+    crossDayAnchor: text("cross_day_anchor", { enum: ["before", "after"] }),
+    crossDayAnchorSourceId: uuid("cross_day_anchor_source_id").references(
+      (): AnyPgColumn => schedules.id,
+      { onDelete: "set null" },
+    ),
     latitude: doublePrecision("latitude"),
     longitude: doublePrecision("longitude"),
     placeId: varchar("place_id", { length: 255 }),
@@ -269,6 +275,11 @@ export const schedules = pgTable(
   (table) => [
     index("schedules_trip_id_idx").on(table.tripId),
     index("schedules_day_pattern_id_idx").on(table.dayPatternId),
+    index("schedules_anchor_source_idx").on(table.crossDayAnchorSourceId),
+    check(
+      "schedules_anchor_consistency",
+      sql`(${table.crossDayAnchor} is null) = (${table.crossDayAnchorSourceId} is null)`,
+    ),
   ],
 ).enableRLS();
 

@@ -218,13 +218,14 @@ expenseRoutes.post("/:tripId/expenses", requireTripAccess("editor"), async (c) =
         )
         .returning({ id: expenseLineItems.id, sortOrder: expenseLineItems.sortOrder });
 
-      // Map returned rows back to input by sortOrder to resolve memberIds per line item
-      const memberRows = insertedItems.flatMap((row) =>
-        lineItems[row.sortOrder].memberIds.map((userId) => ({
-          lineItemId: row.id,
-          userId,
-        })),
-      );
+      // PostgreSQL does not guarantee RETURNING row order for multi-row inserts, so look up
+      // the original lineItem by sortOrder via a Map rather than relying on array index order.
+      const lineItemsBySortOrder = new Map(lineItems.map((item, i) => [i, item]));
+      const memberRows = insertedItems.flatMap((row) => {
+        const source = lineItemsBySortOrder.get(row.sortOrder);
+        if (!source) return [];
+        return source.memberIds.map((userId) => ({ lineItemId: row.id, userId }));
+      });
       if (memberRows.length > 0) {
         await tx.insert(expenseLineItemMembers).values(memberRows);
       }
@@ -424,12 +425,13 @@ expenseRoutes.patch("/:tripId/expenses/:expenseId", requireTripAccess("editor"),
           )
           .returning({ id: expenseLineItems.id, sortOrder: expenseLineItems.sortOrder });
 
-        const memberRows = insertedItems.flatMap((row) =>
-          lineItems[row.sortOrder].memberIds.map((userId) => ({
-            lineItemId: row.id,
-            userId,
-          })),
-        );
+        // Look up original lineItem by sortOrder via Map (see POST path for rationale).
+        const lineItemsBySortOrder = new Map(lineItems.map((item, i) => [i, item]));
+        const memberRows = insertedItems.flatMap((row) => {
+          const source = lineItemsBySortOrder.get(row.sortOrder);
+          if (!source) return [];
+          return source.memberIds.map((userId) => ({ lineItemId: row.id, userId }));
+        });
         if (memberRows.length > 0) {
           await tx.insert(expenseLineItemMembers).values(memberRows);
         }

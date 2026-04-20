@@ -19,12 +19,24 @@ jobs:
           set -euo pipefail
           : "${TARGET_URL:?Deployment status event is missing target_url}"
           echo "Probing $TARGET_URL/api/health"
-          # Retry for up to 30s: Vercel occasionally reports success slightly before the edge
-          # cache flips to the new deployment.
+          # Retry up to ~25s total: Vercel sometimes reports success slightly before the edge
+          # cache flips to the new deployment. Sleep only between attempts (not after the
+          # final failure), and surface an explicit error instead of an opaque jq parse
+          # failure when every attempt fails.
+          response=""
           for attempt in 1 2 3 4 5 6; do
-            response=$(curl -fsS --max-time 10 "$TARGET_URL/api/health") && break
-            echo "Attempt $attempt failed, retrying…"
-            sleep 5
+            if response=$(curl -fsS --max-time 10 "$TARGET_URL/api/health"); then
+              break
+            fi
+            echo "Attempt $attempt failed"
+            response=""
+            if [ "$attempt" -lt 6 ]; then
+              sleep 5
+            fi
           done
+          if [ -z "$response" ]; then
+            echo "::error::All 6 /api/health probes failed for $TARGET_URL"
+            exit 1
+          fi
           echo "Response: $response"
           echo "$response" | jq -e '.status == "ok"'

@@ -13,6 +13,7 @@ on:
       - "apps/api/drizzle/**"
       - "apps/api/src/db/schema.ts"
       - "apps/api/src/db/seed-faqs.ts"
+      - "apps/api/src/db/ensure-faqs-table.ts"
       - "apps/api/src/db/migrate.ts"
       - ".github/workflows/db-migrate.yml"
   workflow_dispatch:

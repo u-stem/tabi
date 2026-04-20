@@ -84,12 +84,16 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules", async 
       eq(schedules.dayPatternId, patternId),
     );
 
+    // Anchors are never set on create — they can only be set via the reorder
+    // endpoint after the schedule has a stable id to reference.
+    const { crossDayAnchor: _a, crossDayAnchorSourceId: _s, ...createData } = parsed.data;
+
     const [result] = await tx
       .insert(schedules)
       .values({
         tripId,
         dayPatternId: patternId,
-        ...parsed.data,
+        ...createData,
         sortOrder: nextOrder,
       })
       .returning();

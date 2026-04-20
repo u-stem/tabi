@@ -16,7 +16,8 @@ vi.mock("../../lib/auth", () => ({
   },
 }));
 
-import { tripMembers } from "../../db/schema";
+import { eq } from "drizzle-orm";
+import { schedules, tripMembers } from "../../db/schema";
 import { candidateRoutes } from "../../routes/candidates";
 import { scheduleRoutes } from "../../routes/schedules";
 import { tripRoutes } from "../../routes/trips";
@@ -288,5 +289,85 @@ describe("Candidates Integration", () => {
     expect(res.status).toBe(200);
     const body = await res.json();
     expect(body).toHaveLength(1);
+  });
+
+  describe("anchors are stripped on candidates", () => {
+    it("POST ignores crossDayAnchor/crossDayAnchorSourceId and stores null", async () => {
+      // Create a hotel-with-endDayOffset in a pattern so the fake anchor source id is valid-looking.
+      const hotelRes = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: "Hotel",
+            category: "hotel",
+            startTime: "15:00",
+            endTime: "10:00",
+            endDayOffset: 1,
+          }),
+        },
+      );
+      const hotel = await hotelRes.json();
+
+      const res = await app.request(`/api/trips/${tripId}/candidates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Smuggled",
+          category: "sightseeing",
+          crossDayAnchor: "after",
+          crossDayAnchorSourceId: hotel.id,
+        }),
+      });
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.crossDayAnchor).toBeNull();
+      expect(body.crossDayAnchorSourceId).toBeNull();
+    });
+
+    it("PATCH ignores crossDayAnchor/crossDayAnchorSourceId fields", async () => {
+      const hotelRes = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: "Hotel",
+            category: "hotel",
+            startTime: "15:00",
+            endTime: "10:00",
+            endDayOffset: 1,
+          }),
+        },
+      );
+      const hotel = await hotelRes.json();
+
+      const candidateRes = await app.request(`/api/trips/${tripId}/candidates`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Candidate", category: "sightseeing" }),
+      });
+      const candidate = await candidateRes.json();
+
+      const patchRes = await app.request(`/api/trips/${tripId}/candidates/${candidate.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Renamed",
+          crossDayAnchor: "before",
+          crossDayAnchorSourceId: hotel.id,
+        }),
+      });
+      expect(patchRes.status).toBe(200);
+
+      const db = getTestDb();
+      const stored = await db.query.schedules.findFirst({
+        where: eq(schedules.id, candidate.id),
+      });
+      expect(stored?.name).toBe("Renamed");
+      expect(stored?.crossDayAnchor).toBeNull();
+      expect(stored?.crossDayAnchorSourceId).toBeNull();
+    });
   });
 });

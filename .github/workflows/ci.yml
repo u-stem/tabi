@@ -33,13 +33,22 @@ jobs:
       - name: TypeScript
         run: bun run check-types
 
-      # Block critical advisories outright; high is noisy and often transitive, so we surface
-      # it without failing the build.
+      # Block "critical" advisories explicitly; high is noisy and often transitive, so we
+      # surface them without failing the build. bun audit's own exit code behaves
+      # inconsistently (exits 1 on any advisory regardless of --level), so we parse output.
       - name: Dependency audit (critical gate)
-        run: bun audit --level critical
+        run: |
+          set +e
+          audit_output=$(bun audit 2>&1)
+          echo "$audit_output"
+          if echo "$audit_output" | grep -qiE '^\s*critical:'; then
+            echo "::error::Critical advisory detected, blocking merge"
+            exit 1
+          fi
+          exit 0
 
       - name: Dependency audit (high, informational)
-        run: bun audit --level high
+        run: bun audit
         continue-on-error: true
 
   test:

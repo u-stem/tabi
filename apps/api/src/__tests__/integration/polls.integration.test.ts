@@ -85,6 +85,16 @@ async function createTripWithPoll(app: Hono, overrides?: Partial<typeof VALID_TR
   return { tripId: trip.id as string, pollId: poll.id as string, poll };
 }
 
+/** Directly insert a trip_members row. Poll participants must be trip members first
+ * (server-side permission check in polls.ts). */
+async function addTripMember(
+  tripId: string,
+  userId: string,
+  role: "owner" | "editor" | "viewer" = "editor",
+) {
+  await getTestDb().insert(tripMembers).values({ tripId, userId, role });
+}
+
 describe("Polls Integration", () => {
   const app = createApp();
   let owner: { id: string; name: string; email: string };
@@ -128,9 +138,10 @@ describe("Polls Integration", () => {
 
   it("lists polls where user is a participant", async () => {
     const other = await createTestUser({ name: "Other", email: "other@test.com" });
-    const { pollId } = await createTripWithPoll(app);
+    const { tripId, pollId } = await createTripWithPoll(app);
 
-    // Add other as participant
+    // Poll participants must already be trip members (permission check in polls.ts)
+    await addTripMember(tripId, other.id);
     await app.request(`/api/polls/${pollId}/participants`, json({ userId: other.id }));
 
     // Switch to other user
@@ -252,9 +263,10 @@ describe("Polls Integration", () => {
   // --- Participants ---
 
   it("adds a participant to a poll", async () => {
-    const { pollId } = await createTripWithPoll(app);
+    const { tripId, pollId } = await createTripWithPoll(app);
 
     const other = await createTestUser({ name: "Participant", email: "participant@test.com" });
+    await addTripMember(tripId, other.id);
     const res = await app.request(`/api/polls/${pollId}/participants`, json({ userId: other.id }));
     expect(res.status).toBe(201);
     const participant = await res.json();
@@ -263,9 +275,10 @@ describe("Polls Integration", () => {
   });
 
   it("rejects duplicate participant", async () => {
-    const { pollId } = await createTripWithPoll(app);
+    const { tripId, pollId } = await createTripWithPoll(app);
 
     const other = await createTestUser({ name: "Dup", email: "dup@test.com" });
+    await addTripMember(tripId, other.id);
     await app.request(`/api/polls/${pollId}/participants`, json({ userId: other.id }));
 
     const res = await app.request(`/api/polls/${pollId}/participants`, json({ userId: other.id }));
@@ -273,9 +286,10 @@ describe("Polls Integration", () => {
   });
 
   it("removes a participant from a poll", async () => {
-    const { pollId } = await createTripWithPoll(app);
+    const { tripId, pollId } = await createTripWithPoll(app);
 
     const other = await createTestUser({ name: "Remove", email: "remove@test.com" });
+    await addTripMember(tripId, other.id);
     const addRes = await app.request(
       `/api/polls/${pollId}/participants`,
       json({ userId: other.id }),
@@ -373,7 +387,8 @@ describe("Polls Integration", () => {
     expect(res.status).toBe(200);
     const data = await res.json();
     expect(data.shareToken).toBeTruthy();
-    expect(data.shareToken).toHaveLength(32);
+    // randomBytes(32).toString("base64url") → 43 chars (see lib/share-token.ts)
+    expect(data.shareToken).toHaveLength(43);
   });
 
   it("returns existing share token on repeated call", async () => {
@@ -414,8 +429,9 @@ describe("Polls Integration", () => {
   it("confirms a poll and updates the trip", async () => {
     const { pollId, poll, tripId } = await createTripWithPoll(app);
 
-    // Add another participant
+    // Add another participant (must be trip member first)
     const other = await createTestUser({ name: "Member", email: "member@test.com" });
+    await addTripMember(tripId, other.id);
     await app.request(`/api/polls/${pollId}/participants`, json({ userId: other.id }));
 
     const res = await app.request(

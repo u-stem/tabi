@@ -16,7 +16,8 @@ vi.mock("../../lib/auth", () => ({
   },
 }));
 
-import { tripMembers } from "../../db/schema";
+import { eq } from "drizzle-orm";
+import { schedules, tripMembers } from "../../db/schema";
 import { patternRoutes } from "../../routes/patterns";
 import { scheduleRoutes } from "../../routes/schedules";
 import { tripRoutes } from "../../routes/trips";
@@ -757,6 +758,38 @@ describe("Schedules Integration", () => {
       const fetched = await fetchSchedule(target.id);
       expect(fetched.crossDayAnchor).toBeNull();
       expect(fetched.crossDayAnchorSourceId).toBeNull();
+    });
+
+    it("trigger nulls cross_day_anchor when source_id is cleared directly (FK SET NULL simulation)", async () => {
+      const hotel = await createReorderSchedule("Hotel Trigger", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+      const target = await createReorderSchedule("Target Trigger", "sightseeing");
+      await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [hotel.id, target.id],
+            anchors: [{ scheduleId: target.id, anchor: "after", anchorSourceId: hotel.id }],
+          }),
+        },
+      );
+
+      const testDb = getTestDb();
+      await testDb
+        .update(schedules)
+        .set({ crossDayAnchorSourceId: null })
+        .where(eq(schedules.id, target.id));
+
+      const after = await testDb.query.schedules.findFirst({
+        where: eq(schedules.id, target.id),
+      });
+      expect(after?.crossDayAnchor).toBeNull();
+      expect(after?.crossDayAnchorSourceId).toBeNull();
     });
 
     it("clears all anchors when clearAnchors=true", async () => {

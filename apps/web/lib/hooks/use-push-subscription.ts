@@ -43,9 +43,13 @@ async function subscribeToVapid(registration: ServiceWorkerRegistration): Promis
     // that as "can't verify, re-subscribe defensively".
     const existingKey = existing.options.applicationServerKey;
     const existingKeyBase64 = existingKey ? arrayBufferToBase64Url(existingKey) : null;
-    if (existingKeyBase64 === vapidPublicKey) {
-      // Already subscribed with the current key. Re-POST so the server can heal if it lost
-      // the row (e.g. VAPID rotation wiped push_subscriptions to drop stale endpoints).
+    // Treat `null` as "key unknown, trust existing subscription". Some legacy Chrome versions
+    // return null from options.applicationServerKey even when the sub was created correctly
+    // (crbug.com/697099). Unsubscribing would loop forever on those browsers, so we only
+    // force a re-subscribe when we *know* the stored key differs from the current VAPID key.
+    if (existingKeyBase64 === null || existingKeyBase64 === vapidPublicKey) {
+      // Re-POST so the server can heal if it lost the row (e.g. VAPID rotation wiped
+      // push_subscriptions to drop stale endpoints).
       await postSubscription(existing);
       return;
     }

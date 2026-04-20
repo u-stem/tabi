@@ -241,7 +241,7 @@ export default function TripDetailPage() {
   const queryClient = useQueryClient();
 
   const {
-    data: trip = null,
+    data: trip,
     isLoading,
     error: queryError,
   } = useQuery({
@@ -845,9 +845,9 @@ export default function TripDetailPage() {
       isLoading={isLoading || (!!pollId && isPollLoading)}
       skeleton={<TripDetailSkeleton />}
     >
-      {queryError || !trip ? (
+      {queryError ? (
         <p className="text-destructive">{tm("tripFetchFailed")}</p>
-      ) : (
+      ) : trip ? (
         <MapsProvider enabled={trip.mapsEnabled}>
           <SelectionProvider value={selectionValue}>
             <div className="mt-4">
@@ -1112,7 +1112,7 @@ export default function TripDetailPage() {
             </div>
           </SelectionProvider>
         </MapsProvider>
-      )}
+      ) : null}
       <ReactionOverlay reactions={reactions} onAnimationEnd={removeReaction} />
     </LoadingBoundary>
   );

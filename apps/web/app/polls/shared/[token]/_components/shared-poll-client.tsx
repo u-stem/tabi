@@ -72,13 +72,13 @@ export function SharedPollClient({ token }: { token: string }) {
     <div className="min-h-screen">
       <SharedPollHeader />
       <LoadingBoundary isLoading={isLoading} skeleton={<SharedPollBodySkeleton />}>
-        {error || !poll ? (
+        {error ? (
           <div className="container flex max-w-3xl flex-col items-center py-16 text-center">
             <Calendar className="mb-4 h-12 w-12 text-muted-foreground" />
             <p className="text-lg font-medium text-destructive">{tm("pollSharedNotFound")}</p>
             <p className="mt-2 text-sm text-muted-foreground">{tp("checkLinkOrContact")}</p>
           </div>
-        ) : (
+        ) : poll ? (
           <div className="container max-w-3xl py-8 space-y-6">
             <div>
               <h1 className="break-words text-xl font-bold sm:text-2xl">{poll.title}</h1>
@@ -126,7 +126,7 @@ export function SharedPollClient({ token }: { token: string }) {
               </p>
             )}
           </div>
-        )}
+        ) : null}
         <SharedFooter />
       </LoadingBoundary>
     </div>

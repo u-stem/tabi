@@ -103,9 +103,9 @@ export default function SpQuickPollDetailPage() {
       </Link>
 
       <LoadingBoundary isLoading={isLoading} skeleton={<DetailSkeleton />}>
-        {error || !poll ? (
+        {error ? (
           <p className="text-center text-destructive">{tm("quickPollNotFound")}</p>
-        ) : (
+        ) : poll ? (
           <div className="space-y-6">
             {/* Header */}
             <div className="flex items-start justify-between gap-2">
@@ -193,7 +193,7 @@ export default function SpQuickPollDetailPage() {
               </Button>
             </div>
           </div>
-        )}
+        ) : null}
       </LoadingBoundary>
     </div>
   );

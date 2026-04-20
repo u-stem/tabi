@@ -415,11 +415,11 @@ export default function TripExportPage() {
 
   return (
     <LoadingBoundary isLoading={isLoading} skeleton={<ExportSkeleton />}>
-      {error || !trip ? (
+      {error ? (
         <div className="flex min-h-[50vh] items-center justify-center">
           <p className="text-destructive">{tm("tripFetchFailed")}</p>
         </div>
-      ) : (
+      ) : trip ? (
         <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)]">
           {/* Settings */}
           <div className="rounded-lg border p-5 space-y-6 self-start">
@@ -759,7 +759,7 @@ export default function TripExportPage() {
             </div>
           </div>
         </div>
-      )}
+      ) : null}
     </LoadingBoundary>
   );
 }

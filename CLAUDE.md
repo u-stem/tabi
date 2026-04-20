@@ -180,12 +180,7 @@ bun run db:generate
 bun run db:migrate
 ```
 
-本番 DB への適用は **2 経路で冪等実行** される:
-
-1. `.github/workflows/db-migrate.yml` — `apps/api/drizzle/**` や `schema.ts` 変更を検知して main merge 時に実行 (`[skip deploy]` でも走る)
-2. Vercel `buildCommand` — `next build` の前に `bun run db:migrate` を実行して build と DB 状態を同期
-
-drizzle の migration は `__drizzle_migrations` テーブルで追跡されるため、二重実行しても 2 回目は no-op。先に完了した方が勝つ。`MIGRATION_URL` シークレットを GitHub Actions `production` environment と Vercel env の両方に設定する必要あり (同じ Supabase Session Pooler URL)。
+本番 DB への適用は Vercel `buildCommand` が `next build` の前に `bun run db:migrate` を実行する。drizzle の migration は `__drizzle_migrations` テーブルで追跡される冪等な DDL で、build 失敗時は migration も未適用のまま (= 次回 deploy で自然復旧)。`MIGRATION_URL` は Vercel env にのみ設定 (Supabase Session Pooler URL)。
 
 ## ドキュメント構成
 

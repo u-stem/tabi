@@ -85,14 +85,13 @@ gh pr create --title "<type>: <日本語タイトル>" --body "<本文>"
 
 ### DB migration
 
-migration は **2 経路** で実行される（冪等性と race-condition 対策のため意図的な二重化）:
+Vercel `buildCommand` が `next build` の前に `bun run db:migrate` を実行する (Pattern A)。
 
-1. `.github/workflows/db-migrate.yml` — `apps/api/drizzle/**` や `schema.ts` の変更を検知し main merge 時に実行。Vercel build とは独立したジョブで、`[skip deploy]` コミットでも必ず走る
-2. Vercel `buildCommand` — `next build` の前に `bun run db:migrate` を実行。Vercel build と DB 状態を確実に同期させる
-
-drizzle の migration は `__drizzle_migrations` テーブルで追跡されるため、同じ migration を二重実行しても 2 回目は no-op になる。先に完了した方が勝つ。
-
-- 両方とも `MIGRATION_URL` を使う。GitHub Actions の `production` environment と Vercel env の両方に設定する必要あり (同じ Supabase Session Pooler URL)
+- drizzle の migration は `__drizzle_migrations` テーブルで追跡される冪等な DDL
+- build 失敗時は migration も未適用のままなので、自然に整合性が保たれる (build 成功 = migration + code 同期)
+- `[skip deploy]` は desktop リリース専用で migration を含まない前提
+- 将来的に staging → production の段階適用や複数人開発への拡張を要するようになった場合、GitHub Actions 側の専用ワークフローへの移行を検討する (Pattern B)
+- `MIGRATION_URL` シークレットは **Vercel env にのみ** 設定 (Supabase Session Pooler URL、ポート 5432、`postgres.<project_ref>` ユーザ)
 
 ### デスクトップアプリのリリース
 

@@ -21,10 +21,11 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
 import {
-  buildMergedTimeline,
-  timelineScheduleOrder,
-  timelineSortableIds,
-} from "@/lib/merge-timeline";
+  computeCandidateInsertIndex,
+  computeScheduleReorderIndex,
+  type DropTarget,
+  isOverUpperHalf,
+} from "@/lib/drop-position";
 
 type ActiveDragItem = {
   id: string;
@@ -51,6 +52,28 @@ const MOUSE_SENSOR_OPTIONS = { activationConstraint: { distance: 8 } } as const;
 const TOUCH_SENSOR_OPTIONS = {
   activationConstraint: { delay: 200, tolerance: 5 },
 } as const;
+
+function buildDropTarget(
+  event: DragEndEvent,
+  savedLastOverZone: "timeline" | "candidates" | null,
+): DropTarget {
+  const { over, activatorEvent, delta } = event;
+  if (!over) {
+    if (savedLastOverZone === "timeline" || savedLastOverZone === "candidates") {
+      return { kind: "timeline" };
+    }
+    return { kind: "outside" };
+  }
+  const overType = over.data.current?.type as string | undefined;
+  if (overType === "timeline" || overType === "candidates") {
+    return { kind: "timeline" };
+  }
+  if (overType === "schedule" || overType === "candidate") {
+    const upperHalf = isOverUpperHalf(activatorEvent, delta.y, over.rect);
+    return { kind: "schedule", overId: String(over.id), upperHalf };
+  }
+  return { kind: "outside" };
+}
 
 export function useTripDragAndDrop({
   tripId,
@@ -167,30 +190,23 @@ export function useTripDragAndDrop({
 
       if (sourceType === "schedule" && isOverTimeline) {
         if (over && active.id === over.id) return;
-        // Use merged timeline so schedules can be dragged past cross-day entries
-        const merged = buildMergedTimeline(currentSchedules, crossDayEntries);
-        const mergedIds = timelineSortableIds(merged);
         const activeId = String(active.id);
-        const oldIndex = mergedIds.indexOf(activeId);
-        // When over is null (dropped below last item), move to end
-        let overIndex = over ? mergedIds.indexOf(String(over.id)) : merged.length - 1;
-        if (oldIndex === -1 || overIndex === -1) return;
+        const activeIdx = currentSchedules.findIndex((s) => s.id === activeId);
+        if (activeIdx === -1) return;
 
-        // When dropping onto a cross-day entry, treat it as dropping after the
-        // first schedule that follows it so the schedule ends up after the
-        // cross-day entry in the merged timeline.
-        if (over && merged[overIndex]?.type === "crossDay") {
-          let nextScheduleIdx = overIndex + 1;
-          while (nextScheduleIdx < merged.length && merged[nextScheduleIdx].type !== "schedule") {
-            nextScheduleIdx++;
-          }
-          overIndex = nextScheduleIdx < merged.length ? nextScheduleIdx : merged.length - 1;
-        }
+        const target = buildDropTarget(event, savedLastOverZone);
+        const destIdx = computeScheduleReorderIndex(
+          currentSchedules,
+          crossDayEntries,
+          activeId,
+          target,
+        );
+        if (destIdx === null) return;
+        // arrayMove: from `activeIdx`, insert at `destIdx` in the post-removal
+        // array. Skip when the destination is a no-op.
+        if (destIdx === activeIdx) return;
 
-        if (oldIndex === overIndex) return;
-
-        const reorderedMerged = arrayMove(merged, oldIndex, overIndex);
-        const reordered = timelineScheduleOrder(reorderedMerged);
+        const reordered = arrayMove(currentSchedules, activeIdx, destIdx);
         setLocalSchedules(reordered);
 
         const scheduleIds = reordered.map((s) => s.id);
@@ -266,47 +282,8 @@ export function useTripDragAndDrop({
 
         setLocalCandidates(currentCandidates.filter((c) => c.id !== active.id));
 
-        // Calculate insertion position (same logic as before)
-        let insertIdx = currentSchedules.length;
-        if (overType === "schedule" && over) {
-          const merged = buildMergedTimeline(currentSchedules, crossDayEntries);
-          const mergedIds = timelineSortableIds(merged);
-          const overIdx = mergedIds.indexOf(String(over.id));
-          if (overIdx !== -1) {
-            if (merged[overIdx]?.type === "crossDay") {
-              // Dropping onto a cross-day entry: insert after the first schedule
-              // following it, matching the same behaviour as schedule reorder.
-              let nextScheduleIdx = overIdx + 1;
-              while (
-                nextScheduleIdx < merged.length &&
-                merged[nextScheduleIdx].type !== "schedule"
-              ) {
-                nextScheduleIdx++;
-              }
-              if (nextScheduleIdx < merged.length) {
-                const nextItem = merged[nextScheduleIdx];
-                if (nextItem.type === "schedule") {
-                  const idx = currentSchedules.findIndex((s) => s.id === nextItem.schedule.id);
-                  if (idx !== -1) insertIdx = idx + 1;
-                }
-              }
-              // else: insertIdx stays at currentSchedules.length (end of list)
-            } else {
-              let insertBeforeId: string | null = null;
-              for (let k = overIdx; k < merged.length; k++) {
-                const item = merged[k];
-                if (item.type === "schedule") {
-                  insertBeforeId = item.schedule.id;
-                  break;
-                }
-              }
-              const idx = insertBeforeId
-                ? currentSchedules.findIndex((s) => s.id === insertBeforeId)
-                : -1;
-              if (idx !== -1) insertIdx = idx;
-            }
-          }
-        }
+        const target = buildDropTarget(event, savedLastOverZone);
+        const insertIdx = computeCandidateInsertIndex(currentSchedules, crossDayEntries, target);
 
         const newSchedule: ScheduleResponse = {
           id: candidate.id,

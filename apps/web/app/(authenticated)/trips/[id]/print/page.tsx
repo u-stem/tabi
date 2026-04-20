@@ -1,12 +1,6 @@
 "use client";
 
-import type {
-  CrossDayEntry,
-  DayResponse,
-  ScheduleResponse,
-  TransportMethod,
-  TripResponse,
-} from "@sugara/shared";
+import type { DayResponse, ScheduleResponse, TransportMethod, TripResponse } from "@sugara/shared";
 
 import { useQuery } from "@tanstack/react-query";
 import { Printer } from "lucide-react";
@@ -106,10 +100,9 @@ export default function TripPrintPage() {
           </header>
 
           <div className="space-y-5 print:space-y-3">
-            {trip.days.map((day) => {
-              const crossDayEntries = getCrossDayEntries(trip.days, day.dayNumber);
-              return <DaySection key={day.id} day={day} crossDayEntries={crossDayEntries} />;
-            })}
+            {trip.days.map((day) => (
+              <DaySection key={day.id} day={day} days={trip.days} />
+            ))}
           </div>
         </div>
       ) : null}
@@ -117,13 +110,7 @@ export default function TripPrintPage() {
   );
 }
 
-function DaySection({
-  day,
-  crossDayEntries,
-}: {
-  day: DayResponse;
-  crossDayEntries: CrossDayEntry[];
-}) {
+function DaySection({ day, days }: { day: DayResponse; days: DayResponse[] }) {
   const locale = useLocale();
   const tm = useTranslations("messages");
   const tdf = useTranslations("dateFormat");
@@ -139,10 +126,10 @@ function DaySection({
         </span>
       </h2>
       {day.patterns.map((pattern, i) => {
-        const merged = buildMergedTimeline(
-          pattern.schedules,
-          i === 0 ? crossDayEntries : undefined,
-        );
+        // Scope cross-day entries to this pattern's sortOrder so parallel
+        // candidate patterns don't leak each other's hotels into the print.
+        const crossDayEntries = getCrossDayEntries(days, day.dayNumber, pattern.sortOrder);
+        const merged = buildMergedTimeline(pattern.schedules, crossDayEntries);
         return (
           <div key={pattern.id}>
             {showPatternLabels && (

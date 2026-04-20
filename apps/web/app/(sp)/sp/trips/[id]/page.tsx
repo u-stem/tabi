@@ -219,8 +219,11 @@ export default function SpTripDetailPage() {
   const dndSchedules = useMemo(() => currentPattern?.schedules ?? [], [currentPattern?.schedules]);
   const dndCandidates = useMemo(() => trip?.candidates ?? [], [trip?.candidates]);
   const dndCrossDayEntries = useMemo(
-    () => (currentDay && trip ? getCrossDayEntries(trip.days, currentDay.dayNumber) : undefined),
-    [currentDay?.dayNumber, trip?.days],
+    () =>
+      currentDay && trip
+        ? getCrossDayEntries(trip.days, currentDay.dayNumber, currentPattern?.sortOrder)
+        : undefined,
+    [currentDay?.dayNumber, trip?.days, currentPattern?.sortOrder],
   );
 
   const allSchedules = useMemo(

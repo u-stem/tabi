@@ -1,5 +1,6 @@
 "use client";
 
+import { useIsRestoring } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { useDelayedLoading } from "@/lib/hooks/use-delayed-loading";
 import { cn } from "@/lib/utils";
@@ -25,9 +26,15 @@ export function LoadingBoundary({
   className,
   delay = 200,
 }: LoadingBoundaryProps) {
-  const showSkeleton = useDelayedLoading(isLoading, delay);
+  // While PersistQueryClientProvider hydrates from IndexedDB, useQuery reports
+  // isLoading=false with data=undefined — callers that render an error fallback
+  // on "!data" would flash it on every reload. Treat restoring as loading so
+  // the skeleton covers that window.
+  const isRestoring = useIsRestoring();
+  const effectiveLoading = isLoading || isRestoring;
+  const showSkeleton = useDelayedLoading(effectiveLoading, delay);
 
-  if (isLoading && !showSkeleton) return null;
+  if (effectiveLoading && !showSkeleton) return null;
   if (showSkeleton) return <>{skeleton}</>;
   if (error) return errorFallback ?? null;
 

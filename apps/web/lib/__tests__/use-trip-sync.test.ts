@@ -85,28 +85,64 @@ describe("useTripSync SDK-managed reconnection", () => {
     expect(mockRemoveChannel).not.toHaveBeenCalled();
   });
 
-  it("recreates channel on CLOSED (SDK removes channel from list)", () => {
+  it("recreates channel on CLOSED after backoff (SDK removes channel from list)", () => {
     renderHook(() => useTripSync("trip-1", user, onSync));
     const firstChannel = mockChannels[0];
 
     act(() => firstChannel._emitStatus("CLOSED"));
+    // Reconnect is scheduled, not immediate.
+    expect(mockChannels).toHaveLength(1);
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
 
     expect(mockRemoveChannel).toHaveBeenCalledWith(firstChannel);
     expect(mockChannels).toHaveLength(2);
   });
 
-  it("ignores CLOSED from a stale channel after disconnect", () => {
+  it("applies exponential backoff on consecutive CLOSED events", () => {
+    renderHook(() => useTripSync("trip-1", user, onSync));
+
+    // attempt 1: delay 1000ms
+    act(() => mockChannels[0]._emitStatus("CLOSED"));
+    act(() => {
+      vi.advanceTimersByTime(999);
+    });
+    expect(mockChannels).toHaveLength(1);
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(mockChannels).toHaveLength(2);
+
+    // attempt 2: delay 2000ms
+    act(() => mockChannels[1]._emitStatus("CLOSED"));
+    act(() => {
+      vi.advanceTimersByTime(1999);
+    });
+    expect(mockChannels).toHaveLength(2);
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(mockChannels).toHaveLength(3);
+  });
+
+  it("ignores CLOSED from a stale channel after reconnect", () => {
     renderHook(() => useTripSync("trip-1", user, onSync));
     const firstChannel = mockChannels[0];
 
-    // Simulate: CLOSED fires for channel A, triggering connect() which creates channel B.
-    // Then removeChannel(A) re-fires CLOSED for A's subscribe callback.
-    // The stale CLOSED must not create a 3rd channel.
+    // First CLOSED schedules a reconnect; advance timer to create channel B.
     act(() => firstChannel._emitStatus("CLOSED"));
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
     expect(mockChannels).toHaveLength(2);
 
-    // Stale CLOSED from the old channel should be ignored
+    // Stale CLOSED from channel A must not create a 3rd channel even after backoff.
     act(() => firstChannel._emitStatus("CLOSED"));
+    act(() => {
+      vi.advanceTimersByTime(30_000);
+    });
     expect(mockChannels).toHaveLength(2);
   });
 
@@ -262,5 +298,44 @@ describe("useTripSync cleanup", () => {
     unmount();
 
     expect(mockRemoveChannel).toHaveBeenCalledWith(channel);
+  });
+
+  it("cancels pending backoff timer on unmount", () => {
+    const { unmount } = renderHook(() => useTripSync("trip-1", user, onSync));
+
+    // Schedule a reconnect via CLOSED
+    act(() => mockChannels[0]._emitStatus("CLOSED"));
+    // removeChannel from CLOSED handling + cleanup → 2 calls; channel count stays at 1
+    const channelsBeforeUnmount = mockChannels.length;
+
+    unmount();
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+
+    // No new channel should be created after unmount
+    expect(mockChannels).toHaveLength(channelsBeforeUnmount);
+  });
+
+  it("cancels pending backoff timer when online event fires mid-backoff", () => {
+    renderHook(() => useTripSync("trip-1", user, onSync));
+
+    // CLOSED → 1s backoff scheduled
+    act(() => mockChannels[0]._emitStatus("CLOSED"));
+    // Advance partway through backoff
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    // online event cancels pending timer and connects fresh
+    act(() => window.dispatchEvent(new Event("online")));
+    const channelsAfterOnline = mockChannels.length;
+
+    // Let the original backoff elapse — it must not create a 3rd channel
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(mockChannels).toHaveLength(channelsAfterOnline);
   });
 });

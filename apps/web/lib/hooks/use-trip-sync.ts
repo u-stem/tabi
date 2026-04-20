@@ -13,6 +13,10 @@ export type PresenceUser = {
 
 const SYNC_DEBOUNCE_MS = 300;
 const SYNC_JITTER_MS = 200;
+// Exponential backoff to prevent tight reconnect loops when subscribe flips
+// immediately to CLOSED (e.g. missing anon key, Realtime auth misconfiguration).
+const CLOSE_RECONNECT_MIN_MS = 1000;
+const CLOSE_RECONNECT_MAX_MS = 30_000;
 
 export function useTripSync(
   tripId: string,
@@ -30,6 +34,8 @@ export function useTripSync(
   const [isConnected, setIsConnected] = useState(false);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const syncTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closeAttemptsRef = useRef(0);
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onSyncRef = useRef(onSync);
   onSyncRef.current = onSync;
   const userRef = useRef(user);
@@ -48,6 +54,11 @@ export function useTripSync(
 
   useEffect(() => {
     function connect() {
+      // Cancel any pending backoff timer so it does not fire against the new channel.
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
       disconnect();
       // SECURITY: Supabase Realtime channels are accessible to anyone with the anon key.
       // tripId is a UUIDv4 (122-bit entropy), making brute-force impractical.
@@ -77,9 +88,14 @@ export function useTripSync(
           }
           setPresence(users);
         })
-        .subscribe((status) => {
+        .subscribe((status, err) => {
           setIsConnected(status === "SUBSCRIBED");
+          if (err) {
+            // Surface the underlying reason (auth failure, RLS, etc.) for diagnostics.
+            console.warn("[Realtime] subscribe error", { status, err });
+          }
           if (status === "SUBSCRIBED") {
+            closeAttemptsRef.current = 0;
             toast.dismiss("realtime-error");
             const u = userRef.current;
             const lp = lastPresenceRef.current;
@@ -91,10 +107,26 @@ export function useTripSync(
           if (status === "CHANNEL_ERROR" || status === "TIMED_OUT") {
             console.debug(`[Realtime] ${status} — SDK will auto-rejoin`);
           }
-          // CLOSED means SDK removed the channel; manual recovery needed
+          // CLOSED means SDK removed the channel; reconnect with exponential backoff
+          // so a persistent failure (bad key, blocked auth) doesn't hammer the server.
           if (status === "CLOSED" && channelRef.current === channel) {
-            console.warn("[Realtime] Channel closed, recreating");
-            connect();
+            const attempt = ++closeAttemptsRef.current;
+            const delay = Math.min(
+              CLOSE_RECONNECT_MIN_MS * 2 ** (attempt - 1),
+              CLOSE_RECONNECT_MAX_MS,
+            );
+            console.warn(
+              `[Realtime] Channel closed, recreating in ${delay}ms (attempt ${attempt})`,
+            );
+            if (closeTimerRef.current) {
+              clearTimeout(closeTimerRef.current);
+            }
+            closeTimerRef.current = setTimeout(() => {
+              closeTimerRef.current = null;
+              // Only reconnect if this closure's channel is still the live one —
+              // a later CLOSED or unmount may have already replaced it.
+              if (channelRef.current === channel) connect();
+            }, delay);
           }
         });
 
@@ -120,6 +152,9 @@ export function useTripSync(
     }
 
     function handleOnline() {
+      // Network recovery is a fresh start; reset attempt counter so the backoff
+      // log reports realistic "attempt N" values.
+      closeAttemptsRef.current = 0;
       connect();
       onSyncRef.current();
     }
@@ -134,6 +169,10 @@ export function useTripSync(
       if (syncTimer.current) {
         clearTimeout(syncTimer.current);
         syncTimer.current = null;
+      }
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
       }
       disconnect();
       setPresence([]);

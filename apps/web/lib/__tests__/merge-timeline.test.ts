@@ -85,7 +85,11 @@ describe("buildMergedTimeline", () => {
     expect(result[2].type).toBe("crossDay");
   });
 
-  it("places all cross-day entries at end when all schedules have null startTime", () => {
+  it("places cross-day entries with endTime before schedules that have null startTime", () => {
+    // Why: schedules without startTime have no time anchor, so a cross-day
+    // entry with a known endTime should visually come first (it's a known
+    // past event). Otherwise users cannot place the schedule after the
+    // cross-day entry since timeline position is derived from times.
     const schedules = [
       makeSchedule({ id: "s1", startTime: undefined }),
       makeSchedule({ id: "s2", startTime: undefined }),
@@ -98,10 +102,32 @@ describe("buildMergedTimeline", () => {
     const result = buildMergedTimeline(schedules, crossDayEntries);
 
     expect(result).toHaveLength(4);
-    expect(result[0].type).toBe("schedule");
+    const ids = result.map((item) =>
+      item.type === "crossDay" ? item.entry.schedule.id : item.schedule.id,
+    );
+    expect(ids).toEqual(["c2", "c1", "s1", "s2"]);
+  });
+
+  it("places cross-day entry before a single schedule that has null startTime", () => {
+    const schedules = [makeSchedule({ id: "s1", startTime: undefined })];
+    const crossDayEntries = [makeCrossDayEntry({ id: "c1", endTime: "10:00" })];
+
+    const result = buildMergedTimeline(schedules, crossDayEntries);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].type).toBe("crossDay");
     expect(result[1].type).toBe("schedule");
-    expect(result[2].type).toBe("crossDay");
-    expect(result[3].type).toBe("crossDay");
+  });
+
+  it("keeps cross-day entry without endTime at the end even when schedules have null startTime", () => {
+    const schedules = [makeSchedule({ id: "s1", startTime: undefined })];
+    const crossDayEntries = [makeCrossDayEntry({ id: "c1", endTime: undefined })];
+
+    const result = buildMergedTimeline(schedules, crossDayEntries);
+
+    expect(result).toHaveLength(2);
+    expect(result[0].type).toBe("schedule");
+    expect(result[1].type).toBe("crossDay");
   });
 
   it("handles multiple cross-day entries with different endTimes", () => {

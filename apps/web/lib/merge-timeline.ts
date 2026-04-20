@@ -6,8 +6,12 @@ export type TimelineItem =
 
 /**
  * Build a merged timeline of schedules and cross-day entries.
- * Cross-day entries are placed before the first schedule whose startTime
- * is after the entry's endTime. Entries without endTime go to the end.
+ * Cross-day entries with endTime are placed before the first schedule whose
+ * startTime is after the entry's endTime. A schedule without startTime has
+ * no time anchor, so cross-day entries with endTime are placed before it as
+ * well — otherwise users cannot position the schedule after the cross-day
+ * entry since timeline order is derived from times. Entries without endTime
+ * fall through to the end.
  */
 export function buildMergedTimeline(
   schedules: ScheduleResponse[],
@@ -26,7 +30,8 @@ export function buildMergedTimeline(
     const toInsert: CrossDayEntry[] = [];
     for (let j = remaining.length - 1; j >= 0; j--) {
       const entryTime = remaining[j].schedule.endTime?.slice(0, 5) ?? null;
-      if (entryTime && scheduleTime && entryTime <= scheduleTime) {
+      if (entryTime == null) continue;
+      if (scheduleTime == null || entryTime <= scheduleTime) {
         toInsert.unshift(remaining[j]);
         remaining.splice(j, 1);
       }

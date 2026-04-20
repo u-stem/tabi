@@ -111,7 +111,7 @@ bun run --filter @sugara/web dev      # Next.js 開発サーバーを起動
 
 - Web: http://localhost:3000
 - API: http://localhost:3000/api
-- Supabase Studio: http://127.0.0.1:54323
+- Supabase Studio: http://127.0.0.1:55323 (sugara 専用。Postgres は 55322)
 
 ### データベースリセット
 
@@ -148,15 +148,28 @@ bun run --filter @sugara/shared check-types
 
 ## 開発ルール
 
+### ブランチ戦略
+
+`main` は Branch Protection で保護されており **直 push 不可**。変更は feature branch → PR → CI green → squash merge の流れ。
+
+- `main` = Production (Vercel が自動デプロイ)
+- feature branch: `<type>/<topic>` (例: `fix/trip-cover-upload`, `feat/expense-itemize`)
+- PR merge は **squash** のみ (linear history を維持)
+- Vercel が PR ごとに preview deploy を生成 (Vercel Authentication で team member 限定)
+
+詳細: [docs/development/release-flow.md](docs/development/release-flow.md)
+
 ### Git フック (lefthook)
 
-`bun install` で自動セットアップされる。
+`bun install` で自動セットアップされる。CI で走るものはローカルで重複実行しない階層設計。
 
-| フック | 内容 |
-|--------|------|
-| pre-commit | `bun run check` (Biome) + `bun run check-types` (TypeScript) |
-| commit-msg | Conventional Commits 形式を強制 |
-| pre-push | `bun run test` |
+| フック | 内容 | 目的 |
+|--------|------|------|
+| pre-commit | `bun run check` (Biome) + `check-i18n` (messages 変更時のみ) | 1 秒以内に終わる軽いチェック |
+| commit-msg | Conventional Commits 形式を強制 | 履歴の一貫性 |
+| pre-push | `bun run check-types` + `bun audit` | push 前に型エラーを検出 |
+
+テスト実行は **CI 側に集約** (ローカルの pre-push には含めない)。ローカルで走らせるなら `bun run test`。
 
 ### コミットメッセージ
 
@@ -172,6 +185,7 @@ bun run --filter @sugara/shared check-types
 | refactor | リファクタリング |
 | test | テスト |
 | chore | ビルド、CI |
+| perf | パフォーマンス改善 |
 
 ### CI / デプロイのスキップ
 
@@ -181,6 +195,8 @@ bun run --filter @sugara/shared check-types
 |------|------|------|
 | `[skip ci]` | Vercel + GitHub Actions 両方スキップ | ドキュメントのみの変更 |
 | `[skip deploy]` | Vercel のみスキップ (GitHub Actions は動く) | デスクトップリリース時 |
+
+ただし **DB migration は `[skip deploy]` でも走る** (`.github/workflows/db-migrate.yml` が `apps/api/drizzle/**` などの変更を検知して独立実行)。
 
 ## リンク
 

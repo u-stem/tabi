@@ -57,9 +57,9 @@ bun run --filter @sugara/shared check-types
 - リンター/フォーマッター: Biome (ルートに biome.json、各パッケージから turbo 経由で実行)
 - i18n: next-intl (Cookie ベース、URL 変更なし)
 - テスト: Vitest, Playwright (E2E)
-- Git フック: lefthook (pre-commit: check + check-types, commit-msg: Conventional Commits, pre-push: test + audit)
-- Claude Code フック: post-edit (biome check + type check), post-stop (test)
-- デプロイ: Vercel
+- Git フック: lefthook (pre-commit: check + check-i18n / commit-msg: Conventional Commits / pre-push: check-types + audit)
+- Claude Code フック: post-edit (biome check + type check、non-code ファイルはスキップ), post-stop (変更パッケージのみのテスト)
+- デプロイ: Vercel (main 直 push 禁止、Branch Protection で PR + CI green を強制)
 
 ## 主要パターン
 
@@ -83,32 +83,40 @@ bun run --filter @sugara/shared check-types
 - ローカル Supabase 起動: `supabase start`
 - Web + API: `bun run --filter @sugara/web dev` (localhost:3000)
 - API エンドポイント: http://localhost:3000/api
-- Supabase Studio: http://127.0.0.1:54323
+- Supabase Studio: http://127.0.0.1:55323 (sugara 専用ポート。他プロジェクトの 54323 と衝突しない)
+- ローカル Postgres: 127.0.0.1:55322 (sugara 専用)
 - DB リセット: `supabase db reset && bun run db:migrate && bun run db:seed`
 - 結合テスト: `bun run --filter @sugara/api test:integration` (PostgreSQL の `sugara_test` DB が必要)
 
-## デプロイ
+## リリースフロー
 
-- Vercel へのデプロイは push 時に自動実行
-- `turbo-ignore` により `@sugara/web` とその依存 (`@sugara/api`, `@sugara/shared`) に変更がない場合はスキップされる
-- コミットメッセージで CI / デプロイをスキップできる
-  - `[skip ci]`: Vercel **と** GitHub Actions の両方をスキップ（ドキュメントのみの変更に使う）
-  - `[skip deploy]`: Vercel のみスキップ、GitHub Actions は動く（デスクトップリリース時に使う）
-  - 例: `docs: CLAUDE.mdを更新 [skip ci]`
-  - 例: `chore: デスクトップアプリ v0.2.0 にバージョンアップ [skip deploy]`
+詳細は [docs/development/release-flow.md](docs/development/release-flow.md) を参照。要点:
+
+- `main` は Branch Protection で保護 → 直 push 不可、PR + CI green で squash merge
+- feature branch: `<type>/<topic>` (例: `fix/cover-upload`, `feat/expense-category`)
+- PR merge → Vercel が自動デプロイ（`turbo-ignore` で web 非依存の変更はスキップ）
+- DB migration は独立した `.github/workflows/db-migrate.yml` で実行（`[skip deploy]` でも migration は走る）
+
+コミットメッセージでのスキップ:
+
+- `[skip ci]`: Vercel **と** GitHub Actions の両方をスキップ（ドキュメントのみの変更に使う）
+- `[skip deploy]`: Vercel のみスキップ、GitHub Actions は動く（デスクトップリリース時に使う）
+- 例: `docs: CLAUDE.mdを更新 [skip ci]`
+- 例: `chore: デスクトップアプリ v0.2.0 にバージョンアップ [skip deploy]`
 
 ## デスクトップアプリのリリース
 
-`tauri.conf.json` の `version` を変更して main に push するとリリースできる。
+`tauri.conf.json` の `version` を変更して PR merge するとリリースされる。
 
 ```
-1. tauri.conf.json の version を更新 (例: "0.1.0" → "0.2.0")
-2. tauri.conf.json の userAgent も同じバージョンに更新
-3. Cargo.toml の version も同じ値に更新
-4. コミット & push
-5. desktop-tag.yml が自動で desktop-v<version> タグを作成
-6. desktop-build.yml がタグをトリガーにビルド・リリース
-7. バイナリが u-stem/sugara-releases に公開される
+1. feature branch を切る (例: `chore/desktop-v0.2.0`)
+2. tauri.conf.json の version を更新 (例: "0.1.0" → "0.2.0")
+3. tauri.conf.json の userAgent も同じバージョンに更新
+4. Cargo.toml の version も同じ値に更新
+5. コミット & push → PR 作成 → CI green → squash merge [skip deploy]
+6. desktop-tag.yml が自動で desktop-v<version> タグを作成
+7. desktop-build.yml がタグをトリガーにビルド・リリース
+8. バイナリが u-stem/sugara-releases に公開される
 ```
 
 - バージョンが既にタグ済みの場合は何もしない（冪等）
@@ -168,8 +176,9 @@ bun run db:generate
 bun run db:migrate
 ```
 
-本番 DB への適用は **Vercel デプロイ時に自動実行** される (`apps/web/vercel.json` の buildCommand)。
-`MIGRATION_URL` 環境変数が Vercel に設定されていること (Supabase の Direct Connection URL)。
+本番 DB への適用は **独立した GitHub Actions ワークフロー `.github/workflows/db-migrate.yml`** が実行する。
+main への merge 時に `apps/api/drizzle/**` や `schema.ts` の変更を検知して走るため、Vercel build から分離されており「build 失敗時にスキーマだけ先に進む」リスクを回避している。
+`MIGRATION_URL` シークレットを GitHub Actions の production environment に設定する必要あり (Supabase Session Pooler の URL)。
 
 ## ドキュメント構成
 
@@ -178,6 +187,8 @@ docs/
   architecture/
     overview.md            全体像・インフラ構成図・技術スタック・デプロイ
     db-backup-recovery.md  DB バックアップ・リカバリ手順
+  development/
+    release-flow.md        ブランチ戦略・PR 運用・リリース手順・secret 管理
 ```
 
 - 設計ドキュメントは「現在の状態」を反映する。古い計画書は git 履歴に残し、docs/ には置かない

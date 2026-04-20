@@ -17,11 +17,19 @@ if (typeof window !== "undefined") {
   // Surface transport-level close codes to diagnose Realtime reconnect storms.
   // 1006 = abnormal close, 1008 = policy violation (auth), 4xxx = Phoenix-level.
   // RealtimeClient has no public onClose/onError; stateChangeCallbacks is the
-  // documented extension point and is typed as a public field.
-  supabase.realtime.stateChangeCallbacks.close.push((e: CloseEvent) => {
-    console.warn(`[Realtime][socket] close code=${e?.code ?? "?"} reason=${e?.reason || "(none)"}`);
-  });
-  supabase.realtime.stateChangeCallbacks.error.push((e: Event) => {
-    console.warn("[Realtime][socket] error", e);
-  });
+  // documented extension point. Guard against future supabase-js refactors that
+  // rename or drop the field — silent failure would leave us with no diagnostics.
+  const cbs = supabase.realtime.stateChangeCallbacks;
+  if (cbs?.close && cbs.error) {
+    cbs.close.push((e: CloseEvent) => {
+      console.warn(
+        `[Realtime][socket] close code=${e?.code ?? "?"} reason=${e?.reason || "(none)"}`,
+      );
+    });
+    cbs.error.push((e: Event) => {
+      console.warn("[Realtime][socket] error", e);
+    });
+  } else {
+    console.warn("[Realtime] stateChangeCallbacks unavailable — socket-level diagnostics disabled");
+  }
 }

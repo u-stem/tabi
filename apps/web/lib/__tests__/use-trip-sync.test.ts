@@ -299,4 +299,43 @@ describe("useTripSync cleanup", () => {
 
     expect(mockRemoveChannel).toHaveBeenCalledWith(channel);
   });
+
+  it("cancels pending backoff timer on unmount", () => {
+    const { unmount } = renderHook(() => useTripSync("trip-1", user, onSync));
+
+    // Schedule a reconnect via CLOSED
+    act(() => mockChannels[0]._emitStatus("CLOSED"));
+    // removeChannel from CLOSED handling + cleanup → 2 calls; channel count stays at 1
+    const channelsBeforeUnmount = mockChannels.length;
+
+    unmount();
+
+    act(() => {
+      vi.advanceTimersByTime(60_000);
+    });
+
+    // No new channel should be created after unmount
+    expect(mockChannels).toHaveLength(channelsBeforeUnmount);
+  });
+
+  it("cancels pending backoff timer when online event fires mid-backoff", () => {
+    renderHook(() => useTripSync("trip-1", user, onSync));
+
+    // CLOSED → 1s backoff scheduled
+    act(() => mockChannels[0]._emitStatus("CLOSED"));
+    // Advance partway through backoff
+    act(() => {
+      vi.advanceTimersByTime(500);
+    });
+
+    // online event cancels pending timer and connects fresh
+    act(() => window.dispatchEvent(new Event("online")));
+    const channelsAfterOnline = mockChannels.length;
+
+    // Let the original backoff elapse — it must not create a 3rd channel
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(mockChannels).toHaveLength(channelsAfterOnline);
+  });
 });

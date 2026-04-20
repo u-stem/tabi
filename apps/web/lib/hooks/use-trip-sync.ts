@@ -54,6 +54,11 @@ export function useTripSync(
 
   useEffect(() => {
     function connect() {
+      // Cancel any pending backoff timer so it does not fire against the new channel.
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
       disconnect();
       // SECURITY: Supabase Realtime channels are accessible to anyone with the anon key.
       // tripId is a UUIDv4 (122-bit entropy), making brute-force impractical.
@@ -147,6 +152,9 @@ export function useTripSync(
     }
 
     function handleOnline() {
+      // Network recovery is a fresh start; reset attempt counter so the backoff
+      // log reports realistic "attempt N" values.
+      closeAttemptsRef.current = 0;
       connect();
       onSyncRef.current();
     }

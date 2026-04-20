@@ -94,6 +94,10 @@ gh pr create --title "<type>: <日本語タイトル>" --body "<本文>"
 - `apps/desktop/src-tauri/tauri.conf.json` の `version` 変更を `desktop-tag.yml` が検知
 - 自動で `desktop-v<version>` タグを作成
 - タグ push を `desktop-build.yml` が検知してビルド → `sugara-releases` repo に公開
+- **バージョンは 3 箇所で手動同期**: `apps/desktop/src-tauri/tauri.conf.json` の `version` と `userAgent`、`apps/desktop/src-tauri/Cargo.toml` の `version` を同じ値にする (自動検証なし)
+- 必要な GitHub Secrets:
+  - `GH_RELEASES_TOKEN` — `u-stem/sugara-releases` 公開 repo への write 権限を持つ PAT
+  - `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` — Tauri 自動更新の署名鍵
 
 ### Dependabot
 

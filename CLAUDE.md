@@ -106,13 +106,13 @@ bun run --filter @sugara/shared check-types
 
 ## デスクトップアプリのリリース
 
-`tauri.conf.json` の `version` を変更して PR merge するとリリースされる。
+`apps/desktop/src-tauri/tauri.conf.json` の `version` を変更して PR merge するとリリースされる。
 
 ```
 1. feature branch を切る (例: `chore/desktop-v0.2.0`)
-2. tauri.conf.json の version を更新 (例: "0.1.0" → "0.2.0")
-3. tauri.conf.json の userAgent も同じバージョンに更新
-4. Cargo.toml の version も同じ値に更新
+2. apps/desktop/src-tauri/tauri.conf.json の version を更新 (例: "0.1.0" → "0.2.0")
+3. apps/desktop/src-tauri/tauri.conf.json の userAgent も同じバージョンに更新
+4. apps/desktop/src-tauri/Cargo.toml の version も同じ値に更新
 5. コミット & push → PR 作成 → CI green → squash merge [skip deploy]
 6. desktop-tag.yml が自動で desktop-v<version> タグを作成
 7. desktop-build.yml がタグをトリガーにビルド・リリース
@@ -122,6 +122,10 @@ bun run --filter @sugara/shared check-types
 - バージョンが既にタグ済みの場合は何もしない（冪等）
 - `apps/desktop/` のみの変更は Vercel の `turbo-ignore` がスキップするため Web ビルドは不要
 - バージョン方針: patch（0.1.x）= バグ修正・軽微な改善、minor（0.x.0）= 新機能、major（x.0.0）= 破壊的変更
+- **3 ファイルの version 同期は自動検証なし**。手動で一致させる
+- 必要な GitHub Secrets:
+  - `GH_RELEASES_TOKEN`: `u-stem/sugara-releases` repo への write 権限を持つ PAT (公開リポジトリへのリリース転送用)
+  - `TAURI_SIGNING_PRIVATE_KEY` / `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: 自動更新用の署名鍵
 
 ## 規約
 

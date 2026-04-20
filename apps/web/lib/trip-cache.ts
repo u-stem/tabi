@@ -17,6 +17,8 @@ const _fieldCheck: Record<keyof ScheduleResponse, true> = {
   transportMethod: true,
   color: true,
   endDayOffset: true,
+  crossDayAnchor: true,
+  crossDayAnchorSourceId: true,
   latitude: true,
   longitude: true,
   placeId: true,

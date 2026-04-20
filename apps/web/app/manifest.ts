@@ -2,10 +2,11 @@ import type { MetadataRoute } from "next";
 
 type ShareTarget = {
   action: string;
-  method: string;
-  // Chrome warns when omitted; explicit value silences
-  // "Enctype should be set to either application/x-www-form-urlencoded or multipart/form-data".
-  enctype: "application/x-www-form-urlencoded" | "multipart/form-data";
+  method: "GET" | "POST";
+  // Per W3C Web Share Target spec, enctype is only meaningful for POST,
+  // but Chrome's manifest validator warns on any method when omitted.
+  // Keep it optional to reflect the spec, and set it explicitly where needed.
+  enctype?: "application/x-www-form-urlencoded" | "multipart/form-data";
   params: Record<string, string>;
 };
 

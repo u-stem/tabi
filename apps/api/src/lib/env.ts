@@ -13,7 +13,7 @@ function withDefault(name: string, defaultValue: string): string {
 // Use getters so tests can stub process.env and have the changes reflected
 export const env = {
   get DATABASE_URL() {
-    return withDefault("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:54322/postgres");
+    return withDefault("DATABASE_URL", "postgresql://postgres:postgres@127.0.0.1:55322/postgres");
   },
   get BETTER_AUTH_BASE_URL() {
     return withDefault("BETTER_AUTH_BASE_URL", "http://localhost:3000");

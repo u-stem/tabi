@@ -257,5 +257,31 @@ describe("buildMergedTimeline", () => {
         "s-14",
       ]);
     });
+
+    it("places early-morning schedule before hotel checkout crossDay (breakfast scenario)", () => {
+      // 朝食 07:00 をホテルのチェックアウト crossDay ~11:00 がある Day に入れた場合、
+      // 時刻順で朝食が crossDay より前に来ることを確認する。
+      const breakfast = makeSchedule({ id: "breakfast", startTime: "07:00", sortOrder: 0 });
+      const sightseeing = makeSchedule({ id: "sightseeing", startTime: "13:00", sortOrder: 1 });
+      const checkout = makeCrossDayEntry({ id: "checkout", endTime: "11:00" });
+
+      expect(ids(buildMergedTimeline([breakfast, sightseeing], [checkout]))).toEqual([
+        "breakfast",
+        "c-checkout",
+        "sightseeing",
+      ]);
+    });
+
+    it("keeps crossDay at the end when every time-having schedule is earlier than the crossDay endTime", () => {
+      // 朝食 07:00 が唯一の time-having schedule で、crossDay が 11:00 のケース。
+      // crossDay を flush するタイミングがないため末尾に残る（= 朝食の後 = 時刻順で自然）。
+      const breakfast = makeSchedule({ id: "breakfast", startTime: "07:00", sortOrder: 0 });
+      const checkout = makeCrossDayEntry({ id: "checkout", endTime: "11:00" });
+
+      expect(ids(buildMergedTimeline([breakfast], [checkout]))).toEqual([
+        "breakfast",
+        "c-checkout",
+      ]);
+    });
   });
 });

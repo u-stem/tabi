@@ -21,6 +21,7 @@ vi.mock("@vis.gl/react-google-maps", () => ({
 
 vi.mock("@tanstack/react-query", () => ({
   useQuery: vi.fn(() => ({ data: undefined })),
+  useIsRestoring: vi.fn(() => false),
 }));
 
 const baseSchedule: ScheduleResponse = {

@@ -2,8 +2,19 @@ import { act, cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { LoadingBoundary } from "./loading-boundary";
 
+const isRestoringMock = vi.hoisted(() => vi.fn(() => false));
+
+vi.mock("@tanstack/react-query", async () => {
+  const actual =
+    await vi.importActual<typeof import("@tanstack/react-query")>("@tanstack/react-query");
+  return { ...actual, useIsRestoring: isRestoringMock };
+});
+
 describe("LoadingBoundary", () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    isRestoringMock.mockReturnValue(false);
+  });
 
   it("renders nothing during fast load (before 200ms delay)", () => {
     vi.useFakeTimers();
@@ -62,5 +73,26 @@ describe("LoadingBoundary", () => {
       </LoadingBoundary>,
     );
     expect(container.firstChild).toBeNull();
+  });
+
+  it("treats PersistQueryClientProvider restoring state as loading (prevents error flash)", async () => {
+    isRestoringMock.mockReturnValue(true);
+    vi.useFakeTimers();
+    render(
+      <LoadingBoundary
+        isLoading={false}
+        skeleton={<div>skeleton</div>}
+        errorFallback={<div>error ui</div>}
+      >
+        <div>content</div>
+      </LoadingBoundary>,
+    );
+    await act(async () => {
+      vi.advanceTimersByTime(200);
+    });
+    expect(screen.getByText("skeleton")).toBeDefined();
+    expect(screen.queryByText("content")).toBeNull();
+    expect(screen.queryByText("error ui")).toBeNull();
+    vi.useRealTimers();
   });
 });

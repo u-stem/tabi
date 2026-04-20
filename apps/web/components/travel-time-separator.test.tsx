@@ -10,6 +10,7 @@ vi.mock("@/lib/api", () => ({
 
 vi.mock("@tanstack/react-query", () => ({
   useQuery: vi.fn(() => ({ data: undefined, isLoading: true })),
+  useIsRestoring: vi.fn(() => false),
 }));
 
 describe("TravelTimeSeparator", () => {

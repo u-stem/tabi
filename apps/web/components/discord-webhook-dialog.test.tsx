@@ -18,6 +18,7 @@ vi.mock("@tanstack/react-query", () => ({
     invalidateQueries: mockInvalidateQueries,
     setQueryData: vi.fn(),
   })),
+  useIsRestoring: vi.fn(() => false),
 }));
 
 // ResponsiveDialog renders Dialog on desktop; stub useMobile to return false

@@ -191,3 +191,194 @@ describe("getCrossDayEntries", () => {
     expect(entries[1].crossDayPosition).toBe("final");
   });
 });
+
+describe("getCrossDayEntries with parallel patterns", () => {
+  it("filters source patterns by viewing pattern sortOrder when source day has multiple patterns", () => {
+    // Why: parallel candidate patterns (sunny/rainy) should be independent.
+    // The rainy pattern viewer must not see the sunny pattern's hotel.
+    const days: DayResponse[] = [
+      {
+        id: "day-1",
+        dayNumber: 1,
+        date: "2025-04-01",
+        patterns: [
+          {
+            id: "p1a",
+            label: "晴れ",
+            isDefault: true,
+            sortOrder: 0,
+            schedules: [
+              makeSchedule({
+                id: "hotel-sunny",
+                category: "hotel",
+                endTime: "10:00",
+                endDayOffset: 1,
+              }),
+            ],
+          },
+          {
+            id: "p1b",
+            label: "雨",
+            isDefault: false,
+            sortOrder: 1,
+            schedules: [
+              makeSchedule({
+                id: "hotel-rainy",
+                category: "hotel",
+                endTime: "11:00",
+                endDayOffset: 1,
+              }),
+            ],
+          },
+        ],
+      },
+      {
+        id: "day-2",
+        dayNumber: 2,
+        date: "2025-04-02",
+        patterns: [
+          { id: "p2a", label: "晴れ", isDefault: true, sortOrder: 0, schedules: [] },
+          { id: "p2b", label: "雨", isDefault: false, sortOrder: 1, schedules: [] },
+        ],
+      },
+    ];
+
+    const sunnyEntries = getCrossDayEntries(days, 2, 0);
+    expect(sunnyEntries.map((e) => e.schedule.id)).toEqual(["hotel-sunny"]);
+
+    const rainyEntries = getCrossDayEntries(days, 2, 1);
+    expect(rainyEntries.map((e) => e.schedule.id)).toEqual(["hotel-rainy"]);
+  });
+
+  it("includes the sole pattern's crossDays for every viewing pattern when source day is pre-branch", () => {
+    const days: DayResponse[] = [
+      {
+        id: "day-1",
+        dayNumber: 1,
+        date: "2025-04-01",
+        patterns: [
+          {
+            id: "p1",
+            label: "Default",
+            isDefault: true,
+            sortOrder: 0,
+            schedules: [
+              makeSchedule({
+                id: "shared-hotel",
+                category: "hotel",
+                endTime: "10:00",
+                endDayOffset: 1,
+              }),
+            ],
+          },
+        ],
+      },
+      {
+        id: "day-2",
+        dayNumber: 2,
+        date: "2025-04-02",
+        patterns: [
+          { id: "p2a", label: "晴れ", isDefault: true, sortOrder: 0, schedules: [] },
+          { id: "p2b", label: "雨", isDefault: false, sortOrder: 1, schedules: [] },
+        ],
+      },
+    ];
+
+    expect(getCrossDayEntries(days, 2, 0).map((e) => e.schedule.id)).toEqual(["shared-hotel"]);
+    expect(getCrossDayEntries(days, 2, 1).map((e) => e.schedule.id)).toEqual(["shared-hotel"]);
+  });
+
+  it("falls back to default pattern when viewing pattern sortOrder is absent in source day", () => {
+    const days: DayResponse[] = [
+      {
+        id: "day-1",
+        dayNumber: 1,
+        date: "2025-04-01",
+        patterns: [
+          {
+            id: "p1a",
+            label: "Default",
+            isDefault: true,
+            sortOrder: 0,
+            schedules: [
+              makeSchedule({
+                id: "default-hotel",
+                category: "hotel",
+                endTime: "10:00",
+                endDayOffset: 1,
+              }),
+            ],
+          },
+          {
+            id: "p1b",
+            label: "Alt",
+            isDefault: false,
+            sortOrder: 2,
+            schedules: [
+              makeSchedule({
+                id: "alt-hotel",
+                category: "hotel",
+                endTime: "11:00",
+                endDayOffset: 1,
+              }),
+            ],
+          },
+        ],
+      },
+      {
+        id: "day-2",
+        dayNumber: 2,
+        date: "2025-04-02",
+        patterns: [
+          { id: "p2a", label: "Default", isDefault: true, sortOrder: 0, schedules: [] },
+          { id: "p2b", label: "雨", isDefault: false, sortOrder: 1, schedules: [] },
+        ],
+      },
+    ];
+
+    // Viewing sortOrder=1 ("雨") has no match in source day (which has 0 and 2).
+    // Fall back to source default pattern (sortOrder=0).
+    expect(getCrossDayEntries(days, 2, 1).map((e) => e.schedule.id)).toEqual(["default-hotel"]);
+  });
+
+  it("returns all patterns' crossDays when viewingPatternSortOrder is undefined", () => {
+    // Legacy callers that don't specify a viewing pattern receive all
+    // crossDays, matching the pre-filter behavior.
+    const days: DayResponse[] = [
+      {
+        id: "day-1",
+        dayNumber: 1,
+        date: "2025-04-01",
+        patterns: [
+          {
+            id: "p1a",
+            label: "A",
+            isDefault: true,
+            sortOrder: 0,
+            schedules: [
+              makeSchedule({ id: "a", category: "hotel", endTime: "10:00", endDayOffset: 1 }),
+            ],
+          },
+          {
+            id: "p1b",
+            label: "B",
+            isDefault: false,
+            sortOrder: 1,
+            schedules: [
+              makeSchedule({ id: "b", category: "hotel", endTime: "10:00", endDayOffset: 1 }),
+            ],
+          },
+        ],
+      },
+      {
+        id: "day-2",
+        dayNumber: 2,
+        date: "2025-04-02",
+        patterns: [{ id: "p2", label: "Default", isDefault: true, sortOrder: 0, schedules: [] }],
+      },
+    ];
+
+    const entries = getCrossDayEntries(days, 2);
+    expect(entries.map((e) => e.schedule.id).sort()).toEqual(["a", "b"]);
+  });
+});

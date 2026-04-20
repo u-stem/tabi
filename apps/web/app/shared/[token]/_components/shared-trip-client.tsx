@@ -222,7 +222,6 @@ export function SharedTripClient({ token }: { token: string }) {
                   <SharedCandidatesSection candidates={trip.candidates} />
                 )}
                 {(trip.days ?? []).map((day) => {
-                  const crossDayEntries = getCrossDayEntries(trip.days ?? [], day.dayNumber);
                   return (
                     <section
                       key={day.id}
@@ -293,13 +292,17 @@ export function SharedTripClient({ token }: { token: string }) {
                         </h3>
                       </div>
                       <div className="p-4 sm:p-5">
-                        {(day.patterns ?? []).map((pattern, i) => (
+                        {(day.patterns ?? []).map((pattern) => (
                           <PatternSection
                             key={pattern.id}
                             pattern={pattern}
                             dayDate={day.date}
                             showLabel={(day.patterns ?? []).length > 1}
-                            crossDayEntries={i === 0 ? crossDayEntries : undefined}
+                            crossDayEntries={getCrossDayEntries(
+                              trip.days ?? [],
+                              day.dayNumber,
+                              pattern.sortOrder,
+                            )}
                           />
                         ))}
                         {day.memo && (

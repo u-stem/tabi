@@ -1,9 +1,9 @@
 import {
+  closestCorners,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
   MouseSensor,
-  pointerWithin,
   TouchSensor,
   useSensor,
   useSensors,
@@ -99,7 +99,7 @@ export function useTripDragAndDrop({
     useSensor(TouchSensor, TOUCH_SENSOR_OPTIONS),
   );
 
-  const collisionDetection = pointerWithin;
+  const collisionDetection = closestCorners;
 
   function handleDragStart(event: DragStartEvent) {
     const { active } = event;

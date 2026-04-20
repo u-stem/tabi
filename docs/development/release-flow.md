@@ -85,9 +85,14 @@ gh pr create --title "<type>: <日本語タイトル>" --body "<本文>"
 
 ### DB migration
 
-- `.github/workflows/db-migrate.yml` が `apps/api/drizzle/**` や `schema.ts` の変更を検知
-- `main` への merge 時に独立して実行 (Vercel build とは別ジョブ)
-- `MIGRATION_URL` シークレットを GitHub Actions の `production` environment に設定する必要あり
+migration は **2 経路** で実行される（冪等性と race-condition 対策のため意図的な二重化）:
+
+1. `.github/workflows/db-migrate.yml` — `apps/api/drizzle/**` や `schema.ts` の変更を検知し main merge 時に実行。Vercel build とは独立したジョブで、`[skip deploy]` コミットでも必ず走る
+2. Vercel `buildCommand` — `next build` の前に `bun run db:migrate` を実行。Vercel build と DB 状態を確実に同期させる
+
+drizzle の migration は `__drizzle_migrations` テーブルで追跡されるため、同じ migration を二重実行しても 2 回目は no-op になる。先に完了した方が勝つ。
+
+- 両方とも `MIGRATION_URL` を使う。GitHub Actions の `production` environment と Vercel env の両方に設定する必要あり (同じ Supabase Session Pooler URL)
 
 ### デスクトップアプリのリリース
 

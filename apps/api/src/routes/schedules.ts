@@ -13,6 +13,7 @@ import { Hono } from "hono";
 import { db } from "../db/index";
 import { schedules } from "../db/schema";
 import { logActivity } from "../lib/activity-logger";
+import { validateAnchors } from "../lib/anchor-validate";
 import { ERROR_MSG } from "../lib/constants";
 import { hasChanges } from "../lib/has-changes";
 import { notifyTripMembersExcluding } from "../lib/notifications";
@@ -368,32 +369,60 @@ scheduleRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/schedules/reorder
   if (!parsed.success) {
     return c.json({ error: parsed.error.flatten() }, 400);
   }
+  const { scheduleIds, anchors, clearAnchors } = parsed.data;
 
   // Verify all schedules belong to this pattern before updating
-  if (parsed.data.scheduleIds.length > 0) {
+  if (scheduleIds.length > 0) {
     const targetSchedules = await db.query.schedules.findMany({
-      where: and(
-        inArray(schedules.id, parsed.data.scheduleIds),
-        eq(schedules.dayPatternId, patternId),
-      ),
+      where: and(inArray(schedules.id, scheduleIds), eq(schedules.dayPatternId, patternId)),
+      columns: { id: true },
     });
-    if (targetSchedules.length !== parsed.data.scheduleIds.length) {
+    if (targetSchedules.length !== scheduleIds.length) {
       return c.json({ error: ERROR_MSG.INVALID_REORDER }, 400);
     }
   }
 
-  if (parsed.data.scheduleIds.length > 0) {
-    const ids = parsed.data.scheduleIds;
-    await db
-      .update(schedules)
-      .set({
-        sortOrder: sql`CASE ${sql.join(
-          ids.map((id, i) => sql`WHEN ${schedules.id} = ${id} THEN ${i}::integer`),
-          sql` `,
-        )} END`,
-      })
-      .where(inArray(schedules.id, ids));
+  if (anchors && anchors.length > 0) {
+    const check = await validateAnchors(db, tripId, patternId, anchors);
+    if (check.ok === false) {
+      return c.json({ error: check.message }, check.status);
+    }
   }
+
+  if (scheduleIds.length === 0 && !clearAnchors && (!anchors || anchors.length === 0)) {
+    return c.json({ ok: true });
+  }
+
+  await db.transaction(async (tx) => {
+    if (scheduleIds.length > 0) {
+      await tx
+        .update(schedules)
+        .set({
+          sortOrder: sql`CASE ${sql.join(
+            scheduleIds.map((id, i) => sql`WHEN ${schedules.id} = ${id} THEN ${i}::integer`),
+            sql` `,
+          )} END`,
+        })
+        .where(inArray(schedules.id, scheduleIds));
+    }
+
+    if (clearAnchors && scheduleIds.length > 0) {
+      await tx
+        .update(schedules)
+        .set({ crossDayAnchor: null, crossDayAnchorSourceId: null })
+        .where(inArray(schedules.id, scheduleIds));
+    } else if (anchors && anchors.length > 0) {
+      for (const a of anchors) {
+        await tx
+          .update(schedules)
+          .set({
+            crossDayAnchor: a.anchor,
+            crossDayAnchorSourceId: a.anchorSourceId,
+          })
+          .where(eq(schedules.id, a.scheduleId));
+      }
+    }
+  });
 
   return c.json({ ok: true });
 });

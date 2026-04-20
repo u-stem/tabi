@@ -10,21 +10,16 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array<ArrayBuffer> {
   return new Uint8Array([...rawData].map((c) => c.charCodeAt(0))) as Uint8Array<ArrayBuffer>;
 }
 
-async function subscribeToVapid(registration: ServiceWorkerRegistration): Promise<void> {
-  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-  if (!vapidPublicKey) return;
+function arrayBufferToBase64Url(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
 
-  const existing = await registration.pushManager.getSubscription();
-  if (existing) return;
-
-  const subscription = await registration.pushManager.subscribe({
-    userVisibleOnly: true,
-    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-  });
-
+async function postSubscription(subscription: PushSubscription): Promise<void> {
   const json = subscription.toJSON();
   if (!json.endpoint || !json.keys?.p256dh || !json.keys?.auth) return;
-
   await api("/api/push-subscriptions", {
     method: "POST",
     body: JSON.stringify({
@@ -33,6 +28,35 @@ async function subscribeToVapid(registration: ServiceWorkerRegistration): Promis
       auth: json.keys.auth,
     }),
   });
+}
+
+async function subscribeToVapid(registration: ServiceWorkerRegistration): Promise<void> {
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  if (!vapidPublicKey) return;
+
+  const existing = await registration.pushManager.getSubscription();
+  if (existing) {
+    // Compare the existing subscription's server key with the current VAPID public key.
+    // Mismatch means the server rotated its VAPID keypair (or this endpoint was issued under
+    // a prior key) — the browser-side subscription is unusable by the current server and must
+    // be replaced. `options.applicationServerKey` is null in some legacy browsers; we treat
+    // that as "can't verify, re-subscribe defensively".
+    const existingKey = existing.options.applicationServerKey;
+    const existingKeyBase64 = existingKey ? arrayBufferToBase64Url(existingKey) : null;
+    if (existingKeyBase64 === vapidPublicKey) {
+      // Already subscribed with the current key. Re-POST so the server can heal if it lost
+      // the row (e.g. VAPID rotation wiped push_subscriptions to drop stale endpoints).
+      await postSubscription(existing);
+      return;
+    }
+    await existing.unsubscribe();
+  }
+
+  const subscription = await registration.pushManager.subscribe({
+    userVisibleOnly: true,
+    applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+  });
+  await postSubscription(subscription);
 }
 
 /**

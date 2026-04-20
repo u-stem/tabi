@@ -130,6 +130,22 @@ describe("buildMergedTimeline", () => {
     expect(result[1].type).toBe("crossDay");
   });
 
+  it("places cross-day with endTime before null-startTime schedule and keeps cross-day without endTime after it", () => {
+    const schedules = [makeSchedule({ id: "s1", startTime: undefined })];
+    const crossDayEntries = [
+      makeCrossDayEntry({ id: "c-with-end", endTime: "10:00" }),
+      makeCrossDayEntry({ id: "c-without-end", endTime: undefined }),
+    ];
+
+    const result = buildMergedTimeline(schedules, crossDayEntries);
+
+    expect(result).toHaveLength(3);
+    const ids = result.map((item) =>
+      item.type === "crossDay" ? item.entry.schedule.id : item.schedule.id,
+    );
+    expect(ids).toEqual(["c-with-end", "s1", "c-without-end"]);
+  });
+
   it("handles multiple cross-day entries with different endTimes", () => {
     const schedules = [
       makeSchedule({ id: "s1", startTime: "09:00" }),

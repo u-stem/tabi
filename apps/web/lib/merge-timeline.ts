@@ -28,6 +28,7 @@ export function buildMergedTimeline(
     const scheduleTime = schedule.startTime?.slice(0, 5) ?? null;
 
     const toInsert: CrossDayEntry[] = [];
+    // Iterate in reverse so splice() doesn't shift the indices of unvisited entries.
     for (let j = remaining.length - 1; j >= 0; j--) {
       const entryTime = remaining[j].schedule.endTime?.slice(0, 5) ?? null;
       if (entryTime == null) continue;

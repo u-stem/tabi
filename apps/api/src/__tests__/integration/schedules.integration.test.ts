@@ -551,7 +551,10 @@ describe("Schedules Integration", () => {
       expect(body.skippedCount).toBe(1);
     });
 
-    it("does not shift endTime when endDayOffset > 0", async () => {
+    it("skips transport with endDayOffset > 0 (overnight bus)", async () => {
+      // Why: shifting only startTime would fix the endTime in place and
+      // silently alter the duration. Treat any cross-day schedule as not
+      // shiftable, regardless of category.
       const overnight = await createSchedule("Night Bus", "transport", {
         startTime: "22:00",
         endTime: "06:00",
@@ -569,15 +572,43 @@ describe("Schedules Integration", () => {
 
       expect(res.status).toBe(200);
       const body = await res.json();
-      expect(body.updatedCount).toBe(1);
+      expect(body.updatedCount).toBe(0);
+      expect(body.skippedCount).toBe(1);
 
       const listRes = await app.request(
         `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
       );
       const list = await listRes.json();
       const bus = list.find((s: { id: string }) => s.id === overnight.id);
-      expect(bus.startTime).toBe("21:30:00");
+      expect(bus.startTime).toBe("22:00:00");
       expect(bus.endTime).toBe("06:00:00");
+    });
+
+    it("skips activity with endDayOffset > 0 (night cruise)", async () => {
+      const cruise = await createSchedule("Night Cruise", "activity", {
+        startTime: "22:00",
+        endTime: "02:00",
+        endDayOffset: 1,
+      });
+
+      const res = await app.request(batchShiftUrl(), {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduleIds: [cruise.id], deltaMinutes: 15 }),
+      });
+
+      expect(res.status).toBe(200);
+      const body = await res.json();
+      expect(body.updatedCount).toBe(0);
+      expect(body.skippedCount).toBe(1);
+
+      const listRes = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+      );
+      const list = await listRes.json();
+      const fetched = list.find((s: { id: string }) => s.id === cruise.id);
+      expect(fetched.startTime).toBe("22:00:00");
+      expect(fetched.endTime).toBe("02:00:00");
     });
   });
 });

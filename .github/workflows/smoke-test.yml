@@ -14,10 +14,13 @@ jobs:
     steps:
       - name: Probe /api/health
         env:
-          TARGET_URL: ${{ github.event.deployment_status.target_url }}
+          # Use the stable production alias, not github.event.deployment_status.target_url.
+          # The target_url is the per-deployment Vercel URL (e.g. sugara-<hash>-u-stem.vercel.app)
+          # which is protected by Vercel Deployment Protection and returns 401 to unauthenticated
+          # requests. The alias does not have that protection.
+          TARGET_URL: https://sugara.vercel.app
         run: |
           set -euo pipefail
-          : "${TARGET_URL:?Deployment status event is missing target_url}"
           echo "Probing $TARGET_URL/api/health"
           # Retry up to ~25s total: Vercel sometimes reports success slightly before the edge
           # cache flips to the new deployment. Sleep only between attempts (not after the

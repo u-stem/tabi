@@ -1,6 +1,9 @@
 #!/bin/bash
-# Post-edit hook: run biome check + type check on the affected package
+# Post-edit hook: run biome check + type check on the affected package.
 # Success: silent (exit 0). Failure: output errors (exit 2).
+# Skips files that don't affect lint/type-check (docs, data, config, SQL migrations) to avoid
+# wasted work and false positives from the post-Edit transient state (e.g. a follow-up Edit
+# that consumes a just-added import hasn't fired yet).
 set -euo pipefail
 
 cd "${CLAUDE_PROJECT_DIR:-.}"
@@ -15,6 +18,12 @@ file_path=$(echo "$input" | jq -r '.tool_input.file_path // empty')
 if [ -z "$file_path" ]; then
   exit 0
 fi
+
+# Skip non-code files that won't produce lint/type-check errors
+case "$file_path" in
+  *.md|*.mdx|*.json|*.jsonc|*.toml|*.yaml|*.yml|*.sql|*.txt|*.sh|*.env*|*.gitignore|*.lockb|*.lock)
+    exit 0 ;;
+esac
 
 # Map file path to package filter
 case "$file_path" in

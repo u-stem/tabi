@@ -7,7 +7,7 @@ import postgres from "postgres";
 const url =
   process.env.MIGRATION_URL ||
   process.env.DATABASE_URL ||
-  "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+  "postgresql://postgres:postgres@127.0.0.1:55322/postgres";
 
 const isLocalhost = url.includes("localhost") || url.includes("127.0.0.1");
 const client = postgres(url, { ssl: isLocalhost ? false : "require", max: 1 });

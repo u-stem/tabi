@@ -13,7 +13,8 @@
     "check-types": "tsc --noEmit",
     "test": "vitest run --passWithNoTests",
     "test:coverage": "vitest run --coverage",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "check-i18n": "bun run scripts/check-i18n-symmetry.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

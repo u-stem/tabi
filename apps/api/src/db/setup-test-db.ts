@@ -2,7 +2,7 @@
 // Run with: bun run apps/api/src/db/setup-test-db.ts
 import postgres from "postgres";
 
-const adminUrl = "postgresql://postgres:postgres@127.0.0.1:54322/postgres";
+const adminUrl = "postgresql://postgres:postgres@127.0.0.1:55322/postgres";
 const sql = postgres(adminUrl, { max: 1 });
 
 try {
@@ -29,7 +29,7 @@ try {
 }
 
 // Now grant schema privileges within sugara_test
-const testSql = postgres("postgresql://postgres:postgres@127.0.0.1:54322/sugara_test", { max: 1 });
+const testSql = postgres("postgresql://postgres:postgres@127.0.0.1:55322/sugara_test", { max: 1 });
 
 try {
   await testSql`GRANT ALL ON SCHEMA public TO sugara`;

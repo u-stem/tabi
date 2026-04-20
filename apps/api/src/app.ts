@@ -63,7 +63,9 @@ app.onError((err, c) => {
   return c.json({ error: ERROR_MSG.INTERNAL_ERROR }, 500);
 });
 
-app.get("/health", (c) => {
+// Hono is mounted at /api/[[...route]] and sees the full path including /api, so this needs
+// the /api prefix to be reachable externally (e.g. post-deploy smoke checks).
+app.get("/api/health", (c) => {
   return c.json({ status: "ok" });
 });
 

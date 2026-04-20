@@ -1,0 +1,32 @@
+name: Cargo Audit
+
+# RustSec advisories for the Tauri desktop app's Rust dependencies. CodeQL covers JS/TS only,
+# so the desktop Rust code would otherwise have no scheduled vulnerability scanning.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/desktop/src-tauri/Cargo.toml"
+      - "apps/desktop/src-tauri/Cargo.lock"
+      - ".github/workflows/cargo-audit.yml"
+  pull_request:
+    paths:
+      - "apps/desktop/src-tauri/Cargo.toml"
+      - "apps/desktop/src-tauri/Cargo.lock"
+  schedule:
+    - cron: "0 3 * * 1" # Monday 03:00 UTC, aligned with CodeQL cadence
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+
+      - uses: rustsec/audit-check@69366f33c96575abad1ee0dba8212993eecbe998 # v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: apps/desktop/src-tauri

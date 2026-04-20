@@ -2,7 +2,7 @@
 // Run with: bun run apps/api/src/db/create-test-db.ts
 import postgres from "postgres";
 
-const sql = postgres("postgresql://postgres:postgres@127.0.0.1:54322/postgres", { max: 1 });
+const sql = postgres("postgresql://postgres:postgres@127.0.0.1:55322/postgres", { max: 1 });
 
 try {
   await sql`CREATE DATABASE sugara_test OWNER postgres`;

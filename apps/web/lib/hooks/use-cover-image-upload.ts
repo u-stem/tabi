@@ -42,18 +42,13 @@ export function useCoverImageUpload(): UseCoverImageUploadReturn {
         });
 
         if (!res.ok) {
-          const body = await res.json().catch(() => ({ error: "Unknown error" }));
-          const message =
-            typeof body.error === "string" ? body.error : tm("coverImageUploadFailed");
-          console.error("Cover image upload failed:", message);
           setError(tm("coverImageUploadFailed"));
           return null;
         }
 
         const data = await res.json();
         return data.coverImageUrl;
-      } catch (err) {
-        console.error("Cover image upload failed:", err);
+      } catch {
         setError(tm("coverImageUploadFailed"));
         return null;
       } finally {
@@ -64,17 +59,12 @@ export function useCoverImageUpload(): UseCoverImageUploadReturn {
   );
 
   const remove = useCallback(async (tripId: string) => {
-    try {
-      const res = await fetch(`/api/trips/${tripId}/cover-image`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!res.ok) {
-        console.error("Cover image delete failed:", res.status);
-      }
-    } catch (err) {
-      console.error("Cover image delete failed:", err);
-    }
+    // Best-effort: if the remove call fails, we surface the state via the caller's reload,
+    // so swallowing here avoids a noisy console for a non-fatal cleanup.
+    await fetch(`/api/trips/${tripId}/cover-image`, {
+      method: "DELETE",
+      credentials: "include",
+    }).catch(() => undefined);
   }, []);
 
   return { uploading, error, upload, remove };

@@ -463,6 +463,30 @@ scheduleRoutes.patch(
       return c.json(existing);
     }
 
+    if (
+      Object.hasOwn(updateData, "crossDayAnchor") ||
+      Object.hasOwn(updateData, "crossDayAnchorSourceId")
+    ) {
+      const check = await validateAnchors(db, tripId, patternId, [
+        {
+          scheduleId,
+          anchor: updateData.crossDayAnchor ?? null,
+          anchorSourceId: updateData.crossDayAnchorSourceId ?? null,
+        },
+      ]);
+      if (check.ok === false) {
+        return c.json({ error: check.message }, check.status);
+      }
+    }
+
+    // When endDayOffset is cleared, the schedule stops generating cross-day
+    // entries, so any anchors pointing to it must be dropped to avoid
+    // orphaned references lingering in the DB.
+    const endDayOffsetCleared =
+      Object.hasOwn(updateData, "endDayOffset") &&
+      (updateData.endDayOffset === null || updateData.endDayOffset === 0) &&
+      (existing.endDayOffset ?? 0) > 0;
+
     // Atomic optimistic lock: include updatedAt in WHERE clause
     const whereConditions = expectedUpdatedAt
       ? and(
@@ -471,14 +495,26 @@ scheduleRoutes.patch(
         )
       : eq(schedules.id, scheduleId);
 
-    const [updated] = await db
-      .update(schedules)
-      .set({
-        ...updateData,
-        updatedAt: new Date(),
-      })
-      .where(whereConditions)
-      .returning();
+    const updated = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(schedules)
+        .set({
+          ...updateData,
+          updatedAt: new Date(),
+        })
+        .where(whereConditions)
+        .returning();
+      if (!row) return null;
+
+      if (endDayOffsetCleared) {
+        await tx
+          .update(schedules)
+          .set({ crossDayAnchor: null, crossDayAnchorSourceId: null })
+          .where(eq(schedules.crossDayAnchorSourceId, scheduleId));
+      }
+
+      return row;
+    });
 
     if (!updated) {
       return c.json({ error: ERROR_MSG.CONFLICT }, 409);

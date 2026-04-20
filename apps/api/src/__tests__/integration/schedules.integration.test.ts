@@ -725,6 +725,40 @@ describe("Schedules Integration", () => {
       expect(res.status).toBe(400);
     });
 
+    it("clears anchors on schedules referencing a hotel whose endDayOffset is set to null", async () => {
+      const hotel = await createReorderSchedule("Hotel Cascade", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+      const target = await createReorderSchedule("Target Cascade", "sightseeing");
+      await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [hotel.id, target.id],
+            anchors: [{ scheduleId: target.id, anchor: "after", anchorSourceId: hotel.id }],
+          }),
+        },
+      );
+
+      const updateRes = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${hotel.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ endDayOffset: null, endTime: null }),
+        },
+      );
+      expect(updateRes.status).toBe(200);
+
+      const fetched = await fetchSchedule(target.id);
+      expect(fetched.crossDayAnchor).toBeNull();
+      expect(fetched.crossDayAnchorSourceId).toBeNull();
+    });
+
     it("clears all anchors when clearAnchors=true", async () => {
       const hotel = await createReorderSchedule("Hotel", "hotel", {
         startTime: "15:00",

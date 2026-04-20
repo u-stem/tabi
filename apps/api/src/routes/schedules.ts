@@ -197,8 +197,10 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules/batch-sh
   let skippedCount = 0;
 
   for (const schedule of targetSchedules) {
-    // Skip hotels spanning multiple days
-    if (schedule.category === "hotel" && schedule.endDayOffset && schedule.endDayOffset > 0) {
+    // Skip any schedule that spans multiple days, regardless of category.
+    // Shifting only startTime would leave endTime fixed and silently alter
+    // the duration (e.g. night bus 22:00→06:00 would collapse by 30min).
+    if (schedule.endDayOffset && schedule.endDayOffset > 0) {
       skippedCount++;
       continue;
     }
@@ -223,16 +225,11 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules/batch-sh
     }
 
     if (!shouldSkip && schedule.endTime) {
-      // Don't shift endTime for cross-day schedules
-      if (schedule.endDayOffset && schedule.endDayOffset > 0) {
-        // Keep endTime as-is
+      const shifted = shiftTime(schedule.endTime, deltaMinutes);
+      if (shifted === null) {
+        shouldSkip = true;
       } else {
-        const shifted = shiftTime(schedule.endTime, deltaMinutes);
-        if (shifted === null) {
-          shouldSkip = true;
-        } else {
-          newEndTime = shifted;
-        }
+        newEndTime = shifted;
       }
     }
 

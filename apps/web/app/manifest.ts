@@ -3,6 +3,9 @@ import type { MetadataRoute } from "next";
 type ShareTarget = {
   action: string;
   method: string;
+  // Chrome warns when omitted; explicit value silences
+  // "Enctype should be set to either application/x-www-form-urlencoded or multipart/form-data".
+  enctype: "application/x-www-form-urlencoded" | "multipart/form-data";
   params: Record<string, string>;
 };
 
@@ -34,6 +37,7 @@ export default function manifest(): ManifestWithShareTarget {
     share_target: {
       action: "/share-target",
       method: "GET",
+      enctype: "application/x-www-form-urlencoded",
       params: {
         url: "url",
         title: "title",

@@ -1,8 +1,10 @@
 import type { CrossDayEntry, ScheduleResponse } from "@sugara/shared";
 import { describe, expect, it } from "vitest";
 import {
+  computeCandidateDropResult,
   computeCandidateInsertIndex,
   computeScheduleReorderIndex,
+  computeScheduleReorderResult,
   type DropTarget,
   isOverUpperHalf,
 } from "../drop-position";
@@ -263,5 +265,87 @@ describe("computeScheduleReorderIndex", () => {
     const c = makeCrossDayEntry({ id: "c", endTime: "10:00" });
     const target: DropTarget = { kind: "schedule", overId: "cross-c", upperHalf: false };
     expect(computeScheduleReorderIndex([s1, s2], [c], "s1", target)).toBe(0);
+  });
+});
+
+describe("computeCandidateDropResult returns anchor info for crossDay drops", () => {
+  const s1 = makeSchedule({ id: "s1", startTime: "09:00", sortOrder: 0 });
+  const hotelCross = makeCrossDayEntry({ id: "hotel", endTime: "10:00" });
+
+  it("returns anchor=before when dropping on crossDay upper half", () => {
+    const target: DropTarget = {
+      kind: "schedule",
+      overId: "cross-hotel",
+      upperHalf: true,
+    };
+    const result = computeCandidateDropResult([s1], [hotelCross], target);
+    expect(result.anchor).toEqual({ anchor: "before", anchorSourceId: "hotel" });
+  });
+
+  it("returns anchor=after when dropping on crossDay lower half", () => {
+    const target: DropTarget = {
+      kind: "schedule",
+      overId: "cross-hotel",
+      upperHalf: false,
+    };
+    const result = computeCandidateDropResult([s1], [hotelCross], target);
+    expect(result.anchor).toEqual({ anchor: "after", anchorSourceId: "hotel" });
+  });
+
+  it("returns anchor=null when dropping on a regular schedule", () => {
+    const target: DropTarget = { kind: "schedule", overId: "s1", upperHalf: true };
+    const result = computeCandidateDropResult([s1], [hotelCross], target);
+    expect(result.anchor).toEqual({ anchor: null, anchorSourceId: null });
+  });
+
+  it("returns anchor=null when dropping on timeline / outside zones", () => {
+    expect(computeCandidateDropResult([s1], [hotelCross], { kind: "timeline" }).anchor).toEqual({
+      anchor: null,
+      anchorSourceId: null,
+    });
+    expect(computeCandidateDropResult([s1], [hotelCross], { kind: "outside" }).anchor).toEqual({
+      anchor: null,
+      anchorSourceId: null,
+    });
+  });
+
+  it("preserves the insertIndex computed by computeCandidateInsertIndex", () => {
+    const target: DropTarget = {
+      kind: "schedule",
+      overId: "cross-hotel",
+      upperHalf: false,
+    };
+    const directIdx = computeCandidateInsertIndex([s1], [hotelCross], target);
+    const result = computeCandidateDropResult([s1], [hotelCross], target);
+    expect(result.insertIndex).toBe(directIdx);
+  });
+});
+
+describe("computeScheduleReorderResult returns anchor info for crossDay drops", () => {
+  const s1 = makeSchedule({ id: "s1", startTime: "09:00", sortOrder: 0 });
+  const s2 = makeSchedule({ id: "s2", startTime: "12:00", sortOrder: 1 });
+  const hotelCross = makeCrossDayEntry({ id: "hotel", endTime: "10:00" });
+
+  it("returns anchor=before when reordering into crossDay upper half", () => {
+    const target: DropTarget = {
+      kind: "schedule",
+      overId: "cross-hotel",
+      upperHalf: true,
+    };
+    const result = computeScheduleReorderResult([s1, s2], [hotelCross], "s2", target);
+    expect(result).not.toBeNull();
+    expect(result?.anchor).toEqual({ anchor: "before", anchorSourceId: "hotel" });
+  });
+
+  it("returns anchor=null when moving to a non-crossDay position", () => {
+    const target: DropTarget = { kind: "schedule", overId: "s1", upperHalf: true };
+    const result = computeScheduleReorderResult([s1, s2], [hotelCross], "s2", target);
+    expect(result).not.toBeNull();
+    expect(result?.anchor).toEqual({ anchor: null, anchorSourceId: null });
+  });
+
+  it("returns null when underlying destination index is null (active not found)", () => {
+    const target: DropTarget = { kind: "timeline" };
+    expect(computeScheduleReorderResult([s1, s2], [hotelCross], "missing", target)).toBeNull();
   });
 });

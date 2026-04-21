@@ -760,7 +760,7 @@ describe("Schedules Integration", () => {
       expect(fetched.crossDayAnchorSourceId).toBeNull();
     });
 
-    it("trigger nulls cross_day_anchor when source_id is cleared directly (FK SET NULL simulation)", async () => {
+    it("trigger nulls cross_day_anchor when source_id is set to null via direct UPDATE", async () => {
       const hotel = await createReorderSchedule("Hotel Trigger", "hotel", {
         startTime: "15:00",
         endTime: "10:00",
@@ -785,6 +785,69 @@ describe("Schedules Integration", () => {
         .set({ crossDayAnchorSourceId: null })
         .where(eq(schedules.id, target.id));
 
+      const after = await testDb.query.schedules.findFirst({
+        where: eq(schedules.id, target.id),
+      });
+      expect(after?.crossDayAnchor).toBeNull();
+      expect(after?.crossDayAnchorSourceId).toBeNull();
+    });
+
+    it("POST strips crossDayAnchor/crossDayAnchorSourceId from client payload", async () => {
+      const hotel = await createReorderSchedule("Hotel for create", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+
+      // Client tries to smuggle anchor fields into create payload. They must be ignored.
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: "Smuggled",
+            category: "sightseeing",
+            crossDayAnchor: "after",
+            crossDayAnchorSourceId: hotel.id,
+          }),
+        },
+      );
+      expect(res.status).toBe(201);
+      const created = await res.json();
+      expect(created.crossDayAnchor).toBeNull();
+      expect(created.crossDayAnchorSourceId).toBeNull();
+    });
+
+    it("DELETE of anchor source clears referencing anchors via FK ON DELETE SET NULL + trigger", async () => {
+      const hotel = await createReorderSchedule("Hotel FK", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+      const target = await createReorderSchedule("Target FK", "sightseeing");
+      await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [hotel.id, target.id],
+            anchors: [{ scheduleId: target.id, anchor: "after", anchorSourceId: hotel.id }],
+          }),
+        },
+      );
+
+      // Delete the hotel through the API. This triggers FK ON DELETE SET NULL on
+      // cross_day_anchor_source_id, which in turn fires the trigger that nulls the
+      // cross_day_anchor enum column.
+      const deleteRes = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/${hotel.id}`,
+        { method: "DELETE" },
+      );
+      expect(deleteRes.status).toBe(200);
+
+      const testDb = getTestDb();
       const after = await testDb.query.schedules.findFirst({
         where: eq(schedules.id, target.id),
       });
@@ -828,6 +891,77 @@ describe("Schedules Integration", () => {
       const fetched = await fetchSchedule(target.id);
       expect(fetched.crossDayAnchor).toBeNull();
       expect(fetched.crossDayAnchorSourceId).toBeNull();
+    });
+
+    it("unassign clears anchor on the moved schedule (becomes a candidate)", async () => {
+      const hotel = await createReorderSchedule("Hotel Unassign", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+      const target = await createReorderSchedule("Target Unassign", "sightseeing");
+      await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [hotel.id, target.id],
+            anchors: [{ scheduleId: target.id, anchor: "after", anchorSourceId: hotel.id }],
+          }),
+        },
+      );
+
+      const unassignRes = await app.request(
+        `/api/trips/${tripId}/schedules/${target.id}/unassign`,
+        { method: "POST" },
+      );
+      expect(unassignRes.status).toBe(200);
+      const unassigned = await unassignRes.json();
+      expect(unassigned.dayPatternId).toBeNull();
+      expect(unassigned.crossDayAnchor).toBeNull();
+      expect(unassigned.crossDayAnchorSourceId).toBeNull();
+    });
+
+    it("batch-unassign clears anchor on each moved schedule", async () => {
+      const hotel = await createReorderSchedule("Hotel Batch", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+      const t1 = await createReorderSchedule("T1", "sightseeing");
+      const t2 = await createReorderSchedule("T2", "sightseeing");
+      await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [hotel.id, t1.id, t2.id],
+            anchors: [
+              { scheduleId: t1.id, anchor: "after", anchorSourceId: hotel.id },
+              { scheduleId: t2.id, anchor: "before", anchorSourceId: hotel.id },
+            ],
+          }),
+        },
+      );
+
+      const res = await app.request(`/api/trips/${tripId}/schedules/batch-unassign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ scheduleIds: [t1.id, t2.id] }),
+      });
+      expect(res.status).toBe(200);
+
+      const testDb = getTestDb();
+      for (const id of [t1.id, t2.id]) {
+        const row = await testDb.query.schedules.findFirst({
+          where: eq(schedules.id, id),
+        });
+        expect(row?.dayPatternId).toBeNull();
+        expect(row?.crossDayAnchor).toBeNull();
+        expect(row?.crossDayAnchorSourceId).toBeNull();
+      }
     });
   });
 });

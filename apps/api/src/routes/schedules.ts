@@ -84,12 +84,16 @@ scheduleRoutes.post("/:tripId/days/:dayId/patterns/:patternId/schedules", async 
       eq(schedules.dayPatternId, patternId),
     );
 
+    // Anchors are never set on create — they can only be set via the reorder
+    // endpoint after the schedule has a stable id to reference.
+    const { crossDayAnchor: _a, crossDayAnchorSourceId: _s, ...createData } = parsed.data;
+
     const [result] = await tx
       .insert(schedules)
       .values({
         tripId,
         dayPatternId: patternId,
-        ...parsed.data,
+        ...createData,
         sortOrder: nextOrder,
       })
       .returning();
@@ -615,6 +619,7 @@ scheduleRoutes.post("/:tripId/schedules/batch-unassign", requireTripAccess("edit
     );
 
     const ids = parsed.data.scheduleIds;
+    // Candidates cannot have anchors (no dayPatternId → no cross-day context).
     await tx
       .update(schedules)
       .set({
@@ -623,6 +628,8 @@ scheduleRoutes.post("/:tripId/schedules/batch-unassign", requireTripAccess("edit
           ids.map((id, i) => sql`WHEN ${schedules.id} = ${id} THEN ${nextOrder + i}::integer`),
           sql` `,
         )} END`,
+        crossDayAnchor: null,
+        crossDayAnchorSourceId: null,
         updatedAt: new Date(),
       })
       .where(inArray(schedules.id, ids));
@@ -663,11 +670,14 @@ scheduleRoutes.post(
       and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
     );
 
+    // Candidates cannot have anchors (no dayPatternId → no cross-day context).
     const [updated] = await db
       .update(schedules)
       .set({
         dayPatternId: null,
         sortOrder: nextOrder,
+        crossDayAnchor: null,
+        crossDayAnchorSourceId: null,
         updatedAt: new Date(),
       })
       .where(eq(schedules.id, scheduleId))

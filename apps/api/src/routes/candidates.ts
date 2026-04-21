@@ -61,11 +61,15 @@ candidateRoutes.post("/:tripId/candidates", requireTripAccess("editor"), async (
       and(eq(schedules.tripId, tripId), isNull(schedules.dayPatternId)),
     );
 
+    // Anchors cannot be set on candidates (they have no dayPatternId and
+    // therefore no cross-day context). Strip if a client tries to smuggle them.
+    const { crossDayAnchor: _a, crossDayAnchorSourceId: _s, ...createData } = parsed.data;
+
     const [result] = await tx
       .insert(schedules)
       .values({
         tripId,
-        ...parsed.data,
+        ...createData,
         sortOrder: nextOrder,
       })
       .returning();
@@ -394,7 +398,12 @@ candidateRoutes.patch("/:tripId/candidates/:scheduleId", requireTripAccess("edit
     return c.json({ error: ERROR_MSG.CANDIDATE_NOT_FOUND }, 404);
   }
 
-  const { expectedUpdatedAt, ...updateData } = parsed.data;
+  const {
+    expectedUpdatedAt,
+    crossDayAnchor: _a,
+    crossDayAnchorSourceId: _s,
+    ...updateData
+  } = parsed.data;
 
   if (!hasChanges(existing, updateData)) {
     return c.json(existing);

@@ -3,13 +3,12 @@ import type { Context, Next } from "hono";
 import { db } from "../db/index";
 import { users } from "../db/schema";
 import { ERROR_MSG } from "../lib/constants";
-import { logger } from "../lib/logger";
 import type { AppEnv } from "../types";
 
 export async function requireAdmin(c: Context<AppEnv>, next: Next) {
   const user = c.get("user");
 
-  // Prefer ADMIN_USER_ID (immutable) over ADMIN_USERNAME (user-changeable).
+  // ADMIN_USER_ID is optional; when set it takes precedence for strict id-based auth.
   const adminUserId = process.env.ADMIN_USER_ID;
   if (adminUserId) {
     if (user.id !== adminUserId) {
@@ -17,14 +16,6 @@ export async function requireAdmin(c: Context<AppEnv>, next: Next) {
     }
     await next();
     return;
-  }
-
-  // In production, refuse the username fallback — usernames are user-editable, so relying on
-  // them as an authorization boundary risks self-lockout and social-engineering attacks.
-  // ADMIN_USER_ID must be set in prod.
-  if (process.env.NODE_ENV === "production") {
-    logger.error("requireAdmin: ADMIN_USER_ID is not configured in production");
-    return c.json({ error: ERROR_MSG.FORBIDDEN }, 403);
   }
 
   const adminUsername = process.env.ADMIN_USERNAME;

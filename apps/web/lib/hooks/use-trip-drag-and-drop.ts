@@ -21,8 +21,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
 import {
-  computeCandidateInsertIndex,
-  computeScheduleReorderIndex,
+  computeCandidateDropResult,
+  computeScheduleReorderResult,
   type DropTarget,
   isOverUpperHalf,
 } from "@/lib/drop-position";
@@ -195,18 +195,17 @@ export function useTripDragAndDrop({
         if (activeIdx === -1) return;
 
         const target = buildDropTarget(event, savedLastOverZone);
-        const destIdx = computeScheduleReorderIndex(
+        const reorderResult = computeScheduleReorderResult(
           currentSchedules,
           crossDayEntries,
           activeId,
           target,
         );
-        if (destIdx === null) return;
-        // arrayMove: from `activeIdx`, insert at `destIdx` in the post-removal
-        // array. Skip when the destination is a no-op.
-        if (destIdx === activeIdx) return;
+        if (reorderResult === null) return;
+        const { destIndex, anchor } = reorderResult;
+        if (destIndex === activeIdx) return;
 
-        const reordered = arrayMove(currentSchedules, activeIdx, destIdx);
+        const reordered = arrayMove(currentSchedules, activeIdx, destIndex);
         setLocalSchedules(reordered);
 
         const scheduleIds = reordered.map((s) => s.id);
@@ -215,7 +214,16 @@ export function useTripDragAndDrop({
             `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/reorder`,
             {
               method: "PATCH",
-              body: JSON.stringify({ scheduleIds }),
+              body: JSON.stringify({
+                scheduleIds,
+                anchors: [
+                  {
+                    scheduleId: activeId,
+                    anchor: anchor.anchor,
+                    anchorSourceId: anchor.anchorSourceId,
+                  },
+                ],
+              }),
             },
           );
           onDone();
@@ -283,7 +291,11 @@ export function useTripDragAndDrop({
         setLocalCandidates(currentCandidates.filter((c) => c.id !== active.id));
 
         const target = buildDropTarget(event, savedLastOverZone);
-        const insertIdx = computeCandidateInsertIndex(currentSchedules, crossDayEntries, target);
+        const { insertIndex: insertIdx, anchor } = computeCandidateDropResult(
+          currentSchedules,
+          crossDayEntries,
+          target,
+        );
 
         const newSchedule: ScheduleResponse = {
           id: candidate.id,
@@ -300,6 +312,8 @@ export function useTripDragAndDrop({
           transportMethod: candidate.transportMethod,
           color: candidate.color,
           endDayOffset: candidate.endDayOffset,
+          crossDayAnchor: anchor.anchor,
+          crossDayAnchorSourceId: anchor.anchorSourceId,
           latitude: candidate.latitude,
           longitude: candidate.longitude,
           placeId: candidate.placeId,
@@ -327,19 +341,30 @@ export function useTripDragAndDrop({
         }
 
         try {
-          if (overType === "schedule") {
-            const scheduleIds = [...currentSchedules.map((s) => s.id)];
-            scheduleIds.splice(insertIdx, 0, String(active.id));
-            await api(
-              `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/reorder`,
-              {
-                method: "PATCH",
-                body: JSON.stringify({ scheduleIds }),
-              },
-            );
-          }
+          // Always write reorder + anchors after assign so the anchor is
+          // persisted even when dropping into the timeline zone (overType
+          // "timeline") — the previous branch-by-overType only persisted
+          // order on overType === "schedule", which was fine for sortOrder
+          // but would drop the anchor silently.
+          const scheduleIds = [...currentSchedules.map((s) => s.id)];
+          scheduleIds.splice(insertIdx, 0, String(active.id));
+          await api(
+            `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/reorder`,
+            {
+              method: "PATCH",
+              body: JSON.stringify({
+                scheduleIds,
+                anchors: [
+                  {
+                    scheduleId: String(active.id),
+                    anchor: anchor.anchor,
+                    anchorSourceId: anchor.anchorSourceId,
+                  },
+                ],
+              }),
+            },
+          );
         } catch {
-          // assign succeeded but reorder failed — refetch to sync
           onDone();
           return;
         }
@@ -394,11 +419,16 @@ export function useTripDragAndDrop({
     setLocalSchedules(reordered);
 
     try {
+      // Keyboard reorder doesn't know the anchor intent — treat it as a
+      // deliberate manual repositioning that overrides any previous anchor.
       await api(
         `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/reorder`,
         {
           method: "PATCH",
-          body: JSON.stringify({ scheduleIds: reordered.map((s) => s.id) }),
+          body: JSON.stringify({
+            scheduleIds: reordered.map((s) => s.id),
+            anchors: [{ scheduleId: id, anchor: null, anchorSourceId: null }],
+          }),
         },
       );
       onDone();

@@ -109,3 +109,60 @@ export function computeScheduleReorderIndex(
   const insert = computeCandidateInsertIndex(without, crossDayEntries, target);
   return insert;
 }
+
+export type AnchorUpdate = {
+  anchor: "before" | "after" | null;
+  anchorSourceId: string | null;
+};
+
+export type CandidateDropResult = {
+  insertIndex: number;
+  anchor: AnchorUpdate;
+};
+
+/**
+ * Like `computeCandidateInsertIndex`, but also returns the anchor update that
+ * should be written to the inserted schedule. When the drop target is a
+ * crossDay sortable (id prefixed with `cross-`), the anchor is set to
+ * 'before' / 'after' with the source schedule id extracted from the prefix.
+ * For any other drop (regular schedule, timeline zone, outside), the anchor
+ * is cleared.
+ */
+export function computeCandidateDropResult(
+  schedules: ScheduleResponse[],
+  crossDayEntries: CrossDayEntry[] | undefined,
+  target: DropTarget,
+): CandidateDropResult {
+  return {
+    insertIndex: computeCandidateInsertIndex(schedules, crossDayEntries, target),
+    anchor: extractAnchor(target),
+  };
+}
+
+/**
+ * Like `computeScheduleReorderIndex` but also returns the anchor update.
+ * Returns null when the underlying index computation returns null (active id
+ * not found or same-over no-op).
+ */
+export function computeScheduleReorderResult(
+  schedules: ScheduleResponse[],
+  crossDayEntries: CrossDayEntry[] | undefined,
+  activeId: string,
+  target: DropTarget,
+): { destIndex: number; anchor: AnchorUpdate } | null {
+  const destIndex = computeScheduleReorderIndex(schedules, crossDayEntries, activeId, target);
+  if (destIndex === null) return null;
+  return { destIndex, anchor: extractAnchor(target) };
+}
+
+function extractAnchor(target: DropTarget): AnchorUpdate {
+  if (target.kind !== "schedule") {
+    return { anchor: null, anchorSourceId: null };
+  }
+  const match = /^cross-(.+)$/.exec(target.overId);
+  if (!match) return { anchor: null, anchorSourceId: null };
+  return {
+    anchor: target.upperHalf ? "before" : "after",
+    anchorSourceId: match[1],
+  };
+}

@@ -89,19 +89,32 @@ export const updateScheduleSchema = createScheduleSchema.partial().extend({
 
 import { MAX_SCHEDULES_PER_TRIP } from "../limits";
 
-export const reorderSchedulesSchema = z.object({
-  scheduleIds: z.array(z.string().check(z.guid())).max(MAX_SCHEDULES_PER_TRIP),
-  anchors: z
-    .array(
-      z.object({
-        scheduleId: z.string().check(z.guid()),
-        anchor: z.enum(["before", "after"]).nullable(),
-        anchorSourceId: z.string().check(z.guid()).nullable(),
-      }),
-    )
-    .optional(),
-  clearAnchors: z.boolean().optional(),
-});
+export const reorderSchedulesSchema = z
+  .object({
+    scheduleIds: z.array(z.string().check(z.guid())).max(MAX_SCHEDULES_PER_TRIP),
+    anchors: z
+      .array(
+        z.object({
+          scheduleId: z.string().check(z.guid()),
+          anchor: z.enum(["before", "after"]).nullable(),
+          anchorSourceId: z.string().check(z.guid()).nullable(),
+        }),
+      )
+      .optional(),
+    clearAnchors: z.boolean().optional(),
+  })
+  // anchors / clearAnchors are defined to operate on scheduleIds; an empty
+  // scheduleIds with either flag would be a silent no-op that misleads
+  // callers into thinking the operation succeeded. Reject at the boundary.
+  .refine(
+    (v) => {
+      if (v.scheduleIds.length > 0) return true;
+      if (v.clearAnchors) return false;
+      if (v.anchors && v.anchors.length > 0) return false;
+      return true;
+    },
+    { message: "scheduleIds must be non-empty when clearAnchors or anchors is provided" },
+  );
 
 export const createCandidateSchema = createScheduleSchema;
 

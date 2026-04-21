@@ -393,6 +393,10 @@ scheduleRoutes.patch("/:tripId/days/:dayId/patterns/:patternId/schedules/reorder
     }
   }
 
+  // reorderSchedulesSchema refine already rejects empty scheduleIds combined
+  // with clearAnchors=true or non-empty anchors. What reaches here is the
+  // idempotent variant: empty scheduleIds with no flags, or with only falsy
+  // flags (clearAnchors=false, anchors=[]). Return early to skip the tx.
   if (scheduleIds.length === 0 && !clearAnchors && (!anchors || anchors.length === 0)) {
     return c.json({ ok: true });
   }

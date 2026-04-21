@@ -285,6 +285,52 @@ describe("reorderSchedulesSchema", () => {
     const result = reorderSchedulesSchema.safeParse({ scheduleIds: [] });
     expect(result.success).toBe(true);
   });
+
+  it("rejects empty scheduleIds with clearAnchors=true", () => {
+    const result = reorderSchedulesSchema.safeParse({
+      scheduleIds: [],
+      clearAnchors: true,
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects empty scheduleIds with non-empty anchors", () => {
+    const result = reorderSchedulesSchema.safeParse({
+      scheduleIds: [],
+      anchors: [
+        {
+          scheduleId: "550e8400-e29b-41d4-a716-446655440000",
+          anchor: "after",
+          anchorSourceId: "550e8400-e29b-41d4-a716-446655440001",
+        },
+      ],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts empty scheduleIds with clearAnchors=false (explicit falsy)", () => {
+    const result = reorderSchedulesSchema.safeParse({
+      scheduleIds: [],
+      clearAnchors: false,
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts empty scheduleIds with empty anchors array", () => {
+    const result = reorderSchedulesSchema.safeParse({
+      scheduleIds: [],
+      anchors: [],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts non-empty scheduleIds with clearAnchors=true", () => {
+    const result = reorderSchedulesSchema.safeParse({
+      scheduleIds: ["550e8400-e29b-41d4-a716-446655440000"],
+      clearAnchors: true,
+    });
+    expect(result.success).toBe(true);
+  });
 });
 
 describe("createCandidateSchema", () => {

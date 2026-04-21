@@ -804,6 +804,18 @@ describe("Schedules Integration", () => {
       expect(res.status).toBe(400);
     });
 
+    it("accepts empty scheduleIds with empty anchors array as idempotent no-op", async () => {
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scheduleIds: [], anchors: [] }),
+        },
+      );
+      expect(res.status).toBe(200);
+    });
+
     it("rejects empty scheduleIds with non-empty anchors", async () => {
       const hotel = await createReorderSchedule("Hotel", "hotel", {
         startTime: "15:00",

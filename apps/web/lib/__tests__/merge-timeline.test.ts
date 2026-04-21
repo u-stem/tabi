@@ -285,3 +285,92 @@ describe("buildMergedTimeline", () => {
     });
   });
 });
+
+describe("buildMergedTimeline with cross-day anchors", () => {
+  function makeAnchoredSchedule(
+    id: string,
+    anchor: "before" | "after",
+    sourceId: string | null,
+    overrides: Partial<ScheduleResponse> = {},
+  ): ScheduleResponse {
+    return makeSchedule({
+      id,
+      crossDayAnchor: anchor,
+      crossDayAnchorSourceId: sourceId,
+      ...overrides,
+    });
+  }
+
+  it("places anchor='after' schedule immediately after the matching crossDay", () => {
+    const hotelId = "hotel-day1";
+    const checkout = makeCrossDayEntry({ id: hotelId, endTime: "08:50" });
+    const schedules = [
+      makeAnchoredSchedule("hatonosu", "after", hotelId, { sortOrder: 0 }),
+      makeSchedule({ id: "okutama", startTime: "09:00", sortOrder: 1 }),
+    ];
+    const result = ids(buildMergedTimeline(schedules, [checkout]));
+    expect(result).toEqual([`c-${hotelId}`, "hatonosu", "okutama"]);
+  });
+
+  it("places anchor='before' schedule immediately before the matching crossDay", () => {
+    const hotelId = "hotel-day1";
+    const checkout = makeCrossDayEntry({ id: hotelId, endTime: "08:50" });
+    const schedules = [
+      makeAnchoredSchedule("before-check", "before", hotelId, { sortOrder: 0 }),
+      makeSchedule({ id: "okutama", startTime: "09:00", sortOrder: 1 }),
+    ];
+    const result = ids(buildMergedTimeline(schedules, [checkout]));
+    expect(result).toEqual(["before-check", `c-${hotelId}`, "okutama"]);
+  });
+
+  it("sorts multiple anchored schedules by sortOrder within the same position", () => {
+    const hotelId = "hotel-day1";
+    const checkout = makeCrossDayEntry({ id: hotelId, endTime: "08:50" });
+    const schedules = [
+      makeAnchoredSchedule("a2", "after", hotelId, { sortOrder: 2 }),
+      makeAnchoredSchedule("a1", "after", hotelId, { sortOrder: 1 }),
+      makeSchedule({ id: "okutama", startTime: "09:00", sortOrder: 3 }),
+    ];
+    const result = ids(buildMergedTimeline(schedules, [checkout]));
+    expect(result).toEqual([`c-${hotelId}`, "a1", "a2", "okutama"]);
+  });
+
+  it("falls back to time-based merge when anchorSourceId doesn't match any crossDay", () => {
+    const checkout = makeCrossDayEntry({ id: "hotel-a", endTime: "08:50" });
+    const schedules = [
+      makeAnchoredSchedule("orphan", "after", "hotel-b", {
+        sortOrder: 0,
+        startTime: "10:00",
+      }),
+    ];
+    const result = ids(buildMergedTimeline(schedules, [checkout]));
+    expect(result).toEqual(["c-hotel-a", "orphan"]);
+  });
+
+  it("falls back to time-based merge when anchorSourceId is null (partial anchor)", () => {
+    const checkout = makeCrossDayEntry({ id: "hotel-a", endTime: "08:50" });
+    const schedules = [
+      makeAnchoredSchedule("partial", "after", null, {
+        sortOrder: 0,
+        startTime: "10:00",
+      }),
+    ];
+    const result = ids(buildMergedTimeline(schedules, [checkout]));
+    expect(result).toEqual(["c-hotel-a", "partial"]);
+  });
+
+  it("keeps anchored 'before' schedules before time-based flushed crossDays", () => {
+    const hotelA = "hotel-a";
+    const hotelB = "hotel-b";
+    const schedules = [
+      makeAnchoredSchedule("anchored", "before", hotelA, { sortOrder: 0 }),
+      makeSchedule({ id: "s1", startTime: "12:00", sortOrder: 1 }),
+    ];
+    const entries = [
+      makeCrossDayEntry({ id: hotelA, endTime: "08:00" }),
+      makeCrossDayEntry({ id: hotelB, endTime: "11:00" }),
+    ];
+    const result = ids(buildMergedTimeline(schedules, entries));
+    expect(result).toEqual(["anchored", "c-hotel-a", "c-hotel-b", "s1"]);
+  });
+});

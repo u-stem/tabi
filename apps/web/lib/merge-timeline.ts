@@ -7,17 +7,16 @@ export type TimelineItem =
 /**
  * Build a merged timeline of schedules and cross-day entries.
  *
- * Cross-day entries (with endTime) are flushed before the first time-having
- * schedule whose startTime is >= the entry's endTime. Schedules without a
- * startTime have no time anchor and therefore do not trigger a flush — they
- * flow around cross-day entries by sortOrder. Remaining cross-day entries
- * (including all entries without endTime) fall through to the end, sorted
- * by endTime; null-endTime entries keep their original order after those.
- *
- * Consequence: a null-startTime schedule placed before a time-having schedule
- * in sortOrder will render before the cross-day entry that the time-having
- * schedule triggers. Reordering the null-startTime schedule around the
- * time-having schedule lets users move it across the cross-day entry.
+ * Schedules with a valid cross-day anchor (both `crossDayAnchor` and
+ * `crossDayAnchorSourceId` set, and the source id matching one of the
+ * crossDayEntries) are placed immediately before/after their target crossDay
+ * and sorted by sortOrder within that slot. All other schedules (including
+ * schedules with a broken/stale anchor whose source doesn't match any
+ * crossDay) flow through the time-based merge: time-having schedules flush
+ * pending crossDays whose endTime is <= the schedule's startTime, and
+ * null-startTime schedules do not flush. Remaining crossDays fall through to
+ * the end (endTime-having entries sorted by endTime, then null-endTime
+ * entries).
  */
 export function buildMergedTimeline(
   schedules: ScheduleResponse[],
@@ -27,6 +26,61 @@ export function buildMergedTimeline(
     return schedules.map((schedule) => ({ type: "schedule", schedule }));
   }
 
+  const validSourceIds = new Set(crossDayEntries.map((e) => e.schedule.id));
+
+  const anchoredBefore: ScheduleResponse[] = [];
+  const anchoredAfter: ScheduleResponse[] = [];
+  const plainSchedules: ScheduleResponse[] = [];
+
+  for (const schedule of schedules) {
+    const anchor = schedule.crossDayAnchor;
+    const sourceId = schedule.crossDayAnchorSourceId;
+    if (anchor && sourceId && validSourceIds.has(sourceId)) {
+      if (anchor === "before") anchoredBefore.push(schedule);
+      else anchoredAfter.push(schedule);
+    } else {
+      plainSchedules.push(schedule);
+    }
+  }
+
+  const sortBySortOrder = (a: ScheduleResponse, b: ScheduleResponse) => a.sortOrder - b.sortOrder;
+  anchoredBefore.sort(sortBySortOrder);
+  anchoredAfter.sort(sortBySortOrder);
+
+  const merged = timeBasedMerge(plainSchedules, crossDayEntries);
+
+  for (const entry of crossDayEntries) {
+    const sourceId = entry.schedule.id;
+    const before = anchoredBefore.filter((s) => s.crossDayAnchorSourceId === sourceId);
+    const after = anchoredAfter.filter((s) => s.crossDayAnchorSourceId === sourceId);
+    if (before.length === 0 && after.length === 0) continue;
+
+    const pos = merged.findIndex((item) => item.type === "crossDay" && item.entry === entry);
+    if (pos === -1) continue;
+
+    if (after.length > 0) {
+      merged.splice(
+        pos + 1,
+        0,
+        ...after.map((s): TimelineItem => ({ type: "schedule", schedule: s })),
+      );
+    }
+    if (before.length > 0) {
+      merged.splice(
+        pos,
+        0,
+        ...before.map((s): TimelineItem => ({ type: "schedule", schedule: s })),
+      );
+    }
+  }
+
+  return merged;
+}
+
+function timeBasedMerge(
+  schedules: ScheduleResponse[],
+  crossDayEntries: CrossDayEntry[],
+): TimelineItem[] {
   const merged: TimelineItem[] = [];
   const remaining = [...crossDayEntries];
 
@@ -35,7 +89,6 @@ export function buildMergedTimeline(
 
     if (scheduleTime != null) {
       const toInsert: CrossDayEntry[] = [];
-      // Iterate in reverse so splice() doesn't shift the indices of unvisited entries.
       for (let j = remaining.length - 1; j >= 0; j--) {
         const entryTime = remaining[j].schedule.endTime?.slice(0, 5) ?? null;
         if (entryTime == null) continue;
@@ -57,8 +110,6 @@ export function buildMergedTimeline(
     merged.push({ type: "schedule", schedule });
   }
 
-  // Trailing cross-day entries: sort entries with endTime by endTime, then
-  // append entries without endTime in their original order.
   const withEnd: CrossDayEntry[] = [];
   const withoutEnd: CrossDayEntry[] = [];
   for (const entry of remaining) {

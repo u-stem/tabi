@@ -161,11 +161,18 @@ export function DayTimeline({
     }
   }
 
+  // Schedules with a manual cross-day anchor are "dirty" relative to time
+  // order — even if their startTimes happen to be ascending, the anchor
+  // forces a position that the time-sort button should be able to reset.
+  const hasAnyAnchor = schedules.some(
+    (s) => s.crossDayAnchor != null && s.crossDayAnchorSourceId != null,
+  );
   const isSorted =
-    schedules.length <= 1 ||
-    schedules.every(
-      (schedule, i) => i === 0 || compareByStartTime(schedules[i - 1], schedule) <= 0,
-    );
+    !hasAnyAnchor &&
+    (schedules.length <= 1 ||
+      schedules.every(
+        (schedule, i) => i === 0 || compareByStartTime(schedules[i - 1], schedule) <= 0,
+      ));
 
   async function handleSortByTime() {
     const sorted = [...schedules].sort(compareByStartTime);
@@ -173,7 +180,7 @@ export function DayTimeline({
     try {
       await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`, {
         method: "PATCH",
-        body: JSON.stringify({ scheduleIds }),
+        body: JSON.stringify({ scheduleIds, clearAnchors: true }),
       });
       onRefresh();
     } catch {

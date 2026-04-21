@@ -359,6 +359,18 @@ describe("buildMergedTimeline with cross-day anchors", () => {
     expect(result).toEqual(["c-hotel-a", "partial"]);
   });
 
+  it("places both 'before' and 'after' anchors around the same crossDay in correct order", () => {
+    const hotelId = "hotel";
+    const checkout = makeCrossDayEntry({ id: hotelId, endTime: "09:00" });
+    const schedules = [
+      makeAnchoredSchedule("b1", "before", hotelId, { sortOrder: 0 }),
+      makeAnchoredSchedule("a1", "after", hotelId, { sortOrder: 1 }),
+      makeSchedule({ id: "plain", startTime: "12:00", sortOrder: 2 }),
+    ];
+    const result = ids(buildMergedTimeline(schedules, [checkout]));
+    expect(result).toEqual(["b1", `c-${hotelId}`, "a1", "plain"]);
+  });
+
   it("keeps anchored 'before' schedules before time-based flushed crossDays", () => {
     const hotelA = "hotel-a";
     const hotelB = "hotel-b";

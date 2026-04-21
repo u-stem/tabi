@@ -203,7 +203,15 @@ export function useTripDragAndDrop({
         );
         if (reorderResult === null) return;
         const { destIndex, anchor } = reorderResult;
-        if (destIndex === activeIdx) return;
+        // Same-position drop with no anchor change is a true no-op. If the
+        // anchor actually changed (e.g. dropping on the crossDay boundary of
+        // the same slot toggles before/after), still send the reorder so the
+        // new anchor is persisted.
+        const activeSchedule = currentSchedules[activeIdx];
+        const anchorChanged =
+          (activeSchedule.crossDayAnchor ?? null) !== anchor.anchor ||
+          (activeSchedule.crossDayAnchorSourceId ?? null) !== anchor.anchorSourceId;
+        if (destIndex === activeIdx && !anchorChanged) return;
 
         const reordered = arrayMove(currentSchedules, activeIdx, destIndex);
         setLocalSchedules(reordered);

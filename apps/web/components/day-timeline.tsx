@@ -110,6 +110,7 @@ export function DayTimeline({
 
   const isMobile = useMobile();
   const [reorderMode, setReorderMode] = useState(false);
+  const [isSortingByTime, setIsSortingByTime] = useState(false);
 
   async function handleDelete(
     scheduleId: string,
@@ -175,6 +176,8 @@ export function DayTimeline({
       ));
 
   async function handleSortByTime() {
+    if (isSortingByTime) return;
+    setIsSortingByTime(true);
     const sorted = [...schedules].sort(compareByStartTime);
     const scheduleIds = sorted.map((s) => s.id);
     try {
@@ -185,6 +188,8 @@ export function DayTimeline({
       onRefresh();
     } catch {
       toast.error(tm("scheduleReorderFailed"));
+    } finally {
+      setIsSortingByTime(false);
     }
   }
 
@@ -442,7 +447,7 @@ export function DayTimeline({
                 size="sm"
                 className="h-9"
                 onClick={handleSortByTime}
-                disabled={disabled || isSorted}
+                disabled={disabled || isSorted || isSortingByTime}
               >
                 <ArrowUpDown className="h-4 w-4" />
                 {tsch("sortByTime")}

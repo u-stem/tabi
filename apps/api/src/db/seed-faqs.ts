@@ -501,7 +501,7 @@ const EN_FAQS = [
   },
   {
     question:
-      "How do I place a schedule before or after an entry that continues from the previous day, such as a hotel checkout?",
+      "How do I place a schedule before or after a multi-day entry, such as a hotel checkout?",
     answer:
       "Drop the schedule onto the upper half of the checkout card to pin it before the checkout, or onto the lower half to pin it after. The pinned position is kept even if you later change the schedule's start time. The 'Sort by time' button clears all manual pins at once.",
     sortOrder: 27,
@@ -509,7 +509,7 @@ const EN_FAQS = [
   {
     question: "What does the 'Sort by time' button do?",
     answer:
-      "It reorders schedules by start time ascending. If any schedules are manually pinned around entries that continue from the previous day (such as a checkout), those pins are cleared as well. The button remains active while any manual pin exists, so you can reset at any time.",
+      "It reorders schedules by start time ascending. Any schedules you manually pinned around a multi-day entry (such as a checkout) are unpinned at the same time. The button stays active while any manual pin exists, so you can reset at any time.",
     sortOrder: 28,
   },
   // ---- Scheduling ----
@@ -763,7 +763,7 @@ function resolveCategory(sortOrder: number): string {
   if (sortOrder === 0) return "overview";
   if (sortOrder >= 10 && sortOrder <= 18) return "account";
   if (sortOrder >= 19 && sortOrder <= 20) return "profile";
-  if (sortOrder >= 21 && sortOrder <= 26) return "trips";
+  if (sortOrder >= 21 && sortOrder <= 28) return "trips";
   if (sortOrder >= 30 && sortOrder <= 31) return "scheduling";
   if (sortOrder >= 40 && sortOrder <= 43) return "members";
   if (sortOrder >= 50 && sortOrder <= 52) return "friends";

@@ -28,6 +28,7 @@ import {
   type DropTarget,
   isOverUpperHalf,
 } from "@/lib/drop-position";
+import { buildMergedTimeline } from "@/lib/merge-timeline";
 
 type ActiveDragItem = {
   id: string;
@@ -482,24 +483,50 @@ export function useTripDragAndDrop({
   async function reorderSchedule(id: string, direction: "up" | "down") {
     if (!currentDayId || !currentPatternId) return;
     const current = localSchedules ?? schedules;
-    const idx = current.findIndex((s) => s.id === id);
-    if (idx === -1) return;
-    const newIdx = direction === "up" ? idx - 1 : idx + 1;
-    if (newIdx < 0 || newIdx >= current.length) return;
+    // Reorder by merged timeline position (what the user sees), not raw
+    // sortOrder. Without this the step may skip across a crossDay entry and
+    // land the schedule far from the user's "one step up/down" intent.
+    const merged = buildMergedTimeline(current, crossDayEntries);
+    const mergedIdx = merged.findIndex(
+      (item) => item.type === "schedule" && item.schedule.id === id,
+    );
+    if (mergedIdx === -1) return;
+    const newMergedIdx = direction === "up" ? mergedIdx - 1 : mergedIdx + 1;
+    if (newMergedIdx < 0 || newMergedIdx >= merged.length) return;
 
-    const reordered = arrayMove(current, idx, newIdx);
-    setLocalSchedules(reordered);
+    const targetItem = merged[newMergedIdx];
+    let anchor: { anchor: "before" | "after" | null; anchorSourceId: string | null };
+    let reordered = current;
+
+    if (targetItem.type === "crossDay") {
+      // Swap target is a crossDay — can't swap sortOrder (crossDay isn't in
+      // this day's schedules). Express "one step past crossDay" as an
+      // anchor: before when moving up, after when moving down. sortOrder is
+      // unchanged — the rendered position shifts via the anchor.
+      anchor = {
+        anchor: direction === "up" ? "before" : "after",
+        anchorSourceId: targetItem.entry.schedule.id,
+      };
+    } else {
+      // Swap with a regular schedule: swap sortOrder and clear anchor so the
+      // explicit reorder wins over any prior pin.
+      const targetId = targetItem.schedule.id;
+      const scheduleIdx = current.findIndex((s) => s.id === id);
+      const targetIdx = current.findIndex((s) => s.id === targetId);
+      if (scheduleIdx === -1 || targetIdx === -1) return;
+      reordered = arrayMove(current, scheduleIdx, targetIdx);
+      setLocalSchedules(reordered);
+      anchor = { anchor: null, anchorSourceId: null };
+    }
 
     try {
-      // Keyboard reorder doesn't know the anchor intent — treat it as a
-      // deliberate manual repositioning that overrides any previous anchor.
       await api(
         `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/reorder`,
         {
           method: "PATCH",
           body: JSON.stringify({
             scheduleIds: reordered.map((s) => s.id),
-            anchors: [{ scheduleId: id, anchor: null, anchorSourceId: null }],
+            anchors: [{ scheduleId: id, ...anchor }],
           }),
         },
       );

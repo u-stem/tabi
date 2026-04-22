@@ -102,6 +102,10 @@ export function useTripDragAndDrop({
   const tm = useTranslations("messages");
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
   const [overScheduleId, setOverScheduleId] = useState<string | null>(null);
+  // Tracks upperHalf for the currently hovered schedule sortable so the
+  // insert indicator can be rendered on the correct side (top vs bottom) of
+  // the card. Kept in sync with handleDragOver's `isOverUpperHalf` result.
+  const [overUpperHalf, setOverUpperHalf] = useState<boolean>(true);
   const [overCandidateId, setOverCandidateId] = useState<string | null>(null);
   // null = no drag in progress; use server props directly
   const [localSchedules, setLocalSchedules] = useState<ScheduleResponse[] | null>(null);
@@ -160,7 +164,7 @@ export function useTripDragAndDrop({
   }
 
   function handleDragOver(event: DragOverEvent) {
-    const { over } = event;
+    const { over, activatorEvent, delta } = event;
     if (!over) {
       // Keep overScheduleId so the insert indicator doesn't jump to the
       // bottom when the pointer briefly leaves all drop targets.
@@ -175,6 +179,7 @@ export function useTripDragAndDrop({
       // bottom of the list.
       if (overType === "schedule") {
         setOverScheduleId(String(over.id));
+        setOverUpperHalf(isOverUpperHalf(activatorEvent, delta.y, over.rect));
       }
       setOverCandidateId(null);
       setLastOverZone("timeline");
@@ -568,6 +573,7 @@ export function useTripDragAndDrop({
     collisionDetection,
     activeDragItem,
     overScheduleId,
+    overUpperHalf,
     overCandidateId,
     localSchedules: localSchedules ?? schedules,
     localCandidates: localCandidates ?? candidates,

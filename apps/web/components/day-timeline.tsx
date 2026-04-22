@@ -66,6 +66,7 @@ type DayTimelineProps = {
   addScheduleOpen?: boolean;
   onAddScheduleOpenChange?: (open: boolean) => void;
   overScheduleId?: string | null;
+  overUpperHalf?: boolean;
   onSaveToBookmark?: (scheduleIds: string[]) => void;
   onReorderSchedule?: (id: string, direction: "up" | "down") => void;
   mapsEnabled?: boolean;
@@ -88,6 +89,7 @@ export function DayTimeline({
   addScheduleOpen,
   onAddScheduleOpenChange,
   overScheduleId,
+  overUpperHalf = true,
   onSaveToBookmark,
   onReorderSchedule,
   mapsEnabled = false,
@@ -200,8 +202,12 @@ export function DayTimeline({
   const sortableIds = useMemo(() => timelineSortableIds(merged), [merged]);
   const scheduleIndexById = useMemo(() => new Map(schedules.map((s, i) => [s.id, i])), [schedules]);
 
-  const overlayIndicator = <DndInsertIndicator overlay />;
   const inlineIndicator = <DndInsertIndicator />;
+  // Indicator side mirrors `upperHalf` from the drag-over event so the blue
+  // line renders on the same edge the drop will actually land on.
+  const overlayIndicator = (
+    <DndInsertIndicator overlay position={overUpperHalf ? "top" : "bottom"} />
+  );
 
   function renderItem(item: TimelineItem, i: number, opts?: { selectable?: boolean }) {
     const isFirst = i === 0;

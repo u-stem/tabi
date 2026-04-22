@@ -321,6 +321,39 @@ describe("computeCandidateDropResult returns anchor info for crossDay drops", ()
   });
 });
 
+describe("computeCandidateDropResult infers anchor from adjacent crossDay in merged", () => {
+  // Scenario: user aims for "right after checkout" but closestCorners picks
+  // the next schedule (upper half) because cursor landed in the gap. The
+  // inferred anchor should pin to the checkout.
+  it("infers anchor=after when dropping on upper half of schedule right after a crossDay", () => {
+    const pre = makeSchedule({ id: "pre", sortOrder: 0 });
+    const next = makeSchedule({ id: "next", startTime: "09:30", sortOrder: 1 });
+    const checkout = makeCrossDayEntry({ id: "hotel", endTime: "09:00" });
+    // merged: [pre, c-hotel, next]
+    const target: DropTarget = { kind: "schedule", overId: "next", upperHalf: true };
+    const result = computeCandidateDropResult([pre, next], [checkout], target);
+    expect(result.anchor).toEqual({ anchor: "after", anchorSourceId: "hotel" });
+  });
+
+  it("infers anchor=before when dropping on lower half of schedule right before a crossDay", () => {
+    const pre = makeSchedule({ id: "pre", startTime: "08:00", sortOrder: 0 });
+    const post = makeSchedule({ id: "post", startTime: "10:00", sortOrder: 1 });
+    const checkout = makeCrossDayEntry({ id: "hotel", endTime: "09:00" });
+    // merged: [pre, c-hotel, post]
+    const target: DropTarget = { kind: "schedule", overId: "pre", upperHalf: false };
+    const result = computeCandidateDropResult([pre, post], [checkout], target);
+    expect(result.anchor).toEqual({ anchor: "before", anchorSourceId: "hotel" });
+  });
+
+  it("does not infer anchor when adjacent item is not a crossDay", () => {
+    const a = makeSchedule({ id: "a", sortOrder: 0 });
+    const b = makeSchedule({ id: "b", sortOrder: 1 });
+    const target: DropTarget = { kind: "schedule", overId: "b", upperHalf: true };
+    const result = computeCandidateDropResult([a, b], undefined, target);
+    expect(result.anchor).toEqual({ anchor: null, anchorSourceId: null });
+  });
+});
+
 describe("computeScheduleReorderResult returns anchor info for crossDay drops", () => {
   const s1 = makeSchedule({ id: "s1", startTime: "09:00", sortOrder: 0 });
   const s2 = makeSchedule({ id: "s2", startTime: "12:00", sortOrder: 1 });

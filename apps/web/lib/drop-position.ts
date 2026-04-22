@@ -135,7 +135,7 @@ export function computeCandidateDropResult(
 ): CandidateDropResult {
   return {
     insertIndex: computeCandidateInsertIndex(schedules, crossDayEntries, target),
-    anchor: extractAnchor(target),
+    anchor: extractAnchor(schedules, crossDayEntries, target),
   };
 }
 
@@ -152,17 +152,50 @@ export function computeScheduleReorderResult(
 ): { destIndex: number; anchor: AnchorUpdate } | null {
   const destIndex = computeScheduleReorderIndex(schedules, crossDayEntries, activeId, target);
   if (destIndex === null) return null;
-  return { destIndex, anchor: extractAnchor(target) };
+  const without = schedules.filter((s) => s.id !== activeId);
+  return { destIndex, anchor: extractAnchor(without, crossDayEntries, target) };
 }
 
-function extractAnchor(target: DropTarget): AnchorUpdate {
+function extractAnchor(
+  schedules: ScheduleResponse[],
+  crossDayEntries: CrossDayEntry[] | undefined,
+  target: DropTarget,
+): AnchorUpdate {
   if (target.kind !== "schedule") {
     return { anchor: null, anchorSourceId: null };
   }
+  // Direct drop on a crossDay sortable: use the id prefix.
   const match = /^cross-(.+)$/.exec(target.overId);
-  if (!match) return { anchor: null, anchorSourceId: null };
-  return {
-    anchor: target.upperHalf ? "before" : "after",
-    anchorSourceId: match[1],
-  };
+  if (match) {
+    return {
+      anchor: target.upperHalf ? "before" : "after",
+      anchorSourceId: match[1],
+    };
+  }
+  // Drop on a regular schedule: if that schedule is adjacent to a crossDay in
+  // the merged timeline, infer the anchor. This catches the common case where
+  // the user aimed for the crossDay's upper/lower half but the cursor landed
+  // on the next/previous schedule because cards are very close together and
+  // closestCorners picks the adjacent sortable in the gap.
+  if (!crossDayEntries || crossDayEntries.length === 0) {
+    return { anchor: null, anchorSourceId: null };
+  }
+  const merged = buildMergedTimeline(schedules, crossDayEntries);
+  const overIdx = merged.findIndex(
+    (item) => item.type === "schedule" && item.schedule.id === target.overId,
+  );
+  if (overIdx === -1) return { anchor: null, anchorSourceId: null };
+  if (target.upperHalf && overIdx > 0) {
+    const prev = merged[overIdx - 1];
+    if (prev.type === "crossDay") {
+      return { anchor: "after", anchorSourceId: prev.entry.schedule.id };
+    }
+  }
+  if (!target.upperHalf && overIdx < merged.length - 1) {
+    const next = merged[overIdx + 1];
+    if (next.type === "crossDay") {
+      return { anchor: "before", anchorSourceId: next.entry.schedule.id };
+    }
+  }
+  return { anchor: null, anchorSourceId: null };
 }

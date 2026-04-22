@@ -410,11 +410,27 @@ describe("computeCandidateDropResult infers anchor from adjacent crossDay in mer
     expect(result.anchor).toEqual({ anchor: "after", anchorSourceId: "hotel" });
   });
 
-  it("inherits anchor when prev in merged is an anchored schedule (drop past anchored cluster)", () => {
-    // Scenario: anchored group ends, user drops on the next plain schedule.
-    // merged: [pre, c-hotel, anchored, plain]. Dropping on `plain` should
-    // inherit `anchored`'s anchor since the intent is likely "still in the
-    // checkout group" (anchored group's boundary).
+  it("inherits anchor when prev in merged is an anchored schedule and drop is upper half (join cluster from below)", () => {
+    // merged: [pre, c-hotel, anchored, plain]. Dropping upper half of `plain`
+    // = insert between `anchored` and `plain` → still inside the anchored
+    // cluster → inherit.
+    const pre = makeSchedule({ id: "pre", sortOrder: 0 });
+    const anchored = makeSchedule({
+      id: "anchored",
+      sortOrder: 1,
+      crossDayAnchor: "after",
+      crossDayAnchorSourceId: "hotel",
+    });
+    const plain = makeSchedule({ id: "plain", startTime: "09:30", sortOrder: 2 });
+    const checkout = makeCrossDayEntry({ id: "hotel", endTime: "09:00" });
+    const target: DropTarget = { kind: "schedule", overId: "plain", upperHalf: true };
+    const result = computeCandidateDropResult([pre, anchored, plain], [checkout], target);
+    expect(result.anchor).toEqual({ anchor: "after", anchorSourceId: "hotel" });
+  });
+
+  it("does not inherit anchor when prev is anchored but drop is lower half (past the cluster)", () => {
+    // Symmetric guard: lower half on `plain` means insert after `plain` —
+    // past the anchored cluster, so no inheritance.
     const pre = makeSchedule({ id: "pre", sortOrder: 0 });
     const anchored = makeSchedule({
       id: "anchored",
@@ -426,12 +442,29 @@ describe("computeCandidateDropResult infers anchor from adjacent crossDay in mer
     const checkout = makeCrossDayEntry({ id: "hotel", endTime: "09:00" });
     const target: DropTarget = { kind: "schedule", overId: "plain", upperHalf: false };
     const result = computeCandidateDropResult([pre, anchored, plain], [checkout], target);
-    expect(result.anchor).toEqual({ anchor: "after", anchorSourceId: "hotel" });
+    expect(result.anchor).toEqual({ anchor: null, anchorSourceId: null });
   });
 
-  it("inherits anchor when next in merged is an anchored schedule (drop just before anchored cluster)", () => {
-    // merged: [plain, anchored, c-hotel]. Dropping upper half of `plain`
-    // should inherit `anchored`'s anchor (join the cluster from above).
+  it("inherits anchor when next in merged is an anchored schedule and drop is lower half (join cluster from above)", () => {
+    // merged: [plain, anchored, c-hotel]. Dropping lower half of `plain` =
+    // insert between `plain` and `anchored` → still inside the cluster from
+    // above → inherit.
+    const plain = makeSchedule({ id: "plain", sortOrder: 0 });
+    const anchored = makeSchedule({
+      id: "anchored",
+      sortOrder: 1,
+      crossDayAnchor: "before",
+      crossDayAnchorSourceId: "hotel",
+    });
+    const checkout = makeCrossDayEntry({ id: "hotel", endTime: "09:00" });
+    const target: DropTarget = { kind: "schedule", overId: "plain", upperHalf: false };
+    const result = computeCandidateDropResult([plain, anchored], [checkout], target);
+    expect(result.anchor).toEqual({ anchor: "before", anchorSourceId: "hotel" });
+  });
+
+  it("does not inherit anchor when next is anchored but drop is upper half (before the cluster)", () => {
+    // Symmetric guard: upper half on `plain` before the anchored cluster
+    // means insert before `plain` — away from the cluster, so no inheritance.
     const plain = makeSchedule({ id: "plain", sortOrder: 0 });
     const anchored = makeSchedule({
       id: "anchored",
@@ -442,7 +475,7 @@ describe("computeCandidateDropResult infers anchor from adjacent crossDay in mer
     const checkout = makeCrossDayEntry({ id: "hotel", endTime: "09:00" });
     const target: DropTarget = { kind: "schedule", overId: "plain", upperHalf: true };
     const result = computeCandidateDropResult([plain, anchored], [checkout], target);
-    expect(result.anchor).toEqual({ anchor: "before", anchorSourceId: "hotel" });
+    expect(result.anchor).toEqual({ anchor: null, anchorSourceId: null });
   });
 
   it("does not inherit anchor when over schedule has no anchor fields set", () => {

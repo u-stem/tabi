@@ -185,42 +185,35 @@ function extractAnchor(
     (item) => item.type === "schedule" && item.schedule.id === target.overId,
   );
   if (overIdx === -1) return { anchor: null, anchorSourceId: null };
-  const prev = overIdx > 0 ? merged[overIdx - 1] : null;
-  const next = overIdx < merged.length - 1 ? merged[overIdx + 1] : null;
   const overSchedule = schedules.find((s) => s.id === target.overId);
-  // Inheritance rule: drops that land inside or adjacent to an anchored
-  // cluster should join the cluster. This prevents null-startTime schedules
-  // (which have no time signal for the merge) from being placed ahead of the
-  // crossDay by the time-based fallback when the user's intent was "below
-  // the crossDay group".
-  //
-  // Check order — from most specific to least:
-  // 1. over schedule itself is anchored → inherit its anchor
-  // 2. adjacent (prev/next) in merged is an anchored schedule → inherit
-  //    (disambiguate by upperHalf if both sides are anchored to different
-  //    crossDays)
-  // 3. adjacent in merged is a crossDay → symmetric pinning based on
-  //    upperHalf (only on the "crossDay side" of the over schedule)
-  //
-  // Users can clear unintended pins via the "Sort by time" button.
+  // Drops directly on an already-anchored schedule join the same anchored
+  // cluster regardless of upperHalf.
   if (overSchedule?.crossDayAnchor && overSchedule.crossDayAnchorSourceId) {
     return {
       anchor: overSchedule.crossDayAnchor,
       anchorSourceId: overSchedule.crossDayAnchorSourceId,
     };
   }
-  const prevAnchor = anchoredScheduleAnchor(prev);
-  const nextAnchor = anchoredScheduleAnchor(next);
-  if (prevAnchor && nextAnchor) {
-    return target.upperHalf ? prevAnchor : nextAnchor;
-  }
-  if (prevAnchor) return prevAnchor;
-  if (nextAnchor) return nextAnchor;
-  if (target.upperHalf && prev?.type === "crossDay") {
-    return { anchor: "after", anchorSourceId: prev.entry.schedule.id };
-  }
-  if (!target.upperHalf && next?.type === "crossDay") {
-    return { anchor: "before", anchorSourceId: next.entry.schedule.id };
+  const prev = overIdx > 0 ? merged[overIdx - 1] : null;
+  const next = overIdx < merged.length - 1 ? merged[overIdx + 1] : null;
+  // Symmetric rule: pin only when the drop is on the "crossDay / anchored
+  // cluster side" of the over schedule. The mirror case (e.g. upperHalf=false
+  // + prev=crossDay) would push a pin far from the crossDay visually and
+  // silently override a legitimate "insert between this schedule and the
+  // next" intent. Users can always adjust cursor direction since the insert
+  // indicator now tracks upperHalf.
+  if (target.upperHalf) {
+    if (prev?.type === "crossDay") {
+      return { anchor: "after", anchorSourceId: prev.entry.schedule.id };
+    }
+    const prevAnchor = anchoredScheduleAnchor(prev);
+    if (prevAnchor) return prevAnchor;
+  } else {
+    if (next?.type === "crossDay") {
+      return { anchor: "before", anchorSourceId: next.entry.schedule.id };
+    }
+    const nextAnchor = anchoredScheduleAnchor(next);
+    if (nextAnchor) return nextAnchor;
   }
   return { anchor: null, anchorSourceId: null };
 }

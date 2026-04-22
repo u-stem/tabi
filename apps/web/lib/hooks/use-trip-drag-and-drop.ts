@@ -208,21 +208,6 @@ export function useTripDragAndDrop({
     const currentSchedules = localSchedules ?? schedules;
     const currentCandidates = localCandidates ?? candidates;
 
-    // Dev-only diagnostic: capture what the drag-end actually saw so that
-    // surprising outcomes ("dropped on checkout but ended up at end") can be
-    // traced back to the dnd-kit collision / target resolution.
-    if (process.env.NODE_ENV !== "production") {
-      console.log("[drag-end]", {
-        activeId: active.id,
-        activeType: active.data.current?.type,
-        overId: over?.id,
-        overType: over?.data.current?.type,
-        savedLastOverZone,
-        crossDayEntriesCount: crossDayEntries?.length ?? 0,
-        crossDayEntryIds: crossDayEntries?.map((e) => e.schedule.id) ?? [],
-      });
-    }
-
     try {
       if (!currentPatternId || !currentDayId) return;
 
@@ -371,15 +356,6 @@ export function useTripDragAndDrop({
           crossDayEntries,
           target,
         );
-
-        if (process.env.NODE_ENV !== "production") {
-          console.log("[drag-end candidate→timeline]", {
-            target,
-            insertIdx,
-            anchor,
-            currentSchedulesCount: currentSchedules.length,
-          });
-        }
 
         const newSchedule: ScheduleResponse = {
           id: candidate.id,

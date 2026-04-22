@@ -56,13 +56,30 @@ const TOUCH_SENSOR_OPTIONS = {
 function buildDropTarget(
   event: DragEndEvent,
   savedLastOverZone: "timeline" | "candidates" | null,
+  lastOverScheduleId: string | null,
 ): DropTarget {
   const { over, activatorEvent, delta } = event;
   if (!over) {
+    // The release point is outside all droppables. Recover intent from the
+    // last hovered sortable (handleDragOver keeps `overScheduleId` as the
+    // most recently hovered schedule/crossDay). Without a rect we can't
+    // compute upperHalf precisely — default to lower half ("after") because
+    // that is the dominant intent when releasing slightly below a card.
+    if (lastOverScheduleId) {
+      return { kind: "schedule", overId: lastOverScheduleId, upperHalf: false };
+    }
     if (savedLastOverZone === "timeline" || savedLastOverZone === "candidates") {
       return { kind: "timeline" };
     }
     return { kind: "outside" };
+  }
+  const overId = String(over.id);
+  // A crossDay sortable (id prefixed with `cross-`) must always be treated as
+  // a schedule-like drop target — even if its `data.type` metadata races in
+  // an unexpected way during re-render.
+  if (overId.startsWith("cross-")) {
+    const upperHalf = isOverUpperHalf(activatorEvent, delta.y, over.rect);
+    return { kind: "schedule", overId, upperHalf };
   }
   const overType = over.data.current?.type as string | undefined;
   if (overType === "timeline" || overType === "candidates") {
@@ -70,7 +87,7 @@ function buildDropTarget(
   }
   if (overType === "schedule" || overType === "candidate") {
     const upperHalf = isOverUpperHalf(activatorEvent, delta.y, over.rect);
-    return { kind: "schedule", overId: String(over.id), upperHalf };
+    return { kind: "schedule", overId, upperHalf };
   }
   return { kind: "outside" };
 }
@@ -161,6 +178,9 @@ export function useTripDragAndDrop({
   }
 
   async function handleDragEnd(event: DragEndEvent) {
+    // Capture the last hovered sortable id before the reset fires — used as a
+    // fallback in buildDropTarget when `over` is null at release time.
+    const savedOverScheduleId = overScheduleId;
     setActiveDragItem(null);
     setOverScheduleId(null);
     setOverCandidateId(null);
@@ -171,6 +191,22 @@ export function useTripDragAndDrop({
     // Resolve current lists once; handleDragStart captured a snapshot into state
     const currentSchedules = localSchedules ?? schedules;
     const currentCandidates = localCandidates ?? candidates;
+
+    // Dev-only diagnostic: capture what the drag-end actually saw so that
+    // surprising outcomes ("dropped on checkout but ended up at end") can be
+    // traced back to the dnd-kit collision / target resolution.
+    if (process.env.NODE_ENV !== "production") {
+      // biome-ignore lint/suspicious/noConsole: dev diagnostic, removed in prod builds
+      console.debug("[drag-end]", {
+        activeId: active.id,
+        activeType: active.data.current?.type,
+        overId: over?.id,
+        overType: over?.data.current?.type,
+        savedLastOverZone,
+        crossDayEntriesCount: crossDayEntries?.length ?? 0,
+        crossDayEntryIds: crossDayEntries?.map((e) => e.schedule.id) ?? [],
+      });
+    }
 
     try {
       if (!currentPatternId || !currentDayId) return;
@@ -194,7 +230,7 @@ export function useTripDragAndDrop({
         const activeIdx = currentSchedules.findIndex((s) => s.id === activeId);
         if (activeIdx === -1) return;
 
-        const target = buildDropTarget(event, savedLastOverZone);
+        const target = buildDropTarget(event, savedLastOverZone, savedOverScheduleId);
         const reorderResult = computeScheduleReorderResult(
           currentSchedules,
           crossDayEntries,
@@ -298,12 +334,22 @@ export function useTripDragAndDrop({
 
         setLocalCandidates(currentCandidates.filter((c) => c.id !== active.id));
 
-        const target = buildDropTarget(event, savedLastOverZone);
+        const target = buildDropTarget(event, savedLastOverZone, savedOverScheduleId);
         const { insertIndex: insertIdx, anchor } = computeCandidateDropResult(
           currentSchedules,
           crossDayEntries,
           target,
         );
+
+        if (process.env.NODE_ENV !== "production") {
+          // biome-ignore lint/suspicious/noConsole: dev diagnostic, removed in prod builds
+          console.debug("[drag-end candidate→timeline]", {
+            target,
+            insertIdx,
+            anchor,
+            currentSchedulesCount: currentSchedules.length,
+          });
+        }
 
         const newSchedule: ScheduleResponse = {
           id: candidate.id,
@@ -372,7 +418,20 @@ export function useTripDragAndDrop({
               }),
             },
           );
-        } catch {
+        } catch (err) {
+          // Previously this was a silent catch — which meant a 400 from
+          // validateAnchors or pattern check would leave the candidate at
+          // assign's nextOrder (= end of list) with no visible error. Surface
+          // the failure so the user knows the drop didn't persist correctly.
+          if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
+            toast.error(tm("conflictStale"));
+          } else {
+            toast.error(tm("scheduleReorderFailed"));
+          }
+          if (process.env.NODE_ENV !== "production") {
+            // biome-ignore lint/suspicious/noConsole: dev diagnostic, removed in prod builds
+            console.error("[candidate→timeline reorder failed]", err);
+          }
           onDone();
           return;
         }

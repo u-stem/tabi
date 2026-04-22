@@ -744,6 +744,7 @@ export default function TripDetailPage() {
                   totalDays={tripData.days.length}
                   crossDayEntries={dndCrossDayEntries}
                   overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
+                  overUpperHalf={dnd.overUpperHalf}
                   scheduleLimitReached={scheduleLimitReached}
                   scheduleLimitMessage={scheduleLimitMessage}
                   onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}
@@ -975,6 +976,7 @@ export default function TripDetailPage() {
                           totalDays={trip.days.length}
                           crossDayEntries={dndCrossDayEntries}
                           overScheduleId={dnd.activeDragItem ? dnd.overScheduleId : null}
+                          overUpperHalf={dnd.overUpperHalf}
                           scheduleLimitReached={scheduleLimitReached}
                           scheduleLimitMessage={scheduleLimitMessage}
                           onSaveToBookmark={canEdit && online ? handleSaveToBookmark : undefined}

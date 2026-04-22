@@ -1,9 +1,11 @@
 import {
+  type CollisionDetection,
   closestCorners,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
   MouseSensor,
+  pointerWithin,
   TouchSensor,
   useSensor,
   useSensors,
@@ -26,6 +28,7 @@ import {
   type DropTarget,
   isOverUpperHalf,
 } from "@/lib/drop-position";
+import { buildMergedTimeline } from "@/lib/merge-timeline";
 
 type ActiveDragItem = {
   id: string;
@@ -59,10 +62,23 @@ function buildDropTarget(
 ): DropTarget {
   const { over, activatorEvent, delta } = event;
   if (!over) {
+    // Release point is outside all droppables. Fall back to the last hovered
+    // zone so a drop in empty space at the end of the list still appends.
+    // We deliberately do NOT reconstruct a schedule target from the last
+    // hovered sortable id — we would have to guess upperHalf, and guessing
+    // wrong silently flips the anchor direction (before ↔ after).
     if (savedLastOverZone === "timeline" || savedLastOverZone === "candidates") {
       return { kind: "timeline" };
     }
     return { kind: "outside" };
+  }
+  const overId = String(over.id);
+  // A crossDay sortable (id prefixed with `cross-`) must always be treated as
+  // a schedule-like drop target — even if its `data.type` metadata races in
+  // an unexpected way during re-render.
+  if (overId.startsWith("cross-")) {
+    const upperHalf = isOverUpperHalf(activatorEvent, delta.y, over.rect);
+    return { kind: "schedule", overId, upperHalf };
   }
   const overType = over.data.current?.type as string | undefined;
   if (overType === "timeline" || overType === "candidates") {
@@ -70,7 +86,7 @@ function buildDropTarget(
   }
   if (overType === "schedule" || overType === "candidate") {
     const upperHalf = isOverUpperHalf(activatorEvent, delta.y, over.rect);
-    return { kind: "schedule", overId: String(over.id), upperHalf };
+    return { kind: "schedule", overId, upperHalf };
   }
   return { kind: "outside" };
 }
@@ -87,6 +103,10 @@ export function useTripDragAndDrop({
   const tm = useTranslations("messages");
   const [activeDragItem, setActiveDragItem] = useState<ActiveDragItem | null>(null);
   const [overScheduleId, setOverScheduleId] = useState<string | null>(null);
+  // Tracks upperHalf for the currently hovered schedule sortable so the
+  // insert indicator can be rendered on the correct side (top vs bottom) of
+  // the card. Kept in sync with handleDragOver's `isOverUpperHalf` result.
+  const [overUpperHalf, setOverUpperHalf] = useState<boolean>(true);
   const [overCandidateId, setOverCandidateId] = useState<string | null>(null);
   // null = no drag in progress; use server props directly
   const [localSchedules, setLocalSchedules] = useState<ScheduleResponse[] | null>(null);
@@ -99,7 +119,23 @@ export function useTripDragAndDrop({
     useSensor(TouchSensor, TOUCH_SENSOR_OPTIONS),
   );
 
-  const collisionDetection = closestCorners;
+  // Prefer droppables whose rect contains the cursor (pointerWithin). When the
+  // cursor is inside a specific sortable card (schedule or crossDay), this
+  // avoids closestCorners' corner-tie behaviour where an adjacent card with a
+  // nearer corner steals the `over` target and drops the user's anchor
+  // intent.
+  //
+  // Outer wrapper droppables (`timeline` / `candidates`) also contain the
+  // cursor whenever the drag is anywhere inside the list, but they convey no
+  // positional information beyond "inside the zone". If pointerWithin only
+  // matched wrappers we fall back to closestCorners so the nearest sortable
+  // card still wins — this preserves the existing gap-drop behaviour.
+  const collisionDetection: CollisionDetection = (args) => {
+    const within = pointerWithin(args);
+    const specific = within.filter((c) => c.id !== "timeline" && c.id !== "candidates");
+    if (specific.length > 0) return specific;
+    return closestCorners(args);
+  };
 
   function handleDragStart(event: DragStartEvent) {
     const { active } = event;
@@ -129,7 +165,7 @@ export function useTripDragAndDrop({
   }
 
   function handleDragOver(event: DragOverEvent) {
-    const { over } = event;
+    const { over, activatorEvent, delta } = event;
     if (!over) {
       // Keep overScheduleId so the insert indicator doesn't jump to the
       // bottom when the pointer briefly leaves all drop targets.
@@ -144,6 +180,7 @@ export function useTripDragAndDrop({
       // bottom of the list.
       if (overType === "schedule") {
         setOverScheduleId(String(over.id));
+        setOverUpperHalf(isOverUpperHalf(activatorEvent, delta.y, over.rect));
       }
       setOverCandidateId(null);
       setLastOverZone("timeline");
@@ -254,7 +291,17 @@ export function useTripDragAndDrop({
           if (idx !== -1) insertIdx = idx;
         }
 
-        const newCandidate = { ...schedule, likeCount: 0, hmmCount: 0, myReaction: null };
+        // Candidates have no dayPatternId → crossDay anchor is meaningless.
+        // Clear the anchor fields explicitly so the optimistic state matches
+        // what the server returns after unassign (which nulls them server-side).
+        const newCandidate = {
+          ...schedule,
+          crossDayAnchor: null,
+          crossDayAnchorSourceId: null,
+          likeCount: 0,
+          hmmCount: 0,
+          myReaction: null,
+        };
         setLocalSchedules(currentSchedules.filter((s) => s.id !== active.id));
         const insertedCandidates = [...currentCandidates];
         insertedCandidates.splice(insertIdx, 0, newCandidate);
@@ -286,8 +333,14 @@ export function useTripDragAndDrop({
               body: JSON.stringify({ scheduleIds }),
             });
           }
-        } catch {
-          // unassign succeeded but reorder failed — refetch to sync
+        } catch (err) {
+          // unassign succeeded but reorder failed — surface the error so the
+          // user knows the drop position didn't persist (post-refetch the
+          // candidate will sit wherever the server's nextOrder placed it).
+          toast.error(tm("scheduleReorderFailed"));
+          if (process.env.NODE_ENV !== "production") {
+            console.error("[schedule→candidates reorder failed]", err);
+          }
           onDone();
           return;
         }
@@ -372,7 +425,19 @@ export function useTripDragAndDrop({
               }),
             },
           );
-        } catch {
+        } catch (err) {
+          // Previously this was a silent catch — which meant a 400 from
+          // validateAnchors or pattern check would leave the candidate at
+          // assign's nextOrder (= end of list) with no visible error. Surface
+          // the failure so the user knows the drop didn't persist correctly.
+          if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
+            toast.error(tm("conflictStale"));
+          } else {
+            toast.error(tm("scheduleReorderFailed"));
+          }
+          if (process.env.NODE_ENV !== "production") {
+            console.error("[candidate→timeline reorder failed]", err);
+          }
           onDone();
           return;
         }
@@ -418,24 +483,50 @@ export function useTripDragAndDrop({
   async function reorderSchedule(id: string, direction: "up" | "down") {
     if (!currentDayId || !currentPatternId) return;
     const current = localSchedules ?? schedules;
-    const idx = current.findIndex((s) => s.id === id);
-    if (idx === -1) return;
-    const newIdx = direction === "up" ? idx - 1 : idx + 1;
-    if (newIdx < 0 || newIdx >= current.length) return;
+    // Reorder by merged timeline position (what the user sees), not raw
+    // sortOrder. Without this the step may skip across a crossDay entry and
+    // land the schedule far from the user's "one step up/down" intent.
+    const merged = buildMergedTimeline(current, crossDayEntries);
+    const mergedIdx = merged.findIndex(
+      (item) => item.type === "schedule" && item.schedule.id === id,
+    );
+    if (mergedIdx === -1) return;
+    const newMergedIdx = direction === "up" ? mergedIdx - 1 : mergedIdx + 1;
+    if (newMergedIdx < 0 || newMergedIdx >= merged.length) return;
 
-    const reordered = arrayMove(current, idx, newIdx);
-    setLocalSchedules(reordered);
+    const targetItem = merged[newMergedIdx];
+    let anchor: { anchor: "before" | "after" | null; anchorSourceId: string | null };
+    let reordered = current;
+
+    if (targetItem.type === "crossDay") {
+      // Swap target is a crossDay — can't swap sortOrder (crossDay isn't in
+      // this day's schedules). Express "one step past crossDay" as an
+      // anchor: before when moving up, after when moving down. sortOrder is
+      // unchanged — the rendered position shifts via the anchor.
+      anchor = {
+        anchor: direction === "up" ? "before" : "after",
+        anchorSourceId: targetItem.entry.schedule.id,
+      };
+    } else {
+      // Swap with a regular schedule: swap sortOrder and clear anchor so the
+      // explicit reorder wins over any prior pin.
+      const targetId = targetItem.schedule.id;
+      const scheduleIdx = current.findIndex((s) => s.id === id);
+      const targetIdx = current.findIndex((s) => s.id === targetId);
+      if (scheduleIdx === -1 || targetIdx === -1) return;
+      reordered = arrayMove(current, scheduleIdx, targetIdx);
+      setLocalSchedules(reordered);
+      anchor = { anchor: null, anchorSourceId: null };
+    }
 
     try {
-      // Keyboard reorder doesn't know the anchor intent — treat it as a
-      // deliberate manual repositioning that overrides any previous anchor.
       await api(
         `/api/trips/${tripId}/days/${currentDayId}/patterns/${currentPatternId}/schedules/reorder`,
         {
           method: "PATCH",
           body: JSON.stringify({
             scheduleIds: reordered.map((s) => s.id),
-            anchors: [{ scheduleId: id, anchor: null, anchorSourceId: null }],
+            anchors: [{ scheduleId: id, ...anchor }],
           }),
         },
       );
@@ -485,6 +576,7 @@ export function useTripDragAndDrop({
     collisionDetection,
     activeDragItem,
     overScheduleId,
+    overUpperHalf,
     overCandidateId,
     localSchedules: localSchedules ?? schedules,
     localCandidates: localCandidates ?? candidates,

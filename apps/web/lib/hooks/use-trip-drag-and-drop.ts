@@ -197,7 +197,7 @@ export function useTripDragAndDrop({
     // traced back to the dnd-kit collision / target resolution.
     if (process.env.NODE_ENV !== "production") {
       // biome-ignore lint/suspicious/noConsole: dev diagnostic, removed in prod builds
-      console.debug("[drag-end]", {
+      console.log("[drag-end]", {
         activeId: active.id,
         activeType: active.data.current?.type,
         overId: over?.id,
@@ -343,7 +343,7 @@ export function useTripDragAndDrop({
 
         if (process.env.NODE_ENV !== "production") {
           // biome-ignore lint/suspicious/noConsole: dev diagnostic, removed in prod builds
-          console.debug("[drag-end candidate→timeline]", {
+          console.log("[drag-end candidate→timeline]", {
             target,
             insertIdx,
             anchor,

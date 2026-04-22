@@ -58,18 +58,14 @@ const TOUCH_SENSOR_OPTIONS = {
 function buildDropTarget(
   event: DragEndEvent,
   savedLastOverZone: "timeline" | "candidates" | null,
-  lastOverScheduleId: string | null,
 ): DropTarget {
   const { over, activatorEvent, delta } = event;
   if (!over) {
-    // The release point is outside all droppables. Recover intent from the
-    // last hovered sortable (handleDragOver keeps `overScheduleId` as the
-    // most recently hovered schedule/crossDay). Without a rect we can't
-    // compute upperHalf precisely — default to lower half ("after") because
-    // that is the dominant intent when releasing slightly below a card.
-    if (lastOverScheduleId) {
-      return { kind: "schedule", overId: lastOverScheduleId, upperHalf: false };
-    }
+    // Release point is outside all droppables. Fall back to the last hovered
+    // zone so a drop in empty space at the end of the list still appends.
+    // We deliberately do NOT reconstruct a schedule target from the last
+    // hovered sortable id — we would have to guess upperHalf, and guessing
+    // wrong silently flips the anchor direction (before ↔ after).
     if (savedLastOverZone === "timeline" || savedLastOverZone === "candidates") {
       return { kind: "timeline" };
     }
@@ -196,9 +192,6 @@ export function useTripDragAndDrop({
   }
 
   async function handleDragEnd(event: DragEndEvent) {
-    // Capture the last hovered sortable id before the reset fires — used as a
-    // fallback in buildDropTarget when `over` is null at release time.
-    const savedOverScheduleId = overScheduleId;
     setActiveDragItem(null);
     setOverScheduleId(null);
     setOverCandidateId(null);
@@ -214,7 +207,6 @@ export function useTripDragAndDrop({
     // surprising outcomes ("dropped on checkout but ended up at end") can be
     // traced back to the dnd-kit collision / target resolution.
     if (process.env.NODE_ENV !== "production") {
-      // biome-ignore lint/suspicious/noConsole: dev diagnostic, removed in prod builds
       console.log("[drag-end]", {
         activeId: active.id,
         activeType: active.data.current?.type,
@@ -248,7 +240,7 @@ export function useTripDragAndDrop({
         const activeIdx = currentSchedules.findIndex((s) => s.id === activeId);
         if (activeIdx === -1) return;
 
-        const target = buildDropTarget(event, savedLastOverZone, savedOverScheduleId);
+        const target = buildDropTarget(event, savedLastOverZone);
         const reorderResult = computeScheduleReorderResult(
           currentSchedules,
           crossDayEntries,
@@ -308,7 +300,17 @@ export function useTripDragAndDrop({
           if (idx !== -1) insertIdx = idx;
         }
 
-        const newCandidate = { ...schedule, likeCount: 0, hmmCount: 0, myReaction: null };
+        // Candidates have no dayPatternId → crossDay anchor is meaningless.
+        // Clear the anchor fields explicitly so the optimistic state matches
+        // what the server returns after unassign (which nulls them server-side).
+        const newCandidate = {
+          ...schedule,
+          crossDayAnchor: null,
+          crossDayAnchorSourceId: null,
+          likeCount: 0,
+          hmmCount: 0,
+          myReaction: null,
+        };
         setLocalSchedules(currentSchedules.filter((s) => s.id !== active.id));
         const insertedCandidates = [...currentCandidates];
         insertedCandidates.splice(insertIdx, 0, newCandidate);
@@ -352,7 +354,7 @@ export function useTripDragAndDrop({
 
         setLocalCandidates(currentCandidates.filter((c) => c.id !== active.id));
 
-        const target = buildDropTarget(event, savedLastOverZone, savedOverScheduleId);
+        const target = buildDropTarget(event, savedLastOverZone);
         const { insertIndex: insertIdx, anchor } = computeCandidateDropResult(
           currentSchedules,
           crossDayEntries,
@@ -360,7 +362,6 @@ export function useTripDragAndDrop({
         );
 
         if (process.env.NODE_ENV !== "production") {
-          // biome-ignore lint/suspicious/noConsole: dev diagnostic, removed in prod builds
           console.log("[drag-end candidate→timeline]", {
             target,
             insertIdx,
@@ -447,7 +448,6 @@ export function useTripDragAndDrop({
             toast.error(tm("scheduleReorderFailed"));
           }
           if (process.env.NODE_ENV !== "production") {
-            // biome-ignore lint/suspicious/noConsole: dev diagnostic, removed in prod builds
             console.error("[candidate→timeline reorder failed]", err);
           }
           onDone();

@@ -187,27 +187,25 @@ function extractAnchor(
   if (overIdx === -1) return { anchor: null, anchorSourceId: null };
   const prev = overIdx > 0 ? merged[overIdx - 1] : null;
   const next = overIdx < merged.length - 1 ? merged[overIdx + 1] : null;
-  const prevIsCross = prev?.type === "crossDay";
-  const nextIsCross = next?.type === "crossDay";
-  // Schedule sandwiched between two crossDays: disambiguate by upperHalf.
-  if (prevIsCross && nextIsCross && prev && next) {
-    if (target.upperHalf) {
-      return { anchor: "after", anchorSourceId: prev.entry.schedule.id };
-    }
-    return { anchor: "before", anchorSourceId: next.entry.schedule.id };
-  }
-  // Schedule immediately after a crossDay. Regardless of upperHalf the drop
-  // is within the crossDay's visual neighbourhood — closestCorners tends to
-  // steal `over` from the crossDay when the cursor falls just below it, so
-  // we pin to `prev` even when the cursor ended up past the schedule's
-  // midpoint. The "Sort by time" button can clear the pin if unwanted.
-  if (prevIsCross && prev) {
+  // Symmetric rule: pin only when the drop clearly lands on the "crossDay
+  // side" of the adjacent schedule.
+  //
+  // - upperHalf=true on a schedule whose prev is a crossDay: the drop is
+  //   visually between the crossDay and this schedule → anchor=after prev.
+  // - upperHalf=false on a schedule whose next is a crossDay: the drop is
+  //   between this schedule and the crossDay → anchor=before next.
+  //
+  // We intentionally do NOT infer when upperHalf=false + prev=crossDay or
+  // upperHalf=true + next=crossDay. Those positions are on the "far side"
+  // of the schedule and treating them as crossDay-anchored would silently
+  // override a legitimate "insert adjacent to this schedule (unrelated to
+  // crossDay)" intent. The primary drop-on-crossDay path is handled by
+  // `pointerWithin` in the hook's collision detection, which matches the
+  // crossDay card directly when the cursor is inside its bbox.
+  if (target.upperHalf && prev?.type === "crossDay") {
     return { anchor: "after", anchorSourceId: prev.entry.schedule.id };
   }
-  // Schedule immediately before a crossDay. Only pin when dropping on the
-  // lower half — upperHalf drops are far from the crossDay visually and
-  // likely unrelated.
-  if (nextIsCross && next && !target.upperHalf) {
+  if (!target.upperHalf && next?.type === "crossDay") {
     return { anchor: "before", anchorSourceId: next.entry.schedule.id };
   }
   return { anchor: null, anchorSourceId: null };

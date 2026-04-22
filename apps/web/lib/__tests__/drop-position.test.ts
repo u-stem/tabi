@@ -353,25 +353,24 @@ describe("computeCandidateDropResult infers anchor from adjacent crossDay in mer
     expect(result.anchor).toEqual({ anchor: null, anchorSourceId: null });
   });
 
-  // Regression for the "真下のチェックアウト" scenario: user drops candidate
-  // on the lower half of a schedule that sits right after a crossDay. The
-  // closestCorners collision picks the schedule (not the crossDay) and
-  // upperHalf=false because the cursor is past the midY of a short card. The
-  // intent was to pin to the previous crossDay — infer it.
-  it("infers anchor=after when dropping on lower half of schedule right after a crossDay", () => {
+  // Symmetric rule: only pin when the drop lands on the "crossDay side" of
+  // the adjacent schedule. Lower half of a schedule-after-crossDay is the
+  // "far side" → no inference (avoids over-pinning genuine "between this
+  // and next" intents). For that user scenario, pointerWithin in the hook
+  // matches the crossDay card directly when cursor is inside its bbox.
+  it("does not infer anchor when dropping on lower half of schedule right after a crossDay", () => {
     const pre = makeSchedule({ id: "pre", sortOrder: 0 });
     const next = makeSchedule({ id: "next", startTime: "09:30", sortOrder: 1 });
     const checkout = makeCrossDayEntry({ id: "hotel", endTime: "09:00" });
     // merged: [pre, c-hotel, next]
     const target: DropTarget = { kind: "schedule", overId: "next", upperHalf: false };
     const result = computeCandidateDropResult([pre, next], [checkout], target);
-    expect(result.anchor).toEqual({ anchor: "after", anchorSourceId: "hotel" });
+    expect(result.anchor).toEqual({ anchor: null, anchorSourceId: null });
   });
 
   it("does not infer anchor when dropping on upper half of schedule right before a crossDay", () => {
     // s1 has no time so crossDay falls to the end in merged → s1 precedes
-    // crossDay. Dropping upper half of s1 is far from crossDay visually; we
-    // should NOT pin (would be an over-inference).
+    // crossDay. Dropping upper half of s1 is far from crossDay visually.
     const s1 = makeSchedule({ id: "s1", sortOrder: 0 });
     const checkout = makeCrossDayEntry({ id: "hotel", endTime: "10:00" });
     // merged: [s1, c-hotel]
@@ -424,5 +423,29 @@ describe("computeScheduleReorderResult returns anchor info for crossDay drops", 
   it("returns null when underlying destination index is null (active not found)", () => {
     const target: DropTarget = { kind: "timeline" };
     expect(computeScheduleReorderResult([s1, s2], [hotelCross], "missing", target)).toBeNull();
+  });
+
+  it("infers anchor=after when reordering onto upper half of schedule right after a crossDay", () => {
+    // merged without s2: [s1 09:00, c-hotel 10:00] → place c-hotel at end.
+    // But we want schedule immediately AFTER crossDay. Construct: s0 09:00,
+    // crossDay 08:00 → merged [c-hotel, s0]. Reorder s2 onto s0 upper half.
+    const s0 = makeSchedule({ id: "s0", startTime: "09:00", sortOrder: 0 });
+    const sOther = makeSchedule({ id: "sOther", sortOrder: 1 });
+    const hotelEarly = makeCrossDayEntry({ id: "hotel", endTime: "08:00" });
+    const target: DropTarget = { kind: "schedule", overId: "s0", upperHalf: true };
+    const result = computeScheduleReorderResult([s0, sOther], [hotelEarly], "sOther", target);
+    expect(result).not.toBeNull();
+    expect(result?.anchor).toEqual({ anchor: "after", anchorSourceId: "hotel" });
+  });
+
+  it("does not infer anchor when reordering onto lower half of schedule right after a crossDay", () => {
+    // Symmetric: no inference for "far side" drop to avoid over-inference.
+    const s0 = makeSchedule({ id: "s0", startTime: "09:00", sortOrder: 0 });
+    const sOther = makeSchedule({ id: "sOther", sortOrder: 1 });
+    const hotelEarly = makeCrossDayEntry({ id: "hotel", endTime: "08:00" });
+    const target: DropTarget = { kind: "schedule", overId: "s0", upperHalf: false };
+    const result = computeScheduleReorderResult([s0, sOther], [hotelEarly], "sOther", target);
+    expect(result).not.toBeNull();
+    expect(result?.anchor).toEqual({ anchor: null, anchorSourceId: null });
   });
 });

@@ -185,6 +185,18 @@ function extractAnchor(
     (item) => item.type === "schedule" && item.schedule.id === target.overId,
   );
   if (overIdx === -1) return { anchor: null, anchorSourceId: null };
+  // Inherit the over schedule's own anchor when present. A drop adjacent to
+  // an already-anchored schedule belongs to the same anchored group (e.g.
+  // dropping a 2nd candidate next to a 1st one that's pinned to checkout —
+  // the 2nd should stay in the same anchored cluster, otherwise the time
+  // merge would push a null-startTime candidate ahead of the crossDay).
+  const overSchedule = schedules.find((s) => s.id === target.overId);
+  if (overSchedule?.crossDayAnchor && overSchedule.crossDayAnchorSourceId) {
+    return {
+      anchor: overSchedule.crossDayAnchor,
+      anchorSourceId: overSchedule.crossDayAnchorSourceId,
+    };
+  }
   const prev = overIdx > 0 ? merged[overIdx - 1] : null;
   const next = overIdx < merged.length - 1 ? merged[overIdx + 1] : null;
   // Symmetric rule: pin only when the drop clearly lands on the "crossDay

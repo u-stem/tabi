@@ -379,6 +379,48 @@ describe("computeCandidateDropResult infers anchor from adjacent crossDay in mer
     expect(result.anchor).toEqual({ anchor: null, anchorSourceId: null });
   });
 
+  it("inherits anchor from an already-anchored over schedule (lower half)", () => {
+    const pre = makeSchedule({ id: "pre", sortOrder: 0 });
+    // `anchored` is already pinned to checkout (e.g. a previous candidate
+    // drop). Dropping on its lower half should join the same anchored group.
+    const anchored = makeSchedule({
+      id: "anchored",
+      sortOrder: 1,
+      crossDayAnchor: "after",
+      crossDayAnchorSourceId: "hotel",
+    });
+    const later = makeSchedule({ id: "later", startTime: "09:30", sortOrder: 2 });
+    const checkout = makeCrossDayEntry({ id: "hotel", endTime: "09:00" });
+    const target: DropTarget = { kind: "schedule", overId: "anchored", upperHalf: false };
+    const result = computeCandidateDropResult([pre, anchored, later], [checkout], target);
+    expect(result.anchor).toEqual({ anchor: "after", anchorSourceId: "hotel" });
+  });
+
+  it("inherits anchor from an already-anchored over schedule (upper half)", () => {
+    const pre = makeSchedule({ id: "pre", sortOrder: 0 });
+    const anchored = makeSchedule({
+      id: "anchored",
+      sortOrder: 1,
+      crossDayAnchor: "after",
+      crossDayAnchorSourceId: "hotel",
+    });
+    const checkout = makeCrossDayEntry({ id: "hotel", endTime: "09:00" });
+    const target: DropTarget = { kind: "schedule", overId: "anchored", upperHalf: true };
+    const result = computeCandidateDropResult([pre, anchored], [checkout], target);
+    expect(result.anchor).toEqual({ anchor: "after", anchorSourceId: "hotel" });
+  });
+
+  it("does not inherit anchor when over schedule has no anchor fields set", () => {
+    // Sanity: plain (unanchored) over schedule → no inheritance. Adjacency
+    // rule is also bypassed here because the schedule is not adjacent to any
+    // crossDay in the merged timeline.
+    const pre = makeSchedule({ id: "pre", startTime: "08:00", sortOrder: 0 });
+    const plain = makeSchedule({ id: "plain", startTime: "09:00", sortOrder: 1 });
+    const target: DropTarget = { kind: "schedule", overId: "plain", upperHalf: false };
+    const result = computeCandidateDropResult([pre, plain], undefined, target);
+    expect(result.anchor).toEqual({ anchor: null, anchorSourceId: null });
+  });
+
   it("disambiguates by upperHalf when schedule is sandwiched between two crossDays", () => {
     const a = makeCrossDayEntry({ id: "a", endTime: "08:00" });
     const b = makeCrossDayEntry({ id: "b", endTime: "10:00" });

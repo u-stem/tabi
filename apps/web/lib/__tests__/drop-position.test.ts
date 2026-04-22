@@ -352,6 +352,50 @@ describe("computeCandidateDropResult infers anchor from adjacent crossDay in mer
     const result = computeCandidateDropResult([a, b], undefined, target);
     expect(result.anchor).toEqual({ anchor: null, anchorSourceId: null });
   });
+
+  // Regression for the "真下のチェックアウト" scenario: user drops candidate
+  // on the lower half of a schedule that sits right after a crossDay. The
+  // closestCorners collision picks the schedule (not the crossDay) and
+  // upperHalf=false because the cursor is past the midY of a short card. The
+  // intent was to pin to the previous crossDay — infer it.
+  it("infers anchor=after when dropping on lower half of schedule right after a crossDay", () => {
+    const pre = makeSchedule({ id: "pre", sortOrder: 0 });
+    const next = makeSchedule({ id: "next", startTime: "09:30", sortOrder: 1 });
+    const checkout = makeCrossDayEntry({ id: "hotel", endTime: "09:00" });
+    // merged: [pre, c-hotel, next]
+    const target: DropTarget = { kind: "schedule", overId: "next", upperHalf: false };
+    const result = computeCandidateDropResult([pre, next], [checkout], target);
+    expect(result.anchor).toEqual({ anchor: "after", anchorSourceId: "hotel" });
+  });
+
+  it("does not infer anchor when dropping on upper half of schedule right before a crossDay", () => {
+    // s1 has no time so crossDay falls to the end in merged → s1 precedes
+    // crossDay. Dropping upper half of s1 is far from crossDay visually; we
+    // should NOT pin (would be an over-inference).
+    const s1 = makeSchedule({ id: "s1", sortOrder: 0 });
+    const checkout = makeCrossDayEntry({ id: "hotel", endTime: "10:00" });
+    // merged: [s1, c-hotel]
+    const target: DropTarget = { kind: "schedule", overId: "s1", upperHalf: true };
+    const result = computeCandidateDropResult([s1], [checkout], target);
+    expect(result.anchor).toEqual({ anchor: null, anchorSourceId: null });
+  });
+
+  it("disambiguates by upperHalf when schedule is sandwiched between two crossDays", () => {
+    const a = makeCrossDayEntry({ id: "a", endTime: "08:00" });
+    const b = makeCrossDayEntry({ id: "b", endTime: "10:00" });
+    const s = makeSchedule({ id: "s", startTime: "09:00", sortOrder: 0 });
+    // merged: [c-a, s, c-b]
+    const upper: DropTarget = { kind: "schedule", overId: "s", upperHalf: true };
+    const lower: DropTarget = { kind: "schedule", overId: "s", upperHalf: false };
+    expect(computeCandidateDropResult([s], [a, b], upper).anchor).toEqual({
+      anchor: "after",
+      anchorSourceId: "a",
+    });
+    expect(computeCandidateDropResult([s], [a, b], lower).anchor).toEqual({
+      anchor: "before",
+      anchorSourceId: "b",
+    });
+  });
 });
 
 describe("computeScheduleReorderResult returns anchor info for crossDay drops", () => {

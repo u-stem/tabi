@@ -1,9 +1,11 @@
 import {
+  type CollisionDetection,
   closestCorners,
   type DragEndEvent,
   type DragOverEvent,
   type DragStartEvent,
   MouseSensor,
+  pointerWithin,
   TouchSensor,
   useSensor,
   useSensors,
@@ -116,7 +118,23 @@ export function useTripDragAndDrop({
     useSensor(TouchSensor, TOUCH_SENSOR_OPTIONS),
   );
 
-  const collisionDetection = closestCorners;
+  // Prefer droppables whose rect contains the cursor (pointerWithin). When the
+  // cursor is inside a specific sortable card (schedule or crossDay), this
+  // avoids closestCorners' corner-tie behaviour where an adjacent card with a
+  // nearer corner steals the `over` target and drops the user's anchor
+  // intent.
+  //
+  // Outer wrapper droppables (`timeline` / `candidates`) also contain the
+  // cursor whenever the drag is anywhere inside the list, but they convey no
+  // positional information beyond "inside the zone". If pointerWithin only
+  // matched wrappers we fall back to closestCorners so the nearest sortable
+  // card still wins — this preserves the existing gap-drop behaviour.
+  const collisionDetection: CollisionDetection = (args) => {
+    const within = pointerWithin(args);
+    const specific = within.filter((c) => c.id !== "timeline" && c.id !== "candidates");
+    if (specific.length > 0) return specific;
+    return closestCorners(args);
+  };
 
   function handleDragStart(event: DragStartEvent) {
     const { active } = event;

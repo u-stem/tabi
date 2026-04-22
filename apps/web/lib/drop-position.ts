@@ -185,17 +185,30 @@ function extractAnchor(
     (item) => item.type === "schedule" && item.schedule.id === target.overId,
   );
   if (overIdx === -1) return { anchor: null, anchorSourceId: null };
-  if (target.upperHalf && overIdx > 0) {
-    const prev = merged[overIdx - 1];
-    if (prev.type === "crossDay") {
+  const prev = overIdx > 0 ? merged[overIdx - 1] : null;
+  const next = overIdx < merged.length - 1 ? merged[overIdx + 1] : null;
+  const prevIsCross = prev?.type === "crossDay";
+  const nextIsCross = next?.type === "crossDay";
+  // Schedule sandwiched between two crossDays: disambiguate by upperHalf.
+  if (prevIsCross && nextIsCross && prev && next) {
+    if (target.upperHalf) {
       return { anchor: "after", anchorSourceId: prev.entry.schedule.id };
     }
+    return { anchor: "before", anchorSourceId: next.entry.schedule.id };
   }
-  if (!target.upperHalf && overIdx < merged.length - 1) {
-    const next = merged[overIdx + 1];
-    if (next.type === "crossDay") {
-      return { anchor: "before", anchorSourceId: next.entry.schedule.id };
-    }
+  // Schedule immediately after a crossDay. Regardless of upperHalf the drop
+  // is within the crossDay's visual neighbourhood — closestCorners tends to
+  // steal `over` from the crossDay when the cursor falls just below it, so
+  // we pin to `prev` even when the cursor ended up past the schedule's
+  // midpoint. The "Sort by time" button can clear the pin if unwanted.
+  if (prevIsCross && prev) {
+    return { anchor: "after", anchorSourceId: prev.entry.schedule.id };
+  }
+  // Schedule immediately before a crossDay. Only pin when dropping on the
+  // lower half — upperHalf drops are far from the crossDay visually and
+  // likely unrelated.
+  if (nextIsCross && next && !target.upperHalf) {
+    return { anchor: "before", anchorSourceId: next.entry.schedule.id };
   }
   return { anchor: null, anchorSourceId: null };
 }

@@ -4,7 +4,7 @@ date: "2026-04-21"
 summary: "Drag schedules to lock them immediately before or after an entry that continues from the previous day, such as a hotel checkout."
 ---
 
-## New Features
+## Enhancements
 
 ### Pin schedules around entries that carry over from the previous day
 

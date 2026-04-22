@@ -342,8 +342,14 @@ export function useTripDragAndDrop({
               body: JSON.stringify({ scheduleIds }),
             });
           }
-        } catch {
-          // unassign succeeded but reorder failed — refetch to sync
+        } catch (err) {
+          // unassign succeeded but reorder failed — surface the error so the
+          // user knows the drop position didn't persist (post-refetch the
+          // candidate will sit wherever the server's nextOrder placed it).
+          toast.error(tm("scheduleReorderFailed"));
+          if (process.env.NODE_ENV !== "production") {
+            console.error("[schedule→candidates reorder failed]", err);
+          }
           onDone();
           return;
         }

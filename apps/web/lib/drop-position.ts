@@ -1,5 +1,5 @@
 import type { CrossDayEntry, ScheduleResponse } from "@sugara/shared";
-import { buildMergedTimeline, timelineSortableIds } from "./merge-timeline";
+import { buildMergedTimeline, type TimelineItem, timelineSortableIds } from "./merge-timeline";
 
 /**
  * Determine whether the pointer currently sits in the upper half of the
@@ -185,35 +185,37 @@ function extractAnchor(
     (item) => item.type === "schedule" && item.schedule.id === target.overId,
   );
   if (overIdx === -1) return { anchor: null, anchorSourceId: null };
-  // Inherit the over schedule's own anchor when present. A drop adjacent to
-  // an already-anchored schedule belongs to the same anchored group (e.g.
-  // dropping a 2nd candidate next to a 1st one that's pinned to checkout —
-  // the 2nd should stay in the same anchored cluster, otherwise the time
-  // merge would push a null-startTime candidate ahead of the crossDay).
+  const prev = overIdx > 0 ? merged[overIdx - 1] : null;
+  const next = overIdx < merged.length - 1 ? merged[overIdx + 1] : null;
   const overSchedule = schedules.find((s) => s.id === target.overId);
+  // Inheritance rule: drops that land inside or adjacent to an anchored
+  // cluster should join the cluster. This prevents null-startTime schedules
+  // (which have no time signal for the merge) from being placed ahead of the
+  // crossDay by the time-based fallback when the user's intent was "below
+  // the crossDay group".
+  //
+  // Check order — from most specific to least:
+  // 1. over schedule itself is anchored → inherit its anchor
+  // 2. adjacent (prev/next) in merged is an anchored schedule → inherit
+  //    (disambiguate by upperHalf if both sides are anchored to different
+  //    crossDays)
+  // 3. adjacent in merged is a crossDay → symmetric pinning based on
+  //    upperHalf (only on the "crossDay side" of the over schedule)
+  //
+  // Users can clear unintended pins via the "Sort by time" button.
   if (overSchedule?.crossDayAnchor && overSchedule.crossDayAnchorSourceId) {
     return {
       anchor: overSchedule.crossDayAnchor,
       anchorSourceId: overSchedule.crossDayAnchorSourceId,
     };
   }
-  const prev = overIdx > 0 ? merged[overIdx - 1] : null;
-  const next = overIdx < merged.length - 1 ? merged[overIdx + 1] : null;
-  // Symmetric rule: pin only when the drop clearly lands on the "crossDay
-  // side" of the adjacent schedule.
-  //
-  // - upperHalf=true on a schedule whose prev is a crossDay: the drop is
-  //   visually between the crossDay and this schedule → anchor=after prev.
-  // - upperHalf=false on a schedule whose next is a crossDay: the drop is
-  //   between this schedule and the crossDay → anchor=before next.
-  //
-  // We intentionally do NOT infer when upperHalf=false + prev=crossDay or
-  // upperHalf=true + next=crossDay. Those positions are on the "far side"
-  // of the schedule and treating them as crossDay-anchored would silently
-  // override a legitimate "insert adjacent to this schedule (unrelated to
-  // crossDay)" intent. The primary drop-on-crossDay path is handled by
-  // `pointerWithin` in the hook's collision detection, which matches the
-  // crossDay card directly when the cursor is inside its bbox.
+  const prevAnchor = anchoredScheduleAnchor(prev);
+  const nextAnchor = anchoredScheduleAnchor(next);
+  if (prevAnchor && nextAnchor) {
+    return target.upperHalf ? prevAnchor : nextAnchor;
+  }
+  if (prevAnchor) return prevAnchor;
+  if (nextAnchor) return nextAnchor;
   if (target.upperHalf && prev?.type === "crossDay") {
     return { anchor: "after", anchorSourceId: prev.entry.schedule.id };
   }
@@ -221,4 +223,11 @@ function extractAnchor(
     return { anchor: "before", anchorSourceId: next.entry.schedule.id };
   }
   return { anchor: null, anchorSourceId: null };
+}
+
+function anchoredScheduleAnchor(item: TimelineItem | null): AnchorUpdate | null {
+  if (item?.type !== "schedule") return null;
+  const { crossDayAnchor, crossDayAnchorSourceId } = item.schedule;
+  if (!crossDayAnchor || !crossDayAnchorSourceId) return null;
+  return { anchor: crossDayAnchor, anchorSourceId: crossDayAnchorSourceId };
 }

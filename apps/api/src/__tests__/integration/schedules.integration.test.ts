@@ -792,6 +792,50 @@ describe("Schedules Integration", () => {
       expect(after?.crossDayAnchorSourceId).toBeNull();
     });
 
+    it("rejects empty scheduleIds with clearAnchors=true", async () => {
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scheduleIds: [], clearAnchors: true }),
+        },
+      );
+      expect(res.status).toBe(400);
+    });
+
+    it("accepts empty scheduleIds with empty anchors array as idempotent no-op", async () => {
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ scheduleIds: [], anchors: [] }),
+        },
+      );
+      expect(res.status).toBe(200);
+    });
+
+    it("rejects empty scheduleIds with non-empty anchors", async () => {
+      const hotel = await createReorderSchedule("Hotel", "hotel", {
+        startTime: "15:00",
+        endTime: "10:00",
+        endDayOffset: 1,
+      });
+      const res = await app.request(
+        `/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            scheduleIds: [],
+            anchors: [{ scheduleId: hotel.id, anchor: "after", anchorSourceId: hotel.id }],
+          }),
+        },
+      );
+      expect(res.status).toBe(400);
+    });
+
     it("POST strips crossDayAnchor/crossDayAnchorSourceId from client payload", async () => {
       const hotel = await createReorderSchedule("Hotel for create", "hotel", {
         startTime: "15:00",

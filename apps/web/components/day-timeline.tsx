@@ -110,6 +110,7 @@ export function DayTimeline({
 
   const isMobile = useMobile();
   const [reorderMode, setReorderMode] = useState(false);
+  const [isSortingByTime, setIsSortingByTime] = useState(false);
 
   async function handleDelete(
     scheduleId: string,
@@ -161,23 +162,34 @@ export function DayTimeline({
     }
   }
 
+  // Schedules with a manual cross-day anchor are "dirty" relative to time
+  // order — even if their startTimes happen to be ascending, the anchor
+  // forces a position that the time-sort button should be able to reset.
+  const hasAnyAnchor = schedules.some(
+    (s) => s.crossDayAnchor != null && s.crossDayAnchorSourceId != null,
+  );
   const isSorted =
-    schedules.length <= 1 ||
-    schedules.every(
-      (schedule, i) => i === 0 || compareByStartTime(schedules[i - 1], schedule) <= 0,
-    );
+    !hasAnyAnchor &&
+    (schedules.length <= 1 ||
+      schedules.every(
+        (schedule, i) => i === 0 || compareByStartTime(schedules[i - 1], schedule) <= 0,
+      ));
 
   async function handleSortByTime() {
+    if (isSortingByTime) return;
+    setIsSortingByTime(true);
     const sorted = [...schedules].sort(compareByStartTime);
     const scheduleIds = sorted.map((s) => s.id);
     try {
       await api(`/api/trips/${tripId}/days/${dayId}/patterns/${patternId}/schedules/reorder`, {
         method: "PATCH",
-        body: JSON.stringify({ scheduleIds }),
+        body: JSON.stringify({ scheduleIds, clearAnchors: true }),
       });
       onRefresh();
     } catch {
       toast.error(tm("scheduleReorderFailed"));
+    } finally {
+      setIsSortingByTime(false);
     }
   }
 
@@ -435,7 +447,7 @@ export function DayTimeline({
                 size="sm"
                 className="h-9"
                 onClick={handleSortByTime}
-                disabled={disabled || isSorted}
+                disabled={disabled || isSorted || isSortingByTime}
               >
                 <ArrowUpDown className="h-4 w-4" />
                 {tsch("sortByTime")}

@@ -128,6 +128,18 @@ const JA_FAQS = [
       "はい。一度表示した旅行データはブラウザに保存され、オフラインでも閲覧できます。PWAとしてインストールしている場合に最適です。データは最大7日間保持されます。",
     sortOrder: 26,
   },
+  {
+    question: "日をまたぐ予定（ホテルのチェックアウトなど）の前後に予定を入れるには？",
+    answer:
+      "チェックアウトのカード上半分にドロップすると予定を「チェックアウトの前」に、下半分にドロップすると「チェックアウトの後」に固定できます。一度配置した位置は、後から予定の時刻を変更しても保持されます。解除したい場合は「時刻順」ボタンで手動配置をまとめてクリアできます。",
+    sortOrder: 27,
+  },
+  {
+    question: "「時刻順」ボタンを押すと何が起きますか？",
+    answer:
+      "予定を開始時刻の昇順に並べ替えます。日をまたぐ予定（チェックアウトなど）の前後にドラッグで固定した予定があれば、その手動配置もまとめて解除されます。手動配置がある間は、時刻が既に昇順でも時刻順ボタンは有効のままなので、いつでもリセットできます。",
+    sortOrder: 28,
+  },
   // ---- Scheduling ----
   {
     question: "「日程調整」とは何ですか？",
@@ -487,6 +499,19 @@ const EN_FAQS = [
       "Yes. Trip data you've viewed is saved in the browser and can be accessed offline. It works best when sugara is installed as a PWA. Data is kept for up to 7 days.",
     sortOrder: 26,
   },
+  {
+    question:
+      "How do I place a schedule before or after a multi-day entry, such as a hotel checkout?",
+    answer:
+      "Drop the schedule onto the upper half of the checkout card to pin it before the checkout, or onto the lower half to pin it after. The pinned position is kept even if you later change the schedule's start time. The 'Sort by time' button clears all manual pins at once.",
+    sortOrder: 27,
+  },
+  {
+    question: "What does the 'Sort by time' button do?",
+    answer:
+      "It reorders schedules by start time ascending. Any schedules you manually pinned around a multi-day entry (such as a checkout) are unpinned at the same time. The button stays active while any manual pin exists, so you can reset at any time.",
+    sortOrder: 28,
+  },
   // ---- Scheduling ----
   {
     question: "What is 'Schedule Coordination'?",
@@ -738,7 +763,7 @@ function resolveCategory(sortOrder: number): string {
   if (sortOrder === 0) return "overview";
   if (sortOrder >= 10 && sortOrder <= 18) return "account";
   if (sortOrder >= 19 && sortOrder <= 20) return "profile";
-  if (sortOrder >= 21 && sortOrder <= 26) return "trips";
+  if (sortOrder >= 21 && sortOrder <= 28) return "trips";
   if (sortOrder >= 30 && sortOrder <= 31) return "scheduling";
   if (sortOrder >= 40 && sortOrder <= 43) return "members";
   if (sortOrder >= 50 && sortOrder <= 52) return "friends";

@@ -17,7 +17,9 @@ LOG_FILE="${CLAUDE_PROJECT_DIR:-.}/.claude/failure-log.jsonl"
 # test-skip escape (SUGARA_SKIP_POST_STOP_TEST) because that escape is about skipping tests, not
 # about ignoring known lint/type failures. Escape hatch for this gate: SUGARA_IGNORE_FAILURE_LOG=1.
 if [ "${SUGARA_IGNORE_FAILURE_LOG:-0}" != "1" ] && [ -s "$LOG_FILE" ]; then
-  count=$(wc -l < "$LOG_FILE" | tr -d ' ')
+  # awk counts records correctly even when the final line lacks a trailing newline;
+  # `wc -l` would underreport by 1 in that case and confuse the user.
+  count=$(awk 'END{print NR}' "$LOG_FILE")
   cat >&2 <<EOF
 [Harness] 未解決の failure が ${count} 件残っています (.claude/failure-log.jsonl)
 セッション終了前に以下を実施してください:

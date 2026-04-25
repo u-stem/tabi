@@ -12,7 +12,6 @@ set -euo pipefail
 
 cd "${CLAUDE_PROJECT_DIR:-.}"
 
-LOG_FAILURE="/Users/mikiya/ws/claude-settings/hooks/log-failure.sh"
 LOG_FILE="${CLAUDE_PROJECT_DIR:-.}/.claude/failure-log.jsonl"
 
 # Read stdin once (hook framework pipes JSON with tool_input)
@@ -38,20 +37,51 @@ case "$file_path" in
   *) exit 0 ;; # Files outside packages (root config, docs, etc.)
 esac
 
-# Drop stale entries for this package+category from the log before recording fresh state.
+# Drop stale entries matching this package+category from the log before recording fresh state.
+# Filters on dedicated `pkg` and `category` fields rather than fuzzy-matching the error string —
+# the legacy approach (startswith on `.error`) broke when turbo/bun output didn't lead with the
+# package name, prune-leaking errors from other packages or failing to reset resolved ones.
 prune_log() {
   local category="$1"
   [ -f "$LOG_FILE" ] || return 0
   local tmp
   tmp=$(mktemp)
-  jq -c --arg pkg "$pkg" --arg cat "$category" \
-    'select(.category != $cat or (.error | startswith($pkg + " ") | not))' \
-    "$LOG_FILE" > "$tmp" 2>/dev/null || cp "$LOG_FILE" "$tmp"
-  if [ -s "$tmp" ]; then
-    mv "$tmp" "$LOG_FILE"
+  if jq -c --arg pkg "$pkg" --arg cat "$category" \
+      'select(.pkg != $pkg or .category != $cat)' \
+      "$LOG_FILE" > "$tmp" 2>/dev/null; then
+    if [ -s "$tmp" ]; then
+      mv "$tmp" "$LOG_FILE"
+    else
+      rm -f "$LOG_FILE"
+      rm -f "$tmp"
+    fi
   else
-    rm -f "$LOG_FILE" "$tmp"
+    # Malformed JSONL — leave the log untouched so a human can inspect it.
+    rm -f "$tmp"
   fi
+}
+
+# Append a fresh failure entry. Schema: {ts, pkg, category, error} where `error` is the first
+# meaningful line extracted from the captured output. Self-contained (does not call out to
+# log-failure.sh) so the pkg field is always set and the prune filter above stays sound.
+append_failure() {
+  local category="$1"
+  local output_text="$2"
+  local first_error
+  first_error=$(printf '%s\n' "$output_text" | grep -E '(error|Error|ERROR|FAIL|✗)' | head -1 | sed 's/^[[:space:]]*//')
+  if [ -z "$first_error" ]; then
+    first_error=$(printf '%s\n' "$output_text" | head -1 | sed 's/^[[:space:]]*//')
+  fi
+  local ts
+  ts=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+  mkdir -p "$(dirname "$LOG_FILE")"
+  jq -nc \
+    --arg ts "$ts" \
+    --arg pkg "$pkg" \
+    --arg category "$category" \
+    --arg error "$first_error" \
+    '{ts: $ts, pkg: $pkg, category: $category, error: $error}' \
+    >> "$LOG_FILE"
 }
 
 run_check() {
@@ -65,7 +95,7 @@ run_check() {
   prune_log "$category"
   if [ $rc -ne 0 ]; then
     errors="${errors}${output}\n"
-    [ -x "$LOG_FAILURE" ] && echo "$output" | "$LOG_FAILURE" "$category"
+    append_failure "$category" "$output"
   fi
 }
 
@@ -74,6 +104,6 @@ run_check check       check
 run_check check-types check-types
 
 if [ -n "$errors" ]; then
-  echo -e "$errors" >&2
+  printf '%b' "$errors" >&2
   exit 2
 fi

@@ -375,3 +375,27 @@ export type LogsResponse = {
   items: ActivityLogResponse[];
   nextCursor: string | null;
 };
+
+// Admin /api/admin/stats response — summary counters for the admin dashboard.
+
+export type AdminStatsResponse = {
+  users: {
+    total: number;
+    guest: number;
+    newLast7Days: number;
+    newLast30Days: number;
+  };
+  trips: {
+    total: number;
+    byStatus: Record<TripStatus, number>;
+    newLast7Days: number;
+  };
+  content: {
+    schedules: number;
+    souvenirs: number;
+  };
+  supabase: {
+    mau: number;
+    dbSizeBytes: number;
+  };
+};

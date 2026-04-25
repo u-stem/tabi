@@ -47,12 +47,29 @@ export function buildMergedTimeline(
   anchoredBefore.sort(sortBySortOrder);
   anchoredAfter.sort(sortBySortOrder);
 
+  // Bucket anchored schedules by sourceId so each entry's lookup is O(1).
+  // The previous filter-per-entry implementation was O(n × m) where n is the
+  // number of anchored schedules and m is the number of crossDay entries.
+  // Insertion order into the bucket preserves the sortBySortOrder above.
+  const bucketBySourceId = (list: ScheduleResponse[]) => {
+    const map = new Map<string, ScheduleResponse[]>();
+    for (const s of list) {
+      if (!s.crossDayAnchorSourceId) continue;
+      const arr = map.get(s.crossDayAnchorSourceId);
+      if (arr) arr.push(s);
+      else map.set(s.crossDayAnchorSourceId, [s]);
+    }
+    return map;
+  };
+  const beforeBySource = bucketBySourceId(anchoredBefore);
+  const afterBySource = bucketBySourceId(anchoredAfter);
+
   const merged = timeBasedMerge(plainSchedules, crossDayEntries);
 
   for (const entry of crossDayEntries) {
     const sourceId = entry.schedule.id;
-    const before = anchoredBefore.filter((s) => s.crossDayAnchorSourceId === sourceId);
-    const after = anchoredAfter.filter((s) => s.crossDayAnchorSourceId === sourceId);
+    const before = beforeBySource.get(sourceId) ?? [];
+    const after = afterBySource.get(sourceId) ?? [];
     if (before.length === 0 && after.length === 0) continue;
 
     const pos = merged.findIndex((item) => item.type === "crossDay" && item.entry === entry);

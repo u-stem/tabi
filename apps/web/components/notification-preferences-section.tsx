@@ -187,7 +187,7 @@ export function NotificationPreferencesSection() {
         .catch(() => {
           // Permission was granted but resolving the subscription failed —
           // surface this so the user knows the toggles won't work yet.
-          toast.error(tm("notificationPrefUpdateFailed"));
+          toast.error(tm("pushSubscribeFailed"));
         });
     }
   }

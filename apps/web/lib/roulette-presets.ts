@@ -113,7 +113,11 @@ const COUNTRY_REGIONS_CONST = [
   },
 ] as const satisfies readonly RegionGroup[];
 
-export const COUNTRY_REGIONS: RegionGroup[] = COUNTRY_REGIONS_CONST as unknown as RegionGroup[];
+// Re-export under a friendlier name. The const-assertion above already gives
+// us a readonly tuple typed as RegionGroup, so no cast is needed here —
+// previously we routed through `as unknown as RegionGroup[]` which silently
+// discarded the satisfies check.
+export const COUNTRY_REGIONS = COUNTRY_REGIONS_CONST;
 
 export const ALL_COUNTRY_KEYS = COUNTRY_REGIONS_CONST.flatMap((r) => r.keys);
 

@@ -214,10 +214,12 @@ export function useScheduleSelection({
       });
       toast.success(tm("batchDuplicated", { count: selectedIds.size }));
       exit();
-      onDone();
     } catch {
       toast.error(tm("batchDuplicateFailed"));
     } finally {
+      // Always refetch — on success to pull the new duplicates, on failure to
+      // reconcile with whatever partial state the server may hold (timeout etc).
+      onDone();
       setBatchLoading(false);
     }
   }
@@ -235,10 +237,10 @@ export function useScheduleSelection({
       );
       toast.success(tm("batchDuplicated", { count: selectedIds.size }));
       exit();
-      onDone();
     } catch {
       toast.error(tm("batchDuplicateFailed"));
     } finally {
+      onDone();
       setBatchLoading(false);
     }
   }

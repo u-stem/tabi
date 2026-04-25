@@ -79,7 +79,12 @@ export function NotificationPreferencesSection() {
     navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => sub && setDeviceEndpoint(sub.endpoint))
-      .catch((err) => console.warn("[push] failed to resolve subscription endpoint", err));
+      .catch(() => {
+        // Subscription resolution can fail on incompatible browsers or
+        // transient service-worker states. The UI degrades to "push not
+        // subscribed" automatically (deviceEndpoint stays null), so there's
+        // nothing actionable to surface to the user here.
+      });
   }, []);
 
   // User-level: inApp preferences only
@@ -179,7 +184,11 @@ export function NotificationPreferencesSection() {
       navigator.serviceWorker.ready
         .then((reg) => reg.pushManager.getSubscription())
         .then((sub) => sub && setDeviceEndpoint(sub.endpoint))
-        .catch((err) => console.warn("[push] failed to resolve subscription endpoint", err));
+        .catch(() => {
+          // Permission was granted but resolving the subscription failed —
+          // surface this so the user knows the toggles won't work yet.
+          toast.error(tm("notificationPrefUpdateFailed"));
+        });
     }
   }
 

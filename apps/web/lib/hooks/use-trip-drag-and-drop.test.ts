@@ -372,6 +372,9 @@ describe("useTripDragAndDrop — null-based snapshot isolation", () => {
     // prop has not been updated yet. If finally runs before onDone resolves,
     // localSchedules falls back to the stale prop (= old order [s1, s2]),
     // causing a brief snap-back before the refetch completes.
+    // The onDone-was-called assertion guards against a degenerate fix where
+    // the test passes only because onDone never ran.
+    expect(onDone).toHaveBeenCalledTimes(1);
     expect(result.current.localSchedules.map((s) => s.id)).toEqual(["s2", "s1"]);
 
     await act(async () => {

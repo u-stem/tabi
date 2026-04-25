@@ -335,6 +335,51 @@ describe("useTripDragAndDrop — null-based snapshot isolation", () => {
     expect(result.current.overScheduleId).toBe("s2");
   });
 
+  it("does not snap back to old order while onDone (refetch) is pending after reorderSchedule", async () => {
+    // onDone returns a pending promise — simulates an in-flight refetch.
+    let resolveOnDone: (() => void) | undefined;
+    const onDone = vi.fn(
+      () =>
+        new Promise<void>((res) => {
+          resolveOnDone = res;
+        }),
+    );
+
+    const { result } = renderHook(() =>
+      useTripDragAndDrop({
+        tripId: "trip1",
+        currentDayId: "day1",
+        currentPatternId: "pattern1",
+        schedules: [s1, s2],
+        candidates: [],
+        onDone,
+      }),
+    );
+
+    let pending!: Promise<void>;
+    act(() => {
+      pending = result.current.reorderSchedule("s2", "up");
+    });
+
+    // Flush microtasks so the optimistic setLocalSchedules and the awaited
+    // api() both settle. `onDone` is still pending.
+    await act(async () => {
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    // Bug repro: while the refetch driven by onDone is pending, the schedules
+    // prop has not been updated yet. If finally runs before onDone resolves,
+    // localSchedules falls back to the stale prop (= old order [s1, s2]),
+    // causing a brief snap-back before the refetch completes.
+    expect(result.current.localSchedules.map((s) => s.id)).toEqual(["s2", "s1"]);
+
+    await act(async () => {
+      resolveOnDone?.();
+      await pending;
+    });
+  });
+
   it("falls back to server data after the API call resolves", async () => {
     // Default mock resolves immediately (mockResolvedValue(undefined))
     const { result } = renderHook(() =>

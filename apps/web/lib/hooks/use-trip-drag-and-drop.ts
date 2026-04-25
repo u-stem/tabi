@@ -45,7 +45,12 @@ type UseTripDragAndDropArgs = {
   schedules: ScheduleResponse[];
   candidates: CandidateResponse[];
   crossDayEntries?: CrossDayEntry[];
-  onDone: () => void;
+  // Awaited before clearing optimistic local state. Pass an async function
+  // (typically `invalidateQueries`) so the schedules prop already reflects
+  // the new server order by the time the local snapshot is released —
+  // otherwise the list briefly snaps back to the pre-mutation order while
+  // the refetch is still in flight.
+  onDone: () => void | Promise<void>;
 };
 
 // MouseSensor (not PointerSensor) so that touch input is handled exclusively
@@ -271,14 +276,14 @@ export function useTripDragAndDrop({
               }),
             },
           );
-          onDone();
+          await onDone();
         } catch (err) {
           if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
             toast.error(tm("conflictStale"));
           } else {
             toast.error(tm("scheduleReorderFailed"));
           }
-          onDone();
+          await onDone();
         }
       } else if (sourceType === "schedule" && isOverCandidates) {
         const schedule = currentSchedules.find((s) => s.id === active.id);
@@ -318,7 +323,7 @@ export function useTripDragAndDrop({
           } else {
             toast.error(tm("scheduleMoveFailed"));
           }
-          onDone();
+          await onDone();
           return;
         }
 
@@ -341,10 +346,10 @@ export function useTripDragAndDrop({
           if (process.env.NODE_ENV !== "production") {
             console.error("[schedule→candidates reorder failed]", err);
           }
-          onDone();
+          await onDone();
           return;
         }
-        onDone();
+        await onDone();
       } else if (sourceType === "candidate" && isOverTimeline) {
         const candidate = currentCandidates.find((c) => c.id === active.id);
         if (!candidate) return;
@@ -397,7 +402,7 @@ export function useTripDragAndDrop({
           } else {
             toast.error(tm("candidateAssignFailed"));
           }
-          onDone();
+          await onDone();
           return;
         }
 
@@ -438,10 +443,10 @@ export function useTripDragAndDrop({
           if (process.env.NODE_ENV !== "production") {
             console.error("[candidate→timeline reorder failed]", err);
           }
-          onDone();
+          await onDone();
           return;
         }
-        onDone();
+        await onDone();
       } else if (sourceType === "candidate" && isOverCandidates) {
         if (over && active.id === over.id) return;
         const oldIndex = currentCandidates.findIndex((c) => c.id === active.id);
@@ -461,14 +466,14 @@ export function useTripDragAndDrop({
             method: "PATCH",
             body: JSON.stringify({ scheduleIds }),
           });
-          onDone();
+          await onDone();
         } catch (err) {
           if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
             toast.error(tm("conflictStale"));
           } else {
             toast.error(tm("scheduleReorderFailed"));
           }
-          onDone();
+          await onDone();
         }
       }
     } finally {
@@ -530,14 +535,14 @@ export function useTripDragAndDrop({
           }),
         },
       );
-      onDone();
+      await onDone();
     } catch (err) {
       if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
         toast.error(tm("conflictStale"));
       } else {
         toast.error(tm("scheduleReorderFailed"));
       }
-      onDone();
+      await onDone();
     } finally {
       setLocalSchedules(null);
     }
@@ -558,14 +563,14 @@ export function useTripDragAndDrop({
         method: "PATCH",
         body: JSON.stringify({ scheduleIds: reordered.map((c) => c.id) }),
       });
-      onDone();
+      await onDone();
     } catch (err) {
       if (err instanceof ApiError && (err.status === 400 || err.status === 404)) {
         toast.error(tm("conflictStale"));
       } else {
         toast.error(tm("scheduleReorderFailed"));
       }
-      onDone();
+      await onDone();
     } finally {
       setLocalCandidates(null);
     }

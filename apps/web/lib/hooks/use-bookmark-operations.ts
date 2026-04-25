@@ -111,6 +111,9 @@ export function useBookmarkOperations({
         method: "PATCH",
         body: JSON.stringify(updatedFields),
       });
+      // Bookmark update doesn't change BookmarkListResponse fields
+      // (bookmarkCount/updatedAt are list-level, untouched by /:bookmarkId PATCH),
+      // so unlike handleAdd/handleDelete we don't invalidate the lists query here.
       invalidateBookmarks();
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);

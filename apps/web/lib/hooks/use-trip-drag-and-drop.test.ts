@@ -75,6 +75,10 @@ const s1 = makeSchedule("s1");
 const s2 = makeSchedule("s2");
 const s3 = makeSchedule("s3");
 
+function makeCandidate(id: string) {
+  return { ...makeSchedule(id), likeCount: 0, hmmCount: 0, myReaction: null };
+}
+
 describe("useTripDragAndDrop — null-based snapshot isolation", () => {
   afterEach(() => vi.clearAllMocks());
 
@@ -381,6 +385,85 @@ describe("useTripDragAndDrop — null-based snapshot isolation", () => {
       resolveOnDone?.();
       await pending;
     });
+  });
+
+  it("rapid reorderSchedule taps don't clobber the latest optimistic snapshot", async () => {
+    // Op #1's API resolves immediately; op #2's hangs. Without the opId
+    // guard, op #1's finally would null-reset localSchedules while op #2 is
+    // still in flight, causing the list to snap back to the schedules prop
+    // (= old order [s1, s2, s3]) before op #2 completes. With the guard,
+    // op #1's finally sees that opIdRef has moved past myOpId and skips the
+    // reset, leaving op #2's [s2, s3, s1] visible.
+    const apiMock = vi.mocked(api);
+    apiMock.mockResolvedValueOnce(undefined).mockImplementationOnce(() => new Promise(() => {}));
+
+    const { result } = renderHook(() =>
+      useTripDragAndDrop({
+        tripId: "trip1",
+        currentDayId: "day1",
+        currentPatternId: "pattern1",
+        schedules: [s1, s2, s3],
+        candidates: [],
+        onDone: vi.fn(),
+      }),
+    );
+
+    let op1Promise!: Promise<void>;
+    act(() => {
+      op1Promise = result.current.reorderSchedule("s2", "up");
+    });
+    expect(result.current.localSchedules.map((s) => s.id)).toEqual(["s2", "s1", "s3"]);
+
+    act(() => {
+      result.current.reorderSchedule("s3", "up");
+    });
+    expect(result.current.localSchedules.map((s) => s.id)).toEqual(["s2", "s3", "s1"]);
+
+    await act(async () => {
+      await op1Promise;
+    });
+
+    expect(result.current.localSchedules.map((s) => s.id)).toEqual(["s2", "s3", "s1"]);
+  });
+
+  it("rapid reorderCandidate taps don't clobber the latest optimistic snapshot", async () => {
+    // Same opId guard applied to the candidate reorder path. Symmetric with
+    // the reorderSchedule case; covered separately so a future regression on
+    // either path is caught independently.
+    const apiMock = vi.mocked(api);
+    apiMock.mockResolvedValueOnce(undefined).mockImplementationOnce(() => new Promise(() => {}));
+
+    const c1 = makeCandidate("c1");
+    const c2 = makeCandidate("c2");
+    const c3 = makeCandidate("c3");
+
+    const { result } = renderHook(() =>
+      useTripDragAndDrop({
+        tripId: "trip1",
+        currentDayId: "day1",
+        currentPatternId: "pattern1",
+        schedules: [],
+        candidates: [c1, c2, c3],
+        onDone: vi.fn(),
+      }),
+    );
+
+    let op1Promise!: Promise<void>;
+    act(() => {
+      op1Promise = result.current.reorderCandidate("c2", "up");
+    });
+    expect(result.current.localCandidates.map((c) => c.id)).toEqual(["c2", "c1", "c3"]);
+
+    act(() => {
+      result.current.reorderCandidate("c3", "up");
+    });
+    expect(result.current.localCandidates.map((c) => c.id)).toEqual(["c2", "c3", "c1"]);
+
+    await act(async () => {
+      await op1Promise;
+    });
+
+    expect(result.current.localCandidates.map((c) => c.id)).toEqual(["c2", "c3", "c1"]);
   });
 
   it("falls back to server data after the API call resolves", async () => {

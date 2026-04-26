@@ -79,11 +79,11 @@ export function NotificationPreferencesSection() {
     navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => sub && setDeviceEndpoint(sub.endpoint))
-      .catch(() => {
-        // Subscription resolution can fail on incompatible browsers or
-        // transient service-worker states. The UI degrades to "push not
-        // subscribed" automatically (deviceEndpoint stays null), so there's
-        // nothing actionable to surface to the user here.
+      .catch((_err: unknown) => {
+        // Intentionally swallowed: subscription resolution can fail on
+        // incompatible browsers or transient service-worker states. The UI
+        // degrades to "push not subscribed" automatically (deviceEndpoint
+        // stays null), so there's nothing actionable to surface here.
       });
   }, []);
 

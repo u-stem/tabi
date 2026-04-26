@@ -104,17 +104,30 @@ function timeBasedMerge(
   schedules: ScheduleResponse[],
   crossDayEntries: CrossDayEntry[],
 ): TimelineItem[] {
+  // Pre-compute "HH:MM" strings once. Without this cache, the same slice was
+  // recomputed on every comparison — O(n + n×m + m log m) calls collapse to
+  // O(n + m). The keys are schedule/entry identity (id is unique within the
+  // function's inputs).
+  const scheduleStartHHMM = new Map<string, string | null>();
+  for (const s of schedules) {
+    scheduleStartHHMM.set(s.id, s.startTime?.slice(0, 5) ?? null);
+  }
+  const entryEndHHMM = new Map<string, string | null>();
+  for (const entry of crossDayEntries) {
+    entryEndHHMM.set(entry.schedule.id, entry.schedule.endTime?.slice(0, 5) ?? null);
+  }
+
   const merged: TimelineItem[] = [];
   const remaining = [...crossDayEntries];
 
   for (const schedule of schedules) {
-    const scheduleTime = schedule.startTime?.slice(0, 5) ?? null;
+    const scheduleTime = scheduleStartHHMM.get(schedule.id) ?? null;
 
     if (scheduleTime != null) {
       const toInsert: CrossDayEntry[] = [];
       // Iterate in reverse so splice() doesn't shift the indices of unvisited entries.
       for (let j = remaining.length - 1; j >= 0; j--) {
-        const entryTime = remaining[j].schedule.endTime?.slice(0, 5) ?? null;
+        const entryTime = entryEndHHMM.get(remaining[j].schedule.id) ?? null;
         if (entryTime == null) continue;
         if (entryTime <= scheduleTime) {
           toInsert.unshift(remaining[j]);
@@ -122,8 +135,8 @@ function timeBasedMerge(
         }
       }
       toInsert.sort((a, b) => {
-        const ta = a.schedule.endTime?.slice(0, 5) ?? "";
-        const tb = b.schedule.endTime?.slice(0, 5) ?? "";
+        const ta = entryEndHHMM.get(a.schedule.id) ?? "";
+        const tb = entryEndHHMM.get(b.schedule.id) ?? "";
         return ta < tb ? -1 : ta > tb ? 1 : 0;
       });
       for (const entry of toInsert) {
@@ -141,8 +154,8 @@ function timeBasedMerge(
     else withoutEnd.push(entry);
   }
   withEnd.sort((a, b) => {
-    const ta = a.schedule.endTime?.slice(0, 5) ?? "";
-    const tb = b.schedule.endTime?.slice(0, 5) ?? "";
+    const ta = entryEndHHMM.get(a.schedule.id) ?? "";
+    const tb = entryEndHHMM.get(b.schedule.id) ?? "";
     return ta < tb ? -1 : ta > tb ? 1 : 0;
   });
   for (const entry of withEnd) {

@@ -19,7 +19,7 @@ import type {
   ScheduleResponse,
 } from "@sugara/shared";
 import { useTranslations } from "next-intl";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { ApiError, api } from "@/lib/api";
 import {
@@ -118,6 +118,14 @@ export function useTripDragAndDrop({
   const [localCandidates, setLocalCandidates] = useState<CandidateResponse[] | null>(null);
   // Track last known drop zone so we can handle drops in empty space below the last item
   const [lastOverZone, setLastOverZone] = useState<"timeline" | "candidates" | null>(null);
+  // Monotonic id assigned at the start of every reorder / drag-end. The
+  // `finally` block in each operation only resets local state when its own
+  // id still matches the latest — if a second tap fires while the first is
+  // awaiting onDone, the first's reset is skipped so it doesn't clobber the
+  // second's optimistic snapshot. Without this guard, rapid taps would
+  // briefly snap the list back to the pre-second-op order until the second
+  // op's refetch completes.
+  const opIdRef = useRef(0);
 
   const sensors = useSensors(
     useSensor(MouseSensor, MOUSE_SENSOR_OPTIONS),
@@ -203,6 +211,7 @@ export function useTripDragAndDrop({
   }
 
   async function handleDragEnd(event: DragEndEvent) {
+    const myOpId = ++opIdRef.current;
     setActiveDragItem(null);
     setOverScheduleId(null);
     setOverCandidateId(null);
@@ -479,13 +488,18 @@ export function useTripDragAndDrop({
     } finally {
       // Reset to null so the hook falls back to server props after the drop.
       // This prevents snap-back caused by stale server data overwriting
-      // the optimistic state (dnd-kit Discussion #1522).
-      setLocalSchedules(null);
-      setLocalCandidates(null);
+      // the optimistic state (dnd-kit Discussion #1522). Skip the reset when
+      // a newer op has started — letting it stand would clobber the next
+      // op's optimistic snapshot.
+      if (opIdRef.current === myOpId) {
+        setLocalSchedules(null);
+        setLocalCandidates(null);
+      }
     }
   }
 
   async function reorderSchedule(id: string, direction: "up" | "down") {
+    const myOpId = ++opIdRef.current;
     if (!currentDayId || !currentPatternId) return;
     const current = localSchedules ?? schedules;
     // Reorder by merged timeline position (what the user sees), not raw
@@ -544,11 +558,14 @@ export function useTripDragAndDrop({
       }
       await onDone();
     } finally {
-      setLocalSchedules(null);
+      if (opIdRef.current === myOpId) {
+        setLocalSchedules(null);
+      }
     }
   }
 
   async function reorderCandidate(id: string, direction: "up" | "down") {
+    const myOpId = ++opIdRef.current;
     const current = localCandidates ?? candidates;
     const idx = current.findIndex((c) => c.id === id);
     if (idx === -1) return;
@@ -572,7 +589,9 @@ export function useTripDragAndDrop({
       }
       await onDone();
     } finally {
-      setLocalCandidates(null);
+      if (opIdRef.current === myOpId) {
+        setLocalCandidates(null);
+      }
     }
   }
 

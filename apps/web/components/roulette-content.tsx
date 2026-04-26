@@ -114,7 +114,7 @@ function RegionFilterPreset({
   allKeys,
   namespace,
 }: {
-  regions: RegionGroup[];
+  regions: readonly RegionGroup[];
   allKeys: string[];
   namespace: "prefectures" | "countries";
 }) {

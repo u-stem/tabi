@@ -3,7 +3,7 @@ import type { RegionGroup } from "@/lib/roulette-presets";
 // Prefecture keys mapped to message keys in the "prefectures" namespace
 export type PrefectureKey = (typeof ALL_PREFECTURE_KEYS)[number];
 
-export const REGIONS: RegionGroup[] = [
+export const REGIONS = [
   {
     nameKey: "regionHokkaido",
     keys: ["hokkaido", "aomori", "iwate", "miyagi", "akita", "yamagata", "fukushima"],
@@ -48,6 +48,6 @@ export const REGIONS: RegionGroup[] = [
     nameKey: "regionKyushu",
     keys: ["fukuoka", "saga", "nagasaki", "kumamoto", "oita", "miyazaki", "kagoshima", "okinawa"],
   },
-];
+] as const satisfies readonly RegionGroup[];
 
 export const ALL_PREFECTURE_KEYS = REGIONS.flatMap((r) => r.keys);

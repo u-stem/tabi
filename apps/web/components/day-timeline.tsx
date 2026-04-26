@@ -164,18 +164,23 @@ export function DayTimeline({
     }
   }
 
+  // Memoized so unrelated re-renders (selection-mode toggle, drag-over state)
+  // don't pay the O(n) every() cost on schedules that haven't changed.
   // Schedules with a manual cross-day anchor are "dirty" relative to time
   // order — even if their startTimes happen to be ascending, the anchor
   // forces a position that the time-sort button should be able to reset.
-  const hasAnyAnchor = schedules.some(
-    (s) => s.crossDayAnchor != null && s.crossDayAnchorSourceId != null,
-  );
-  const isSorted =
-    !hasAnyAnchor &&
-    (schedules.length <= 1 ||
-      schedules.every(
-        (schedule, i) => i === 0 || compareByStartTime(schedules[i - 1], schedule) <= 0,
-      ));
+  const isSorted = useMemo(() => {
+    const hasAnyAnchor = schedules.some(
+      (s) => s.crossDayAnchor != null && s.crossDayAnchorSourceId != null,
+    );
+    return (
+      !hasAnyAnchor &&
+      (schedules.length <= 1 ||
+        schedules.every(
+          (schedule, i) => i === 0 || compareByStartTime(schedules[i - 1], schedule) <= 0,
+        ))
+    );
+  }, [schedules]);
 
   async function handleSortByTime() {
     if (isSortingByTime) return;

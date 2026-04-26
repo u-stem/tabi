@@ -353,6 +353,7 @@
     "notificationMarkReadFailed": "Failed to mark as read",
     "notificationMarkAllReadFailed": "Failed to mark all as read",
     "notificationPrefUpdateFailed": "Failed to update notification settings",
+    "pushSubscribeFailed": "Failed to enable push notifications",
     "emptyNotification": "No notifications",
     "accountDeleted": "Account deleted",
     "accountDeleteFailed": "Failed to delete account",

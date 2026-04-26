@@ -1,5 +1,6 @@
 "use client";
 
+import type { AdminStatsResponse } from "@sugara/shared";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ExternalLink, KeyRound, Save, X } from "lucide-react";
 import Link from "next/link";
@@ -34,34 +35,6 @@ import { queryKeys } from "@/lib/query-keys";
 
 const SUPABASE_MAU_LIMIT = 50_000;
 const SUPABASE_DB_SIZE_LIMIT_BYTES = 500 * 1024 * 1024; // 500 MB
-
-type AdminStatsResponse = {
-  users: {
-    total: number;
-    guest: number;
-    newLast7Days: number;
-    newLast30Days: number;
-  };
-  trips: {
-    total: number;
-    byStatus: {
-      scheduling: number;
-      draft: number;
-      planned: number;
-      active: number;
-      completed: number;
-    };
-    newLast7Days: number;
-  };
-  content: {
-    schedules: number;
-    souvenirs: number;
-  };
-  supabase: {
-    mau: number;
-    dbSizeBytes: number;
-  };
-};
 
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (

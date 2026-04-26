@@ -211,6 +211,9 @@ export function useTripDragAndDrop({
   }
 
   async function handleDragEnd(event: DragEndEvent) {
+    // Bump first; cleanup state below always runs and any "id holes" left by
+    // early returns inside the try block don't affect race correctness — only
+    // equality between myOpId and opIdRef.current at finally time matters.
     const myOpId = ++opIdRef.current;
     setActiveDragItem(null);
     setOverScheduleId(null);

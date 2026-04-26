@@ -104,17 +104,35 @@ function timeBasedMerge(
   schedules: ScheduleResponse[],
   crossDayEntries: CrossDayEntry[],
 ): TimelineItem[] {
+  // Pre-compute "HH:MM" strings once. Without this cache, the same slice was
+  // recomputed on every comparison — the dominant cost was the O(n × m) scan
+  // over `remaining` inside the schedule loop, plus an O(m log m) sort. With
+  // the Map both collapse to one slice per input → O(n + m). Keys are schedule
+  // ids; uniqueness is guaranteed by the schedules table PK and the
+  // single-source nature of crossDayEntries (one entry per source schedule).
+  const scheduleStartHHMM = new Map<string, string | null>();
+  for (const s of schedules) {
+    scheduleStartHHMM.set(s.id, s.startTime?.slice(0, 5) ?? null);
+  }
+  const entryEndHHMM = new Map<string, string | null>();
+  for (const entry of crossDayEntries) {
+    entryEndHHMM.set(entry.schedule.id, entry.schedule.endTime?.slice(0, 5) ?? null);
+  }
+  // Map.get's undefined branch is unreachable here (every input was set above);
+  // the `?? null` / `?? ""` fallbacks below exist purely to narrow the return
+  // type from `string | null | undefined` to the original `string | null`.
+
   const merged: TimelineItem[] = [];
   const remaining = [...crossDayEntries];
 
   for (const schedule of schedules) {
-    const scheduleTime = schedule.startTime?.slice(0, 5) ?? null;
+    const scheduleTime = scheduleStartHHMM.get(schedule.id) ?? null;
 
     if (scheduleTime != null) {
       const toInsert: CrossDayEntry[] = [];
       // Iterate in reverse so splice() doesn't shift the indices of unvisited entries.
       for (let j = remaining.length - 1; j >= 0; j--) {
-        const entryTime = remaining[j].schedule.endTime?.slice(0, 5) ?? null;
+        const entryTime = entryEndHHMM.get(remaining[j].schedule.id) ?? null;
         if (entryTime == null) continue;
         if (entryTime <= scheduleTime) {
           toInsert.unshift(remaining[j]);
@@ -122,8 +140,8 @@ function timeBasedMerge(
         }
       }
       toInsert.sort((a, b) => {
-        const ta = a.schedule.endTime?.slice(0, 5) ?? "";
-        const tb = b.schedule.endTime?.slice(0, 5) ?? "";
+        const ta = entryEndHHMM.get(a.schedule.id) ?? "";
+        const tb = entryEndHHMM.get(b.schedule.id) ?? "";
         return ta < tb ? -1 : ta > tb ? 1 : 0;
       });
       for (const entry of toInsert) {
@@ -141,8 +159,8 @@ function timeBasedMerge(
     else withoutEnd.push(entry);
   }
   withEnd.sort((a, b) => {
-    const ta = a.schedule.endTime?.slice(0, 5) ?? "";
-    const tb = b.schedule.endTime?.slice(0, 5) ?? "";
+    const ta = entryEndHHMM.get(a.schedule.id) ?? "";
+    const tb = entryEndHHMM.get(b.schedule.id) ?? "";
     return ta < tb ? -1 : ta > tb ? 1 : 0;
   });
   for (const entry of withEnd) {

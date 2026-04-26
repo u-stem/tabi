@@ -105,9 +105,11 @@ function timeBasedMerge(
   crossDayEntries: CrossDayEntry[],
 ): TimelineItem[] {
   // Pre-compute "HH:MM" strings once. Without this cache, the same slice was
-  // recomputed on every comparison — O(n + n×m + m log m) calls collapse to
-  // O(n + m). The keys are schedule/entry identity (id is unique within the
-  // function's inputs).
+  // recomputed on every comparison — the dominant cost was the O(n × m) scan
+  // over `remaining` inside the schedule loop, plus an O(m log m) sort. With
+  // the Map both collapse to one slice per input → O(n + m). Keys are schedule
+  // ids; uniqueness is guaranteed by the schedules table PK and the
+  // single-source nature of crossDayEntries (one entry per source schedule).
   const scheduleStartHHMM = new Map<string, string | null>();
   for (const s of schedules) {
     scheduleStartHHMM.set(s.id, s.startTime?.slice(0, 5) ?? null);
@@ -116,6 +118,9 @@ function timeBasedMerge(
   for (const entry of crossDayEntries) {
     entryEndHHMM.set(entry.schedule.id, entry.schedule.endTime?.slice(0, 5) ?? null);
   }
+  // Map.get's undefined branch is unreachable here (every input was set above);
+  // the `?? null` / `?? ""` fallbacks below exist purely to narrow the return
+  // type from `string | null | undefined` to the original `string | null`.
 
   const merged: TimelineItem[] = [];
   const remaining = [...crossDayEntries];

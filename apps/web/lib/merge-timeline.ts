@@ -43,6 +43,14 @@ export function buildMergedTimeline(
     }
   }
 
+  const merged = timeBasedMerge(plainSchedules, crossDayEntries);
+
+  // Skip the bucket-and-splice pass entirely when no schedules carry a
+  // cross-day anchor — the time-based merge above is already the final order.
+  if (anchoredBefore.length === 0 && anchoredAfter.length === 0) {
+    return merged;
+  }
+
   const sortBySortOrder = (a: ScheduleResponse, b: ScheduleResponse) => a.sortOrder - b.sortOrder;
   anchoredBefore.sort(sortBySortOrder);
   anchoredAfter.sort(sortBySortOrder);
@@ -63,8 +71,6 @@ export function buildMergedTimeline(
   };
   const beforeBySource = bucketBySourceId(anchoredBefore);
   const afterBySource = bucketBySourceId(anchoredAfter);
-
-  const merged = timeBasedMerge(plainSchedules, crossDayEntries);
 
   for (const entry of crossDayEntries) {
     const sourceId = entry.schedule.id;

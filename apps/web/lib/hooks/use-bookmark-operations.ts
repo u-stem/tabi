@@ -73,6 +73,9 @@ export function useBookmarkOperations({
       resetForm();
       setAddBookmarkOpen(false);
       invalidateBookmarks();
+      // Add affects BookmarkListResponse.bookmarkCount, so the lists query
+      // also needs a refetch. handleDelete mirrors this; handleUpdate skips
+      // it intentionally (PATCH /:bookmarkId doesn't touch bookmark_lists).
       invalidateLists();
     } catch (err) {
       toast.error(getApiErrorMessage(err, tm("bookmarkAddFailed") as string));
@@ -111,6 +114,9 @@ export function useBookmarkOperations({
         method: "PATCH",
         body: JSON.stringify(updatedFields),
       });
+      // Bookmark update doesn't change BookmarkListResponse fields
+      // (bookmarkCount/updatedAt are list-level, untouched by /:bookmarkId PATCH),
+      // so unlike handleAdd/handleDelete we don't invalidate the lists query here.
       invalidateBookmarks();
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);
@@ -140,6 +146,9 @@ export function useBookmarkOperations({
         method: "DELETE",
       });
       invalidateBookmarks();
+      // Delete affects BookmarkListResponse.bookmarkCount (mirrored in
+      // handleAdd; handleUpdate skips this since /:bookmarkId PATCH doesn't
+      // touch bookmark_lists).
       invalidateLists();
     } catch (err) {
       if (prev) queryClient.setQueryData(cacheKey, prev);

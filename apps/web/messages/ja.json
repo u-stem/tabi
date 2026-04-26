@@ -353,6 +353,7 @@
     "notificationMarkReadFailed": "既読の更新に失敗しました",
     "notificationMarkAllReadFailed": "全て既読の更新に失敗しました",
     "notificationPrefUpdateFailed": "通知設定の更新に失敗しました",
+    "pushSubscribeFailed": "プッシュ通知の有効化に失敗しました",
     "emptyNotification": "通知はありません",
     "accountDeleted": "アカウントを削除しました",
     "accountDeleteFailed": "アカウントの削除に失敗しました",

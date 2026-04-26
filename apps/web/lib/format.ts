@@ -71,6 +71,11 @@ export function formatTimeRange(startTime?: string | null, endTime?: string | nu
   return "";
 }
 
+// Compare two items by startTime ("HH:MM"). null sorts last.
+// Callers: handleSortByTime (DayTimeline) for the actual sort, and
+// isScheduleListSorted (lib/timeline-sort) for detecting whether the list is
+// already in this order. Changing null/equality semantics here also changes
+// when the time-sort UI is enabled — extend timeline-sort.test.ts when you do.
 export function compareByStartTime(
   a: { startTime?: string | null },
   b: { startTime?: string | null },

@@ -1,3 +1,5 @@
+@~/ws/claude-system/adapters/claude-code/project-fragments/web-apps-common.md
+
 # sugara - 旅行計画アプリ
 
 ## プロジェクト概要

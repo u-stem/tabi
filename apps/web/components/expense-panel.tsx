@@ -31,7 +31,7 @@ import {
   ResponsiveAlertDialogTitle,
 } from "@/components/ui/responsive-alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { api, apiVoid, getApiErrorMessage } from "@/lib/api";
 import { useSession } from "@/lib/auth-client";
 import { useMobile } from "@/lib/hooks/use-is-mobile";
 import { queryKeys } from "@/lib/query-keys";
@@ -64,7 +64,7 @@ export function ExpensePanel({ tripId, canEdit, addOpen, onAddOpenChange }: Expe
 
   const deleteMutation = useMutation({
     mutationFn: (expenseId: string) =>
-      api(`/api/trips/${tripId}/expenses/${expenseId}`, { method: "DELETE" }),
+      apiVoid(`/api/trips/${tripId}/expenses/${expenseId}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.expenses.list(tripId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.trips.activityLogs(tripId) });

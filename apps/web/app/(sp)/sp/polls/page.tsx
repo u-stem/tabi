@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LoadingBoundary } from "@/components/ui/loading-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
-import { api } from "@/lib/api";
+import { api, apiVoid } from "@/lib/api";
 import { pageTitle } from "@/lib/constants";
 import { queryKeys } from "@/lib/query-keys";
 
@@ -83,7 +83,7 @@ export default function SpPollsPage() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => api(`/api/quick-polls/${id}`, { method: "DELETE" }),
+    mutationFn: (id: string) => apiVoid(`/api/quick-polls/${id}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.quickPolls.list() });
       toast.success(tm("quickPollDeleted"));

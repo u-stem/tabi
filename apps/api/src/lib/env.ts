@@ -45,4 +45,10 @@ export const env = {
   get GMAIL_APP_PASSWORD() {
     return required("GMAIL_APP_PASSWORD");
   },
+  get UPSTASH_REDIS_REST_URL() {
+    return process.env.UPSTASH_REDIS_REST_URL;
+  },
+  get UPSTASH_REDIS_REST_TOKEN() {
+    return process.env.UPSTASH_REDIS_REST_TOKEN;
+  },
 };

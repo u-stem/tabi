@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { ApiError, api } from "../api";
+import { ApiError, api, apiVoid } from "../api";
 
 const mockFetch = vi.fn();
 
@@ -70,14 +70,16 @@ describe("api", () => {
     });
   });
 
-  it("returns undefined for 204 responses", async () => {
+  it("throws ApiError for 204 responses to surface the type lie", async () => {
     mockFetch.mockResolvedValue({
       ok: true,
       status: 204,
     });
 
-    const result = await api("/api/trips/123");
-    expect(result).toBeUndefined();
+    await expect(api("/api/trips/123")).rejects.toMatchObject({
+      status: 204,
+      message: expect.stringContaining("apiVoid"),
+    });
   });
 
   it("sends POST request with body", async () => {
@@ -100,6 +102,29 @@ describe("api", () => {
         }),
       }),
     );
+  });
+});
+
+describe("apiVoid", () => {
+  it("resolves on 204 responses without parsing a body", async () => {
+    const json = vi.fn();
+    mockFetch.mockResolvedValue({ ok: true, status: 204, json });
+
+    await expect(apiVoid("/api/account", { method: "DELETE" })).resolves.toBeUndefined();
+    expect(json).not.toHaveBeenCalled();
+  });
+
+  it("throws ApiError on non-ok response", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false,
+      status: 403,
+      json: () => Promise.resolve({ error: "Forbidden" }),
+    });
+
+    await expect(apiVoid("/api/account", { method: "DELETE" })).rejects.toMatchObject({
+      message: "Forbidden",
+      status: 403,
+    });
   });
 });
 

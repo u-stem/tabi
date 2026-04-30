@@ -47,7 +47,7 @@ import {
 } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { UserAvatar } from "@/components/user-avatar";
-import { ApiError, api } from "@/lib/api";
+import { ApiError, apiVoid } from "@/lib/api";
 import { authClient, useSession } from "@/lib/auth-client";
 import {
   getPasswordRequirementsText,
@@ -722,7 +722,7 @@ function DeleteAccountSection({ username }: { username: string }) {
     setLoading(true);
 
     try {
-      await api("/api/account", {
+      await apiVoid("/api/account", {
         method: "DELETE",
         body: JSON.stringify({ password }),
       });

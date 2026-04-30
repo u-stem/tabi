@@ -123,17 +123,21 @@ describe("rateLimitByIp middleware", () => {
 });
 
 describe("rateLimitByIp middleware (Upstash Redis path)", () => {
-  type MockRedis = {
+  type MockPipeline = {
+    set: ReturnType<typeof vi.fn>;
     incr: ReturnType<typeof vi.fn>;
-    expire: ReturnType<typeof vi.fn>;
+    exec: ReturnType<typeof vi.fn>;
   };
-  let redis: MockRedis;
+  type MockRedis = { pipeline: () => MockPipeline };
+  let pipeline: MockPipeline;
 
   beforeEach(() => {
-    redis = {
+    pipeline = {
+      set: vi.fn(),
       incr: vi.fn(),
-      expire: vi.fn().mockResolvedValue(1),
+      exec: vi.fn(),
     };
+    const redis: MockRedis = { pipeline: () => pipeline };
     vi.mocked(getRedis).mockReturnValue(redis as never);
   });
 
@@ -141,8 +145,8 @@ describe("rateLimitByIp middleware (Upstash Redis path)", () => {
     vi.mocked(getRedis).mockReturnValue(null);
   });
 
-  it("calls INCR + EXPIRE on first request and allows it", async () => {
-    redis.incr.mockResolvedValue(1);
+  it("uses SET NX EX + INCR in one pipeline so TTL is set atomically", async () => {
+    pipeline.exec.mockResolvedValue(["OK", 1]);
     const app = new Hono();
     app.use("*", rateLimitByIp({ window: 60, max: 3 }));
     app.get("/test", (c) => c.json({ ok: true }));
@@ -152,23 +156,13 @@ describe("rateLimitByIp middleware (Upstash Redis path)", () => {
     });
 
     expect(res.status).toBe(200);
-    expect(redis.incr).toHaveBeenCalledWith("rl:60:3:1.2.3.4");
-    expect(redis.expire).toHaveBeenCalledWith("rl:60:3:1.2.3.4", 60);
-  });
-
-  it("does not re-set EXPIRE on subsequent requests", async () => {
-    redis.incr.mockResolvedValue(2);
-    const app = new Hono();
-    app.use("*", rateLimitByIp({ window: 60, max: 3 }));
-    app.get("/test", (c) => c.json({ ok: true }));
-
-    await app.request("/test", { headers: { "x-forwarded-for": "1.2.3.4" } });
-
-    expect(redis.expire).not.toHaveBeenCalled();
+    expect(pipeline.set).toHaveBeenCalledWith("rl:60:3:1.2.3.4", 0, { nx: true, ex: 60 });
+    expect(pipeline.incr).toHaveBeenCalledWith("rl:60:3:1.2.3.4");
+    expect(pipeline.exec).toHaveBeenCalledTimes(1);
   });
 
   it("returns 429 when INCR exceeds the max", async () => {
-    redis.incr.mockResolvedValue(4);
+    pipeline.exec.mockResolvedValue([null, 4]);
     const app = new Hono();
     app.use("*", rateLimitByIp({ window: 60, max: 3 }));
     app.get("/test", (c) => c.json({ ok: true }));
@@ -181,8 +175,25 @@ describe("rateLimitByIp middleware (Upstash Redis path)", () => {
     expect(await res.json()).toEqual({ error: "Too many requests" });
   });
 
-  it("fails open when Redis is unreachable", async () => {
-    redis.incr.mockRejectedValue(new Error("ECONNREFUSED"));
+  it("does not refresh TTL on subsequent requests (SET NX is a no-op)", async () => {
+    // First request: key created, TTL set (SET NX returns "OK")
+    pipeline.exec.mockResolvedValueOnce(["OK", 1]);
+    // Second request: key exists, SET NX returns null (no-op), INCR still works
+    pipeline.exec.mockResolvedValueOnce([null, 2]);
+    const app = new Hono();
+    app.use("*", rateLimitByIp({ window: 60, max: 3 }));
+    app.get("/test", (c) => c.json({ ok: true }));
+
+    await app.request("/test", { headers: { "x-forwarded-for": "1.2.3.4" } });
+    const res = await app.request("/test", { headers: { "x-forwarded-for": "1.2.3.4" } });
+
+    expect(res.status).toBe(200);
+    // SET should be called both times, but the second is a no-op at Redis level
+    expect(pipeline.set).toHaveBeenCalledTimes(2);
+  });
+
+  it("fails open when the pipeline rejects (Redis unreachable)", async () => {
+    pipeline.exec.mockRejectedValue(new Error("ECONNREFUSED"));
     const app = new Hono();
     app.use("*", rateLimitByIp({ window: 60, max: 3 }));
     app.get("/test", (c) => c.json({ ok: true }));

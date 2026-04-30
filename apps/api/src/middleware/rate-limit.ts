@@ -48,17 +48,21 @@ export function rateLimitByIp(opts: { window: number; max: number }) {
     if (redis) {
       const key = `rl:${opts.window}:${opts.max}:${ip}`;
       try {
-        const count = await redis.incr(key);
-        if (count === 1) {
-          await redis.expire(key, opts.window);
-        }
+        // SET NX EX + INCR in one pipeline so the TTL is set atomically with
+        // initialization. Without `nx`, a long-running window would have its TTL
+        // refreshed every request and never expire.
+        const pipe = redis.pipeline();
+        pipe.set(key, 0, { nx: true, ex: opts.window });
+        pipe.incr(key);
+        const [, count] = (await pipe.exec()) as [unknown, number];
         if (count > opts.max) {
           return c.json({ error: ERROR_MSG.TOO_MANY_REQUESTS }, 429);
         }
         return next();
       } catch (err) {
-        // If Upstash is unreachable, surface in logs and fail-open. Blocking traffic
-        // because of an upstream cache outage is worse than the leak window.
+        // Fail-open by design: if Upstash is unreachable, blocking legitimate
+        // traffic because of an upstream cache outage is worse than the leak
+        // window. Surface in logs so monitoring can detect prolonged outages.
         logger.error({ err, ip }, "rate-limit redis error; falling open");
         return next();
       }

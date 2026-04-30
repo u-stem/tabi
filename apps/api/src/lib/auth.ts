@@ -14,8 +14,10 @@ import {
   USERNAME_MIN_LENGTH,
 } from "./constants";
 import { env } from "./env";
+import { createUpstashSecondaryStorage } from "./redis";
 
 const isProduction = process.env.NODE_ENV === "production";
+const secondaryStorage = createUpstashSecondaryStorage();
 
 // Lazily created so tests that don't use email can import auth without GMAIL_USER set
 function getTransporter() {
@@ -34,8 +36,9 @@ export const auth = betterAuth({
     enabled: isProduction,
     window: 60,
     max: 30,
-    // In-memory storage is per-instance and not shared across function invocations.
-    storage: "memory",
+    // Use Upstash Redis when configured so all serverless instances share state.
+    // Falls back to per-instance memory storage when env vars are absent (local dev).
+    storage: secondaryStorage ? "secondary-storage" : "memory",
     customRules: {
       "/api/auth/sign-in/anonymous": { window: 60, max: 3 },
       "/api/auth/sign-in/*": { window: 60, max: 5 },
@@ -43,6 +46,7 @@ export const auth = betterAuth({
       "/api/auth/change-password": { window: 60, max: 3 },
     },
   },
+  secondaryStorage,
   advanced: {
     database: {
       generateId: "uuid",

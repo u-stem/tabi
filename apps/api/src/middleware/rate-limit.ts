@@ -54,7 +54,7 @@ export function rateLimitByIp(opts: { window: number; max: number }) {
         const pipe = redis.pipeline();
         pipe.set(key, 0, { nx: true, ex: opts.window });
         pipe.incr(key);
-        const [, count] = (await pipe.exec()) as [unknown, number];
+        const [, count] = await pipe.exec<["OK" | null, number]>();
         if (count > opts.max) {
           return c.json({ error: ERROR_MSG.TOO_MANY_REQUESTS }, 429);
         }

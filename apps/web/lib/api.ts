@@ -14,7 +14,7 @@ type FetchOptions = RequestInit & {
   params?: Record<string, string>;
 };
 
-export async function api<T>(path: string, options: FetchOptions = {}): Promise<T> {
+async function fetchApi(path: string, options: FetchOptions): Promise<Response> {
   const { params, ...fetchOptions } = options;
 
   let url = `${API_BASE}${path}`;
@@ -41,11 +41,32 @@ export async function api<T>(path: string, options: FetchOptions = {}): Promise<
     throw new ApiError(message, res.status);
   }
 
+  return res;
+}
+
+/**
+ * Call a JSON API endpoint that returns a body of type T.
+ * Use {@link apiVoid} for endpoints that return 204 No Content.
+ */
+export async function api<T>(path: string, options: FetchOptions = {}): Promise<T> {
+  const res = await fetchApi(path, options);
+
   if (res.status === 204) {
-    return undefined as T;
+    throw new ApiError(
+      `Expected JSON body from ${path} but got 204 No Content. Use apiVoid() for endpoints that return no body.`,
+      204,
+    );
   }
 
   return res.json();
+}
+
+/**
+ * Call an API endpoint that returns no body (typically 204 No Content).
+ * Throws if the endpoint returns a non-2xx status; ignores the body otherwise.
+ */
+export async function apiVoid(path: string, options: FetchOptions = {}): Promise<void> {
+  await fetchApi(path, options);
 }
 
 /**

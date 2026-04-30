@@ -7,7 +7,7 @@ import { ArrowRight } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
-import { api, getApiErrorMessage } from "@/lib/api";
+import { api, apiVoid, getApiErrorMessage } from "@/lib/api";
 import { queryKeys } from "@/lib/query-keys";
 
 type SettlementSectionProps = {
@@ -121,7 +121,7 @@ export function SettlementSection({
       toUserId: string;
       amount: number;
     }) =>
-      api(`/api/trips/${tripId}/settlement-payments/${vars.paymentId}`, {
+      apiVoid(`/api/trips/${tripId}/settlement-payments/${vars.paymentId}`, {
         method: "DELETE",
       }),
     onMutate: async (vars) => {
